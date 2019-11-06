@@ -1,0 +1,44 @@
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: nginx
+spec:
+  fetch:
+  - git:
+      url: https://github.com/bitnami/charts
+      ref: origin/master
+      subPath: bitnami/nginx
+  template:
+  - helmTemplate:
+      valuesFrom:
+      - secretRef:
+          name: nginx-values
+  - ytt:
+      ignoreUnknownComments: true
+      inline:
+        paths:
+          remove-lb.yml: |
+            #@ load("@ytt:overlay", "overlay")
+            #@overlay/match by=overlay.subset({"kind":"Service","metadata":{"name":"nginx"}})
+            ---
+            spec:
+              type: ClusterIP
+              #@overlay/remove
+              externalTrafficPolicy:
+  - kbld: {}
+  deploy:
+  - kapp: {}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nginx-values
+stringData:
+  data.yml: |
+    serverBlock: |-
+      server {
+        listen 0.0.0.0:8080;
+        location / {
+          return 200 "hello from kapp-controller!";
+        }
+      }

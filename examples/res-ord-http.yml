@@ -1,0 +1,13 @@
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: res-ord
+spec:
+  fetch:
+  - http:
+      url: https://github.com/k14s/kapp/archive/master.zip
+      subPath: kapp-master/examples/resource-ordering
+  template:
+  - ytt: {}
+  deploy:
+  - kapp: {}

@@ -1,0 +1,55 @@
+#@ load("@ytt:template", "template")
+#@ load("cm.lib.yml", "config_map")
+
+#@ def cr():
+files:
+  inline:
+    paths:
+      config.yml: |
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: redis-config
+          annotations:
+            kapp.k14s.io/versioned: ""
+        data:
+          redis-config: |
+            maxmemory 3mb
+            maxmemory-policy allkeys-lru
+      redis.yml: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: redis
+          annotations:
+            #! Use replace strategy since Pod cannot be modified "meaningfully"
+            kapp.k14s.io/update-strategy: fallback-on-replace
+        spec:
+          containers:
+          - name: redis
+            image: k8s.gcr.io/redis:e2e
+            env:
+            - name: MASTER
+              value: "true"
+            ports:
+            - containerPort: 6379
+            resources:
+              limits:
+                cpu: "0.1"
+            volumeMounts:
+            - mountPath: /redis-master-data
+              name: data
+            - mountPath: /redis-master
+              name: config
+          volumes:
+          - name: data
+            emptyDir: {}
+          - name: config
+            configMap:
+              name: redis-config
+              items: 
+              - key: redis-config
+                path: redis.conf
+#@ end
+
+--- #@ template.replace(config_map("app1-cm", cr()))

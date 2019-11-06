@@ -1,0 +1,9 @@
+required = ["github.com/kubernetes/code-generator"]
+
+[[override]]
+  name = "gopkg.in/fsnotify.v1"
+  source = "https://github.com/fsnotify/fsnotify.git"
+
+[[override]]
+  name = "k8s.io/code-generator"
+  version = "kubernetes-1.13.5"

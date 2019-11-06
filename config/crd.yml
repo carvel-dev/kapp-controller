@@ -1,0 +1,44 @@
+#@ load("@ytt:data", "data")
+
+#@ if/end data.values.include_crd:
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: apps.kappctrl.k14s.io
+spec:
+  group: kappctrl.k14s.io
+  names:
+    kind: App
+    listKind: AppList
+    plural: apps
+    singular: app
+  scope: Namespaced
+  subresources:
+    status: {}
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+  additionalPrinterColumns:
+  - name: Paused
+    type: boolean
+    description: Reconcilation is paused
+    JSONPath: .spec.paused
+  - name: DeployExitCode
+    type: integer
+    description: Exit code from last deploy
+    JSONPath: .Status.Deploy.exitCode
+  - name: DeployUpdatedAt
+    type: date
+    description: Last deploy finish time
+    JSONPath: .Status.Deploy.updatedAt
+  - name: Age
+    type: date
+    description: |-
+      CreationTimestamp is a timestamp representing the server time when this object was created.
+      It is not guaranteed to be set in happens-before order across separate operations.
+      Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+      Populated by the system. Read-only. Null for lists.
+      More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+    JSONPath: .metadata.creationTimestamp

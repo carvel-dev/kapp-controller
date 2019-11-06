@@ -1,0 +1,23 @@
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: redis
+spec:
+  fetch:
+  - helmChart:
+      name: stable/redis
+  template:
+  - helmTemplate:
+      valuesFrom:
+      - secretRef:
+          name: redis-values
+  deploy:
+  - kapp: {}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-values
+stringData:
+  data.yml: |
+    password: "1234567891234"
