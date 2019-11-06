@@ -1,0 +1,6 @@
+#@data/values
+---
+namespace: default
+include_crd: true
+push_images: true
+image_repo: docker.io/dkalinin/kapp-controller

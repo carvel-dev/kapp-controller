@@ -1,0 +1,39 @@
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: concourse
+spec:
+  fetch:
+  - helmChart:
+      name: stable/concourse
+  template:
+  - helmTemplate:
+      valuesFrom:
+      - secretRef:
+          name: concourse-values
+  # - ytt:
+  #     #! helm inserts comments before each doc, ignore them
+  #     ignoreUnknownComments: true
+  #     inline:
+  #       paths:
+  #         scale-up.yml: |
+  #           #@ load("@ytt:overlay", "overlay")
+  #           #@ matcher = {"metadata":{"name": "concourse-web"}, "kind":"Deployment"}
+  #           #@overlay/match by=overlay.subset(matcher)
+  #           ---
+  #           spec:
+  #             replicas: 3
+  deploy:
+  - kapp: {}
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: concourse-values
+stringData:
+  data.yml: |
+    concourse:
+      web:
+        externalUrl: http://concourse-web.default.svc.cluster.local:8080
+        replicas: 3

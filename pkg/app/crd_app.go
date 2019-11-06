@@ -1,0 +1,101 @@
+package app
+
+import (
+	"github.com/go-logr/logr"
+	kcv1alpha1 "github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	kcclient "github.com/k14s/kapp-controller/pkg/client/clientset/versioned"
+	"github.com/k14s/kapp-controller/pkg/fetch"
+	"github.com/k14s/kapp-controller/pkg/template"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+func init() {
+	kcv1alpha1.AddToScheme(scheme.Scheme)
+}
+
+type CRDApp struct {
+	app      *App
+	appModel *kcv1alpha1.App
+	nsName   types.NamespacedName // TODO fill in?
+
+	log       logr.Logger
+	appClient kcclient.Interface
+}
+
+func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger,
+	appClient kcclient.Interface, fetchFactory fetch.Factory,
+	templateFactory template.Factory) (*CRDApp, error) {
+
+	crdApp := &CRDApp{appModel: appModel, log: log, appClient: appClient}
+
+	crdApp.app = NewApp(*appModel, AppHooks{
+		BlockDeletion:   crdApp.blockDeletion,
+		UnblockDeletion: crdApp.unblockDeletion,
+		UpdateStatus:    crdApp.updateStatus,
+	}, fetchFactory, templateFactory)
+
+	return crdApp, nil
+}
+
+func NewCRDAppFromName(nsName types.NamespacedName, log logr.Logger,
+	appClient kcclient.Interface) *CRDApp {
+
+	return &CRDApp{nil, nil, nsName, log, appClient}
+}
+
+func (a *CRDApp) blockDeletion() error {
+	a.log.Info("Blocking deletion")
+	return a.updateApp(func(app *kcv1alpha1.App) {
+		if !containsString(app.ObjectMeta.Finalizers, deleteFinalizerName) {
+			app.ObjectMeta.Finalizers = append(app.ObjectMeta.Finalizers, deleteFinalizerName)
+		}
+	})
+}
+
+func (a *CRDApp) unblockDeletion() error {
+	a.log.Info("Unblocking deletion")
+	return a.updateApp(func(app *kcv1alpha1.App) {
+		app.ObjectMeta.Finalizers = removeString(app.ObjectMeta.Finalizers, deleteFinalizerName)
+	})
+}
+
+func (a *CRDApp) updateStatus() error {
+	existingApp, err := a.appClient.KappctrlV1alpha1().Apps(a.appModel.Namespace).Get(a.appModel.Name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	existingApp.Status = a.app.Status()
+
+	_, err = a.appClient.KappctrlV1alpha1().Apps(existingApp.Namespace).UpdateStatus(existingApp)
+	return err
+}
+
+func (a *CRDApp) updateApp(updateFunc func(*kcv1alpha1.App)) error {
+	existingApp, err := a.appClient.KappctrlV1alpha1().Apps(a.appModel.Namespace).Get(a.appModel.Name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	updateFunc(existingApp)
+
+	_, err = a.appClient.KappctrlV1alpha1().Apps(existingApp.Namespace).Update(existingApp)
+	return err
+}
+
+func (a *CRDApp) Reconcile() (reconcile.Result, error) {
+	err := a.app.Reconcile()
+	if err != nil {
+		return reconcile.Result{Requeue: true}, err
+	}
+
+	return reconcile.Result{}, nil
+}
+
+func (a *CRDApp) Delete() (reconcile.Result, error) {
+	// TODO implement
+	return reconcile.Result{}, nil
+}

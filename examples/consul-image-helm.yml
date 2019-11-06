@@ -1,0 +1,26 @@
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: consul
+spec:
+  fetch:
+  - image:
+      url: dkalinin/consul-helm
+  template:
+  - helmTemplate: {}
+  - ytt:
+      ignoreUnknownComments: true
+      inline:
+        paths:
+          fix-test-pod.yml: |
+            #@ load("@ytt:overlay", "overlay")
+            #@ matcher = {"metadata":{"name": "consul-consul-test"}, "kind":"Pod"}
+            #@overlay/match by=overlay.subset(matcher)
+            ---
+            metadata:
+              #@overlay/match missing_ok=True
+              annotations:
+                #@overlay/match missing_ok=True
+                kapp.k14s.io/update-strategy: fallback-on-replace
+  deploy:
+  - kapp: {}
