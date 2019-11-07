@@ -2,6 +2,8 @@
 
 ### Example
 
+See [App Spec](app-spec.md) for details.
+
 ```yaml
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
