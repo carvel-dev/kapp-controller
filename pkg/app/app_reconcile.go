@@ -57,7 +57,7 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 
 		fetchResult := a.fetch(tmpDir.Path())
 
-		a.app.Status.Fetch = &v1alpha1.AppStatusLastFetch{
+		a.app.Status.Fetch = &v1alpha1.AppStatusFetch{
 			Stderr:    fetchResult.Stderr,
 			ExitCode:  fetchResult.ExitCode,
 			Error:     fetchResult.ErrorStr(),
@@ -74,7 +74,7 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 
 	tplResult := a.template(tmpDir.Path())
 
-	a.app.Status.Template = &v1alpha1.AppStatusLastTemplate{
+	a.app.Status.Template = &v1alpha1.AppStatusTemplate{
 		Stderr:    tplResult.Stderr,
 		ExitCode:  tplResult.ExitCode,
 		Error:     tplResult.ErrorStr(),
@@ -95,7 +95,7 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 func (a *App) updateLastDeploy(result exec.CmdRunResult) exec.CmdRunResult {
 	result = result.WithFriendlyYAMLStrings()
 
-	a.app.Status.Deploy = &v1alpha1.AppStatusLastDeploy{
+	a.app.Status.Deploy = &v1alpha1.AppStatusDeploy{
 		Stdout:    result.Stdout,
 		Stderr:    result.Stderr,
 		Finished:  result.Finished,
@@ -116,14 +116,14 @@ func (a *App) updateLastDeployNoReturn(result exec.CmdRunResult) {
 
 func (a *App) resetLastFetchStartedAt() {
 	if a.app.Status.Fetch == nil {
-		a.app.Status.Fetch = &v1alpha1.AppStatusLastFetch{}
+		a.app.Status.Fetch = &v1alpha1.AppStatusFetch{}
 	}
 	a.app.Status.Fetch.StartedAt = metav1.NewTime(time.Now().UTC())
 }
 
 func (a *App) resetLastDeployStartedAt() {
 	if a.app.Status.Deploy == nil {
-		a.app.Status.Deploy = &v1alpha1.AppStatusLastDeploy{}
+		a.app.Status.Deploy = &v1alpha1.AppStatusDeploy{}
 	}
 	a.app.Status.Deploy.StartedAt = metav1.NewTime(time.Now().UTC())
 }

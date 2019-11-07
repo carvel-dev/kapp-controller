@@ -56,17 +56,17 @@ spec:
 
 		expectedStatus := v1alpha1.AppStatus{
 			Conditions: []v1alpha1.AppCondition{},
-			Deploy: &v1alpha1.AppStatusLastDeploy{
+			Deploy: &v1alpha1.AppStatusDeploy{
 				ExitCode: 0,
 				Finished: true,
 			},
-			Fetch: &v1alpha1.AppStatusLastFetch{
+			Fetch: &v1alpha1.AppStatusFetch{
 				ExitCode: 0,
 			},
 			Inspect: &v1alpha1.AppStatusInspect{
 				ExitCode: 0,
 			},
-			Template: &v1alpha1.AppStatusLastTemplate{
+			Template: &v1alpha1.AppStatusTemplate{
 				ExitCode: 0,
 			},
 			ObservedGeneration: 1,
