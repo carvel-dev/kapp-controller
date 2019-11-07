@@ -115,6 +115,10 @@ func (a *Kapp) managedName() string { return a.genericOpts.Name + "-ctrl" }
 
 var (
 	kappDisallowedOpts = map[string]bool{
+		"-a":                   true,
+		"--app":                true,
+		"-n":                   true,
+		"--namespace":          true,
 		"-f":                   true,
 		"--file":               true,
 		"--kubeconfig":         true,
