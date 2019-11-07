@@ -23,7 +23,7 @@ func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts GenericOpts) *Kapp {
 }
 
 func (a *Kapp) Deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
-	args := a.addDeployArgs([]string{"deploy", "-a", a.managedName(), "-f", "-", "-y"})
+	args := a.addDeployArgs([]string{"deploy", "-n", a.genericOpts.Namespace, "-a", a.managedName(), "-f", "-", "-y"})
 
 	cmd := goexec.Command("kapp", args...)
 	cmd.Stdin = strings.NewReader(tplOutput)
@@ -41,7 +41,7 @@ func (a *Kapp) Deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exe
 }
 
 func (a *Kapp) Delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
-	args := a.addDeleteArgs([]string{"delete", "-a", a.managedName(), "-y"})
+	args := a.addDeleteArgs([]string{"delete", "-n", a.genericOpts.Namespace, "-a", a.managedName(), "-y"})
 
 	cmd := goexec.Command("kapp", args...)
 	stdoutBs, stderrBs := a.trackCmdOutput(cmd, changedFunc)
@@ -61,7 +61,7 @@ func (a *Kapp) Inspect() exec.CmdRunResult {
 	var stdoutBs, stderrBs bytes.Buffer
 
 	args := []string{
-		"inspect", "-a", a.managedName(), "-t",
+		"inspect", "-n", a.genericOpts.Namespace, "-a", a.managedName(), "-t",
 		// PodMetrics rapidly get/created and removed, hence lets hide them
 		// to avoid resource update churn
 		// TODO is there a better way to deal with this?
