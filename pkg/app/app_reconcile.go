@@ -147,6 +147,7 @@ func (a *App) reconcileInspect() error {
 func (a *App) setReconciling() {
 	a.removeCondition(v1alpha1.Reconciling)
 	a.removeCondition(v1alpha1.ReconcileFailed)
+	a.removeCondition(v1alpha1.ReconcileSucceeded)
 
 	a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
 		Type:   v1alpha1.Reconciling,
@@ -159,12 +160,19 @@ func (a *App) setReconciling() {
 func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 	a.removeCondition(v1alpha1.Reconciling)
 	a.removeCondition(v1alpha1.ReconcileFailed)
+	a.removeCondition(v1alpha1.ReconcileSucceeded)
 
 	if result.Error != nil {
 		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
 			Type:    v1alpha1.ReconcileFailed,
 			Status:  corev1.ConditionTrue,
 			Message: result.ErrorStr(),
+		})
+	} else {
+		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
+			Type:    v1alpha1.ReconcileSucceeded,
+			Status:  corev1.ConditionTrue,
+			Message: "",
 		})
 	}
 }

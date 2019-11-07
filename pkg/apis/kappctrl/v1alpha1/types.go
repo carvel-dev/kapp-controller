@@ -90,8 +90,9 @@ type AppStatusInspect struct {
 type AppConditionType string
 
 const (
-	Reconciling     AppConditionType = "Reconciling"
-	ReconcileFailed AppConditionType = "ReconcileFailed"
+	Reconciling        AppConditionType = "Reconciling"
+	ReconcileFailed    AppConditionType = "ReconcileFailed"
+	ReconcileSucceeded AppConditionType = "ReconcileSucceeded"
 )
 
 type AppCondition struct {
