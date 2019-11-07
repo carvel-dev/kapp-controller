@@ -3,10 +3,12 @@
 ```yaml
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
+
 metadata:
   name: simple-app
-  # This namespace is going to be used as a default namespace during deploy
+  # namespace is going to be used as a default namespace during kapp deploy
   namespace: ns
+
 spec:
   # pauses _future_ reconcilation; does _not_ affect
   # currently running reconciliation (optional; default=false)
@@ -139,4 +141,65 @@ spec:
         delete:
           # pass through options to kapp delete (optional)
           rawOptions: ["--apply-ignored=true"]
+
+# status is popuated by the controller
+status:
+  # populated based on metadata.generation when controller
+  # observes a change to the resource; if this value is 
+  # out of data, other status fields do not reflect latest state
+  observedGeneration: 1
+
+  conditions:
+    # "Reconciling" indicates that fetch/template/deploy is happening;
+    # it does not mean that any resource has changed
+    - type: Reconciling
+      status: "True"
+    # "ReconcileFailed" indicates that one of the stages failed
+    - type: ReconcileFailed
+      status: "True"
+
+  fetch:
+    exitCode: 0
+    error: "..."
+    stderr: "..."
+    startedAt: "2019-11-07T16:37:23Z"
+    updatedAt: "2019-11-07T16:37:23Z"
+
+  template:
+    exitCode: 0
+    error: "..."
+    stderr: "..."
+    updatedAt: "2019-11-07T16:37:23Z"
+
+  deploy:
+    exitCode: 0
+    error: "..."
+    stderr: "..."
+    finished: true
+    startedAt: "2019-11-07T16:37:23Z"
+    stdout: |-
+      Changes
+      Namespace  Name  Kind  Conds.  Age  Op  Wait to  Rs  Ri
+      Op:      0 create, 0 delete, 0 update, 0 noop
+      Wait to: 0 reconcile, 0 delete, 0 noop
+      Succeeded
+    updatedAt: "2019-11-07T16:37:23Z"
+
+  inspect:
+    exitCode: 0
+    error: "..."
+    stderr: "..."
+    stdout: |-
+      Resources in app 'simple-app-ctrl'
+      Namespace  Name                              Kind        Owner    Conds.  Rs  Ri  Age
+      default    simple-app                        Deployment  kapp     2/2 t   ok  -   7d
+      default     L simple-app-6b6b4fcd97          ReplicaSet  cluster  -       ok  -   7d
+      default     L.. simple-app-6b6b4fcd97-kwclv  Pod         cluster  4/4 t   ok  -   7d
+      default    simple-app                        Service     kapp     -       ok  -   7d
+      default     L simple-app                     Endpoints   cluster  -       ok  -   7d
+      Rs: Reconcile state
+      Ri: Reconcile information
+      5 resources
+      Succeeded
+    updatedAt: "2019-11-07T16:37:23Z"
 ```
