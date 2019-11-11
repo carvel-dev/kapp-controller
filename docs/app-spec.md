@@ -137,6 +137,10 @@ spec:
         mapNs: ["ns1=another-ns1"]
         # pass through options to kapp deploy (optional)
         rawOptions: ["--apply-concurrency=10"]
+        # configuration for inspect command (optional)
+        inspect:
+          # pass through options to kapp inspect (optional)
+          rawOptions: ["--json=true"]
         # configuration for delete command (optional)
         delete:
           # pass through options to kapp delete (optional)

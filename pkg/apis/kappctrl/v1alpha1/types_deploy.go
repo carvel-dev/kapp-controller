@@ -9,7 +9,12 @@ type AppDeployKapp struct {
 	MapNs      []string `json:"mapNs,omitempty"`
 	RawOptions []string `json:"rawOptions,omitempty"`
 
-	Delete *AppDeployKappDelete `json:"delete,omitempty"`
+	Inspect *AppDeployKappInspect `json:"inspect,omitempty"`
+	Delete  *AppDeployKappDelete  `json:"delete,omitempty"`
+}
+
+type AppDeployKappInspect struct {
+	RawOptions []string `json:"rawOptions,omitempty"`
 }
 
 type AppDeployKappDelete struct {

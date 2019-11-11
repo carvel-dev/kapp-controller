@@ -24,7 +24,9 @@ spec:
   #           spec:
   #             replicas: 3
   deploy:
-  - kapp: {}
+  - kapp:
+      delete:
+        rawOptions: ["--apply-ignored=true"]
 
 ---
 apiVersion: v1
