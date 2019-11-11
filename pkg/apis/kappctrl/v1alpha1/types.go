@@ -93,6 +93,9 @@ const (
 	Reconciling        AppConditionType = "Reconciling"
 	ReconcileFailed    AppConditionType = "ReconcileFailed"
 	ReconcileSucceeded AppConditionType = "ReconcileSucceeded"
+
+	Deleting     AppConditionType = "Deleting"
+	DeleteFailed AppConditionType = "DeleteFailed"
 )
 
 type AppCondition struct {

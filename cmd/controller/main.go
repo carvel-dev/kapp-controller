@@ -8,7 +8,6 @@ import (
 
 	kcv1alpha1 "github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/k14s/kapp-controller/pkg/client/clientset/versioned"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -67,7 +66,7 @@ func main() {
 	{ // add controller for apps
 		ctrlAppOpts := controller.Options{
 			Reconciler: &PeriodicReconciler{NewUniqueReconciler(&AppsReconciler{
-				client:     mgr.GetClient(),
+				appClient:  appClient,
 				appFactory: appFactory,
 				log:        log.WithName("ar"),
 			})},

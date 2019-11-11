@@ -1,17 +1,15 @@
 package main
 
 import (
-	"context"
-
 	"github.com/go-logr/logr"
-	kcv1alpha1 "github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	kcclient "github.com/k14s/kapp-controller/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type AppsReconciler struct {
-	client     client.Client
+	appClient  kcclient.Interface
 	log        logr.Logger
 	appFactory AppFactory
 }
@@ -21,20 +19,20 @@ var _ reconcile.Reconciler = &AppsReconciler{}
 func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
-	app := &kcv1alpha1.App{}
-
-	err := r.client.Get(context.TODO(), request.NamespacedName, app)
+	// TODO currently we've decided to get a fresh copy of app so
+	// that we do not operate on stale copy for efficiency reasons
+	existingApp, err := r.appClient.KappctrlV1alpha1().Apps(request.Namespace).Get(request.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.Info("Could not find App") // TODO
-			return r.appFactory.NewCRDAppFromName(request, log).Delete()
+			return reconcile.Result{}, nil
 		}
 
 		log.Error(err, "Could not fetch App")
 		return reconcile.Result{}, err
 	}
 
-	crdApp, err := r.appFactory.NewCRDApp(app, log)
+	crdApp, err := r.appFactory.NewCRDApp(existingApp, log)
 	if crdApp == nil || err != nil {
 		return reconcile.Result{}, err
 	}

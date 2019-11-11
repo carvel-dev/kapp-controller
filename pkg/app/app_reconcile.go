@@ -10,35 +10,75 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Reconcile is not expected to be called concurrently
 func (a *App) Reconcile() error {
-	isDeleting := a.app.DeletionTimestamp != nil
+	switch {
+	case a.app.Spec.Canceled || a.app.Spec.Paused:
+		a.log.Info("App is canceled or paused, not reconciling")
+		a.markObservedLatest()
+		return a.updateStatus()
 
-	if isDeleting || a.shouldReconcile() {
-		var result exec.CmdRunResult
+	case a.app.DeletionTimestamp != nil:
+		a.log.Info("Started deleting")
+		return a.reconcileDelete()
 
-		a.setReconciling()
-		a.updateStatus()
+	case a.shouldReconcile():
+		a.log.Info("Started deploying")
+		return a.reconcileDeploy()
 
-		defer func() {
-			a.setReconcileCompleted(result)
-			a.updateStatus()
-		}()
+	default:
+		a.log.Info("Reconcile noop")
+		return nil
+	}
+}
 
-		// TODO a.app.Status.ManagedAppName = a.managedName()
+func (a *App) reconcileDelete() error {
+	a.markObservedLatest()
+	a.setDeleting()
 
-		if isDeleting {
-			a.resetLastDeployStartedAt()
-			result = a.delete(a.updateLastDeployNoReturn)
-			return result.Error
-		}
-
-		if !a.app.Spec.Paused {
-			result = a.reconcileFetchTemplateDeploy()
-			// Reconcile inspect regardless of deploy success
-			a.reconcileInspect()
-		}
+	err := a.updateStatus()
+	if err != nil {
+		return err
 	}
 
+	var result exec.CmdRunResult
+
+	defer func() {
+		a.setDeleteCompleted(result)
+		// TODO technically resource is gone so this will error
+		a.updateStatus()
+		a.log.Info("Completed delete")
+	}()
+
+	// TODO a.app.Status.ManagedAppName = a.managedName()
+
+	a.resetLastDeployStartedAt()
+	result = a.delete(a.updateLastDeployNoReturn)
+	return result.Error
+}
+
+func (a *App) reconcileDeploy() error {
+	a.markObservedLatest()
+	a.setReconciling()
+
+	err := a.updateStatus()
+	if err != nil {
+		return err
+	}
+
+	var result exec.CmdRunResult
+
+	defer func() {
+		a.setReconcileCompleted(result)
+		a.updateStatus()
+		a.log.Info("Completed deploy")
+	}()
+
+	// TODO a.app.Status.ManagedAppName = a.managedName()
+
+	result = a.reconcileFetchTemplateDeploy()
+	// Reconcile inspect regardless of deploy success
+	a.reconcileInspect()
 	return nil
 }
 
@@ -65,7 +105,10 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 			UpdatedAt: metav1.NewTime(time.Now().UTC()),
 		}
 
-		a.updateStatus()
+		err := a.updateStatus()
+		if err != nil {
+			return exec.NewCmdRunResultWithErr(err)
+		}
 
 		if fetchResult.Error != nil {
 			return fetchResult
@@ -81,7 +124,10 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
 
-	a.updateStatus()
+	err = a.updateStatus()
+	if err != nil {
+		return exec.NewCmdRunResultWithErr(err)
+	}
 
 	if tplResult.Error != nil {
 		return tplResult
@@ -139,28 +185,24 @@ func (a *App) reconcileInspect() error {
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
 
-	a.updateStatus()
+	return a.updateStatus()
+}
 
-	return nil
+func (a *App) markObservedLatest() {
+	a.app.Status.ObservedGeneration = a.app.Generation
 }
 
 func (a *App) setReconciling() {
-	a.removeCondition(v1alpha1.Reconciling)
-	a.removeCondition(v1alpha1.ReconcileFailed)
-	a.removeCondition(v1alpha1.ReconcileSucceeded)
+	a.removeAllConditions()
 
 	a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
 		Type:   v1alpha1.Reconciling,
 		Status: corev1.ConditionTrue,
 	})
-
-	a.app.Status.ObservedGeneration = a.app.Generation
 }
 
 func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
-	a.removeCondition(v1alpha1.Reconciling)
-	a.removeCondition(v1alpha1.ReconcileFailed)
-	a.removeCondition(v1alpha1.ReconcileSucceeded)
+	a.removeAllConditions()
 
 	if result.Error != nil {
 		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
@@ -174,6 +216,29 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 			Status:  corev1.ConditionTrue,
 			Message: "",
 		})
+	}
+}
+
+func (a *App) setDeleting() {
+	a.removeAllConditions()
+
+	a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
+		Type:   v1alpha1.Deleting,
+		Status: corev1.ConditionTrue,
+	})
+}
+
+func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
+	a.removeAllConditions()
+
+	if result.Error != nil {
+		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
+			Type:    v1alpha1.DeleteFailed,
+			Status:  corev1.ConditionTrue,
+			Message: result.ErrorStr(),
+		})
+	} else {
+		// assume resource will be deleted, hence nothing to update
 	}
 }
 
@@ -202,6 +267,10 @@ func (a *App) shouldReconcile() bool {
 	}
 
 	return false
+}
+
+func (a *App) removeAllConditions() {
+	a.app.Status.Conditions = nil
 }
 
 func (a *App) removeCondition(type_ v1alpha1.AppConditionType) {

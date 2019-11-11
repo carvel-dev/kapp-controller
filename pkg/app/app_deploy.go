@@ -24,7 +24,8 @@ func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec
 	for _, dep := range a.app.Spec.Deploy {
 		switch {
 		case dep.Kapp != nil:
-			result = ctldep.NewKapp(*dep.Kapp, a.deployGenericOpts()).Deploy(tplOutput, changedFunc)
+			kapp := ctldep.NewKapp(*dep.Kapp, a.deployGenericOpts(), a.newCancelCh())
+			result = kapp.Deploy(tplOutput, changedFunc)
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to deploy"))
 		}
@@ -42,7 +43,8 @@ func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 	for _, dep := range a.app.Spec.Deploy {
 		switch {
 		case dep.Kapp != nil:
-			result = ctldep.NewKapp(*dep.Kapp, a.deployGenericOpts()).Delete(changedFunc)
+			kapp := ctldep.NewKapp(*dep.Kapp, a.deployGenericOpts(), a.newCancelCh())
+			result = kapp.Delete(changedFunc)
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to delete"))
 		}
@@ -69,7 +71,8 @@ func (a *App) inspect() exec.CmdRunResult {
 	for _, dep := range a.app.Spec.Deploy {
 		switch {
 		case dep.Kapp != nil:
-			result = ctldep.NewKapp(*dep.Kapp, a.deployGenericOpts()).Inspect()
+			kapp := ctldep.NewKapp(*dep.Kapp, a.deployGenericOpts(), a.newCancelCh())
+			result = kapp.Inspect()
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to inspect"))
 		}
@@ -84,7 +87,3 @@ func (a *App) inspect() exec.CmdRunResult {
 func (a *App) deployGenericOpts() ctldep.GenericOpts {
 	return ctldep.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
 }
-
-func (a *App) blockDeletion() error   { return a.hooks.BlockDeletion() }
-func (a *App) unblockDeletion() error { return a.hooks.UnblockDeletion() }
-func (a *App) updateStatus() error    { return a.hooks.UpdateStatus() }
