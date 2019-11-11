@@ -61,13 +61,13 @@ func (a *Kapp) Delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 func (a *Kapp) Inspect() exec.CmdRunResult {
 	var stdoutBs, stderrBs bytes.Buffer
 
-	args := []string{
+	args := a.addInspectArgs([]string{
 		"inspect", "-n", a.genericOpts.Namespace, "-a", a.managedName(), "-t",
 		// PodMetrics rapidly get/created and removed, hence lets hide them
 		// to avoid resource update churn
 		// TODO is there a better way to deal with this?
 		"--filter", `{"not":{"resource":{"kinds":["PodMetrics"]}}}`,
-	}
+	})
 
 	cmd := goexec.Command("kapp", args...)
 	cmd.Stdout = &stdoutBs
@@ -150,6 +150,22 @@ func (a *Kapp) addDeployArgs(args []string) []string {
 func (a *Kapp) addDeleteArgs(args []string) []string {
 	if a.opts.Delete != nil {
 		for _, opt := range a.opts.Delete.RawOptions {
+			flag, err := exec.NewFlagFromString(opt)
+			if err != nil {
+				continue
+			}
+
+			if _, found := kappDisallowedOpts[flag.Name]; !found {
+				args = append(args, opt)
+			}
+		}
+	}
+	return args
+}
+
+func (a *Kapp) addInspectArgs(args []string) []string {
+	if a.opts.Inspect != nil {
+		for _, opt := range a.opts.Inspect.RawOptions {
 			flag, err := exec.NewFlagFromString(opt)
 			if err != nil {
 				continue
