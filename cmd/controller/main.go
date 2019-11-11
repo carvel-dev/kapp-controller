@@ -64,29 +64,6 @@ func main() {
 		appClient:  appClient,
 	}
 
-	{ // add controller for config maps
-		ctrlCMOpts := controller.Options{
-			Reconciler: &PeriodicReconciler{NewUniqueReconciler(&ConfigMapsReconciler{
-				client:     mgr.GetClient(),
-				appFactory: appFactory,
-				log:        log.WithName("kapp-controller-cm-reconciler"),
-			})},
-			MaxConcurrentReconciles: ctrlConcurrency,
-		}
-
-		ctrlCM, err := controller.New("kapp-controller-cm", mgr, ctrlCMOpts)
-		if err != nil {
-			entryLog.Error(err, "unable to set up kapp-controller-cm")
-			os.Exit(1)
-		}
-
-		err = ctrlCM.Watch(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForObject{})
-		if err != nil {
-			entryLog.Error(err, "unable to watch *corev1.ConfigMap")
-			os.Exit(1)
-		}
-	}
-
 	{ // add controller for apps
 		ctrlAppOpts := controller.Options{
 			Reconciler: &PeriodicReconciler{NewUniqueReconciler(&AppsReconciler{
