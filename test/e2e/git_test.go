@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ghodss/yaml"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
@@ -55,7 +56,10 @@ spec:
 		}
 
 		expectedStatus := v1alpha1.AppStatus{
-			Conditions: []v1alpha1.AppCondition{},
+			Conditions: []v1alpha1.AppCondition{{
+				Type: v1alpha1.ReconcileSucceeded,
+				Status: corev1.ConditionTrue,
+			}},
 			Deploy: &v1alpha1.AppStatusDeploy{
 				ExitCode: 0,
 				Finished: true,

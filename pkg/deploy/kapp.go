@@ -14,12 +14,13 @@ import (
 type Kapp struct {
 	opts        v1alpha1.AppDeployKapp
 	genericOpts GenericOpts
+	cancelCh    chan struct{}
 }
 
 var _ Deploy = &Kapp{}
 
-func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts GenericOpts) *Kapp {
-	return &Kapp{opts, genericOpts}
+func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts GenericOpts, cancelCh chan struct{}) *Kapp {
+	return &Kapp{opts, genericOpts, cancelCh}
 }
 
 func (a *Kapp) Deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
@@ -29,7 +30,7 @@ func (a *Kapp) Deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exe
 	cmd.Stdin = strings.NewReader(tplOutput)
 	stdoutBs, stderrBs := a.trackCmdOutput(cmd, changedFunc)
 
-	err := cmd.Run()
+	err := exec.RunWithCancel(cmd, a.cancelCh)
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),
@@ -46,7 +47,7 @@ func (a *Kapp) Delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 	cmd := goexec.Command("kapp", args...)
 	stdoutBs, stderrBs := a.trackCmdOutput(cmd, changedFunc)
 
-	err := cmd.Run()
+	err := exec.RunWithCancel(cmd, a.cancelCh)
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),
@@ -72,7 +73,7 @@ func (a *Kapp) Inspect() exec.CmdRunResult {
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
-	err := cmd.Run()
+	err := exec.RunWithCancel(cmd, a.cancelCh)
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),

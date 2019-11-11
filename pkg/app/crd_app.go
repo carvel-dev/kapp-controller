@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/go-logr/logr"
 	kcv1alpha1 "github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/k14s/kapp-controller/pkg/client/clientset/versioned"
@@ -35,14 +37,14 @@ func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger,
 		BlockDeletion:   crdApp.blockDeletion,
 		UnblockDeletion: crdApp.unblockDeletion,
 		UpdateStatus:    crdApp.updateStatus,
-	}, fetchFactory, templateFactory)
+		WatchChanges:    crdApp.watchChanges,
+	}, fetchFactory, templateFactory, log)
 
 	return crdApp, nil
 }
 
 func NewCRDAppFromName(nsName types.NamespacedName, log logr.Logger,
 	appClient kcclient.Interface) *CRDApp {
-
 	return &CRDApp{nil, nil, nsName, log, appClient}
 }
 
@@ -65,25 +67,33 @@ func (a *CRDApp) unblockDeletion() error {
 func (a *CRDApp) updateStatus() error {
 	existingApp, err := a.appClient.KappctrlV1alpha1().Apps(a.appModel.Namespace).Get(a.appModel.Name, metav1.GetOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("Fetching app: %s", err)
 	}
 
 	existingApp.Status = a.app.Status()
 
 	_, err = a.appClient.KappctrlV1alpha1().Apps(existingApp.Namespace).UpdateStatus(existingApp)
-	return err
+	if err != nil {
+		return fmt.Errorf("Updating app status: %s", err)
+	}
+
+	return nil
 }
 
 func (a *CRDApp) updateApp(updateFunc func(*kcv1alpha1.App)) error {
 	existingApp, err := a.appClient.KappctrlV1alpha1().Apps(a.appModel.Namespace).Get(a.appModel.Name, metav1.GetOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("Updating app: %s", err)
 	}
 
 	updateFunc(existingApp)
 
 	_, err = a.appClient.KappctrlV1alpha1().Apps(existingApp.Namespace).Update(existingApp)
-	return err
+	if err != nil {
+		return fmt.Errorf("Updating app: %s", err)
+	}
+
+	return nil
 }
 
 func (a *CRDApp) Reconcile() (reconcile.Result, error) {
@@ -98,4 +108,8 @@ func (a *CRDApp) Reconcile() (reconcile.Result, error) {
 func (a *CRDApp) Delete() (reconcile.Result, error) {
 	// TODO implement
 	return reconcile.Result{}, nil
+}
+
+func (a *CRDApp) watchChanges(callback func(kcv1alpha1.App), cancelCh chan struct{}) error {
+	return NewCRDAppWatcher(*a.appModel, a.appClient).Watch(callback, cancelCh)
 }
