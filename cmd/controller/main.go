@@ -69,7 +69,7 @@ func main() {
 			Reconciler: &PeriodicReconciler{NewUniqueReconciler(&AppsReconciler{
 				client:     mgr.GetClient(),
 				appFactory: appFactory,
-				log:        log.WithName("kapp-controller-app-reconciler"),
+				log:        log.WithName("ar"),
 			})},
 			MaxConcurrentReconciles: ctrlConcurrency,
 		}
