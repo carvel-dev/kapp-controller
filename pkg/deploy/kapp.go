@@ -116,11 +116,8 @@ func (a *Kapp) managedName() string { return a.genericOpts.Name + "-ctrl" }
 
 var (
 	kappDisallowedOpts = map[string]bool{
-		"-a":                   true,
 		"--app":                true,
-		"-n":                   true,
 		"--namespace":          true,
-		"-f":                   true,
 		"--file":               true,
 		"--kubeconfig":         true,
 		"--kubeconfig-context": true,
@@ -137,7 +134,12 @@ func (a *Kapp) addDeployArgs(args []string) []string {
 	}
 
 	for _, opt := range a.opts.RawOptions {
-		if _, found := kappDisallowedOpts[opt]; !found {
+		flag, err := exec.NewFlagFromString(opt)
+		if err != nil {
+			continue
+		}
+
+		if _, found := kappDisallowedOpts[flag.Name]; !found {
 			args = append(args, opt)
 		}
 	}
@@ -148,7 +150,12 @@ func (a *Kapp) addDeployArgs(args []string) []string {
 func (a *Kapp) addDeleteArgs(args []string) []string {
 	if a.opts.Delete != nil {
 		for _, opt := range a.opts.Delete.RawOptions {
-			if _, found := kappDisallowedOpts[opt]; !found {
+			flag, err := exec.NewFlagFromString(opt)
+			if err != nil {
+				continue
+			}
+
+			if _, found := kappDisallowedOpts[flag.Name]; !found {
 				args = append(args, opt)
 			}
 		}
