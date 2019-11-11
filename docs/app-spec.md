@@ -16,13 +16,13 @@ spec:
 
   # Fetch must have one or more directives
   fetch:
+    # pull content from within this resource; or other resources in the cluster
     - inline:
-        # specifies content inline within resource;
+        # specifies mapping of paths to their content;
         # not recommended for sensitive values as CR is not encrypted (optional)
         paths:
-          # mapping of paths to their content
           dir/file.ext: file-content
-        # specified content via secrets and config maps;
+        # specifies content via secrets and config maps;
         # data values are recommended to be placed in secrets (optional)
         pathsFrom:
           - secretRef:
@@ -86,6 +86,7 @@ spec:
 
   # Template must have one or more directives
   template:
+    # use ytt to template configuration
     - ytt:
         # ignores comments that ytt doesn't recognize
         # (optional; default=false)
@@ -128,7 +129,6 @@ spec:
 
   # Deploy must have one directive
   deploy:
-
     # use kapp to deploy resources
     - kapp:
         # override namespace for all resources (optional)
