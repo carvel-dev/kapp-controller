@@ -1,0 +1,28 @@
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: simple-app
+spec:
+  fetch:
+  - git:
+      url: https://github.com/k14s/k8s-simple-app-example
+      ref: origin/master
+      subPath: config-step-2-template
+  template:
+  - ytt:
+      inline:
+        pathsFrom:
+        - secretRef:
+            name: simple-app-values
+  deploy:
+  - kapp: {}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: simple-app-values
+stringData:
+  values2.yml: |
+    #@data/values
+    ---
+    hello_msg: updated
