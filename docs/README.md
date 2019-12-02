@@ -1,4 +1,5 @@
 ## Docs
 
+- [Install](install.md)
 - [Config](config.md)
-- [App spec](app-spec.md)
+- [App CRD spec](app-spec.md)
