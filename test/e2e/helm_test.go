@@ -33,7 +33,7 @@ spec:
   deploy:
   - kapp:
       delete:
-        rawOptions: ["--apply-ignored"]
+        rawOptions: ["--apply-ignored=true"]
 ---
 apiVersion: v1
 kind: Secret
