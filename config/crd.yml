@@ -17,18 +17,10 @@ spec:
     served: true
     storage: true
   additionalPrinterColumns:
-  - name: Paused
-    type: boolean
-    description: Reconcilation is paused
-    JSONPath: .spec.paused
-  - name: DeployExitCode
-    type: integer
-    description: Exit code from last deploy
-    JSONPath: .Status.Deploy.exitCode
-  - name: DeployUpdatedAt
-    type: date
-    description: Last deploy finish time
-    JSONPath: .Status.Deploy.updatedAt
+  - name: Description
+    type: string
+    description: Friendly description
+    JSONPath: .status.friendlyDescription
   - name: Age
     type: date
     description: |-

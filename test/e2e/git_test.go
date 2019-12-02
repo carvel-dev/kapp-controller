@@ -74,6 +74,7 @@ spec:
 				ExitCode: 0,
 			},
 			ObservedGeneration: 1,
+			FriendlyDescription: "Reconcile succeeded",
 		}
 
 		{
