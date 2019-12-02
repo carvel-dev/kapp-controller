@@ -1,6 +1,7 @@
 #@data/values
 ---
-namespace: default
-include_crd: true
-push_images: true
-image_repo: docker.io/dkalinin/kapp-controller
+namespace: kapp-controller
+create_namespace: true
+
+push_images: false
+image_repo: docker.io/k14s/kapp-controller-test
