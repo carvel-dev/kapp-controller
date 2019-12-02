@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -16,6 +17,7 @@ func (a *App) Reconcile() error {
 	case a.app.Spec.Canceled || a.app.Spec.Paused:
 		a.log.Info("App is canceled or paused, not reconciling")
 		a.markObservedLatest()
+		a.app.Status.FriendlyDescription = "Canceled/paused"
 		return a.updateStatus()
 
 	case a.app.DeletionTimestamp != nil:
@@ -199,6 +201,8 @@ func (a *App) setReconciling() {
 		Type:   v1alpha1.Reconciling,
 		Status: corev1.ConditionTrue,
 	})
+
+	a.app.Status.FriendlyDescription = "Reconciling"
 }
 
 func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
@@ -210,12 +214,14 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 			Status:  corev1.ConditionTrue,
 			Message: result.ErrorStr(),
 		})
+		a.app.Status.FriendlyDescription = fmt.Sprintf("Reconcile failed: %s", result.ErrorStr())
 	} else {
 		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
 			Type:    v1alpha1.ReconcileSucceeded,
 			Status:  corev1.ConditionTrue,
 			Message: "",
 		})
+		a.app.Status.FriendlyDescription = "Reconcile succeeded"
 	}
 }
 
@@ -226,6 +232,8 @@ func (a *App) setDeleting() {
 		Type:   v1alpha1.Deleting,
 		Status: corev1.ConditionTrue,
 	})
+
+	a.app.Status.FriendlyDescription = "Deleting"
 }
 
 func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
@@ -237,6 +245,7 @@ func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
 			Status:  corev1.ConditionTrue,
 			Message: result.ErrorStr(),
 		})
+		a.app.Status.FriendlyDescription = fmt.Sprintf("Delete failed: %s", result.ErrorStr())
 	} else {
 		// assume resource will be deleted, hence nothing to update
 	}
