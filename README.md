@@ -1,8 +1,8 @@
 # kapp-controller
 
 - Slack: [#k14s in Kubernetes slack](https://slack.kubernetes.io)
-- [Docs](docs/README.md) with topics about config, etc.
-- Install: see below section
+- [Docs](docs/README.md) with topics about installation, config, etc.
+- Install: see [Install instructions](docs/install.md)
 
 kapp controller provides a way to specify which applications should run on your K8s cluster. It will install, and continiously apply updates.
 
@@ -10,17 +10,3 @@ Features:
 - supports fetching Helm charts (via `helm fetch`), git repos (via `git`), Docker images (via [imgpkg](https://github.com/k14s/imgpkg)), inline content within resource
 - supports templating of Helm charts, [ytt](https://get-ytt.io) configuration
 - installs and syncs resources with [kapp](https://get-kapp.io)
-
-## Development & Deploy
-
-Install ytt, kbld, kapp beforehand (https://k14s.io).
-
-```
-./hack/build.sh  # to build locally
-
-# add `-v image_repo=docker.io/username/kapp-controller` with your registry to ytt invocation inside
-./hack/deploy.sh # to deploy
-
-export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
-./hack/test-all.sh
-```
