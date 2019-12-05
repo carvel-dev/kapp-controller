@@ -6,9 +6,11 @@ Example:
 
 ```bash
 $ kapp deploy -a kc -f https://github.com/k14s/kapp-controller/releases/download/v0.1.0/release.yml
+or
+$ kubectl apply -f https://github.com/k14s/kapp-controller/releases/download/v0.1.0/release.yml
 ```
 
-Note: By default kapp controller allows to install any piece of Kubernetes configuration, hence `release.yml` includes ClusterRole that allows modification of all resources in the cluster. Limit them appropriately based on your needs.
+**Note**: By default kapp controller allows to install any piece of Kubernetes configuration, hence `release.yml` includes ClusterRole that allows modification of all resources in the cluster. Limit them appropriately based on your needs.
 
 ### Advanced
 
