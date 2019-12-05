@@ -1,10 +1,10 @@
 ## Walkthrough
 
-Goal of this walkthrough is to demonstrate how to install a simple HTTP server on Kubernetes with kapp-controller. We will use `examples/simple-app-git` directory as our YAML configuration. 
+Goal of this walkthrough is to demonstrate how to install a simple example application, an HTTP server, on Kubernetes with kapp-controller. We will use `examples/simple-app-git` directory as our YAML configuration. 
 
 - Start by [installing](install.md) kapp-controller onto cluster
 
-- Install [k8s-simple-app-example](https://github.com/k14s/k8s-simple-app-example) App CR
+- Install [k8s-simple-app-example](https://github.com/k14s/k8s-simple-app-example) App CR. It specifies how to fetch, template, and deploy our example application.
 
 ```bash
 $ kapp deploy -a simple-app -f examples/simple-app-git/1.yml
@@ -30,10 +30,12 @@ Continue? [yN]: y
 Succeeded
 ```
 
-- Check out status of our App CR
+- Check out `kubectl get app` output to see that app is deployed.
+
+- Additionally, let's check status of our App CR. It shows overall status of the application, including latest deploy output (`status.deploy.stdout`), and latest inspect output (`status.inspect.stdout`). Based on inspect output we can see that our app included a `Deployment` and a `Service`.
 
 ```bash
-$ kapp i -a simple-app --status
+$ kapp inspect -a simple-app --status
 
 Resources in app 'simple-app'
 
@@ -99,7 +101,7 @@ Status     conditions:
 Succeeded
 ```
 
-- Update simple-app App CR to reconfigure simple-app
+- Update simple-app App CR to reconfigure simple-app. In this example we are changing data values for ytt templates.
 
 ```bash
 $ kapp deploy -a simple-app -f examples/simple-app-git/2.yml -c
