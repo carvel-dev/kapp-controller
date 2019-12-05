@@ -22,3 +22,5 @@ Example:
 $ git clone ...
 $ kapp deploy -a kc -f <(ytt -f config/ | kbld -f-)
 ```
+
+Next: [Walkthrough](walkthrough.md)
