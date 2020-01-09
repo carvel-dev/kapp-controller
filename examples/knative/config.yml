@@ -1,0 +1,47 @@
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: istio
+  annotations:
+    kapp.k14s.io/change-group: "istio"
+spec:
+  fetch:
+  - http:
+      url: https://github.com/k14s/kapp/archive/master.zip
+      subPath: kapp-master/examples/istio-v1.4.0
+  template:
+  - ytt:
+      ignoreUnknownComments: true
+  deploy:
+  - kapp:
+      rawOptions: ["--dangerous-ignore-failing-api-services=true"]
+      inspect:
+        rawOptions: ["--dangerous-ignore-failing-api-services=true"]
+      delete:
+        rawOptions: ["--dangerous-ignore-failing-api-services=true"]
+
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: knative
+  annotations:
+    kapp.k14s.io/change-rule.0: "upsert after upserting istio"
+    kapp.k14s.io/change-rule.1: "delete before deleting istio"
+spec:
+  fetch:
+  - http:
+      url: https://github.com/k14s/kapp/archive/master.zip
+      subPath: kapp-master/examples/knative-v0.10.0
+  template:
+  - ytt:
+      ignoreUnknownComments: true
+  deploy:
+  - kapp:
+      rawOptions: ["--dangerous-ignore-failing-api-services=true"]
+      inspect:
+        rawOptions: ["--dangerous-ignore-failing-api-services=true"]
+      delete:
+        rawOptions: ["--dangerous-ignore-failing-api-services=true"]
+
