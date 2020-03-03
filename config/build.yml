@@ -5,6 +5,12 @@ kind: Sources
 sources:
 - image: kapp-controller
   path: .
+  #@ if/end not data.values.image_cache:
+  docker:
+    build:
+      #! Always rebuild image
+      pull: true
+      noCache: true
 
 #@ if/end data.values.push_images:
 ---
