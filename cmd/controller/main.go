@@ -20,6 +20,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+const (
+	Version = "0.1.0"
+)
+
 var (
 	log             = logf.Log.WithName("kapp-controller")
 	ctrlConcurrency = 10
@@ -33,6 +37,7 @@ func main() {
 
 	logf.SetLogger(zap.Logger(false))
 	entryLog := log.WithName("entrypoint")
+	entryLog.Info("kapp-controller", "version", Version)
 
 	entryLog.Info("setting up manager")
 
@@ -44,7 +49,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	entryLog.Info("Setting up controllers")
+	entryLog.Info("setting up controller")
 
 	coreClient, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
