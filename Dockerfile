@@ -1,4 +1,4 @@
-FROM golang:1.12
+FROM golang:1.13
 WORKDIR /go/src/github.com/k14s/kapp-controller/
 
 RUN apt-get -y update && apt-get install -y ca-certificates && update-ca-certificates
@@ -13,7 +13,7 @@ RUN wget -O- https://get.helm.sh/helm-v2.14.3-linux-amd64.tar.gz > /helm && \
 
 # kapp-controller
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -v -o controller ./cmd/controller/...
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags=-buildid= -trimpath -o controller ./cmd/controller/...
 
 # ---
 # Needs ubuntu for installing git/openssh
