@@ -4,4 +4,5 @@ namespace: kapp-controller
 create_namespace: true
 
 push_images: false
+image_cache: true
 image_repo: docker.io/k14s/kapp-controller-test
