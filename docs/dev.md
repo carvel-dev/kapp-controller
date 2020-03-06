@@ -11,3 +11,11 @@ Install ytt, kbld, kapp beforehand (https://k14s.io).
 export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
 ./hack/test-all.sh
 ```
+
+### Release
+
+```
+# Bump version in cmd/controller/main.go
+# Commit
+./hack/build-release.sh
+```
