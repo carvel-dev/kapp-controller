@@ -140,12 +140,12 @@ func (t *HTTP) tryZip(path, dstPath string) (bool, error) {
 
 		srcZipFile, err := f.Open()
 		if err != nil {
-			return true, fmt.Errorf("Opening zip file: %s", err)
+			return false, fmt.Errorf("Opening zip file: %s", err)
 		}
 
 		err = t.writeIntoFileAndClose(srcZipFile, dstPath, f.Name)
 		if err != nil {
-			return true, err
+			return false, err
 		}
 	}
 
