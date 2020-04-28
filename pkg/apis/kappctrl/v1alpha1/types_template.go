@@ -16,6 +16,7 @@ type AppTemplateYtt struct {
 	IgnoreUnknownComments bool            `json:"ignoreUnknownComments,omitempty"`
 	Strict                bool            `json:"strict,omitempty"`
 	Inline                *AppFetchInline `json:"inline,omitempty"`
+	Paths                 []string        `json:"paths,omitempty"`
 }
 
 type AppTemplateKbld struct{}

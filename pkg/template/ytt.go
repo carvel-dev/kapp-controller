@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	goexec "os/exec"
+	"path"
 
 	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/k14s/kapp-controller/pkg/exec"
@@ -33,7 +34,14 @@ func (t *Ytt) TemplateStream(input io.Reader) exec.CmdRunResult {
 }
 
 func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
-	args := t.addArgs([]string{"-f", dirPath})
+	var args []string
+	if len(t.opts.Paths) == 0 {
+		args = t.addArgs([]string{"-f", dirPath})
+	} else {
+		for _, p := range t.opts.Paths {
+			args = append(args, t.addArgs([]string{"-f", path.Join(dirPath, p)})...)
+		}
+	}
 
 	args, inlineDir, err := t.addInlinePaths(args)
 	if inlineDir != nil {
