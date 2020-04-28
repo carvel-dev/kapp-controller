@@ -1,10 +1,10 @@
 ## Walkthrough
 
-Goal of this walkthrough is to demonstrate how to install a simple example application, an HTTP server, on Kubernetes with kapp-controller. We will use `examples/simple-app-git` directory as our YAML configuration. 
+The goal of this walkthrough is to demonstrate how to install a simple example application, an HTTP server, on Kubernetes with kapp-controller. We will use `examples/simple-app-git` directory as our YAML configuration. 
 
-You can use `kubectl` (or another tool) to deploy YAML examples below. We've chosen [kapp](https://get-kapp.io).
+You can use `kubectl` (or another tool) to deploy the YAML examples below. We've chosen [kapp](https://get-kapp.io).
 
-- Start by [installing](install.md) kapp-controller onto cluster
+- Start by [installing](install.md) kapp-controller onto your cluster
 
 - Install [examples/simple-app-git/1.yml](https://github.com/k14s/kapp-controller/blob/master/examples/simple-app-git/1.yml) App CR. It specifies how to fetch, template, and deploy our example application.
 
@@ -35,7 +35,7 @@ Succeeded
 
 - Check out `kubectl get app` output to see that app is deployed.
 
-- Additionally, let's check status of our App CR. It shows overall status of the application, including latest deploy output (`status.deploy.stdout`), and latest inspect output (`status.inspect.stdout`). Based on inspect output we can see that our app included a `Deployment` and a `Service`.
+- Additionally, let's check status of our App CR. It shows the overall status of the application, including the latest deploy output (`status.deploy.stdout`) and latest inspect output (`status.inspect.stdout`). Based on the inspect output we can see that our app included a `Deployment` and a `Service`.
 
 ```bash
 $ kapp inspect -a simple-app --status
