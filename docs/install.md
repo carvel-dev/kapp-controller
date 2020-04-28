@@ -5,9 +5,9 @@ Grab the latest copy of YAML from the [Releases page](https://github.com/k14s/ka
 Example:
 
 ```bash
-$ kapp deploy -a kc -f https://github.com/k14s/kapp-controller/releases/download/v0.1.0/release.yml
+$ kapp deploy -a kc -f https://github.com/k14s/kapp-controller/releases/download/v0.4.0/release.yml
 or
-$ kubectl apply -f https://github.com/k14s/kapp-controller/releases/download/v0.1.0/release.yml
+$ kubectl apply -f https://github.com/k14s/kapp-controller/releases/download/v0.4.0/release.yml
 ```
 
 **Note**: By default kapp controller allows you to install any piece of Kubernetes configuration, hence `release.yml` includes ClusterRole that allows modification of all resources in the cluster. Limit them appropriately based on your needs.
