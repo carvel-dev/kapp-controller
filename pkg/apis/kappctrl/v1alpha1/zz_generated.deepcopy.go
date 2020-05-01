@@ -731,6 +731,11 @@ func (in *AppTemplateYtt) DeepCopyInto(out *AppTemplateYtt) {
 		*out = new(AppFetchInline)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Paths != nil {
+		in, out := &in.Paths, &out.Paths
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
