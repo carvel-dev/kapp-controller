@@ -2,9 +2,15 @@
 
 set -e -x -u
 
-go fmt ./cmd/... ./pkg/...
+# makes builds reproducible
+export CGO_ENABLED=0
+repro_flags="-ldflags=-buildid= -trimpath"
 
-go build -o controller ./cmd/controller/...
+go fmt ./cmd/... ./pkg/...
+go mod vendor
+go mod tidy
+
+go build $repro_flags -o controller ./cmd/controller/...
 ls -la ./controller
 
 ytt -f config/ >/dev/null
