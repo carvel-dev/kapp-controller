@@ -31,6 +31,8 @@ type AppList struct {
 }
 
 type AppSpec struct {
+	Cluster *AppCluster `json:"cluster,omitempty"`
+
 	Fetch    []AppFetch    `json:"fetch,omitempty"`
 	Template []AppTemplate `json:"template,omitempty"`
 	Deploy   []AppDeploy   `json:"deploy,omitempty"`
@@ -40,6 +42,16 @@ type AppSpec struct {
 	Paused bool `json:"paused,omitempty"`
 	// Canceled when set to true will stop all active changes
 	Canceled bool `json:"canceled,omitempty"`
+}
+
+type AppCluster struct {
+	Namespace           string                         `json:"namespace,omitempty"`
+	KubeconfigSecretRef *AppClusterKubeconfigSecretRef `json:"kubeconfigSecretRef,omitempty"`
+}
+
+type AppClusterKubeconfigSecretRef struct {
+	Name string `json:"name,omitempty"`
+	Key  string `json:"key,omitempty"`
 }
 
 type AppStatus struct {

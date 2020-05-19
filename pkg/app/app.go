@@ -6,6 +6,7 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
 	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/k14s/kapp-controller/pkg/deploy"
 	"github.com/k14s/kapp-controller/pkg/fetch"
 	"github.com/k14s/kapp-controller/pkg/template"
 )
@@ -22,12 +23,15 @@ type App struct {
 	hooks           AppHooks
 	fetchFactory    fetch.Factory
 	templateFactory template.Factory
+	deployFactory   deploy.Factory
 	log             logr.Logger
 }
 
 func NewApp(app v1alpha1.App, hooks AppHooks,
-	fetchFactory fetch.Factory, templateFactory template.Factory, log logr.Logger) *App {
-	return &App{app, hooks, fetchFactory, templateFactory, log}
+	fetchFactory fetch.Factory, templateFactory template.Factory,
+	deployFactory deploy.Factory, log logr.Logger) *App {
+
+	return &App{app, hooks, fetchFactory, templateFactory, deployFactory, log}
 }
 
 func (a *App) Name() string      { return a.app.Name }

@@ -24,7 +24,8 @@ func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts GenericOpts, cancelCh chan
 }
 
 func (a *Kapp) Deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
-	args := a.addDeployArgs([]string{"deploy", "-n", a.genericOpts.Namespace, "-a", a.managedName(), "-f", "-", "-y"})
+	args := a.addDeployArgs([]string{"deploy", "-f", "-"})
+	args = a.addGenericArgs(args)
 
 	cmd := goexec.Command("kapp", args...)
 	cmd.Stdin = strings.NewReader(tplOutput)
@@ -42,7 +43,8 @@ func (a *Kapp) Deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exe
 }
 
 func (a *Kapp) Delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
-	args := a.addDeleteArgs([]string{"delete", "-n", a.genericOpts.Namespace, "-a", a.managedName(), "-y"})
+	args := a.addDeleteArgs([]string{"delete"})
+	args = a.addGenericArgs(args)
 
 	cmd := goexec.Command("kapp", args...)
 	stdoutBs, stderrBs := a.trackCmdOutput(cmd, changedFunc)
@@ -59,15 +61,17 @@ func (a *Kapp) Delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 }
 
 func (a *Kapp) Inspect() exec.CmdRunResult {
-	var stdoutBs, stderrBs bytes.Buffer
-
 	args := a.addInspectArgs([]string{
-		"inspect", "-n", a.genericOpts.Namespace, "-a", a.managedName(), "-t",
+		"inspect", "-t",
 		// PodMetrics rapidly get/created and removed, hence lets hide them
 		// to avoid resource update churn
 		// TODO is there a better way to deal with this?
 		"--filter", `{"not":{"resource":{"kinds":["PodMetrics"]}}}`,
 	})
+
+	args = a.addGenericArgs(args)
+
+	var stdoutBs, stderrBs bytes.Buffer
 
 	cmd := goexec.Command("kapp", args...)
 	cmd.Stdout = &stdoutBs
@@ -176,5 +180,21 @@ func (a *Kapp) addInspectArgs(args []string) []string {
 			}
 		}
 	}
+	return args
+}
+
+func (a *Kapp) addGenericArgs(args []string) []string {
+	args = append(args, []string{"--app", a.managedName()}...)
+
+	if len(a.genericOpts.Namespace) > 0 {
+		args = append(args, []string{"--namespace", a.genericOpts.Namespace}...)
+	}
+
+	if len(a.genericOpts.KubeconfigYAML) > 0 {
+		args = append(args, []string{"--kubeconfig-yaml", a.genericOpts.KubeconfigYAML}...)
+	}
+
+	args = append(args, "--yes")
+
 	return args
 }
