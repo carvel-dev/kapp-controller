@@ -24,8 +24,12 @@ func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec
 	for _, dep := range a.app.Spec.Deploy {
 		switch {
 		case dep.Kapp != nil:
-			kapp := ctldep.NewKapp(*dep.Kapp, a.deployGenericOpts(), a.newCancelCh())
-			result = kapp.Deploy(tplOutput, changedFunc)
+			kapp, err := a.deployFactory.NewKapp(*dep.Kapp, a.app.Spec.Cluster, a.deployGenericOpts(), a.newCancelCh())
+			if err != nil {
+				result.AttachErrorf("%s", fmt.Errorf("Preparing kapp: %s", err))
+			} else {
+				result = kapp.Deploy(tplOutput, changedFunc)
+			}
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to deploy"))
 		}
@@ -43,8 +47,12 @@ func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 	for _, dep := range a.app.Spec.Deploy {
 		switch {
 		case dep.Kapp != nil:
-			kapp := ctldep.NewKapp(*dep.Kapp, a.deployGenericOpts(), a.newCancelCh())
-			result = kapp.Delete(changedFunc)
+			kapp, err := a.deployFactory.NewKapp(*dep.Kapp, a.app.Spec.Cluster, a.deployGenericOpts(), a.newCancelCh())
+			if err != nil {
+				result.AttachErrorf("%s", fmt.Errorf("Preparing kapp: %s", err))
+			} else {
+				result = kapp.Delete(changedFunc)
+			}
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to delete"))
 		}
@@ -71,8 +79,12 @@ func (a *App) inspect() exec.CmdRunResult {
 	for _, dep := range a.app.Spec.Deploy {
 		switch {
 		case dep.Kapp != nil:
-			kapp := ctldep.NewKapp(*dep.Kapp, a.deployGenericOpts(), a.newCancelCh())
-			result = kapp.Inspect()
+			kapp, err := a.deployFactory.NewKapp(*dep.Kapp, a.app.Spec.Cluster, a.deployGenericOpts(), a.newCancelCh())
+			if err != nil {
+				result.AttachErrorf("%s", fmt.Errorf("Preparing kapp: %s", err))
+			} else {
+				result = kapp.Inspect()
+			}
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to inspect"))
 		}

@@ -6,6 +6,7 @@ import (
 	"github.com/go-logr/logr"
 	kcv1alpha1 "github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/k14s/kapp-controller/pkg/client/clientset/versioned"
+	"github.com/k14s/kapp-controller/pkg/deploy"
 	"github.com/k14s/kapp-controller/pkg/fetch"
 	"github.com/k14s/kapp-controller/pkg/template"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +30,7 @@ type CRDApp struct {
 
 func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger,
 	appClient kcclient.Interface, fetchFactory fetch.Factory,
-	templateFactory template.Factory) (*CRDApp, error) {
+	templateFactory template.Factory, deployFactory deploy.Factory) (*CRDApp, error) {
 
 	crdApp := &CRDApp{appModel: appModel, log: log, appClient: appClient}
 
@@ -38,7 +39,7 @@ func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger,
 		UnblockDeletion: crdApp.unblockDeletion,
 		UpdateStatus:    crdApp.updateStatus,
 		WatchChanges:    crdApp.watchChanges,
-	}, fetchFactory, templateFactory, log)
+	}, fetchFactory, templateFactory, deployFactory, log)
 
 	return crdApp, nil
 }

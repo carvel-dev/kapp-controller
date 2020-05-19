@@ -12,6 +12,7 @@ type Deploy interface {
 }
 
 type GenericOpts struct {
-	Name      string
-	Namespace string
+	Name           string
+	Namespace      string
+	KubeconfigYAML string
 }
