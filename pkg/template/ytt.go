@@ -2,9 +2,9 @@ package template
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	goexec "os/exec"
-	"path"
 
 	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/k14s/kapp-controller/pkg/exec"
@@ -30,17 +30,15 @@ func (t *Ytt) TemplateDir(dirPath string) exec.CmdRunResult {
 }
 
 func (t *Ytt) TemplateStream(input io.Reader) exec.CmdRunResult {
-	return t.template("-", input)
+	return t.template(stdinPath, input)
 }
 
 func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
-	var args []string
-	if len(t.opts.Paths) == 0 {
-		args = t.addArgs([]string{"-f", dirPath})
-	} else {
-		for _, p := range t.opts.Paths {
-			args = append(args, t.addArgs([]string{"-f", path.Join(dirPath, p)})...)
-		}
+	args := t.addArgs([]string{})
+
+	args, err := t.addPaths(dirPath, args)
+	if err != nil {
+		return exec.NewCmdRunResultWithErr(err)
 	}
 
 	args, inlineDir, err := t.addInlinePaths(args)
@@ -74,6 +72,27 @@ func (t *Ytt) addArgs(args []string) []string {
 		args = append(args, "--ignore-unknown-comments")
 	}
 	return args
+}
+
+func (t *Ytt) addPaths(dirPath string, args []string) ([]string, error) {
+	if len(t.opts.Paths) > 0 {
+		// Disallow path selection when consuming a stream
+		if dirPath == stdinPath {
+			return nil, fmt.Errorf("Paths cannot be used with template stream")
+		}
+
+		for _, path := range t.opts.Paths {
+			checkedPath, err := memdir.ScopedPath(dirPath, path)
+			if err != nil {
+				return nil, fmt.Errorf("Checking path: %s", err)
+			}
+			args = append(args, []string{"-f", checkedPath}...)
+		}
+
+		return args, nil
+	}
+
+	return append(args, []string{"-f", dirPath}...), nil
 }
 
 func (t *Ytt) addInlinePaths(args []string) ([]string, *memdir.TmpDir, error) {
