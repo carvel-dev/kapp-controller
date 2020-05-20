@@ -126,8 +126,8 @@ spec:
                 name: cfgmap-name
                 # specifies where to place files found in config map (optional)
                 directoryPath: dir
-        # if ytt needs to use multiple paths, explicitly list all paths (optional) 
-        - paths:
+        # if ytt needs to use multiple paths, explicitly list all paths (optional)
+        paths:
           - dir/common
           - dir/nested/app
 

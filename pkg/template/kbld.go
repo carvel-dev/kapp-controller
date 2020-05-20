@@ -25,7 +25,7 @@ func (t *Kbld) TemplateDir(dirPath string) exec.CmdRunResult {
 }
 
 func (t *Kbld) TemplateStream(input io.Reader) exec.CmdRunResult {
-	return t.template("-", input)
+	return t.template(stdinPath, input)
 }
 
 func (t *Kbld) template(dirPath string, input io.Reader) exec.CmdRunResult {

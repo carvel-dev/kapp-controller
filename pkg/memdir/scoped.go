@@ -12,6 +12,9 @@ func ScopedPath(path, subPath string) (string, error) {
 		return "", fmt.Errorf("Abs path: %s", err)
 	}
 
+	// Check that subPath is contained within path (disallow this scenario):
+	//   ScopedPath("/root", "../root-trick/file1")
+	//   "/root-trick/file1" == "/root" + "../root-trick/file1"
 	if newPath != path && !strings.HasPrefix(newPath, path+string(filepath.Separator)) {
 		return "", fmt.Errorf("Invalid path: %s", subPath)
 	}
