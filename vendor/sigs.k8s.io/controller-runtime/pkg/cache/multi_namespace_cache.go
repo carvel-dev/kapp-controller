@@ -36,7 +36,9 @@ type NewCacheFunc func(config *rest.Config, opts Options) (Cache, error)
 
 // MultiNamespacedCacheBuilder - Builder function to create a new multi-namespaced cache.
 // This will scope the cache to a list of namespaces. Listing for all namespaces
-// will list for all the namespaces that this knows about.
+// will list for all the namespaces that this knows about. Note that this is not intended
+// to be used for excluding namespaces, this is better done via a Predicate. Also note that
+// you may face performance issues when using this with a high number of namespaces.
 func MultiNamespacedCacheBuilder(namespaces []string) NewCacheFunc {
 	return func(config *rest.Config, opts Options) (Cache, error) {
 		opts, err := defaultOpts(config, opts)
@@ -133,7 +135,7 @@ func (c *multiNamespaceCache) Get(ctx context.Context, key client.ObjectKey, obj
 }
 
 // List multi namespace cache will get all the objects in the namespaces that the cache is watching if asked for all namespaces.
-func (c *multiNamespaceCache) List(ctx context.Context, list runtime.Object, opts ...client.ListOptionFunc) error {
+func (c *multiNamespaceCache) List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error {
 	listOpts := client.ListOptions{}
 	listOpts.ApplyOptions(opts)
 	if listOpts.Namespace != corev1.NamespaceAll {

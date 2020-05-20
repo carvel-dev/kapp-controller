@@ -63,17 +63,23 @@ func (m *InformersMap) Start(stop <-chan struct{}) error {
 	return nil
 }
 
-// WaitForCacheSync waits until all the caches have been synced.
+// WaitForCacheSync waits until all the caches have been started and synced.
 func (m *InformersMap) WaitForCacheSync(stop <-chan struct{}) bool {
 	syncedFuncs := append([]cache.InformerSynced(nil), m.structured.HasSyncedFuncs()...)
 	syncedFuncs = append(syncedFuncs, m.unstructured.HasSyncedFuncs()...)
 
+	if !m.structured.waitForStarted(stop) {
+		return false
+	}
+	if !m.unstructured.waitForStarted(stop) {
+		return false
+	}
 	return cache.WaitForCacheSync(stop, syncedFuncs...)
 }
 
 // Get will create a new Informer and add it to the map of InformersMap if none exists.  Returns
 // the Informer from the map.
-func (m *InformersMap) Get(gvk schema.GroupVersionKind, obj runtime.Object) (*MapEntry, error) {
+func (m *InformersMap) Get(gvk schema.GroupVersionKind, obj runtime.Object) (bool, *MapEntry, error) {
 	_, isUnstructured := obj.(*unstructured.Unstructured)
 	_, isUnstructuredList := obj.(*unstructured.UnstructuredList)
 	isUnstructured = isUnstructured || isUnstructuredList
