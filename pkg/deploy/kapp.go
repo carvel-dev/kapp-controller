@@ -62,7 +62,7 @@ func (a *Kapp) Delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 
 func (a *Kapp) Inspect() exec.CmdRunResult {
 	args := a.addInspectArgs([]string{
-		"inspect", "-t",
+		"inspect",
 		// PodMetrics rapidly get/created and removed, hence lets hide them
 		// to avoid resource update churn
 		// TODO is there a better way to deal with this?
