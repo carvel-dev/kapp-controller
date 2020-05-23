@@ -21,6 +21,10 @@ spec:
     type: string
     description: Friendly description
     JSONPath: .status.friendlyDescription
+  - name: Since-Deploy
+    type: date
+    description: Last time app started being deployed. Does not mean anything was changed.
+    JSONPath: .status.deploy.startedAt
   - name: Age
     type: date
     description: |-
