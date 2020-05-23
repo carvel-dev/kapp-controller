@@ -50,7 +50,13 @@ func NewCRDAppFromName(nsName types.NamespacedName, log logr.Logger,
 }
 
 func (a *CRDApp) blockDeletion() error {
+	// Avoid doing unnecessary processing
+	if containsString(a.appModel.ObjectMeta.Finalizers, deleteFinalizerName) {
+		return nil
+	}
+
 	a.log.Info("Blocking deletion")
+
 	return a.updateApp(func(app *kcv1alpha1.App) {
 		if !containsString(app.ObjectMeta.Finalizers, deleteFinalizerName) {
 			app.ObjectMeta.Finalizers = append(app.ObjectMeta.Finalizers, deleteFinalizerName)
