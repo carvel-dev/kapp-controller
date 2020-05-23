@@ -270,7 +270,7 @@ func (a *App) shouldReconcile() bool {
 		return true
 	}
 
-	// Did we deploy some time ago?
+	// Did we deploy too long ago?
 	if time.Now().UTC().Sub(lastDeploy.UpdatedAt.Time) > 30*time.Second {
 		return true
 	}
