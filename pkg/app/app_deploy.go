@@ -10,9 +10,7 @@ import (
 func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 	err := a.blockDeletion()
 	if err != nil {
-		result := exec.CmdRunResult{}
-		result.AttachErrorf("Blocking for deploy: %s", err)
-		return result
+		return exec.NewCmdRunResultWithErr(fmt.Errorf("Blocking for deploy: %s", err))
 	}
 
 	if len(a.app.Spec.Deploy) != 1 {
@@ -26,13 +24,14 @@ func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec
 		case dep.Kapp != nil:
 			kapp, err := a.deployFactory.NewKapp(*dep.Kapp, a.app.Spec.Cluster, a.deployGenericOpts(), a.newCancelCh())
 			if err != nil {
-				result.AttachErrorf("%s", fmt.Errorf("Preparing kapp: %s", err))
-			} else {
-				result = kapp.Deploy(tplOutput, changedFunc)
+				return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 			}
+			result = kapp.Deploy(tplOutput, changedFunc)
+
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to deploy"))
 		}
+
 		if result.Error != nil {
 			break
 		}
@@ -49,13 +48,14 @@ func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 		case dep.Kapp != nil:
 			kapp, err := a.deployFactory.NewKapp(*dep.Kapp, a.app.Spec.Cluster, a.deployGenericOpts(), a.newCancelCh())
 			if err != nil {
-				result.AttachErrorf("%s", fmt.Errorf("Preparing kapp: %s", err))
-			} else {
-				result = kapp.Delete(changedFunc)
+				return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 			}
+			result = kapp.Delete(changedFunc)
+
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to delete"))
 		}
+
 		if result.Error != nil {
 			break
 		}
@@ -64,9 +64,7 @@ func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 	if result.Error == nil {
 		err := a.unblockDeletion()
 		if err != nil {
-			result := exec.CmdRunResult{}
-			result.AttachErrorf("Unblocking for deploy: %s", err)
-			return result
+			return exec.NewCmdRunResultWithErr(fmt.Errorf("Unblocking for deploy: %s", err))
 		}
 	}
 
@@ -81,13 +79,14 @@ func (a *App) inspect() exec.CmdRunResult {
 		case dep.Kapp != nil:
 			kapp, err := a.deployFactory.NewKapp(*dep.Kapp, a.app.Spec.Cluster, a.deployGenericOpts(), a.newCancelCh())
 			if err != nil {
-				result.AttachErrorf("%s", fmt.Errorf("Preparing kapp: %s", err))
-			} else {
-				result = kapp.Inspect()
+				return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 			}
+			result = kapp.Inspect()
+
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to inspect"))
 		}
+
 		if result.Error != nil {
 			break
 		}
