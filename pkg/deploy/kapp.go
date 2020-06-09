@@ -3,6 +3,7 @@ package deploy
 import (
 	"bytes"
 	"io"
+	"os"
 	goexec "os/exec"
 	"strings"
 	"sync"
@@ -25,9 +26,10 @@ func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts GenericOpts, cancelCh chan
 
 func (a *Kapp) Deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 	args := a.addDeployArgs([]string{"deploy", "-f", "-"})
-	args = a.addGenericArgs(args)
+	args, env := a.addGenericArgs(args)
 
 	cmd := goexec.Command("kapp", args...)
+	cmd.Env = append(os.Environ(), env...)
 	cmd.Stdin = strings.NewReader(tplOutput)
 	stdoutBs, stderrBs := a.trackCmdOutput(cmd, changedFunc)
 
@@ -44,9 +46,10 @@ func (a *Kapp) Deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exe
 
 func (a *Kapp) Delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 	args := a.addDeleteArgs([]string{"delete"})
-	args = a.addGenericArgs(args)
+	args, env := a.addGenericArgs(args)
 
 	cmd := goexec.Command("kapp", args...)
+	cmd.Env = append(os.Environ(), env...)
 	stdoutBs, stderrBs := a.trackCmdOutput(cmd, changedFunc)
 
 	err := exec.RunWithCancel(cmd, a.cancelCh)
@@ -69,11 +72,12 @@ func (a *Kapp) Inspect() exec.CmdRunResult {
 		"--filter", `{"not":{"resource":{"kinds":["PodMetrics"]}}}`,
 	})
 
-	args = a.addGenericArgs(args)
+	args, env := a.addGenericArgs(args)
 
 	var stdoutBs, stderrBs bytes.Buffer
 
 	cmd := goexec.Command("kapp", args...)
+	cmd.Env = append(os.Environ(), env...)
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
@@ -183,18 +187,19 @@ func (a *Kapp) addInspectArgs(args []string) []string {
 	return args
 }
 
-func (a *Kapp) addGenericArgs(args []string) []string {
+func (a *Kapp) addGenericArgs(args []string) ([]string, []string) {
 	args = append(args, []string{"--app", a.managedName()}...)
+	env := []string{}
 
 	if len(a.genericOpts.Namespace) > 0 {
 		args = append(args, []string{"--namespace", a.genericOpts.Namespace}...)
 	}
 
 	if len(a.genericOpts.KubeconfigYAML) > 0 {
-		args = append(args, []string{"--kubeconfig-yaml", a.genericOpts.KubeconfigYAML}...)
+		env = append(env, "KAPP_KUBECONFIG_YAML="+a.genericOpts.KubeconfigYAML)
 	}
 
 	args = append(args, "--yes")
 
-	return args
+	return args, env
 }
