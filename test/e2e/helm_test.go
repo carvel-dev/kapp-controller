@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -15,13 +16,17 @@ func TestHelm(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
+	sas := ServiceAccounts{env.Namespace}
 
-	yaml1 := `
+	yaml1 := fmt.Sprintf(`
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
   name: test-helm
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
 spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
   - helmChart:
       name: stable/redis
@@ -32,6 +37,7 @@ spec:
           name: test-helm-values
   deploy:
   - kapp:
+      intoNs: %s
       delete:
         rawOptions: ["--apply-ignored=true"]
 ---
@@ -42,7 +48,7 @@ metadata:
 stringData:
   data.yml: |
     password: "1234567891234"
-`
+`, env.Namespace)+sas.ForNamespaceYAML()
 
 	name := "test-helm"
 	cleanUp := func() {
@@ -56,7 +62,7 @@ stringData:
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind", "App"})
+		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
 
 		var cr v1alpha1.App
 

@@ -14,6 +14,10 @@ spec:
   # currently running reconciliation (optional; default=false)
   paused: true
 
+  # specifies that app should be deployed authenticated via
+  # given service account, found in this namespace (optional)
+  serviceAccountName: sa-name
+
   # specifies that app should be deployed to destination cluster;
   # by default, cluster is same as where this resource resides (optional)
   cluster:

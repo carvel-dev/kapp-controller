@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 
+	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	ctldep "github.com/k14s/kapp-controller/pkg/deploy"
 	"github.com/k14s/kapp-controller/pkg/exec"
 )
@@ -22,7 +23,7 @@ func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec
 	for _, dep := range a.app.Spec.Deploy {
 		switch {
 		case dep.Kapp != nil:
-			kapp, err := a.deployFactory.NewKapp(*dep.Kapp, a.app.Spec.Cluster, a.deployGenericOpts(), a.newCancelCh())
+			kapp, err := a.newKapp(*dep.Kapp)
 			if err != nil {
 				return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 			}
@@ -41,12 +42,16 @@ func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec
 }
 
 func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
+	if len(a.app.Spec.Deploy) != 1 {
+		return exec.NewCmdRunResultWithErr(fmt.Errorf("Expected exactly one deploy option"))
+	}
+
 	var result exec.CmdRunResult
 
 	for _, dep := range a.app.Spec.Deploy {
 		switch {
 		case dep.Kapp != nil:
-			kapp, err := a.deployFactory.NewKapp(*dep.Kapp, a.app.Spec.Cluster, a.deployGenericOpts(), a.newCancelCh())
+			kapp, err := a.newKapp(*dep.Kapp)
 			if err != nil {
 				return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 			}
@@ -72,12 +77,16 @@ func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 }
 
 func (a *App) inspect() exec.CmdRunResult {
+	if len(a.app.Spec.Deploy) != 1 {
+		return exec.NewCmdRunResultWithErr(fmt.Errorf("Expected exactly one deploy option"))
+	}
+
 	var result exec.CmdRunResult
 
 	for _, dep := range a.app.Spec.Deploy {
 		switch {
 		case dep.Kapp != nil:
-			kapp, err := a.deployFactory.NewKapp(*dep.Kapp, a.app.Spec.Cluster, a.deployGenericOpts(), a.newCancelCh())
+			kapp, err := a.newKapp(*dep.Kapp)
 			if err != nil {
 				return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 			}
@@ -95,6 +104,9 @@ func (a *App) inspect() exec.CmdRunResult {
 	return result
 }
 
-func (a *App) deployGenericOpts() ctldep.GenericOpts {
-	return ctldep.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
+func (a *App) newKapp(kapp v1alpha1.AppDeployKapp) (*ctldep.Kapp, error) {
+	genericOpts := ctldep.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
+
+	return a.deployFactory.NewKapp(kapp, a.app.Spec.ServiceAccountName,
+		a.app.Spec.Cluster, genericOpts, a.newCancelCh())
 }

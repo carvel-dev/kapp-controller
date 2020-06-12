@@ -15,6 +15,7 @@ func TestCancel(t *testing.T) {
   env := BuildEnv(t)
   logger := Logger{}
   kapp := Kapp{t, env.Namespace, logger}
+  sas := ServiceAccounts{env.Namespace}
 
   yaml1 := `
 ---
@@ -22,7 +23,10 @@ apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
   name: cancel
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
 spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
   - inline:
       paths:
@@ -51,7 +55,7 @@ kind: ConfigMap
 metadata:
   name: filler
 data: {}
-`
+`+sas.ForNamespaceYAML()
 
   yaml2 := `
 ---
@@ -59,7 +63,10 @@ apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
   name: cancel
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
 spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
   canceled: true
   fetch:
   - inline:
@@ -89,7 +96,7 @@ kind: ConfigMap
 metadata:
   name: filler
 data: {}
-`
+`+sas.ForNamespaceYAML()
 
   name := "test-cancel"
   cleanUp := func() {
