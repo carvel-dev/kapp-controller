@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -15,14 +16,18 @@ func TestGit(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
+	sas := ServiceAccounts{env.Namespace}
 
-	yaml1 := `
+	yaml1 := fmt.Sprintf(`
 ---
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
-  name: guestbook
+  name: test-git
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
 spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
   - git:
       url: https://github.com/k14s/kapp
@@ -31,8 +36,9 @@ spec:
   template:
   - ytt: {}
   deploy:
-  - kapp: {}
-`
+  - kapp:
+      intoNs: %s
+`, env.Namespace)+sas.ForNamespaceYAML()
 
 	name := "test-git"
 	cleanUp := func() {
@@ -46,7 +52,7 @@ spec:
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false"})
+		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
 
 		var cr v1alpha1.App
 
@@ -91,7 +97,7 @@ spec:
 			cr.Status.Fetch.UpdatedAt = metav1.Time{}
 
 			// inspect
-			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'guestbook-ctrl'") {
+			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-git-ctrl'") {
 				t.Fatalf("Expected non-empty inspect output")
 			}
 			cr.Status.Inspect.UpdatedAt = metav1.Time{}

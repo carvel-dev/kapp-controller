@@ -31,7 +31,8 @@ type AppList struct {
 }
 
 type AppSpec struct {
-	Cluster *AppCluster `json:"cluster,omitempty"`
+	ServiceAccountName string      `json:"serviceAccountName,omitempty"`
+	Cluster            *AppCluster `json:"cluster,omitempty"`
 
 	Fetch    []AppFetch    `json:"fetch,omitempty"`
 	Template []AppTemplate `json:"template,omitempty"`
