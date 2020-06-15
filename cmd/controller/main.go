@@ -25,14 +25,17 @@ const (
 )
 
 var (
-	log             = logf.Log.WithName("kapp-controller")
-	ctrlConcurrency = 10
-	ctrlNamespace   = ""
+	log                       = logf.Log.WithName("kapp-controller")
+	ctrlConcurrency           = 10
+	ctrlNamespace             = ""
+	allowSharedServiceAccount = false
 )
 
 func main() {
 	flag.IntVar(&ctrlConcurrency, "concurrency", 10, "Max concurrent reconciles")
 	flag.StringVar(&ctrlNamespace, "namespace", "", "Namespace to watch")
+	flag.BoolVar(&allowSharedServiceAccount, "dangerous-allow-shared-service-account",
+		false, "If set to true, allow use of shared service account instead of per-app service accounts")
 	flag.Parse()
 
 	logf.SetLogger(zap.Logger(false))
@@ -64,8 +67,9 @@ func main() {
 	}
 
 	appFactory := AppFactory{
-		coreClient: coreClient,
-		appClient:  appClient,
+		coreClient:                coreClient,
+		appClient:                 appClient,
+		allowSharedServiceAccount: allowSharedServiceAccount,
 	}
 
 	{ // add controller for apps

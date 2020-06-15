@@ -44,11 +44,6 @@ func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger,
 	return crdApp, nil
 }
 
-func NewCRDAppFromName(nsName types.NamespacedName, log logr.Logger,
-	appClient kcclient.Interface) *CRDApp {
-	return &CRDApp{nil, nil, nsName, log, appClient}
-}
-
 func (a *CRDApp) blockDeletion() error {
 	// Avoid doing unnecessary processing
 	if containsString(a.appModel.ObjectMeta.Finalizers, deleteFinalizerName) {

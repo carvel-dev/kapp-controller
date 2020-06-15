@@ -3,3 +3,4 @@
 push_images: true
 image_cache: false
 image_repo: docker.io/k14s/kapp-controller
+dangerous_allow_shared_service_account: true
