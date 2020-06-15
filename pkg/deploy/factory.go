@@ -1,18 +1,23 @@
 package deploy
 
 import (
+	"fmt"
+
 	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"k8s.io/client-go/kubernetes"
 )
 
 type Factory struct {
-	coreClient        kubernetes.Interface
+	coreClient                kubernetes.Interface
+	allowSharedServiceAccount bool
+
 	kubeconfigSecrets *KubeconfigSecrets
 	serviceAccounts   *ServiceAccounts
 }
 
-func NewFactory(coreClient kubernetes.Interface) Factory {
-	return Factory{coreClient, NewKubeconfigSecrets(coreClient), NewServiceAccounts(coreClient)}
+func NewFactory(coreClient kubernetes.Interface, allowSharedServiceAccount bool) Factory {
+	return Factory{coreClient, allowSharedServiceAccount,
+		NewKubeconfigSecrets(coreClient), NewServiceAccounts(coreClient)}
 }
 
 func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
@@ -34,7 +39,9 @@ func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
 		}
 
 	default:
-		// do nothing
+		if !f.allowSharedServiceAccount {
+			return nil, fmt.Errorf("Expected service account or cluster specified (shared service account is not allowed)")
+		}
 	}
 
 	return NewKapp(opts, genericOpts, cancelCh), nil
