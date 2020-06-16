@@ -47,13 +47,18 @@ func (a *App) blockDeletion() error   { return a.hooks.BlockDeletion() }
 func (a *App) unblockDeletion() error { return a.hooks.UnblockDeletion() }
 func (a *App) updateStatus() error    { return a.hooks.UpdateStatus() }
 
-func (a *App) newCancelCh() chan struct{} {
+func (a *App) newCancelCh() (chan struct{}, func()) {
 	var cancelOnce sync.Once
 	cancelCh := make(chan struct{})
 
-	cancelFunc := func(app v1alpha1.App) {
+	// Ends watching for app changes
+	cancelFunc := func() {
+		cancelOnce.Do(func() { close(cancelCh) })
+	}
+
+	cancelFuncOnApp := func(app v1alpha1.App) {
 		if app.Spec.Canceled {
-			cancelOnce.Do(func() { close(cancelCh) })
+			cancelFunc()
 		}
 	}
 
@@ -63,11 +68,11 @@ func (a *App) newCancelCh() chan struct{} {
 			return
 		}
 
-		err := a.hooks.WatchChanges(cancelFunc, cancelCh)
+		err := a.hooks.WatchChanges(cancelFuncOnApp, cancelCh)
 		if err != nil {
 			a.log.Error(err, "Watching changes") // TODO remove
 		}
 	}()
 
-	return cancelCh
+	return cancelCh, cancelFunc
 }

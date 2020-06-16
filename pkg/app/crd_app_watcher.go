@@ -49,7 +49,17 @@ func (w CRDAppWatcher) watch(callback func(v1alpha1.App), cancelCh chan struct{}
 		return false, fmt.Errorf("Creating app watcher: %s", err)
 	}
 
-	defer watcher.Stop()
+	defer func() {
+		watcher.Stop()
+
+		// Watcher may be trying to send Event before being channel is closed
+		// https://github.com/kubernetes/apimachinery/blob/d8530e6c952f75365336be8ea29cfd758ce49ee8/pkg/watch/streamwatcher.go#L127
+		// (Found this problem by observing open stuck goroutines via pprof)
+		for range watcher.ResultChan() {
+			// Drain any pending events, so that channel is
+			// closed and internal goroutine is discarded
+		}
+	}()
 
 	for {
 		select {
