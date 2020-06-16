@@ -107,6 +107,10 @@ func main() {
 
 	entryLog.Info("starting manager")
 
+	if allowSharedServiceAccount {
+		entryLog.Info("DANGEROUS in production setting -- allow shared service account")
+	}
+
 	if enablePprof {
 		entryLog.Info("DANGEROUS in production setting -- pprof running on %s", pprofListenAddr)
 		go func() {
