@@ -2,7 +2,9 @@
 ---
 namespace: kapp-controller
 create_namespace: true
+
 dangerous_allow_shared_service_account: false
+dangerous_enable_pprof: false
 
 push_images: false
 image_cache: true

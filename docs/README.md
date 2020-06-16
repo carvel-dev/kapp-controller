@@ -5,3 +5,4 @@
 - [Walkthrough](walkthrough.md)
 - [Config](config.md)
 - [App CRD spec](app-spec.md)
+- [Dangerous Flags](dangerous-flags.md)
