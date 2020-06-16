@@ -6,6 +6,10 @@ import (
 	"flag"
 	"os"
 
+	// Pprof related
+	"net/http"
+	_ "net/http/pprof"
+
 	kcv1alpha1 "github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/k14s/kapp-controller/pkg/client/clientset/versioned"
 	"k8s.io/client-go/kubernetes"
@@ -29,6 +33,11 @@ var (
 	ctrlConcurrency           = 10
 	ctrlNamespace             = ""
 	allowSharedServiceAccount = false
+	enablePprof               = false
+)
+
+const (
+	pprofListenAddr = "0.0.0.0:6060"
 )
 
 func main() {
@@ -36,6 +45,7 @@ func main() {
 	flag.StringVar(&ctrlNamespace, "namespace", "", "Namespace to watch")
 	flag.BoolVar(&allowSharedServiceAccount, "dangerous-allow-shared-service-account",
 		false, "If set to true, allow use of shared service account instead of per-app service accounts")
+	flag.BoolVar(&enablePprof, "dangerous-enable-pprof", false, "If set to true, enable pprof on "+pprofListenAddr)
 	flag.Parse()
 
 	logf.SetLogger(zap.Logger(false))
@@ -96,6 +106,13 @@ func main() {
 	}
 
 	entryLog.Info("starting manager")
+
+	if enablePprof {
+		entryLog.Info("DANGEROUS in production setting -- pprof running on %s", pprofListenAddr)
+		go func() {
+			entryLog.Error(http.ListenAndServe(pprofListenAddr, nil), "serving pprof")
+		}()
+	}
 
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
 		entryLog.Error(err, "unable to run manager")

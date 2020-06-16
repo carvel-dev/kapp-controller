@@ -24,6 +24,8 @@ spec:
         args:
         #@ if/end data.values.dangerous_allow_shared_service_account:
         - -dangerous-allow-shared-service-account=true
+        #@ if/end data.values.dangerous_enable_pprof:
+        - -dangerous-enable-pprof=true
         env:
         - name: KAPPCTRL_MEM_TMP_DIR
           value: /etc/kappctrl-mem-tmp
@@ -44,3 +46,18 @@ spec:
         emptyDir:
           #! https://kubernetes.io/docs/concepts/storage/volumes/#emptydir
           medium: Memory
+
+#@ if/end data.values.dangerous_enable_pprof:
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pprof
+  namespace: #@ data.values.namespace
+spec:
+  type: NodePort
+  selector:
+    app: kapp-controller
+  ports:
+  - port: 6060
+    protocol: TCP
