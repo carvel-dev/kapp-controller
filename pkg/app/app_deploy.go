@@ -23,10 +23,14 @@ func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec
 	for _, dep := range a.app.Spec.Deploy {
 		switch {
 		case dep.Kapp != nil:
-			kapp, err := a.newKapp(*dep.Kapp)
+			cancelCh, closeCancelCh := a.newCancelCh()
+			defer closeCancelCh()
+
+			kapp, err := a.newKapp(*dep.Kapp, cancelCh)
 			if err != nil {
 				return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 			}
+
 			result = kapp.Deploy(tplOutput, changedFunc)
 
 		default:
@@ -51,10 +55,14 @@ func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 	for _, dep := range a.app.Spec.Deploy {
 		switch {
 		case dep.Kapp != nil:
-			kapp, err := a.newKapp(*dep.Kapp)
+			cancelCh, closeCancelCh := a.newCancelCh()
+			defer closeCancelCh()
+
+			kapp, err := a.newKapp(*dep.Kapp, cancelCh)
 			if err != nil {
 				return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 			}
+
 			result = kapp.Delete(changedFunc)
 
 		default:
@@ -86,10 +94,14 @@ func (a *App) inspect() exec.CmdRunResult {
 	for _, dep := range a.app.Spec.Deploy {
 		switch {
 		case dep.Kapp != nil:
-			kapp, err := a.newKapp(*dep.Kapp)
+			cancelCh, closeCancelCh := a.newCancelCh()
+			defer closeCancelCh()
+
+			kapp, err := a.newKapp(*dep.Kapp, cancelCh)
 			if err != nil {
 				return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 			}
+
 			result = kapp.Inspect()
 
 		default:
@@ -104,9 +116,9 @@ func (a *App) inspect() exec.CmdRunResult {
 	return result
 }
 
-func (a *App) newKapp(kapp v1alpha1.AppDeployKapp) (*ctldep.Kapp, error) {
+func (a *App) newKapp(kapp v1alpha1.AppDeployKapp, cancelCh chan struct{}) (*ctldep.Kapp, error) {
 	genericOpts := ctldep.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
 
 	return a.deployFactory.NewKapp(kapp, a.app.Spec.ServiceAccountName,
-		a.app.Spec.Cluster, genericOpts, a.newCancelCh())
+		a.app.Spec.Cluster, genericOpts, cancelCh)
 }
