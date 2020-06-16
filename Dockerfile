@@ -24,7 +24,8 @@ RUN apt-get update && apt-get install -y git openssh-client && rm -rf /var/lib/a
 RUN groupadd -g 2000 kapp-controller && useradd -r -u 1000 --create-home -g kapp-controller kapp-controller
 USER kapp-controller
 
-COPY --from=0 /go/src/github.com/k14s/kapp-controller/controller .
+# Name it kapp-controller to identify it easier in process tree
+COPY --from=0 /go/src/github.com/k14s/kapp-controller/controller kapp-controller
 
 # fetchers
 COPY --from=0 /helm-unpacked/linux-amd64/helm .
@@ -38,4 +39,4 @@ COPY --from=0 /usr/local/bin/kbld .
 COPY --from=0 /usr/local/bin/kapp .
 
 ENV PATH="/:${PATH}"
-ENTRYPOINT ["/controller"]
+ENTRYPOINT ["/kapp-controller"]
