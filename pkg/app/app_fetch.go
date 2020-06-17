@@ -2,6 +2,9 @@ package app
 
 import (
 	"fmt"
+	"os"
+	"path"
+	"strconv"
 
 	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/k14s/kapp-controller/pkg/exec"
@@ -16,7 +19,13 @@ func (a *App) fetch(dstPath string) exec.CmdRunResult {
 	var result exec.CmdRunResult
 
 	for i, fetch := range a.app.Spec.Fetch {
-		err := a.fetchOne(fetch, dstPath)
+		subPath := path.Join(dstPath, strconv.Itoa(i))
+		err := os.Mkdir(subPath, os.FileMode(0700))
+		if err != nil {
+			result.AttachErrorf(fmt.Sprintf("Fetching (%d): ", i)+"%s", err)
+			break
+		}
+		err = a.fetchOne(fetch, subPath)
 		if err != nil {
 			result.AttachErrorf(fmt.Sprintf("Fetching (%d): ", i)+"%s", err)
 			break
