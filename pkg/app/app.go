@@ -19,19 +19,26 @@ type AppHooks struct {
 }
 
 type App struct {
-	app             v1alpha1.App
-	hooks           AppHooks
+	app     v1alpha1.App
+	appPrev v1alpha1.App
+	hooks   AppHooks
+
 	fetchFactory    fetch.Factory
 	templateFactory template.Factory
 	deployFactory   deploy.Factory
-	log             logr.Logger
+
+	log logr.Logger
+
+	pendingStatusUpdate bool
 }
 
 func NewApp(app v1alpha1.App, hooks AppHooks,
 	fetchFactory fetch.Factory, templateFactory template.Factory,
 	deployFactory deploy.Factory, log logr.Logger) *App {
 
-	return &App{app, hooks, fetchFactory, templateFactory, deployFactory, log}
+	return &App{app: app, appPrev: *(app.DeepCopy()), hooks: hooks,
+		fetchFactory: fetchFactory, templateFactory: templateFactory,
+		deployFactory: deployFactory, log: log}
 }
 
 func (a *App) Name() string      { return a.app.Name }
@@ -45,7 +52,26 @@ func (a *App) StatusAsYAMLBytes() ([]byte, error) {
 
 func (a *App) blockDeletion() error   { return a.hooks.BlockDeletion() }
 func (a *App) unblockDeletion() error { return a.hooks.UnblockDeletion() }
-func (a *App) updateStatus() error    { return a.hooks.UpdateStatus() }
+
+func (a *App) updateStatus() error {
+	a.pendingStatusUpdate = true
+
+	// If there is no direct changes to the CRD, throttle status update
+	if a.app.Generation == a.appPrev.Status.ObservedGeneration {
+		return nil
+	}
+
+	a.pendingStatusUpdate = false
+	return a.hooks.UpdateStatus()
+}
+
+func (a *App) flushUpdateStatus() error {
+	// Last possibility to save any pending status changes
+	if a.pendingStatusUpdate {
+		return a.hooks.UpdateStatus()
+	}
+	return nil
+}
 
 func (a *App) newCancelCh() (chan struct{}, func()) {
 	var cancelOnce sync.Once

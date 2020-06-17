@@ -13,6 +13,8 @@ import (
 
 // Reconcile is not expected to be called concurrently
 func (a *App) Reconcile() error {
+	defer a.flushUpdateStatus()
+
 	switch {
 	case a.app.Spec.Canceled || a.app.Spec.Paused:
 		a.log.Info("App is canceled or paused, not reconciling")
