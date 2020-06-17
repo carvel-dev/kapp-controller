@@ -29,7 +29,7 @@ const (
 )
 
 var (
-	log                       = logf.Log.WithName("kapp-controller")
+	log                       = logf.Log.WithName("kc")
 	ctrlConcurrency           = 10
 	ctrlNamespace             = ""
 	allowSharedServiceAccount = false
