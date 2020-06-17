@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/go-logr/logr"
 	kcv1alpha1 "github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -74,11 +75,13 @@ func (a *CRDApp) updateStatus() error {
 		return fmt.Errorf("Fetching app: %s", err)
 	}
 
-	existingApp.Status = a.app.Status()
+	if !reflect.DeepEqual(existingApp.Status, a.app.Status()) {
+		existingApp.Status = a.app.Status()
 
-	_, err = a.appClient.KappctrlV1alpha1().Apps(existingApp.Namespace).UpdateStatus(existingApp)
-	if err != nil {
-		return fmt.Errorf("Updating app status: %s", err)
+		_, err = a.appClient.KappctrlV1alpha1().Apps(existingApp.Namespace).UpdateStatus(existingApp)
+		if err != nil {
+			return fmt.Errorf("Updating app status: %s", err)
+		}
 	}
 
 	return nil
@@ -103,12 +106,7 @@ func (a *CRDApp) updateApp(updateFunc func(*kcv1alpha1.App)) error {
 }
 
 func (a *CRDApp) Reconcile() (reconcile.Result, error) {
-	err := a.app.Reconcile()
-	if err != nil {
-		return reconcile.Result{Requeue: true}, err
-	}
-
-	return reconcile.Result{}, nil
+	return a.app.Reconcile()
 }
 
 func (a *CRDApp) Delete() (reconcile.Result, error) {

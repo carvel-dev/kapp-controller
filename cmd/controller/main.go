@@ -84,11 +84,14 @@ func main() {
 
 	{ // add controller for apps
 		ctrlAppOpts := controller.Options{
-			Reconciler: &PeriodicReconciler{NewUniqueReconciler(&AppsReconciler{
-				appClient:  appClient,
-				appFactory: appFactory,
-				log:        log.WithName("ar"),
-			})},
+			Reconciler: NewUniqueReconciler(&PeriodicReconciler{
+				delegate: &AppsReconciler{
+					appClient:  appClient,
+					appFactory: appFactory,
+					log:        log.WithName("ar"),
+				},
+				log: log.WithName("pr"),
+			}),
 			MaxConcurrentReconciles: ctrlConcurrency,
 		}
 
