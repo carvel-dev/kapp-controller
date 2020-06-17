@@ -9,30 +9,40 @@ import (
 	"github.com/k14s/kapp-controller/pkg/memdir"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // Reconcile is not expected to be called concurrently
-func (a *App) Reconcile() error {
+func (a *App) Reconcile() (reconcile.Result, error) {
 	defer a.flushUpdateStatus()
 
 	switch {
 	case a.app.Spec.Canceled || a.app.Spec.Paused:
 		a.log.Info("App is canceled or paused, not reconciling")
+
 		a.markObservedLatest()
 		a.app.Status.FriendlyDescription = "Canceled/paused"
-		return a.updateStatus()
+
+		err := a.updateStatus()
+		return reconcile.Result{}, err
 
 	case a.app.DeletionTimestamp != nil:
-		a.log.Info("Started deleting")
-		return a.reconcileDelete()
+		a.log.Info("Started delete")
+		defer func() { a.log.Info("Completed delete") }()
 
-	case a.shouldReconcile():
-		a.log.Info("Started deploying")
-		return a.reconcileDeploy()
+		err := a.reconcileDelete()
+		return a.requeueIfNecessary(), err
+
+	case a.shouldReconcile(time.Now()):
+		a.log.Info("Started deploy")
+		defer func() { a.log.Info("Completed deploy") }()
+
+		err := a.reconcileDeploy()
+		return a.requeueIfNecessary(), err
 
 	default:
 		a.log.Info("Reconcile noop")
-		return nil
+		return reconcile.Result{}, nil
 	}
 }
 
@@ -45,20 +55,14 @@ func (a *App) reconcileDelete() error {
 		return err
 	}
 
-	var result exec.CmdRunResult
-
-	defer func() {
-		a.setDeleteCompleted(result)
-		// TODO technically resource is gone so this will error
-		a.updateStatus()
-		a.log.Info("Completed delete")
-	}()
-
-	// TODO a.app.Status.ManagedAppName = a.managedName()
-
 	a.resetLastDeployStartedAt()
-	result = a.delete(a.updateLastDeployNoReturn)
-	return result.Error
+
+	result := a.delete(a.updateLastDeployNoReturn)
+	a.setDeleteCompleted(result)
+
+	// Resource is gone so this will error, ignore it
+	_ = a.updateStatus()
+	return nil
 }
 
 func (a *App) reconcileDeploy() error {
@@ -70,20 +74,13 @@ func (a *App) reconcileDeploy() error {
 		return err
 	}
 
-	var result exec.CmdRunResult
+	result := a.reconcileFetchTemplateDeploy()
+	a.setReconcileCompleted(result)
 
-	defer func() {
-		a.setReconcileCompleted(result)
-		a.updateStatus()
-		a.log.Info("Completed deploy")
-	}()
-
-	// TODO a.app.Status.ManagedAppName = a.managedName()
-
-	result = a.reconcileFetchTemplateDeploy()
 	// Reconcile inspect regardless of deploy success
-	a.reconcileInspect()
-	return nil
+	_ = a.reconcileInspect()
+
+	return a.updateStatus()
 }
 
 func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
@@ -253,17 +250,24 @@ func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
 	}
 }
 
-func (a *App) shouldReconcile() bool {
+func (a *App) requeueIfNecessary() reconcile.Result {
+	retryDur := 4 * time.Second
+
+	if a.shouldReconcile(time.Now().Add(retryDur)) {
+		return reconcile.Result{RequeueAfter: retryDur}
+	}
+	return reconcile.Result{}
+}
+
+func (a *App) shouldReconcile(timeAt time.Time) bool {
+	const (
+		tooLongAfterFailure = 3 * time.Second
+		tooLongAfterSuccess = 30 * time.Second
+	)
+
 	// Did resource spec change?
 	if a.app.Status.ObservedGeneration != a.app.Generation {
 		return true
-	}
-
-	// Did previous deploy fail?
-	for _, cond := range a.app.Status.Conditions {
-		if cond.Type == v1alpha1.ReconcileFailed {
-			return true
-		}
 	}
 
 	// Did we deploy at least once?
@@ -272,8 +276,18 @@ func (a *App) shouldReconcile() bool {
 		return true
 	}
 
+	// Did previous deploy fail?
+	for _, cond := range a.app.Status.Conditions {
+		if cond.Type == v1alpha1.ReconcileFailed {
+			// Did we try too long ago?
+			if timeAt.UTC().Sub(lastDeploy.UpdatedAt.Time) > tooLongAfterFailure {
+				return true
+			}
+		}
+	}
+
 	// Did we deploy too long ago?
-	if time.Now().UTC().Sub(lastDeploy.UpdatedAt.Time) > 30*time.Second {
+	if timeAt.UTC().Sub(lastDeploy.UpdatedAt.Time) > tooLongAfterSuccess {
 		return true
 	}
 

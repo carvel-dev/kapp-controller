@@ -9,9 +9,13 @@ import (
 type UniqueReconciler struct {
 	delegate reconcile.Reconciler
 
+	// Represents currently executing reconcilation requests
 	ongoing    map[string]struct{}
 	ongoingMux sync.Mutex
 
+	// Represents whether reconilation should happen immediately after
+	// due to reconcilcation requests coming in while one was being
+	// already executed
 	pending    map[string]struct{}
 	pendingMux sync.Mutex
 }
@@ -29,33 +33,21 @@ func NewUniqueReconciler(delegate reconcile.Reconciler) *UniqueReconciler {
 func (r *UniqueReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	resKey := request.NamespacedName.String()
 
-	r.allowRequeues(resKey)
-
 	if r.shouldReconcileAndMarkOngoing(resKey) {
 		res, err := r.delegate.Reconcile(request)
-		r.markReconcileFinished(resKey)
+
+		// If there are any pending "reconciliation requests", reconcile immediately
+		if r.isPendingAndUnmark(resKey) {
+			res.Requeue = true
+			res.RequeueAfter = 0
+		}
+
+		r.unmarkOngoing(resKey)
 		return res, err
 	}
 
-	return r.requeueIfAllowed(resKey)
-}
-
-func (r *UniqueReconciler) allowRequeues(resKey string) {
-	r.pendingMux.Lock()
-	delete(r.pending, resKey)
-	r.pendingMux.Unlock()
-}
-
-func (r *UniqueReconciler) requeueIfAllowed(resKey string) (reconcile.Result, error) {
-	// Avoid excessive requeueing of same resource
-	r.pendingMux.Lock()
-	defer r.pendingMux.Unlock()
-
-	if _, found := r.pending[resKey]; !found {
-		r.pending[resKey] = struct{}{}
-		return reconcile.Result{Requeue: true}, nil
-	}
-
+	// Mark to be requeued at the end of ongoing reconciliation request
+	r.markPending(resKey)
 	return reconcile.Result{}, nil
 }
 
@@ -71,8 +63,22 @@ func (r *UniqueReconciler) shouldReconcileAndMarkOngoing(resKey string) bool {
 	return false
 }
 
-func (r *UniqueReconciler) markReconcileFinished(resKey string) {
+func (r *UniqueReconciler) unmarkOngoing(resKey string) {
 	r.ongoingMux.Lock()
 	delete(r.ongoing, resKey)
 	r.ongoingMux.Unlock()
+}
+
+func (r *UniqueReconciler) isPendingAndUnmark(resKey string) bool {
+	r.pendingMux.Lock()
+	_, found := r.pending[resKey]
+	delete(r.pending, resKey)
+	r.pendingMux.Unlock()
+	return found
+}
+
+func (r *UniqueReconciler) markPending(resKey string) {
+	r.pendingMux.Lock()
+	r.pending[resKey] = struct{}{}
+	r.pendingMux.Unlock()
 }
