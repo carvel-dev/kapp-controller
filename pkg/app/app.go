@@ -29,7 +29,8 @@ type App struct {
 
 	log logr.Logger
 
-	pendingStatusUpdate bool
+	pendingStatusUpdate   bool
+	flushAllStatusUpdates bool
 }
 
 func NewApp(app v1alpha1.App, hooks AppHooks,
@@ -56,18 +57,26 @@ func (a *App) unblockDeletion() error { return a.hooks.UnblockDeletion() }
 func (a *App) updateStatus() error {
 	a.pendingStatusUpdate = true
 
-	// If there is no direct changes to the CRD, throttle status update
-	if a.app.Generation == a.appPrev.Status.ObservedGeneration {
-		return nil
+	if !a.flushAllStatusUpdates {
+		// If there is no direct changes to the CRD, throttle status update
+		if a.app.Generation == a.appPrev.Status.ObservedGeneration {
+			return nil
+		}
 	}
 
 	a.pendingStatusUpdate = false
 	return a.hooks.UpdateStatus()
 }
 
+func (a *App) startFlushingAllStatusUpdates() {
+	a.flushAllStatusUpdates = true
+	a.flushUpdateStatus()
+}
+
 func (a *App) flushUpdateStatus() error {
 	// Last possibility to save any pending status changes
 	if a.pendingStatusUpdate {
+		a.pendingStatusUpdate = false
 		return a.hooks.UpdateStatus()
 	}
 	return nil

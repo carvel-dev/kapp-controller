@@ -12,6 +12,12 @@ import (
 	"github.com/k14s/kapp-controller/pkg/exec"
 )
 
+const (
+	// TODO not a great way to determine whether
+	// kapp found changes and started to apply them
+	applyOutputMarker = " ---- applying "
+)
+
 type Kapp struct {
 	opts        v1alpha1.AppDeployKapp
 	genericOpts GenericOpts
@@ -24,14 +30,16 @@ func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts GenericOpts, cancelCh chan
 	return &Kapp{opts, genericOpts, cancelCh}
 }
 
-func (a *Kapp) Deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
+func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
+	changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
+
 	args := a.addDeployArgs([]string{"deploy", "-f", "-"})
 	args, env := a.addGenericArgs(args)
 
 	cmd := goexec.Command("kapp", args...)
 	cmd.Env = append(os.Environ(), env...)
 	cmd.Stdin = strings.NewReader(tplOutput)
-	stdoutBs, stderrBs := a.trackCmdOutput(cmd, changedFunc)
+	stdoutBs, stderrBs := a.trackCmdOutput(cmd, startedApplyingFunc, changedFunc)
 
 	err := exec.RunWithCancel(cmd, a.cancelCh)
 
@@ -44,13 +52,13 @@ func (a *Kapp) Deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exe
 	return result
 }
 
-func (a *Kapp) Delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
+func (a *Kapp) Delete(startedApplyingFunc func(), changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 	args := a.addDeleteArgs([]string{"delete"})
 	args, env := a.addGenericArgs(args)
 
 	cmd := goexec.Command("kapp", args...)
 	cmd.Env = append(os.Environ(), env...)
-	stdoutBs, stderrBs := a.trackCmdOutput(cmd, changedFunc)
+	stdoutBs, stderrBs := a.trackCmdOutput(cmd, startedApplyingFunc, changedFunc)
 
 	err := exec.RunWithCancel(cmd, a.cancelCh)
 
@@ -94,7 +102,9 @@ func (a *Kapp) Inspect() exec.CmdRunResult {
 
 func (a *Kapp) ManagedName() string { return a.managedName() }
 
-func (a *Kapp) trackCmdOutput(cmd *goexec.Cmd, changedFunc func(exec.CmdRunResult)) (*bytes.Buffer, *bytes.Buffer) {
+func (a *Kapp) trackCmdOutput(cmd *goexec.Cmd, startedApplyingFunc func(),
+	changedFunc func(exec.CmdRunResult)) (*bytes.Buffer, *bytes.Buffer) {
+
 	stdoutBs := &bytes.Buffer{}
 	stderrBs := &bytes.Buffer{}
 
@@ -106,7 +116,12 @@ func (a *Kapp) trackCmdOutput(cmd *goexec.Cmd, changedFunc func(exec.CmdRunResul
 		liveResult.Stdout += string(data)
 		liveResultCopy := *liveResult
 		liveResultMux.Unlock()
+
 		changedFunc(liveResultCopy)
+
+		if strings.Contains(liveResultCopy.Stdout, applyOutputMarker) {
+			startedApplyingFunc()
+		}
 	}))
 
 	cmd.Stderr = io.MultiWriter(stderrBs, newBufferingWriter(func(data []byte) {
