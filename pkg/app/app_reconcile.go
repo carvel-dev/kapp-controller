@@ -14,7 +14,7 @@ import (
 
 // Reconcile is not expected to be called concurrently
 func (a *App) Reconcile() (reconcile.Result, error) {
-	defer a.flushUpdateStatus()
+	defer a.flushUpdateStatus("app reconciled")
 
 	switch {
 	case a.app.Spec.Canceled || a.app.Spec.Paused:
@@ -23,7 +23,7 @@ func (a *App) Reconcile() (reconcile.Result, error) {
 		a.markObservedLatest()
 		a.app.Status.FriendlyDescription = "Canceled/paused"
 
-		err := a.updateStatus()
+		err := a.updateStatus("app canceled/paused")
 		return reconcile.Result{}, err
 
 	case a.app.DeletionTimestamp != nil:
@@ -50,7 +50,7 @@ func (a *App) reconcileDelete() error {
 	a.markObservedLatest()
 	a.setDeleting()
 
-	err := a.updateStatus()
+	err := a.updateStatus("marking deleting")
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (a *App) reconcileDelete() error {
 	a.setDeleteCompleted(result)
 
 	// Resource is gone so this will error, ignore it
-	_ = a.updateStatus()
+	_ = a.updateStatus("marking delete completed")
 	return nil
 }
 
@@ -69,7 +69,7 @@ func (a *App) reconcileDeploy() error {
 	a.markObservedLatest()
 	a.setReconciling()
 
-	err := a.updateStatus()
+	err := a.updateStatus("marking reconciling")
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (a *App) reconcileDeploy() error {
 	// Reconcile inspect regardless of deploy success
 	_ = a.reconcileInspect()
 
-	return a.updateStatus()
+	return a.updateStatus("marking reconcile completed")
 }
 
 func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
@@ -106,7 +106,7 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 			UpdatedAt: metav1.NewTime(time.Now().UTC()),
 		}
 
-		err := a.updateStatus()
+		err := a.updateStatus("marking fetch completed")
 		if err != nil {
 			return exec.NewCmdRunResultWithErr(err)
 		}
@@ -125,7 +125,7 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
 
-	err = a.updateStatus()
+	err = a.updateStatus("marking template completed")
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(err)
 	}
@@ -152,7 +152,7 @@ func (a *App) updateLastDeploy(result exec.CmdRunResult) exec.CmdRunResult {
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
 
-	a.updateStatus()
+	a.updateStatus("marking last deploy")
 
 	return result
 }
@@ -186,7 +186,7 @@ func (a *App) reconcileInspect() error {
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
 
-	return a.updateStatus()
+	return a.updateStatus("marking inspect completed")
 }
 
 func (a *App) markObservedLatest() {

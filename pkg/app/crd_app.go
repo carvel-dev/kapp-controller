@@ -67,8 +67,8 @@ func (a *CRDApp) unblockDeletion() error {
 	})
 }
 
-func (a *CRDApp) updateStatus() error {
-	a.log.Info("Updating status")
+func (a *CRDApp) updateStatus(desc string) error {
+	a.log.Info("Updating status", "desc", desc)
 
 	existingApp, err := a.appClient.KappctrlV1alpha1().Apps(a.appModel.Namespace).Get(a.appModel.Name, metav1.GetOptions{})
 	if err != nil {

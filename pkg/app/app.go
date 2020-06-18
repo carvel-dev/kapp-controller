@@ -14,7 +14,7 @@ import (
 type AppHooks struct {
 	BlockDeletion   func() error
 	UnblockDeletion func() error
-	UpdateStatus    func() error
+	UpdateStatus    func(string) error
 	WatchChanges    func(func(v1alpha1.App), chan struct{}) error
 }
 
@@ -54,7 +54,7 @@ func (a *App) StatusAsYAMLBytes() ([]byte, error) {
 func (a *App) blockDeletion() error   { return a.hooks.BlockDeletion() }
 func (a *App) unblockDeletion() error { return a.hooks.UnblockDeletion() }
 
-func (a *App) updateStatus() error {
+func (a *App) updateStatus(desc string) error {
 	a.pendingStatusUpdate = true
 
 	if !a.flushAllStatusUpdates {
@@ -65,19 +65,19 @@ func (a *App) updateStatus() error {
 	}
 
 	a.pendingStatusUpdate = false
-	return a.hooks.UpdateStatus()
+	return a.hooks.UpdateStatus(desc)
 }
 
 func (a *App) startFlushingAllStatusUpdates() {
 	a.flushAllStatusUpdates = true
-	a.flushUpdateStatus()
+	a.flushUpdateStatus("flush all")
 }
 
-func (a *App) flushUpdateStatus() error {
+func (a *App) flushUpdateStatus(desc string) error {
 	// Last possibility to save any pending status changes
 	if a.pendingStatusUpdate {
 		a.pendingStatusUpdate = false
-		return a.hooks.UpdateStatus()
+		return a.hooks.UpdateStatus("flushing: " + desc)
 	}
 	return nil
 }
