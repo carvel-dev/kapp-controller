@@ -2,11 +2,10 @@ package deploy
 
 import (
 	"bytes"
-	"io"
 	"os"
 	goexec "os/exec"
 	"strings"
-	"sync"
+	"time"
 
 	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/k14s/kapp-controller/pkg/exec"
@@ -39,14 +38,13 @@ func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 	cmd := goexec.Command("kapp", args...)
 	cmd.Env = append(os.Environ(), env...)
 	cmd.Stdin = strings.NewReader(tplOutput)
-	stdoutBs, stderrBs := a.trackCmdOutput(cmd, startedApplyingFunc, changedFunc)
+
+	resultBuf, doneTrackingOutputCh := a.trackCmdOutput(cmd, startedApplyingFunc, changedFunc)
 
 	err := exec.RunWithCancel(cmd, a.cancelCh)
+	close(doneTrackingOutputCh)
 
-	result := exec.CmdRunResult{
-		Stdout: stdoutBs.String(),
-		Stderr: stderrBs.String(),
-	}
+	result := resultBuf.Copy()
 	result.AttachErrorf("Deploying: %s", err)
 
 	return result
@@ -58,14 +56,13 @@ func (a *Kapp) Delete(startedApplyingFunc func(), changedFunc func(exec.CmdRunRe
 
 	cmd := goexec.Command("kapp", args...)
 	cmd.Env = append(os.Environ(), env...)
-	stdoutBs, stderrBs := a.trackCmdOutput(cmd, startedApplyingFunc, changedFunc)
+
+	resultBuf, doneTrackingOutputCh := a.trackCmdOutput(cmd, startedApplyingFunc, changedFunc)
 
 	err := exec.RunWithCancel(cmd, a.cancelCh)
+	close(doneTrackingOutputCh)
 
-	result := exec.CmdRunResult{
-		Stdout: stdoutBs.String(),
-		Stderr: stderrBs.String(),
-	}
+	result := resultBuf.Copy()
 	result.AttachErrorf("Deleting: %s", err)
 
 	return result
@@ -100,39 +97,37 @@ func (a *Kapp) Inspect() exec.CmdRunResult {
 	return result
 }
 
-func (a *Kapp) ManagedName() string { return a.managedName() }
-
 func (a *Kapp) trackCmdOutput(cmd *goexec.Cmd, startedApplyingFunc func(),
-	changedFunc func(exec.CmdRunResult)) (*bytes.Buffer, *bytes.Buffer) {
+	changedFunc func(exec.CmdRunResult)) (*CmdRunResultBuffer, chan struct{}) {
 
-	stdoutBs := &bytes.Buffer{}
-	stderrBs := &bytes.Buffer{}
+	liveResult := NewCmdRunResultBuffer()
+	doneCh := make(chan struct{})
 
-	liveResult := &exec.CmdRunResult{}
-	liveResultMux := sync.Mutex{}
+	cmd.Stdout = WriterFunc(liveResult.WriteStdout)
+	cmd.Stderr = WriterFunc(liveResult.WriteStderr)
 
-	cmd.Stdout = io.MultiWriter(stdoutBs, newBufferingWriter(func(data []byte) {
-		liveResultMux.Lock()
-		liveResult.Stdout += string(data)
-		liveResultCopy := *liveResult
-		liveResultMux.Unlock()
+	// Serialize status updates
+	go func() {
+		check := time.NewTicker(2 * time.Second)
+		defer check.Stop()
 
-		changedFunc(liveResultCopy)
+		for {
+			select {
+			case <-check.C:
+				resultCopy := liveResult.Copy()
 
-		if strings.Contains(liveResultCopy.Stdout, applyOutputMarker) {
-			startedApplyingFunc()
+				changedFunc(resultCopy)
+				if strings.Contains(resultCopy.Stdout, applyOutputMarker) {
+					startedApplyingFunc()
+				}
+
+			case <-doneCh:
+				return
+			}
 		}
-	}))
+	}()
 
-	cmd.Stderr = io.MultiWriter(stderrBs, newBufferingWriter(func(data []byte) {
-		liveResultMux.Lock()
-		liveResult.Stderr += string(data)
-		liveResultCopy := *liveResult
-		liveResultMux.Unlock()
-		changedFunc(liveResultCopy)
-	}))
-
-	return stdoutBs, stderrBs
+	return liveResult, doneCh
 }
 
 func (a *Kapp) managedName() string { return a.genericOpts.Name + "-ctrl" }
