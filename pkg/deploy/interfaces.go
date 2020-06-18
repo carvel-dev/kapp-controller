@@ -5,10 +5,13 @@ import (
 )
 
 type Deploy interface {
-	Deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec.CmdRunResult
-	Delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult
+	Deploy(tplOutput string, startedApplyingFunc func(),
+		changedFunc func(exec.CmdRunResult)) exec.CmdRunResult
+
+	Delete(startedApplyingFunc func(),
+		changedFunc func(exec.CmdRunResult)) exec.CmdRunResult
+
 	Inspect() exec.CmdRunResult
-	ManagedName() string
 }
 
 type GenericOpts struct {
