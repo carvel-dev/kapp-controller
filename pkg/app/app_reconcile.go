@@ -9,12 +9,15 @@ import (
 	"github.com/k14s/kapp-controller/pkg/memdir"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // Reconcile is not expected to be called concurrently
 func (a *App) Reconcile() (reconcile.Result, error) {
 	defer a.flushUpdateStatus("app reconciled")
+
+	var err error
 
 	switch {
 	case a.app.Spec.Canceled || a.app.Spec.Paused:
@@ -23,27 +26,25 @@ func (a *App) Reconcile() (reconcile.Result, error) {
 		a.markObservedLatest()
 		a.app.Status.FriendlyDescription = "Canceled/paused"
 
-		err := a.updateStatus("app canceled/paused")
-		return reconcile.Result{}, err
+		err = a.updateStatus("app canceled/paused")
 
 	case a.app.DeletionTimestamp != nil:
 		a.log.Info("Started delete")
 		defer func() { a.log.Info("Completed delete") }()
 
-		err := a.reconcileDelete()
-		return a.requeueIfNecessary(), err
+		err = a.reconcileDelete()
 
 	case a.shouldReconcile(time.Now()):
 		a.log.Info("Started deploy")
 		defer func() { a.log.Info("Completed deploy") }()
 
-		err := a.reconcileDeploy()
-		return a.requeueIfNecessary(), err
+		err = a.reconcileDeploy()
 
 	default:
 		a.log.Info("Reconcile noop")
-		return reconcile.Result{}, nil
 	}
+
+	return a.requeueIfNecessary(), err
 }
 
 func (a *App) reconcileDelete() error {
@@ -251,12 +252,14 @@ func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
 }
 
 func (a *App) requeueIfNecessary() reconcile.Result {
-	retryDur := 4 * time.Second
-
-	if a.shouldReconcile(time.Now().Add(retryDur)) {
-		return reconcile.Result{RequeueAfter: retryDur}
+	var (
+		shortDelay  = 4 * time.Second
+		longerDelay = 25*time.Second + wait.Jitter(5*time.Second, 1.0)
+	)
+	if a.shouldReconcile(time.Now().Add(shortDelay)) {
+		return reconcile.Result{RequeueAfter: shortDelay}
 	}
-	return reconcile.Result{}
+	return reconcile.Result{RequeueAfter: longerDelay}
 }
 
 func (a *App) shouldReconcile(timeAt time.Time) bool {
@@ -268,6 +271,11 @@ func (a *App) shouldReconcile(timeAt time.Time) bool {
 	// Did resource spec change?
 	if a.app.Status.ObservedGeneration != a.app.Generation {
 		return true
+	}
+
+	// If canceled/paused, then no reconcilation until unpaused
+	if a.app.Spec.Canceled || a.app.Spec.Paused {
+		return false
 	}
 
 	// Did we deploy at least once?

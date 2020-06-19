@@ -84,7 +84,7 @@ func main() {
 
 	{ // add controller for apps
 		ctrlAppOpts := controller.Options{
-			Reconciler: NewUniqueReconciler(&PeriodicReconciler{
+			Reconciler: NewUniqueReconciler(&ErrReconciler{
 				delegate: &AppsReconciler{
 					appClient:  appClient,
 					appFactory: appFactory,

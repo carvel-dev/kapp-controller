@@ -31,7 +31,7 @@ type CRDApp struct {
 
 func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger,
 	appClient kcclient.Interface, fetchFactory fetch.Factory,
-	templateFactory template.Factory, deployFactory deploy.Factory) (*CRDApp, error) {
+	templateFactory template.Factory, deployFactory deploy.Factory) *CRDApp {
 
 	crdApp := &CRDApp{appModel: appModel, log: log, appClient: appClient}
 
@@ -42,7 +42,7 @@ func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger,
 		WatchChanges:    crdApp.watchChanges,
 	}, fetchFactory, templateFactory, deployFactory, log)
 
-	return crdApp, nil
+	return crdApp
 }
 
 func (a *CRDApp) blockDeletion() error {
@@ -107,11 +107,6 @@ func (a *CRDApp) updateApp(updateFunc func(*kcv1alpha1.App)) error {
 
 func (a *CRDApp) Reconcile() (reconcile.Result, error) {
 	return a.app.Reconcile()
-}
-
-func (a *CRDApp) Delete() (reconcile.Result, error) {
-	// TODO implement
-	return reconcile.Result{}, nil
 }
 
 func (a *CRDApp) watchChanges(callback func(kcv1alpha1.App), cancelCh chan struct{}) error {

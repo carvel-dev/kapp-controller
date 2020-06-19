@@ -17,7 +17,7 @@ type AppFactory struct {
 	allowSharedServiceAccount bool
 }
 
-func (f *AppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) (*ctlapp.CRDApp, error) {
+func (f *AppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *ctlapp.CRDApp {
 	fetchFactory := fetch.NewFactory(f.coreClient)
 	templateFactory := template.NewFactory(f.coreClient, fetchFactory)
 	deployFactory := deploy.NewFactory(f.coreClient, allowSharedServiceAccount)

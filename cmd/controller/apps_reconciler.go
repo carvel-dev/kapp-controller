@@ -24,18 +24,13 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 	existingApp, err := r.appClient.KappctrlV1alpha1().Apps(request.Namespace).Get(request.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Info("Could not find App") // TODO
-			return reconcile.Result{}, nil
+			log.Info("Could not find App")
+			return reconcile.Result{}, nil // No requeue
 		}
 
 		log.Error(err, "Could not fetch App")
 		return reconcile.Result{}, err
 	}
 
-	crdApp, err := r.appFactory.NewCRDApp(existingApp, log)
-	if crdApp == nil || err != nil {
-		return reconcile.Result{}, err
-	}
-
-	return crdApp.Reconcile()
+	return r.appFactory.NewCRDApp(existingApp, log).Reconcile()
 }
