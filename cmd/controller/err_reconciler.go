@@ -8,19 +8,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-type PeriodicReconciler struct {
+type ErrReconciler struct {
 	delegate reconcile.Reconciler
 	log      logr.Logger
 }
 
-var _ reconcile.Reconciler = &PeriodicReconciler{}
+var _ reconcile.Reconciler = &ErrReconciler{}
 
-func (r *PeriodicReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ErrReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
 	res, err := r.delegate.Reconcile(request)
 
 	switch {
+	// Check before error check, since error check does not queue immediately
 	case res.Requeue && res.RequeueAfter == 0:
 		log.Info("Requeue immediately", "after", 0)
 
@@ -31,12 +32,11 @@ func (r *PeriodicReconciler) Reconcile(request reconcile.Request) (reconcile.Res
 		res.RequeueAfter = 3*time.Second + wait.Jitter(5*time.Second, 1.0)
 		log.Info("Requeue quickly due to err", "after", res.RequeueAfter)
 
-	case res.RequeueAfter > 0 && res.RequeueAfter < 30*time.Second:
+	case res.RequeueAfter > 0:
 		log.Info("Requeue after given time", "after", res.RequeueAfter)
 
 	default:
-		res.RequeueAfter = 25*time.Second + wait.Jitter(5*time.Second, 1.0)
-		log.Info("Requeue soon", "after", res.RequeueAfter)
+		log.Info("Requeue stopped")
 	}
 
 	return res, err
