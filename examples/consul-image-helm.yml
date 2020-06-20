@@ -2,7 +2,9 @@ apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
   name: consul
+  namespace: default
 spec:
+  serviceAccountName: default-ns-sa
   fetch:
   - image:
       url: dkalinin/consul-helm

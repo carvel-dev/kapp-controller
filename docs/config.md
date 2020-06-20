@@ -10,6 +10,7 @@ kind: App
 metadata:
   name: simple-app
 spec:
+  serviceAccountName: default
   fetch:
   - git:
       url: https://github.com/k14s/k8s-simple-app-example
