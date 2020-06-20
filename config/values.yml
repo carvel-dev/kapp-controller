@@ -8,4 +8,4 @@ dangerous_enable_pprof: false
 
 push_images: false
 image_cache: true
-image_repo: docker.io/k14s/kapp-controller-test
+image_repo: docker.io/k14stest/kapp-controller-test
