@@ -2,7 +2,9 @@ apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
   name: concourse
+  namespace: default
 spec:
+  serviceAccountName: default-ns-sa
   fetch:
   - helmChart:
       name: stable/concourse
@@ -27,12 +29,12 @@ spec:
   - kapp:
       delete:
         rawOptions: ["--apply-ignored=true"]
-
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: concourse-values
+  namespace: default
 stringData:
   data.yml: |
     concourse:

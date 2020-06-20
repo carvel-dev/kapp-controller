@@ -2,7 +2,9 @@ apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
   name: res-ord
+  namespace: default
 spec:
+  serviceAccountName: default-ns-sa
   fetch:
   - http:
       url: https://github.com/k14s/kapp/archive/master.zip

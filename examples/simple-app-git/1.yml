@@ -2,7 +2,9 @@ apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
   name: simple-app
+  namespace: default
 spec:
+  serviceAccountName: defaut-ns-sa
   fetch:
   - git:
       url: https://github.com/k14s/k8s-simple-app-example

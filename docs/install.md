@@ -10,7 +10,7 @@ or
 $ kubectl apply -f https://github.com/k14s/kapp-controller/releases/download/v0.4.0/release.yml
 ```
 
-**Note**: By default kapp controller allows you to install any piece of Kubernetes configuration, hence `release.yml` includes ClusterRole that allows modification of all resources in the cluster. Limit them appropriately based on your needs.
+**Note**: As of v0.6.0+, kapp-controller requires each App CR to specify a dedicated service account. This enables kapp-controller to be used _securely_ by users with different levels of privelege (namespace admin vs cluster admin) within the same cluster. If you want to configure kapp-controller to allow cluster admin level access for any user of App CR (not recommended!) you can _temporarily_ use `release-dangerous-allow-shared-sa.yml`. We are planning to remove this configuration in next few releases.
 
 ### Advanced
 

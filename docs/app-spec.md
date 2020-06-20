@@ -15,11 +15,11 @@ spec:
   paused: true
 
   # specifies that app should be deployed authenticated via
-  # given service account, found in this namespace (optional)
+  # given service account, found in this namespace (optional; v0.6.0+)
   serviceAccountName: sa-name
 
   # specifies that app should be deployed to destination cluster;
-  # by default, cluster is same as where this resource resides (optional)
+  # by default, cluster is same as where this resource resides (optional; v0.5.0+)
   cluster:
     # specifies namespace in destination cluster (optional)
     namespace: ns2
@@ -180,6 +180,9 @@ status:
       status: "True"
     # "ReconcileFailed" indicates that one of the stages failed
     - type: ReconcileFailed
+      status: "True"
+    # "ReconcileSucceeded" indicates that all stages succeeded
+    - type: ReconcileSucceeded
       status: "True"
 
   fetch:
