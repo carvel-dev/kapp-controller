@@ -18,17 +18,25 @@ func (a *App) fetch(dstPath string) exec.CmdRunResult {
 
 	var result exec.CmdRunResult
 
-	for i, fetch := range a.app.Spec.Fetch {
-		subPath := path.Join(dstPath, strconv.Itoa(i))
-		err := os.Mkdir(subPath, os.FileMode(0700))
+	if len(a.app.Spec.Fetch) == 1 {
+		fetch := a.app.Spec.Fetch[0]
+		err := a.fetchOne(fetch, dstPath)
 		if err != nil {
-			result.AttachErrorf(fmt.Sprintf("Fetching (%d): ", i)+"%s", err)
-			break
+			result.AttachErrorf("Fetching (0): %s", err)
 		}
-		err = a.fetchOne(fetch, subPath)
-		if err != nil {
-			result.AttachErrorf(fmt.Sprintf("Fetching (%d): ", i)+"%s", err)
-			break
+	} else {
+		for i, fetch := range a.app.Spec.Fetch {
+			subPath := path.Join(dstPath, strconv.Itoa(i))
+			err := os.Mkdir(subPath, os.FileMode(0700))
+			if err != nil {
+				result.AttachErrorf(fmt.Sprintf("Fetching (%d): ", i)+"%s", err)
+				break
+			}
+			err = a.fetchOne(fetch, subPath)
+			if err != nil {
+				result.AttachErrorf(fmt.Sprintf("Fetching (%d): ", i)+"%s", err)
+				break
+			}
 		}
 	}
 
