@@ -4,7 +4,7 @@ metadata:
   name: concourse
   namespace: default
 spec:
-  serviceAccountName: default-ns-sa
+  serviceAccountName: cluster-admin-sa
   fetch:
   - helmChart:
       name: stable/concourse
@@ -13,18 +13,35 @@ spec:
       valuesFrom:
       - secretRef:
           name: concourse-values
-  # - ytt:
-  #     #! helm inserts comments before each doc, ignore them
-  #     ignoreUnknownComments: true
-  #     inline:
-  #       paths:
-  #         scale-up.yml: |
-  #           #@ load("@ytt:overlay", "overlay")
-  #           #@ matcher = {"metadata":{"name": "concourse-web"}, "kind":"Deployment"}
-  #           #@overlay/match by=overlay.subset(matcher)
-  #           ---
-  #           spec:
-  #             replicas: 3
+  - ytt:
+      #! helm inserts comments before each doc, ignore them
+      ignoreUnknownComments: true
+      inline:
+        paths:
+          scale-up.yml: |
+            #@ load("@ytt:overlay", "overlay")
+
+            #@overlay/match by=overlay.subset({"kind":"Deployment", "metadata":{"name": "concourse-web"}})
+            ---
+            apiVersion: apps/v1 #! change from extensions/v1beta1 since it's deprecated
+            spec:
+              #@overlay/match expects=0
+              selector:
+                matchLabels:
+                  app: concourse-web
+
+            #@overlay/match by=overlay.subset({"kind":"StatefulSet", "metadata":{"name": "concourse-worker"}})
+            ---
+            apiVersion: apps/v1 #! change from extensions/v1beta1 since it's deprecated
+            spec:
+              #@overlay/match expects=0
+              selector:
+                matchLabels:
+                  app: concourse-worker
+
+            #@overlay/match by=overlay.subset({"kind":"StatefulSet", "metadata":{"name": "concourse-postgresql"}})
+            ---
+            apiVersion: apps/v1 #! change from apps/v1beta2 since it's deprecated
   deploy:
   - kapp:
       delete:

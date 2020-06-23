@@ -14,7 +14,10 @@ spec:
       - secretRef:
           name: redis-values
   deploy:
-  - kapp: {}
+  - kapp:
+      delete:
+        # Force delete PVCs, since StatefulSet does not delete them
+        rawOptions: ["--apply-ignored=true"]
 ---
 apiVersion: v1
 kind: Secret

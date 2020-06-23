@@ -14,15 +14,31 @@ spec:
       ignoreUnknownComments: true
       inline:
         paths:
-          fix-test-pod.yml: |
+          fix.yml: |
             #@ load("@ytt:overlay", "overlay")
-            #@ matcher = {"metadata":{"name": "consul-consul-test"}, "kind":"Pod"}
-            #@overlay/match by=overlay.subset(matcher)
+
+            #@overlay/match by=overlay.subset({"kind":"Pod", "metadata":{"name": "consul-consul-test"}})
+            #@overlay/remove
             ---
-            metadata:
-              #@overlay/match missing_ok=True
-              annotations:
-                #@overlay/match missing_ok=True
-                kapp.k14s.io/update-strategy: fallback-on-replace
+
+            #! mark PVCs as owned by kapp so they will deleted successfully
+            #@overlay/match by=overlay.subset({"kind":"StatefulSet", "metadata":{"name": "consul-consul-server"}})
+            ---
+            spec:
+              volumeClaimTemplates:
+              #@overlay/match by=overlay.subset({"metadata":{"name": "data-default"}})
+              - metadata:
+                  #@overlay/match missing_ok=True
+                  annotations:
+                    #@overlay/match expects=0
+                    kapp.k14s.io/owned-for-deletion: ""
+
+            #! Not sure why there was cluster level resources
+            #@overlay/match by=overlay.subset({"kind": "ClusterRole"}),expects=2
+            #@overlay/remove
+            ---
+            #@overlay/match by=overlay.subset({"kind": "ClusterRoleBinding"}),expects=2
+            #@overlay/remove
+            ---
   deploy:
   - kapp: {}
