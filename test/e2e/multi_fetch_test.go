@@ -12,6 +12,7 @@ func TestMultiFetch(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
+	sas := ServiceAccounts{env.Namespace}
 
 	yaml1 := `
 apiVersion: kappctrl.k14s.io/v1alpha1
@@ -19,6 +20,7 @@ kind: App
 metadata:
   name: test-multi-fetch
 spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
   - inline:
       paths:
@@ -41,10 +43,8 @@ spec:
   template:
   - ytt: {}
   deploy:
-  - kapp:
-      delete:
-        rawOptions: ["--apply-ignored=true"]
-`
+  - kapp: {}
+`+sas.ForNamespaceYAML()
 
 	name := "test-multi-fetch"
 	cleanUp := func() {
