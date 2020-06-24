@@ -100,7 +100,7 @@ data: {}
 
   name := "test-cancel"
   cleanUp := func() {
-    kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
+    kapp.Run([]string{"delete", "-a", name})
   }
 
   cleanUp()
