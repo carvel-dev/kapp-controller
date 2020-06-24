@@ -19,6 +19,8 @@ apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
   name: test-multi-fetch
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
@@ -48,7 +50,7 @@ spec:
 
 	name := "test-multi-fetch"
 	cleanUp := func() {
-		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", name})
 	}
 
 	cleanUp()

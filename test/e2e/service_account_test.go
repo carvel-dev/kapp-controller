@@ -69,7 +69,7 @@ spec:
 
 	name := "test-service-account-not-allowed"
 	cleanUp := func() {
-		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", name})
 	}
 
 	cleanUp()
