@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	goexec "os/exec"
 	"strings"
@@ -32,7 +33,11 @@ func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts GenericOpts, cancelCh chan
 func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 	changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 
-	args := a.addDeployArgs([]string{"deploy", "-f", "-"})
+	args, err := a.addDeployArgs([]string{"deploy", "-f", "-"})
+	if err != nil {
+		return exec.NewCmdRunResultWithErr(err)
+	}
+
 	args, env := a.addGenericArgs(args)
 
 	cmd := goexec.Command("kapp", args...)
@@ -41,7 +46,7 @@ func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 
 	resultBuf, doneTrackingOutputCh := a.trackCmdOutput(cmd, startedApplyingFunc, changedFunc)
 
-	err := exec.RunWithCancel(cmd, a.cancelCh)
+	err = exec.RunWithCancel(cmd, a.cancelCh)
 	close(doneTrackingOutputCh)
 
 	result := resultBuf.Copy()
@@ -51,7 +56,11 @@ func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 }
 
 func (a *Kapp) Delete(startedApplyingFunc func(), changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
-	args := a.addDeleteArgs([]string{"delete"})
+	args, err := a.addDeleteArgs([]string{"delete"})
+	if err != nil {
+		return exec.NewCmdRunResultWithErr(err)
+	}
+
 	args, env := a.addGenericArgs(args)
 
 	cmd := goexec.Command("kapp", args...)
@@ -59,7 +68,7 @@ func (a *Kapp) Delete(startedApplyingFunc func(), changedFunc func(exec.CmdRunRe
 
 	resultBuf, doneTrackingOutputCh := a.trackCmdOutput(cmd, startedApplyingFunc, changedFunc)
 
-	err := exec.RunWithCancel(cmd, a.cancelCh)
+	err = exec.RunWithCancel(cmd, a.cancelCh)
 	close(doneTrackingOutputCh)
 
 	result := resultBuf.Copy()
@@ -69,13 +78,16 @@ func (a *Kapp) Delete(startedApplyingFunc func(), changedFunc func(exec.CmdRunRe
 }
 
 func (a *Kapp) Inspect() exec.CmdRunResult {
-	args := a.addInspectArgs([]string{
+	args, err := a.addInspectArgs([]string{
 		"inspect",
 		// PodMetrics rapidly get/created and removed, hence lets hide them
 		// to avoid resource update churn
 		// TODO is there a better way to deal with this?
 		"--filter", `{"not":{"resource":{"kinds":["PodMetrics"]}}}`,
 	})
+	if err != nil {
+		return exec.NewCmdRunResultWithErr(err)
+	}
 
 	args, env := a.addGenericArgs(args)
 
@@ -86,7 +98,7 @@ func (a *Kapp) Inspect() exec.CmdRunResult {
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
-	err := exec.RunWithCancel(cmd, a.cancelCh)
+	err = exec.RunWithCancel(cmd, a.cancelCh)
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),
@@ -132,17 +144,7 @@ func (a *Kapp) trackCmdOutput(cmd *goexec.Cmd, startedApplyingFunc func(),
 
 func (a *Kapp) managedName() string { return a.genericOpts.Name + "-ctrl" }
 
-var (
-	kappDisallowedOpts = map[string]bool{
-		"--app":                true,
-		"--namespace":          true,
-		"--file":               true,
-		"--kubeconfig":         true,
-		"--kubeconfig-context": true,
-	}
-)
-
-func (a *Kapp) addDeployArgs(args []string) []string {
+func (a *Kapp) addDeployArgs(args []string) ([]string, error) {
 	if len(a.opts.IntoNs) > 0 {
 		args = append(args, []string{"--into-ns", a.opts.IntoNs}...)
 	}
@@ -151,50 +153,36 @@ func (a *Kapp) addDeployArgs(args []string) []string {
 		args = append(args, []string{"--map-ns", val}...)
 	}
 
-	for _, opt := range a.opts.RawOptions {
+	return a.addRawOpts(args, a.opts.RawOptions, kappAllowedDeployFlagSet)
+}
+
+func (a *Kapp) addDeleteArgs(args []string) ([]string, error) {
+	if a.opts.Delete != nil {
+		return a.addRawOpts(args, a.opts.Delete.RawOptions, kappAllowedDeleteFlagSet)
+	}
+	return args, nil
+}
+
+func (a *Kapp) addInspectArgs(args []string) ([]string, error) {
+	if a.opts.Inspect != nil {
+		return a.addRawOpts(args, a.opts.Inspect.RawOptions, kappAllowedInspectFlagSet)
+	}
+	return args, nil
+}
+
+func (a *Kapp) addRawOpts(args []string, opts []string, allowedFlagSet exec.FlagSet) ([]string, error) {
+	for _, opt := range opts {
 		flag, err := exec.NewFlagFromString(opt)
 		if err != nil {
-			continue
+			return nil, err
 		}
-
-		if _, found := kappDisallowedOpts[flag.Name]; !found {
+		if allowedFlagSet.Includes(flag.Name) {
 			args = append(args, opt)
+		} else {
+			return nil, fmt.Errorf("Unexpected flag '%s' specified (either forbidden or unknown)", flag.Name)
 		}
 	}
-
-	return args
-}
-
-func (a *Kapp) addDeleteArgs(args []string) []string {
-	if a.opts.Delete != nil {
-		for _, opt := range a.opts.Delete.RawOptions {
-			flag, err := exec.NewFlagFromString(opt)
-			if err != nil {
-				continue
-			}
-
-			if _, found := kappDisallowedOpts[flag.Name]; !found {
-				args = append(args, opt)
-			}
-		}
-	}
-	return args
-}
-
-func (a *Kapp) addInspectArgs(args []string) []string {
-	if a.opts.Inspect != nil {
-		for _, opt := range a.opts.Inspect.RawOptions {
-			flag, err := exec.NewFlagFromString(opt)
-			if err != nil {
-				continue
-			}
-
-			if _, found := kappDisallowedOpts[flag.Name]; !found {
-				args = append(args, opt)
-			}
-		}
-	}
-	return args
+	return args, nil
 }
 
 func (a *Kapp) addGenericArgs(args []string) ([]string, []string) {
