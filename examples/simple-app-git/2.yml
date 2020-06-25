@@ -8,7 +8,7 @@ spec:
   fetch:
   - git:
       url: https://github.com/k14s/k8s-simple-app-example
-      ref: origin/master
+      ref: origin/develop
       subPath: config-step-2-template
   template:
   - ytt:

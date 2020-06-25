@@ -31,7 +31,7 @@ spec:
   fetch:
   - git:
       url: https://github.com/k14s/kapp
-      ref: origin/master
+      ref: origin/develop
       subPath: examples/gitops/guestbook
   template:
   - ytt: {}
