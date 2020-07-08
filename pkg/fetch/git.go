@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -80,9 +81,23 @@ func (t *Git) Retrieve(dstPath string) error {
 		env = append(env, "GIT_LFS_SKIP_SMUDGE=1")
 	}
 
+	gitUrl := t.opts.URL
+
+	if authOpts.Username != nil && authOpts.Password != nil {
+		if !strings.HasPrefix(gitUrl, "https://") {
+			return fmt.Errorf("username/password authentication is only supported for https remotes")
+		}
+		parsedUrl, err := url.Parse(gitUrl)
+		if err != nil {
+			return fmt.Errorf("could not parse git remote url: %w", err)
+		}
+		parsedUrl.User = url.UserPassword(*authOpts.Username, *authOpts.Password)
+		gitUrl = parsedUrl.String()
+	}
+
 	argss := [][]string{
 		{"init"},
-		{"remote", "add", "origin", t.opts.URL},
+		{"remote", "add", "origin", gitUrl},
 		{"fetch", "origin"}, // TODO shallow clones?
 		{"checkout", t.opts.Ref, "--recurse-submodules", "."},
 	}
@@ -108,6 +123,8 @@ func (t *Git) Retrieve(dstPath string) error {
 type gitAuthOpts struct {
 	PrivateKey *string
 	KnownHosts *string
+	Username   *string
+	Password   *string
 }
 
 func (t *Git) getAuthOpts() (gitAuthOpts, error) {
@@ -127,6 +144,12 @@ func (t *Git) getAuthOpts() (gitAuthOpts, error) {
 			case "ssh-knownhosts":
 				hosts := string(val)
 				opts.KnownHosts = &hosts
+			case "username":
+				username := string(val)
+				opts.Username = &username
+			case "password":
+				password := string(val)
+				opts.Password = &password
 			default:
 				return opts, fmt.Errorf("Unknown secret field '%s' in secret '%s'", name, secret.Name)
 			}
