@@ -115,7 +115,7 @@ func main() {
 	}
 
 	if enablePprof {
-		entryLog.Info("DANGEROUS in production setting -- pprof running on %s", pprofListenAddr)
+		entryLog.Info("DANGEROUS in production setting -- pprof running", "listen-addr", pprofListenAddr)
 		go func() {
 			entryLog.Error(http.ListenAndServe(pprofListenAddr, nil), "serving pprof")
 		}()
