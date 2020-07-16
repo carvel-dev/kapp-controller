@@ -40,19 +40,19 @@ func (t *Git) Retrieve(dstPath string) error {
 		return err
 	}
 
-	sshAuthDir := memdir.NewTmpDir("fetch-git")
+	authDir := memdir.NewTmpDir("fetch-git")
 
-	err = sshAuthDir.Create()
+	err = authDir.Create()
 	if err != nil {
 		return err
 	}
 
-	defer sshAuthDir.Remove()
+	defer authDir.Remove()
 
 	sshCmd := []string{"-o", "ServerAliveInterval=30", "-o", "ForwardAgent=no", "-F", "/dev/null"}
 
 	if authOpts.PrivateKey != nil {
-		path := filepath.Join(sshAuthDir.Path(), "private-key")
+		path := filepath.Join(authDir.Path(), "private-key")
 
 		err = ioutil.WriteFile(path, []byte(*authOpts.PrivateKey), 0600)
 		if err != nil {
@@ -63,7 +63,7 @@ func (t *Git) Retrieve(dstPath string) error {
 	}
 
 	if authOpts.KnownHosts != nil {
-		path := filepath.Join(sshAuthDir.Path(), "known-hosts")
+		path := filepath.Join(authDir.Path(), "known-hosts")
 
 		err = ioutil.WriteFile(path, []byte(*authOpts.KnownHosts), 0600)
 		if err != nil {
@@ -83,6 +83,7 @@ func (t *Git) Retrieve(dstPath string) error {
 
 	gitUrl := t.opts.URL
 
+	gitCredentialsPath := filepath.Join(authDir.Path(), ".git-credentials")
 	if authOpts.Username != nil && authOpts.Password != nil {
 		if !strings.HasPrefix(gitUrl, "https://") {
 			return fmt.Errorf("username/password authentication is only supported for https remotes")
@@ -92,11 +93,17 @@ func (t *Git) Retrieve(dstPath string) error {
 			return fmt.Errorf("could not parse git remote url: %w", err)
 		}
 		parsedUrl.User = url.UserPassword(*authOpts.Username, *authOpts.Password)
-		gitUrl = parsedUrl.String()
+		parsedUrl.Path = ""
+
+		err = ioutil.WriteFile(gitCredentialsPath, []byte(parsedUrl.String()+"\n"), 0600)
+		if err != nil {
+			return fmt.Errorf("writing .git-credentials: %s", err)
+		}
 	}
 
 	argss := [][]string{
 		{"init"},
+		{"config", "credential.helper", "store --file " + gitCredentialsPath},
 		{"remote", "add", "origin", gitUrl},
 		{"fetch", "origin"}, // TODO shallow clones?
 		{"checkout", t.opts.Ref, "--recurse-submodules", "."},
