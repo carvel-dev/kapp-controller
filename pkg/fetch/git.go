@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,19 +40,19 @@ func (t *Git) Retrieve(dstPath string) error {
 		return err
 	}
 
-	sshAuthDir := memdir.NewTmpDir("fetch-git")
+	authDir := memdir.NewTmpDir("fetch-git")
 
-	err = sshAuthDir.Create()
+	err = authDir.Create()
 	if err != nil {
 		return err
 	}
 
-	defer sshAuthDir.Remove()
+	defer authDir.Remove()
 
 	sshCmd := []string{"-o", "ServerAliveInterval=30", "-o", "ForwardAgent=no", "-F", "/dev/null"}
 
 	if authOpts.PrivateKey != nil {
-		path := filepath.Join(sshAuthDir.Path(), "private-key")
+		path := filepath.Join(authDir.Path(), "private-key")
 
 		err = ioutil.WriteFile(path, []byte(*authOpts.PrivateKey), 0600)
 		if err != nil {
@@ -62,7 +63,7 @@ func (t *Git) Retrieve(dstPath string) error {
 	}
 
 	if authOpts.KnownHosts != nil {
-		path := filepath.Join(sshAuthDir.Path(), "known-hosts")
+		path := filepath.Join(authDir.Path(), "known-hosts")
 
 		err = ioutil.WriteFile(path, []byte(*authOpts.KnownHosts), 0600)
 		if err != nil {
@@ -80,9 +81,30 @@ func (t *Git) Retrieve(dstPath string) error {
 		env = append(env, "GIT_LFS_SKIP_SMUDGE=1")
 	}
 
+	gitUrl := t.opts.URL
+
+	gitCredentialsPath := filepath.Join(authDir.Path(), ".git-credentials")
+	if authOpts.Username != nil && authOpts.Password != nil {
+		if !strings.HasPrefix(gitUrl, "https://") {
+			return fmt.Errorf("username/password authentication is only supported for https remotes")
+		}
+		parsedUrl, err := url.Parse(gitUrl)
+		if err != nil {
+			return fmt.Errorf("could not parse git remote url: %w", err)
+		}
+		parsedUrl.User = url.UserPassword(*authOpts.Username, *authOpts.Password)
+		parsedUrl.Path = ""
+
+		err = ioutil.WriteFile(gitCredentialsPath, []byte(parsedUrl.String()+"\n"), 0600)
+		if err != nil {
+			return fmt.Errorf("writing .git-credentials: %s", err)
+		}
+	}
+
 	argss := [][]string{
 		{"init"},
-		{"remote", "add", "origin", t.opts.URL},
+		{"config", "credential.helper", "store --file " + gitCredentialsPath},
+		{"remote", "add", "origin", gitUrl},
 		{"fetch", "origin"}, // TODO shallow clones?
 		{"checkout", t.opts.Ref, "--recurse-submodules", "."},
 	}
@@ -108,6 +130,8 @@ func (t *Git) Retrieve(dstPath string) error {
 type gitAuthOpts struct {
 	PrivateKey *string
 	KnownHosts *string
+	Username   *string
+	Password   *string
 }
 
 func (t *Git) getAuthOpts() (gitAuthOpts, error) {
@@ -127,6 +151,12 @@ func (t *Git) getAuthOpts() (gitAuthOpts, error) {
 			case "ssh-knownhosts":
 				hosts := string(val)
 				opts.KnownHosts = &hosts
+			case "username":
+				username := string(val)
+				opts.Username = &username
+			case "password":
+				password := string(val)
+				opts.Password = &password
 			default:
 				return opts, fmt.Errorf("Unknown secret field '%s' in secret '%s'", name, secret.Name)
 			}
