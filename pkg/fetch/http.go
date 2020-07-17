@@ -56,8 +56,8 @@ func (t *HTTP) Retrieve(dstPath string) error {
 	}
 
 	for _, f := range contentExtractorFuncs {
-		ok, err := f(tmpFile.Name(), dstPath)
-		if ok {
+		final, err := f(tmpFile.Name(), dstPath)
+		if final {
 			return err
 		}
 	}
@@ -181,7 +181,7 @@ func (t *HTTP) tryTarWithGzip(path, dstPath string, gzipped bool) (bool, error) 
 	}
 
 	tarReader := tar.NewReader(fileReader)
-	firstFile := true
+	readEntries := false
 
 	for {
 		header, err := tarReader.Next()
@@ -189,10 +189,10 @@ func (t *HTTP) tryTarWithGzip(path, dstPath string, gzipped bool) (bool, error) 
 			if err == io.EOF {
 				break
 			}
-			return firstFile, fmt.Errorf("Reading next tar header: %s", err)
+			return readEntries, fmt.Errorf("Reading next tar header: %s", err)
 		}
 
-		firstFile = false
+		readEntries = true
 
 		switch header.Typeflag {
 		case tar.TypeDir:
@@ -226,17 +226,15 @@ func (t *HTTP) tryPlain(path, dstPath string) error {
 		fileName = "content"
 	}
 
-	dstFilePath, err := memdir.ScopedPath(dstPath, fileName)
+	srcFile, err := os.Open(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("Opening file %s: %s", path, err)
 	}
 
-	err = os.Rename(path, dstFilePath)
-	if err != nil {
-		return fmt.Errorf("Moving downloaded file to final destination")
-	}
+	defer srcFile.Close()
 
-	return nil
+	// Cannot just move since it may be on a different device
+	return t.writeIntoFile(srcFile, dstPath, fileName)
 }
 
 func (t *HTTP) writeIntoFile(srcFile io.Reader, dstPath, additionalPath string) error {
