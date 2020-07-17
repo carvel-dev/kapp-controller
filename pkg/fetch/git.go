@@ -82,28 +82,30 @@ func (t *Git) Retrieve(dstPath string) error {
 	}
 
 	gitUrl := t.opts.URL
+	gitCredsPath := filepath.Join(authDir.Path(), ".git-credentials")
 
-	gitCredentialsPath := filepath.Join(authDir.Path(), ".git-credentials")
 	if authOpts.Username != nil && authOpts.Password != nil {
 		if !strings.HasPrefix(gitUrl, "https://") {
-			return fmt.Errorf("username/password authentication is only supported for https remotes")
+			return fmt.Errorf("Username/password authentication is only supported for https remotes")
 		}
-		parsedUrl, err := url.Parse(gitUrl)
-		if err != nil {
-			return fmt.Errorf("could not parse git remote url: %w", err)
-		}
-		parsedUrl.User = url.UserPassword(*authOpts.Username, *authOpts.Password)
-		parsedUrl.Path = ""
 
-		err = ioutil.WriteFile(gitCredentialsPath, []byte(parsedUrl.String()+"\n"), 0600)
+		gitCredsUrl, err := url.Parse(gitUrl)
 		if err != nil {
-			return fmt.Errorf("writing .git-credentials: %s", err)
+			return fmt.Errorf("Parsing git remote url: %s", err)
+		}
+
+		gitCredsUrl.User = url.UserPassword(*authOpts.Username, *authOpts.Password)
+		gitCredsUrl.Path = ""
+
+		err = ioutil.WriteFile(gitCredsPath, []byte(gitCredsUrl.String()+"\n"), 0600)
+		if err != nil {
+			return fmt.Errorf("Writing %s: %s", gitCredsPath, err)
 		}
 	}
 
 	argss := [][]string{
 		{"init"},
-		{"config", "credential.helper", "store --file " + gitCredentialsPath},
+		{"config", "credential.helper", "store --file " + gitCredsPath},
 		{"remote", "add", "origin", gitUrl},
 		{"fetch", "origin"}, // TODO shallow clones?
 		{"checkout", t.opts.Ref, "--recurse-submodules", "."},
