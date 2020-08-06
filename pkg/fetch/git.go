@@ -49,7 +49,7 @@ func (t *Git) Retrieve(dstPath string) error {
 
 	defer authDir.Remove()
 
-	sshCmd := []string{"-o", "ServerAliveInterval=30", "-o", "ForwardAgent=no", "-F", "/dev/null"}
+	sshCmd := []string{"ssh", "-o", "ServerAliveInterval=30", "-o", "ForwardAgent=no", "-F", "/dev/null"}
 
 	if authOpts.PrivateKey != nil {
 		path := filepath.Join(authDir.Path(), "private-key")
