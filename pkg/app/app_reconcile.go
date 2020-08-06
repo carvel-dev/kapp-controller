@@ -265,8 +265,12 @@ func (a *App) requeueIfNecessary() reconcile.Result {
 func (a *App) shouldReconcile(timeAt time.Time) bool {
 	const (
 		tooLongAfterFailure = 3 * time.Second
-		tooLongAfterSuccess = 30 * time.Second
 	)
+
+	tooLongAfterSuccess := 30 * time.Second
+	if sp := a.app.Spec.SyncPeriod; sp != nil {
+		tooLongAfterSuccess = sp.Duration
+	}
 
 	// Did resource spec change?
 	if a.app.Status.ObservedGeneration != a.app.Generation {

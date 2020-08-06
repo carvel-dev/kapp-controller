@@ -18,6 +18,10 @@ spec:
   # given service account, found in this namespace (optional; v0.6.0+)
   serviceAccountName: sa-name
 
+  # specifies the length of time to wait, in time + unit
+  # format, before reconciling (optional; default=30s)
+  syncPeriod: 1m
+
   # specifies that app should be deployed to destination cluster;
   # by default, cluster is same as where this resource resides (optional; v0.5.0+)
   cluster:

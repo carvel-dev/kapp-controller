@@ -43,6 +43,8 @@ type AppSpec struct {
 	Paused bool `json:"paused,omitempty"`
 	// Canceled when set to true will stop all active changes
 	Canceled bool `json:"canceled,omitempty"`
+	// Controls frequency of app reconciliation
+	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
 }
 
 type AppCluster struct {
