@@ -5,6 +5,7 @@ RUN apt-get -y update && apt-get install -y ca-certificates && update-ca-certifi
 
 # k14s
 RUN bash -c "wget -O- https://k14s.io/install.sh | bash"
+RUN ytt version && kapp version && kbld version && imgpkg version && vendir version
 
 # helm
 RUN wget -O- https://get.helm.sh/helm-v2.14.3-linux-amd64.tar.gz > /helm && \
