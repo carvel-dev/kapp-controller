@@ -262,6 +262,8 @@ func (a *App) syncPeriod() time.Duration {
 func (a *App) requeueIfNecessary() reconcile.Result {
 	var (
 		shortDelay = 4 * time.Second
+		// Must always be >= tooLongAfterSuccess so that we dont requeue
+		// without work to do
 		// replace last 5 seconds with int from range [5,10]
 		longerDelay = a.syncPeriod() - 5 + wait.Jitter(5*time.Second, 1.0)
 	)
