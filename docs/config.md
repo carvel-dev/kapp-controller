@@ -54,6 +54,29 @@ spec:
   # ...
 ```
 
+Note, following sections describes contents of Secret resources referenced by various fetch strategies. kapp-controller does not check for `type` value of Secret resource.
+
+#### `git` authentication
+
+Allowed secret keys:
+
+- `ssh-privatekey`: PEM-encoded key that will be provided to SSH
+- `ssh-knownhosts`: Optional, set of known hosts allowed to connect (if not specified, all hosts are allowed)
+- `username` and `password`: Alternative to private key authentication
+
+#### `http` authentication
+
+Allowed secret keys:
+
+- `username` and `password`
+
+#### `helmChart` authentication
+
+Allowed secret keys:
+
+- `username` and `password`
+
+---
 ### spec.template
 
 Transform set of files.
