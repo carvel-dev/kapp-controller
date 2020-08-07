@@ -122,6 +122,7 @@ spec:
   # ...
 ```
 
+---
 ### spec.deploy
 
 Deploys resources.
