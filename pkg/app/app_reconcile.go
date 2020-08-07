@@ -251,11 +251,21 @@ func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
 	}
 }
 
+func (a *App) syncPeriod() time.Duration {
+	const DefaultSyncPeriod = 30 * time.Second
+	if sp := a.app.Spec.SyncPeriod; sp != nil && sp.Duration > DefaultSyncPeriod {
+		return sp.Duration
+	}
+	return DefaultSyncPeriod
+}
+
 func (a *App) requeueIfNecessary() reconcile.Result {
 	var (
-		shortDelay  = 4 * time.Second
-		longerDelay = 25*time.Second + wait.Jitter(5*time.Second, 1.0)
+		shortDelay = 4 * time.Second
+		// replace last 5 seconds with int from range [5,10]
+		longerDelay = a.syncPeriod() - 5 + wait.Jitter(5*time.Second, 1.0)
 	)
+
 	if a.shouldReconcile(time.Now().Add(shortDelay)) {
 		return reconcile.Result{RequeueAfter: shortDelay}
 	}
@@ -266,11 +276,7 @@ func (a *App) shouldReconcile(timeAt time.Time) bool {
 	const (
 		tooLongAfterFailure = 3 * time.Second
 	)
-
-	tooLongAfterSuccess := 30 * time.Second
-	if sp := a.app.Spec.SyncPeriod; sp != nil {
-		tooLongAfterSuccess = sp.Duration
-	}
+	tooLongAfterSuccess := a.syncPeriod()
 
 	// Did resource spec change?
 	if a.app.Status.ObservedGeneration != a.app.Generation {

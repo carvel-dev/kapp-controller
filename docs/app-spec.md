@@ -19,7 +19,8 @@ spec:
   serviceAccountName: sa-name
 
   # specifies the length of time to wait, in time + unit
-  # format, before reconciling (optional; default=30s)
+  # format, before reconciling. Always >= 30s. If value below
+  # 30s is specified, 30s will be used. (optional; default=30s)
   syncPeriod: 1m
 
   # specifies that app should be deployed to destination cluster;
