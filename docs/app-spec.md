@@ -14,13 +14,16 @@ spec:
   # currently running reconciliation (optional; default=false)
   paused: true
 
+  # cancels current and future reconciliations (optional; default=false)
+  canceled: true
+
   # specifies that app should be deployed authenticated via
   # given service account, found in this namespace (optional; v0.6.0+)
   serviceAccountName: sa-name
 
   # specifies the length of time to wait, in time + unit
   # format, before reconciling. Always >= 30s. If value below
-  # 30s is specified, 30s will be used. (optional; default=30s)
+  # 30s is specified, 30s will be used. (optional; v0.9.0+; default=30s)
   syncPeriod: 1m
 
   # specifies that app should be deployed to destination cluster;
