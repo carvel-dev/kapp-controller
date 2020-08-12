@@ -27,6 +27,8 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 			template = a.templateFactory.NewKbld(*tpl.Kbld, genericOpts)
 		case tpl.HelmTemplate != nil:
 			template = a.templateFactory.NewHelmTemplate(*tpl.HelmTemplate, genericOpts)
+		case tpl.Command != nil:
+			template = a.templateFactory.NewCommand(*tpl.Command, genericOpts)
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to template"))
 			break

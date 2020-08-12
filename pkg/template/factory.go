@@ -23,6 +23,10 @@ func (f Factory) NewKbld(opts v1alpha1.AppTemplateKbld, genericOpts GenericOpts)
 	return NewKbld(opts, genericOpts)
 }
 
+func (f Factory) NewCommand(opts v1alpha1.AppTemplateCommand, genericOpts GenericOpts) *Command {
+	return NewCommand(opts, genericOpts)
+}
+
 func (f Factory) NewHelmTemplate(
 	opts v1alpha1.AppTemplateHelmTemplate, genericOpts GenericOpts) *HelmTemplate {
 	return NewHelmTemplate(opts, genericOpts, f.coreClient)

@@ -10,6 +10,7 @@ type AppTemplate struct {
 	HelmTemplate *AppTemplateHelmTemplate `json:"helmTemplate,omitempty"`
 	Kustomize    *AppTemplateKustomize    `json:"kustomize,omitempty"`
 	Jsonnet      *AppTemplateJsonnet      `json:"jsonnet,omitempty"`
+	Command      *AppTemplateCommand      `json:"command,omitempty"`
 }
 
 type AppTemplateYtt struct {
@@ -20,6 +21,13 @@ type AppTemplateYtt struct {
 }
 
 type AppTemplateKbld struct{}
+
+type AppTemplateCommand struct {
+	Cmd        string   `json:"cmd,omitempty"`
+	Match      string   `json:"match,omitempty"`
+	Args       []string `json:"args,omitempty"`
+	MergeFiles bool     `json:"mergeFiles,omitempty"`
+}
 
 type AppTemplateHelmTemplate struct {
 	ValuesFrom []AppTemplateHelmTemplateValuesSource `json:"valuesFrom,omitempty"`
