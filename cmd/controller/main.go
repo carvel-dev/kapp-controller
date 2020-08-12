@@ -1,3 +1,8 @@
+/*
+ * Copyright 2020 VMware, Inc.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package main
 
 // Based on https://github.com/kubernetes-sigs/controller-runtime/blob/8f633b179e1c704a6e40440b528252f147a3362a/examples/builtins/main.go
