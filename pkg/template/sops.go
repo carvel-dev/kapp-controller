@@ -11,12 +11,12 @@ import (
 	"github.com/k14s/kapp-controller/pkg/exec"
 )
 
-type Command struct {
-	opts        v1alpha1.AppTemplateCommand
+type Sops struct {
+	opts        v1alpha1.AppTemplateSops
 	genericOpts GenericOpts
 }
 
-var _ Template = &Command{}
+var _ Template = &Sops{}
 
 func walkMatch(root, pattern string) ([]string, error) {
 	var matches []string
@@ -40,12 +40,12 @@ func walkMatch(root, pattern string) ([]string, error) {
 	return matches, nil
 }
 
-func NewCommand(opts v1alpha1.AppTemplateCommand, genericOpts GenericOpts) *Command {
+func NewSops(opts v1alpha1.AppTemplateSops, genericOpts GenericOpts) *Sops {
 
-	return &Command{opts, genericOpts}
+	return &Sops{opts, genericOpts}
 }
 
-func (t *Command) TemplateDir(dirPath string) exec.CmdRunResult {
+func (t *Sops) TemplateDir(dirPath string) exec.CmdRunResult {
 
 	files, err := walkMatch(dirPath, t.opts.Match)
 	result := exec.CmdRunResult{}
@@ -86,15 +86,16 @@ func (t *Command) TemplateDir(dirPath string) exec.CmdRunResult {
 	return result
 }
 
-func (t *Command) TemplateStream(input io.Reader) exec.CmdRunResult {
+func (t *Sops) TemplateStream(input io.Reader) exec.CmdRunResult {
 	return t.template(input)
 }
 
-func (t *Command) template(input io.Reader) exec.CmdRunResult {
+func (t *Sops) template(input io.Reader) exec.CmdRunResult {
 
 	var stdoutBs, stderrBs bytes.Buffer
 
-	cmd := goexec.Command(t.opts.Cmd, t.opts.Args...)
+	args := t.addArgs(t.opts.Args)
+	cmd := goexec.Command("sops", args...)
 	cmd.Stdin = input
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
@@ -110,6 +111,7 @@ func (t *Command) template(input io.Reader) exec.CmdRunResult {
 	return result
 }
 
-func (t *Command) addArgs(args []string) []string {
+func (t *Sops) addArgs(args []string) []string {
+	args = append(args, "-d", "/dev/stdin")
 	return args
 }

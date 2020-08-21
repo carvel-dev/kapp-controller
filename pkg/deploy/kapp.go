@@ -27,7 +27,7 @@ type Kapp struct {
 var _ Deploy = &Kapp{}
 
 func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts GenericOpts, cancelCh chan struct{}) *Kapp {
-	return &Kapp{opts, genericOpts, cancelCh}
+atu	return &Kapp{opts, genericOpts, cancelCh}
 }
 
 func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
