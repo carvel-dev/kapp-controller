@@ -115,7 +115,7 @@ spec:
         # ignores comments that ytt doesn't recognize
         # (optional; default=false)
         ignoreUnknownComments: true
-        # forces strict mode https://github.com/k14s/ytt/blob/master/docs/strict.md
+        # forces strict mode https://github.com/k14s/ytt/blob/develop/docs/strict.md
         # (optional; default=false)
         strict: true
         # specify additional files, including data values (optional)
