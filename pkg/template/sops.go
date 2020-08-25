@@ -74,7 +74,7 @@ func (t *Sops) TemplateDir(dirPath string) exec.CmdRunResult {
 		for _, r := range readers {
 
 			templateResult := t.template(r)
-			result.Stdout = result.Stdout + "\n" + templateResult.Stdout
+			result.Stdout = result.Stdout + "--- \n" + templateResult.Stdout
 			result.Stderr = result.Stderr + "\n" + templateResult.Stderr
 
 		}
