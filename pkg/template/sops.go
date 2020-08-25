@@ -6,6 +6,7 @@ import (
 	"os"
 	goexec "os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/k14s/kapp-controller/pkg/exec"
@@ -94,7 +95,7 @@ func (t *Sops) template(input io.Reader) exec.CmdRunResult {
 
 	var stdoutBs, stderrBs bytes.Buffer
 
-	args := t.addArgs(t.opts.Args)
+	args := t.addArgs(*t.opts.Args)
 	cmd := goexec.Command("sops", args...)
 	cmd.Stdin = input
 	cmd.Stdout = &stdoutBs
@@ -111,7 +112,27 @@ func (t *Sops) template(input io.Reader) exec.CmdRunResult {
 	return result
 }
 
-func (t *Sops) addArgs(args []string) []string {
-	args = append(args, "-d", "/dev/stdin")
+func (t *Sops) addArgs(inputArgs v1alpha1.AppTemplateSopsArgs) []string {
+	var args = []string{}
+
+	if inputArgs.IgnoreMac {
+		args = append(args, "--ignore-mac")
+	}
+	if len(inputArgs.PGP) > 0 {
+		args = append(args, "--pgp", strings.Join(inputArgs.PGP, ","))
+	}
+	if len(inputArgs.AWSProifle) > 0 {
+		args = append(args, "--aws-profile", inputArgs.AWSProifle)
+	}
+	if len(inputArgs.KMSKeys) > 0 {
+		args = append(args, "--kms", strings.Join(inputArgs.KMSKeys, ","))
+	}
+	if len(inputArgs.GCPKms) > 0 {
+		args = append(args, "--gcp-kms", strings.Join(inputArgs.GCPKms, ","))
+	}
+	if len(inputArgs.AzureKV) > 0 {
+		args = append(args, "--azure-kv", strings.Join(inputArgs.AzureKV, ","))
+	}
+	args = append(args, "--input-type=yaml", "--output-type=yaml", "-d", "/dev/stdin")
 	return args
 }
