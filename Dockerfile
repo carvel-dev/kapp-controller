@@ -8,8 +8,8 @@ RUN wget -O- https://github.com/k14s/ytt/releases/download/v0.30.0/ytt-linux-amd
   echo "456e58c70aef5cd4946d29ed106c2b2acbb4d0d5e99129e526ecb4a859a36145  /usr/local/bin/ytt" | shasum -c - && \
   chmod +x /usr/local/bin/ytt && ytt version
 
-RUN wget -O- https://github.com/k14s/kapp/releases/download/v0.33.0/kapp-linux-amd64 > /usr/local/bin/kapp && \
-  echo "2a3328c9eca9f43fe639afb524501d9d119feeea52c8a913639cfb96e38e93d1  /usr/local/bin/kapp" | shasum -c - && \
+RUN wget -O- https://github.com/k14s/kapp/releases/download/v0.34.0/kapp-linux-amd64 > /usr/local/bin/kapp && \
+  echo "e170193c40ff5dff9f9274c25048de1f50e23c69e8406df274fbb416d5862d7f  /usr/local/bin/kapp" | shasum -c - && \
   chmod +x /usr/local/bin/kapp && kapp version
 
 RUN wget -O- https://github.com/k14s/kbld/releases/download/v0.24.0/kbld-linux-amd64 > /usr/local/bin/kbld && \
