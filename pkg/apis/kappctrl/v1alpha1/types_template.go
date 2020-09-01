@@ -22,19 +22,13 @@ type AppTemplateYtt struct {
 
 type AppTemplateKbld struct{}
 
-type AppTemplateSopsArgs struct {
+type AppTemplateSops struct {
 	KMSKeys    []string `json:"kmsKeys,omitempty"`
 	GCPKms     []string `json:"gcpKms,omitempty"`
 	AzureKV    []string `json:"azureKV,omitempty"`
 	PGP        []string `json:"pgp,omitempty"`
 	AWSProifle string   `json:"awsProfile,omitempty"`
 	IgnoreMac  bool     `json:"ignoreMac,omitempty"`
-}
-
-type AppTemplateSops struct {
-	Match      string               `json:"match,omitempty"`
-	MergeFiles bool                 `json:"mergeFiles,omitempty"`
-	Args       *AppTemplateSopsArgs `json:"args,omitempty"`
 }
 
 type AppTemplateHelmTemplate struct {

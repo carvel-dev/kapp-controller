@@ -11,10 +11,7 @@ spec:
         url: arttii/dummydeploy
   template:
   - sops: 
-      args:
-        pgp:
+      pgp:
         - '0F2D7BFF3ACF1384D554037CC27F860A17CBB93B'
-      mergeFiles: false
-      match: "*.yaml"
   deploy:
   - kapp: {}

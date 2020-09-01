@@ -2,7 +2,9 @@ package template
 
 import (
 	"bytes"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	goexec "os/exec"
 	"path/filepath"
@@ -48,7 +50,7 @@ func NewSops(opts v1alpha1.AppTemplateSops, genericOpts GenericOpts) *Sops {
 
 func (t *Sops) TemplateDir(dirPath string) exec.CmdRunResult {
 
-	files, err := walkMatch(dirPath, t.opts.Match)
+	files, err := walkMatch(dirPath, "*")
 	result := exec.CmdRunResult{}
 
 	if err != nil {
@@ -57,62 +59,53 @@ func (t *Sops) TemplateDir(dirPath string) exec.CmdRunResult {
 		return result
 	}
 
-	readers := make([]io.Reader, len(files))
+	for _, file := range files {
 
-	for i, f := range files {
-
-		file, err := os.Open(f) // just pass the file name
+		templateResult := t.template(file)
+		content, err := ioutil.ReadFile(file) // just pass the file name
 		if err != nil {
 			result.AttachErrorf("Templating dir: %s", err)
 			return result
 		}
 
-		readers[i] = file
+		result.Stdout = fmt.Sprintf("%s\n---\n%s", result.Stdout, content)
+		result.Stderr = fmt.Sprintf("%s \n file: %s \n %s", result.Stderr, file, templateResult.Stderr)
 
-	}
-	if t.opts.MergeFiles == false {
-		for _, r := range readers {
-
-			templateResult := t.template(r)
-			result.Stdout = result.Stdout + "--- \n" + templateResult.Stdout
-			result.Stderr = result.Stderr + "\n" + templateResult.Stderr
-
-		}
-	} else {
-		r := io.MultiReader(readers...)
-
-		result = t.template(r)
 	}
 
 	return result
 }
 
-func (t *Sops) TemplateStream(input io.Reader) exec.CmdRunResult {
-	return t.template(input)
+func (t *Sops) TemplateStream(_ io.Reader) exec.CmdRunResult {
+	return exec.NewCmdRunResultWithErr(fmt.Errorf("Templating data is not supported"))
 }
 
-func (t *Sops) template(input io.Reader) exec.CmdRunResult {
+func (t *Sops) template(input string) exec.CmdRunResult {
 
 	var stdoutBs, stderrBs bytes.Buffer
 
-	args := t.addArgs(*t.opts.Args)
+	args := t.addArgs(input, t.opts)
 	cmd := goexec.Command("sops", args...)
-	cmd.Stdin = input
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
 	err := cmd.Run()
 
+	errStr := stderrBs.String()
+	if strings.Contains(errStr, "sops metadata not found") {
+		errStr = ""
+	}
+
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),
-		Stderr: stderrBs.String(),
+		Stderr: errStr,
 	}
 	result.AttachErrorf("Templating dir: %s", err)
 
 	return result
 }
 
-func (t *Sops) addArgs(inputArgs v1alpha1.AppTemplateSopsArgs) []string {
+func (t *Sops) addArgs(inputFile string, inputArgs v1alpha1.AppTemplateSops) []string {
 	var args = []string{}
 
 	if inputArgs.IgnoreMac {
@@ -133,6 +126,6 @@ func (t *Sops) addArgs(inputArgs v1alpha1.AppTemplateSopsArgs) []string {
 	if len(inputArgs.AzureKV) > 0 {
 		args = append(args, "--azure-kv", strings.Join(inputArgs.AzureKV, ","))
 	}
-	args = append(args, "--input-type=yaml", "--output-type=yaml", "-d", "/dev/stdin")
+	args = append(args, "--input-type=yaml", "--output-type=yaml", "-d", "-i", inputFile)
 	return args
 }
