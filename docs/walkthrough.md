@@ -6,7 +6,8 @@ You can use `kubectl` (or another tool) to deploy the YAML examples below. We've
 
 - Start by [installing](install.md) kapp-controller onto your cluster
 
-- Install [examples/default-ns-rbac.yml](https://github.com/k14s/kapp-controller/blob/develop/examples/rbac/default-ns.yml). It creates `default-ns-sa` service account that allows to change any resource within `default` namespace. This will be used by App CR below.
+- Install [examples/default-ns-rbac.yml](https://github.com/k14s/kapp-controller/blob/develop/examples/rbac/default-ns.yml). It creates `default-ns-sa` service account that allows to change any
+  resource within the `default` namespace. This will be used by App CR below.
 
 ```bash
 $ kapp deploy -a default-ns-rbac -f https://github.com/k14s/kapp-controller/blob/develop/examples/rbac/default-ns.yml
@@ -15,8 +16,8 @@ $ kapp deploy -a default-ns-rbac -f https://github.com/k14s/kapp-controller/blob
 - Install [examples/simple-app-git/1.yml](https://github.com/k14s/kapp-controller/blob/develop/examples/simple-app-git/1.yml) App CR. It specifies how to fetch, template, and deploy our example application.
 
 ```bash
-$ kapp deploy -a simple-app -f https://raw.githubusercontent.com/k14s/kapp-controller/master/examples/simple-app-git/1.yml
-# or... kubectl apply -f https://raw.githubusercontent.com/k14s/kapp-controller/master/examples/simple-app-git/1.yml
+$ kapp deploy -a simple-app -f https://raw.githubusercontent.com/k14s/kapp-controller/develop/examples/simple-app-git/1.yml
+# or... kubectl apply -f https://raw.githubusercontent.com/k14s/kapp-controller/develop/examples/simple-app-git/1.yml
 
 Changes
 
@@ -114,8 +115,8 @@ Succeeded
 - Update simple-app App CR to reconfigure simple-app. In this example we are changing data values for ytt templates.
 
 ```bash
-$ kapp deploy -a simple-app -f https://raw.githubusercontent.com/k14s/kapp-controller/master/examples/simple-app-git/2.yml -c
-# or... kubectl apply -f https://raw.githubusercontent.com/k14s/kapp-controller/master/examples/simple-app-git/2.yml
+$ kapp deploy -a simple-app -f https://raw.githubusercontent.com/k14s/kapp-controller/develop/examples/simple-app-git/2.yml -c
+# or... kubectl apply -f https://raw.githubusercontent.com/k14s/kapp-controller/develop/examples/simple-app-git/2.yml
 
 --- update app/simple-app (kappctrl.k14s.io/v1alpha1) namespace: default
   ...
@@ -173,7 +174,7 @@ Succeeded
 
 ```bash
 $ kapp delete -a simple-app
-# or... kubectl delete -f https://raw.githubusercontent.com/k14s/kapp-controller/master/examples/simple-app-git/2.yml
+# or... kubectl delete -f https://raw.githubusercontent.com/k14s/kapp-controller/develop/examples/simple-app-git/2.yml
 
 Changes
 
