@@ -87,7 +87,7 @@ spec:
         # http or ssh urls are supported (required)
         url: https://github.com/k14s/k8s-simple-app-example
         # branch, tag, commit; origin is the name of the remote (required)
-        ref: origin/master
+        ref: origin/develop
         # secret with auth details (optional)
         secretRef:
           name: secret-name
