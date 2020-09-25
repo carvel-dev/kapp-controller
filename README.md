@@ -1,6 +1,6 @@
 # kapp-controller
 
-- Slack: [#k14s in Kubernetes slack](https://slack.kubernetes.io)
+- Slack: [#carvel in Kubernetes slack](https://slack.kubernetes.io)
 - [Docs](docs/README.md) with topics about installation, config, etc.
 - Install: see [Install instructions](docs/install.md)
 
