@@ -155,6 +155,15 @@ spec:
           - configMapRef:
               name: cfgmap-name
 
+    # use sops to decrypt *.wsops.yml files (optional)
+    - sops:
+        # use PGP to decrypt files (required)
+        pgp:
+          # secret with private armored PGP private keys (required)
+          privateKeysSecretRef:
+            # (required)
+            name: pgp-secrets
+
   # Deploy must have one directive
   deploy:
     # use kapp to deploy resources

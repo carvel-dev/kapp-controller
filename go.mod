@@ -12,6 +12,7 @@ require (
 	github.com/prometheus/common v0.6.0 // indirect
 	github.com/prometheus/procfs v0.0.3 // indirect
 	go.uber.org/atomic v1.4.0 // indirect
+	golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
 	golang.org/x/tools v0.0.0-20190926165942-a8d5d34286bd // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 	k8s.io/api v0.17.2
