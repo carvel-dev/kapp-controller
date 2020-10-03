@@ -25,6 +25,11 @@ RUN wget -O- https://get.helm.sh/helm-v2.14.3-linux-amd64.tar.gz > /helm && \
   echo "38614a665859c0f01c9c1d84fa9a5027364f936814d1e47839b05327e400bf55  /helm" | shasum -c - && \
   mkdir /helm-unpacked && tar -C /helm-unpacked -xzvf /helm
 
+# sops
+RUN wget -O- https://github.com/mozilla/sops/releases/download/v3.6.1/sops-v3.6.1.linux > /usr/local/bin/sops && \
+  echo "b2252aa00836c72534471e1099fa22fab2133329b62d7826b5ac49511fcc8997  /usr/local/bin/sops" | shasum -c - && \
+  chmod +x /usr/local/bin/sops && sops -v
+
 # kapp-controller
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags=-buildid= -trimpath -o controller ./cmd/controller/...
@@ -48,6 +53,7 @@ COPY --from=0 /usr/local/bin/imgpkg .
 # templaters
 COPY --from=0 /usr/local/bin/ytt .
 COPY --from=0 /usr/local/bin/kbld .
+COPY --from=0 /usr/local/bin/sops .
 
 # deployers
 COPY --from=0 /usr/local/bin/kapp .

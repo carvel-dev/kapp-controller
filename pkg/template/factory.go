@@ -30,3 +30,8 @@ func (f Factory) NewHelmTemplate(
 	opts v1alpha1.AppTemplateHelmTemplate, genericOpts GenericOpts) *HelmTemplate {
 	return NewHelmTemplate(opts, genericOpts, f.coreClient)
 }
+
+func (f Factory) NewSops(
+	opts v1alpha1.AppTemplateSops, genericOpts GenericOpts) *Sops {
+	return NewSops(opts, genericOpts, f.coreClient)
+}

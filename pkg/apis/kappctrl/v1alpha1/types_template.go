@@ -13,6 +13,7 @@ type AppTemplate struct {
 	HelmTemplate *AppTemplateHelmTemplate `json:"helmTemplate,omitempty"`
 	Kustomize    *AppTemplateKustomize    `json:"kustomize,omitempty"`
 	Jsonnet      *AppTemplateJsonnet      `json:"jsonnet,omitempty"`
+	Sops         *AppTemplateSops         `json:"sops,omitempty"`
 }
 
 type AppTemplateYtt struct {
@@ -42,3 +43,15 @@ type AppTemplateKustomize struct{}
 
 // TODO implement jsonnet
 type AppTemplateJsonnet struct{}
+
+type AppTemplateSops struct {
+	PGP *AppTemplateSopsPGP `json:"pgp,omitempty"`
+}
+
+type AppTemplateSopsPGP struct {
+	PrivateKeysSecretRef *AppTemplateSopsPGPPrivateKeysSecretRef `json:"privateKeysSecretRef,omitempty"`
+}
+
+type AppTemplateSopsPGPPrivateKeysSecretRef struct {
+	Name string `json:"name,omitempty"`
+}

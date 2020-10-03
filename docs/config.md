@@ -86,6 +86,7 @@ Transform set of files.
 - `kbld`: uses [kbld](https://get-kbld.io) to resolve image URLs to include digests
 - `kustomize`: (not implemented yet) uses kustomize to render configuration
 - `jsonnnet`: (not implemented yet) renders jsonnet files
+- `sops`: uses [sops](https://github.com/mozilla/sops) to decrypt secrets. [More details](sops.md). Available in v0.11.0+.
 
 Template source via `helm template`
 
