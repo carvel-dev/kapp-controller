@@ -19,8 +19,9 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 	genericOpts := ctltpl.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
 
 	var result exec.CmdRunResult
+	var isStream bool
 
-	for i, tpl := range a.app.Spec.Template {
+	for _, tpl := range a.app.Spec.Template {
 		var template ctltpl.Template
 
 		switch {
@@ -35,10 +36,10 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 			break
 		}
 
-		if i == 0 {
-			result = template.TemplateDir(dirPath)
-		} else {
+		if isStream {
 			result = template.TemplateStream(strings.NewReader(result.Stdout))
+		} else {
+			result, isStream = template.TemplateDir(dirPath)
 		}
 		if result.Error != nil {
 			break

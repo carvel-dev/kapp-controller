@@ -28,8 +28,8 @@ func NewYtt(opts v1alpha1.AppTemplateYtt,
 	return &Ytt{opts, genericOpts, fetchFactory}
 }
 
-func (t *Ytt) TemplateDir(dirPath string) exec.CmdRunResult {
-	return t.template(dirPath, nil)
+func (t *Ytt) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
+	return t.template(dirPath, nil), true
 }
 
 func (t *Ytt) TemplateStream(input io.Reader) exec.CmdRunResult {

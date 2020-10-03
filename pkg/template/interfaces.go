@@ -13,7 +13,7 @@ const (
 )
 
 type Template interface {
-	TemplateDir(dirPath string) exec.CmdRunResult
+	TemplateDir(dirPath string) (exec.CmdRunResult, bool)
 	TemplateStream(io.Reader) exec.CmdRunResult
 }
 
