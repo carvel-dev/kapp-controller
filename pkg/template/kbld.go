@@ -23,8 +23,8 @@ func NewKbld(opts v1alpha1.AppTemplateKbld, genericOpts GenericOpts) *Kbld {
 	return &Kbld{opts, genericOpts}
 }
 
-func (t *Kbld) TemplateDir(dirPath string) exec.CmdRunResult {
-	return t.template(dirPath, nil)
+func (t *Kbld) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
+	return t.template(dirPath, nil), true
 }
 
 func (t *Kbld) TemplateStream(input io.Reader) exec.CmdRunResult {

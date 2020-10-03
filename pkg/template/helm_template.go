@@ -30,7 +30,7 @@ func NewHelmTemplate(opts v1alpha1.AppTemplateHelmTemplate,
 	return &HelmTemplate{opts, genericOpts, coreClient}
 }
 
-func (t *HelmTemplate) TemplateDir(chartPath string) exec.CmdRunResult {
+func (t *HelmTemplate) TemplateDir(chartPath string) (exec.CmdRunResult, bool) {
 	args := []string{
 		"template", chartPath,
 		"--namespace", t.genericOpts.Namespace,
@@ -47,7 +47,7 @@ func (t *HelmTemplate) TemplateDir(chartPath string) exec.CmdRunResult {
 		if err != nil {
 			result := exec.CmdRunResult{}
 			result.AttachErrorf("Templating: %s", err)
-			return result
+			return result, true
 		}
 
 		defer valuesDir.Remove()
@@ -63,7 +63,7 @@ func (t *HelmTemplate) TemplateDir(chartPath string) exec.CmdRunResult {
 		if err != nil {
 			result := exec.CmdRunResult{}
 			result.AttachErrorf("Writing paths: %s", err)
-			return result
+			return result, true
 		}
 
 		for _, path := range paths {
@@ -85,7 +85,7 @@ func (t *HelmTemplate) TemplateDir(chartPath string) exec.CmdRunResult {
 	}
 	result.AttachErrorf("Templating helm chart: %s", err)
 
-	return result
+	return result, true
 }
 
 func (t *HelmTemplate) TemplateStream(_ io.Reader) exec.CmdRunResult {
