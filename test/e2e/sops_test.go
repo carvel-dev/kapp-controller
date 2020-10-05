@@ -29,43 +29,40 @@ spec:
   fetch:
   - inline:
       paths:
-        config.yml: |
-          #@ load("@ytt:data", "data")
-          apiVersion: v1
-          kind: ConfigMap
+        cm2.sops.yml: |
+          apiVersion: ENC[AES256_GCM,data:TCc=,iv:YyeMABS+DjwlLBcg7RgSYD2lvUC9arab3g5XH02l4Ug=,tag:m1jlYfHpZwS5lF8QGmLfQg==,type:str]
+          kind: ENC[AES256_GCM,data:0IR0Z3OPGpMJ,iv:dhPkR6HWq9Baq3qBEgh6Rtap9fYy4/LPwB+HJw3e9Oc=,tag:Z2d/P53etuarM73vqizOAg==,type:str]
           metadata:
-            name: configmap
+              name: ENC[AES256_GCM,data:Nbhb,iv:IdmS1Q1dPjcYYwwKQHqMICcG2AVvsesZ2YWZMRRjBAw=,tag:j90x3EDjDBNZuI7CYjqcXg==,type:str]
           data:
-            key: #@ data.values.value
-        values.wsops.yml: |
-          data: ENC[AES256_GCM,data:/CF3wqiBqYVhZEWTtiBELgorAZDNJIj/j2Eh4xo/NRInXBv6w6gZ/zXM,iv:roiMIOpvtMZmUJWPrPqMbTQFbUG9tfRDb/YPm6BjDzU=,tag:4nVM1sORfSzk8bXRj5AysQ==,type:str]
+              key: ENC[AES256_GCM,data:W5fepVbN5Nlt+lLhkQ==,iv:7HtxrTusZ6myNkjUBH6uudqUc9u/81NSmvkMP1rYQqs=,tag:obOHC3u9uNPCyxVlZdvecQ==,type:str]
           sops:
               kms: []
               gcp_kms: []
               azure_kv: []
               hc_vault: []
-              lastmodified: '2020-10-03T01:05:21Z'
-              mac: ENC[AES256_GCM,data:fVzy1fhbbRRni4Dtlgh/UchZs+dEMmG9kdI82xcZonTxCBjnXZqSIomSb3rtDxKXMFkgn7UyfrrQzD6duUpF5qiX4o0BTC412mN1LEbsh5LO3Zl4IAgbSxuGdyIljgk9Pzv5dBz7ajoQE8Z5A78e5N3+5DBYf8XxVhgUvBkeRT0=,iv:bZqkgGLI9CLNPTQwU4RBVBCz8IUpzmmYLF1WU32dwEs=,tag:qUpN3Fh5QC5pX3gHULEJng==,type:str]
+              lastmodified: '2020-10-05T15:55:37Z'
+              mac: ENC[AES256_GCM,data:a/NUWKO1umLeGJaVoV7HKMxtTGEVB+C1MOXJ+RwWhsplfQn1S09//C4WHFkkLUaM6+chBhc9HDCLgp5zoZ0EyW7JnQHCq18CE/xGA/qBljeKMQVtaR0r82EwnNMCBC8Lx7jlRDky0ORLkK0JD0Pcu7ARSwTCOgf8CiuAJlgT0ZE=,iv:i4L5PEV0tIX8QI7niAOT+WyvlH6/TBBjmkFwflJ7PKE=,tag:emFBV2lk9/3nL8qCHQmqNw==,type:str]
               pgp:
-              -   created_at: '2020-10-03T01:05:21Z'
+              -   created_at: '2020-10-05T15:55:37Z'
                   enc: |
                       -----BEGIN PGP MESSAGE-----
                       Version: GnuPG v1
 
-                      hQIMA/7je44gmO38ARAAijjlBfHB/swjSnTJijzddFAGDZKPo7c/SBPYt5ql3eBg
-                      dp3SWFihynQtyDbIu/gTHyjkHu/X9Zp1E01UwavgnGrKIl8dYn9OsZXQi1t9zcZF
-                      Cm4UQNXSaKV0NATlC6Bz35s2WZDQyRQQOHvItCnPprz68/Om84LanN5+Aj7GHcgg
-                      9DyGbt+s0slGfQxi3Sj/3YhcxgFxblJ95yygRkbopfJv9+cVNdTCCAn4gO/TbtMl
-                      SDAukhMycbbXf1pxKGnUn07Y3kY39++209B1AQ+V/R+LkjFxP+XOIZSiY0oBxror
-                      hXF5lwqMVOFpJeni61iS9qqJ2WzytxAoOaiXz61bHZl0HmWtSZ6/htwDzILPHujG
-                      VzO4YpytTZqrhsIVtrVzoQQgcuVmWhHnXFAf3wUx+4AAe5jetfCwgioKJ69KVgzB
-                      NwSQIX7OrgsJ+0ypJLMJWBU4J5cfWN5vETIDgKipxN2gOZPdUu3CqBN8qDTB8Vdd
-                      oHOAHhEd09JuaJ6CPru3HAe8aUV46QZriK/1C1ogxpxF9OL0WynVUtn7i+bJumtz
-                      QfERFMZuaj4aP3N9r49vmvWRIaozEQbatXVKhaibIcJH8pCNbJ8I6ZOWjsOpMomA
-                      VfMWJXq3eWwDIjIi7rE7kAzeH+xQp31M3jX53R5huCY1u19MDjjZqn58K8k2Ed7S
-                      XAFJPGiVi1g3Pl2H8aNj+/J5HjmDlOCwueCNZTi1rXnywYfrATVoAhOaH49LSdU6
-                      IORRfu9qKdVPVHzQj1AEJBEGZXKsx8Xw1q1m0LPQEDuIFtDaVP42jH8HsQK+
-                      =do5e
+                      hQIMA/7je44gmO38ARAA0L44XpVaU4XSn+NQUJu07C4evREOsCYvdXaDOQGaZgW7
+                      FoTfwDwtKIGdPfDo0pMBs5jnK5D0ukiuQEgzOGiWYkZEpAHtaT3lzbGo3x8sO5rE
+                      qsz+dY0h/QMeBfgmdeDAzUlh6RIHmWf7xQuFKBj7s7q4Q3CtjSucUBa2SIlpaQ1/
+                      7MYkf9CGnINXQxHu0ZJXeniV38Tsw/0UiWRGRu2grsC/nziTONdlDW5Jcq6CUahT
+                      hH6Bqb41C6FE43numNtcuVr7kR+DIV1laFn0J9XqSO1+SAnaI36CSHvLOBWAPrJE
+                      cOOGWDYcSpYakDOLDdDI0O9jeXVCgQjSBsMlvAHEap2946B1ORK9o7rtDY+hbglk
+                      hHEDdJ0tPIf9O5Hk0u6fMnoZxDPQOx9kMZT5bsbdlBDg27PHYbfAEVAZuOywf9u5
+                      Gq/CUbE7AVHkBf0q0iDIeGV3jbfeRT7jHG+LR6xrvdhDlciwsiKDbXlS/ges7Yda
+                      IILY4EEBZmt1tZMzCcE5gwkaXRRGKOm5NLgTfRnneVDDDZmv5NJYfyIvRumalOAZ
+                      pK7Md3EMGKWFxLMtIXlPSAN7Cd2Ce+dp0MdpOv3ioveR5wdIJVMvJc5FpkEoZvAW
+                      EQpydWZtMUMeEUtuEC6QtVIyNgDsWnVvVE4bM4KlupeGn6lIVjEjMjEoHzj+L7/S
+                      XAFv51Vet4dHpw0FTkYnTwpx5QrieF2zDlZ6OBUsAa9h7gE21K7HqD7+zl0rHF/A
+                      cBj6pvgBGW8qFa67LLiWPT701QNA4JDkXIAd9d/f/0zwEnJV2k+9c7R5Ec9G
+                      =53Ry
                       -----END PGP MESSAGE-----
                   fp: B464DFD255C6B9F8
               unencrypted_suffix: _unencrypted
@@ -205,8 +202,8 @@ stringData:
             RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
     })
 
-    logger.Section("verify", func() {
-        out := kapp.Run([]string{"inspect", "-a", name + "-ctrl", "--raw", "--tty=false", "--filter-kind", "ConfigMap"})
+    logger.Section("verify fully encrypted configmap", func() {
+        out := kapp.Run([]string{"inspect", "-a", name + "-ctrl", "--raw", "--tty=false", "--filter-kind-name", "ConfigMap/cm2"})
 
         var cm corev1.ConfigMap
 
@@ -214,18 +211,28 @@ stringData:
         if err != nil {
             t.Fatalf("Failed to unmarshal: %s", err)
         }
-
-        if cm.ObjectMeta.Name != "configmap" {
-            t.Fatalf(`Expected name to be "configmap" got %#v`, cm.ObjectMeta.Name)
-        }
-
-        if cm.Data["key"] != "encrypted-valued" {
-            t.Fatalf(`Expected data.key to be "value" got %#v`, cm.Data["key"])
+        if cm.Data["key"] != "cm2-encrypted" {
+            t.Fatalf(`Expected data.key to be "cm2-encrypted" got %#v`, cm.Data["key"])
         }
     })
 }
 
 /*
+
+cm2.yml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm2
+data:
+  key: cm2-encrypted
+
+*/
+
+/*
+
+GPG/SOPS usage:
 
 $ gpg --gen-key
 
