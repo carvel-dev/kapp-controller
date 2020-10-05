@@ -22,21 +22,23 @@ ssb   4096R/FEE37B8E2098EDFC 2020-10-03
 
 ### Encrypt contents
 
-kapp-controller expects that encrypted files have `.wsops.yml` extension. Contents of such files must have single top level key called `data` which contains string value that will be encrypted.
+kapp-controller expects that encrypted files have `.sops.yml` extension (or `.sops.yml`).
 
 ```bash
 # Unencrypted file
-$ cat values.unenc.yml
-data: |
-  #@data/values
-  ---
-  value: encrypted-valued
+$ cat secret.yml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-sec
+data:
+  password: my-password
 
 # Encrypt file to be later decrypted by kapp-controller
-$ sops --encrypt --pgp B464DFD255C6B9F8 values.yml > values.wsops.yml
+$ sops --encrypt --pgp B464DFD255C6B9F8 secret.yml > secret.sops.yml
 
 # Delete unencrypted file
-$ rm values.unenc.yml
+$ rm secret.yml
 ```
 
 ### Import private key into Kubernetes
@@ -63,7 +65,7 @@ stringData:
 
 ### Decrypt in App CR
 
-Configure App CR to decrypt contents. Assuming, in this example, your git repo contains `values.wsops.yml`, it would be decrypted into `values.yml` file.
+Configure App CR to decrypt contents. Assuming, in this example, your git repo contains `secret.sops.yml`, it would be decrypted into `secret.yml` file.
 
 ```yaml
 apiVersion: kappctrl.k14s.io/v1alpha1

@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ghodss/yaml"
 	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/k14s/kapp-controller/pkg/exec"
 	"github.com/k14s/kapp-controller/pkg/memdir"
@@ -71,7 +70,11 @@ func (t *Sops) decryptDir(dirPath string, input io.Reader) exec.CmdRunResult {
 		if err != nil {
 			return err
 		}
-		return t.decryptWholeSopsFile(path, info, args, env)
+		err = t.decryptSopsFile(path, info, args, env)
+		if err != nil {
+			return fmt.Errorf("Decrypting file '%s': %s", path, err)
+		}
+		return nil
 	})
 
 	result.AttachErrorf("Decrypting dir: %s", err)
@@ -79,15 +82,14 @@ func (t *Sops) decryptDir(dirPath string, input io.Reader) exec.CmdRunResult {
 	return result
 }
 
-func (t *Sops) decryptWholeSopsFile(path string, info os.FileInfo, args []string, env []string) error {
-	const (
-		wholeSopsExt = ".wsops.yml"
-		ymlExt       = ".yml"
-		dataKey      = "data"
-	)
+func (t *Sops) decryptSopsFile(path string, info os.FileInfo, args []string, env []string) error {
+	// Skip non-sops files
+	if info.IsDir() {
+		return nil
+	}
 
-	// Skip non-whole sops files
-	if info.IsDir() || !strings.HasSuffix(info.Name(), wholeSopsExt) {
+	cont, newPath := t.isSopsFile(path)
+	if !cont {
 		return nil
 	}
 
@@ -104,7 +106,7 @@ func (t *Sops) decryptWholeSopsFile(path string, info os.FileInfo, args []string
 
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("Decrypting file: %s", err)
+		return fmt.Errorf("Running sops: %s", err)
 	}
 
 	err = os.Remove(path)
@@ -112,31 +114,59 @@ func (t *Sops) decryptWholeSopsFile(path string, info os.FileInfo, args []string
 		return fmt.Errorf("Removing encrypted file: %s", err)
 	}
 
-	var contents map[string]interface{}
-
-	err = yaml.Unmarshal(stdoutBs.Bytes(), &contents)
+	contentsBs, err := t.shapeDecryptedContents(stdoutBs.Bytes())
 	if err != nil {
-		return fmt.Errorf("Pulling out data from decrypted file: %s", err)
+		return err
 	}
 
-	data, found := contents[dataKey]
-	if !found {
-		return fmt.Errorf("Expected to find key 'data' within file")
-	}
-
-	dataStr, ok := data.(string)
-	if !ok {
-		return fmt.Errorf("Expected to data value to be a string")
-	}
-
-	newPath := strings.TrimSuffix(path, wholeSopsExt) + ymlExt
-
-	err = ioutil.WriteFile(newPath, []byte(dataStr), 0600)
+	err = ioutil.WriteFile(newPath, contentsBs, 0600)
 	if err != nil {
 		return fmt.Errorf("Writing decrypted file: %s", err)
 	}
 
 	return nil
+}
+
+var (
+	sopsExts = map[string]string{
+		".sops.yml":  ".yml",
+		".sops.yaml": ".yaml",
+	}
+)
+
+func (*Sops) isSopsFile(path string) (bool, string) {
+	for ext, replExt := range sopsExts {
+		if strings.HasSuffix(path, ext) {
+			return true, strings.TrimSuffix(path, ext) + replExt
+		}
+	}
+	return false, ""
+}
+
+func (*Sops) shapeDecryptedContents(contentsBs []byte) ([]byte, error) {
+	// TODO we currently do not support any kind of enveloping
+	// which might be needed for cases like ytt data values
+
+	// const (
+	// 	dataKey = "sops.k14s.io/data"
+	// )
+
+	// var contents map[string]interface{}
+
+	// err := yaml.Unmarshal(contentsBs, &contents)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("Unmarshaling decrypted file as YAML: %s", err)
+	// }
+
+	// if dataVal, found := contents[dataKey]; found {
+	// 	dataStr, ok := dataVal.(string)
+	// 	if !ok {
+	// 		return nil, fmt.Errorf("Expected key '%s' value to be a string", dataKey)
+	// 	}
+	// 	contentsBs = []byte(dataStr)
+	// }
+
+	return contentsBs, nil
 }
 
 func (t *Sops) gpgHomeWithKeyRing() (*memdir.TmpDir, error) {
