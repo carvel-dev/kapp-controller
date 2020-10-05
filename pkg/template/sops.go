@@ -45,28 +45,28 @@ func (t *Sops) TemplateStream(input io.Reader) exec.CmdRunResult {
 func (t *Sops) decryptDir(dirPath string, input io.Reader) exec.CmdRunResult {
 	result := exec.CmdRunResult{}
 
-	args := []string{}
-	env := []string{}
+	gpgHomeDir, configPath, err := t.configPaths()
+	if err != nil {
+		result.AttachErrorf("Building config paths: %s", err)
+		return result
+	}
+
+	defer gpgHomeDir.Remove()
+
+	// Be explicit about the config path to avoid sops searching for it
+	args := []string{"--config=" + configPath}
+	env := []string{"GNUPGHOME=" + gpgHomeDir.Path()}
 
 	switch {
 	case t.opts.PGP != nil:
-		gpgHomeDir, err := t.gpgHomeWithKeyRing()
-		if err != nil {
-			result.AttachErrorf("Building PGP key ring: %s", err)
-			return result
-		}
-
-		defer gpgHomeDir.Remove()
-
-		args = []string{} // no additional args
-		env = append(env, "GNUPGHOME="+gpgHomeDir.Path())
+		// no additional args
 
 	default:
 		result.AttachErrorf("%s", fmt.Errorf("Unsupported SOPS strategy"))
 		return result
 	}
 
-	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -76,8 +76,9 @@ func (t *Sops) decryptDir(dirPath string, input io.Reader) exec.CmdRunResult {
 		}
 		return nil
 	})
-
-	result.AttachErrorf("Decrypting dir: %s", err)
+	if err != nil {
+		result.AttachErrorf("Decrypting dir: %s", err)
+	}
 
 	return result
 }
@@ -93,9 +94,7 @@ func (t *Sops) decryptSopsFile(path string, info os.FileInfo, args []string, env
 		return nil
 	}
 
-	decryptArgs := []string{}
-	decryptArgs = append(decryptArgs, args...)
-	decryptArgs = append(decryptArgs, "--decrypt", path)
+	decryptArgs := append(append([]string{}, args...), "--decrypt", path)
 
 	var stdoutBs, stderrBs bytes.Buffer
 
@@ -169,29 +168,34 @@ func (*Sops) shapeDecryptedContents(contentsBs []byte) ([]byte, error) {
 	return contentsBs, nil
 }
 
-func (t *Sops) gpgHomeWithKeyRing() (*memdir.TmpDir, error) {
-	if t.opts.PGP.PrivateKeysSecretRef == nil {
-		return nil, fmt.Errorf("Expected to have private keys secret ref specified")
-	}
+func (t *Sops) configPaths() (*memdir.TmpDir, string, error) {
+	gpgHomeDir := memdir.NewTmpDir("template-sops-config")
 
-	privateKeys, err := t.getFromSecret(*t.opts.PGP.PrivateKeysSecretRef)
+	err := gpgHomeDir.Create()
 	if err != nil {
-		return nil, fmt.Errorf("Getting private keys secret: %s", err)
+		return nil, "", err
 	}
 
-	gpgHomeDir := memdir.NewTmpDir("template-sops-gpghome")
+	if t.opts.PGP.PrivateKeysSecretRef != nil {
+		privateKeys, err := t.getFromSecret(*t.opts.PGP.PrivateKeysSecretRef)
+		if err != nil {
+			return nil, "", fmt.Errorf("Getting private keys secret: %s", err)
+		}
 
-	err = gpgHomeDir.Create()
+		err = gpgKeyring{privateKeys}.Write(gpgHomeDir.Path())
+		if err != nil {
+			return nil, "", fmt.Errorf("Generating secring.gpg: %s", err)
+		}
+	}
+
+	configPath := filepath.Join(gpgHomeDir.Path(), ".sops.yml")
+
+	err = ioutil.WriteFile(configPath, []byte("{}"), 0600)
 	if err != nil {
-		return nil, err
+		return nil, "", fmt.Errorf("Generating config file: %s", err)
 	}
 
-	err = gpgKeyring{privateKeys}.Write(gpgHomeDir.Path())
-	if err != nil {
-		return nil, fmt.Errorf("Generating secring.gpg: %s", err)
-	}
-
-	return gpgHomeDir, nil
+	return gpgHomeDir, configPath, nil
 }
 
 func (t *Sops) getFromSecret(secretRef v1alpha1.AppTemplateSopsPGPPrivateKeysSecretRef) (string, error) {
