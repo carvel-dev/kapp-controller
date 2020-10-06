@@ -155,7 +155,7 @@ spec:
           - configMapRef:
               name: cfgmap-name
 
-    # use sops to decrypt *.wsops.yml files (optional)
+    # use sops to decrypt *.sops.yml files (optional)
     - sops:
         # use PGP to decrypt files (required)
         pgp:
