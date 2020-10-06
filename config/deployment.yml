@@ -20,7 +20,6 @@ spec:
       containers:
       - name: kapp-controller
         image: kapp-controller
-        command: ["/kapp-controller"]
         args:
         #@ if/end data.values.dangerous_allow_shared_service_account:
         - -dangerous-allow-shared-service-account=true
