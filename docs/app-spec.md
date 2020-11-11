@@ -247,3 +247,5 @@ status:
       Succeeded
     updatedAt: "2019-11-07T16:37:23Z"
 ```
+
+Next: [Security Model](security-model.md)

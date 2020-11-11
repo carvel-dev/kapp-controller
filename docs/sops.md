@@ -2,7 +2,7 @@
 
 Available in v0.11.0+.
 
-Storing _encrypted_ secrets next to your configuration (within a Git repo or other artifacts) is one way to manage secret lifecycle. kapp-controller integrates with [Mozilla's sops](https://github.com/mozilla/sops) to decrypt secret material in fetched configuration.
+Storing _encrypted_ secrets next to your configuration (within a Git repo or other artifacts) is one way to manage secret lifecycle. kapp-controller integrates with [Mozilla's SOPS](https://github.com/mozilla/sops) to decrypt secret material in fetched configuration.
 
 ### Prepate GPG installation
 
@@ -87,3 +87,5 @@ spec:
   deploy:
   - kapp: {}
 ```
+
+Next: [Dangerous Flags](dangerous-flags.md)
