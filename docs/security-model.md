@@ -18,3 +18,5 @@ Example:
 - User A has been granted access to namespace `a` (and no other namespace or cluster level access). User A can create an App CR with a service account located in namespace `a` to deploy resources into namespace `a`. It _is not_ possible for user A to create an App CR that would install cluster-wide resources or place resources into another namespace. (e.g. a user that just deploys web application to their namespace)
 
 - User B has been granted access to namespace `b` and ability to manage specifically named CRD (single scoped cluster-wide privilege). User B can create an App CR with a service account located in namespace `b` that installs app into namespace `b` and also manages single CRD lifecycle. (e.g. a user that manages another controller for other users)
+
+Next: [SOPS](sops.md)

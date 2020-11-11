@@ -200,3 +200,5 @@ Continue? [yN]: y
 
 Succeeded
 ```
+
+Next: [Config](config.md)

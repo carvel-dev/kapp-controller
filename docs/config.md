@@ -136,3 +136,5 @@ spec:
   deploy:
   - kapp: {}
 ```
+
+Next: [App CRD spec](app-spec.md)
