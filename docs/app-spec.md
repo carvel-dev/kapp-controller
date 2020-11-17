@@ -88,7 +88,8 @@ spec:
         url: https://github.com/k14s/k8s-simple-app-example
         # branch, tag, commit; origin is the name of the remote (required)
         ref: origin/develop
-        # secret with auth details (optional)
+        # secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password (optional)
+        # (if ssh-knownhosts is not specified, git will not perform strict host checking)
         secretRef:
           name: secret-name
         # grab only portion of repository (optional)
