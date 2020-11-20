@@ -9,9 +9,9 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/k14s/kapp-controller/pkg/exec"
-	"github.com/k14s/kapp-controller/pkg/memdir"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 )
 
 func (a *App) fetch(dstPath string) exec.CmdRunResult {

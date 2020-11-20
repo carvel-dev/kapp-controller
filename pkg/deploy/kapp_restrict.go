@@ -4,7 +4,7 @@
 package deploy
 
 import (
-	"github.com/k14s/kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
 
 var (

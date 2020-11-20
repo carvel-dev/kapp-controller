@@ -5,7 +5,7 @@ package main
 
 import (
 	"github.com/go-logr/logr"
-	kcclient "github.com/k14s/kapp-controller/pkg/client/clientset/versioned"
+	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"

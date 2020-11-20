@@ -6,9 +6,9 @@ package app
 import (
 	"fmt"
 
-	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	ctldep "github.com/k14s/kapp-controller/pkg/deploy"
-	"github.com/k14s/kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	ctldep "github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
 
 func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {

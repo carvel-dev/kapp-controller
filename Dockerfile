@@ -1,5 +1,5 @@
 FROM golang:1.13
-WORKDIR /go/src/github.com/k14s/kapp-controller/
+WORKDIR /go/src/github.com/vmware-tanzu/carvel-kapp-controller/
 
 RUN apt-get -y update && apt-get install -y ca-certificates && update-ca-certificates
 
@@ -44,7 +44,7 @@ RUN groupadd -g 2000 kapp-controller && useradd -r -u 1000 --create-home -g kapp
 USER kapp-controller
 
 # Name it kapp-controller to identify it easier in process tree
-COPY --from=0 /go/src/github.com/k14s/kapp-controller/controller kapp-controller
+COPY --from=0 /go/src/github.com/vmware-tanzu/carvel-kapp-controller/controller kapp-controller
 
 # fetchers
 COPY --from=0 /helm-unpacked/linux-amd64/helm .

@@ -7,9 +7,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/k14s/kapp-controller/pkg/client/clientset/versioned"
-	internalinterfaces "github.com/k14s/kapp-controller/pkg/client/informers/externalversions/internalinterfaces"
-	kappctrl "github.com/k14s/kapp-controller/pkg/client/informers/externalversions/kappctrl"
+	versioned "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	internalinterfaces "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/internalinterfaces"
+	kappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/kappctrl"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

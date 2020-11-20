@@ -3,9 +3,9 @@
 package fake
 
 import (
-	clientset "github.com/k14s/kapp-controller/pkg/client/clientset/versioned"
-	kappctrlv1alpha1 "github.com/k14s/kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1"
-	fakekappctrlv1alpha1 "github.com/k14s/kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1/fake"
+	clientset "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1"
+	fakekappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

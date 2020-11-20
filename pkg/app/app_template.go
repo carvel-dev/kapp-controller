@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/k14s/kapp-controller/pkg/exec"
-	ctltpl "github.com/k14s/kapp-controller/pkg/template"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	ctltpl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 )
 
 func (a *App) template(dirPath string) exec.CmdRunResult {

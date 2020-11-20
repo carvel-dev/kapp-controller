@@ -3,8 +3,8 @@
 package kappctrl
 
 import (
-	internalinterfaces "github.com/k14s/kapp-controller/pkg/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/k14s/kapp-controller/pkg/client/informers/externalversions/kappctrl/v1alpha1"
+	internalinterfaces "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/internalinterfaces"
+	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/kappctrl/v1alpha1"
 )
 
 // Interface provides access to each of this group's versions.
