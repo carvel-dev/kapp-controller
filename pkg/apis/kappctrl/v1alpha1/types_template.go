@@ -45,7 +45,8 @@ type AppTemplateKustomize struct{}
 type AppTemplateJsonnet struct{}
 
 type AppTemplateSops struct {
-	PGP *AppTemplateSopsPGP `json:"pgp,omitempty"`
+	PGP   *AppTemplateSopsPGP `json:"pgp,omitempty"`
+	Paths []string            `json:"paths,omitempty"`
 }
 
 type AppTemplateSopsPGP struct {

@@ -139,10 +139,10 @@ spec:
                 name: cfgmap-name
                 # specifies where to place files found in config map (optional)
                 directoryPath: dir
-        # if ytt needs to use multiple paths, explicitly list all paths (optional)
+        # lists paths to provide to ytt explicitly (optional)
         paths:
-          - dir/common
-          - dir/nested/app
+        - dir/common
+        - dir/nested/app
 
     # use kbld to resolve image references to use digests
     - kbld: {}
@@ -164,6 +164,10 @@ spec:
           privateKeysSecretRef:
             # (required)
             name: pgp-secrets
+        # lists paths to decrypt explicitly (optional)
+        paths:
+        - all-secrets/
+        - prod-secrets/prod.sops.yml
 
   # Deploy must have one directive
   deploy:
