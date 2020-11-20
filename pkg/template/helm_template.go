@@ -30,7 +30,17 @@ func NewHelmTemplate(opts v1alpha1.AppTemplateHelmTemplate,
 	return &HelmTemplate{opts, genericOpts, coreClient}
 }
 
-func (t *HelmTemplate) TemplateDir(chartPath string) (exec.CmdRunResult, bool) {
+func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
+	chartPath := dirPath
+
+	if len(t.opts.Path) > 0 {
+		checkedPath, err := memdir.ScopedPath(dirPath, t.opts.Path)
+		if err != nil {
+			return exec.NewCmdRunResultWithErr(err), true
+		}
+		chartPath = checkedPath
+	}
+
 	args := []string{
 		"template", chartPath,
 		"--namespace", t.genericOpts.Namespace,
@@ -55,10 +65,18 @@ func (t *HelmTemplate) TemplateDir(chartPath string) (exec.CmdRunResult, bool) {
 		switch {
 		case source.SecretRef != nil:
 			paths, err = t.writeFromSecret(valuesDir.Path(), *source.SecretRef)
+
 		case source.ConfigMapRef != nil:
 			paths, err = t.writeFromConfigMap(valuesDir.Path(), *source.ConfigMapRef)
+
+		case len(source.Path) > 0:
+			checkedPath, err := memdir.ScopedPath(dirPath, source.Path)
+			if err == nil {
+				paths = append(paths, checkedPath)
+			}
+
 		default:
-			err = fmt.Errorf("Expected either secretRef or configMapRef as a source")
+			err = fmt.Errorf("Expected either secretRef, configMapRef or path as a source")
 		}
 		if err != nil {
 			result := exec.CmdRunResult{}

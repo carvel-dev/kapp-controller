@@ -153,12 +153,15 @@ spec:
 
     # use helm template command to render helm chart
     - helmTemplate:
-        # one or more secrets or config maps that provide values (optional)
+        # path to chart (optional; v0.13.0+)
+        path: some-chart/
+        # one or more secrets, config maps, paths that provide values (optional)
         valuesFrom:
           - secretRef:
               name: secret-name
           - configMapRef:
               name: cfgmap-name
+          - path: values/shared.yml
 
     # use sops to decrypt *.sops.yml files (optional; v0.11.0+)
     - sops:
