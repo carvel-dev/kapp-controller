@@ -6,8 +6,8 @@ package app
 import (
 	"fmt"
 
-	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	kcclient "github.com/k14s/kapp-controller/pkg/client/clientset/versioned"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 )

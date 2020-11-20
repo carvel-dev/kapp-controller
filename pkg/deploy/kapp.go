@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/k14s/kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
 
 const (

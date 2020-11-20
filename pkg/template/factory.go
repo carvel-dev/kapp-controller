@@ -4,8 +4,8 @@
 package template
 
 import (
-	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/k14s/kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"k8s.io/client-go/kubernetes"
 )
 

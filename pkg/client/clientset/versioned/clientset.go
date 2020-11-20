@@ -5,7 +5,7 @@ package versioned
 import (
 	"fmt"
 
-	kappctrlv1alpha1 "github.com/k14s/kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1"
+	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

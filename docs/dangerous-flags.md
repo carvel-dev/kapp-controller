@@ -13,4 +13,4 @@ This flag enables [Go's pprof server](https://golang.org/pkg/net/http/pprof/) wi
 - list goroutines: `http://x.x.x.x/debug/pprof/goroutine?debug=2`
 - collect CPU samples: `go tool pprof x.x.x.x/debug/pprof/profile?seconds=60` (useful commands: top10, tree)
 
-Next: [Examples](https://github.com/k14s/kapp-controller/tree/develop/examples)
+Next: [Examples](https://github.com/vmware-tanzu/carvel-kapp-controller/tree/develop/examples)

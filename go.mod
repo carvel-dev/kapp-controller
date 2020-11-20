@@ -1,4 +1,4 @@
-module github.com/k14s/kapp-controller
+module github.com/vmware-tanzu/carvel-kapp-controller
 
 go 1.13
 
