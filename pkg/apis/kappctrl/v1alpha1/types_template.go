@@ -28,6 +28,8 @@ type AppTemplateKbld struct {
 }
 
 type AppTemplateHelmTemplate struct {
+	Name       string                                `json:"name,omitempty"`
+	Namespace  string                                `json:"namespace,omitempty"`
 	Path       string                                `json:"path,omitempty"`
 	ValuesFrom []AppTemplateHelmTemplateValuesSource `json:"valuesFrom,omitempty"`
 }

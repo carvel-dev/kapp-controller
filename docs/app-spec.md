@@ -155,6 +155,10 @@ spec:
     - helmTemplate:
         # path to chart (optional; v0.13.0+)
         path: some-chart/
+        # set name explicitly, default is App CR's name (optional; v0.13.0+)
+        name: custom-name
+        # set namespace explicitly, default is App CR's namespace (optional; v0.13.0+)
+        namespace: custom-ns
         # one or more secrets, config maps, paths that provide values (optional)
         valuesFrom:
           - secretRef:

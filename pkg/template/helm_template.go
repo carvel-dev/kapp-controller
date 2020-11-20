@@ -41,11 +41,17 @@ func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 		chartPath = checkedPath
 	}
 
-	args := []string{
-		"template", chartPath,
-		"--namespace", t.genericOpts.Namespace,
-		"--name", t.genericOpts.Name,
+	name := t.genericOpts.Name
+	if len(t.opts.Name) > 0 {
+		name = t.opts.Name
 	}
+
+	namespace := t.genericOpts.Namespace
+	if len(t.opts.Namespace) > 0 {
+		namespace = t.opts.Namespace
+	}
+
+	args := []string{"template", chartPath, "--name", name, "--namespace", namespace}
 
 	for _, source := range t.opts.ValuesFrom {
 		var paths []string
