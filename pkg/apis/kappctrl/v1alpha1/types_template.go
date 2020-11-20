@@ -28,12 +28,14 @@ type AppTemplateKbld struct {
 }
 
 type AppTemplateHelmTemplate struct {
+	Path       string                                `json:"path,omitempty"`
 	ValuesFrom []AppTemplateHelmTemplateValuesSource `json:"valuesFrom,omitempty"`
 }
 
 type AppTemplateHelmTemplateValuesSource struct {
 	SecretRef    *AppTemplateHelmTemplateValuesSourceRef `json:"secretRef,omitempty"`
 	ConfigMapRef *AppTemplateHelmTemplateValuesSourceRef `json:"configMapRef,omitempty"`
+	Path         string                                  `json:"path,omitempty"`
 }
 
 type AppTemplateHelmTemplateValuesSourceRef struct {
