@@ -66,16 +66,7 @@ func (t *Sops) decryptDir(dirPath string, input io.Reader) exec.CmdRunResult {
 		return result
 	}
 
-	err = filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		err = t.decryptSopsFile(path, info, args, env)
-		if err != nil {
-			return fmt.Errorf("Decrypting file '%s': %s", path, err)
-		}
-		return nil
-	})
+	err = t.decryptPathsWithinDir(dirPath, args, env)
 	if err != nil {
 		result.AttachErrorf("Decrypting dir: %s", err)
 	}
@@ -83,17 +74,63 @@ func (t *Sops) decryptDir(dirPath string, input io.Reader) exec.CmdRunResult {
 	return result
 }
 
-func (t *Sops) decryptSopsFile(path string, info os.FileInfo, args []string, env []string) error {
-	// Skip non-sops files
+func (t *Sops) decryptPathsWithinDir(dirPath string, args, env []string) error {
+	var selectedDirPaths []string
+
+	if len(t.opts.Paths) == 0 {
+		selectedDirPaths = append(selectedDirPaths, dirPath)
+	} else {
+		for _, path := range t.opts.Paths {
+			checkedPath, err := memdir.ScopedPath(dirPath, path)
+			if err != nil {
+				return fmt.Errorf("Checking path: %s", err)
+			}
+
+			info, err := os.Stat(checkedPath)
+			if err != nil {
+				return err
+			}
+
+			isDir, err := t.checkDirOrDecryptSopsFile(info, checkedPath, args, env)
+			if err != nil {
+				return err
+			} else if isDir {
+				selectedDirPaths = append(selectedDirPaths, checkedPath)
+			}
+		}
+	}
+
+	for _, dirPath := range selectedDirPaths {
+		err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			_, err = t.checkDirOrDecryptSopsFile(info, path, args, env)
+			return err
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (t *Sops) checkDirOrDecryptSopsFile(info os.FileInfo, path string, args, env []string) (bool, error) {
 	if info.IsDir() {
-		return nil
+		return true, nil
 	}
-
-	cont, newPath := t.isSopsFile(path)
-	if !cont {
-		return nil
+	matched, newPath := t.isSopsFile(path)
+	if matched {
+		err := t.decryptSopsFile(path, newPath, args, env)
+		if err != nil {
+			return false, fmt.Errorf("Decrypting file '%s': %s", path, err)
+		}
 	}
+	return false, nil
+}
 
+func (t *Sops) decryptSopsFile(path, newPath string, args, env []string) error {
 	decryptArgs := append(append([]string{}, args...), "--decrypt", path)
 
 	var stdoutBs, stderrBs bytes.Buffer
