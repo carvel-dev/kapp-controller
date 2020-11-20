@@ -39,7 +39,7 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 		}
 
 		if isStream {
-			result = template.TemplateStream(strings.NewReader(result.Stdout))
+			result = template.TemplateStream(strings.NewReader(result.Stdout), dirPath)
 		} else {
 			result, isStream = template.TemplateDir(dirPath)
 		}

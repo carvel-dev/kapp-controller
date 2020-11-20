@@ -23,7 +23,9 @@ type AppTemplateYtt struct {
 	Paths                 []string        `json:"paths,omitempty"`
 }
 
-type AppTemplateKbld struct{}
+type AppTemplateKbld struct {
+	Paths []string `json:"paths,omitempty"`
+}
 
 type AppTemplateHelmTemplate struct {
 	ValuesFrom []AppTemplateHelmTemplateValuesSource `json:"valuesFrom,omitempty"`
