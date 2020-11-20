@@ -7,7 +7,9 @@ spec:
   serviceAccountName: default-ns-sa
   fetch:
   - helmChart:
-      name: stable/redis
+      name: redis
+      repository:
+        url: https://charts.bitnami.com/bitnami
   template:
   - helmTemplate:
       valuesFrom:

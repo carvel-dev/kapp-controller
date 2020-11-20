@@ -10,8 +10,8 @@ spec:
   serviceAccountName: cluster-admin-sa
   fetch:
   - http:
-      url: https://github.com/k14s/kapp/archive/master.zip
-      subPath: kapp-master/examples/istio-v1.4.0
+      url: https://github.com/vmware-tanzu/carvel-kapp/archive/develop.zip
+      subPath: carvel-kapp-develop/examples/istio-v1.4.0
   template:
   - ytt:
       ignoreUnknownComments: true
@@ -30,8 +30,8 @@ spec:
   serviceAccountName: cluster-admin-sa
   fetch:
   - http:
-      url: https://github.com/k14s/kapp/archive/master.zip
-      subPath: kapp-master/examples/knative-v0.10.0
+      url: https://github.com/vmware-tanzu/carvel-kapp/archive/develop.zip
+      subPath: carvel-kapp-develop/examples/knative-v0.10.0
   template:
   - ytt:
       ignoreUnknownComments: true
