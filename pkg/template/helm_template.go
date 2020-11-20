@@ -88,7 +88,7 @@ func (t *HelmTemplate) TemplateDir(chartPath string) (exec.CmdRunResult, bool) {
 	return result, true
 }
 
-func (t *HelmTemplate) TemplateStream(_ io.Reader) exec.CmdRunResult {
+func (t *HelmTemplate) TemplateStream(_ io.Reader, _ string) exec.CmdRunResult {
 	return exec.NewCmdRunResultWithErr(fmt.Errorf("Templating data is not supported"))
 }
 

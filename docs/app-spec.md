@@ -145,7 +145,11 @@ spec:
         - dir/nested/app
 
     # use kbld to resolve image references to use digests
-    - kbld: {}
+    - kbld:
+        # lists paths to use explicitly (optional; v0.13.0+)
+        paths:
+        - -
+        - .imgpkg/images.yml
 
     # use helm template command to render helm chart
     - helmTemplate:
@@ -156,7 +160,7 @@ spec:
           - configMapRef:
               name: cfgmap-name
 
-    # use sops to decrypt *.sops.yml files (optional)
+    # use sops to decrypt *.sops.yml files (optional; v0.11.0+)
     - sops:
         # use PGP to decrypt files (required)
         pgp:
@@ -164,7 +168,7 @@ spec:
           privateKeysSecretRef:
             # (required)
             name: pgp-secrets
-        # lists paths to decrypt explicitly (optional)
+        # lists paths to decrypt explicitly (optional; v0.13.0+)
         paths:
         - all-secrets/
         - prod-secrets/prod.sops.yml

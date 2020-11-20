@@ -5,11 +5,13 @@ package template
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	goexec "os/exec"
 
 	"github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/k14s/kapp-controller/pkg/exec"
+	"github.com/k14s/kapp-controller/pkg/memdir"
 )
 
 type Kbld struct {
@@ -27,12 +29,15 @@ func (t *Kbld) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 	return t.template(dirPath, nil), true
 }
 
-func (t *Kbld) TemplateStream(input io.Reader) exec.CmdRunResult {
-	return t.template(stdinPath, input)
+func (t *Kbld) TemplateStream(input io.Reader, dirPath string) exec.CmdRunResult {
+	return t.template(dirPath, input)
 }
 
 func (t *Kbld) template(dirPath string, input io.Reader) exec.CmdRunResult {
-	args := t.addArgs([]string{"-f", dirPath})
+	args, err := t.addPaths(dirPath, input, []string{})
+	if err != nil {
+		return exec.NewCmdRunResultWithErr(err)
+	}
 
 	var stdoutBs, stderrBs bytes.Buffer
 
@@ -41,7 +46,7 @@ func (t *Kbld) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
-	err := cmd.Run()
+	err = cmd.Run()
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),
@@ -52,6 +57,30 @@ func (t *Kbld) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	return result
 }
 
-func (t *Kbld) addArgs(args []string) []string {
-	return args
+func (t *Kbld) addPaths(dirPath string, input io.Reader, args []string) ([]string, error) {
+	// If explicit paths provided, expect user specify stdin explicitly
+	switch {
+	case len(t.opts.Paths) > 0:
+		for _, path := range t.opts.Paths {
+			if path == stdinPath {
+				if input == nil {
+					return nil, fmt.Errorf("Expected stdin to be available when using it as path, but was not")
+				}
+				args = append(args, "-f", path)
+			} else {
+				checkedPath, err := memdir.ScopedPath(dirPath, path)
+				if err != nil {
+					return nil, fmt.Errorf("Checking path: %s", err)
+				}
+				args = append(args, "-f", checkedPath)
+			}
+		}
+		return args, nil
+
+	case input != nil:
+		return append(args, "-f", "-"), nil
+
+	default:
+		return append(args, "-f", dirPath), nil
+	}
 }

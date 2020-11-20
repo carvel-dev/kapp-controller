@@ -32,14 +32,14 @@ func (t *Ytt) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 	return t.template(dirPath, nil), true
 }
 
-func (t *Ytt) TemplateStream(input io.Reader) exec.CmdRunResult {
-	return t.template(stdinPath, input)
+func (t *Ytt) TemplateStream(input io.Reader, dirPath string) exec.CmdRunResult {
+	return t.template(dirPath, input)
 }
 
 func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	args := t.addArgs([]string{})
 
-	args, err := t.addPaths(dirPath, args)
+	args, err := t.addPaths(dirPath, input, args)
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(err)
 	}
@@ -77,25 +77,33 @@ func (t *Ytt) addArgs(args []string) []string {
 	return args
 }
 
-func (t *Ytt) addPaths(dirPath string, args []string) ([]string, error) {
-	if len(t.opts.Paths) > 0 {
-		// Disallow path selection when consuming a stream
-		if dirPath == stdinPath {
-			return nil, fmt.Errorf("Paths cannot be used with template stream")
-		}
-
+func (t *Ytt) addPaths(dirPath string, input io.Reader, args []string) ([]string, error) {
+	// TODO we currently do not allow file path remapping -f new-path=actual-path syntax
+	// If explicit paths provided, expect user specify stdin explicitly
+	switch {
+	case len(t.opts.Paths) > 0:
 		for _, path := range t.opts.Paths {
-			checkedPath, err := memdir.ScopedPath(dirPath, path)
-			if err != nil {
-				return nil, fmt.Errorf("Checking path: %s", err)
+			if path == stdinPath {
+				if input == nil {
+					return nil, fmt.Errorf("Expected stdin to be available when using it as path, but was not")
+				}
+				args = append(args, "-f", path)
+			} else {
+				checkedPath, err := memdir.ScopedPath(dirPath, path)
+				if err != nil {
+					return nil, fmt.Errorf("Checking path: %s", err)
+				}
+				args = append(args, "-f", checkedPath)
 			}
-			args = append(args, []string{"-f", checkedPath}...)
 		}
-
 		return args, nil
-	}
 
-	return append(args, []string{"-f", dirPath}...), nil
+	case input != nil:
+		return append(args, "-f", "-"), nil
+
+	default:
+		return append(args, "-f", dirPath), nil
+	}
 }
 
 func (t *Ytt) addInlinePaths(args []string) ([]string, *memdir.TmpDir, error) {

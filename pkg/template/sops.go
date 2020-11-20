@@ -38,7 +38,7 @@ func (t *Sops) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 	return t.decryptDir(dirPath, nil), false
 }
 
-func (t *Sops) TemplateStream(input io.Reader) exec.CmdRunResult {
+func (t *Sops) TemplateStream(input io.Reader, dirPath string) exec.CmdRunResult {
 	return exec.NewCmdRunResultWithErr(fmt.Errorf("Templating data is not supported"))
 }
 
