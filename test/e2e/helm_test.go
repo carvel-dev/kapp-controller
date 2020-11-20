@@ -32,7 +32,9 @@ spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
   - helmChart:
-      name: stable/redis
+      name: redis
+      repository:
+        url: https://charts.bitnami.com/bitnami
   template:
   - helmTemplate:
       valuesFrom:
