@@ -7,6 +7,7 @@ package main
 
 import (
 	"flag"
+	"go.uber.org/zap/zapcore"
 	"os"
 
 	// Pprof related
@@ -15,6 +16,7 @@ import (
 
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	uberzap "go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -44,14 +46,25 @@ const (
 )
 
 func main() {
+	var logLevel string
+
 	flag.IntVar(&ctrlConcurrency, "concurrency", 10, "Max concurrent reconciles")
 	flag.StringVar(&ctrlNamespace, "namespace", "", "Namespace to watch")
 	flag.BoolVar(&allowSharedServiceAccount, "dangerous-allow-shared-service-account",
 		false, "If set to true, allow use of shared service account instead of per-app service accounts")
 	flag.BoolVar(&enablePprof, "dangerous-enable-pprof", false, "If set to true, enable pprof on "+pprofListenAddr)
+	flag.StringVar(&logLevel, "loglevel", zapcore.InfoLevel.String(), "Log level: debug/info/warn/error/dpanic/panic/fatal")
 	flag.Parse()
 
-	logf.SetLogger(zap.Logger(false))
+	level := uberzap.NewAtomicLevel()
+	if err := level.UnmarshalText([]byte(logLevel)); err != nil {
+		level.SetLevel(zapcore.InfoLevel)
+	}
+	logf.SetLogger(zap.New(func(o *zap.Options) {
+		o.Level = &level
+		o.Development = false
+	}))
+
 	entryLog := log.WithName("entrypoint")
 	entryLog.Info("kapp-controller", "version", Version)
 
