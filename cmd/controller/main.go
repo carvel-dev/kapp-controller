@@ -53,7 +53,7 @@ func main() {
 	flag.BoolVar(&allowSharedServiceAccount, "dangerous-allow-shared-service-account",
 		false, "If set to true, allow use of shared service account instead of per-app service accounts")
 	flag.BoolVar(&enablePprof, "dangerous-enable-pprof", false, "If set to true, enable pprof on "+pprofListenAddr)
-	flag.StringVar(&logLevel, "loglevel", zapcore.InfoLevel.String(), "Log level: debug/info/warn/error/dpanic/panic/fatal")
+	flag.StringVar(&logLevel, "loglevel", zapcore.InfoLevel.String(), "Set log level from one of the available options: debug/info/warn/error/dpanic/panic/fatal")
 	flag.Parse()
 
 	level := uberzap.NewAtomicLevel()
