@@ -57,7 +57,8 @@ func main() {
 	flag.Parse()
 
 	level := uberzap.NewAtomicLevel()
-	if err := level.UnmarshalText([]byte(logLevel)); err != nil {
+	logLevelErr := level.UnmarshalText([]byte(logLevel))
+	if logLevelErr != nil {
 		level.SetLevel(zapcore.InfoLevel)
 	}
 	logf.SetLogger(zap.New(func(o *zap.Options) {
@@ -67,6 +68,10 @@ func main() {
 
 	entryLog := log.WithName("entrypoint")
 	entryLog.Info("kapp-controller", "version", Version)
+
+	if logLevelErr != nil {
+		entryLog.Error(logLevelErr, "unable to unmarshal log level", "loglevel", logLevel)
+	}
 
 	entryLog.Info("setting up manager")
 
