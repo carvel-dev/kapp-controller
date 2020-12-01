@@ -11,16 +11,14 @@ import (
 )
 
 type Factory struct {
-	coreClient                kubernetes.Interface
-	allowSharedServiceAccount bool
+	coreClient kubernetes.Interface
 
 	kubeconfigSecrets *KubeconfigSecrets
 	serviceAccounts   *ServiceAccounts
 }
 
-func NewFactory(coreClient kubernetes.Interface, allowSharedServiceAccount bool) Factory {
-	return Factory{coreClient, allowSharedServiceAccount,
-		NewKubeconfigSecrets(coreClient), NewServiceAccounts(coreClient)}
+func NewFactory(coreClient kubernetes.Interface) Factory {
+	return Factory{coreClient, NewKubeconfigSecrets(coreClient), NewServiceAccounts(coreClient)}
 }
 
 func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
@@ -42,9 +40,7 @@ func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
 		}
 
 	default:
-		if !f.allowSharedServiceAccount {
-			return nil, fmt.Errorf("Expected service account or cluster specified (shared service account is not allowed)")
-		}
+		return nil, fmt.Errorf("Expected service account or cluster specified")
 	}
 
 	return NewKapp(opts, genericOpts, cancelCh), nil

@@ -15,14 +15,13 @@ import (
 )
 
 type AppFactory struct {
-	coreClient                kubernetes.Interface
-	appClient                 kcclient.Interface
-	allowSharedServiceAccount bool
+	coreClient kubernetes.Interface
+	appClient  kcclient.Interface
 }
 
 func (f *AppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *ctlapp.CRDApp {
 	fetchFactory := fetch.NewFactory(f.coreClient)
 	templateFactory := template.NewFactory(f.coreClient, fetchFactory)
-	deployFactory := deploy.NewFactory(f.coreClient, allowSharedServiceAccount)
+	deployFactory := deploy.NewFactory(f.coreClient)
 	return ctlapp.NewCRDApp(app, log, f.appClient, fetchFactory, templateFactory, deployFactory)
 }
