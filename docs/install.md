@@ -10,8 +10,6 @@ or
 $ kubectl apply -f https://github.com/vmware-tanzu/carvel-kapp-controller/releases/latest/download/release.yml
 ```
 
-**Note**: As of v0.6.0+, kapp-controller requires each App CR to specify a dedicated service account. This enables kapp-controller to be used _securely_ by users with different levels of privelege (namespace admin vs cluster admin) within the same cluster. If you want to configure kapp-controller to allow cluster admin level access for any user of App CR (not recommended!) you can _temporarily_ use `release-dangerous-allow-shared-sa.yml`. We are planning to remove this configuration in next few releases.
-
 ### Advanced
 
 `release.yml` is produced with [ytt](https://get-ytt.io) and [kbld](https://get-kbld.io) at the time of the release. You can use these tools yourself and customize the kapp controller configuration if the defaults do not not fit your needs.
