@@ -12,18 +12,12 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: kapp-controller-cluster-role
 rules:
-#@ if data.values.dangerous_allow_shared_service_account:
-- apiGroups: ["*"]
-  resources: ["*"]
-  verbs: ["*"]
-#@ else:
 - apiGroups: [""]
   resources: ["serviceaccounts", "secrets", "configmaps"]
   verbs: ["get"]
 - apiGroups: ["kappctrl.k14s.io"]
   resources: ["apps", "apps/status"]
   verbs: ["*"]
-#@ end
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1

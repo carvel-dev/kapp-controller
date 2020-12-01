@@ -32,11 +32,10 @@ const (
 )
 
 var (
-	log                       = logf.Log.WithName("kc")
-	ctrlConcurrency           = 10
-	ctrlNamespace             = ""
-	allowSharedServiceAccount = false
-	enablePprof               = false
+	log             = logf.Log.WithName("kc")
+	ctrlConcurrency = 10
+	ctrlNamespace   = ""
+	enablePprof     = false
 )
 
 const (
@@ -46,8 +45,6 @@ const (
 func main() {
 	flag.IntVar(&ctrlConcurrency, "concurrency", 10, "Max concurrent reconciles")
 	flag.StringVar(&ctrlNamespace, "namespace", "", "Namespace to watch")
-	flag.BoolVar(&allowSharedServiceAccount, "dangerous-allow-shared-service-account",
-		false, "If set to true, allow use of shared service account instead of per-app service accounts")
 	flag.BoolVar(&enablePprof, "dangerous-enable-pprof", false, "If set to true, enable pprof on "+pprofListenAddr)
 	flag.Parse()
 
@@ -80,9 +77,8 @@ func main() {
 	}
 
 	appFactory := AppFactory{
-		coreClient:                coreClient,
-		appClient:                 appClient,
-		allowSharedServiceAccount: allowSharedServiceAccount,
+		coreClient: coreClient,
+		appClient:  appClient,
 	}
 
 	{ // add controller for apps
@@ -112,10 +108,6 @@ func main() {
 	}
 
 	entryLog.Info("starting manager")
-
-	if allowSharedServiceAccount {
-		entryLog.Info("DANGEROUS in production setting -- allow shared service account")
-	}
 
 	if enablePprof {
 		entryLog.Info("DANGEROUS in production setting -- pprof running", "listen-addr", pprofListenAddr)

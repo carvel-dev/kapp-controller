@@ -21,8 +21,6 @@ spec:
       - name: kapp-controller
         image: kapp-controller
         args:
-        #@ if/end data.values.dangerous_allow_shared_service_account:
-        - -dangerous-allow-shared-service-account=true
         #@ if/end data.values.dangerous_enable_pprof:
         - -dangerous-enable-pprof=true
         env:
