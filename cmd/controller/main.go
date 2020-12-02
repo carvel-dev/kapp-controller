@@ -7,7 +7,6 @@ package main
 
 import (
 	"flag"
-	"go.uber.org/zap/zapcore"
 	"os"
 
 	// Pprof related
@@ -17,6 +16,7 @@ import (
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	uberzap "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -53,7 +53,7 @@ func main() {
 	flag.BoolVar(&allowSharedServiceAccount, "dangerous-allow-shared-service-account",
 		false, "If set to true, allow use of shared service account instead of per-app service accounts")
 	flag.BoolVar(&enablePprof, "dangerous-enable-pprof", false, "If set to true, enable pprof on "+pprofListenAddr)
-	flag.StringVar(&logLevel, "loglevel", zapcore.InfoLevel.String(), "Set log level from one of the available options: debug/info/warn/error/dpanic/panic/fatal")
+	flag.StringVar(&logLevel, "log-level", zapcore.InfoLevel.String(), "Set log level from one of the available options: debug/info/warn/error/dpanic/panic/fatal")
 	flag.Parse()
 
 	level := uberzap.NewAtomicLevel()
@@ -71,6 +71,7 @@ func main() {
 
 	if logLevelErr != nil {
 		entryLog.Error(logLevelErr, "unable to unmarshal log level", "loglevel", logLevel)
+		os.Exit(1)
 	}
 
 	entryLog.Info("setting up manager")
