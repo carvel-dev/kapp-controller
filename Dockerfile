@@ -20,6 +20,10 @@ RUN wget -O- https://github.com/k14s/imgpkg/releases/download/v0.2.0/imgpkg-linu
   echo "57a73c4721c39f815408f486c1acfb720af82450996e2bfdf4c2c280d8a28dcc  /usr/local/bin/imgpkg" | shasum -c - && \
   chmod +x /usr/local/bin/imgpkg && imgpkg version
 
+RUN wget -O- https://github.com/vmware-tanzu/carvel-vendir/releases/download/v0.14.0/vendir-linux-amd64 > /usr/local/bin/vendir && \
+  echo "c224bdfe74df326d7e75b4c50669ec5976b95c0ff9a27d25c6e1833d0c781946  /usr/local/bin/vendir" | shasum -c - && \
+  chmod +x /usr/local/bin/vendir && vendir version
+
 # helm
 RUN wget -O- https://get.helm.sh/helm-v2.14.3-linux-amd64.tar.gz > /helm && \
   echo "38614a665859c0f01c9c1d84fa9a5027364f936814d1e47839b05327e400bf55  /helm" | shasum -c - && \
@@ -49,6 +53,7 @@ COPY --from=0 /go/src/github.com/vmware-tanzu/carvel-kapp-controller/controller 
 # fetchers
 COPY --from=0 /helm-unpacked/linux-amd64/helm .
 COPY --from=0 /usr/local/bin/imgpkg .
+COPY --from=0 /usr/local/bin/vendir .
 
 # templaters
 COPY --from=0 /usr/local/bin/ytt .

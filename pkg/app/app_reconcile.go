@@ -97,13 +97,17 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 
 	defer tmpDir.Remove()
 
+	assetsPath := tmpDir.Path()
+
 	{
 		a.resetLastFetchStartedAt()
 
-		fetchResult := a.fetch(tmpDir.Path())
+		var fetchResult exec.CmdRunResult
+		assetsPath, fetchResult = a.fetch(assetsPath)
 
 		a.app.Status.Fetch = &v1alpha1.AppStatusFetch{
 			Stderr:    fetchResult.Stderr,
+			Stdout:    fetchResult.Stdout,
 			ExitCode:  fetchResult.ExitCode,
 			Error:     fetchResult.ErrorStr(),
 			StartedAt: a.app.Status.Fetch.StartedAt,
@@ -120,7 +124,7 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 		}
 	}
 
-	tplResult := a.template(tmpDir.Path())
+	tplResult := a.template(assetsPath)
 
 	a.app.Status.Template = &v1alpha1.AppStatusTemplate{
 		Stderr:    tplResult.Stderr,

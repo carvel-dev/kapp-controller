@@ -1,5 +1,5 @@
- // Copyright 2020 VMware, Inc.
- // SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
 
 package e2e
 
@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/ghodss/yaml"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
 func TestHelm(t *testing.T) {
@@ -53,7 +53,7 @@ metadata:
 stringData:
   data.yml: |
     password: "1234567891234"
-`, env.Namespace)+sas.ForNamespaceYAML()
+`, env.Namespace) + sas.ForNamespaceYAML()
 
 	name := "test-helm"
 	cleanUp := func() {
@@ -78,7 +78,7 @@ stringData:
 
 		expectedStatus := v1alpha1.AppStatus{
 			Conditions: []v1alpha1.AppCondition{{
-				Type: v1alpha1.ReconcileSucceeded,
+				Type:   v1alpha1.ReconcileSucceeded,
 				Status: corev1.ConditionTrue,
 			}},
 			Deploy: &v1alpha1.AppStatusDeploy{
@@ -94,22 +94,26 @@ stringData:
 			Template: &v1alpha1.AppStatusTemplate{
 				ExitCode: 0,
 			},
-			ObservedGeneration: 1,
+			ObservedGeneration:  1,
 			FriendlyDescription: "Reconcile succeeded",
 		}
 
 		{
 			// deploy
 			if !strings.Contains(cr.Status.Deploy.Stdout, "Wait to:") {
-				t.Fatalf("Expected non-empty deploy output: '%s'", cr.Status.Deploy.Stdout)	
+				t.Fatalf("Expected non-empty deploy output: '%s'", cr.Status.Deploy.Stdout)
 			}
 			cr.Status.Deploy.StartedAt = metav1.Time{}
 			cr.Status.Deploy.UpdatedAt = metav1.Time{}
 			cr.Status.Deploy.Stdout = ""
 
 			// fetch
+			if !strings.Contains(cr.Status.Fetch.Stdout, "kind: LockConfig") {
+				t.Fatalf("Expected non-empty fetch output: '%s'", cr.Status.Fetch.Stdout)
+			}
 			cr.Status.Fetch.StartedAt = metav1.Time{}
 			cr.Status.Fetch.UpdatedAt = metav1.Time{}
+			cr.Status.Fetch.Stdout = ""
 
 			// inspect
 			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-helm-ctrl'") {
