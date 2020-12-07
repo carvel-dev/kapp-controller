@@ -76,6 +76,7 @@ type AppStatus struct {
 
 type AppStatusFetch struct {
 	Stderr    string      `json:"stderr,omitempty"`
+	Stdout    string      `json:"stdout,omitempty"`
 	ExitCode  int         `json:"exitCode"`
 	Error     string      `json:"error,omitempty"`
 	StartedAt metav1.Time `json:"startedAt,omitempty"`

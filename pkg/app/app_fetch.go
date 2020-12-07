@@ -4,100 +4,108 @@
 package app
 
 import (
+	"bytes"
 	"fmt"
-	"os"
+	"io"
 	"path"
 	"strconv"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
+
+	goexec "os/exec"
+
+	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
-func (a *App) fetch(dstPath string) exec.CmdRunResult {
+func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
 	if len(a.app.Spec.Fetch) == 0 {
-		return exec.NewCmdRunResultWithErr(fmt.Errorf("Expected at least one fetch option"))
+		return "", exec.NewCmdRunResultWithErr(fmt.Errorf("Expected at least one fetch option"))
 	}
 
-	var result exec.CmdRunResult
+	var (
+		result      exec.CmdRunResult
+		resourceYml [][]byte
+	)
 
-	if len(a.app.Spec.Fetch) == 1 {
-		fetch := a.app.Spec.Fetch[0]
+	vendirConf := vendirconf.Config{
+		APIVersion: "vendir.k14s.io/v1alpha1", // TODO: use constant from vendir package
+		Kind:       "Config",                  // TODO: use constant from vendir package
+	}
 
-		err := a.fetchOne(fetch, dstPath)
+	// Because vendir doesn't allow placing contents in the vendir root, we
+	// place all contents in sub dirs. For backwards compatibility, we must
+	// update dstPath to point to dstPath/0 if there is just one fetch step
+	for i, fetch := range a.app.Spec.Fetch {
+		dir, resources, err := a.vendirResFor(fetch, strconv.Itoa(i))
 		if err != nil {
-			result.AttachErrorf("Fetching (0): %s", err)
+			result.AttachErrorf(fmt.Sprintf("Fetching (%d): ", i)+"%s", err)
+			return "", result
 		}
-	} else {
-		for i, fetch := range a.app.Spec.Fetch {
-			dstSubPath := path.Join(dstPath, strconv.Itoa(i))
 
-			err := os.Mkdir(dstSubPath, os.FileMode(0700))
-			if err != nil {
-				result.AttachErrorf(fmt.Sprintf("Fetching (%d): ", i)+"%s", err)
-				break
-			}
-
-			err = a.fetchOne(fetch, dstSubPath)
-			if err != nil {
-				result.AttachErrorf(fmt.Sprintf("Fetching (%d): ", i)+"%s", err)
-				break
-			}
-		}
+		vendirConf.Directories = append(vendirConf.Directories, dir)
+		resourceYml = append(resourceYml, resources...)
 	}
 
-	return result
+	confReader, err := a.confReader(vendirConf, resourceYml)
+	if err != nil {
+		result.AttachErrorf("%v", err)
+		return "", result
+	}
+
+	result = a.runVendir(confReader, dstPath)
+
+	// if only one fetch, update dstPath for backwards compatibility
+	if len(a.app.Spec.Fetch) == 1 {
+		dstPath = path.Join(dstPath, "0")
+	}
+
+	return dstPath, result
 }
 
-func (a *App) fetchOne(fetch v1alpha1.AppFetch, dstPath string) error {
-	tmpDstDir := memdir.NewTmpDir("fetch-one")
-
-	err := tmpDstDir.Create()
-	if err != nil {
-		return err
-	}
-
-	defer tmpDstDir.Remove()
-
-	var subPath string
-
+func (a *App) vendirResFor(fetch v1alpha1.AppFetch, destPath string) (vendirconf.Directory, [][]byte, error) {
 	switch {
 	case fetch.Inline != nil:
-		err = a.fetchFactory.NewInline(*fetch.Inline, a.app.Namespace).Retrieve(tmpDstDir.Path())
-		if err != nil {
-			return err
-		}
-
+		return a.fetchFactory.NewInline(*fetch.Inline, a.app.Namespace).VendirRes(destPath)
 	case fetch.Image != nil:
-		subPath = fetch.Image.SubPath
-		err = a.fetchFactory.NewImage(*fetch.Image, a.app.Namespace).Retrieve(tmpDstDir.Path())
-		if err != nil {
-			return fmt.Errorf("Fetching registry image: %s", err)
-		}
-
+		return a.fetchFactory.NewImage(*fetch.Image, a.app.Namespace).VendirRes(destPath)
 	case fetch.HTTP != nil:
-		subPath = fetch.HTTP.SubPath
-		err = a.fetchFactory.NewHTTP(*fetch.HTTP, a.app.Namespace).Retrieve(tmpDstDir.Path())
-		if err != nil {
-			return fmt.Errorf("Fetching HTTP asset: %s", err)
-		}
-
+		return a.fetchFactory.NewHTTP(*fetch.HTTP, a.app.Namespace).VendirRes(destPath)
 	case fetch.Git != nil:
-		subPath = fetch.Git.SubPath
-		err = a.fetchFactory.NewGit(*fetch.Git, a.app.Namespace).Retrieve(tmpDstDir.Path())
-		if err != nil {
-			return fmt.Errorf("Fetching git repo: %s", err)
-		}
-
+		return a.fetchFactory.NewGit(*fetch.Git, a.app.Namespace).VendirRes(destPath)
 	case fetch.HelmChart != nil:
-		err = a.fetchFactory.NewHelmChart(*fetch.HelmChart, a.app.Namespace).Retrieve(tmpDstDir.Path())
-		if err != nil {
-			return fmt.Errorf("Fetching helm chart: %s", err)
-		}
-
-	default:
-		return fmt.Errorf("Unsupported way to fetch templates")
+		return a.fetchFactory.NewHelmChart(*fetch.HelmChart, a.app.Namespace).VendirRes(destPath)
 	}
 
-	return memdir.NewSubPath(subPath).Extract(tmpDstDir.Path(), dstPath)
+	return vendirconf.Directory{}, nil, fmt.Errorf("Unsupported way to fetch templates")
+}
+
+func (a *App) confReader(conf vendirconf.Config, resourceYml [][]byte) (io.Reader, error) {
+	vendirConfBytes, err := conf.AsBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	finalConfig := bytes.Join(append(resourceYml, vendirConfBytes), []byte("---\n"))
+
+	return bytes.NewReader(finalConfig), nil
+}
+
+func (a *App) runVendir(confReader io.Reader, workingDir string) exec.CmdRunResult {
+	var stdoutBs, stderrBs bytes.Buffer
+	cmd := goexec.Command("vendir", "sync", "-f", "-", "--lock-file", "/dev/null")
+	cmd.Dir = workingDir
+	cmd.Stdin = confReader
+	cmd.Stdout = &stdoutBs
+	cmd.Stderr = &stderrBs
+
+	err := cmd.Run()
+
+	result := exec.CmdRunResult{
+		Stdout: stdoutBs.String(),
+		Stderr: stderrBs.String(),
+	}
+	result.AttachErrorf("Fetching resources: %s", err)
+
+	return result
 }

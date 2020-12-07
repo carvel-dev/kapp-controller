@@ -4,13 +4,13 @@
 package fetch
 
 import (
-	"bytes"
 	"fmt"
-	"os/exec"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	kyaml "sigs.k8s.io/yaml"
 )
 
 type Image struct {
@@ -23,58 +23,36 @@ func NewImage(opts v1alpha1.AppFetchImage, nsName string, coreClient kubernetes.
 	return &Image{opts, nsName, coreClient}
 }
 
-func (t *Image) Retrieve(dstPath string) error {
-	if len(t.opts.URL) == 0 {
-		return fmt.Errorf("Expected non-empty URL")
-	}
+func (t *Image) VendirRes(dirPath string) (vendirconf.Directory, [][]byte, error) {
+	dir := NewVendir().ImageDirConf(t.opts, dirPath)
 
-	args := []string{"pull", "-i", t.opts.URL, "-o", dstPath}
-
-	args, err := t.addAuthArgs(args)
+	resources, err := t.resources()
 	if err != nil {
-		return err
+		return vendirconf.Directory{}, nil, fmt.Errorf("Fecthing resources: %v", err)
 	}
 
-	var stdoutBs, stderrBs bytes.Buffer
+	return dir, resources, nil
 
-	cmd := exec.Command("imgpkg", args...)
-	cmd.Stdout = &stdoutBs
-	cmd.Stderr = &stderrBs
-
-	err = cmd.Run()
-	if err != nil {
-		return fmt.Errorf("Imgpkg: %s (stderr: %s)", err, stderrBs.String())
-	}
-
-	return nil
 }
 
-func (t *Image) addAuthArgs(args []string) ([]string, error) {
-	var authArgs []string
-
-	if t.opts.SecretRef != nil {
-		secret, err := t.coreClient.CoreV1().Secrets(t.nsName).Get(t.opts.SecretRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
-
-		for name, val := range secret.Data {
-			switch name {
-			case "username":
-				authArgs = append(authArgs, []string{"--registry-username", string(val)}...)
-			case "password":
-				authArgs = append(authArgs, []string{"--registry-password", string(val)}...)
-			case "token":
-				authArgs = append(authArgs, []string{"--registry-token", string(val)}...)
-			default:
-				return nil, fmt.Errorf("Unknown secret field '%s' in secret '%s'", name, secret.Name)
-			}
-		}
+func (t *Image) resources() ([][]byte, error) {
+	if t.opts.SecretRef == nil {
+		return nil, nil
 	}
 
-	if len(authArgs) == 0 {
-		authArgs = []string{"--registry-anon"}
+	secret, err := t.coreClient.CoreV1().Secrets(t.nsName).Get(t.opts.SecretRef.Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
 	}
 
-	return append(args, authArgs...), nil
+	// typed clients drop GVK or resource (https://github.com/kubernetes/kubernetes/issues/80609)
+	secret.TypeMeta.Kind = "Secret"
+	secret.TypeMeta.APIVersion = "v1"
+
+	sBytes, err := kyaml.Marshal(secret)
+	if err != nil {
+		return nil, err
+	}
+
+	return [][]byte{sBytes}, err
 }
