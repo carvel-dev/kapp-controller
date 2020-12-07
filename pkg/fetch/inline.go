@@ -10,8 +10,11 @@ import (
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
+	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	kyaml "sigs.k8s.io/yaml"
 )
 
 type Inline struct {
@@ -22,6 +25,68 @@ type Inline struct {
 
 func NewInline(opts v1alpha1.AppFetchInline, nsName string, coreClient kubernetes.Interface) *Inline {
 	return &Inline{opts, nsName, coreClient}
+}
+
+func (t *Inline) VendirRes(dirPath string) (vendirconf.Directory, [][]byte, error) {
+	dir := NewVendir().InlineDirConf(t.opts, dirPath)
+
+	resources, err := t.resources()
+	if err != nil {
+		return vendirconf.Directory{}, nil, fmt.Errorf("Fecthing resources: %v", err)
+	}
+
+	return dir, resources, nil
+
+}
+
+func (t *Inline) resources() ([][]byte, error) {
+	var resources [][]byte
+
+	for _, source := range t.opts.PathsFrom {
+		switch {
+		case source.SecretRef != nil:
+			bytes, err := t.secretBytes(*source.SecretRef)
+			if err != nil {
+				return nil, err
+			}
+
+			resources = append(resources, bytes)
+
+		case source.ConfigMapRef != nil:
+			bytes, err := t.configMapBytes(*source.SecretRef)
+			if err != nil {
+				return nil, err
+			}
+
+			resources = append(resources, bytes)
+		}
+	}
+
+	return resources, nil
+}
+
+func (t *Inline) secretBytes(secretRef v1alpha1.AppFetchInlineSourceRef) ([]byte, error) {
+	secret, err := t.coreClient.CoreV1().Secrets(t.nsName).Get(secretRef.Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	secret.TypeMeta.Kind = "Secret"
+	secret.TypeMeta.APIVersion = "v1"
+
+	return kyaml.Marshal(secret)
+}
+
+func (t *Inline) configMapBytes(configMapRef v1alpha1.AppFetchInlineSourceRef) ([]byte, error) {
+	configMap, err := t.coreClient.CoreV1().ConfigMaps(t.nsName).Get(configMapRef.Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	configMap.TypeMeta.Kind = "ConfigMap"
+	configMap.TypeMeta.APIVersion = "v1"
+
+	return kyaml.Marshal(configMap)
 }
 
 func (t *Inline) Retrieve(dstPath string) error {

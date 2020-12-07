@@ -1,5 +1,5 @@
- // Copyright 2020 VMware, Inc.
- // SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
 
 package e2e
 
@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/ghodss/yaml"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
 func TestHTTP(t *testing.T) {
@@ -39,7 +39,7 @@ spec:
   deploy:
   - kapp:
       intoNs: %s
-`, env.Namespace)+sas.ForNamespaceYAML()
+`, env.Namespace) + sas.ForNamespaceYAML()
 
 	name := "test-http"
 	cleanUp := func() {
@@ -64,7 +64,7 @@ spec:
 
 		expectedStatus := v1alpha1.AppStatus{
 			Conditions: []v1alpha1.AppCondition{{
-				Type: v1alpha1.ReconcileSucceeded,
+				Type:   v1alpha1.ReconcileSucceeded,
 				Status: corev1.ConditionTrue,
 			}},
 			Deploy: &v1alpha1.AppStatusDeploy{
@@ -80,7 +80,7 @@ spec:
 			Template: &v1alpha1.AppStatusTemplate{
 				ExitCode: 0,
 			},
-			ObservedGeneration: 1,
+			ObservedGeneration:  1,
 			FriendlyDescription: "Reconcile succeeded",
 		}
 
@@ -94,8 +94,12 @@ spec:
 			cr.Status.Deploy.Stdout = ""
 
 			// fetch
+			if !strings.Contains(cr.Status.Fetch.Stdout, "kind: LockConfig") {
+				t.Fatalf("Expected non-empty fetch output: '%s'", cr.Status.Fetch.Stdout)
+			}
 			cr.Status.Fetch.StartedAt = metav1.Time{}
 			cr.Status.Fetch.UpdatedAt = metav1.Time{}
+			cr.Status.Fetch.Stdout = ""
 
 			// inspect
 			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-http-ctrl'") {
