@@ -1,36 +1,52 @@
 package fetch
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	kyaml "sigs.k8s.io/yaml"
 )
 
 const vendirEntireDirPath = "."
 
-type Vendir struct{}
-
-func NewVendir() *Vendir {
-	return &Vendir{}
+type Vendir struct {
+	nsName     string
+	coreClient kubernetes.Interface
+	config     vendirconf.Config
 }
 
-func (v *Vendir) InlineDirConf(fetchOpts v1alpha1.AppFetchInline, dirPath string) vendirconf.Directory {
-	return v.dir(v.inlineConf(fetchOpts), dirPath)
+func NewVendir(nsName string, coreClient kubernetes.Interface) *Vendir {
+	return &Vendir{
+		nsName:     nsName,
+		coreClient: coreClient,
+		config: vendirconf.Config{
+			APIVersion: "vendir.k14s.io/v1alpha1", // TODO: use constant from vendir package
+			Kind:       "Config",                  // TODO: use constant from vendir package
+		}}
 }
 
-func (v *Vendir) ImageDirConf(fetchOpts v1alpha1.AppFetchImage, dirPath string) vendirconf.Directory {
-	return v.dir(v.imageConf(fetchOpts), dirPath)
-}
+func (v *Vendir) AddDir(fetch v1alpha1.AppFetch, dirPath string) error {
+	switch {
+	case fetch.Inline != nil:
+		v.config.Directories = append(v.config.Directories, v.dir(v.inlineConf(*fetch.Inline), dirPath))
+	case fetch.Image != nil:
+		v.config.Directories = append(v.config.Directories, v.dir(v.imageConf(*fetch.Image), dirPath))
+	case fetch.HTTP != nil:
+		v.config.Directories = append(v.config.Directories, v.dir(v.httpConf(*fetch.HTTP), dirPath))
+	case fetch.Git != nil:
+		v.config.Directories = append(v.config.Directories, v.dir(v.gitConf(*fetch.Git), dirPath))
+	case fetch.HelmChart != nil:
+		v.config.Directories = append(v.config.Directories, v.dir(v.helmChartConf(*fetch.HelmChart), dirPath))
+	default:
+		return fmt.Errorf("Unsupported way to fetch templates")
+	}
 
-func (v *Vendir) HTTPDirConf(fetchOpts v1alpha1.AppFetchHTTP, dirPath string) vendirconf.Directory {
-	return v.dir(v.httpConf(fetchOpts), dirPath)
-}
-
-func (v *Vendir) GitDirConf(fetchOpts v1alpha1.AppFetchGit, dirPath string) vendirconf.Directory {
-	return v.dir(v.gitConf(fetchOpts), dirPath)
-}
-
-func (v *Vendir) HelmChartDirConf(fetchOpts v1alpha1.AppFetchHelmChart, dirPath string) vendirconf.Directory {
-	return v.dir(v.helmChartConf(fetchOpts), dirPath)
+	return nil
 }
 
 func (v *Vendir) dir(contents vendirconf.DirectoryContents, dirPath string) vendirconf.Directory {
@@ -137,4 +153,147 @@ func (v *Vendir) localRefConf(ref *v1alpha1.AppFetchLocalRef) *vendirconf.Direct
 	return &vendirconf.DirectoryContentsLocalRef{
 		Name: ref.LocalObjectReference.Name,
 	}
+}
+
+func (v *Vendir) ConfigReader() (io.Reader, error) {
+	var resourcesYaml [][]byte
+	for _, dir := range v.config.Directories {
+		for _, contents := range dir.Contents {
+			yamlBytes, err := v.requiredResourcesYaml(contents)
+			if err != nil {
+				return nil, err
+			}
+
+			resourcesYaml = append(resourcesYaml, yamlBytes...)
+		}
+	}
+
+	vendirConfBytes, err := v.config.AsBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	finalConfig := bytes.Join(append(resourcesYaml, vendirConfBytes), []byte("---\n"))
+
+	return bytes.NewReader(finalConfig), nil
+}
+
+func (v *Vendir) requiredResourcesYaml(contents vendirconf.DirectoryContents) ([][]byte, error) {
+	switch {
+	case contents.Inline != nil:
+		return v.inlineResources(*contents.Inline)
+	case contents.Image != nil:
+		return v.imageResources(*contents.Image)
+	case contents.HTTP != nil:
+		return v.httpResources(*contents.HTTP)
+	case contents.Git != nil:
+		return v.gitResources(*contents.Git)
+	case contents.HelmChart != nil:
+		return v.helmChartResources(*contents.HelmChart)
+	}
+
+	return nil, fmt.Errorf("Unknown fetch type: %v", contents)
+}
+
+func (v *Vendir) inlineResources(inline vendirconf.DirectoryContentsInline) ([][]byte, error) {
+	var resourcesYamlBytes [][]byte
+	for _, source := range inline.PathsFrom {
+		switch {
+		case source.SecretRef != nil:
+			bytes, err := v.secretBytes(source.SecretRef.DirectoryContentsLocalRef)
+			if err != nil {
+				return nil, err
+			}
+
+			resourcesYamlBytes = append(resourcesYamlBytes, bytes)
+
+		case source.ConfigMapRef != nil:
+			bytes, err := v.configMapBytes(source.ConfigMapRef.DirectoryContentsLocalRef)
+			if err != nil {
+				return nil, err
+			}
+
+			resourcesYamlBytes = append(resourcesYamlBytes, bytes)
+		}
+	}
+
+	return resourcesYamlBytes, nil
+}
+
+func (v *Vendir) imageResources(image vendirconf.DirectoryContentsImage) ([][]byte, error) {
+	if image.SecretRef == nil {
+		return nil, nil
+	}
+
+	resBytes, err := v.secretBytes(*image.SecretRef)
+	if err != nil {
+		return nil, err
+	}
+
+	return [][]byte{resBytes}, nil
+}
+
+func (v *Vendir) httpResources(http vendirconf.DirectoryContentsHTTP) ([][]byte, error) {
+	if http.SecretRef == nil {
+		return nil, nil
+	}
+
+	resBytes, err := v.secretBytes(*http.SecretRef)
+	if err != nil {
+		return nil, err
+	}
+
+	return [][]byte{resBytes}, nil
+}
+
+func (v *Vendir) gitResources(git vendirconf.DirectoryContentsGit) ([][]byte, error) {
+	if git.SecretRef == nil {
+		return nil, nil
+	}
+
+	resBytes, err := v.secretBytes(*git.SecretRef)
+	if err != nil {
+		return nil, err
+	}
+
+	return [][]byte{resBytes}, nil
+}
+
+func (v *Vendir) helmChartResources(helmChart vendirconf.DirectoryContentsHelmChart) ([][]byte, error) {
+	if helmChart.Repository == nil || helmChart.Repository.SecretRef == nil {
+		return nil, nil
+	}
+
+	resBytes, err := v.secretBytes(*helmChart.Repository.SecretRef)
+	if err != nil {
+		return nil, err
+	}
+
+	return [][]byte{resBytes}, nil
+}
+
+func (v *Vendir) secretBytes(secretRef vendirconf.DirectoryContentsLocalRef) ([]byte, error) {
+	secret, err := v.coreClient.CoreV1().Secrets(v.nsName).Get(secretRef.Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	// typed clients drop GVK or resource (https://github.com/kubernetes/kubernetes/issues/80609)
+	secret.TypeMeta.Kind = "Secret"
+	secret.TypeMeta.APIVersion = "v1"
+
+	return kyaml.Marshal(secret)
+}
+
+func (v *Vendir) configMapBytes(configMapRef vendirconf.DirectoryContentsLocalRef) ([]byte, error) {
+	configMap, err := v.coreClient.CoreV1().ConfigMaps(v.nsName).Get(configMapRef.Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	// typed clients drop GVK or resource (https://github.com/kubernetes/kubernetes/issues/80609)
+	configMap.TypeMeta.Kind = "ConfigMap"
+	configMap.TypeMeta.APIVersion = "v1"
+
+	return kyaml.Marshal(configMap)
 }
