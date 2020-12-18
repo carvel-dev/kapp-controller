@@ -8,6 +8,7 @@ package main
 import (
 	"flag"
 	"os"
+	"time"
 
 	// Pprof related
 	"net/http"
@@ -36,6 +37,7 @@ var (
 	ctrlConcurrency = 10
 	ctrlNamespace   = ""
 	enablePprof     = false
+	httpTimeoutInSeconds = 0
 )
 
 const (
@@ -46,6 +48,7 @@ func main() {
 	flag.IntVar(&ctrlConcurrency, "concurrency", 10, "Max concurrent reconciles")
 	flag.StringVar(&ctrlNamespace, "namespace", "", "Namespace to watch")
 	flag.BoolVar(&enablePprof, "dangerous-enable-pprof", false, "If set to true, enable pprof on "+pprofListenAddr)
+	flag.IntVar(&httpTimeoutInSeconds, "http-timeout", 0, "Http timeout")
 	flag.Parse()
 
 	logf.SetLogger(zap.Logger(false))
@@ -55,6 +58,10 @@ func main() {
 	entryLog.Info("setting up manager")
 
 	restConfig := config.GetConfigOrDie()
+
+	if httpTimeoutInSeconds != 0 {
+		restConfig.Timeout = time.Second * time.Duration(httpTimeoutInSeconds)
+	}
 
 	mgr, err := manager.New(restConfig, manager.Options{Namespace: ctrlNamespace})
 	if err != nil {
