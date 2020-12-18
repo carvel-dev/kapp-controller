@@ -32,13 +32,13 @@ RUN wget -O- https://github.com/mozilla/sops/releases/download/v3.6.1/sops-v3.6.
 
 # kapp-controller
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags=-buildid= -trimpath -o controller ./cmd/controller/...
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags=-buildid= -trimpath -o controller ./cmd/main.go
 
 # ---
 # Needs ubuntu for installing git/openssh
 FROM ubuntu:bionic
 
-RUN apt-get update && apt-get install -y git openssh-client dumb-init && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y git openssh-client && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -g 2000 kapp-controller && useradd -r -u 1000 --create-home -g kapp-controller kapp-controller
 USER kapp-controller
@@ -59,4 +59,4 @@ COPY --from=0 /usr/local/bin/sops .
 COPY --from=0 /usr/local/bin/kapp .
 
 ENV PATH="/:${PATH}"
-ENTRYPOINT ["dumb-init", "--", "/kapp-controller"]
+ENTRYPOINT ["/kapp-controller"]
