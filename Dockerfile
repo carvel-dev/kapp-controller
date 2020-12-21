@@ -45,6 +45,7 @@ FROM ubuntu:bionic
 RUN apt-get update && apt-get install -y git openssh-client && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -g 2000 kapp-controller && useradd -r -u 1000 --create-home -g kapp-controller kapp-controller
+RUN chmod g+w /etc/ssl/certs/ca-certificates.crt && chgrp kapp-controller /etc/ssl/certs/ca-certificates.crt
 USER kapp-controller
 
 # Name it kapp-controller to identify it easier in process tree
