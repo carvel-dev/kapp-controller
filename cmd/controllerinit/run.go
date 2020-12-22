@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package initproc
+package controllerinit
 
 // Based on https://github.com/pablo-ruth/go-init/blob/master/main.go
 import (
@@ -14,6 +14,10 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+)
+
+const (
+	InternalControllerFlag = "internal-controller"
 )
 
 func Run(cmdName string, args []string, runLog logr.Logger) {
@@ -54,19 +58,21 @@ func reapZombies(ctx context.Context, zombiesWg *sync.WaitGroup, runLog logr.Log
 
 		select {
 		case <-ctx.Done():
-			wg.Done()
+			zombiesWg.Done()
 			return
 		default:
 		}
 	}
 }
 
-func runControllerCmd(cmdName string, args []string) (int, error) {
+func runControllerCmd(cmdName string, args []string) error {
 	sigs := make(chan os.Signal, 1)
 	defer close(sigs)
 
 	signal.Notify(sigs)
 	defer signal.Reset()
+
+	cmd := exec.Command(cmdName, append([]string{"--" + InternalControllerFlag}, args...)...)
 
 	// Forward signals to child's proc group
 	go func() {
@@ -77,15 +83,9 @@ func runControllerCmd(cmdName string, args []string) (int, error) {
 		}
 	}()
 
-	cmd := exec.Command(cmdName, append([]string{"--internal-controller"}, args...)...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
-	err := cmd.Run()
-	if err != nil {
-		return 1, err
-	}
-
-	return 0, nil
+	return cmd.Run()
 }
