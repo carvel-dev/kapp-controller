@@ -3,14 +3,10 @@
 
 package controller
 
-// Based on https://github.com/kubernetes-sigs/controller-runtime/blob/8f633b179e1c704a6e40440b528252f147a3362a/examples/builtins/main.go
-
 import (
+	"net/http"         // Pprof related
+	_ "net/http/pprof" // Pprof related
 	"os"
-
-	// Pprof related
-	"net/http"
-	_ "net/http/pprof"
 
 	"github.com/go-logr/logr"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -25,28 +21,40 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-func RunController(ctrlConcurrency int, ctrlNamespace string, enablePprof bool, pprofListenAddr string, controllerLog logr.Logger) {
-	controllerLog.Info("setting up manager")
+const (
+	PprofListenAddr = "0.0.0.0:6060"
+)
+
+type Options struct {
+	Concurrency int
+	Namespace   string
+	EnablePprof bool
+}
+
+// Based on https://github.com/kubernetes-sigs/controller-runtime/blob/8f633b179e1c704a6e40440b528252f147a3362a/examples/builtins/main.go
+func Run(opts Options, runLog logr.Logger) {
+	runLog.Info("start controller")
+	runLog.Info("setting up manager")
 
 	restConfig := config.GetConfigOrDie()
 
-	mgr, err := manager.New(restConfig, manager.Options{Namespace: ctrlNamespace})
+	mgr, err := manager.New(restConfig, manager.Options{Namespace: opts.Namespace})
 	if err != nil {
-		controllerLog.Error(err, "unable to set up overall controller manager")
+		runLog.Error(err, "unable to set up overall controller manager")
 		os.Exit(1)
 	}
 
-	controllerLog.Info("setting up controller")
+	runLog.Info("setting up controller")
 
 	coreClient, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		controllerLog.Error(err, "building core client")
+		runLog.Error(err, "building core client")
 		os.Exit(1)
 	}
 
 	appClient, err := kcclient.NewForConfig(restConfig)
 	if err != nil {
-		controllerLog.Error(err, "building app client")
+		runLog.Error(err, "building app client")
 		os.Exit(1)
 	}
 
@@ -61,40 +69,40 @@ func RunController(ctrlConcurrency int, ctrlNamespace string, enablePprof bool, 
 				delegate: &AppsReconciler{
 					appClient:  appClient,
 					appFactory: appFactory,
-					log:        controllerLog.WithName("ar"),
+					log:        runLog.WithName("ar"),
 				},
-				log: controllerLog.WithName("pr"),
+				log: runLog.WithName("pr"),
 			}),
-			MaxConcurrentReconciles: ctrlConcurrency,
+			MaxConcurrentReconciles: opts.Concurrency,
 		}
 
 		ctrlApp, err := controller.New("kapp-controller-app", mgr, ctrlAppOpts)
 		if err != nil {
-			controllerLog.Error(err, "unable to set up kapp-controller-app")
+			runLog.Error(err, "unable to set up kapp-controller-app")
 			os.Exit(1)
 		}
 
 		err = ctrlApp.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForObject{})
 		if err != nil {
-			controllerLog.Error(err, "unable to watch *kcv1alpha1.App")
+			runLog.Error(err, "unable to watch *kcv1alpha1.App")
 			os.Exit(1)
 		}
 	}
 
-	controllerLog.Info("starting manager")
+	runLog.Info("starting manager")
 
-	if enablePprof {
-		controllerLog.Info("DANGEROUS in production setting -- pprof running", "listen-addr", pprofListenAddr)
+	if opts.EnablePprof {
+		runLog.Info("DANGEROUS in production setting -- pprof running", "listen-addr", PprofListenAddr)
 		go func() {
-			controllerLog.Error(http.ListenAndServe(pprofListenAddr, nil), "serving pprof")
+			runLog.Error(http.ListenAndServe(PprofListenAddr, nil), "serving pprof")
 		}()
 	}
 
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		controllerLog.Error(err, "unable to run manager")
+		runLog.Error(err, "unable to run manager")
 		os.Exit(1)
 	}
 
-	controllerLog.Info("Exiting")
+	runLog.Info("Exiting")
 	os.Exit(0)
 }
