@@ -10,7 +10,7 @@ go fmt ./cmd/... ./pkg/...
 go mod vendor
 go mod tidy
 
-go build $repro_flags -o controller ./cmd/controller/...
+go build $repro_flags -o controller ./cmd/main.go
 ls -la ./controller
 
 ytt -f config/ >/dev/null
