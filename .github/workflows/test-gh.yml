@@ -37,7 +37,7 @@ jobs:
         minikube start --driver=docker
         eval $(minikube docker-env --shell=bash)
 
-        ./hack/deploy.sh
+        ./hack/deploy-test.sh
 
         export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
         kubectl create ns $KAPPCTRL_E2E_NAMESPACE

@@ -5,15 +5,15 @@ package controllerinit
 
 // Based on https://github.com/pablo-ruth/go-init/blob/master/main.go
 import (
-	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/config/global"
 )
 
 const (
@@ -23,17 +23,14 @@ const (
 func Run(cmdName string, args []string, runLog logr.Logger) {
 	runLog.Info("start init")
 
-	zombiesCtx, zombiesCancelFunc := context.WithCancel(context.Background())
+	go reapZombies(runLog)
 
-	var zombiesWg sync.WaitGroup
-	zombiesWg.Add(1)
-
-	go reapZombies(zombiesCtx, &zombiesWg, runLog)
+	if err := configureSystem(); err != nil {
+		runLog.Error(err, "Could not configure system")
+		os.Exit(1)
+	}
 
 	err := runControllerCmd(cmdName, args)
-
-	zombiesCancelFunc()
-	zombiesWg.Wait()
 
 	if err != nil {
 		runLog.Error(err, "Could not start controller")
@@ -43,7 +40,7 @@ func Run(cmdName string, args []string, runLog logr.Logger) {
 	os.Exit(0)
 }
 
-func reapZombies(ctx context.Context, zombiesWg *sync.WaitGroup, runLog logr.Logger) {
+func reapZombies(runLog logr.Logger) {
 	runLog.Info("starting zombie reaper")
 
 	for {
@@ -54,13 +51,6 @@ func reapZombies(ctx context.Context, zombiesWg *sync.WaitGroup, runLog logr.Log
 			time.Sleep(1 * time.Second)
 		} else {
 			continue
-		}
-
-		select {
-		case <-ctx.Done():
-			zombiesWg.Done()
-			return
-		default:
 		}
 	}
 }
@@ -88,4 +78,18 @@ func runControllerCmd(cmdName string, args []string) error {
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	return cmd.Run()
+}
+
+func configureSystem() error {
+	globalConfigurer, err := global.NewGlobalConfigurer()
+	if err != nil {
+		return fmt.Errorf("Creating configurer: %s", err)
+	}
+
+	err = globalConfigurer.Configure()
+	if err != nil {
+		return fmt.Errorf("Applying configuration: %s", err)
+	}
+
+	return nil
 }
