@@ -3,6 +3,7 @@ package global
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -13,9 +14,17 @@ import (
 )
 
 const (
-	configMapName   = "kapp-controller-config"
+	configMapName = "kapp-controller-config"
+
 	caCertsKey      = "caCerts"
 	systemCertsFile = "/etc/ssl/certs/ca-certificates.crt"
+
+	httpProxyKey     = "httpProxy"
+	httpsProxyKey    = "httpsProxy"
+	httpProxyEnvVar  = "http_proxy"
+	httpsProxyEnvVar = "https_proxy"
+	noProxyKey       = "noProxy"
+	noProxyEnvVar    = "no_proxy"
 )
 
 type GlobalConfigurer struct {
@@ -58,6 +67,8 @@ func (gc *GlobalConfigurer) Configure() error {
 		return fmt.Errorf("Adding trusted certs: %s", err)
 	}
 
+	gc.configureProxies(configMap.Data[httpProxyKey], configMap.Data[httpsProxyKey], configMap.Data[noProxyKey])
+
 	return nil
 }
 
@@ -79,6 +90,23 @@ func (gc *GlobalConfigurer) addTrustedCerts(certChain string) (err error) {
 	}
 
 	return file.Close()
+}
+
+func (gc *GlobalConfigurer) configureProxies(httpProxy, httpsProxy, noProxy string) {
+	if httpProxy != "" {
+		os.Setenv(httpProxyEnvVar, httpProxy)
+		os.Setenv(strings.ToUpper(httpProxyEnvVar), httpProxy)
+	}
+
+	if httpsProxy != "" {
+		os.Setenv(httpsProxyEnvVar, httpsProxy)
+		os.Setenv(strings.ToUpper(httpsProxyEnvVar), httpsProxy)
+	}
+
+	if noProxy != "" {
+		os.Setenv(noProxyEnvVar, noProxy)
+		os.Setenv(strings.ToUpper(noProxyEnvVar), noProxy)
+	}
 }
 
 func (gc *GlobalConfigurer) configMap() (*v1.ConfigMap, error) {

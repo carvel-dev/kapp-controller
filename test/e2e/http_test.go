@@ -139,7 +139,7 @@ spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
   - http:
-      url: https://https-svc.%s.svc.cluster.local:80/deployment.yml
+      url: https://https-svc.%s.svc.cluster.local:443/deployment.yml
   template:
   - ytt: {}
   deploy:

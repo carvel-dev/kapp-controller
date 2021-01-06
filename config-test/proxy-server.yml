@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: proxy-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: proxy-server
+  name: proxy-svc
+spec:
+  selector:
+    app: proxy-server
+  ports:
+  - port: 80
+    targetPort: 3128
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxy-server
+  namespace: proxy-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app:  proxy-server
+  template:
+    metadata:
+      labels:
+        app: proxy-server
+    spec:
+      containers:
+      - name: proxy-server
+        image: datadog/squid
+        ports:
+        - containerPort: 3128

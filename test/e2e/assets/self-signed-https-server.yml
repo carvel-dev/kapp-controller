@@ -13,8 +13,8 @@ spec:
   selector:
     app: self-signed-https-server
   ports:
-  - port: 80
-    targetPort: 80
+  - port: 443
+    targetPort: 443
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -35,7 +35,7 @@ spec:
       - name: self-signed-https-server
         image: nginx
         ports:
-        - containerPort: 80
+        - containerPort: 443
         volumeMounts:
         - mountPath: /www/data
           name: data
@@ -72,7 +72,7 @@ data:
 
     http {
       server {
-        listen 80;
+        listen 443;
 
         ssl on;
         ssl_certificate /etc/ssl/https-server.crt;

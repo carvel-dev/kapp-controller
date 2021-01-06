@@ -36,3 +36,12 @@ data:
     Fu8L5PIkg4weBW+87kp+CCseEXPUplpqQCAnmVJdvilK6vgKc7T+vzbET8LNw7NX
     mHOVA3CR2w+yUhN4uiCI1aY=
     -----END CERTIFICATE-----
+
+  #! must match the value in proxy_test.go
+  httpProxy: proxy-svc.proxy-server.svc.cluster.local:80
+
+  #! Uncomment and fill in a value to test with https proxy
+  #! httpsProxy: ""
+
+  #! must match the value in proxy_test.go
+  noProxy: github.com,docker.io
