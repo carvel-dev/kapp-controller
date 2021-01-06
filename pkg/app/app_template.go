@@ -35,7 +35,7 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 			template = a.templateFactory.NewSops(*tpl.Sops, genericOpts)
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to template"))
-			break
+			return result
 		}
 
 		if isStream {
