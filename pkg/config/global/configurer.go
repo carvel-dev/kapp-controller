@@ -17,7 +17,7 @@ const (
 	configMapName = "kapp-controller-config"
 
 	caCertsKey      = "caCerts"
-	systemCertsFile = "/etc/ssl/certs/ca-certificates.crt"
+	systemCertsFile = "/etc/pki/tls/certs/ca-bundle.crt"
 
 	httpProxyKey     = "httpProxy"
 	httpsProxyKey    = "httpsProxy"
