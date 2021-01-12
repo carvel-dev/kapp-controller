@@ -6,6 +6,7 @@ package main
 import (
 	"flag"
 	"os"
+	"time"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controllerinit"
@@ -25,6 +26,7 @@ func main() {
 	flag.IntVar(&ctrlOpts.Concurrency, "concurrency", 10, "Max concurrent reconciles")
 	flag.StringVar(&ctrlOpts.Namespace, "namespace", "", "Namespace to watch")
 	flag.BoolVar(&ctrlOpts.EnablePprof, "dangerous-enable-pprof", false, "If set to true, enable pprof on "+controller.PprofListenAddr)
+	flag.DurationVar(&ctrlOpts.APIRequestTimeout, "api-request-timeout", time.Duration(0), "HTTP timeout for Kubernetes API requests")
 	flag.BoolVar(&runController, controllerinit.InternalControllerFlag, false, "[Internal] run the controller code")
 	flag.Parse()
 

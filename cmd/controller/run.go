@@ -8,6 +8,7 @@ import (
 	"net/http"         // Pprof related
 	_ "net/http/pprof" // Pprof related
 	"os"
+	"time"
 
 	"github.com/go-logr/logr"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -27,9 +28,10 @@ const (
 )
 
 type Options struct {
-	Concurrency int
-	Namespace   string
-	EnablePprof bool
+	Concurrency       int
+	Namespace         string
+	EnablePprof       bool
+	APIRequestTimeout time.Duration
 }
 
 // Based on https://github.com/kubernetes-sigs/controller-runtime/blob/8f633b179e1c704a6e40440b528252f147a3362a/examples/builtins/main.go
@@ -38,6 +40,10 @@ func Run(opts Options, runLog logr.Logger) {
 	runLog.Info("setting up manager")
 
 	restConfig := config.GetConfigOrDie()
+
+	if opts.APIRequestTimeout != 0 {
+		restConfig.Timeout = opts.APIRequestTimeout
+	}
 
 	mgr, err := manager.New(restConfig, manager.Options{Namespace: opts.Namespace})
 	if err != nil {
