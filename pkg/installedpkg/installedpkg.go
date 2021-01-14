@@ -29,6 +29,8 @@ func NewInstalledPkgCR(model *kcv1alpha1.InstalledPkg, log logr.Logger,
 }
 
 func (ip *InstalledPackageCR) Reconcile() (reconcile.Result, error) {
+	ip.log.Info(fmt.Sprintf("Reconciling InstalledPkg '%s/%s'", ip.model.Namespace, ip.model.Name))
+
 	pkg, err := ip.referencedPkg()
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
