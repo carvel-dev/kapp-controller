@@ -64,7 +64,7 @@ func Run(opts Options, runLog logr.Logger) {
 		os.Exit(1)
 	}
 
-	appClient, err := kcclient.NewForConfig(restConfig)
+	kcClient, err := kcclient.NewForConfig(restConfig)
 	if err != nil {
 		runLog.Error(err, "building app client")
 		os.Exit(1)
@@ -72,7 +72,7 @@ func Run(opts Options, runLog logr.Logger) {
 
 	appFactory := AppFactory{
 		coreClient: coreClient,
-		appClient:  appClient,
+		appClient:  kcClient,
 	}
 
 	{ // add controller for apps
@@ -80,7 +80,7 @@ func Run(opts Options, runLog logr.Logger) {
 		appUpdateStatus := reftracker.NewAppUpdateStatus()
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
-				delegate: NewAppsReconciler(appClient, runLog.WithName("ar"), appFactory, appRefTracker, appUpdateStatus),
+				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), appFactory, appRefTracker, appUpdateStatus),
 				log:      runLog.WithName("pr"),
 			}),
 			MaxConcurrentReconciles: opts.Concurrency,
@@ -109,6 +109,28 @@ func Run(opts Options, runLog logr.Logger) {
 		err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, cfgmh)
 		if err != nil {
 			runLog.Error(err, "unable to watch ConfigMaps")
+			os.Exit(1)
+		}
+	}
+
+	{ // add controller for installedPkgs
+		installedPkgsCtrlOpts := controller.Options{
+			Reconciler: &InstalledPkgReconciler{
+				intalledPkgClient: kcClient,
+				log:               runLog.WithName("ipr"),
+			},
+			MaxConcurrentReconciles: opts.Concurrency,
+		}
+
+		installedPkgCtrl, err := controller.New("kapp-controller-installed-pkg", mgr, installedPkgsCtrlOpts)
+		if err != nil {
+			runLog.Error(err, "unable to set up kapp-controller-installed-pkg")
+			os.Exit(1)
+		}
+
+		err = installedPkgCtrl.Watch(&source.Kind{Type: &kcv1alpha1.InstalledPkg{}}, &handler.EnqueueRequestForObject{})
+		if err != nil {
+			runLog.Error(err, "unable to watch *kcv1alpha1.InstalledPkg")
 			os.Exit(1)
 		}
 	}
