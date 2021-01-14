@@ -15,7 +15,6 @@ import (
 // FakePkgRepositories implements PkgRepositoryInterface
 type FakePkgRepositories struct {
 	Fake *FakeKappctrlV1alpha1
-	ns   string
 }
 
 var pkgrepositoriesResource = schema.GroupVersionResource{Group: "kappctrl", Version: "v1alpha1", Resource: "pkgrepositories"}
@@ -25,8 +24,7 @@ var pkgrepositoriesKind = schema.GroupVersionKind{Group: "kappctrl", Version: "v
 // Get takes name of the pkgRepository, and returns the corresponding pkgRepository object, and an error if there is any.
 func (c *FakePkgRepositories) Get(name string, options v1.GetOptions) (result *v1alpha1.PkgRepository, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(pkgrepositoriesResource, c.ns, name), &v1alpha1.PkgRepository{})
-
+		Invokes(testing.NewRootGetAction(pkgrepositoriesResource, name), &v1alpha1.PkgRepository{})
 	if obj == nil {
 		return nil, err
 	}
@@ -36,8 +34,7 @@ func (c *FakePkgRepositories) Get(name string, options v1.GetOptions) (result *v
 // List takes label and field selectors, and returns the list of PkgRepositories that match those selectors.
 func (c *FakePkgRepositories) List(opts v1.ListOptions) (result *v1alpha1.PkgRepositoryList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(pkgrepositoriesResource, pkgrepositoriesKind, c.ns, opts), &v1alpha1.PkgRepositoryList{})
-
+		Invokes(testing.NewRootListAction(pkgrepositoriesResource, pkgrepositoriesKind, opts), &v1alpha1.PkgRepositoryList{})
 	if obj == nil {
 		return nil, err
 	}
@@ -58,15 +55,13 @@ func (c *FakePkgRepositories) List(opts v1.ListOptions) (result *v1alpha1.PkgRep
 // Watch returns a watch.Interface that watches the requested pkgRepositories.
 func (c *FakePkgRepositories) Watch(opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(pkgrepositoriesResource, c.ns, opts))
-
+		InvokesWatch(testing.NewRootWatchAction(pkgrepositoriesResource, opts))
 }
 
 // Create takes the representation of a pkgRepository and creates it.  Returns the server's representation of the pkgRepository, and an error, if there is any.
 func (c *FakePkgRepositories) Create(pkgRepository *v1alpha1.PkgRepository) (result *v1alpha1.PkgRepository, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(pkgrepositoriesResource, c.ns, pkgRepository), &v1alpha1.PkgRepository{})
-
+		Invokes(testing.NewRootCreateAction(pkgrepositoriesResource, pkgRepository), &v1alpha1.PkgRepository{})
 	if obj == nil {
 		return nil, err
 	}
@@ -76,8 +71,7 @@ func (c *FakePkgRepositories) Create(pkgRepository *v1alpha1.PkgRepository) (res
 // Update takes the representation of a pkgRepository and updates it. Returns the server's representation of the pkgRepository, and an error, if there is any.
 func (c *FakePkgRepositories) Update(pkgRepository *v1alpha1.PkgRepository) (result *v1alpha1.PkgRepository, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(pkgrepositoriesResource, c.ns, pkgRepository), &v1alpha1.PkgRepository{})
-
+		Invokes(testing.NewRootUpdateAction(pkgrepositoriesResource, pkgRepository), &v1alpha1.PkgRepository{})
 	if obj == nil {
 		return nil, err
 	}
@@ -88,8 +82,7 @@ func (c *FakePkgRepositories) Update(pkgRepository *v1alpha1.PkgRepository) (res
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
 func (c *FakePkgRepositories) UpdateStatus(pkgRepository *v1alpha1.PkgRepository) (*v1alpha1.PkgRepository, error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(pkgrepositoriesResource, "status", c.ns, pkgRepository), &v1alpha1.PkgRepository{})
-
+		Invokes(testing.NewRootUpdateSubresourceAction(pkgrepositoriesResource, "status", pkgRepository), &v1alpha1.PkgRepository{})
 	if obj == nil {
 		return nil, err
 	}
@@ -99,14 +92,13 @@ func (c *FakePkgRepositories) UpdateStatus(pkgRepository *v1alpha1.PkgRepository
 // Delete takes name of the pkgRepository and deletes it. Returns an error if one occurs.
 func (c *FakePkgRepositories) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(pkgrepositoriesResource, c.ns, name), &v1alpha1.PkgRepository{})
-
+		Invokes(testing.NewRootDeleteAction(pkgrepositoriesResource, name), &v1alpha1.PkgRepository{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakePkgRepositories) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(pkgrepositoriesResource, c.ns, listOptions)
+	action := testing.NewRootDeleteCollectionAction(pkgrepositoriesResource, listOptions)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.PkgRepositoryList{})
 	return err
@@ -115,8 +107,7 @@ func (c *FakePkgRepositories) DeleteCollection(options *v1.DeleteOptions, listOp
 // Patch applies the patch and returns the patched pkgRepository.
 func (c *FakePkgRepositories) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.PkgRepository, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(pkgrepositoriesResource, c.ns, name, pt, data, subresources...), &v1alpha1.PkgRepository{})
-
+		Invokes(testing.NewRootPatchSubresourceAction(pkgrepositoriesResource, name, pt, data, subresources...), &v1alpha1.PkgRepository{})
 	if obj == nil {
 		return nil, err
 	}

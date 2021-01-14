@@ -13,8 +13,8 @@ import (
 type PkgLister interface {
 	// List lists all Pkgs in the indexer.
 	List(selector labels.Selector) (ret []*v1alpha1.Pkg, err error)
-	// Pkgs returns an object that can list and get Pkgs.
-	Pkgs(namespace string) PkgNamespaceLister
+	// Get retrieves the Pkg from the index for a given name.
+	Get(name string) (*v1alpha1.Pkg, error)
 	PkgListerExpansion
 }
 
@@ -36,38 +36,9 @@ func (s *pkgLister) List(selector labels.Selector) (ret []*v1alpha1.Pkg, err err
 	return ret, err
 }
 
-// Pkgs returns an object that can list and get Pkgs.
-func (s *pkgLister) Pkgs(namespace string) PkgNamespaceLister {
-	return pkgNamespaceLister{indexer: s.indexer, namespace: namespace}
-}
-
-// PkgNamespaceLister helps list and get Pkgs.
-type PkgNamespaceLister interface {
-	// List lists all Pkgs in the indexer for a given namespace.
-	List(selector labels.Selector) (ret []*v1alpha1.Pkg, err error)
-	// Get retrieves the Pkg from the indexer for a given namespace and name.
-	Get(name string) (*v1alpha1.Pkg, error)
-	PkgNamespaceListerExpansion
-}
-
-// pkgNamespaceLister implements the PkgNamespaceLister
-// interface.
-type pkgNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all Pkgs in the indexer for a given namespace.
-func (s pkgNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.Pkg, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.Pkg))
-	})
-	return ret, err
-}
-
-// Get retrieves the Pkg from the indexer for a given namespace and name.
-func (s pkgNamespaceLister) Get(name string) (*v1alpha1.Pkg, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
+// Get retrieves the Pkg from the index for a given name.
+func (s *pkgLister) Get(name string) (*v1alpha1.Pkg, error) {
+	obj, exists, err := s.indexer.GetByKey(name)
 	if err != nil {
 		return nil, err
 	}

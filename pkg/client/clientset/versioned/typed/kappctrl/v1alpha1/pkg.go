@@ -16,7 +16,7 @@ import (
 // PkgsGetter has a method to return a PkgInterface.
 // A group's client should implement this interface.
 type PkgsGetter interface {
-	Pkgs(namespace string) PkgInterface
+	Pkgs() PkgInterface
 }
 
 // PkgInterface has methods to work with Pkg resources.
@@ -36,14 +36,12 @@ type PkgInterface interface {
 // pkgs implements PkgInterface
 type pkgs struct {
 	client rest.Interface
-	ns     string
 }
 
 // newPkgs returns a Pkgs
-func newPkgs(c *KappctrlV1alpha1Client, namespace string) *pkgs {
+func newPkgs(c *KappctrlV1alpha1Client) *pkgs {
 	return &pkgs{
 		client: c.RESTClient(),
-		ns:     namespace,
 	}
 }
 
@@ -51,7 +49,6 @@ func newPkgs(c *KappctrlV1alpha1Client, namespace string) *pkgs {
 func (c *pkgs) Get(name string, options v1.GetOptions) (result *v1alpha1.Pkg, err error) {
 	result = &v1alpha1.Pkg{}
 	err = c.client.Get().
-		Namespace(c.ns).
 		Resource("pkgs").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
@@ -68,7 +65,6 @@ func (c *pkgs) List(opts v1.ListOptions) (result *v1alpha1.PkgList, err error) {
 	}
 	result = &v1alpha1.PkgList{}
 	err = c.client.Get().
-		Namespace(c.ns).
 		Resource("pkgs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -85,7 +81,6 @@ func (c *pkgs) Watch(opts v1.ListOptions) (watch.Interface, error) {
 	}
 	opts.Watch = true
 	return c.client.Get().
-		Namespace(c.ns).
 		Resource("pkgs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -96,7 +91,6 @@ func (c *pkgs) Watch(opts v1.ListOptions) (watch.Interface, error) {
 func (c *pkgs) Create(pkg *v1alpha1.Pkg) (result *v1alpha1.Pkg, err error) {
 	result = &v1alpha1.Pkg{}
 	err = c.client.Post().
-		Namespace(c.ns).
 		Resource("pkgs").
 		Body(pkg).
 		Do().
@@ -108,7 +102,6 @@ func (c *pkgs) Create(pkg *v1alpha1.Pkg) (result *v1alpha1.Pkg, err error) {
 func (c *pkgs) Update(pkg *v1alpha1.Pkg) (result *v1alpha1.Pkg, err error) {
 	result = &v1alpha1.Pkg{}
 	err = c.client.Put().
-		Namespace(c.ns).
 		Resource("pkgs").
 		Name(pkg.Name).
 		Body(pkg).
@@ -123,7 +116,6 @@ func (c *pkgs) Update(pkg *v1alpha1.Pkg) (result *v1alpha1.Pkg, err error) {
 func (c *pkgs) UpdateStatus(pkg *v1alpha1.Pkg) (result *v1alpha1.Pkg, err error) {
 	result = &v1alpha1.Pkg{}
 	err = c.client.Put().
-		Namespace(c.ns).
 		Resource("pkgs").
 		Name(pkg.Name).
 		SubResource("status").
@@ -136,7 +128,6 @@ func (c *pkgs) UpdateStatus(pkg *v1alpha1.Pkg) (result *v1alpha1.Pkg, err error)
 // Delete takes name of the pkg and deletes it. Returns an error if one occurs.
 func (c *pkgs) Delete(name string, options *v1.DeleteOptions) error {
 	return c.client.Delete().
-		Namespace(c.ns).
 		Resource("pkgs").
 		Name(name).
 		Body(options).
@@ -151,7 +142,6 @@ func (c *pkgs) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOp
 		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
-		Namespace(c.ns).
 		Resource("pkgs").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -164,7 +154,6 @@ func (c *pkgs) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOp
 func (c *pkgs) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.Pkg, err error) {
 	result = &v1alpha1.Pkg{}
 	err = c.client.Patch(pt).
-		Namespace(c.ns).
 		Resource("pkgs").
 		SubResource(subresources...).
 		Name(name).
