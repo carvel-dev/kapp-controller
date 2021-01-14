@@ -20,12 +20,12 @@ func (c *FakeKappctrlV1alpha1) InstalledPkgs(namespace string) v1alpha1.Installe
 	return &FakeInstalledPkgs{c, namespace}
 }
 
-func (c *FakeKappctrlV1alpha1) Pkgs(namespace string) v1alpha1.PkgInterface {
-	return &FakePkgs{c, namespace}
+func (c *FakeKappctrlV1alpha1) Pkgs() v1alpha1.PkgInterface {
+	return &FakePkgs{c}
 }
 
-func (c *FakeKappctrlV1alpha1) PkgRepositories(namespace string) v1alpha1.PkgRepositoryInterface {
-	return &FakePkgRepositories{c, namespace}
+func (c *FakeKappctrlV1alpha1) PkgRepositories() v1alpha1.PkgRepositoryInterface {
+	return &FakePkgRepositories{c}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

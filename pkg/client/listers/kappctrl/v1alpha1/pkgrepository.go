@@ -13,8 +13,8 @@ import (
 type PkgRepositoryLister interface {
 	// List lists all PkgRepositories in the indexer.
 	List(selector labels.Selector) (ret []*v1alpha1.PkgRepository, err error)
-	// PkgRepositories returns an object that can list and get PkgRepositories.
-	PkgRepositories(namespace string) PkgRepositoryNamespaceLister
+	// Get retrieves the PkgRepository from the index for a given name.
+	Get(name string) (*v1alpha1.PkgRepository, error)
 	PkgRepositoryListerExpansion
 }
 
@@ -36,38 +36,9 @@ func (s *pkgRepositoryLister) List(selector labels.Selector) (ret []*v1alpha1.Pk
 	return ret, err
 }
 
-// PkgRepositories returns an object that can list and get PkgRepositories.
-func (s *pkgRepositoryLister) PkgRepositories(namespace string) PkgRepositoryNamespaceLister {
-	return pkgRepositoryNamespaceLister{indexer: s.indexer, namespace: namespace}
-}
-
-// PkgRepositoryNamespaceLister helps list and get PkgRepositories.
-type PkgRepositoryNamespaceLister interface {
-	// List lists all PkgRepositories in the indexer for a given namespace.
-	List(selector labels.Selector) (ret []*v1alpha1.PkgRepository, err error)
-	// Get retrieves the PkgRepository from the indexer for a given namespace and name.
-	Get(name string) (*v1alpha1.PkgRepository, error)
-	PkgRepositoryNamespaceListerExpansion
-}
-
-// pkgRepositoryNamespaceLister implements the PkgRepositoryNamespaceLister
-// interface.
-type pkgRepositoryNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all PkgRepositories in the indexer for a given namespace.
-func (s pkgRepositoryNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.PkgRepository, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.PkgRepository))
-	})
-	return ret, err
-}
-
-// Get retrieves the PkgRepository from the indexer for a given namespace and name.
-func (s pkgRepositoryNamespaceLister) Get(name string) (*v1alpha1.PkgRepository, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
+// Get retrieves the PkgRepository from the index for a given name.
+func (s *pkgRepositoryLister) Get(name string) (*v1alpha1.PkgRepository, error) {
+	obj, exists, err := s.indexer.GetByKey(name)
 	if err != nil {
 		return nil, err
 	}
