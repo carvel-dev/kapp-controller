@@ -16,6 +16,18 @@ func (c *FakeKappctrlV1alpha1) Apps(namespace string) v1alpha1.AppInterface {
 	return &FakeApps{c, namespace}
 }
 
+func (c *FakeKappctrlV1alpha1) InstalledPkgs(namespace string) v1alpha1.InstalledPkgInterface {
+	return &FakeInstalledPkgs{c, namespace}
+}
+
+func (c *FakeKappctrlV1alpha1) Pkgs(namespace string) v1alpha1.PkgInterface {
+	return &FakePkgs{c, namespace}
+}
+
+func (c *FakeKappctrlV1alpha1) PkgRepositories(namespace string) v1alpha1.PkgRepositoryInterface {
+	return &FakePkgRepositories{c, namespace}
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeKappctrlV1alpha1) RESTClient() rest.Interface {

@@ -10,6 +10,12 @@ import (
 type Interface interface {
 	// Apps returns a AppInformer.
 	Apps() AppInformer
+	// InstalledPkgs returns a InstalledPkgInformer.
+	InstalledPkgs() InstalledPkgInformer
+	// Pkgs returns a PkgInformer.
+	Pkgs() PkgInformer
+	// PkgRepositories returns a PkgRepositoryInformer.
+	PkgRepositories() PkgRepositoryInformer
 }
 
 type version struct {
@@ -26,4 +32,19 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // Apps returns a AppInformer.
 func (v *version) Apps() AppInformer {
 	return &appInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// InstalledPkgs returns a InstalledPkgInformer.
+func (v *version) InstalledPkgs() InstalledPkgInformer {
+	return &installedPkgInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// Pkgs returns a PkgInformer.
+func (v *version) Pkgs() PkgInformer {
+	return &pkgInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// PkgRepositories returns a PkgRepositoryInformer.
+func (v *version) PkgRepositories() PkgRepositoryInformer {
+	return &pkgRepositoryInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

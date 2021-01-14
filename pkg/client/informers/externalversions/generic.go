@@ -39,6 +39,12 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	// Group=kappctrl, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("apps"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Kappctrl().V1alpha1().Apps().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("installedpkgs"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Kappctrl().V1alpha1().InstalledPkgs().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("pkgs"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Kappctrl().V1alpha1().Pkgs().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("pkgrepositories"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Kappctrl().V1alpha1().PkgRepositories().Informer()}, nil
 
 	}
 
