@@ -34,3 +34,75 @@ spec:
       Populated by the system. Read-only. Null for lists.
       More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
     JSONPath: .metadata.creationTimestamp
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: pkgs.kappctrl.k14s.io
+spec:
+  group: kappctrl.k14s.io
+  names:
+    kind: Pkg
+    listKind: PkgList
+    plural: pkgs
+    singular: pkg
+  scope: Cluster
+  subresources:
+    status: {}
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+  additionalPrinterColumns:
+  - name: Age
+    type: date
+    description: Time since creation
+    JSONPath: .metadata.creationTimestamp
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: pkgrepositories.kappctrl.k14s.io
+spec:
+  group: kappctrl.k14s.io
+  names:
+    kind: PkgRepository
+    listKind: PkgRepositoryList
+    plural: pkgrepositories
+    singular: pkgrepository
+  scope: Cluster
+  subresources:
+    status: {}
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+  additionalPrinterColumns:
+  - name: Age
+    type: date
+    description: Time since creation
+    JSONPath: .metadata.creationTimestamp
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: installedpkgs.kappctrl.k14s.io
+spec:
+  group: kappctrl.k14s.io
+  names:
+    kind: InstalledPkg
+    listKind: InstalledPkgList
+    plural: installedpkgs
+    singular: installedpkg
+  scope: Namespaced
+  subresources:
+    status: {}
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+  additionalPrinterColumns:
+  - name: Age
+    type: date
+    description: Time since creation
+    JSONPath: .metadata.creationTimestamp
