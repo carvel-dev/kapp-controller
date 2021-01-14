@@ -21,6 +21,15 @@ rules:
 - apiGroups: ["kappctrl.k14s.io"]
   resources: ["apps", "apps/status"]
   verbs: ["*"]
+- apiGroups: ["kappctrl.k14s.io"]
+  resources: ["installedpkgs", "installedpkgs/status"]
+  verbs: ["*"]
+- apiGroups: ["kappctrl.k14s.io"]
+  resources: ["pkgs", "pkgs/status"]
+  verbs: ["*"]
+- apiGroups: ["kappctrl.k14s.io"]
+  resources: ["pkgrepositories", "pkgrepositories/status"]
+  verbs: ["*"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
