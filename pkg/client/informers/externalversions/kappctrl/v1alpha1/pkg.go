@@ -25,33 +25,32 @@ type PkgInformer interface {
 type pkgInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
-	namespace        string
 }
 
 // NewPkgInformer constructs a new informer for Pkg type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewPkgInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredPkgInformer(client, namespace, resyncPeriod, indexers, nil)
+func NewPkgInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredPkgInformer(client, resyncPeriod, indexers, nil)
 }
 
 // NewFilteredPkgInformer constructs a new informer for Pkg type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredPkgInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredPkgInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.KappctrlV1alpha1().Pkgs(namespace).List(options)
+				return client.KappctrlV1alpha1().Pkgs().List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.KappctrlV1alpha1().Pkgs(namespace).Watch(options)
+				return client.KappctrlV1alpha1().Pkgs().Watch(options)
 			},
 		},
 		&kappctrlv1alpha1.Pkg{},
@@ -61,7 +60,7 @@ func NewFilteredPkgInformer(client versioned.Interface, namespace string, resync
 }
 
 func (f *pkgInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredPkgInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewFilteredPkgInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
 func (f *pkgInformer) Informer() cache.SharedIndexInformer {

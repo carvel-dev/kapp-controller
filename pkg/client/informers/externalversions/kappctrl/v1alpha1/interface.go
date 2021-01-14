@@ -41,10 +41,10 @@ func (v *version) InstalledPkgs() InstalledPkgInformer {
 
 // Pkgs returns a PkgInformer.
 func (v *version) Pkgs() PkgInformer {
-	return &pkgInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+	return &pkgInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // PkgRepositories returns a PkgRepositoryInformer.
 func (v *version) PkgRepositories() PkgRepositoryInformer {
-	return &pkgRepositoryInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+	return &pkgRepositoryInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }

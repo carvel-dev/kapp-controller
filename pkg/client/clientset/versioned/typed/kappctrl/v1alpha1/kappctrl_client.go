@@ -29,12 +29,12 @@ func (c *KappctrlV1alpha1Client) InstalledPkgs(namespace string) InstalledPkgInt
 	return newInstalledPkgs(c, namespace)
 }
 
-func (c *KappctrlV1alpha1Client) Pkgs(namespace string) PkgInterface {
-	return newPkgs(c, namespace)
+func (c *KappctrlV1alpha1Client) Pkgs() PkgInterface {
+	return newPkgs(c)
 }
 
-func (c *KappctrlV1alpha1Client) PkgRepositories(namespace string) PkgRepositoryInterface {
-	return newPkgRepositories(c, namespace)
+func (c *KappctrlV1alpha1Client) PkgRepositories() PkgRepositoryInterface {
+	return newPkgRepositories(c)
 }
 
 // NewForConfig creates a new KappctrlV1alpha1Client for the given config.

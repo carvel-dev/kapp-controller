@@ -15,7 +15,6 @@ import (
 // FakePkgs implements PkgInterface
 type FakePkgs struct {
 	Fake *FakeKappctrlV1alpha1
-	ns   string
 }
 
 var pkgsResource = schema.GroupVersionResource{Group: "kappctrl", Version: "v1alpha1", Resource: "pkgs"}
@@ -25,8 +24,7 @@ var pkgsKind = schema.GroupVersionKind{Group: "kappctrl", Version: "v1alpha1", K
 // Get takes name of the pkg, and returns the corresponding pkg object, and an error if there is any.
 func (c *FakePkgs) Get(name string, options v1.GetOptions) (result *v1alpha1.Pkg, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(pkgsResource, c.ns, name), &v1alpha1.Pkg{})
-
+		Invokes(testing.NewRootGetAction(pkgsResource, name), &v1alpha1.Pkg{})
 	if obj == nil {
 		return nil, err
 	}
@@ -36,8 +34,7 @@ func (c *FakePkgs) Get(name string, options v1.GetOptions) (result *v1alpha1.Pkg
 // List takes label and field selectors, and returns the list of Pkgs that match those selectors.
 func (c *FakePkgs) List(opts v1.ListOptions) (result *v1alpha1.PkgList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(pkgsResource, pkgsKind, c.ns, opts), &v1alpha1.PkgList{})
-
+		Invokes(testing.NewRootListAction(pkgsResource, pkgsKind, opts), &v1alpha1.PkgList{})
 	if obj == nil {
 		return nil, err
 	}
@@ -58,15 +55,13 @@ func (c *FakePkgs) List(opts v1.ListOptions) (result *v1alpha1.PkgList, err erro
 // Watch returns a watch.Interface that watches the requested pkgs.
 func (c *FakePkgs) Watch(opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(pkgsResource, c.ns, opts))
-
+		InvokesWatch(testing.NewRootWatchAction(pkgsResource, opts))
 }
 
 // Create takes the representation of a pkg and creates it.  Returns the server's representation of the pkg, and an error, if there is any.
 func (c *FakePkgs) Create(pkg *v1alpha1.Pkg) (result *v1alpha1.Pkg, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(pkgsResource, c.ns, pkg), &v1alpha1.Pkg{})
-
+		Invokes(testing.NewRootCreateAction(pkgsResource, pkg), &v1alpha1.Pkg{})
 	if obj == nil {
 		return nil, err
 	}
@@ -76,8 +71,7 @@ func (c *FakePkgs) Create(pkg *v1alpha1.Pkg) (result *v1alpha1.Pkg, err error) {
 // Update takes the representation of a pkg and updates it. Returns the server's representation of the pkg, and an error, if there is any.
 func (c *FakePkgs) Update(pkg *v1alpha1.Pkg) (result *v1alpha1.Pkg, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(pkgsResource, c.ns, pkg), &v1alpha1.Pkg{})
-
+		Invokes(testing.NewRootUpdateAction(pkgsResource, pkg), &v1alpha1.Pkg{})
 	if obj == nil {
 		return nil, err
 	}
@@ -88,8 +82,7 @@ func (c *FakePkgs) Update(pkg *v1alpha1.Pkg) (result *v1alpha1.Pkg, err error) {
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
 func (c *FakePkgs) UpdateStatus(pkg *v1alpha1.Pkg) (*v1alpha1.Pkg, error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(pkgsResource, "status", c.ns, pkg), &v1alpha1.Pkg{})
-
+		Invokes(testing.NewRootUpdateSubresourceAction(pkgsResource, "status", pkg), &v1alpha1.Pkg{})
 	if obj == nil {
 		return nil, err
 	}
@@ -99,14 +92,13 @@ func (c *FakePkgs) UpdateStatus(pkg *v1alpha1.Pkg) (*v1alpha1.Pkg, error) {
 // Delete takes name of the pkg and deletes it. Returns an error if one occurs.
 func (c *FakePkgs) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(pkgsResource, c.ns, name), &v1alpha1.Pkg{})
-
+		Invokes(testing.NewRootDeleteAction(pkgsResource, name), &v1alpha1.Pkg{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakePkgs) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(pkgsResource, c.ns, listOptions)
+	action := testing.NewRootDeleteCollectionAction(pkgsResource, listOptions)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.PkgList{})
 	return err
@@ -115,8 +107,7 @@ func (c *FakePkgs) DeleteCollection(options *v1.DeleteOptions, listOptions v1.Li
 // Patch applies the patch and returns the patched pkg.
 func (c *FakePkgs) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.Pkg, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(pkgsResource, c.ns, name, pt, data, subresources...), &v1alpha1.Pkg{})
-
+		Invokes(testing.NewRootPatchSubresourceAction(pkgsResource, name, pt, data, subresources...), &v1alpha1.Pkg{})
 	if obj == nil {
 		return nil, err
 	}

@@ -16,7 +16,7 @@ import (
 // PkgRepositoriesGetter has a method to return a PkgRepositoryInterface.
 // A group's client should implement this interface.
 type PkgRepositoriesGetter interface {
-	PkgRepositories(namespace string) PkgRepositoryInterface
+	PkgRepositories() PkgRepositoryInterface
 }
 
 // PkgRepositoryInterface has methods to work with PkgRepository resources.
@@ -36,14 +36,12 @@ type PkgRepositoryInterface interface {
 // pkgRepositories implements PkgRepositoryInterface
 type pkgRepositories struct {
 	client rest.Interface
-	ns     string
 }
 
 // newPkgRepositories returns a PkgRepositories
-func newPkgRepositories(c *KappctrlV1alpha1Client, namespace string) *pkgRepositories {
+func newPkgRepositories(c *KappctrlV1alpha1Client) *pkgRepositories {
 	return &pkgRepositories{
 		client: c.RESTClient(),
-		ns:     namespace,
 	}
 }
 
@@ -51,7 +49,6 @@ func newPkgRepositories(c *KappctrlV1alpha1Client, namespace string) *pkgReposit
 func (c *pkgRepositories) Get(name string, options v1.GetOptions) (result *v1alpha1.PkgRepository, err error) {
 	result = &v1alpha1.PkgRepository{}
 	err = c.client.Get().
-		Namespace(c.ns).
 		Resource("pkgrepositories").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
@@ -68,7 +65,6 @@ func (c *pkgRepositories) List(opts v1.ListOptions) (result *v1alpha1.PkgReposit
 	}
 	result = &v1alpha1.PkgRepositoryList{}
 	err = c.client.Get().
-		Namespace(c.ns).
 		Resource("pkgrepositories").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -85,7 +81,6 @@ func (c *pkgRepositories) Watch(opts v1.ListOptions) (watch.Interface, error) {
 	}
 	opts.Watch = true
 	return c.client.Get().
-		Namespace(c.ns).
 		Resource("pkgrepositories").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -96,7 +91,6 @@ func (c *pkgRepositories) Watch(opts v1.ListOptions) (watch.Interface, error) {
 func (c *pkgRepositories) Create(pkgRepository *v1alpha1.PkgRepository) (result *v1alpha1.PkgRepository, err error) {
 	result = &v1alpha1.PkgRepository{}
 	err = c.client.Post().
-		Namespace(c.ns).
 		Resource("pkgrepositories").
 		Body(pkgRepository).
 		Do().
@@ -108,7 +102,6 @@ func (c *pkgRepositories) Create(pkgRepository *v1alpha1.PkgRepository) (result 
 func (c *pkgRepositories) Update(pkgRepository *v1alpha1.PkgRepository) (result *v1alpha1.PkgRepository, err error) {
 	result = &v1alpha1.PkgRepository{}
 	err = c.client.Put().
-		Namespace(c.ns).
 		Resource("pkgrepositories").
 		Name(pkgRepository.Name).
 		Body(pkgRepository).
@@ -123,7 +116,6 @@ func (c *pkgRepositories) Update(pkgRepository *v1alpha1.PkgRepository) (result 
 func (c *pkgRepositories) UpdateStatus(pkgRepository *v1alpha1.PkgRepository) (result *v1alpha1.PkgRepository, err error) {
 	result = &v1alpha1.PkgRepository{}
 	err = c.client.Put().
-		Namespace(c.ns).
 		Resource("pkgrepositories").
 		Name(pkgRepository.Name).
 		SubResource("status").
@@ -136,7 +128,6 @@ func (c *pkgRepositories) UpdateStatus(pkgRepository *v1alpha1.PkgRepository) (r
 // Delete takes name of the pkgRepository and deletes it. Returns an error if one occurs.
 func (c *pkgRepositories) Delete(name string, options *v1.DeleteOptions) error {
 	return c.client.Delete().
-		Namespace(c.ns).
 		Resource("pkgrepositories").
 		Name(name).
 		Body(options).
@@ -151,7 +142,6 @@ func (c *pkgRepositories) DeleteCollection(options *v1.DeleteOptions, listOption
 		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
-		Namespace(c.ns).
 		Resource("pkgrepositories").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -164,7 +154,6 @@ func (c *pkgRepositories) DeleteCollection(options *v1.DeleteOptions, listOption
 func (c *pkgRepositories) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.PkgRepository, err error) {
 	result = &v1alpha1.PkgRepository{}
 	err = c.client.Patch(pt).
-		Namespace(c.ns).
 		Resource("pkgrepositories").
 		SubResource(subresources...).
 		Name(name).
