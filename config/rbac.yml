@@ -30,6 +30,11 @@ rules:
 - apiGroups: ["kappctrl.k14s.io"]
   resources: ["pkgrepositories", "pkgrepositories/status"]
   verbs: ["*"]
+#! TODO Needed for kapp-controller when deploying
+#! repository App CR (temporarily needed only for POC)
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["*"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1

@@ -6,10 +6,10 @@ metadata:
   # cluster scoped
 spec:
   fetch:
-    - git:
-        url: https://github.com/vmware-tanzu/carvel-kapp-controller
-        ref: origin/pkg-poc
-        subPath: examples/pkgrepository
+    git:
+      url: https://github.com/vmware-tanzu/carvel-kapp-controller
+      ref: origin/pkg-poc
+      subPath: examples/pkgrepository
 ---
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: InstalledPkg
@@ -23,12 +23,12 @@ spec:
     version: v2.0
   values:
   - secretRef:
-      name: simple-values
+      name: installed-pkg-test-in-repo-values
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: simple-values
+  name: installed-pkg-test-in-repo-values
 stringData:
   values.yml: |
     #@data/values
