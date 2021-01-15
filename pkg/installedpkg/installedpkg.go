@@ -80,39 +80,33 @@ func (ip *InstalledPackageCR) reconcileAppWithPackage(existingApp *kcv1alpha1.Ap
 }
 
 func (ip *InstalledPackageCR) referencedPkg() (kcv1alpha1.Pkg, error) {
-	var constraint string
-	var prereleases *versions.VersionSelectionSemverPrereleases
+	var semverConfig *versions.VersionSelectionSemver
 
 	switch {
 	case ip.model.Spec.PkgRef.Version != "" && ip.model.Spec.PkgRef.VersionSelection != nil:
 		return v1alpha1.Pkg{}, fmt.Errorf("Cannot use 'version' with 'versionSelection'")
 	case ip.model.Spec.PkgRef.Version != "":
-		constraint = ip.model.Spec.PkgRef.Version
+		semverConfig = &versions.VersionSelectionSemver{Constraints: ip.model.Spec.PkgRef.Version}
 	case ip.model.Spec.PkgRef.VersionSelection != nil:
-		constraint = ip.model.Spec.PkgRef.VersionSelection.Constraints
-		prereleases = ip.model.Spec.PkgRef.VersionSelection.Prereleases
+		semverConfig = ip.model.Spec.PkgRef.VersionSelection
 	}
-
-	desiredPkgName := ip.model.Spec.PkgRef.PublicName
 
 	pkgList, err := ip.client.KappctrlV1alpha1().Pkgs().List(metav1.ListOptions{})
 	if err != nil {
 		return kcv1alpha1.Pkg{}, err
 	}
 
-	var semvers []string
-	versionToPkg := make(map[string]kcv1alpha1.Pkg)
+	var versionStrs []string
+	versionToPkg := map[string]kcv1alpha1.Pkg{}
+
 	for _, pkg := range pkgList.Items {
+		versionStrs = append(versionStrs, pkg.Spec.Version)
 		versionToPkg[pkg.Spec.Version] = pkg
-		semvers = append(semvers, pkg.Spec.Version)
 	}
 
-	selectedVersion, err := versions.HighestConstrainedVersion(semvers, versions.VersionSelection{
-		Semver: &versions.VersionSelectionSemver{
-			Constraints: constraint,
-			Prereleases: prereleases,
-		},
-	})
+	verConfig := versions.VersionSelection{Semver: semverConfig}
+
+	selectedVersion, err := versions.HighestConstrainedVersion(versionStrs, verConfig)
 	if err != nil {
 		return kcv1alpha1.Pkg{}, err
 	}
@@ -121,5 +115,6 @@ func (ip *InstalledPackageCR) referencedPkg() (kcv1alpha1.Pkg, error) {
 		return pkg, nil
 	}
 
-	return kcv1alpha1.Pkg{}, fmt.Errorf("Could not find package with name '%s' and version '%s'", desiredPkgName, selectedVersion)
+	return kcv1alpha1.Pkg{}, fmt.Errorf("Could not find package with name '%s' and version '%s'",
+		ip.model.Spec.PkgRef.PublicName, selectedVersion)
 }

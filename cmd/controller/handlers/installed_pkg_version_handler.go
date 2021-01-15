@@ -2,7 +2,7 @@ package main
 
 import "sigs.k8s.io/controller-runtime/pkg/handler"
 
-type InstalledPkgVersionHandler struct {}
+type InstalledPkgVersionHandler struct{}
 
 var _ handler.EventHandler = InstalledPkgVersionHandler{}
 
