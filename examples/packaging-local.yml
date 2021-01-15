@@ -6,7 +6,7 @@ metadata:
   # cluster scoped
 spec:
   publicName: pkg1.test.carvel.dev
-  version: v1.0
+  version: v1.0.0
   displayName: "Test Package"
   description: "Package used for testing"
   template: # type of App CR
@@ -28,7 +28,7 @@ metadata:
   # cluster scoped
 spec:
   publicName: pkg1.test.carvel.dev
-  version: v2.0
+  version: v2.0.0
   displayName: "Test Package"
   description: "Package used for testing"
   template: # type of App CR
@@ -54,7 +54,7 @@ spec:
   serviceAccountName: default-ns-sa
   pkgRef:
     publicName: pkg1.test.carvel.dev
-    version: v2.0
+    version: v2.0.0
   values:
   - secretRef:
       name: simple-values

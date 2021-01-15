@@ -6,7 +6,7 @@ metadata:
   # cluster scoped
 spec:
   publicName: pkg2.test.carvel.dev
-  version: v1.0
+  version: v1.0.0
   displayName: "Test Package in repo"
   description: "Package used for testing"
   template:
@@ -28,7 +28,7 @@ metadata:
   # cluster scoped
 spec:
   publicName: pkg2.test.carvel.dev
-  version: v2.0
+  version: v2.0.0
   displayName: "Test Package in repo"
   description: "Package used for testing"
   template:
