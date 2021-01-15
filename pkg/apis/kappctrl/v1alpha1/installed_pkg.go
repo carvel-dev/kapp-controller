@@ -4,6 +4,7 @@
 package v1alpha1
 
 import (
+	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -43,8 +44,9 @@ type InstalledPkgSpec struct {
 }
 
 type InstalledPkgPkgRef struct {
-	PublicName string `json:"publicName,omitempty"`
-	Version    string `json:"version,omitempty"`
+	PublicName       string                           `json:"publicName,omitempty"`
+	Version          string                           `json:"version,omitempty"`
+	VersionSelection *versions.VersionSelectionSemver `json:"versionSelection,omitempty"`
 }
 
 type InstalledPkgValues struct {
