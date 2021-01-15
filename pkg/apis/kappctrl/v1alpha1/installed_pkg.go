@@ -48,7 +48,6 @@ type InstalledPkgPkgRef struct {
 }
 
 type InstalledPkgValues struct {
-	Inline    string                       `json:"inline,omitempty"`
 	SecretRef *InstalledPkgValuesSecretRef `json:"secretRef,omitempty"`
 }
 
