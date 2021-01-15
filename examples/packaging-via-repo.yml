@@ -2,7 +2,7 @@
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: PkgRepository
 metadata:
-  name: test-repo
+  name: basic.test.carvel.dev
   # cluster scoped
 spec:
   fetch:
@@ -19,7 +19,7 @@ metadata:
 spec:
   serviceAccountName: default-ns-sa
   pkgRef:
-    publicName: test-pkg-in-repo
+    publicName: pkg2.test.carvel.dev
     version: v2.0
   values:
   - secretRef:

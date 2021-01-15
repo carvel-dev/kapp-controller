@@ -2,10 +2,10 @@
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: Pkg
 metadata:
-  name: test-pkg-v1.0
+  name: pkg1.test.carvel.dev.v1.0
   # cluster scoped
 spec:
-  publicName: test-pkg
+  publicName: pkg1.test.carvel.dev
   version: v1.0
   displayName: "Test Package"
   description: "Package used for testing"
@@ -24,10 +24,10 @@ spec:
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: Pkg
 metadata:
-  name: test-pkg-v2.0
+  name: pkg1.test.carvel.dev.v2.0
   # cluster scoped
 spec:
-  publicName: test-pkg
+  publicName: pkg1.test.carvel.dev
   version: v2.0
   displayName: "Test Package"
   description: "Package used for testing"
@@ -53,7 +53,7 @@ metadata:
 spec:
   serviceAccountName: default-ns-sa
   pkgRef:
-    publicName: test-pkg
+    publicName: pkg1.test.carvel.dev
     version: v2.0
   values:
   - secretRef:
