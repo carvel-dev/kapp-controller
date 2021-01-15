@@ -54,6 +54,14 @@ spec:
     served: true
     storage: true
   additionalPrinterColumns:
+  - name: Public-Name
+    type: string
+    description: Package public name
+    JSONPath: .spec.publicName
+  - name: Version
+    type: string
+    description: Package version
+    JSONPath: .spec.version
   - name: Age
     type: date
     description: Time since creation
@@ -70,6 +78,8 @@ spec:
     listKind: PkgRepositoryList
     plural: pkgrepositories
     singular: pkgrepository
+    shortNames:
+    - pkgr
   scope: Cluster
   subresources:
     status: {}
@@ -94,6 +104,8 @@ spec:
     listKind: InstalledPkgList
     plural: installedpkgs
     singular: installedpkg
+    shortNames:
+    - ipkg
   scope: Namespaced
   subresources:
     status: {}
@@ -102,6 +114,16 @@ spec:
     served: true
     storage: true
   additionalPrinterColumns:
+  #! TODO package name+version should be pointing at
+  #! resolved information. for poc just point at pkgRef
+  - name: Package name
+    type: string
+    description: Package public name
+    JSONPath: .spec.pkgRef.publicName
+  - name: Package version
+    type: string
+    description: Package version
+    JSONPath: .spec.pkgRef.version
   - name: Age
     type: date
     description: Time since creation
