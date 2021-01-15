@@ -10,6 +10,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,19 +80,46 @@ func (ip *InstalledPackageCR) reconcileAppWithPackage(existingApp *kcv1alpha1.Ap
 }
 
 func (ip *InstalledPackageCR) referencedPkg() (kcv1alpha1.Pkg, error) {
+	var constraint string
+	var prereleases *versions.VersionSelectionSemverPrereleases
+
+	switch {
+	case ip.model.Spec.PkgRef.Version != "" && ip.model.Spec.PkgRef.VersionSelection != nil:
+		return v1alpha1.Pkg{}, fmt.Errorf("Cannot use 'version' with 'versionSelection'")
+	case ip.model.Spec.PkgRef.Version != "":
+		constraint = ip.model.Spec.PkgRef.Version
+	case ip.model.Spec.PkgRef.VersionSelection != nil:
+		constraint = ip.model.Spec.PkgRef.VersionSelection.Constraints
+		prereleases = ip.model.Spec.PkgRef.VersionSelection.Prereleases
+	}
+
 	desiredPkgName := ip.model.Spec.PkgRef.PublicName
-	desiredPkgVersion := ip.model.Spec.PkgRef.Version
 
 	pkgList, err := ip.client.KappctrlV1alpha1().Pkgs().List(metav1.ListOptions{})
 	if err != nil {
 		return kcv1alpha1.Pkg{}, err
 	}
 
+	var semvers []string
+	versionToPkg := make(map[string]kcv1alpha1.Pkg)
 	for _, pkg := range pkgList.Items {
-		if pkg.Spec.PublicName == desiredPkgName && pkg.Spec.Version == desiredPkgVersion {
-			return pkg, nil
-		}
+		versionToPkg[pkg.Spec.Version] = pkg
+		semvers = append(semvers, pkg.Spec.Version)
 	}
 
-	return kcv1alpha1.Pkg{}, fmt.Errorf("Could not find package with name '%s' and version '%s'", desiredPkgName, desiredPkgVersion)
+	selectedVersion, err := versions.HighestConstrainedVersion(semvers, versions.VersionSelection{
+		Semver: &versions.VersionSelectionSemver{
+			Constraints: constraint,
+			Prereleases: prereleases,
+		},
+	})
+	if err != nil {
+		return kcv1alpha1.Pkg{}, err
+	}
+
+	if pkg, found := versionToPkg[selectedVersion]; found {
+		return pkg, nil
+	}
+
+	return kcv1alpha1.Pkg{}, fmt.Errorf("Could not find package with name '%s' and version '%s'", desiredPkgName, selectedVersion)
 }
