@@ -1,0 +1,46 @@
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: Pkg
+metadata:
+  name: test-pkg-in-repo-v1.0
+  # cluster scoped
+spec:
+  publicName: test-pkg-in-repo
+  version: v1.0
+  displayName: "Test Package in repo"
+  description: "Package used for testing"
+  template:
+    spec:
+      fetch:
+      - git:
+          url: https://github.com/k14s/k8s-simple-app-example
+          ref: origin/develop
+          subPath: config-step-2-template
+      template:
+      - ytt: {}
+      deploy:
+      - kapp: {}
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: Pkg
+metadata:
+  name: test-pkg-in-repo-v2.0
+  # cluster scoped
+spec:
+  publicName: test-pkg-in-repo
+  version: v2.0
+  displayName: "Test Package in repo"
+  description: "Package used for testing"
+  template:
+    spec:
+      fetch:
+      - git:
+          url: https://github.com/k14s/k8s-simple-app-example
+          ref: origin/develop
+      template:
+      - ytt:
+          paths:
+          - config-step-2-template
+          - config-step-2a-overlays
+      deploy:
+      - kapp: {}
