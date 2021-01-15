@@ -5,11 +5,12 @@ package installedpkg
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/go-logr/logr"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -39,7 +40,6 @@ func (ip *InstalledPackageCR) Reconcile() (reconcile.Result, error) {
 	existingApp, err := ip.client.KappctrlV1alpha1().Apps(ip.model.Namespace).Get(ip.model.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// cosntruct app
 			return ip.createAppFromPackage(pkg)
 		}
 		return reconcile.Result{Requeue: true}, err
@@ -49,12 +49,12 @@ func (ip *InstalledPackageCR) Reconcile() (reconcile.Result, error) {
 }
 
 func (ip *InstalledPackageCR) createAppFromPackage(pkg kcv1alpha1.Pkg) (reconcile.Result, error) {
-	app := pkg.Spec.Template
+	desiredApp, err := NewApp(&v1alpha1.App{}, ip.model, pkg)
+	if err != nil {
+		return reconcile.Result{Requeue: true}, err
+	}
 
-	app.Name = ip.model.Name
-	app.Namespace = ip.model.Namespace
-
-	_, err := ip.client.KappctrlV1alpha1().Apps(app.Namespace).Create(app)
+	_, err = ip.client.KappctrlV1alpha1().Apps(desiredApp.Namespace).Create(desiredApp)
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
 	}
@@ -63,13 +63,13 @@ func (ip *InstalledPackageCR) createAppFromPackage(pkg kcv1alpha1.Pkg) (reconcil
 }
 
 func (ip *InstalledPackageCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App, pkg kcv1alpha1.Pkg) (reconcile.Result, error) {
-	if !reflect.DeepEqual(existingApp, pkg) {
-		app := pkg.Spec.Template
+	desiredApp, err := NewApp(existingApp, ip.model, pkg)
+	if err != nil {
+		return reconcile.Result{Requeue: true}, err
+	}
 
-		app.Name = ip.model.Name
-		app.Namespace = ip.model.Namespace
-
-		_, err := ip.client.KappctrlV1alpha1().Apps(app.Namespace).Update(app)
+	if !equality.Semantic.DeepEqual(desiredApp, existingApp) {
+		_, err = ip.client.KappctrlV1alpha1().Apps(desiredApp.Namespace).Update(desiredApp)
 		if err != nil {
 			return reconcile.Result{Requeue: true}, err
 		}
