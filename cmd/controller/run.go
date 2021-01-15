@@ -135,6 +135,28 @@ func Run(opts Options, runLog logr.Logger) {
 		}
 	}
 
+	{ // add controller for pkgrepositories
+		pkgRepositoriesCtrlOpts := controller.Options{
+			Reconciler: &PkgRepositoryReconciler{
+				client: kcClient,
+				log:    runLog.WithName("prr"),
+			},
+			MaxConcurrentReconciles: opts.Concurrency,
+		}
+
+		pkgRepositoryCtrl, err := controller.New("kapp-controller-pkg-repository", mgr, pkgRepositoriesCtrlOpts)
+		if err != nil {
+			runLog.Error(err, "unable to set up kapp-controller-pkg-repository")
+			os.Exit(1)
+		}
+
+		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &kcv1alpha1.PkgRepository{}}, &handler.EnqueueRequestForObject{})
+		if err != nil {
+			runLog.Error(err, "unable to watch *kcv1alpha1.PkgRepository")
+			os.Exit(1)
+		}
+	}
+
 	runLog.Info("starting manager")
 
 	if opts.EnablePprof {
