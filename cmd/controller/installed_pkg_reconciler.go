@@ -32,10 +32,5 @@ func (r *InstalledPkgReconciler) Reconcile(request reconcile.Request) (reconcile
 		return reconcile.Result{}, err
 	}
 
-	if existingInstalledPkg.DeletionTimestamp != nil {
-		// Nothing to do
-		return reconcile.Result{}, nil
-	}
-
 	return installedpkg.NewInstalledPkgCR(existingInstalledPkg, log, r.intalledPkgClient).Reconcile()
 }
