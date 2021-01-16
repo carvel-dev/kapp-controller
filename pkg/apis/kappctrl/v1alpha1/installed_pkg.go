@@ -59,6 +59,5 @@ type InstalledPkgValuesSecretRef struct {
 }
 
 type InstalledPkgStatus struct {
-	ObservedGeneration int64          `json:"observedGeneration"`
-	Conditions         []AppCondition `json:"conditions"`
+	GenericStatus `json:",inline"`
 }
