@@ -2,11 +2,11 @@
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: Pkg
 metadata:
-  name: pkg1.test.carvel.dev.v1.0
+  name: pkg1.test.carvel.dev.1.0.0
   # cluster scoped
 spec:
   publicName: pkg1.test.carvel.dev
-  version: v1.0.0
+  version: 1.0.0
   displayName: "Test Package"
   description: "Package used for testing"
   template: # type of App CR
@@ -24,11 +24,11 @@ spec:
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: Pkg
 metadata:
-  name: pkg1.test.carvel.dev.v2.0
+  name: pkg1.test.carvel.dev.2.0.0
   # cluster scoped
 spec:
   publicName: pkg1.test.carvel.dev
-  version: v2.0.0
+  version: 2.0.0
   displayName: "Test Package"
   description: "Package used for testing"
   template: # type of App CR
