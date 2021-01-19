@@ -123,7 +123,11 @@ spec:
   - name: Package version
     type: string
     description: Package version
-    JSONPath: .spec.pkgRef.version
+    JSONPath: .status.version
+  - name: Description
+    type: string
+    description: Friendly description
+    JSONPath: .status.friendlyDescription
   - name: Age
     type: date
     description: Time since creation

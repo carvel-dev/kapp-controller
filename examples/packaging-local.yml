@@ -54,7 +54,13 @@ spec:
   serviceAccountName: default-ns-sa
   pkgRef:
     publicName: pkg1.test.carvel.dev
-    version: v2.0.0
+    ## explicit
+    # version: 1.0.0
+    ## latest
+    versionSelection: {}
+    ## constraint
+    # versionSelection:
+    #   constraint: "<2.0.0"
   values:
   - secretRef:
       name: simple-values
