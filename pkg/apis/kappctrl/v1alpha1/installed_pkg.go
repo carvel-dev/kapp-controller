@@ -60,4 +60,6 @@ type InstalledPkgValuesSecretRef struct {
 
 type InstalledPkgStatus struct {
 	GenericStatus `json:",inline"`
+	// TODO this is desired resolved version (not actually deployed)
+	Version string `json:"version,omitempty"`
 }
