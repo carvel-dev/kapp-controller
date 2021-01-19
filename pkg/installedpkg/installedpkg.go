@@ -10,6 +10,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reconciler"
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -18,7 +19,8 @@ import (
 )
 
 type InstalledPackageCR struct {
-	model *kcv1alpha1.InstalledPkg
+	model           *kcv1alpha1.InstalledPkg
+	unmodifiedModel *kcv1alpha1.InstalledPkg
 
 	log    logr.Logger
 	client kcclient.Interface
@@ -27,20 +29,45 @@ type InstalledPackageCR struct {
 func NewInstalledPkgCR(model *kcv1alpha1.InstalledPkg, log logr.Logger,
 	client kcclient.Interface) *InstalledPackageCR {
 
-	return &InstalledPackageCR{model: model, log: log, client: client}
+	return &InstalledPackageCR{model: model, unmodifiedModel: model.DeepCopy(), log: log, client: client}
 }
 
 func (ip *InstalledPackageCR) Reconcile() (reconcile.Result, error) {
 	ip.log.Info(fmt.Sprintf("Reconciling InstalledPkg '%s/%s'", ip.model.Namespace, ip.model.Name))
 
+	// TODO deleting conditions
 	if ip.model.DeletionTimestamp != nil {
 		return reconcile.Result{}, nil // Nothing to do
 	}
+
+	status := &reconciler.Status{
+		ip.model.Status.GenericStatus,
+		func(st kcv1alpha1.GenericStatus) { ip.model.Status.GenericStatus = st },
+	}
+
+	result, err := ip.reconcile(status)
+	if err != nil {
+		status.SetReconcileCompleted(err)
+	}
+
+	// Always update status
+	statusErr := ip.updateStatus()
+	if statusErr != nil {
+		return reconcile.Result{Requeue: true}, statusErr
+	}
+
+	return result, err
+}
+
+func (ip *InstalledPackageCR) reconcile(modelStatus *reconciler.Status) (reconcile.Result, error) {
+	modelStatus.SetReconciling(ip.model.ObjectMeta)
 
 	pkg, err := ip.referencedPkg()
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
 	}
+
+	ip.model.Status.Version = pkg.Spec.Version
 
 	existingApp, err := ip.client.KappctrlV1alpha1().Apps(ip.model.Namespace).Get(ip.model.Name, metav1.GetOptions{})
 	if err != nil {
@@ -48,6 +75,17 @@ func (ip *InstalledPackageCR) Reconcile() (reconcile.Result, error) {
 			return ip.createAppFromPackage(pkg)
 		}
 		return reconcile.Result{Requeue: true}, err
+	}
+
+	appStatus := reconciler.Status{S: existingApp.Status.GenericStatus}
+	ip.log.Info(fmt.Sprintf("Reconciling InstalledPkg '%s/%s'", ip.model.Namespace, ip.model.Name))
+	switch {
+	case appStatus.IsReconciling():
+		modelStatus.SetReconciling(ip.model.ObjectMeta)
+	case appStatus.IsReconcileSucceeded():
+		modelStatus.SetReconcileCompleted(nil)
+	case appStatus.IsReconcileFailed():
+		modelStatus.SetReconcileCompleted(fmt.Errorf("App failed reconciling"))
 	}
 
 	return ip.reconcileAppWithPackage(existingApp, pkg)
@@ -121,4 +159,14 @@ func (ip *InstalledPackageCR) referencedPkg() (kcv1alpha1.Pkg, error) {
 
 	return kcv1alpha1.Pkg{}, fmt.Errorf("Could not find package with name '%s' and version '%s'",
 		ip.model.Spec.PkgRef.PublicName, selectedVersion)
+}
+
+func (r *InstalledPackageCR) updateStatus() error {
+	if !equality.Semantic.DeepEqual(r.unmodifiedModel.Status, r.model.Status) {
+		_, err := r.client.KappctrlV1alpha1().InstalledPkgs(r.model.Namespace).UpdateStatus(r.model)
+		if err != nil {
+			return fmt.Errorf("Updating installed pkg status: %s", err)
+		}
+	}
+	return nil
 }
