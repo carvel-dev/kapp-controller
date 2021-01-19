@@ -144,7 +144,16 @@ func Run(opts Options, runLog logr.Logger) {
 
 		err = installedPkgCtrl.Watch(&source.Kind{Type: &kcv1alpha1.Pkg{}}, handlers.NewInstalledPkgVersionHandler(kcClient, runLog.WithName("handler")))
 		if err != nil {
-			runLog.Error(err, "unable to watch *kcv1alpha1.InstalledPkg")
+			runLog.Error(err, "unable to watch *kcv1alpha1.Pkg for InstalledPkg")
+			os.Exit(1)
+		}
+
+		err = installedPkgCtrl.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
+			OwnerType:    &kcv1alpha1.InstalledPkg{},
+			IsController: true,
+		})
+		if err != nil {
+			runLog.Error(err, "unable to watch *kcv1alpha1.App for InstalledPkg")
 			os.Exit(1)
 		}
 	}
