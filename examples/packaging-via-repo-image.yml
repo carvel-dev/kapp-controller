@@ -1,0 +1,34 @@
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: PkgRepository
+metadata:
+  name: basic.test.carvel.dev
+  # cluster scoped
+spec:
+  fetch:
+    image:
+      url: ewrenn/repo-image:v1.0
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: InstalledPkg
+metadata:
+  name: installed-pkg-test-in-repo
+  namespace: default
+spec:
+  serviceAccountName: default-ns-sa
+  pkgRef:
+    publicName: pkg2.test.carvel.dev
+    version: 2.0.0
+  values:
+  - secretRef:
+      name: installed-pkg-test-in-repo-values
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: installed-pkg-test-in-repo-values
+stringData:
+  values.yml: |
+    #@data/values
+    ---
+    hello_msg: "hi"
