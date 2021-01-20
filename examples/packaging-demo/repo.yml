@@ -1,0 +1,9 @@
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: PkgRepository
+metadata:
+  name: basic.test.carvel.dev
+spec:
+  fetch:
+    image:
+      url: ewrenn/repo-bundle:v1.0.0
