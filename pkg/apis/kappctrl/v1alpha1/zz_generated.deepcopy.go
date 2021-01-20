@@ -5,7 +5,7 @@
 package v1alpha1
 
 import (
-	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
+	versionsv1alpha1 "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -954,7 +954,7 @@ func (in *InstalledPkgPkgRef) DeepCopyInto(out *InstalledPkgPkgRef) {
 	*out = *in
 	if in.VersionSelection != nil {
 		in, out := &in.VersionSelection, &out.VersionSelection
-		*out = new(versions.VersionSelectionSemver)
+		*out = new(versionsv1alpha1.VersionSelectionSemver)
 		(*in).DeepCopyInto(*out)
 	}
 	return
