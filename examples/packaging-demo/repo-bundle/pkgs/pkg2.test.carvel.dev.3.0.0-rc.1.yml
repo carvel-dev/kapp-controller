@@ -1,0 +1,22 @@
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: Pkg
+metadata:
+  name: pkg2.test.carvel.dev.3.0.0-rc.1
+  # cluster scoped
+spec:
+  publicName: pkg2.test.carvel.dev
+  version: 3.0.0-rc.1
+  displayName: "Test Package in repo"
+  description: "Package used for testing"
+  template:
+    spec:
+      fetch:
+      - image:
+          url: ewrenn/pkg2:v2.0.0
+      template:
+      - ytt:
+          paths:
+          - config-step-2-template
+      deploy:
+      - kapp: {}
