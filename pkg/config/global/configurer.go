@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package global
 
 import (
@@ -27,12 +30,12 @@ const (
 	noProxyEnvVar    = "no_proxy"
 )
 
-type GlobalConfigurer struct {
+type Configurer struct {
 	namespace string
 	client    kubernetes.Interface
 }
 
-func NewGlobalConfigurer() (*GlobalConfigurer, error) {
+func NewConfigurer() (*Configurer, error) {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	kubeConf := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
 	namespace, _, err := kubeConf.Namespace()
@@ -46,13 +49,13 @@ func NewGlobalConfigurer() (*GlobalConfigurer, error) {
 		return nil, fmt.Errorf("Buidling client: %s", err)
 	}
 
-	return &GlobalConfigurer{
+	return &Configurer{
 		namespace: namespace,
 		client:    coreClient,
 	}, nil
 }
 
-func (gc *GlobalConfigurer) Configure() error {
+func (gc *Configurer) Configure() error {
 	configMap, err := gc.configMap()
 	if err != nil {
 		return fmt.Errorf("Fetching config map: %s", err)
@@ -72,7 +75,7 @@ func (gc *GlobalConfigurer) Configure() error {
 	return nil
 }
 
-func (gc *GlobalConfigurer) addTrustedCerts(certChain string) (err error) {
+func (gc *Configurer) addTrustedCerts(certChain string) (err error) {
 	if certChain == "" {
 		return nil
 	}
@@ -92,7 +95,7 @@ func (gc *GlobalConfigurer) addTrustedCerts(certChain string) (err error) {
 	return file.Close()
 }
 
-func (gc *GlobalConfigurer) configureProxies(httpProxy, httpsProxy, noProxy string) {
+func (gc *Configurer) configureProxies(httpProxy, httpsProxy, noProxy string) {
 	if httpProxy != "" {
 		os.Setenv(httpProxyEnvVar, httpProxy)
 		os.Setenv(strings.ToUpper(httpProxyEnvVar), httpProxy)
@@ -109,7 +112,7 @@ func (gc *GlobalConfigurer) configureProxies(httpProxy, httpsProxy, noProxy stri
 	}
 }
 
-func (gc *GlobalConfigurer) configMap() (*v1.ConfigMap, error) {
+func (gc *Configurer) configMap() (*v1.ConfigMap, error) {
 	configMap, err := gc.client.CoreV1().ConfigMaps(gc.namespace).Get(configMapName, metav1.GetOptions{})
 
 	if errors.IsNotFound(err) {

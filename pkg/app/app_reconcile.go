@@ -268,9 +268,9 @@ func (a *App) removeAllConditions() {
 	a.app.Status.Conditions = nil
 }
 
-func (a *App) removeCondition(type_ v1alpha1.AppConditionType) {
+func (a *App) removeCondition(appCondType v1alpha1.AppConditionType) {
 	for i, cond := range a.app.Status.Conditions {
-		if cond.Type == type_ {
+		if cond.Type == appCondType {
 			a.app.Status.Conditions = append(a.app.Status.Conditions[:i], a.app.Status.Conditions[i+1:]...)
 			return
 		}

@@ -38,7 +38,7 @@ func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger,
 
 	crdApp := &CRDApp{appModel: appModel, log: log, appClient: appClient}
 
-	crdApp.app = NewApp(*appModel, AppHooks{
+	crdApp.app = NewApp(*appModel, Hooks{
 		BlockDeletion:   crdApp.blockDeletion,
 		UnblockDeletion: crdApp.unblockDeletion,
 		UpdateStatus:    crdApp.updateStatus,
