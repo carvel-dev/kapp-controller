@@ -62,7 +62,7 @@ func (s *KubeconfigSecrets) fetchKubeconfigYAML(nsName string,
 	val, found := secret.Data[key]
 	if !found {
 		var otherKeys []string
-		for otherKey, _ := range secret.Data {
+		for otherKey := range secret.Data {
 			otherKeys = append(otherKeys, otherKey)
 		}
 
