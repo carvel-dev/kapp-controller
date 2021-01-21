@@ -14,7 +14,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 )
 
-type AppHooks struct {
+type Hooks struct {
 	BlockDeletion   func() error
 	UnblockDeletion func() error
 	UpdateStatus    func(string) error
@@ -24,7 +24,7 @@ type AppHooks struct {
 type App struct {
 	app     v1alpha1.App
 	appPrev v1alpha1.App
-	hooks   AppHooks
+	hooks   Hooks
 
 	fetchFactory    fetch.Factory
 	templateFactory template.Factory
@@ -36,7 +36,7 @@ type App struct {
 	flushAllStatusUpdates bool
 }
 
-func NewApp(app v1alpha1.App, hooks AppHooks,
+func NewApp(app v1alpha1.App, hooks Hooks,
 	fetchFactory fetch.Factory, templateFactory template.Factory,
 	deployFactory deploy.Factory, log logr.Logger) *App {
 

@@ -81,7 +81,7 @@ func runControllerCmd(cmdName string, args []string) error {
 }
 
 func configureSystem() error {
-	globalConfigurer, err := global.NewGlobalConfigurer()
+	globalConfigurer, err := global.NewConfigurer()
 	if err != nil {
 		return fmt.Errorf("Creating configurer: %s", err)
 	}
