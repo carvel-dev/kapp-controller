@@ -95,8 +95,9 @@ stringData:
 			Template: &v1alpha1.AppStatusTemplate{
 				ExitCode: 0,
 			},
-			ObservedGeneration:  1,
-			FriendlyDescription: "Reconcile succeeded",
+			ConsecutiveReconcileSuccesses: 1,
+			ObservedGeneration:            1,
+			FriendlyDescription:           "Reconcile succeeded",
 		}
 
 		{
