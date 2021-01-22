@@ -73,6 +73,18 @@ func (a *CRDApp) unblockDeletion() error {
 func (a *CRDApp) updateStatus(desc string) error {
 	a.log.Info("Updating status", "desc", desc)
 
+	var lastErr error
+	for i := 0; i < 5; i++ {
+		lastErr = a.updateStatusOnce()
+		if lastErr == nil {
+			return nil
+		}
+	}
+
+	return lastErr
+}
+
+func (a *CRDApp) updateStatusOnce() error {
 	existingApp, err := a.appClient.KappctrlV1alpha1().Apps(a.appModel.Namespace).Get(a.appModel.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("Fetching app: %s", err)
@@ -80,10 +92,9 @@ func (a *CRDApp) updateStatus(desc string) error {
 
 	if !reflect.DeepEqual(existingApp.Status, a.app.Status()) {
 		existingApp.Status = a.app.Status()
-
 		_, err = a.appClient.KappctrlV1alpha1().Apps(existingApp.Namespace).UpdateStatus(existingApp)
 		if err != nil {
-			return fmt.Errorf("Updating app status: %s", err)
+			return err
 		}
 	}
 
