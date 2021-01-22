@@ -12,7 +12,6 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -37,7 +36,7 @@ func (a *App) Reconcile() (reconcile.Result, error) {
 
 		err = a.reconcileDelete()
 
-	case a.shouldReconcile(time.Now()):
+	case NewReconcileTimer(a.app).IsReadyAt(time.Now()):
 		a.log.Info("Started deploy")
 		defer func() { a.log.Info("Completed deploy") }()
 
@@ -47,7 +46,7 @@ func (a *App) Reconcile() (reconcile.Result, error) {
 		a.log.Info("Reconcile noop")
 	}
 
-	return a.requeueIfNecessary(), err
+	return reconcile.Result{RequeueAfter: NewReconcileTimer(a.app).DurationUntilReady(err)}, err
 }
 
 func (a *App) reconcileDelete() error {
@@ -221,6 +220,8 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 			Status:  corev1.ConditionTrue,
 			Message: result.ErrorStr(),
 		})
+		a.app.Status.ConsecutiveReconcileFailures++
+		a.app.Status.ConsecutiveReconcileSuccesses = 0
 		a.app.Status.FriendlyDescription = fmt.Sprintf("Reconcile failed: %s", result.ErrorStr())
 	} else {
 		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
@@ -228,6 +229,8 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 			Status:  corev1.ConditionTrue,
 			Message: "",
 		})
+		a.app.Status.ConsecutiveReconcileSuccesses++
+		a.app.Status.ConsecutiveReconcileFailures = 0
 		a.app.Status.FriendlyDescription = "Reconcile succeeded"
 	}
 }
@@ -256,69 +259,6 @@ func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
 	} else {
 		// assume resource will be deleted, hence nothing to update
 	}
-}
-
-func (a *App) syncPeriod() time.Duration {
-	const DefaultSyncPeriod = 30 * time.Second
-	if sp := a.app.Spec.SyncPeriod; sp != nil && sp.Duration > DefaultSyncPeriod {
-		return sp.Duration
-	}
-	return DefaultSyncPeriod
-}
-
-func (a *App) requeueIfNecessary() reconcile.Result {
-	var (
-		shortDelay = 4 * time.Second
-		// Must always be >= tooLongAfterSuccess so that we dont requeue
-		// without work to do
-		// replace last 5 seconds with int from range [5,10]
-		longerDelay = a.syncPeriod() - 5 + wait.Jitter(5*time.Second, 1.0)
-	)
-
-	if a.shouldReconcile(time.Now().Add(shortDelay)) {
-		return reconcile.Result{RequeueAfter: shortDelay}
-	}
-	return reconcile.Result{RequeueAfter: longerDelay}
-}
-
-func (a *App) shouldReconcile(timeAt time.Time) bool {
-	const (
-		tooLongAfterFailure = 3 * time.Second
-	)
-	tooLongAfterSuccess := a.syncPeriod()
-
-	// Did resource spec change?
-	if a.app.Status.ObservedGeneration != a.app.Generation {
-		return true
-	}
-
-	// If canceled/paused, then no reconcilation until unpaused
-	if a.app.Spec.Canceled || a.app.Spec.Paused {
-		return false
-	}
-
-	// Did we deploy at least once?
-	lastDeploy := a.app.Status.Deploy
-	if lastDeploy == nil {
-		return true
-	}
-
-	// Did previous deploy fail?
-	for _, cond := range a.app.Status.Conditions {
-		if cond.Type == v1alpha1.ReconcileFailed {
-			// Did we try too long ago?
-			if timeAt.UTC().Sub(lastDeploy.UpdatedAt.Time) > tooLongAfterFailure {
-				return true
-			}
-		}
-	}
-
-	// Did we deploy too long ago?
-	if timeAt.UTC().Sub(lastDeploy.UpdatedAt.Time) > tooLongAfterSuccess {
-		return true
-	}
-
-	return false
 }
 
 func (a *App) removeAllConditions() {
