@@ -81,7 +81,10 @@ func (a *App) reconcileDeploy() error {
 	a.setReconcileCompleted(result)
 
 	// Reconcile inspect regardless of deploy success
-	_ = a.reconcileInspect()
+	// but don't inspect if deploy never attempted
+	if a.app.Status.Deploy != nil {
+		_ = a.reconcileInspect()
+	}
 
 	return a.updateStatus("marking reconcile completed")
 }
