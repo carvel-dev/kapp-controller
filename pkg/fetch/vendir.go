@@ -42,6 +42,8 @@ func (v *Vendir) AddDir(fetch v1alpha1.AppFetch, dirPath string) error {
 		v.config.Directories = append(v.config.Directories, v.dir(v.gitConf(*fetch.Git), dirPath))
 	case fetch.HelmChart != nil:
 		v.config.Directories = append(v.config.Directories, v.dir(v.helmChartConf(*fetch.HelmChart), dirPath))
+	case fetch.ImgpkgBundle != nil:
+		v.config.Directories = append(v.config.Directories, v.dir(v.imgpkgBundleConf(*fetch.ImgpkgBundle), dirPath))
 	default:
 		return fmt.Errorf("Unsupported way to fetch templates")
 	}
@@ -76,6 +78,17 @@ func (v *Vendir) imageConf(image v1alpha1.AppFetchImage) vendirconf.DirectoryCon
 		Image: &vendirconf.DirectoryContentsImage{
 			URL:       image.URL,
 			SecretRef: v.localRefConf(image.SecretRef),
+		},
+	}
+}
+
+func (v *Vendir) imgpkgBundleConf(imgpkgBundle v1alpha1.AppFetchImgpkgBundle) vendirconf.DirectoryContents {
+	return vendirconf.DirectoryContents{
+		Path:        vendirEntireDirPath,
+		NewRootPath: imgpkgBundle.SubPath,
+		ImgpkgBundle: &vendirconf.DirectoryContentsImgpkgBundle{
+			Image:     imgpkgBundle.Image,
+			SecretRef: v.localRefConf(imgpkgBundle.SecretRef),
 		},
 	}
 }
@@ -190,6 +203,8 @@ func (v *Vendir) requiredResourcesYaml(contents vendirconf.DirectoryContents) ([
 		return v.gitResources(*contents.Git)
 	case contents.HelmChart != nil:
 		return v.helmChartResources(*contents.HelmChart)
+	case contents.ImgpkgBundle != nil:
+		return v.imgpkgBundleResources(*contents.ImgpkgBundle)
 	}
 
 	return nil, fmt.Errorf("Unknown fetch type: %v", contents)
@@ -226,6 +241,19 @@ func (v *Vendir) imageResources(image vendirconf.DirectoryContentsImage) ([][]by
 	}
 
 	resBytes, err := v.secretBytes(*image.SecretRef)
+	if err != nil {
+		return nil, err
+	}
+
+	return [][]byte{resBytes}, nil
+}
+
+func (v *Vendir) imgpkgBundleResources(imgpkgBundle vendirconf.DirectoryContentsImgpkgBundle) ([][]byte, error) {
+	if imgpkgBundle.SecretRef == nil {
+		return nil, nil
+	}
+
+	resBytes, err := v.secretBytes(*imgpkgBundle.SecretRef)
 	if err != nil {
 		return nil, err
 	}

@@ -8,11 +8,12 @@ import (
 )
 
 type AppFetch struct {
-	Inline    *AppFetchInline    `json:"inline,omitempty"`
-	Image     *AppFetchImage     `json:"image,omitempty"`
-	HTTP      *AppFetchHTTP      `json:"http,omitempty"`
-	Git       *AppFetchGit       `json:"git,omitempty"`
-	HelmChart *AppFetchHelmChart `json:"helmChart,omitempty"`
+	Inline       *AppFetchInline       `json:"inline,omitempty"`
+	Image        *AppFetchImage        `json:"image,omitempty"`
+	HTTP         *AppFetchHTTP         `json:"http,omitempty"`
+	Git          *AppFetchGit          `json:"git,omitempty"`
+	HelmChart    *AppFetchHelmChart    `json:"helmChart,omitempty"`
+	ImgpkgBundle *AppFetchImgpkgBundle `json:"imgpkgBundle,omitempty"`
 }
 
 type AppFetchInline struct {
@@ -85,4 +86,15 @@ type AppFetchHelmChartRepo struct {
 type AppFetchLocalRef struct {
 	// Object is expected to be within same namespace
 	corev1.LocalObjectReference `json:",inline" protobuf:"bytes,1,opt,name=localObjectReference"`
+}
+
+type AppFetchImgpkgBundle struct {
+	Image string `json:"image,omitempty"`
+	// Secret may include one or more keys: username, password, token.
+	// By default anonymous access is used for authentication.
+	// TODO support docker config formated secret
+	// +optional
+	SecretRef *AppFetchLocalRef `json:"secretRef,omitempty"`
+	// +optional
+	SubPath string `json:"subPath,omitempty"`
 }
