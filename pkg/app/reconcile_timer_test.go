@@ -27,6 +27,51 @@ func TestSucceededDurationUntilReady(t *testing.T) {
 	}
 }
 
+func TestFailureSyncMathOverflowGuard(t *testing.T) {
+	syncPeriod := 30 * time.Second
+	app := v1alpha1.App{
+		Spec: v1alpha1.AppSpec{
+			SyncPeriod: &metav1.Duration{Duration: syncPeriod},
+		},
+		Status: v1alpha1.AppStatus{
+			ConsecutiveReconcileFailures: 2700, // number so large 2^x will definitely overflow
+			Conditions:                   []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+		},
+	}
+
+	delay := NewReconcileTimer(app).DurationUntilReady(nil)
+
+	// In the overflow case, delay would be negative due to the 2^x overflow,
+	// which would be less than syncPeriod and would be returned. This checks
+	// the guard against overflow works
+	if delay != syncPeriod {
+		t.Fatalf("Expected failureSync period to handle an overflow")
+	}
+
+}
+
+func TestConsecutiveFailuresOverflowGuard(t *testing.T) {
+	syncPeriod := 30 * time.Second
+	app := v1alpha1.App{
+		Spec: v1alpha1.AppSpec{
+			SyncPeriod: &metav1.Duration{Duration: syncPeriod},
+		},
+		Status: v1alpha1.AppStatus{
+			ConsecutiveReconcileFailures: -2, // number so large 2^x will definitely overflow
+			Conditions:                   []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+		},
+	}
+
+	delay := NewReconcileTimer(app).DurationUntilReady(nil)
+
+	// make sure that if consecutive failed reconciles has overflowed, we just
+	// return syncPeriod instead of a fractional duration (due to neg exp in 2^x)
+	if delay != syncPeriod {
+		t.Fatalf("Expected failureSync period to handle an overflow")
+	}
+
+}
+
 func TestFailedDurationUntilReady(t *testing.T) {
 	syncPeriod := 30 * time.Second
 	app := v1alpha1.App{

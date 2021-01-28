@@ -64,10 +64,17 @@ func (rt ReconcileTimer) syncPeriod() time.Duration {
 }
 
 func (rt ReconcileTimer) failureSyncPeriod() time.Duration {
-	d := time.Duration(math.Exp2(float64(rt.app.Status.ConsecutiveReconcileFailures))) * time.Second
-	if d < rt.syncPeriod() {
-		return d
+	consecFailures := float64(rt.app.Status.ConsecutiveReconcileFailures)
+	// cap consec failures that we are willing to calculate for to avoid overflows
+	maxConsecFailures := float64(30)
+
+	if consecFailures > 0 && consecFailures < maxConsecFailures {
+		d := time.Duration(math.Exp2(consecFailures)) * time.Second
+		if d < rt.syncPeriod() {
+			return d
+		}
 	}
+
 	return rt.syncPeriod()
 }
 
