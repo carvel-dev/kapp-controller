@@ -19,7 +19,7 @@ More details in [docs](docs/README.md).
 
 ### Join the Community and Make Carvel Better
 Carvel is better because of our contributors and maintainers. It is because of you that we can bring great software to the community.
-Please join us during our online community meetings. Details can be found on our [Carvel website](https://carvel.netlify.app/community/).
+Please join us during our online community meetings. Details can be found on our [Carvel website](https://carvel.dev/community/).
 
 
 You can chat with us on Kubernetes Slack in the #carvel channel and follow us on Twitter at @carvel_dev.
