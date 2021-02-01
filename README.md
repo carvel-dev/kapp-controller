@@ -6,7 +6,7 @@
 - [Docs](docs/README.md) with topics about installation, config, etc.
 - Install: see [Install instructions](docs/install.md)
 
-kapp controller provides a way to specify which applications should run on your K8s cluster via one or more App CRs. It will install, and continiously apply updates.
+kapp controller provides a way to specify which applications should run on your K8s cluster via one or more App CRs. It will install, and continuously apply updates.
 
 Features:
 
