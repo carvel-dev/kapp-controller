@@ -5,6 +5,7 @@ name: test-gh
     - 'docs/**'
     - '*.md'
   pull_request:
+    types: [opened, reopened]
     paths-ignore:
     - 'docs/**'
     - '*.md'
