@@ -90,7 +90,7 @@ github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/vmware-tanzu/carvel-vendir v0.15.1-0.20210125232012-da0fe75e8194
+# github.com/vmware-tanzu/carvel-vendir v0.16.0
 github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config
 github.com/vmware-tanzu/carvel-vendir/pkg/vendir/version
 github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1

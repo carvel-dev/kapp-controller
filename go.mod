@@ -11,7 +11,7 @@ require (
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/prometheus/common v0.6.0 // indirect
 	github.com/prometheus/procfs v0.0.3 // indirect
-	github.com/vmware-tanzu/carvel-vendir v0.15.1-0.20210125232012-da0fe75e8194
+	github.com/vmware-tanzu/carvel-vendir v0.16.0
 	go.uber.org/atomic v1.4.0 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/tools v0.0.0-20190926165942-a8d5d34286bd // indirect
