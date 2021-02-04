@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package config
 
 type LockDirectory struct {
@@ -11,6 +14,7 @@ type LockDirectoryContents struct {
 	Git           *LockDirectoryContentsGit           `json:"git,omitempty"`
 	HTTP          *LockDirectoryContentsHTTP          `json:"http,omitempty"`
 	Image         *LockDirectoryContentsImage         `json:"image,omitempty"`
+	ImgpkgBundle  *LockDirectoryContentsImgpkgBundle  `json:"imgpkgBundle,omitempty"`
 	GithubRelease *LockDirectoryContentsGithubRelease `json:"githubRelease,omitempty"`
 	HelmChart     *LockDirectoryContentsHelmChart     `json:"helmChart,omitempty"`
 	Manual        *LockDirectoryContentsManual        `json:"manual,omitempty"`
@@ -28,6 +32,10 @@ type LockDirectoryContentsHTTP struct{}
 
 type LockDirectoryContentsImage struct {
 	URL string `json:"url"`
+}
+
+type LockDirectoryContentsImgpkgBundle struct {
+	Image string `json:"image"`
 }
 
 type LockDirectoryContentsGithubRelease struct {
