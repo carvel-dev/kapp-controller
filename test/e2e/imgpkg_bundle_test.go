@@ -21,6 +21,8 @@ func Test_FetchAndDeployImgpkgBundle_Successfully(t *testing.T) {
 	kapp := Kapp{t, env.Namespace, logger}
 	sas := ServiceAccounts{env.Namespace}
 
+	// contents for kappctrl-e2e-bundle
+	// available in test/e2e/assets/kappctrl-e2e-bundle
 	appYaml := fmt.Sprintf(`
 ---
 apiVersion: kappctrl.k14s.io/v1alpha1
