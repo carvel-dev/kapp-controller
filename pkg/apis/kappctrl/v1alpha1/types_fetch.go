@@ -95,6 +95,4 @@ type AppFetchImgpkgBundle struct {
 	// TODO support docker config formated secret
 	// +optional
 	SecretRef *AppFetchLocalRef `json:"secretRef,omitempty"`
-	// +optional
-	SubPath string `json:"subPath,omitempty"`
 }

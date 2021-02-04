@@ -77,8 +77,6 @@ spec:
         # secret with auth details (optional)
         secretRef:
           name: secret-name
-        # grab only portion of image (optional)
-        subPath: inside-dir/dir2
 
     # uses http library to fetch file
     - http:

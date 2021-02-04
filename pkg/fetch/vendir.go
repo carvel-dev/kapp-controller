@@ -84,8 +84,7 @@ func (v *Vendir) imageConf(image v1alpha1.AppFetchImage) vendirconf.DirectoryCon
 
 func (v *Vendir) imgpkgBundleConf(imgpkgBundle v1alpha1.AppFetchImgpkgBundle) vendirconf.DirectoryContents {
 	return vendirconf.DirectoryContents{
-		Path:        vendirEntireDirPath,
-		NewRootPath: imgpkgBundle.SubPath,
+		Path: vendirEntireDirPath,
 		ImgpkgBundle: &vendirconf.DirectoryContentsImgpkgBundle{
 			Image:     imgpkgBundle.Image,
 			SecretRef: v.localRefConf(imgpkgBundle.SecretRef),
