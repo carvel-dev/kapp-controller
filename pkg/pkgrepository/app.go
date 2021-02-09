@@ -2,6 +2,8 @@ package pkgrepository
 
 import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const (
@@ -13,6 +15,11 @@ func NewApp(existingApp *v1alpha1.App, pkgRepository *v1alpha1.PkgRepository) (*
 
 	desiredApp.Name = pkgRepository.Name
 	desiredApp.Namespace = appNs
+
+	err := controllerutil.SetControllerReference(pkgRepository, desiredApp, scheme.Scheme)
+	if err != nil {
+		return &v1alpha1.App{}, err
+	}
 
 	desiredApp.Spec = v1alpha1.AppSpec{
 		// TODO since we are assuming that we are inside kapp-controller NS, use its SA
