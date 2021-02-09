@@ -49,21 +49,22 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	// Expected app status has no inspect on status
 	// since the app deployment was not attempted
 	expectedStatus := v1alpha1.AppStatus{
-		Conditions: []v1alpha1.AppCondition{{
-			Type:    v1alpha1.ReconcileFailed,
-			Status:  corev1.ConditionTrue,
-			Message: "Fetching resources: exit status 1",
-		}},
+		GenericStatus: v1alpha1.GenericStatus{
+			Conditions: []v1alpha1.AppCondition{{
+				Type:    v1alpha1.ReconcileFailed,
+				Status:  corev1.ConditionTrue,
+				Message: "Fetching resources: exit status 1",
+			}},
+			ObservedGeneration:  0,
+			FriendlyDescription: "Reconcile failed: Fetching resources: exit status 1",
+		},
 		Fetch: &v1alpha1.AppStatusFetch{
 			Error:    "Fetching resources: exit status 1",
 			ExitCode: 1,
 		},
 		ConsecutiveReconcileFailures: 1,
-		ObservedGeneration:           0,
-		FriendlyDescription:          "Reconcile failed: Fetching resources: exit status 1",
 	}
 
-	// Unset time for assertions
 	crdApp.app.Status().Fetch.StartedAt = metav1.Time{}
 	crdApp.app.Status().Fetch.UpdatedAt = metav1.Time{}
 	// No need to assert on stderr as its captured elsewhere
