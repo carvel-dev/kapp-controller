@@ -38,9 +38,10 @@ type PkgRepositorySpec struct {
 }
 
 type PkgRepositoryFetch struct {
-	Image *AppFetchImage `json:"image,omitempty"`
-	HTTP  *AppFetchHTTP  `json:"http,omitempty"`
-	Git   *AppFetchGit   `json:"git,omitempty"`
+	Image  *AppFetchImage        `json:"image,omitempty"`
+	HTTP   *AppFetchHTTP         `json:"http,omitempty"`
+	Git    *AppFetchGit          `json:"git,omitempty"`
+	Bundle *AppFetchImgpkgBundle `json:"bundle,omitempty"`
 }
 
 type PkgRepositoryStatus struct {

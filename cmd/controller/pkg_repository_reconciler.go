@@ -19,8 +19,6 @@ var _ reconcile.Reconciler = &PkgRepositoryReconciler{}
 func (r *PkgRepositoryReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
-	// TODO currently we've decided to get a fresh copy of app so
-	// that we do not operate on stale copy for efficiency reasons
 	existingPkgRepository, err := r.client.KappctrlV1alpha1().PkgRepositories().Get(request.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
