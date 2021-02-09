@@ -1,8 +1,10 @@
 package e2e
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+	"time"
 )
 
 func Test_PackageRepoBundle_PackagesAvailable(t *testing.T) {
@@ -41,19 +43,23 @@ spec:
 		return nil
 	}
 
-	err := retry(5, retryFunc)
+	err := retry(10 * time.Second, retryFunc)
 	if err != nil {
 		t.Fatalf("Expected to find pkgs (pkg2.test.carvel.dev.1.0.0, pkg2.test.carvel.dev.2.0.0) but couldn't: %v", err)
 	}
 }
 
-func retry(iterations int, f func() error) error {
+func retry(timeout time.Duration, f func() error) error {
 	var err error
-	for i := 0; i < iterations; i++ {
+	stopTime := time.Now().Add(timeout)
+	for {
 		err = f()
 		if err == nil {
 			return nil
 		}
+		if time.Now().After(stopTime) {
+			return fmt.Errorf("retry timed out after %d: %v", timeout, err)
+		}
+		time.Sleep(1 * time.Second)
 	}
-	return err
 }
