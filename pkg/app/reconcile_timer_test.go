@@ -18,7 +18,9 @@ func TestSucceededDurationUntilReady(t *testing.T) {
 			SyncPeriod: &metav1.Duration{Duration: syncPeriod},
 		},
 		Status: v1alpha1.AppStatus{
-			Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileSucceeded}},
+			GenericStatus: v1alpha1.GenericStatus{
+				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileSucceeded}},
+			},
 		},
 	}
 
@@ -38,7 +40,9 @@ func TestFailureSyncMathOverflowGuard(t *testing.T) {
 		},
 		Status: v1alpha1.AppStatus{
 			ConsecutiveReconcileFailures: 2700, // number so large 2^x will definitely overflow
-			Conditions:                   []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+			GenericStatus: v1alpha1.GenericStatus{
+				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+			},
 		},
 	}
 
@@ -61,7 +65,9 @@ func TestConsecutiveFailuresOverflowGuard(t *testing.T) {
 		},
 		Status: v1alpha1.AppStatus{
 			ConsecutiveReconcileFailures: -2, // number so large 2^x will definitely overflow
-			Conditions:                   []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+			GenericStatus: v1alpha1.GenericStatus{
+				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+			},
 		},
 	}
 
@@ -82,7 +88,9 @@ func TestFailedDurationUntilReady(t *testing.T) {
 			SyncPeriod: &metav1.Duration{Duration: syncPeriod},
 		},
 		Status: v1alpha1.AppStatus{
-			Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+			GenericStatus: v1alpha1.GenericStatus{
+				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+			},
 		},
 	}
 
@@ -128,7 +136,9 @@ func TestSucceededIsReadyAt(t *testing.T) {
 			Fetch: &v1alpha1.AppStatusFetch{
 				UpdatedAt: metav1.Time{Time: timeNow},
 			},
-			Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileSucceeded}},
+			GenericStatus: v1alpha1.GenericStatus{
+				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileSucceeded}},
+			},
 		},
 	}
 
@@ -161,7 +171,9 @@ func TestFailedIsReadyAt(t *testing.T) {
 			Fetch: &v1alpha1.AppStatusFetch{
 				UpdatedAt: metav1.Time{Time: timeNow},
 			},
-			Conditions:                   []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+			GenericStatus: v1alpha1.GenericStatus{
+				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+			},
 			ConsecutiveReconcileFailures: 1,
 		},
 	}

@@ -67,10 +67,14 @@ spec:
 		}
 
 		expectedStatus := v1alpha1.AppStatus{
-			Conditions: []v1alpha1.AppCondition{{
-				Type:   v1alpha1.ReconcileSucceeded,
-				Status: corev1.ConditionTrue,
-			}},
+			GenericStatus: v1alpha1.GenericStatus{
+				Conditions: []v1alpha1.AppCondition{{
+					Type:   v1alpha1.ReconcileSucceeded,
+					Status: corev1.ConditionTrue,
+				}},
+				ObservedGeneration:  1,
+				FriendlyDescription: "Reconcile succeeded",
+			},
 			Deploy: &v1alpha1.AppStatusDeploy{
 				ExitCode: 0,
 				Finished: true,
@@ -85,8 +89,6 @@ spec:
 				ExitCode: 0,
 			},
 			ConsecutiveReconcileSuccesses: 1,
-			ObservedGeneration:            1,
-			FriendlyDescription:           "Reconcile succeeded",
 		}
 
 		{
