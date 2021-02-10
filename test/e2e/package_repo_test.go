@@ -49,7 +49,7 @@ spec:
 	}
 }
 
-func TestRepoDelete(t *testing.T) {
+func Test_PackageRepoDelete(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
@@ -62,30 +62,33 @@ metadata:
   name: basic.test.carvel.dev
 spec:
   fetch:
-    image:
-      url: ewrenn/repo-bundle:v1.0.0`
+    bundle:
+      image: ewrenn/repo-bundle:v1.0.0`
 
 	packageNames := []string{"pkg2.test.carvel.dev.1.0.0", "pkg2.test.carvel.dev.2.0.0"}
 
 	cleanUp := func() {
 		kctl.RunWithOpts([]string{"delete", "pkgrepository/basic.test.carvel.dev"}, RunOpts{NoNamespace: true, AllowError: true})
 		for _, name := range packageNames {
-			kctl.RunWithOpts([]string{"delete", fmt.Sprintf("pkgs/%s", name)}, RunOpts{NoNamespace: true, AllowError: true})
+			kctl.RunWithOpts([]string{"delete", fmt.Sprintf("pkg/%s", name)}, RunOpts{NoNamespace: true, AllowError: true})
 		}
 	}
 	defer cleanUp()
 
 	logger.Section("deploy repo", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", "repo"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(repoYaml)})
+			RunOpts{StdinReader: strings.NewReader(repoYaml)})
 	})
 
 	logger.Section("check packages exist", func() {
 		for _, name := range packageNames {
-			retry(10*time.Second, func() error {
+			err := retry(10*time.Second, func() error {
 				_, err := kctl.RunWithOpts([]string{"get", fmt.Sprintf("pkgs/%s", name)}, RunOpts{AllowError: true, NoNamespace: true})
 				return err
 			})
+			if err != nil {
+				t.Fatalf("Expected to find pkgs %s but couldn't: %v", name, err)
+			}
 		}
 	})
 
@@ -95,8 +98,14 @@ spec:
 
 	logger.Section("check packages are deleted too", func() {
 		for _, name := range packageNames {
-			_, err := kctl.RunWithOpts([]string{"get", fmt.Sprintf("pkgs/%s", name)}, RunOpts{AllowError: true, NoNamespace: true})
-			if err == nil || !strings.Contains(err.Error(), fmt.Sprintf("\"%s\" not found", name)) {
+			err := retry(10*time.Second, func() error {
+				_, err := kctl.RunWithOpts([]string{"get", fmt.Sprintf("pkgs/%s", name)}, RunOpts{AllowError: true, NoNamespace: true})
+				if err == nil || !strings.Contains(err.Error(), fmt.Sprintf("\"%s\" not found", name)) {
+					return err
+				}
+				return nil
+			})
+			if err != nil {
 				t.Fatalf("Expected kubectl to fail with package '%s' not found error but got: %v", name, err)
 			}
 		}
@@ -112,7 +121,7 @@ func retry(timeout time.Duration, f func() error) error {
 			return nil
 		}
 		if time.Now().After(stopTime) {
-			return fmt.Errorf("retry timed out after %d: %v", timeout, err)
+			return fmt.Errorf("retry timed out after %s: %v", timeout.String(), err)
 		}
 		time.Sleep(1 * time.Second)
 	}
