@@ -38,14 +38,16 @@ spec:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: pkgs.kappctrl.k14s.io
+  name: packages.package.carvel.dev
 spec:
-  group: kappctrl.k14s.io
+  group: package.carvel.dev
   names:
-    kind: Pkg
-    listKind: PkgList
-    plural: pkgs
-    singular: pkg
+    kind: Package
+    listKind: PackageList
+    plural: packages
+    singular: package
+    shortNames:
+      - pkg
   scope: Cluster
   subresources:
     status: {}
@@ -70,14 +72,14 @@ spec:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: pkgrepositories.kappctrl.k14s.io
+  name: packagerepositories.install.package.carvel.dev
 spec:
-  group: kappctrl.k14s.io
+  group: install.package.carvel.dev
   names:
-    kind: PkgRepository
-    listKind: PkgRepositoryList
-    plural: pkgrepositories
-    singular: pkgrepository
+    kind: PackageRepository
+    listKind: PackageRepositoryList
+    plural: packagerepositories
+    singular: packagerepository
     shortNames:
     - pkgr
   scope: Cluster
@@ -96,14 +98,14 @@ spec:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: installedpkgs.kappctrl.k14s.io
+  name: installedpackages.install.package.carvel.dev
 spec:
-  group: kappctrl.k14s.io
+  group: install.package.carvel.dev
   names:
-    kind: InstalledPkg
-    listKind: InstalledPkgList
-    plural: installedpkgs
-    singular: installedpkg
+    kind: InstalledPackage
+    listKind: InstalledPackageList
+    plural: installedpackages
+    singular: installedpackage
     shortNames:
     - ipkg
   scope: Namespaced
@@ -119,7 +121,7 @@ spec:
   - name: Package name
     type: string
     description: Package public name
-    JSONPath: .spec.pkgRef.publicName
+    JSONPath: .spec.packageRef.publicName
   - name: Package version
     type: string
     description: Package version
