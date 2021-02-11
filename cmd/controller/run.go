@@ -5,6 +5,8 @@ package controller
 
 import (
 	"fmt"
+	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/package/v1alpha1"
 	"net/http"         // Pprof related
 	_ "net/http/pprof" // Pprof related
 	"os"
@@ -130,30 +132,30 @@ func Run(opts Options, runLog logr.Logger) {
 			MaxConcurrentReconciles: opts.Concurrency,
 		}
 
-		installedPkgCtrl, err := controller.New("kapp-controller-installed-pkg", mgr, installedPkgsCtrlOpts)
+		installedPkgCtrl, err := controller.New("kapp-controller-installed-package", mgr, installedPkgsCtrlOpts)
 		if err != nil {
-			runLog.Error(err, "unable to set up kapp-controller-installed-pkg")
+			runLog.Error(err, "unable to set up kapp-controller-installed-package")
 			os.Exit(1)
 		}
 
-		err = installedPkgCtrl.Watch(&source.Kind{Type: &kcv1alpha1.InstalledPkg{}}, &handler.EnqueueRequestForObject{})
+		err = installedPkgCtrl.Watch(&source.Kind{Type: &v1alpha12.InstalledPackage{}}, &handler.EnqueueRequestForObject{})
 		if err != nil {
-			runLog.Error(err, "unable to watch *kcv1alpha1.InstalledPkg")
+			runLog.Error(err, "unable to watch *kcv1alpha1.InstalledPackage")
 			os.Exit(1)
 		}
 
-		err = installedPkgCtrl.Watch(&source.Kind{Type: &kcv1alpha1.Pkg{}}, handlers.NewInstalledPkgVersionHandler(kcClient, runLog.WithName("handler")))
+		err = installedPkgCtrl.Watch(&source.Kind{Type: &v1alpha1.Package{}}, handlers.NewInstalledPkgVersionHandler(kcClient, runLog.WithName("handler")))
 		if err != nil {
-			runLog.Error(err, "unable to watch *kcv1alpha1.Pkg for InstalledPkg")
+			runLog.Error(err, "unable to watch *kcv1alpha1.Package for InstalledPackage")
 			os.Exit(1)
 		}
 
 		err = installedPkgCtrl.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
-			OwnerType:    &kcv1alpha1.InstalledPkg{},
+			OwnerType:    &v1alpha12.InstalledPackage{},
 			IsController: true,
 		})
 		if err != nil {
-			runLog.Error(err, "unable to watch *kcv1alpha1.App for InstalledPkg")
+			runLog.Error(err, "unable to watch *kcv1alpha1.App for InstalledPackage")
 			os.Exit(1)
 		}
 	}
@@ -167,15 +169,15 @@ func Run(opts Options, runLog logr.Logger) {
 			MaxConcurrentReconciles: opts.Concurrency,
 		}
 
-		pkgRepositoryCtrl, err := controller.New("kapp-controller-pkg-repository", mgr, pkgRepositoriesCtrlOpts)
+		pkgRepositoryCtrl, err := controller.New("kapp-controller-package-repository", mgr, pkgRepositoriesCtrlOpts)
 		if err != nil {
-			runLog.Error(err, "unable to set up kapp-controller-pkg-repository")
+			runLog.Error(err, "unable to set up kapp-controller-package-repository")
 			os.Exit(1)
 		}
 
-		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &kcv1alpha1.PkgRepository{}}, &handler.EnqueueRequestForObject{})
+		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &v1alpha12.PackageRepository{}}, &handler.EnqueueRequestForObject{})
 		if err != nil {
-			runLog.Error(err, "unable to watch *kcv1alpha1.PkgRepository")
+			runLog.Error(err, "unable to watch *kcv1alpha1.PackageRepository")
 			os.Exit(1)
 		}
 	}
