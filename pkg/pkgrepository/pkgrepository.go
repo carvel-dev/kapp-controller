@@ -5,6 +5,7 @@ package pkgrepository
 
 import (
 	"fmt"
+	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -17,20 +18,20 @@ import (
 )
 
 type PkgRepositoryCR struct {
-	model *kcv1alpha1.PkgRepository
+	model *v1alpha12.PackageRepository
 
 	log    logr.Logger
 	client kcclient.Interface
 }
 
-func NewPkgRepositoryCR(model *kcv1alpha1.PkgRepository, log logr.Logger,
+func NewPkgRepositoryCR(model *v1alpha12.PackageRepository, log logr.Logger,
 	client kcclient.Interface) *PkgRepositoryCR {
 
 	return &PkgRepositoryCR{model: model, log: log, client: client}
 }
 
 func (ip *PkgRepositoryCR) Reconcile() (reconcile.Result, error) {
-	ip.log.Info(fmt.Sprintf("Reconciling PkgRepository '%s'", ip.model.Name))
+	ip.log.Info(fmt.Sprintf("Reconciling PackageRepository '%s'", ip.model.Name))
 
 	if ip.model.DeletionTimestamp != nil {
 		// Nothing to do
@@ -38,7 +39,7 @@ func (ip *PkgRepositoryCR) Reconcile() (reconcile.Result, error) {
 	}
 
 	// TODO note that we will not be using App CR as a method to download
-	// pkg repositories beyond this quick POC. we would like to decouple storage
+	// package repositories beyond this quick POC. we would like to decouple storage
 	// of packages from kubernetes etcd. Most likely we will rely on k8s API agg layer
 	// to serve packages apis directly.
 

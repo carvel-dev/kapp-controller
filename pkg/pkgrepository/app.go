@@ -1,6 +1,7 @@
 package pkgrepository
 
 import (
+	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -10,7 +11,7 @@ const (
 	appNs = "kapp-controller"
 )
 
-func NewApp(existingApp *v1alpha1.App, pkgRepository *v1alpha1.PkgRepository) (*v1alpha1.App, error) {
+func NewApp(existingApp *v1alpha1.App, pkgRepository *v1alpha12.PackageRepository) (*v1alpha1.App, error) {
 	desiredApp := existingApp.DeepCopy()
 
 	desiredApp.Name = pkgRepository.Name

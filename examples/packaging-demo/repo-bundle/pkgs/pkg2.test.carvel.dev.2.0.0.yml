@@ -1,6 +1,6 @@
 ---
-apiVersion: kappctrl.k14s.io/v1alpha1
-kind: Pkg
+apiVersion: install.package.carvel.dev/v1alpha1
+kind: Package
 metadata:
   name: pkg2.test.carvel.dev.2.0.0
   # cluster scoped

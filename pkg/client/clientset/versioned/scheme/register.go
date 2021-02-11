@@ -3,7 +3,9 @@
 package scheme
 
 import (
+	installv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	packagev1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/package/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -15,7 +17,9 @@ var Scheme = runtime.NewScheme()
 var Codecs = serializer.NewCodecFactory(Scheme)
 var ParameterCodec = runtime.NewParameterCodec(Scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
+	installv1alpha1.AddToScheme,
 	kappctrlv1alpha1.AddToScheme,
+	packagev1alpha1.AddToScheme,
 }
 
 // AddToScheme adds all types of this clientset into the given scheme. This allows composition
@@ -24,7 +28,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 //   import (
 //     "k8s.io/client-go/kubernetes"
 //     clientsetscheme "k8s.io/client-go/kubernetes/scheme"
-//     aggregatorclientsetscheme "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/scheme"
+//     aggregatorclientsetscheme "k8s.io/kube-aggregator/package/client/clientset_generated/clientset/scheme"
 //   )
 //
 //   kclientset, _ := kubernetes.NewForConfig(c)

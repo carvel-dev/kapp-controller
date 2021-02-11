@@ -5,7 +5,9 @@ package externalversions
 import (
 	"fmt"
 
-	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
+	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/package/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -36,15 +38,19 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=kappctrl, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("apps"):
+	// Group=install.package.carvel.dev, Version=v1alpha1
+	case v1alpha1.SchemeGroupVersion.WithResource("installedpackages"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Install().V1alpha1().InstalledPackages().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("packagerepositories"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Install().V1alpha1().PackageRepositories().Informer()}, nil
+
+		// Group=kappctrl, Version=v1alpha1
+	case kappctrlv1alpha1.SchemeGroupVersion.WithResource("apps"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Kappctrl().V1alpha1().Apps().Informer()}, nil
-	case v1alpha1.SchemeGroupVersion.WithResource("installedpkgs"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Kappctrl().V1alpha1().InstalledPkgs().Informer()}, nil
-	case v1alpha1.SchemeGroupVersion.WithResource("pkgs"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Kappctrl().V1alpha1().Pkgs().Informer()}, nil
-	case v1alpha1.SchemeGroupVersion.WithResource("pkgrepositories"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Kappctrl().V1alpha1().PkgRepositories().Informer()}, nil
+
+		// Group=package.carvel.dev, Version=v1alpha1
+	case pkgv1alpha1.SchemeGroupVersion.WithResource("pkgs"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Package().V1alpha1().Packages().Informer()}, nil
 
 	}
 

@@ -20,9 +20,6 @@ var (
 func init() {
 	localSchemeBuilder.Register(func(scheme *runtime.Scheme) error {
 		scheme.AddKnownTypes(SchemeGroupVersion, &App{}, &AppList{})
-		scheme.AddKnownTypes(SchemeGroupVersion, &PkgRepository{}, &PkgRepositoryList{})
-		scheme.AddKnownTypes(SchemeGroupVersion, &Pkg{}, &PkgList{})
-		scheme.AddKnownTypes(SchemeGroupVersion, &InstalledPkg{}, &InstalledPkgList{})
 		scheme.AddKnownTypes(SchemeGroupVersion, &metav1.Status{})
 		metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 		return nil

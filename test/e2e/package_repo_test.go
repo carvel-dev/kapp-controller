@@ -11,21 +11,21 @@ func Test_PackageRepoBundle_PackagesAvailable(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kubectl := Kubectl{t, env.Namespace, logger}
-	// contents of this bundle (ewrenn/repo-bundle:v1.0.0)
+	// contents of this bundle (k8slt/k8slt/kappctrl-e2e-repo-bundle)
 	// under examples/packaging-demo/repo-bundle
 	yamlRepo := `---
-apiVersion: kappctrl.k14s.io/v1alpha1
-kind: PkgRepository
+apiVersion: install.package.carvel.dev/v1alpha1
+kind: PackageRepository
 metadata:
   name: basic.test.carvel.dev
   # cluster scoped
 spec:
   fetch:
     bundle:
-      image: ewrenn/repo-bundle:v1.0.0`
+      image: k8slt/kappctrl-e2e-repo-bundle`
 
 	cleanUp := func() {
-		kubectl.RunWithOpts([]string{"delete", "pkgrepository/basic.test.carvel.dev"}, RunOpts{NoNamespace: true})
+		kubectl.RunWithOpts([]string{"delete", "pkgr/basic.test.carvel.dev"}, RunOpts{NoNamespace: true})
 	}
 	defer cleanUp()
 
@@ -56,21 +56,21 @@ func Test_PackageRepoDelete(t *testing.T) {
 	kctl := Kubectl{t, env.Namespace, logger}
 
 	repoYaml := `---
-apiVersion: kappctrl.k14s.io/v1alpha1
-kind: PkgRepository
+apiVersion: install.package.carvel.dev/v1alpha1
+kind: PackageRepository
 metadata:
   name: basic.test.carvel.dev
 spec:
   fetch:
     bundle:
-      image: ewrenn/repo-bundle:v1.0.0`
+      image: k8slt/kappctrl-e2e-repo-bundle`
 
 	packageNames := []string{"pkg2.test.carvel.dev.1.0.0", "pkg2.test.carvel.dev.2.0.0"}
 
 	cleanUp := func() {
-		kctl.RunWithOpts([]string{"delete", "pkgrepository/basic.test.carvel.dev"}, RunOpts{NoNamespace: true, AllowError: true})
+		kctl.RunWithOpts([]string{"delete", "pkgr/basic.test.carvel.dev"}, RunOpts{NoNamespace: true, AllowError: true})
 		for _, name := range packageNames {
-			kctl.RunWithOpts([]string{"delete", fmt.Sprintf("pkg/%s", name)}, RunOpts{NoNamespace: true, AllowError: true})
+			kctl.RunWithOpts([]string{"delete", fmt.Sprintf("package/%s", name)}, RunOpts{NoNamespace: true, AllowError: true})
 		}
 	}
 	defer cleanUp()
@@ -82,8 +82,8 @@ spec:
 
 	logger.Section("check packages exist", func() {
 		for _, name := range packageNames {
-			err := retry(10*time.Second, func() error {
-				_, err := kctl.RunWithOpts([]string{"get", fmt.Sprintf("pkgs/%s", name)}, RunOpts{AllowError: true, NoNamespace: true})
+			err := retry(20*time.Second, func() error {
+				_, err := kctl.RunWithOpts([]string{"get", fmt.Sprintf("pkg/%s", name)}, RunOpts{AllowError: true, NoNamespace: true})
 				return err
 			})
 			if err != nil {
@@ -99,7 +99,7 @@ spec:
 	logger.Section("check packages are deleted too", func() {
 		for _, name := range packageNames {
 			err := retry(10*time.Second, func() error {
-				_, err := kctl.RunWithOpts([]string{"get", fmt.Sprintf("pkgs/%s", name)}, RunOpts{AllowError: true, NoNamespace: true})
+				_, err := kctl.RunWithOpts([]string{"get", fmt.Sprintf("pkg/%s", name)}, RunOpts{AllowError: true, NoNamespace: true})
 				if err == nil || !strings.Contains(err.Error(), fmt.Sprintf("\"%s\" not found", name)) {
 					return err
 				}
