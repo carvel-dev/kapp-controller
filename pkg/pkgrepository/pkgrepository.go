@@ -1,4 +1,4 @@
-// Copyright 2020 VMware, Inc.
+// Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 package pkgrepository
@@ -17,7 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-type PkgRepositoryCR struct {
+type PackageRepositoryCR struct {
 	model *v1alpha12.PackageRepository
 
 	log    logr.Logger
@@ -25,12 +25,12 @@ type PkgRepositoryCR struct {
 }
 
 func NewPkgRepositoryCR(model *v1alpha12.PackageRepository, log logr.Logger,
-	client kcclient.Interface) *PkgRepositoryCR {
+	client kcclient.Interface) *PackageRepositoryCR {
 
-	return &PkgRepositoryCR{model: model, log: log, client: client}
+	return &PackageRepositoryCR{model: model, log: log, client: client}
 }
 
-func (ip *PkgRepositoryCR) Reconcile() (reconcile.Result, error) {
+func (ip *PackageRepositoryCR) Reconcile() (reconcile.Result, error) {
 	ip.log.Info(fmt.Sprintf("Reconciling PackageRepository '%s'", ip.model.Name))
 
 	if ip.model.DeletionTimestamp != nil {
@@ -54,7 +54,7 @@ func (ip *PkgRepositoryCR) Reconcile() (reconcile.Result, error) {
 	return ip.reconcileApp(existingApp)
 }
 
-func (ip *PkgRepositoryCR) createApp() (reconcile.Result, error) {
+func (ip *PackageRepositoryCR) createApp() (reconcile.Result, error) {
 	desiredApp, err := NewApp(&v1alpha1.App{}, ip.model)
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
@@ -68,7 +68,7 @@ func (ip *PkgRepositoryCR) createApp() (reconcile.Result, error) {
 	return reconcile.Result{}, nil
 }
 
-func (ip *PkgRepositoryCR) reconcileApp(existingApp *kcv1alpha1.App) (reconcile.Result, error) {
+func (ip *PackageRepositoryCR) reconcileApp(existingApp *kcv1alpha1.App) (reconcile.Result, error) {
 	desiredApp, err := NewApp(existingApp, ip.model)
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
