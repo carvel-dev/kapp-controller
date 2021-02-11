@@ -15,13 +15,8 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
-
-func init() {
-	kcv1alpha1.AddToScheme(scheme.Scheme)
-}
 
 type CRDApp struct {
 	app       *App
