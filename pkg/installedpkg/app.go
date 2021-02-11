@@ -4,16 +4,16 @@
 package installedpkg
 
 import (
-	v1alpha13 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
+	instpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/package/v1alpha1"
+	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/package/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func NewApp(existingApp *v1alpha1.App, installedPkg *v1alpha13.InstalledPackage, pkg v1alpha12.Package) (*v1alpha1.App, error) {
+func NewApp(existingApp *v1alpha1.App, installedPkg *instpkgv1alpha1.InstalledPackage, pkg pkgv1alpha1.Package) (*v1alpha1.App, error) {
 	desiredApp := existingApp.DeepCopy()
 
 	desiredApp.Name = installedPkg.Name
