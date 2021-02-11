@@ -5,6 +5,7 @@ package installedpkg
 
 import (
 	"fmt"
+
 	instPkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/package/v1alpha1"
 
@@ -17,7 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -27,11 +27,6 @@ type InstalledPackageCR struct {
 
 	log    logr.Logger
 	client kcclient.Interface
-}
-
-func init() {
-	instPkgv1alpha1.AddToScheme(scheme.Scheme)
-	pkgv1alpha1.AddToScheme(scheme.Scheme)
 }
 
 func NewInstalledPkgCR(model *instPkgv1alpha1.InstalledPackage, log logr.Logger,
