@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+// TODO: Right now the implementation of the package repo reconciler needs improvement
+// hopefully after which, these tests can be cleaned up to remove retries and time related
+// falkeyness
+
 func Test_PackageRepoBundle_PackagesAvailable(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
@@ -62,7 +66,7 @@ func Test_PackageRepoDelete(t *testing.T) {
 apiVersion: install.package.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
-  name: basic.test.carvel.dev
+  name: basic.delete.test.carvel.dev
 spec:
   fetch:
     bundle:
@@ -84,14 +88,21 @@ spec:
 	})
 
 	logger.Section("check packages exist", func() {
-		for _, name := range packageNames {
-			err := retry(20*time.Second, func() error {
-				_, err := kctl.RunWithOpts([]string{"get", fmt.Sprintf("pkg/%s", name)}, RunOpts{AllowError: true, NoNamespace: true})
-				return err
-			})
+		err := retry(20*time.Second, func() error {
+			_, err := kctl.RunWithOpts([]string{"get", "pkg/pkg2.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
 			if err != nil {
-				t.Fatalf("Expected to find pkgs %s but couldn't: %v", name, err)
+				return err
 			}
+
+			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg2.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+
+		if err != nil {
+			t.Fatalf("Expected to find pkgs '%s' but couldn't: %v", strings.Join(packageNames, ", "), err)
 		}
 	})
 
@@ -100,17 +111,20 @@ spec:
 	})
 
 	logger.Section("check packages are deleted too", func() {
-		for _, name := range packageNames {
-			err := retry(10*time.Second, func() error {
-				_, err := kctl.RunWithOpts([]string{"get", fmt.Sprintf("pkg/%s", name)}, RunOpts{AllowError: true, NoNamespace: true})
-				if err == nil || !strings.Contains(err.Error(), fmt.Sprintf("\"%s\" not found", name)) {
-					return err
-				}
-				return nil
-			})
-			if err != nil {
-				t.Fatalf("Expected kubectl to fail with package '%s' not found error but got: %v", name, err)
+		err := retry(10*time.Second, func() error {
+			_, err := kctl.RunWithOpts([]string{"get", "pkg/pkg2.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
+			if err == nil || !strings.Contains(err.Error(), "\"pkg2.test.carvel.dev.1.0.0\" not found") {
+				return fmt.Errorf("found package pkg2.test.carvel.dev.1.0.0")
 			}
+
+			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg2.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
+			if err == nil || !strings.Contains(err.Error(), "\"pkg2.test.carvel.dev.2.0.0\" not found") {
+				return fmt.Errorf("found package pkg2.test.carvel.dev.2.0.0")
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Expected not to find pkgs '%s' but %s", strings.Join(packageNames, ", "), err)
 		}
 	})
 }
