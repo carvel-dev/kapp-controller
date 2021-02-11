@@ -5,10 +5,10 @@ package pkgrepository
 
 import (
 	"fmt"
-	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
+
+	instpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 
 	"github.com/go-logr/logr"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -18,13 +18,13 @@ import (
 )
 
 type PackageRepositoryCR struct {
-	model *v1alpha12.PackageRepository
+	model *instpkgv1alpha1.PackageRepository
 
 	log    logr.Logger
 	client kcclient.Interface
 }
 
-func NewPkgRepositoryCR(model *v1alpha12.PackageRepository, log logr.Logger,
+func NewPkgRepositoryCR(model *instpkgv1alpha1.PackageRepository, log logr.Logger,
 	client kcclient.Interface) *PackageRepositoryCR {
 
 	return &PackageRepositoryCR{model: model, log: log, client: client}
@@ -55,7 +55,7 @@ func (ip *PackageRepositoryCR) Reconcile() (reconcile.Result, error) {
 }
 
 func (ip *PackageRepositoryCR) createApp() (reconcile.Result, error) {
-	desiredApp, err := NewApp(&v1alpha1.App{}, ip.model)
+	desiredApp, err := NewApp(&kcv1alpha1.App{}, ip.model)
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
 	}
