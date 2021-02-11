@@ -11,9 +11,6 @@ import (
 type KappctrlV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	AppsGetter
-	InstalledPkgsGetter
-	PkgsGetter
-	PkgRepositoriesGetter
 }
 
 // KappctrlV1alpha1Client is used to interact with features provided by the kappctrl group.
@@ -23,18 +20,6 @@ type KappctrlV1alpha1Client struct {
 
 func (c *KappctrlV1alpha1Client) Apps(namespace string) AppInterface {
 	return newApps(c, namespace)
-}
-
-func (c *KappctrlV1alpha1Client) InstalledPkgs(namespace string) InstalledPkgInterface {
-	return newInstalledPkgs(c, namespace)
-}
-
-func (c *KappctrlV1alpha1Client) Pkgs() PkgInterface {
-	return newPkgs(c)
-}
-
-func (c *KappctrlV1alpha1Client) PkgRepositories() PkgRepositoryInterface {
-	return newPkgRepositories(c)
 }
 
 // NewForConfig creates a new KappctrlV1alpha1Client for the given config.

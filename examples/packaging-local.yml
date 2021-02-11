@@ -1,6 +1,6 @@
 ---
-apiVersion: kappctrl.k14s.io/v1alpha1
-kind: Pkg
+apiVersion: package.carvel.dev
+kind: Package
 metadata:
   name: pkg1.test.carvel.dev.1.0.0
   # cluster scoped
@@ -21,8 +21,8 @@ spec:
       deploy:
       - kapp: {}
 ---
-apiVersion: kappctrl.k14s.io/v1alpha1
-kind: Pkg
+apiVersion: package.carvel.dev
+kind: Package
 metadata:
   name: pkg1.test.carvel.dev.2.0.0
   # cluster scoped
@@ -45,8 +45,8 @@ spec:
       deploy:
       - kapp: {}
 ---
-apiVersion: kappctrl.k14s.io/v1alpha1
-kind: InstalledPkg
+apiVersion: install.package.carvel.dev
+kind: InstalledPackage
 metadata:
   name: installed-pkg-test
   namespace: default
