@@ -169,9 +169,9 @@ func (ip *InstalledPackageCR) referencedPkg() (pkgv1alpha1.Package, error) {
 		ip.model.Spec.PkgRef.PublicName, selectedVersion)
 }
 
-func (r *InstalledPackageCR) updateStatus() error {
-	if !equality.Semantic.DeepEqual(r.unmodifiedModel.Status, r.model.Status) {
-		_, err := r.client.InstallV1alpha1().InstalledPackages(r.model.Namespace).UpdateStatus(r.model)
+func (ip *InstalledPackageCR) updateStatus() error {
+	if !equality.Semantic.DeepEqual(ip.unmodifiedModel.Status, ip.model.Status) {
+		_, err := ip.client.InstallV1alpha1().InstalledPackages(ip.model.Namespace).UpdateStatus(ip.model)
 		if err != nil {
 			return fmt.Errorf("Updating installed package status: %s", err)
 		}
