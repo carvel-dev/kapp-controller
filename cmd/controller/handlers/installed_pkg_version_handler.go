@@ -59,7 +59,7 @@ func (ipvh *InstalledPkgVersionHandler) Generic(evt event.GenericEvent, q workqu
 }
 
 func (ipvh *InstalledPkgVersionHandler) enqueueAllPackages(q workqueue.RateLimitingInterface) error {
-	installedPkgList, err := ipvh.client.KappctrlV1alpha1().InstalledPkgs("").List(metav1.ListOptions{})
+	installedPkgList, err := ipvh.client.InstallV1alpha1().InstalledPackages("").List(metav1.ListOptions{})
 	if err != nil {
 		return err
 	}

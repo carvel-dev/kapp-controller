@@ -4,8 +4,12 @@ package fake
 
 import (
 	clientset "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	installv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/installpackage/v1alpha1"
+	fakeinstallv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/installpackage/v1alpha1/fake"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1"
 	fakekappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1/fake"
+	packagev1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/package/v1alpha1"
+	fakepackagev1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/package/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -60,7 +64,17 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 
 var _ clientset.Interface = &Clientset{}
 
+// InstallV1alpha1 retrieves the InstallV1alpha1Client
+func (c *Clientset) InstallV1alpha1() installv1alpha1.InstallV1alpha1Interface {
+	return &fakeinstallv1alpha1.FakeInstallV1alpha1{Fake: &c.Fake}
+}
+
 // KappctrlV1alpha1 retrieves the KappctrlV1alpha1Client
 func (c *Clientset) KappctrlV1alpha1() kappctrlv1alpha1.KappctrlV1alpha1Interface {
 	return &fakekappctrlv1alpha1.FakeKappctrlV1alpha1{Fake: &c.Fake}
+}
+
+// PackageV1alpha1 retrieves the PackageV1alpha1Client
+func (c *Clientset) PackageV1alpha1() packagev1alpha1.PackageV1alpha1Interface {
+	return &fakepackagev1alpha1.FakePackageV1alpha1{Fake: &c.Fake}
 }

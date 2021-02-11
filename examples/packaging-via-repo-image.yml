@@ -1,6 +1,6 @@
 ---
-apiVersion: kappctrl.k14s.io/v1alpha1
-kind: PkgRepository
+apiVersion: install.package.carvel.dev/v1alpha1
+kind: PackageRepository
 metadata:
   name: basic.test.carvel.dev
   # cluster scoped
@@ -9,8 +9,8 @@ spec:
     image:
       url: ewrenn/repo-image:v1.0
 ---
-apiVersion: kappctrl.k14s.io/v1alpha1
-kind: InstalledPkg
+apiVersion: install.package.carvel.dev/v1alpha1
+kind: InstalledPackage
 metadata:
   name: installed-pkg-test-in-repo
   namespace: default
