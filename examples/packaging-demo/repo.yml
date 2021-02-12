@@ -5,5 +5,5 @@ metadata:
   name: basic.test.carvel.dev
 spec:
   fetch:
-    image:
-      url: ewrenn/repo-bundle:v1.0.0
+    bundle:
+      image: ewrenn/repo-bundle:v1.0.0
