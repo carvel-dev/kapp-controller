@@ -1,5 +1,5 @@
 ---
-apiVersion: install.package.carvel.dev/v1alpha1
+apiVersion: package.carvel.dev/v1alpha1
 kind: Package
 metadata:
   name: pkg2.test.carvel.dev.3.0.0-rc.1
