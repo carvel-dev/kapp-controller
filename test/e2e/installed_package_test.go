@@ -70,8 +70,8 @@ stringData:
 	kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
 	// Wait for both InstalledPackage/App to have condition of ReconcileSucceeded
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "ipkg/"+name, "-n", env.Namespace, "--timeout", "20s"})
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/"+name, "-n", env.Namespace, "--timeout", "20s"})
+	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "ipkg/"+name, "-n", env.Namespace, "--timeout", "1m"})
+	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/"+name, "-n", env.Namespace, "--timeout", "1m"})
 	out := kubectl.Run([]string{"get", fmt.Sprintf("apps/%s", name), "-o", "yaml"})
 
 	var cr v1alpha1.App
