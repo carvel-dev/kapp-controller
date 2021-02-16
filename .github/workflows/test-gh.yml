@@ -49,6 +49,7 @@ jobs:
         ./hack/deploy-test.sh
 
         export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
+        kubectl version
         kubectl create ns $KAPPCTRL_E2E_NAMESPACE
 
         ./hack/test-all.sh
