@@ -60,8 +60,7 @@ stringData:
 `, name, env.Namespace) + sas.ForNamespaceYAML()
 
 	cleanUp := func() {
-		kubectl.RunWithOpts([]string{"delete", fmt.Sprintf("ipkg/%s", name), "-n", env.Namespace}, RunOpts{AllowError: true})
-		kubectl.RunWithOpts([]string{"delete", fmt.Sprintf("pkgr/%s", "basic.test.carvel.dev"), "-n", env.Namespace}, RunOpts{AllowError: true})
+		kubectl.RunWithOpts([]string{"delete", "-f", "-", "-n", env.Namespace}, RunOpts{StdinReader: strings.NewReader(installPkgYaml), AllowError: true})
 	}
 	cleanUp()
 	defer cleanUp()
