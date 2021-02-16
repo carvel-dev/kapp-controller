@@ -8,7 +8,7 @@ import (
 )
 
 // +genclient
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/package/runtime.Object
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type App struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -20,7 +20,7 @@ type App struct {
 	Status AppStatus `json:"status"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/package/runtime.Object
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type AppList struct {
 	metav1.TypeMeta `json:",inline"`
 
