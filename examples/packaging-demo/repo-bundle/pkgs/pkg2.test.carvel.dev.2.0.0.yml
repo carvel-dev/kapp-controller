@@ -6,6 +6,8 @@ metadata:
   # cluster scoped
 spec:
   publicName: pkg2.test.carvel.dev
+  # In this new version of the package, we are including some overlays
+  # which will increase the pod count for the simple app.
   version: 2.0.0
   displayName: "Test Package in repo"
   description: "Package used for testing"
