@@ -4,6 +4,12 @@ kind: PackageRepository
 metadata:
   name: basic.test.carvel.dev
 spec:
+  # Here we are fetching a list of packages from a docker registry. This reference
+  # points to an imgpkg bundle, which is our recommended way of storing a package
+  # repository
   fetch:
     bundle:
+      # This bundle was create by running `imgpkg push -b <repo> -f repo-bundle`. The resulting
+      # bundle will contain the packages within the folder and, by adding this repo to the cluster,
+      # those packages will also be available for installation.
       image: ewrenn/repo-bundle:v1.0.0
