@@ -10,7 +10,7 @@ import (
 
 // +genclient
 // +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/package/runtime.Object
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type Package struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -22,7 +22,7 @@ type Package struct {
 	Status PackageStatus `json:"status"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/package/runtime.Object
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type PackageList struct {
 	metav1.TypeMeta `json:",inline"`
 

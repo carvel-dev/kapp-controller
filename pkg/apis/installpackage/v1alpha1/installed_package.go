@@ -10,7 +10,7 @@ import (
 )
 
 // +genclient
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/package/runtime.Object
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type InstalledPackage struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -22,7 +22,7 @@ type InstalledPackage struct {
 	Status InstalledPackageStatus `json:"status"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/package/runtime.Object
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type InstalledPackageList struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -38,7 +38,7 @@ type InstalledPackageSpec struct {
 	ServiceAccountName string               `json:"serviceAccountName,omitempty"`
 	Cluster            *v1alpha1.AppCluster `json:"cluster,omitempty"`
 
-	PkgRef *PackageRef              `json:"pkgRef,omitempty"`
+	PkgRef *PackageRef              `json:"packageRef,omitempty"`
 	Values []InstalledPackageValues `json:"values,omitempty"`
 
 	// TODO other App CR related fields
