@@ -6,7 +6,7 @@ metadata:
   namespace: default
 spec:
   serviceAccountName: default-ns-sa
-  pkgRef:
+  packageRef:
     publicName: pkg2.test.carvel.dev
     versionSelection: {}
   values:
