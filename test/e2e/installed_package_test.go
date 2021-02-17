@@ -67,8 +67,8 @@ stringData:
 		// Delete App with kubectl since kapp doesn't
 		// know of App that is created by kapp-controller.
 		// AllowError = true since kubectl errors if it can't
-		// resource to delete.
-		kubectl.RunWithOpts([]string{"delete", "apps/"+name}, RunOpts{AllowError: true})
+		// find resource to delete.
+		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, RunOpts{AllowError: true})
 		kapp.Run([]string{"delete", "-a", name})
 	}
 	cleanUp()
@@ -124,7 +124,7 @@ stringData:
 		cr.Status.Fetch.Stdout = ""
 
 		// inspect
-		if !strings.Contains(cr.Status.Inspect.Stdout, "5 resources\nSucceeded") {
+		if !strings.Contains(cr.Status.Inspect.Stdout, "6 resources\nSucceeded") {
 			t.Fatalf("Expected to find 5 resources created but got:\n%s", cr.Status.Inspect.Stdout)
 		}
 		if !strings.Contains(cr.Status.Inspect.Stdout, "simple-app") {
