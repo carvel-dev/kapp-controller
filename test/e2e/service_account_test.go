@@ -1,5 +1,5 @@
- // Copyright 2020 VMware, Inc.
- // SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
 
 package e2e
 
@@ -42,7 +42,7 @@ spec:
   - ytt: {}
   deploy:
   - kapp: {}
-`+sas.ForNamespaceYAML()
+` + sas.ForNamespaceYAML()
 
 	yaml2 := `
 ---
@@ -68,7 +68,7 @@ spec:
   - ytt: {}
   deploy:
   - kapp: {}
-`+sas.ForNamespaceYAML()
+` + sas.ForNamespaceYAML()
 
 	name := "test-service-account-not-allowed"
 	cleanUp := func() {
