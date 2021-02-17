@@ -5,18 +5,20 @@ package e2e
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
+	"testing"
+
 	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"reflect"
-	"strings"
-	"testing"
 )
 
 func Test_PackageInstalled_FromInstalledPackage_Successfully(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
 	kubectl := Kubectl{t, env.Namespace, logger}
 	sas := ServiceAccounts{env.Namespace}
 	name := "instl-pkg-test"
@@ -39,10 +41,12 @@ kind: InstalledPackage
 metadata:
   name: %s
   namespace: %s
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/installedpackages
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   packageRef:
-    publicName: pkg2.test.carvel.dev
+    publicName: pkg.test.carvel.dev
     version: 1.0.0
   values:
   - secretRef:
@@ -60,17 +64,23 @@ stringData:
 `, name, env.Namespace) + sas.ForNamespaceYAML()
 
 	cleanUp := func() {
-		kubectl.RunWithOpts([]string{"delete", "-f", "-", "-n", env.Namespace}, RunOpts{StdinReader: strings.NewReader(installPkgYaml), AllowError: true})
+		kapp.Run([]string{"delete", "-a", name})
 	}
 	cleanUp()
 	defer cleanUp()
 
-	// Create Repo, InstalledPackage, and App from YAML
-	kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+	if env.Namespace != "default" {
+		// TODO: figure out a way to get the namespace the tests are running against
+		// in to the same namespace as installed package.
+		t.Skip("Namespace must temporarily be set to default to run installed package tests, skipping")
+	}
 
-	// Wait for both InstalledPackage/App to have condition of ReconcileSucceeded
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "ipkg/"+name, "-n", env.Namespace, "--timeout", "1m"})
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/"+name, "-n", env.Namespace, "--timeout", "1m"})
+	// Create Repo, InstalledPackage, and App from YAML
+	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+
+	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "ipkg/" + name, "-n", env.Namespace, "--timeout", "1m"})
+	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "-n", env.Namespace, "--timeout", "1m"})
+	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "-n", env.Namespace, "--timeout", "1m"})
 	out := kubectl.Run([]string{"get", fmt.Sprintf("apps/%s", name), "-o", "yaml"})
 
 	var cr v1alpha1.App
