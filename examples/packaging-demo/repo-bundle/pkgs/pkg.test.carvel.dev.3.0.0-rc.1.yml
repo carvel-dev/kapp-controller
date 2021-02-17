@@ -2,10 +2,10 @@
 apiVersion: package.carvel.dev/v1alpha1
 kind: Package
 metadata:
-  name: pkg2.test.carvel.dev.3.0.0-rc.1
+  name: pkg.test.carvel.dev.3.0.0-rc.1
   # cluster scoped
 spec:
-  publicName: pkg2.test.carvel.dev
+  publicName: pkg.test.carvel.dev
   # This is a pre-release, which kapp-contorller will not automatically bump
   # InstalledPackages to unless it explicitly allowed within the InstalledPackage
   # version selection.
@@ -16,7 +16,7 @@ spec:
     spec:
       fetch:
       - image:
-          url: ewrenn/pkg2:v2.0.0
+          url: k8slt/kctrl-example-pkg:v2.0.0
       template:
       - ytt:
           paths:

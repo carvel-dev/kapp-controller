@@ -7,7 +7,7 @@ metadata:
 spec:
   serviceAccountName: default-ns-sa
   packageRef:
-    publicName: pkg2.test.carvel.dev
+    publicName: pkg.test.carvel.dev
     # Kapp controller will keep this installed package up to date with the latest
     # available version of the packages matching the publicName. Users are also able to
     # pin to a specific version or specify specific constraints for the selection. You can

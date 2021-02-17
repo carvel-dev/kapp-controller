@@ -2,7 +2,7 @@
 apiVersion: package.carvel.dev/v1alpha1
 kind: Package
 metadata:
-  name: pkg2.test.carvel.dev.2.0.0
+  name: pkg.test.carvel.dev.2.0.0
   # cluster scoped
 spec:
   publicName: pkg2.test.carvel.dev
@@ -15,7 +15,7 @@ spec:
     spec:
       fetch:
       - image:
-          url: ewrenn/pkg2:v2.0.0
+          url: k8slt/kctrl-example-pkg:v2.0.0
       template:
       - ytt:
           paths:

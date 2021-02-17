@@ -12,4 +12,4 @@ spec:
       # This bundle was create by running `imgpkg push -b <repo> -f repo-bundle`. The resulting
       # bundle will contain the packages within the folder and, by adding this repo to the cluster,
       # those packages will also be available for installation.
-      image: ewrenn/repo-bundle:v1.0.0
+      image: k8slt/kctrl-pkg-repo-bundle:v1.0.0

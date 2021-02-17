@@ -7,7 +7,7 @@ metadata:
 spec:
   serviceAccountName: default-ns-sa
   packageRef:
-    publicName: pkg2.test.carvel.dev
+    publicName: pkg.test.carvel.dev
     # This will pin the version of the package we are installing to
     # 1.0.0. You can also use version constraints to allow kapp-controller
     # to automatically bump versions for you. This can be seen in installedpackage-floating.yml
