@@ -67,8 +67,8 @@ stringData:
 		// Delete App with kubectl since kapp doesn't
 		// know of App that is created by kapp-controller.
 		// AllowError = true since kubectl errors if it can't
-		// resource to delete.
-		kubectl.RunWithOpts([]string{"delete", "apps/"+name}, RunOpts{AllowError: true})
+		// find resource to delete.
+		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, RunOpts{AllowError: true})
 		kapp.Run([]string{"delete", "-a", name})
 	}
 	cleanUp()

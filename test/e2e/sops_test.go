@@ -1,23 +1,23 @@
- // Copyright 2020 VMware, Inc.
- // SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
 
 package e2e
 
 import (
-    "strings"
-    "testing"
+	"strings"
+	"testing"
 
-    "github.com/ghodss/yaml"
-    corev1 "k8s.io/api/core/v1"
+	"github.com/ghodss/yaml"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func TestSops(t *testing.T) {
-    env := BuildEnv(t)
-    logger := Logger{}
-    kapp := Kapp{t, env.Namespace, logger}
-    sas := ServiceAccounts{env.Namespace}
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+	sas := ServiceAccounts{env.Namespace}
 
-    yaml1 := `
+	yaml1 := `
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
@@ -187,34 +187,34 @@ stringData:
     9/zXBe3JOXNsfFYVeNVlkq4BeHWtxz6aOZgcbN2Nd+ykDNCxpQ==
     =2uSU
     -----END PGP PRIVATE KEY BLOCK-----
-`+sas.ForNamespaceYAML()
+` + sas.ForNamespaceYAML()
 
-    name := "test-sops"
-    cleanUp := func() {
-        kapp.Run([]string{"delete", "-a", name})
-    }
+	name := "test-sops"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
 
-    cleanUp()
-    defer cleanUp()
+	cleanUp()
+	defer cleanUp()
 
-    logger.Section("deploy", func() {
-        kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-            RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
-    })
+	logger.Section("deploy", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+	})
 
-    logger.Section("verify fully encrypted configmap", func() {
-        out := kapp.Run([]string{"inspect", "-a", name + "-ctrl", "--raw", "--tty=false", "--filter-kind-name", "ConfigMap/cm2"})
+	logger.Section("verify fully encrypted configmap", func() {
+		out := kapp.Run([]string{"inspect", "-a", name + "-ctrl", "--raw", "--tty=false", "--filter-kind-name", "ConfigMap/cm2"})
 
-        var cm corev1.ConfigMap
+		var cm corev1.ConfigMap
 
-        err := yaml.Unmarshal([]byte(out), &cm)
-        if err != nil {
-            t.Fatalf("Failed to unmarshal: %s", err)
-        }
-        if cm.Data["key"] != "cm2-encrypted" {
-            t.Fatalf(`Expected data.key to be "cm2-encrypted" got %#v`, cm.Data["key"])
-        }
-    })
+		err := yaml.Unmarshal([]byte(out), &cm)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal: %s", err)
+		}
+		if cm.Data["key"] != "cm2-encrypted" {
+			t.Fatalf(`Expected data.key to be "cm2-encrypted" got %#v`, cm.Data["key"])
+		}
+	})
 }
 
 /*
