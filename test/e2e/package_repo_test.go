@@ -39,11 +39,11 @@ spec:
 	kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(yamlRepo)})
 
 	retryFunc := func() error {
-		_, err := kubectl.RunWithOpts([]string{"get", "pkg/pkg2.test.carvel.dev.1.0.0"}, RunOpts{NoNamespace: true, AllowError: true})
+		_, err := kubectl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"}, RunOpts{NoNamespace: true, AllowError: true})
 		if err != nil {
 			return err
 		}
-		_, err = kubectl.RunWithOpts([]string{"get", "pkg/pkg2.test.carvel.dev.2.0.0"}, RunOpts{NoNamespace: true, AllowError: true})
+		_, err = kubectl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"}, RunOpts{NoNamespace: true, AllowError: true})
 		if err != nil {
 			return err
 		}
@@ -52,7 +52,7 @@ spec:
 
 	err := retry(10*time.Second, retryFunc)
 	if err != nil {
-		t.Fatalf("Expected to find pkgs (pkg2.test.carvel.dev.1.0.0, pkg2.test.carvel.dev.2.0.0) but couldn't: %v", err)
+		t.Fatalf("Expected to find pkgs (pkg.test.carvel.dev.1.0.0, pkg.test.carvel.dev.2.0.0) but couldn't: %v", err)
 	}
 }
 
@@ -72,7 +72,7 @@ spec:
     bundle:
       image: k8slt/kappctrl-e2e-repo-bundle`
 
-	packageNames := []string{"pkg2.test.carvel.dev.1.0.0", "pkg2.test.carvel.dev.2.0.0"}
+	packageNames := []string{"pkg.test.carvel.dev.1.0.0", "pkg.test.carvel.dev.2.0.0"}
 
 	cleanUp := func() {
 		kctl.RunWithOpts([]string{"delete", "pkgr/basic.test.carvel.dev"}, RunOpts{NoNamespace: true, AllowError: true})
@@ -89,12 +89,12 @@ spec:
 
 	logger.Section("check packages exist", func() {
 		err := retry(20*time.Second, func() error {
-			_, err := kctl.RunWithOpts([]string{"get", "pkg/pkg2.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
+			_, err := kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
 			if err != nil {
 				return err
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg2.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
+			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
 			if err != nil {
 				return err
 			}
@@ -112,14 +112,14 @@ spec:
 
 	logger.Section("check packages are deleted too", func() {
 		err := retry(10*time.Second, func() error {
-			_, err := kctl.RunWithOpts([]string{"get", "pkg/pkg2.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
-			if err == nil || !strings.Contains(err.Error(), "\"pkg2.test.carvel.dev.1.0.0\" not found") {
-				return fmt.Errorf("found package pkg2.test.carvel.dev.1.0.0")
+			_, err := kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
+			if err == nil || !strings.Contains(err.Error(), "\"pkg.test.carvel.dev.1.0.0\" not found") {
+				return fmt.Errorf("found package pkg.test.carvel.dev.1.0.0")
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg2.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
-			if err == nil || !strings.Contains(err.Error(), "\"pkg2.test.carvel.dev.2.0.0\" not found") {
-				return fmt.Errorf("found package pkg2.test.carvel.dev.2.0.0")
+			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
+			if err == nil || !strings.Contains(err.Error(), "\"pkg.test.carvel.dev.2.0.0\" not found") {
+				return fmt.Errorf("found package pkg.test.carvel.dev.2.0.0")
 			}
 			return nil
 		})
