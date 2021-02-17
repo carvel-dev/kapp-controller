@@ -109,7 +109,7 @@ spec:
 			cr.Status.Fetch.Stdout = ""
 
 			// inspect
-			if !strings.Contains(cr.Status.Inspect.Stdout, "6 resources\nSucceeded") {
+			if !strings.Contains(cr.Status.Inspect.Stdout, "5 resources\nSucceeded") {
 				t.Fatalf("Expected to find 5 resources created but got:\n%s", cr.Status.Inspect.Stdout)
 			}
 			if !strings.Contains(cr.Status.Inspect.Stdout, "simple-app") {
