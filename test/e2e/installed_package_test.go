@@ -64,23 +64,21 @@ stringData:
 `, name, env.Namespace) + sas.ForNamespaceYAML()
 
 	cleanUp := func() {
+		// Delete App with kubectl since kapp doesn't
+		// know of App that is created by kapp-controller.
+		// AllowError = true since kubectl errors if it can't
+		// resource to delete.
+		kubectl.RunWithOpts([]string{"delete", "apps/"+name}, RunOpts{AllowError: true})
 		kapp.Run([]string{"delete", "-a", name})
 	}
 	cleanUp()
 	defer cleanUp()
 
-	if env.Namespace != "default" {
-		// TODO: figure out a way to get the namespace the tests are running against
-		// in to the same namespace as installed package.
-		t.Skip("Namespace must temporarily be set to default to run installed package tests, skipping")
-	}
-
 	// Create Repo, InstalledPackage, and App from YAML
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "ipkg/" + name, "-n", env.Namespace, "--timeout", "1m"})
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "-n", env.Namespace, "--timeout", "1m"})
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "-n", env.Namespace, "--timeout", "1m"})
+	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "ipkg/" + name, "--timeout", "30s"})
+	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "30s"})
 	out := kubectl.Run([]string{"get", fmt.Sprintf("apps/%s", name), "-o", "yaml"})
 
 	var cr v1alpha1.App
