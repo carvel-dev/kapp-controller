@@ -8,8 +8,8 @@ spec:
   # points to an imgpkg bundle, which is our recommended way of storing a package
   # repository
   fetch:
-    bundle:
-      # This bundle was create by running `imgpkg push -b <repo> -f repo-bundle`. The resulting
-      # bundle will contain the packages within the folder and, by adding this repo to the cluster,
+    image:
+      # This image was create by running `imgpkg push -i <repo> -f repo`. The resulting
+      # image will contain the packages within the pkgs folder and, by adding this repo to the cluster,
       # those packages will also be available for installation.
-      image: k8slt/kctrl-pkg-repo-bundle:v1.0.0
+      url: k8slt/kctrl-pkg-repo-bundle:v1.0.0
