@@ -14,12 +14,16 @@ spec:
   template:
     spec:
       fetch:
-      - image:
-          url: k8slt/kctrl-example-pkg:v2.0.0
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v2.0.0
       template:
       - ytt:
           paths:
           - config-step-2-template
           - config-step-2a-overlays
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
       deploy:
       - kapp: {}

@@ -19,9 +19,16 @@ spec:
     # our simple app.
     spec:
       fetch:
-      - image:
-          url: k8slt/kctrl-example-pkg:v1.0.0
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v1.0.0
       template:
-      - ytt: {}
+      - ytt:
+          paths:
+          - "config.yml"
+          - "values.yml"
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
       deploy:
       - kapp: {}
