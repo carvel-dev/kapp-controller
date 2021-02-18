@@ -33,8 +33,8 @@ metadata:
   # cluster scoped
 spec:
   fetch:
-    bundle:
-      image: k8slt/kappctrl-e2e-repo-bundle
+    image:
+      url: k8slt/kappctrl-e2e-repo
 ---
 apiVersion: install.package.carvel.dev/v1alpha1
 kind: InstalledPackage
