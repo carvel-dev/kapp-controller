@@ -4,7 +4,7 @@ Available in v0.11.0+.
 
 Storing _encrypted_ secrets next to your configuration (within a Git repo or other artifacts) is one way to manage secret lifecycle. kapp-controller integrates with [Mozilla's SOPS](https://github.com/mozilla/sops) to decrypt secret material in fetched configuration.
 
-### Prepate GPG installation
+### Prepare GPG installation
 
 ```bash
 $ gpg --gen-key
@@ -22,7 +22,7 @@ ssb   4096R/FEE37B8E2098EDFC 2020-10-03
 
 ### Encrypt contents
 
-kapp-controller expects that encrypted files have `.sops.yml` extension (or `.sops.yml`).
+kapp-controller expects that encrypted files have `.sops.yml` extension (or `.sops.yaml`).
 
 ```bash
 # Unencrypted file
