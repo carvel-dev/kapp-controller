@@ -23,6 +23,16 @@ jobs:
       uses: actions/checkout@v1
       with:
         path: src/github.com/${{ github.repository }}
+    - name: Install Carvel Tools
+      uses: vmware-tanzu/carvel-setup-action@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        only: ytt, kapp, kbld, imgpkg, vendir
+        ytt: v0.31.0
+        kapp: v0.35.0
+        kbld: v0.28.0
+        imgpkg: v0.3.0
+        vendir: v0.16.0
     - name: Run Tests
       run: |
         set -e -x
@@ -30,8 +40,6 @@ jobs:
 
         mkdir /tmp/bin
         export PATH=/tmp/bin:$PATH
-
-        wget -O- https://k14s.io/install.sh | K14SIO_INSTALL_BIN_DIR=/tmp/bin bash
 
         wget -O- https://github.com/kubernetes/minikube/releases/download/v1.10.0/minikube-linux-amd64 > /tmp/bin/minikube
         chmod +x /tmp/bin/minikube
