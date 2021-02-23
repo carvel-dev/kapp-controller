@@ -2,7 +2,7 @@
 apiVersion: install.package.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
-  name: basic.test.carvel.dev
+  name: simple-package-repository
 spec:
   # Here we are fetching a list of packages from a docker registry. This reference
   # points to an imgpkg bundle, which is our recommended way of storing a package
