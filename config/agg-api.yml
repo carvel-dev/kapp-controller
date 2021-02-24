@@ -1,0 +1,27 @@
+#@ load("@ytt:data", "data")
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1alpha1.package.carvel.dev
+spec:
+  group: package.carvel.dev
+  groupPriorityMinimum: 100
+  version: v1alpha1
+  versionPriority: 100
+  service:
+    name: packages-api
+    namespace: kapp-controller
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: packages-api
+  namespace: #@ data.values.namespace
+spec:
+  ports:
+    - port: 443
+      protocol: TCP
+      targetPort: api
+  selector:
+    app: kapp-controller

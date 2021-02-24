@@ -4,4 +4,6 @@ package v1alpha1
 
 type InstalledPackageExpansion interface{}
 
+type InternalPackageExpansion interface{}
+
 type PackageRepositoryExpansion interface{}

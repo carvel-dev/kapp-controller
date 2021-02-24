@@ -25,6 +25,7 @@ const (
 )
 
 // TODO rename to Condition
+// +k8s:openapi-gen=true
 type AppCondition struct {
 	Type   AppConditionType       `json:"type"`
 	Status corev1.ConditionStatus `json:"status"`
