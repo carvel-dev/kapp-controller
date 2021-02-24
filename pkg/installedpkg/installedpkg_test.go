@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	ipv1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
-	packagev1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/package/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
+	packagev1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,7 +28,7 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 	}
 
 	// Load package into fake client
-	kappcs := fake.NewSimpleClientset(&expectedPkg)
+	fakePkgClient := fake.NewSimpleClientset(&expectedPkg)
 
 	// InstalledPackage that has PackageRef with prerelease
 	ip := InstalledPackageCR{
@@ -43,7 +43,7 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 				},
 			},
 		},
-		client: kappcs,
+		pkgclient: fakePkgClient,
 	}
 
 	out, err := ip.referencedPkg()
@@ -79,7 +79,7 @@ func Test_PackageRefUsesName(t *testing.T) {
 	}
 
 	// Load package into fake client
-	kappcs := fake.NewSimpleClientset(&expectedPkg, &alternatePkg)
+	fakePkgClient := fake.NewSimpleClientset(&expectedPkg, &alternatePkg)
 
 	// InstalledPackage that has PackageRef with prerelease
 	ip := InstalledPackageCR{
@@ -94,7 +94,7 @@ func Test_PackageRefUsesName(t *testing.T) {
 				},
 			},
 		},
-		client: kappcs,
+		pkgclient: fakePkgClient,
 	}
 
 	out, err := ip.referencedPkg()
