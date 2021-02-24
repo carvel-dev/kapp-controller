@@ -10,6 +10,8 @@ import (
 type Interface interface {
 	// InstalledPackages returns a InstalledPackageInformer.
 	InstalledPackages() InstalledPackageInformer
+	// InternalPackages returns a InternalPackageInformer.
+	InternalPackages() InternalPackageInformer
 	// PackageRepositories returns a PackageRepositoryInformer.
 	PackageRepositories() PackageRepositoryInformer
 }
@@ -28,6 +30,11 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // InstalledPackages returns a InstalledPackageInformer.
 func (v *version) InstalledPackages() InstalledPackageInformer {
 	return &installedPackageInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// InternalPackages returns a InternalPackageInformer.
+func (v *version) InternalPackages() InternalPackageInformer {
+	return &internalPackageInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // PackageRepositories returns a PackageRepositoryInformer.

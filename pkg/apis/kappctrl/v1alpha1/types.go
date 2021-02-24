@@ -32,6 +32,7 @@ type AppList struct {
 	Items []App `json:"items"`
 }
 
+// +k8s:openapi-gen=true
 type AppSpec struct {
 	ServiceAccountName string      `json:"serviceAccountName,omitempty"`
 	Cluster            *AppCluster `json:"cluster,omitempty"`
@@ -52,11 +53,13 @@ type AppSpec struct {
 	NoopDelete bool `json:"noopDelete,omitempty"`
 }
 
+// +k8s:openapi-gen=true
 type AppCluster struct {
 	Namespace           string                         `json:"namespace,omitempty"`
 	KubeconfigSecretRef *AppClusterKubeconfigSecretRef `json:"kubeconfigSecretRef,omitempty"`
 }
 
+// +k8s:openapi-gen=true
 type AppClusterKubeconfigSecretRef struct {
 	Name string `json:"name,omitempty"`
 	Key  string `json:"key,omitempty"`

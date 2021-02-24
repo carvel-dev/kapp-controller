@@ -7,6 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// +k8s:openapi-gen=true
 type AppFetch struct {
 	Inline       *AppFetchInline       `json:"inline,omitempty"`
 	Image        *AppFetchImage        `json:"image,omitempty"`
@@ -16,21 +17,25 @@ type AppFetch struct {
 	ImgpkgBundle *AppFetchImgpkgBundle `json:"imgpkgBundle,omitempty"`
 }
 
+// +k8s:openapi-gen=true
 type AppFetchInline struct {
 	Paths     map[string]string      `json:"paths,omitempty"`
 	PathsFrom []AppFetchInlineSource `json:"pathsFrom,omitempty"`
 }
 
+// +k8s:openapi-gen=true
 type AppFetchInlineSource struct {
 	SecretRef    *AppFetchInlineSourceRef `json:"secretRef,omitempty"`
 	ConfigMapRef *AppFetchInlineSourceRef `json:"configMapRef,omitempty"`
 }
 
+// +k8s:openapi-gen=true
 type AppFetchInlineSourceRef struct {
 	DirectoryPath               string `json:"directoryPath,omitempty"`
 	corev1.LocalObjectReference `json:",inline" protobuf:"bytes,1,opt,name=localObjectReference"`
 }
 
+// +k8s:openapi-gen=true
 type AppFetchImage struct {
 	// Example: username/app1-config:v0.1.0
 	URL string `json:"url,omitempty"`
@@ -43,6 +48,7 @@ type AppFetchImage struct {
 	SubPath string `json:"subPath,omitempty"`
 }
 
+// +k8s:openapi-gen=true
 type AppFetchHTTP struct {
 	// URL can point to one of following formats: text, tgz, zip
 	URL string `json:"url,omitempty"`
@@ -56,6 +62,7 @@ type AppFetchHTTP struct {
 }
 
 // TODO implement git
+// +k8s:openapi-gen=true
 type AppFetchGit struct {
 	URL string `json:"url,omitempty"`
 	// +optional
@@ -69,6 +76,7 @@ type AppFetchGit struct {
 	LFSSkipSmudge bool `json:"lfsSkipSmudge,omitempty"`
 }
 
+// +k8s:openapi-gen=true
 type AppFetchHelmChart struct {
 	// Example: stable/redis
 	Name string `json:"name,omitempty"`
@@ -77,17 +85,20 @@ type AppFetchHelmChart struct {
 	Repository *AppFetchHelmChartRepo `json:"repository,omitempty"`
 }
 
+// +k8s:openapi-gen=true
 type AppFetchHelmChartRepo struct {
 	URL string `json:"url,omitempty"`
 	// +optional
 	SecretRef *AppFetchLocalRef `json:"secretRef,omitempty"`
 }
 
+// +k8s:openapi-gen=true
 type AppFetchLocalRef struct {
 	// Object is expected to be within same namespace
 	corev1.LocalObjectReference `json:",inline" protobuf:"bytes,1,opt,name=localObjectReference"`
 }
 
+// +k8s:openapi-gen=true
 type AppFetchImgpkgBundle struct {
 	Image string `json:"image,omitempty"`
 	// Secret may include one or more keys: username, password, token.

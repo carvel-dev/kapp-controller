@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/installedpkg"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -15,8 +16,9 @@ import (
 )
 
 type InstalledPkgReconciler struct {
-	intalledPkgClient kcclient.Interface
-	log               logr.Logger
+	kcClient  kcclient.Interface
+	pkgClient pkgclient.Interface
+	log       logr.Logger
 }
 
 var _ reconcile.Reconciler = &InstalledPkgReconciler{}
@@ -24,7 +26,7 @@ var _ reconcile.Reconciler = &InstalledPkgReconciler{}
 func (r *InstalledPkgReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
-	existingInstalledPkg, err := r.intalledPkgClient.InstallV1alpha1().InstalledPackages(request.Namespace).Get(ctx, request.Name, metav1.GetOptions{})
+	existingInstalledPkg, err := r.kcClient.InstallV1alpha1().InstalledPackages(request.Namespace).Get(ctx, request.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.Info("Could not find InstalledPkg", "name", request.Name)
@@ -35,5 +37,5 @@ func (r *InstalledPkgReconciler) Reconcile(ctx context.Context, request reconcil
 		return reconcile.Result{}, err
 	}
 
-	return installedpkg.NewInstalledPkgCR(existingInstalledPkg, log, r.intalledPkgClient).Reconcile()
+	return installedpkg.NewInstalledPkgCR(existingInstalledPkg, log, r.kcClient, r.pkgClient).Reconcile()
 }

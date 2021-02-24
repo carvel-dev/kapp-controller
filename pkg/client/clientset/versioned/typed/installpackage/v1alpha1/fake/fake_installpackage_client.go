@@ -16,6 +16,10 @@ func (c *FakeInstallV1alpha1) InstalledPackages(namespace string) v1alpha1.Insta
 	return &FakeInstalledPackages{c, namespace}
 }
 
+func (c *FakeInstallV1alpha1) InternalPackages() v1alpha1.InternalPackageInterface {
+	return &FakeInternalPackages{c}
+}
+
 func (c *FakeInstallV1alpha1) PackageRepositories() v1alpha1.PackageRepositoryInterface {
 	return &FakePackageRepositories{c}
 }

@@ -36,6 +36,10 @@ spec:
         securityContext:
           runAsUser: 1000
           runAsGroup: 2000
+        ports:
+        - containerPort: 10349
+          name: api
+          protocol: TCP
       securityContext:
         fsGroup: 3000
       volumes:

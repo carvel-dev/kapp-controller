@@ -12,11 +12,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
-	instpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
-	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/package/v1alpha1"
-	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -27,6 +23,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	instpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
+	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
+
+	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/v1alpha1"
+	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 )
 
 const (
@@ -79,11 +83,26 @@ func Run(opts Options, runLog logr.Logger) {
 		os.Exit(1)
 	}
 
+	pkgClient, err := pkgclient.NewForConfig(restConfig)
+	if err != nil {
+		runLog.Error(err, "building app client")
+		os.Exit(1)
+	}
+
 	appFactory := AppFactory{
 		coreClient: coreClient,
 		kcConfig:   kcConfig,
 		appClient:  kcClient,
 	}
+
+	server, err := apiserver.NewAPIServer(restConfig)
+	if err != nil {
+		runLog.Error(err, "creating server")
+		os.Exit(1)
+	}
+	server.Run()
+
+	// TODO: we may need to sleep here to give the server time to start up
 
 	{ // add controller for apps
 		appRefTracker := reftracker.NewAppRefTracker()
@@ -126,8 +145,9 @@ func Run(opts Options, runLog logr.Logger) {
 	{ // add controller for installedPkgs
 		installedPkgsCtrlOpts := controller.Options{
 			Reconciler: &InstalledPkgReconciler{
-				intalledPkgClient: kcClient,
-				log:               runLog.WithName("ipr"),
+				kcClient:  kcClient,
+				pkgClient: pkgClient,
+				log:       runLog.WithName("ipr"),
 			},
 			MaxConcurrentReconciles: opts.Concurrency,
 		}
@@ -197,6 +217,7 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	runLog.Info("Exiting")
+	server.Stop()
 	os.Exit(0)
 }
 
