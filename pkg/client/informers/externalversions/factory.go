@@ -11,7 +11,6 @@ import (
 	installpackage "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/installpackage"
 	internalinterfaces "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/internalinterfaces"
 	kappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/kappctrl"
-	pkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/package"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -160,7 +159,6 @@ type SharedInformerFactory interface {
 
 	Install() installpackage.Interface
 	Kappctrl() kappctrl.Interface
-	Package() pkg.Interface
 }
 
 func (f *sharedInformerFactory) Install() installpackage.Interface {
@@ -169,8 +167,4 @@ func (f *sharedInformerFactory) Install() installpackage.Interface {
 
 func (f *sharedInformerFactory) Kappctrl() kappctrl.Interface {
 	return kappctrl.New(f, f.namespace, f.tweakListOptions)
-}
-
-func (f *sharedInformerFactory) Package() pkg.Interface {
-	return pkg.New(f, f.namespace, f.tweakListOptions)
 }

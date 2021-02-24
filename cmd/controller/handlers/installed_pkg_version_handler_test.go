@@ -10,7 +10,7 @@ import (
 	"github.com/go-logr/logr"
 
 	instpackagev1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
-	packagev1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/package/v1alpha1"
+	packagev1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/v1alpha1"
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"

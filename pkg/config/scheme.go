@@ -6,7 +6,7 @@ package config
 import (
 	installinstpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/install"
 	installkctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/install"
-	installpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/package/install"
+	installpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/install"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
