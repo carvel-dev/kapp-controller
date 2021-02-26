@@ -157,7 +157,7 @@ func Test_PackageInstalled_WhenPackageIsPrerelease(t *testing.T) {
 apiVersion: install.package.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
-  name: basic.test.carvel.dev
+  name: repo.test.carvel.dev
   # cluster scoped
 spec:
   fetch:
