@@ -131,7 +131,11 @@ func (ip *InstalledPackageCR) referencedPkg() (pkgv1alpha1.Package, error) {
 	case ip.model.Spec.PkgRef.Version != "" && ip.model.Spec.PkgRef.VersionSelection != nil:
 		return pkgv1alpha1.Package{}, fmt.Errorf("Cannot use 'version' with 'versionSelection'")
 	case ip.model.Spec.PkgRef.Version != "":
-		semverConfig = &versions.VersionSelectionSemver{Constraints: ip.model.Spec.PkgRef.Version}
+		semverConfig = &versions.VersionSelectionSemver{
+			Constraints: ip.model.Spec.PkgRef.Version,
+			// Prereleases must be non nil to be included
+			Prereleases: &versions.VersionSelectionSemverPrereleases{},
+		}
 	case ip.model.Spec.PkgRef.VersionSelection != nil:
 		semverConfig = ip.model.Spec.PkgRef.VersionSelection
 	}
