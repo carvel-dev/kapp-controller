@@ -77,8 +77,8 @@ stringData:
 	// Create Repo, InstalledPackage, and App from YAML
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "ipkg/" + name, "--timeout", "30s"})
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "30s"})
+	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "ipkg/" + name, "--timeout", "1m"})
+	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
 	out := kubectl.Run([]string{"get", fmt.Sprintf("apps/%s", name), "-o", "yaml"})
 
 	var cr v1alpha1.App
@@ -157,7 +157,7 @@ func Test_PackageInstalled_WhenPackageIsPrerelease(t *testing.T) {
 apiVersion: install.package.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
-  name: repo.test.carvel.dev
+  name: basic.test.carvel.dev
   # cluster scoped
 spec:
   fetch:
@@ -192,6 +192,11 @@ stringData:
 `, name, env.Namespace) + sas.ForNamespaceYAML()
 
 	cleanUp := func() {
+		// Delete App with kubectl since kapp doesn't
+		// know of App that is created by kapp-controller.
+		// AllowError = true since kubectl errors if it can't
+		// find resource to delete.
+		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, RunOpts{AllowError: true})
 		kapp.Run([]string{"delete", "-a", name})
 	}
 	cleanUp()
@@ -200,8 +205,8 @@ stringData:
 	// Create Repo, InstalledPackage, and App from YAML
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "ipkg/" + name, "--timeout", "30s"})
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "30s"})
+	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "ipkg/" + name, "--timeout", "1m"})
+	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
 	out := kubectl.Run([]string{"get", fmt.Sprintf("apps/%s", name), "-o", "yaml"})
 
 	var cr v1alpha1.App
@@ -265,3 +270,4 @@ stringData:
 		t.Fatalf("\nStatus is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, cr.Status)
 	}
 }
+
