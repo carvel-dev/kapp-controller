@@ -44,7 +44,8 @@ spec:
         - secretRef:
             name: simple-app-values
   deploy:
-  - kapp: {}
+  - kapp: 
+      intoNs: %s
 ---
 apiVersion: v1
 kind: Secret
@@ -72,7 +73,7 @@ spec:
       containers:
         - image: k8s.gcr.io/echoserver:1.4
           imagePullPolicy: IfNotPresent
-          name: echoserver`, name) + sas.ForNamespaceYAML()
+          name: echoserver`, name, env.Namespace) + sas.ForNamespaceYAML()
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
