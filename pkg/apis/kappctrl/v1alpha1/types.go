@@ -48,6 +48,8 @@ type AppSpec struct {
 	Canceled bool `json:"canceled,omitempty"`
 	// Controls frequency of app reconciliation
 	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
+	// Used to force reconciliation of App by controller
+	ReconcileMarker bool
 }
 
 type AppCluster struct {

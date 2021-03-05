@@ -10,6 +10,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/resourcetracker"
+	v1 "k8s.io/api/core/v1"
+
 	"github.com/go-logr/logr"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
@@ -73,12 +77,15 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	{ // add controller for apps
+		appSecrets := resourcetracker.NewAppSecrets()
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
 				delegate: &AppsReconciler{
+					kubeclient: coreClient,
 					appClient:  appClient,
 					appFactory: appFactory,
 					log:        runLog.WithName("ar"),
+					appSecrets: &appSecrets,
 				},
 				log: runLog.WithName("pr"),
 			}),
@@ -93,9 +100,26 @@ func Run(opts Options, runLog logr.Logger) {
 
 		err = ctrlApp.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForObject{})
 		if err != nil {
-			runLog.Error(err, "unable to watch *kcv1alpha1.App")
+			runLog.Error(err, "unable to watch Apps")
 			os.Exit(1)
 		}
+
+		//Watches for secrets/configmaps for app controller
+		//Handler for both secret and configmap updates
+		//Store state in map secretName/secretNamespace -> [app]
+		sch := handlers.NewSecretHandler(appClient, runLog, &appSecrets)
+		err = ctrlApp.Watch(&source.Kind{Type: &v1.Secret{}}, sch)
+		if err != nil {
+			runLog.Error(err, "unable to watch Secrets")
+			os.Exit(1)
+		}
+
+		// TODO: Add watching of ConfigMaps
+		//err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, &handlers.SecretHandler{})
+		//if err != nil {
+		//	runLog.Error(err, "unable to watch ConfigMaps")
+		//	os.Exit(1)
+		//}
 	}
 
 	runLog.Info("starting manager")

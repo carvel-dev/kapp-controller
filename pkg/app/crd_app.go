@@ -126,3 +126,7 @@ func (a *CRDApp) Reconcile() (reconcile.Result, error) {
 func (a *CRDApp) watchChanges(callback func(kcv1alpha1.App), cancelCh chan struct{}) error {
 	return NewCRDAppWatcher(*a.appModel, a.appClient).Watch(callback, cancelCh)
 }
+
+func (a *CRDApp) GetApp() *App {
+	return a.app
+}

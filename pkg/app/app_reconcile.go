@@ -24,22 +24,23 @@ func (a *App) Reconcile() (reconcile.Result, error) {
 	switch {
 	case a.app.Spec.Canceled || a.app.Spec.Paused:
 		a.log.Info("App is canceled or paused, not reconciling")
-
 		a.markObservedLatest()
 		a.app.Status.FriendlyDescription = "Canceled/paused"
-
 		err = a.updateStatus("app canceled/paused")
 
 	case a.app.DeletionTimestamp != nil:
 		a.log.Info("Started delete")
 		defer func() { a.log.Info("Completed delete") }()
-
 		err = a.reconcileDelete()
 
 	case NewReconcileTimer(a.app).IsReadyAt(time.Now()):
-		a.log.Info("Started deploy")
+		a.log.Info("Started deploy for sync update")
 		defer func() { a.log.Info("Completed deploy") }()
+		err = a.reconcileDeploy()
 
+	case a.appPrev.Spec.ReconcileMarker != a.app.Spec.ReconcileMarker:
+		a.log.Info("Started deploy for reconcile marker update")
+		defer func() { a.log.Info("Completed deploy") }()
 		err = a.reconcileDeploy()
 
 	default:
