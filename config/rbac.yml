@@ -14,7 +14,7 @@ metadata:
 rules:
 - apiGroups: [""]
   resources: ["serviceaccounts", "secrets", "configmaps"]
-  verbs: ["get"]
+  verbs: ["get", "list", "watch"]
 - apiGroups: ["kappctrl.k14s.io"]
   resources: ["apps", "apps/status"]
   verbs: ["*"]
