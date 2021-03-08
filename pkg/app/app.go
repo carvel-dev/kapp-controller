@@ -54,12 +54,6 @@ func (a *App) StatusAsYAMLBytes() ([]byte, error) {
 	return yaml.Marshal(a.Status())
 }
 
-func (a *App) SetReconcileMarker() {
-	// Only set to the opposite of previous version
-	// of App to force reconcile of App
-	a.app.Spec.ReconcileMarker = !a.appPrev.Spec.ReconcileMarker
-}
-
 func (a *App) blockDeletion() error   { return a.hooks.BlockDeletion() }
 func (a *App) unblockDeletion() error { return a.hooks.UnblockDeletion() }
 
@@ -119,55 +113,4 @@ func (a *App) newCancelCh() (chan struct{}, func()) {
 	}()
 
 	return cancelCh, cancelFunc
-}
-
-// Get all SecretRefs from App spec
-func (a *App) GetSecretRefs() []string {
-	var secrets []string
-
-	// Fetch SecretRefs
-	for _, fetch := range a.app.Spec.Fetch {
-		switch {
-		case fetch.Inline != nil && fetch.Inline.PathsFrom != nil:
-			for _, pathsFrom := range fetch.Inline.PathsFrom {
-				if pathsFrom.SecretRef != nil {
-					secrets = append(secrets, pathsFrom.SecretRef.Name)
-				}
-			}
-		case fetch.Image != nil && fetch.Image.SecretRef != nil:
-			secrets = append(secrets, fetch.Image.SecretRef.Name)
-		case fetch.ImgpkgBundle != nil && fetch.ImgpkgBundle.SecretRef != nil:
-			secrets = append(secrets, fetch.ImgpkgBundle.SecretRef.Name)
-		case fetch.HTTP != nil && fetch.HTTP.SecretRef != nil:
-			secrets = append(secrets, fetch.HTTP.SecretRef.Name)
-		case fetch.Git != nil && fetch.Git.SecretRef != nil:
-			secrets = append(secrets, fetch.Git.SecretRef.Name)
-		case fetch.HelmChart != nil && fetch.HelmChart.Repository != nil:
-			if fetch.HelmChart.Repository.SecretRef != nil {
-				secrets = append(secrets, fetch.HelmChart.Repository.SecretRef.Name)
-			}
-		default:
-		}
-	}
-
-	// Templating SecretRefs
-	for _, tpl := range a.app.Spec.Template {
-		switch {
-		case tpl.Ytt != nil && tpl.Ytt.Inline != nil:
-			for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
-				if pathsFrom.SecretRef != nil {
-					secrets = append(secrets, pathsFrom.SecretRef.Name)
-				}
-			}
-		case tpl.HelmTemplate != nil && tpl.HelmTemplate.ValuesFrom != nil:
-			for _, valsFrom := range tpl.HelmTemplate.ValuesFrom {
-				if valsFrom.SecretRef != nil {
-					secrets = append(secrets, valsFrom.SecretRef.Name)
-				}
-			}
-		default:
-		}
-	}
-
-	return secrets
 }

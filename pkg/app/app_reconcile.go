@@ -16,7 +16,7 @@ import (
 )
 
 // Reconcile is not expected to be called concurrently
-func (a *App) Reconcile() (reconcile.Result, error) {
+func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 	defer a.flushUpdateStatus("app reconciled")
 
 	var err error
@@ -25,22 +25,20 @@ func (a *App) Reconcile() (reconcile.Result, error) {
 	case a.app.Spec.Canceled || a.app.Spec.Paused:
 		a.log.Info("App is canceled or paused, not reconciling")
 		a.markObservedLatest()
+
 		a.app.Status.FriendlyDescription = "Canceled/paused"
 		err = a.updateStatus("app canceled/paused")
 
 	case a.app.DeletionTimestamp != nil:
 		a.log.Info("Started delete")
 		defer func() { a.log.Info("Completed delete") }()
+
 		err = a.reconcileDelete()
 
-	case NewReconcileTimer(a.app).IsReadyAt(time.Now()):
-		a.log.Info("Started deploy for sync update")
+	case force || NewReconcileTimer(a.app).IsReadyAt(time.Now()):
+		a.log.Info("Started deploy for update")
 		defer func() { a.log.Info("Completed deploy") }()
-		err = a.reconcileDeploy()
 
-	case a.appPrev.Spec.ReconcileMarker != a.app.Spec.ReconcileMarker:
-		a.log.Info("Started deploy for reconcile marker update")
-		defer func() { a.log.Info("Completed deploy") }()
 		err = a.reconcileDeploy()
 
 	default:

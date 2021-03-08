@@ -48,10 +48,6 @@ type AppSpec struct {
 	Canceled bool `json:"canceled,omitempty"`
 	// Controls frequency of app reconciliation
 	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
-	// ReconcileMarker is used to force an App to reconcile by creating
-	// an update to the App spec. It is only set by the App controller in the
-	// event a SecretRef or ConfigMapRef associated with an App is updated.
-	ReconcileMarker bool `json:"reconcileMarker,omitempty"`
 }
 
 type AppCluster struct {

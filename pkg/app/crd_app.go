@@ -119,8 +119,8 @@ func (a *CRDApp) updateApp(updateFunc func(*kcv1alpha1.App)) error {
 	return nil
 }
 
-func (a *CRDApp) Reconcile() (reconcile.Result, error) {
-	return a.app.Reconcile()
+func (a *CRDApp) Reconcile(force bool) (reconcile.Result, error) {
+	return a.app.Reconcile(force)
 }
 
 func (a *CRDApp) watchChanges(callback func(kcv1alpha1.App), cancelCh chan struct{}) error {
@@ -129,4 +129,55 @@ func (a *CRDApp) watchChanges(callback func(kcv1alpha1.App), cancelCh chan struc
 
 func (a *CRDApp) GetApp() *App {
 	return a.app
+}
+
+// Get all SecretRefs from App spec
+func (a *CRDApp) GetSecretRefs() []string {
+	var secrets []string
+
+	// Fetch SecretRefs
+	for _, fetch := range a.app.app.Spec.Fetch {
+		switch {
+		case fetch.Inline != nil && fetch.Inline.PathsFrom != nil:
+			for _, pathsFrom := range fetch.Inline.PathsFrom {
+				if pathsFrom.SecretRef != nil {
+					secrets = append(secrets, pathsFrom.SecretRef.Name)
+				}
+			}
+		case fetch.Image != nil && fetch.Image.SecretRef != nil:
+			secrets = append(secrets, fetch.Image.SecretRef.Name)
+		case fetch.ImgpkgBundle != nil && fetch.ImgpkgBundle.SecretRef != nil:
+			secrets = append(secrets, fetch.ImgpkgBundle.SecretRef.Name)
+		case fetch.HTTP != nil && fetch.HTTP.SecretRef != nil:
+			secrets = append(secrets, fetch.HTTP.SecretRef.Name)
+		case fetch.Git != nil && fetch.Git.SecretRef != nil:
+			secrets = append(secrets, fetch.Git.SecretRef.Name)
+		case fetch.HelmChart != nil && fetch.HelmChart.Repository != nil:
+			if fetch.HelmChart.Repository.SecretRef != nil {
+				secrets = append(secrets, fetch.HelmChart.Repository.SecretRef.Name)
+			}
+		default:
+		}
+	}
+
+	// Templating SecretRefs
+	for _, tpl := range a.app.app.Spec.Template {
+		switch {
+		case tpl.Ytt != nil && tpl.Ytt.Inline != nil:
+			for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
+				if pathsFrom.SecretRef != nil {
+					secrets = append(secrets, pathsFrom.SecretRef.Name)
+				}
+			}
+		case tpl.HelmTemplate != nil && tpl.HelmTemplate.ValuesFrom != nil:
+			for _, valsFrom := range tpl.HelmTemplate.ValuesFrom {
+				if valsFrom.SecretRef != nil {
+					secrets = append(secrets, valsFrom.SecretRef.Name)
+				}
+			}
+		default:
+		}
+	}
+
+	return secrets
 }
