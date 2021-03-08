@@ -25,7 +25,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	// app to fail before deploy.
 	app := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "simple-app",
+			Name: "simple-app",
 		},
 		Spec: v1alpha1.AppSpec{
 			Fetch: []v1alpha1.AppFetch{
@@ -41,7 +41,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	deployFac := deploy.NewFactory(k8scs)
 
 	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
-	_, err := crdApp.Reconcile()
+	_, err := crdApp.Reconcile(false)
 	if err != nil {
 		t.Fatalf("Unexpected error with reconciling: %v", err)
 	}
