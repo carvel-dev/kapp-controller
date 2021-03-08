@@ -149,8 +149,10 @@ func (ip *InstalledPackageCR) referencedPkg() (pkgv1alpha1.Package, error) {
 	versionToPkg := map[string]pkgv1alpha1.Package{}
 
 	for _, pkg := range pkgList.Items {
-		versionStrs = append(versionStrs, pkg.Spec.Version)
-		versionToPkg[pkg.Spec.Version] = pkg
+		if pkg.Spec.PublicName == ip.model.Spec.PkgRef.PublicName {
+			versionStrs = append(versionStrs, pkg.Spec.Version)
+			versionToPkg[pkg.Spec.Version] = pkg
+		}
 	}
 
 	verConfig := versions.VersionSelection{Semver: semverConfig}

@@ -4,12 +4,13 @@
 package installedpkg
 
 import (
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
-	packagev1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/package/v1alpha1"
-	ipv1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 	"reflect"
+	"testing"
+
+	ipv1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
+	packagev1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/package/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // This test was developed for issue:
@@ -21,7 +22,8 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 			Name: "pkg.test.carvel.dev",
 		},
 		Spec: packagev1.PackageSpec{
-			Version: "3.0.0-rc.1",
+			PublicName: "pkg.test.carvel.dev",
+			Version:    "3.0.0-rc.1",
 		},
 	}
 
@@ -37,7 +39,7 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 			Spec: ipv1.InstalledPackageSpec{
 				PkgRef: &ipv1.PackageRef{
 					PublicName: "pkg.test.carvel.dev",
-					Version: "3.0.0-rc.1",
+					Version:    "3.0.0-rc.1",
 				},
 			},
 		},
@@ -54,3 +56,53 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 	}
 }
 
+func Test_PackageRefUsesName(t *testing.T) {
+	// Package with prerelease version
+	expectedPkg := packagev1.Package{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "expected-pkg",
+		},
+		Spec: packagev1.PackageSpec{
+			PublicName: "expected-pkg",
+			Version:    "1.0.0",
+		},
+	}
+
+	alternatePkg := packagev1.Package{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "alternate-pkg",
+		},
+		Spec: packagev1.PackageSpec{
+			PublicName: "alternate-pkg",
+			Version:    "1.0.0",
+		},
+	}
+
+	// Load package into fake client
+	kappcs := fake.NewSimpleClientset(&expectedPkg, &alternatePkg)
+
+	// InstalledPackage that has PackageRef with prerelease
+	ip := InstalledPackageCR{
+		model: &ipv1.InstalledPackage{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "instl-pkg",
+			},
+			Spec: ipv1.InstalledPackageSpec{
+				PkgRef: &ipv1.PackageRef{
+					PublicName: "expected-pkg",
+					Version:    "1.0.0",
+				},
+			},
+		},
+		client: kappcs,
+	}
+
+	out, err := ip.referencedPkg()
+	if err != nil {
+		t.Fatalf("\nExpected no error from resolving referenced package\nBut got:\n%v\n", err)
+	}
+
+	if !reflect.DeepEqual(out, expectedPkg) {
+		t.Fatalf("\nPackage is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedPkg, out)
+	}
+}
