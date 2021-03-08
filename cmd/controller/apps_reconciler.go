@@ -6,7 +6,7 @@ package controller
 import (
 	"github.com/go-logr/logr"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/resourcetracker"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -18,7 +18,7 @@ type AppsReconciler struct {
 	appClient  kcclient.Interface
 	log        logr.Logger
 	appFactory AppFactory
-	appSecrets *resourcetracker.AppSecrets
+	appSecrets *reftracker.AppSecrets
 }
 
 var _ reconcile.Reconciler = &AppsReconciler{}
@@ -39,24 +39,29 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 		return reconcile.Result{}, err
 	}
 
+	force := false
 	crdApp := r.appFactory.NewCRDApp(existingApp, log)
-	if !r.areAppSecretsUpToDate(crdApp.GetApp().GetSecretRefs(), request.Namespace, existingApp.Name) {
-		crdApp.GetApp().SetReconcileMarker()
+	if !r.areAppSecretsUpToDate(crdApp.GetSecretRefs(), request.Namespace, existingApp.Name) {
+		force = true
 	}
 
-	return crdApp.Reconcile()
+	return crdApp.Reconcile(force)
 }
 
 // Check whether secrets used by App are latest
 // versions. Helps determine whether to force an
 // update to App during Reconcile.
+
+// WHY this func is needed: We don't know where the
+// reconcileRequest originates from so we need to determine
+// if we should force reconciliation. Also, we need a way to
+// have secrets be associated with apps and this is how Apps
+// will register with their secretRefs.
 func (r *AppsReconciler) areAppSecretsUpToDate(secretNames []string, namespace, appName string) bool {
-	// TODO: Remove logging used for debugging
 	for _, secretName := range secretNames {
 		secret, err := r.kubeclient.CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
 		if err != nil {
 			r.log.Info("could not find Secret for App " + appName)
-			// TODO: Should secret be removed in this case?
 			continue
 		}
 		appsEntry, err := r.appSecrets.GetSpecificAppForSecret(secret.Name, namespace, appName)
@@ -64,18 +69,15 @@ func (r *AppsReconciler) areAppSecretsUpToDate(secretNames []string, namespace, 
 			r.log.Info("could not find App for Secret " + secret.Name + ". Adding to map.")
 			r.appSecrets.AddAppToMap(secret.Name, namespace, appName, secret.ResourceVersion)
 		}
-		r.log.Info("CHECKING SECRET DIFF")
 		// Get app entry again since it may have just been added
 		appsEntry, _ = r.appSecrets.GetSpecificAppForSecret(secret.Name, namespace, appName)
 		if secret.ResourceVersion != appsEntry.GetResourceVersion() {
 			// Get app entry again since it may have just been added
 			appsEntry, _ = r.appSecrets.GetSpecificAppForSecret(secret.Name, namespace, appName)
-			r.log.Info("DIFF: " + secret.ResourceVersion + " " + appsEntry.GetResourceVersion())
 			// Reflect changes to secret version in map
 			r.appSecrets.UpdateAppInMap(secret.Name, namespace, appName, secret.ResourceVersion)
 			return false
 		}
-		r.log.Info("NO DIFF")
 	}
 	return true
 }

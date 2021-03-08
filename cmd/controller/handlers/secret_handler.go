@@ -6,7 +6,7 @@ package handlers
 import (
 	"github.com/go-logr/logr"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/resourcetracker"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -17,12 +17,12 @@ import (
 type SecretHandler struct {
 	client     kcclient.Interface
 	log        logr.Logger
-	appSecrets *resourcetracker.AppSecrets
+	appSecrets *reftracker.AppSecrets
 }
 
 var _ handler.EventHandler = &SecretHandler{}
 
-func NewSecretHandler(kc kcclient.Interface, log logr.Logger, as *resourcetracker.AppSecrets) *SecretHandler {
+func NewSecretHandler(kc kcclient.Interface, log logr.Logger, as *reftracker.AppSecrets) *SecretHandler {
 	return &SecretHandler{kc, log, as}
 }
 

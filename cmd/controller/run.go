@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/resourcetracker"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/go-logr/logr"
@@ -77,7 +77,7 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	{ // add controller for apps
-		appSecrets := resourcetracker.NewAppSecrets()
+		appSecrets := reftracker.NewAppSecrets()
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
 				delegate: &AppsReconciler{
