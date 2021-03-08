@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	"strings"
 	"testing"
+	"time"
 )
 
 func Test_AppReconcileOccurs_WhenSecretUpdated(t *testing.T) {
@@ -18,7 +20,7 @@ func Test_AppReconcileOccurs_WhenSecretUpdated(t *testing.T) {
 	kubectl := Kubectl{t, env.Namespace, logger}
 	sas := ServiceAccounts{env.Namespace}
 
-	name := "simple-app-with-secret"
+	name := "configmap-with-secret"
 	// syncPeriod set to 20 minutes so that test
 	// won't pass because of reconcile from time sync.
 	appYaml := fmt.Sprintf(`
@@ -33,47 +35,36 @@ spec:
   syncPeriod: 20m
   serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
-  - git:
-      url: https://github.com/k14s/k8s-simple-app-example
-      ref: origin/develop
-      subPath: config-step-2-template
+    - inline:
+        paths:
+          file.yml: |
+            #@ load("@ytt:data", "data")
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: configmap
+            data:
+              hello_msg: #@ data.values.hello_msg
   template:
   - ytt:
       inline:
         pathsFrom:
-        - secretRef:
-            name: simple-app-values
+          - secretRef:
+              name: simple-app-values
+      paths:
+        - file.yml
   deploy:
-  - kapp: 
-      intoNs: %s
+    - kapp: {}
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: simple-app-values
 stringData:
-  values2.yml: |
+  values.yml: |
     #@data/values
     ---
-    hello_msg: original
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: exec-curl
-spec:
-  selector:
-    matchLabels:
-      app: exec-curl
-  template:
-    metadata:
-      labels:
-        app: exec-curl
-    spec:
-      containers:
-        - image: k8s.gcr.io/echoserver:1.4
-          imagePullPolicy: IfNotPresent
-          name: echoserver`, name, env.Namespace) + sas.ForNamespaceYAML()
+    hello_msg: original`, name) + sas.ForNamespaceYAML()
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
@@ -82,9 +73,7 @@ spec:
 	defer cleanUp()
 
 	logger.Section("deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(appYaml)})
-
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(appYaml)})
 		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
 
 		var cr v1alpha1.App
@@ -107,42 +96,47 @@ kind: Secret
 metadata:
   name: simple-app-values
 stringData:
-  values2.yml: |
+  values.yml: |
     #@data/values
     ---
     hello_msg: updated`
 
 		// Update secret
 		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(updatedSecret)})
-
-		// Make sure App reconciles from secret update/reconcile succeeds before asserting on response from App
-		kubectl.Run([]string{"wait", "--for=condition=Reconciling", "apps/" + name, "--timeout", "1m"})
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
 	})
 
 	logger.Section("check App uses new secret", func() {
-		// get ClusterIP of simple-app to use with kubectl exec
-		svcIP := kubectl.Run([]string{"get", "svc/simple-app", "-o", "jsonpath={.spec.clusterIP}"})
-		// kubectl exec into debug pod and run curl against simple-app
-		// to get response with secret
-		appResponse, _ := kubectl.RunWithOpts([]string{"exec", "deployment/exec-curl", "-n", env.Namespace, "--", "curl", svcIP, "-s"}, RunOpts{NoNamespace: true})
+		err := retry(10*time.Second, func() error {
+			out := kubectl.Run([]string{"get", "configmap/configmap", "-o", "yaml"})
 
-		if !strings.Contains(appResponse, "updated") {
-			t.Fatalf("\nSecret message was not updated to Hello updated!\nGot:%s", appResponse)
-		}
-	})
+			var cm corev1.ConfigMap
+			err := yaml.Unmarshal([]byte(out), &cm)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal: %s", err)
+			}
 
-	logger.Section("check App status", func() {
-		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
-
-		var cr v1alpha1.App
-		err := yaml.Unmarshal([]byte(out), &cr)
+			if cm.Data["hello_msg"] != "updated" {
+				return fmt.Errorf("\nSecret message was not updated to \"updated\"\nGot:%s", cm.Data["hello_msg"])
+			}
+			return nil
+		})
 		if err != nil {
-			t.Fatalf("Failed to unmarshal: %s", err)
-		}
-
-		if cr.Status.ConsecutiveReconcileSuccesses != 3 {
-			t.Fatalf("Expected only two App reconciles but got %d", cr.Status.ConsecutiveReconcileSuccesses)
+			t.Fatalf("Timed out wating for App to reconcile: %s", err.Error())
 		}
 	})
+}
+
+func retry(timeout time.Duration, f func() error) error {
+	var err error
+	stopTime := time.Now().Add(timeout)
+	for {
+		err = f()
+		if err == nil {
+			return nil
+		}
+		if time.Now().After(stopTime) {
+			return fmt.Errorf("retry timed out after %s: %v", timeout.String(), err)
+		}
+		time.Sleep(1 * time.Second)
+	}
 }
