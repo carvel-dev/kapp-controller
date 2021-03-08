@@ -60,12 +60,6 @@ func (a *App) SetReconcileMarker() {
 	a.app.Spec.ReconcileMarker = !a.appPrev.Spec.ReconcileMarker
 }
 
-func (a *App) UnsetReconcileMarker() {
-	if a.app.Spec.ReconcileMarker != a.appPrev.Spec.ReconcileMarker {
-		a.app.Spec.ReconcileMarker = a.appPrev.Spec.ReconcileMarker
-	}
-}
-
 func (a *App) blockDeletion() error   { return a.hooks.BlockDeletion() }
 func (a *App) unblockDeletion() error { return a.hooks.UnblockDeletion() }
 

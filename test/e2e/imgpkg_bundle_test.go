@@ -84,8 +84,8 @@ spec:
 			Template: &v1alpha1.AppStatusTemplate{
 				ExitCode: 0,
 			},
-			ConsecutiveReconcileSuccesses: 2,
-			ObservedGeneration:            2,
+			ConsecutiveReconcileSuccesses: 1,
+			ObservedGeneration:            1,
 			FriendlyDescription:           "Reconcile succeeded",
 		}
 
