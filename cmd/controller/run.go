@@ -77,15 +77,14 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	{ // add controller for apps
-		appSecrets := reftracker.NewAppSecrets()
+		appSecrets := reftracker.NewAppRefTracker()
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
 				delegate: &AppsReconciler{
-					kubeclient: coreClient,
-					appClient:  appClient,
-					appFactory: appFactory,
-					log:        runLog.WithName("ar"),
-					appSecrets: &appSecrets,
+					appClient:     appClient,
+					appFactory:    appFactory,
+					log:           runLog.WithName("ar"),
+					appRefTracker: &appSecrets,
 				},
 				log: runLog.WithName("pr"),
 			}),
@@ -107,7 +106,7 @@ func Run(opts Options, runLog logr.Logger) {
 		//Watches for secrets/configmaps for app controller
 		//Handler for both secret and configmap updates
 		//Store state in map secretName/secretNamespace -> [app]
-		sch := handlers.NewSecretHandler(appClient, runLog, &appSecrets)
+		sch := handlers.NewSecretHandler(runLog, &appSecrets)
 		err = ctrlApp.Watch(&source.Kind{Type: &v1.Secret{}}, sch)
 		if err != nil {
 			runLog.Error(err, "unable to watch Secrets")
@@ -115,7 +114,7 @@ func Run(opts Options, runLog logr.Logger) {
 		}
 
 		// TODO: Add watching of ConfigMaps
-		//err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, &handlers.SecretHandler{})
+		//err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, &handlers.ConfigMapHandler{})
 		//if err != nil {
 		//	runLog.Error(err, "unable to watch ConfigMaps")
 		//	os.Exit(1)

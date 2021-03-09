@@ -7,78 +7,76 @@ import (
 	"fmt"
 )
 
-type AppSecretsEntry struct {
-	appName         string
-	resourceVersion string
+type AppRefTracker struct {
+	refsToApps         map[string]map[string]string
+	appsToUpdateStatus map[string]bool
 }
 
-type AppSecrets struct {
-	secretToApps map[string][]AppSecretsEntry
+func NewAppRefTracker() AppRefTracker {
+	refsToApps := make(map[string]map[string]string)
+	appsToUpdateStatus := make(map[string]bool)
+	return AppRefTracker{refsToApps: refsToApps, appsToUpdateStatus: appsToUpdateStatus}
 }
 
-func NewAppsSecretsEntry(name string, resourveVersion string) AppSecretsEntry {
-	return AppSecretsEntry{name, resourveVersion}
-}
-
-func (a AppSecretsEntry) GetResourceVersion() string {
-	return a.resourceVersion
-}
-
-func (a AppSecretsEntry) GetAppName() string {
-	return a.appName
-}
-
-func NewAppSecrets() AppSecrets {
-	secretToApps := make(map[string][]AppSecretsEntry)
-	return AppSecrets{secretToApps: secretToApps}
-}
-
-func (a AppSecrets) AddAppToMap(secretName, namespace, appName, resourceVersion string) {
-	secretKey := fmt.Sprintf(`%s:%s`, secretName, namespace)
-	appEntry := a.GetAppsForSecret(secretName, namespace)
-	a.secretToApps[secretKey] = append(appEntry, NewAppsSecretsEntry(appName, resourceVersion))
-}
-
-func (a AppSecrets) GetAppsForSecret(secretName, namespace string) []AppSecretsEntry {
-	secretKey := fmt.Sprintf(`%s:%s`, secretName, namespace)
-	return a.secretToApps[secretKey]
-}
-
-func (a AppSecrets) GetSpecificAppForSecret(secretName, namespace, appName string) (AppSecretsEntry, error) {
-	secretKey := fmt.Sprintf(`%s:%s`, secretName, namespace)
-	for _, appEntry := range a.secretToApps[secretKey] {
-		if appEntry.GetAppName() == appName {
-			return appEntry, nil
-		}
+func (a AppRefTracker) AddAppToRefMap(resourceKind, resourceName, namespace, appName string) {
+	// TODO: lowercase all except app name
+	key := fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace)
+	apps := a.GetAppsForRef(resourceKind, resourceName, namespace)
+	if apps == nil {
+		apps = make(map[string]string)
 	}
-	return AppSecretsEntry{}, fmt.Errorf("could not find App %s", appName)
+	apps[appName] = appName
+	a.refsToApps[key] = apps
 }
 
-func (a AppSecrets) RemoveSecretFromMap(secretName, namespace string) {
-	secretKey := fmt.Sprintf(`%s:%s`, secretName, namespace)
-	delete(a.secretToApps, secretKey)
+func (a AppRefTracker) GetAppsForRef(resourceKind, resourceName, namespace string) map[string]string {
+	key := fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace)
+	return a.refsToApps[key]
 }
 
-// TODO: Use when App is deleted?
-func (a AppSecrets) RemoveAppFromMap(secretName, namespace, appName string) {
-	secretKey := fmt.Sprintf(`%s:%s`, secretName, namespace)
-	appEntries := a.GetAppsForSecret(secretKey, namespace)
-	for i, appEntry := range appEntries {
-		if appEntry.GetAppName() == appName {
-			appEntries[i] = appEntries[len(appEntries)-1]
-			appEntries[len(appEntries)-1] = AppSecretsEntry{}
-			appEntries = appEntries[:len(appEntries)-1]
-		}
+func (a AppRefTracker) CheckAppExistsForRef(resourceKind, resourceName, namespace, appName string) bool {
+	key := fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace)
+	if a.refsToApps[key][appName] == "" {
+		return false
 	}
+	return true
 }
 
-func (a AppSecrets) UpdateAppInMap(secretName, namespace, appName, resourceVersion string) {
-	secretKey := fmt.Sprintf(`%s:%s`, secretName, namespace)
-	appEntries := a.GetAppsForSecret(secretKey, namespace)
-	for i, appEntry := range appEntries {
-		if appEntry.GetAppName() == appName {
-			appEntries[i] = NewAppsSecretsEntry(appName, resourceVersion)
-		}
+func (a AppRefTracker) RemoveRefFromMap(resourceKind, resourceName, namespace string) {
+	key := fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace)
+	delete(a.refsToApps, key)
+}
+
+func (a AppRefTracker) RemoveAppFromRefMap(resourceKind, resourceName, namespace, appName string) error {
+	if !a.CheckAppExistsForRef(resourceKind, resourceName, namespace, appName) {
+		return fmt.Errorf("could not find App %s for ref %s/%s", appName, resourceKind, resourceName)
 	}
-	a.secretToApps[secretKey] = appEntries
+
+	apps := a.GetAppsForRef(resourceKind, resourceName, namespace)
+	appKey := fmt.Sprintf(`%s`, appName)
+	delete(apps, appKey)
+	refKey := fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace)
+	a.refsToApps[refKey] = apps
+
+	return nil
+}
+
+func (a AppRefTracker) MarkAppForUpdate(appName, namespace string) {
+	key := fmt.Sprintf(`%s:%s`, appName, namespace)
+	a.appsToUpdateStatus[key] = true
+}
+
+func (a AppRefTracker) MarkAppUpdated(appName, namespace string) {
+	key := fmt.Sprintf(`%s:%s`, appName, namespace)
+	a.appsToUpdateStatus[key] = false
+}
+
+func (a AppRefTracker) GetAppUpdateStatus(appName, namespace string) bool {
+	key := fmt.Sprintf(`%s:%s`, appName, namespace)
+	return a.appsToUpdateStatus[key]
+}
+
+func (a AppRefTracker) RemoveAppFromUpdateMap(appName, namespace string) {
+	key := fmt.Sprintf(`%s:%s`, appName, namespace)
+	delete(a.appsToUpdateStatus, key)
 }

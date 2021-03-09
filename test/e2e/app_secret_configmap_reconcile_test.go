@@ -21,7 +21,7 @@ func Test_AppReconcileOccurs_WhenSecretUpdated(t *testing.T) {
 	sas := ServiceAccounts{env.Namespace}
 
 	name := "configmap-with-secret"
-	// syncPeriod set to 20 minutes so that test
+	// syncPeriod set to 5 minutes so that test
 	// won't pass because of reconcile from time sync.
 	appYaml := fmt.Sprintf(`
 ---
@@ -32,7 +32,7 @@ metadata:
   annotations:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
 spec:
-  syncPeriod: 20m
+  syncPeriod: 5m
   serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
     - inline:
@@ -116,12 +116,12 @@ stringData:
 			}
 
 			if cm.Data["hello_msg"] != "updated" {
-				return fmt.Errorf("\nSecret message was not updated to \"updated\"\nGot:%s", cm.Data["hello_msg"])
+				return fmt.Errorf("\nSecret message was not updated to \"updated\"\nGot: %s", cm.Data["hello_msg"])
 			}
 			return nil
 		})
 		if err != nil {
-			t.Fatalf("Timed out wating for App to reconcile: %s", err.Error())
+			t.Fatalf("Timed out wating for App to update: %s", err.Error())
 		}
 	})
 }

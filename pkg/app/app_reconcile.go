@@ -24,9 +24,10 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 	switch {
 	case a.app.Spec.Canceled || a.app.Spec.Paused:
 		a.log.Info("App is canceled or paused, not reconciling")
-		a.markObservedLatest()
 
+		a.markObservedLatest()
 		a.app.Status.FriendlyDescription = "Canceled/paused"
+
 		err = a.updateStatus("app canceled/paused")
 
 	case a.app.DeletionTimestamp != nil:
@@ -36,7 +37,7 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 		err = a.reconcileDelete()
 
 	case force || NewReconcileTimer(a.app).IsReadyAt(time.Now()):
-		a.log.Info("Started deploy for update")
+		a.log.Info("Started deploy")
 		defer func() { a.log.Info("Completed deploy") }()
 
 		err = a.reconcileDeploy()

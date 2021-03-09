@@ -5,8 +5,8 @@ package handlers
 
 import (
 	"github.com/go-logr/logr"
-	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -15,15 +15,14 @@ import (
 )
 
 type SecretHandler struct {
-	client     kcclient.Interface
-	log        logr.Logger
-	appSecrets *reftracker.AppSecrets
+	log          logr.Logger
+	appRefTacker *reftracker.AppRefTracker
 }
 
 var _ handler.EventHandler = &SecretHandler{}
 
-func NewSecretHandler(kc kcclient.Interface, log logr.Logger, as *reftracker.AppSecrets) *SecretHandler {
-	return &SecretHandler{kc, log, as}
+func NewSecretHandler(log logr.Logger, as *reftracker.AppRefTracker) *SecretHandler {
+	return &SecretHandler{log, as}
 }
 
 func (sch *SecretHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {}
@@ -33,17 +32,19 @@ func (sch *SecretHandler) Update(evt event.UpdateEvent, q workqueue.RateLimiting
 }
 
 func (sch *SecretHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
-	sch.appSecrets.RemoveSecretFromMap(evt.Meta.GetName(), evt.Meta.GetNamespace())
+	sch.appRefTacker.RemoveRefFromMap(v1.Secret{}.Kind, evt.Meta.GetName(), evt.Meta.GetNamespace())
 }
 
 func (sch *SecretHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {}
 
 func (sch *SecretHandler) enqueueAppsForUpdate(secretName, secretNamespace string, q workqueue.RateLimitingInterface) {
-	apps := sch.appSecrets.GetAppsForSecret(secretName, secretNamespace)
-	for _, app := range apps {
-		sch.log.Info("enqueueing App " + app.GetAppName() + " from update to secret " + secretName)
+	// TODO: Does v1.Secret{}.Kind result in secret kind with it being set?
+	apps := sch.appRefTacker.GetAppsForRef(v1.Secret{}.Kind, secretName, secretNamespace)
+	for appName, _ := range apps {
+		sch.log.Info("enqueueing App " + appName + " from update to secret " + secretName)
+		sch.appRefTacker.MarkAppForUpdate(appName, secretNamespace)
 		q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
-			Name:      app.GetAppName(),
+			Name:      appName,
 			Namespace: secretNamespace,
 		}})
 	}
