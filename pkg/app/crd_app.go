@@ -129,90 +129,10 @@ func (a *CRDApp) watchChanges(callback func(kcv1alpha1.App), cancelCh chan struc
 
 // Get all SecretRefs from App spec
 func (a *CRDApp) GetSecretRefs() map[string]struct{} {
-	secrets := make(map[string]struct{})
-
-	// Fetch SecretRefs
-	for _, fetch := range a.app.app.Spec.Fetch {
-		switch {
-		case fetch.Inline != nil && fetch.Inline.PathsFrom != nil:
-			for _, pathsFrom := range fetch.Inline.PathsFrom {
-				if pathsFrom.SecretRef != nil {
-					secrets[pathsFrom.SecretRef.Name] = struct{}{}
-				}
-			}
-		case fetch.Image != nil && fetch.Image.SecretRef != nil:
-			secrets[fetch.Image.SecretRef.Name] = struct{}{}
-		case fetch.ImgpkgBundle != nil && fetch.ImgpkgBundle.SecretRef != nil:
-			secrets[fetch.ImgpkgBundle.SecretRef.Name] = struct{}{}
-		case fetch.HTTP != nil && fetch.HTTP.SecretRef != nil:
-			secrets[fetch.HTTP.SecretRef.Name] = struct{}{}
-		case fetch.Git != nil && fetch.Git.SecretRef != nil:
-			secrets[fetch.Git.SecretRef.Name] = struct{}{}
-		case fetch.HelmChart != nil && fetch.HelmChart.Repository != nil:
-			if fetch.HelmChart.Repository.SecretRef != nil {
-				secrets[fetch.HelmChart.Repository.SecretRef.Name] = struct{}{}
-			}
-		default:
-		}
-	}
-
-	// Templating SecretRefs
-	for _, tpl := range a.app.app.Spec.Template {
-		switch {
-		case tpl.Ytt != nil && tpl.Ytt.Inline != nil:
-			for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
-				if pathsFrom.SecretRef != nil {
-					secrets[pathsFrom.SecretRef.Name] = struct{}{}
-				}
-			}
-		case tpl.HelmTemplate != nil && tpl.HelmTemplate.ValuesFrom != nil:
-			for _, valsFrom := range tpl.HelmTemplate.ValuesFrom {
-				if valsFrom.SecretRef != nil {
-					secrets[valsFrom.SecretRef.Name] = struct{}{}
-				}
-			}
-		default:
-		}
-	}
-
-	return secrets
+	return a.app.getSecretRefs()
 }
 
 // Get all ConfigMapRefs from App spec
 func (a *CRDApp) GetConfigMapRefs() map[string]struct{} {
-	configMaps := make(map[string]struct{})
-
-	// Fetch ConfigMapRefs
-	for _, fetch := range a.app.app.Spec.Fetch {
-		switch {
-		case fetch.Inline != nil && fetch.Inline.PathsFrom != nil:
-			for _, pathsFrom := range fetch.Inline.PathsFrom {
-				if pathsFrom.ConfigMapRef != nil {
-					configMaps[pathsFrom.ConfigMapRef.Name] = struct{}{}
-				}
-			}
-		default:
-		}
-	}
-
-	// Templating ConfigMapRefs
-	for _, tpl := range a.app.app.Spec.Template {
-		switch {
-		case tpl.Ytt != nil && tpl.Ytt.Inline != nil:
-			for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
-				if pathsFrom.ConfigMapRef != nil {
-					configMaps[pathsFrom.ConfigMapRef.Name] = struct{}{}
-				}
-			}
-		case tpl.HelmTemplate != nil && tpl.HelmTemplate.ValuesFrom != nil:
-			for _, valsFrom := range tpl.HelmTemplate.ValuesFrom {
-				if valsFrom.ConfigMapRef != nil {
-					configMaps[valsFrom.ConfigMapRef.Name] = struct{}{}
-				}
-			}
-		default:
-		}
-	}
-
-	return configMaps
+	return a.app.getConfigMapRefs()
 }

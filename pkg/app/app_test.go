@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
@@ -30,7 +29,8 @@ func Test_GetSecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 		"s6": struct{}{},
 		"s7": struct{}{},
 	}
-	app := v1alpha1.App{
+
+	appWithRefs := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "simple-app",
 		},
@@ -51,14 +51,13 @@ func Test_GetSecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	}
 
 	k8scs := k8sfake.NewSimpleClientset()
-	kappcs := fake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs)
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
+	app := NewApp(appWithRefs, Hooks{}, fetchFac, tmpFac, deployFac, log)
 
-	out := crdApp.GetSecretRefs()
+	out := app.getSecretRefs()
 	if !reflect.DeepEqual(out, expected) {
 		t.Fatalf("\n Expected: %s\nGot: %s\n", expected, out)
 	}
@@ -66,7 +65,8 @@ func Test_GetSecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 
 func Test_GetSecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 	log := logf.Log.WithName("kc")
-	app := v1alpha1.App{
+
+	appEmpty := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "simple-app",
 		},
@@ -77,14 +77,13 @@ func Test_GetSecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 	}
 
 	k8scs := k8sfake.NewSimpleClientset()
-	kappcs := fake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs)
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
+	app := NewApp(appEmpty, Hooks{}, fetchFac, tmpFac, deployFac, log)
 
-	out := crdApp.GetSecretRefs()
+	out := app.getSecretRefs()
 	if len(out) != 0 {
 		t.Fatalf("\n Expected: %s\nGot: %s\n", "No SecretRefs to be returned", out)
 	}
@@ -92,12 +91,14 @@ func Test_GetSecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 
 func Test_GetConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 	log := logf.Log.WithName("kc")
+
 	expected := map[string]struct{}{
 		"s":  struct{}{},
 		"s1": struct{}{},
 		"s2": struct{}{},
 	}
-	app := v1alpha1.App{
+
+	appWithRefs := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "simple-app",
 		},
@@ -113,14 +114,13 @@ func Test_GetConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 	}
 
 	k8scs := k8sfake.NewSimpleClientset()
-	kappcs := fake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs)
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
+	app := NewApp(appWithRefs, Hooks{}, fetchFac, tmpFac, deployFac, log)
 
-	out := crdApp.GetConfigMapRefs()
+	out := app.getConfigMapRefs()
 	if !reflect.DeepEqual(out, expected) {
 		t.Fatalf("\n Expected: %s\nGot: %s\n", expected, out)
 	}
@@ -128,7 +128,8 @@ func Test_GetConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 
 func Test_GetConfigMapRefs_RetrievesNoConfigMapRefs_WhenNonePresent(t *testing.T) {
 	log := logf.Log.WithName("kc")
-	app := v1alpha1.App{
+
+	appEmpty := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "simple-app",
 		},
@@ -139,14 +140,13 @@ func Test_GetConfigMapRefs_RetrievesNoConfigMapRefs_WhenNonePresent(t *testing.T
 	}
 
 	k8scs := k8sfake.NewSimpleClientset()
-	kappcs := fake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs)
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
+	app := NewApp(appEmpty, Hooks{}, fetchFac, tmpFac, deployFac, log)
 
-	out := crdApp.GetConfigMapRefs()
+	out := app.getConfigMapRefs()
 	if len(out) != 0 {
 		t.Fatalf("\n Expected: %s\nGot: %s\n", "No ConfigMapRefs to be returned", out)
 	}
