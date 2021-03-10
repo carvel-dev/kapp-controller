@@ -203,7 +203,7 @@ data:
 	})
 
 	logger.Section("update configmap", func() {
-		updatedSecret := `
+		updatedConfigMap := `
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -215,8 +215,8 @@ data:
     ---
     hello_msg: updated`
 
-		// Update secret
-		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(updatedSecret)})
+		// Update configmap
+		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(updatedConfigMap)})
 	})
 
 	logger.Section("check App uses new configmap", func() {
