@@ -22,9 +22,10 @@ func NewAppRefTracker() *AppRefTracker {
 
 func (a AppRefTracker) AddAppToRefMap(resourceKind, resourceName, namespace, appName string) {
 	refKey := strings.ToLower(fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace))
+
 	a.lock.Lock()
 	defer a.lock.Unlock()
-	
+
 	apps := a.refsToApps[refKey]
 	if apps == nil {
 		// If refKey not found, need to initialize map
@@ -36,10 +37,11 @@ func (a AppRefTracker) AddAppToRefMap(resourceKind, resourceName, namespace, app
 }
 
 func (a AppRefTracker) GetAppsForRef(resourceKind, resourceName, namespace string) (map[string]struct{}, error) {
+	refKey := strings.ToLower(fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace))
+
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	refKey := strings.ToLower(fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace))
 	if a.refsToApps[refKey] == nil {
 		return nil, fmt.Errorf("could not find App ref %s/%s", resourceKind, resourceName)
 	}
@@ -47,11 +49,12 @@ func (a AppRefTracker) GetAppsForRef(resourceKind, resourceName, namespace strin
 }
 
 func (a AppRefTracker) CheckAppExistsForRef(resourceKind, resourceName, namespace, appName string) bool {
+	refKey := strings.ToLower(fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace))
+	appKey := strings.ToLower(appName)
+
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	refKey := strings.ToLower(fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace))
-	appKey := strings.ToLower(appName)
 	if a.refsToApps[refKey] == nil {
 		return false
 	}
@@ -102,7 +105,6 @@ func (a AppUpdateStatus) MarkNeedsUpdate(appName, namespace string) {
 	defer a.lock.Unlock()
 
 	a.appsToUpdateStatus[appKey] = struct{}{}
-	a.lock.Unlock()
 }
 
 func (a AppUpdateStatus) IsUpdateNeeded(appName, namespace string) bool {
@@ -116,9 +118,10 @@ func (a AppUpdateStatus) IsUpdateNeeded(appName, namespace string) bool {
 }
 
 func (a AppUpdateStatus) MarkUpdated(appName, namespace string) {
+	appKey := strings.ToLower(fmt.Sprintf(`%s:%s`, appName, namespace))
+
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	appKey := strings.ToLower(fmt.Sprintf(`%s:%s`, appName, namespace))
 	delete(a.appsToUpdateStatus, appKey)
 }
