@@ -37,10 +37,13 @@ func (sch *SecretHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimiting
 
 func (sch *SecretHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {}
 
-func (sch *SecretHandler) enqueueAppsForUpdate(secretName, secretNamespace string, q workqueue.RateLimitingInterface) {
-	// TODO: Does v1.Secret{}.Kind result in secret kind with it being set?
-	apps := sch.appRefTacker.GetAppsForRef(v1.Secret{}.Kind, secretName, secretNamespace)
-	for appName, _ := range apps {
+func (sch *SecretHandler) enqueueAppsForUpdate(secretName, secretNamespace string, q workqueue.RateLimitingInterface) error {
+	apps, err := sch.appRefTacker.GetAppsForRef("secret", secretName, secretNamespace)
+	if err != nil {
+		return err
+	}
+
+	for appName := range apps {
 		sch.log.Info("enqueueing App " + appName + " from update to secret " + secretName)
 		sch.appRefTacker.MarkAppForUpdate(appName, secretNamespace)
 		q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
@@ -48,4 +51,6 @@ func (sch *SecretHandler) enqueueAppsForUpdate(secretName, secretNamespace strin
 			Namespace: secretNamespace,
 		}})
 	}
+
+	return nil
 }
