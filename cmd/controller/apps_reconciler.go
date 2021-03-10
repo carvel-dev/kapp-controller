@@ -49,6 +49,7 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 	r.updateAppRefs(crdApp.GetSecretRefs(), secret, existingApp)
 	r.updateAppRefs(crdApp.GetConfigMapRefs(), configmap, existingApp)
 	if r.appUpdateStatus.IsUpdateNeeded(existingApp.Name, existingApp.Namespace) {
+		r.appUpdateStatus.MarkUpdated(existingApp.Name, existingApp.Namespace)
 		force = true
 	}
 
