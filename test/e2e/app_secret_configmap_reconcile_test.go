@@ -117,7 +117,7 @@ stringData:
 			}
 
 			if cm.Data["hello_msg"] != "updated" {
-				return fmt.Errorf("\nsecret message was not updated to \"updated\"\nGot: %s", cm.Data["hello_msg"])
+				return fmt.Errorf("secret message was not updated to \"updated\"\nGot: %s", cm.Data["hello_msg"])
 			}
 			return nil
 		})
@@ -202,7 +202,7 @@ data:
 		}
 	})
 
-	logger.Section("update secret", func() {
+	logger.Section("update configmap", func() {
 		updatedSecret := `
 ---
 apiVersion: v1
@@ -230,7 +230,7 @@ data:
 			}
 
 			if cm.Data["hello_msg"] != "updated" {
-				return fmt.Errorf("\nconfigmap message was not updated to \"updated\"\nGot: %s", cm.Data["hello_msg"])
+				return fmt.Errorf("configmap message was not updated to \"updated\"\nGot: %s", cm.Data["hello_msg"])
 			}
 			return nil
 		})

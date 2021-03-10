@@ -78,13 +78,15 @@ func Run(opts Options, runLog logr.Logger) {
 
 	{ // add controller for apps
 		appRefTracker := reftracker.NewAppRefTracker()
+		appUpdateStatus := reftracker.NewAppUpdateStatus()
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
 				delegate: &AppsReconciler{
-					appClient:     appClient,
-					appFactory:    appFactory,
-					log:           runLog.WithName("ar"),
-					appRefTracker: &appRefTracker,
+					appClient:       appClient,
+					appFactory:      appFactory,
+					log:             runLog.WithName("ar"),
+					appRefTracker:   appRefTracker,
+					appUpdateStatus: appUpdateStatus,
 				},
 				log: runLog.WithName("pr"),
 			}),
@@ -103,14 +105,14 @@ func Run(opts Options, runLog logr.Logger) {
 			os.Exit(1)
 		}
 
-		sch := handlers.NewSecretHandler(runLog, &appRefTracker)
+		sch := handlers.NewSecretHandler(runLog, appRefTracker, appUpdateStatus)
 		err = ctrlApp.Watch(&source.Kind{Type: &v1.Secret{}}, sch)
 		if err != nil {
 			runLog.Error(err, "unable to watch Secrets")
 			os.Exit(1)
 		}
 
-		cfgmh := handlers.NewConfigMapHandler(runLog, &appRefTracker)
+		cfgmh := handlers.NewConfigMapHandler(runLog, appRefTracker, appUpdateStatus)
 		err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, cfgmh)
 		if err != nil {
 			runLog.Error(err, "unable to watch ConfigMaps")

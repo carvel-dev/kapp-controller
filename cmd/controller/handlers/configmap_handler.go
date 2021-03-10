@@ -15,14 +15,15 @@ import (
 )
 
 type ConfigMapHandler struct {
-	log          logr.Logger
-	appRefTacker *reftracker.AppRefTracker
+	log             logr.Logger
+	appRefTacker    *reftracker.AppRefTracker
+	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
 var _ handler.EventHandler = &ConfigMapHandler{}
 
-func NewConfigMapHandler(log logr.Logger, as *reftracker.AppRefTracker) *ConfigMapHandler {
-	return &ConfigMapHandler{log, as}
+func NewConfigMapHandler(log logr.Logger, as *reftracker.AppRefTracker, aus *reftracker.AppUpdateStatus) *ConfigMapHandler {
+	return &ConfigMapHandler{log, as, aus}
 }
 
 func (sch *ConfigMapHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {}
@@ -45,7 +46,7 @@ func (sch *ConfigMapHandler) enqueueAppsForUpdate(cfgmName, cfgmNamespace string
 
 	for appName := range apps {
 		sch.log.Info("enqueueing App " + appName + " from update to configmap " + cfgmName)
-		sch.appRefTacker.MarkAppForUpdate(appName, cfgmNamespace)
+		sch.appUpdateStatus.MarkNeedsUpdate(appName, cfgmNamespace)
 		q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
 			Name:      appName,
 			Namespace: cfgmNamespace,

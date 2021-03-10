@@ -15,14 +15,15 @@ import (
 )
 
 type SecretHandler struct {
-	log          logr.Logger
-	appRefTacker *reftracker.AppRefTracker
+	log             logr.Logger
+	appRefTacker    *reftracker.AppRefTracker
+	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
 var _ handler.EventHandler = &SecretHandler{}
 
-func NewSecretHandler(log logr.Logger, as *reftracker.AppRefTracker) *SecretHandler {
-	return &SecretHandler{log, as}
+func NewSecretHandler(log logr.Logger, as *reftracker.AppRefTracker, aus *reftracker.AppUpdateStatus) *SecretHandler {
+	return &SecretHandler{log, as, aus}
 }
 
 func (sch *SecretHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {}
@@ -45,7 +46,7 @@ func (sch *SecretHandler) enqueueAppsForUpdate(secretName, secretNamespace strin
 
 	for appName := range apps {
 		sch.log.Info("enqueueing App " + appName + " from update to secret " + secretName)
-		sch.appRefTacker.MarkAppForUpdate(appName, secretNamespace)
+		sch.appUpdateStatus.MarkNeedsUpdate(appName, secretNamespace)
 		q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
 			Name:      appName,
 			Namespace: secretNamespace,

@@ -57,10 +57,6 @@ func Test_GetSecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	deployFac := deploy.NewFactory(k8scs)
 
 	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
-	_, err := crdApp.Reconcile(false)
-	if err != nil {
-		t.Fatalf("Unexpected error with reconciling: %v", err)
-	}
 
 	out := crdApp.GetSecretRefs()
 	if !reflect.DeepEqual(out, expected) {
@@ -87,10 +83,6 @@ func Test_GetSecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 	deployFac := deploy.NewFactory(k8scs)
 
 	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
-	_, err := crdApp.Reconcile(false)
-	if err != nil {
-		t.Fatalf("Unexpected error with reconciling: %v", err)
-	}
 
 	out := crdApp.GetSecretRefs()
 	if len(out) != 0 {
@@ -127,10 +119,6 @@ func Test_GetConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 	deployFac := deploy.NewFactory(k8scs)
 
 	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
-	_, err := crdApp.Reconcile(false)
-	if err != nil {
-		t.Fatalf("Unexpected error with reconciling: %v", err)
-	}
 
 	out := crdApp.GetConfigMapRefs()
 	if !reflect.DeepEqual(out, expected) {
@@ -157,10 +145,6 @@ func Test_GetConfigMapRefs_RetrievesNoConfigMapRefs_WhenNonePresent(t *testing.T
 	deployFac := deploy.NewFactory(k8scs)
 
 	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
-	_, err := crdApp.Reconcile(false)
-	if err != nil {
-		t.Fatalf("Unexpected error with reconciling: %v", err)
-	}
 
 	out := crdApp.GetConfigMapRefs()
 	if len(out) != 0 {

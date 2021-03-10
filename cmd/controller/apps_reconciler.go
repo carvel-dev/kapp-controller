@@ -19,10 +19,11 @@ const (
 )
 
 type AppsReconciler struct {
-	appClient     kcclient.Interface
-	log           logr.Logger
-	appFactory    AppFactory
-	appRefTracker *reftracker.AppRefTracker
+	appClient       kcclient.Interface
+	log             logr.Logger
+	appFactory      AppFactory
+	appRefTracker   *reftracker.AppRefTracker
+	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
 var _ reconcile.Reconciler = &AppsReconciler{}
@@ -45,38 +46,21 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 
 	force := false
 	crdApp := r.appFactory.NewCRDApp(existingApp, log)
-	if !r.areAppRefsUpToDate(crdApp.GetSecretRefs(), secret, existingApp) ||
-		!r.areAppRefsUpToDate(crdApp.GetConfigMapRefs(), configmap, existingApp) {
+	r.updateAppRefs(crdApp.GetSecretRefs(), secret, existingApp)
+	r.updateAppRefs(crdApp.GetConfigMapRefs(), configmap, existingApp)
+	if r.appUpdateStatus.IsUpdateNeeded(existingApp.Name, existingApp.Namespace) {
 		force = true
 	}
 
-	result, err := crdApp.Reconcile(force)
-	if err != nil {
-		return result, err
-	}
-
-	// Only update if reconcile is successful.
-	// Leave as not updated if error occurs
-	// in case follow up reconcile request may
-	// address issue for App.
-	r.appRefTracker.MarkAppUpdated(existingApp.Name, existingApp.Namespace)
-
-	return result, err
+	return crdApp.Reconcile(force)
 }
 
-func (r *AppsReconciler) areAppRefsUpToDate(refNames map[string]struct{}, kind string, app *v1alpha1.App) bool {
-	// No updates if paused or cancelled
-	if app.Spec.Canceled || app.Spec.Paused {
-		return true
-	}
-
+func (r *AppsReconciler) updateAppRefs(refNames map[string]struct{}, kind string, app *v1alpha1.App) {
 	// If App is being deleted, remove App from appRefTracker.
 	if app.DeletionTimestamp != nil {
 		for refName := range refNames {
 			r.appRefTracker.RemoveAppFromRefMap(kind, refName, app.Namespace, app.Name)
-			r.appRefTracker.RemoveAppFromUpdateMap(app.Name, app.Namespace)
 		}
-		return true
 	}
 
 	// Make sure refs for App are always up to date
@@ -86,10 +70,4 @@ func (r *AppsReconciler) areAppRefsUpToDate(refNames map[string]struct{}, kind s
 			r.appRefTracker.AddAppToRefMap(kind, refName, app.Namespace, app.Name)
 		}
 	}
-
-	if r.appRefTracker.GetAppUpdateStatus(app.Name, app.Namespace) {
-		return false
-	}
-
-	return true
 }

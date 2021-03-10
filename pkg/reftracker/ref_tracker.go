@@ -6,34 +6,39 @@ package reftracker
 import (
 	"fmt"
 	"strings"
+	"sync"
 )
 
-var appExists struct{}
-
 type AppRefTracker struct {
-	refsToApps         map[string]map[string]struct{}
-	appsToUpdateStatus map[string]struct{}
+	lock       sync.Mutex
+	refsToApps map[string]map[string]struct{}
 }
 
-func NewAppRefTracker() AppRefTracker {
-	refsToApps := make(map[string]map[string]struct{})
-	appsToUpdateStatus := make(map[string]struct{})
-	return AppRefTracker{refsToApps: refsToApps, appsToUpdateStatus: appsToUpdateStatus}
+func NewAppRefTracker() *AppRefTracker {
+	refsToApps := map[string]map[string]struct{}{}
+	lock := sync.Mutex{}
+	return &AppRefTracker{refsToApps: refsToApps, lock: lock}
 }
 
 func (a AppRefTracker) AddAppToRefMap(resourceKind, resourceName, namespace, appName string) {
 	refKey := strings.ToLower(fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace))
-	apps, err := a.GetAppsForRef(resourceKind, resourceName, namespace)
-	if err != nil {
+	a.lock.Lock()
+	defer a.lock.Unlock()
+	
+	apps := a.refsToApps[refKey]
+	if apps == nil {
 		// If refKey not found, need to initialize map
-		apps = make(map[string]struct{})
+		apps = map[string]struct{}{}
 	}
 	appKey := strings.ToLower(appName)
-	apps[appKey] = appExists
+	apps[appKey] = struct{}{}
 	a.refsToApps[refKey] = apps
 }
 
 func (a AppRefTracker) GetAppsForRef(resourceKind, resourceName, namespace string) (map[string]struct{}, error) {
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
 	refKey := strings.ToLower(fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace))
 	if a.refsToApps[refKey] == nil {
 		return nil, fmt.Errorf("could not find App ref %s/%s", resourceKind, resourceName)
@@ -42,6 +47,9 @@ func (a AppRefTracker) GetAppsForRef(resourceKind, resourceName, namespace strin
 }
 
 func (a AppRefTracker) CheckAppExistsForRef(resourceKind, resourceName, namespace, appName string) bool {
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
 	refKey := strings.ToLower(fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace))
 	appKey := strings.ToLower(appName)
 	if a.refsToApps[refKey] == nil {
@@ -53,39 +61,64 @@ func (a AppRefTracker) CheckAppExistsForRef(resourceKind, resourceName, namespac
 
 func (a AppRefTracker) RemoveRefFromMap(resourceKind, resourceName, namespace string) {
 	refKey := strings.ToLower(fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace))
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
 	delete(a.refsToApps, refKey)
 }
 
 func (a AppRefTracker) RemoveAppFromRefMap(resourceKind, resourceName, namespace, appName string) error {
-	apps, err := a.GetAppsForRef(resourceKind, resourceName, namespace)
-	if err != nil {
-		return err
+	refKey := strings.ToLower(fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace))
+
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
+	apps := a.refsToApps[refKey]
+	if apps == nil {
+		return fmt.Errorf("could not find App ref %s/%s", resourceKind, resourceName)
 	}
 
 	appKey := strings.ToLower(appName)
 	delete(apps, appKey)
-	refKey := strings.ToLower(fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace))
 	a.refsToApps[refKey] = apps
-
 	return nil
 }
 
-func (a AppRefTracker) MarkAppForUpdate(appName, namespace string) {
-	appKey := strings.ToLower(fmt.Sprintf(`%s:%s`, appName, namespace))
-	a.appsToUpdateStatus[appKey] = appExists
+type AppUpdateStatus struct {
+	lock               sync.Mutex
+	appsToUpdateStatus map[string]struct{}
 }
 
-func (a AppRefTracker) MarkAppUpdated(appName, namespace string) {
-	a.RemoveAppFromUpdateMap(appName, namespace)
+func NewAppUpdateStatus() *AppUpdateStatus {
+	appsUpdateStatus := map[string]struct{}{}
+	lock := sync.Mutex{}
+	return &AppUpdateStatus{appsToUpdateStatus: appsUpdateStatus, lock: lock}
 }
 
-func (a AppRefTracker) GetAppUpdateStatus(appName, namespace string) bool {
+func (a AppUpdateStatus) MarkNeedsUpdate(appName, namespace string) {
 	appKey := strings.ToLower(fmt.Sprintf(`%s:%s`, appName, namespace))
+
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
+	a.appsToUpdateStatus[appKey] = struct{}{}
+	a.lock.Unlock()
+}
+
+func (a AppUpdateStatus) IsUpdateNeeded(appName, namespace string) bool {
+	appKey := strings.ToLower(fmt.Sprintf(`%s:%s`, appName, namespace))
+
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
 	_, keyExists := a.appsToUpdateStatus[appKey]
 	return keyExists
 }
 
-func (a AppRefTracker) RemoveAppFromUpdateMap(appName, namespace string) {
+func (a AppUpdateStatus) MarkUpdated(appName, namespace string) {
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
 	appKey := strings.ToLower(fmt.Sprintf(`%s:%s`, appName, namespace))
 	delete(a.appsToUpdateStatus, appKey)
 }
