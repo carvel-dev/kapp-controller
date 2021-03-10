@@ -13,8 +13,11 @@ metadata:
   name: kapp-controller-cluster-role
 rules:
 - apiGroups: [""]
-  resources: ["serviceaccounts", "secrets", "configmaps"]
+  resources: ["secrets", "configmaps"]
   verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["serviceaccounts"]
+  verbs: ["get"]
 - apiGroups: ["kappctrl.k14s.io"]
   resources: ["apps", "apps/status"]
   verbs: ["*"]
