@@ -8,10 +8,14 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+const (
+	secret    = "secret"
+	configmap = "configmap"
 )
 
 type AppsReconciler struct {
@@ -41,31 +45,26 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 
 	force := false
 	crdApp := r.appFactory.NewCRDApp(existingApp, log)
-	if !r.areAppSecretsUpToDate(crdApp.GetSecretRefs(), existingApp) {
+	if !r.areAppRefsUpToDate(crdApp.GetSecretRefs(), secret, existingApp) ||
+		!r.areAppRefsUpToDate(crdApp.GetConfigMapRefs(), configmap, existingApp) {
 		force = true
 	}
-	//if !force && r.areAppConfigMapsUpToDate(crdApp.GetConfigMapRefs(), request.Namespace, existingApp.Name)
 
 	result, err := crdApp.Reconcile(force)
 	if err != nil {
 		return result, err
 	}
 
+	// Only update if reconcile is successful.
+	// Leave as not updated if error occurs
+	// in case follow up reconcile request may
+	// address issue for App.
 	r.appRefTracker.MarkAppUpdated(existingApp.Name, existingApp.Namespace)
-	return result, err
 
+	return result, err
 }
 
-// Check whether secrets used by App are latest
-// versions. Helps determine whether to force an
-// update to App during Reconcile.
-
-// WHY this func is needed: We don't know where the
-// reconcileRequest originates from so we need to determine
-// if we should force reconciliation. Also, we need a way to
-// have secrets be associated with apps and this is how Apps
-// will register with their secretRefs.
-func (r *AppsReconciler) areAppSecretsUpToDate(secretNames []string, app *v1alpha1.App) bool {
+func (r *AppsReconciler) areAppRefsUpToDate(refNames map[string]struct{}, kind string, app *v1alpha1.App) bool {
 	// No updates if paused or cancelled
 	if app.Spec.Canceled || app.Spec.Paused {
 		return true
@@ -73,20 +72,18 @@ func (r *AppsReconciler) areAppSecretsUpToDate(secretNames []string, app *v1alph
 
 	// If App is being deleted, remove App from appRefTracker.
 	if app.DeletionTimestamp != nil {
-		for _, secretName := range secretNames {
-			r.appRefTracker.RemoveAppFromRefMap(v1.Secret{}.Kind, secretName, app.Namespace, app.Name)
+		for refName := range refNames {
+			r.appRefTracker.RemoveAppFromRefMap(kind, refName, app.Namespace, app.Name)
 			r.appRefTracker.RemoveAppFromUpdateMap(app.Name, app.Namespace)
 		}
 		return true
 	}
 
-	// Make sure secrets for App are always up to date
+	// Make sure refs for App are always up to date
 	// in appRefTracker.
-	for _, secretName := range secretNames {
-		if !r.appRefTracker.CheckAppExistsForRef(v1.Secret{}.Kind, secretName, app.Namespace, app.Name) {
-			r.appRefTracker.AddAppToRefMap(v1.Secret{}.Kind, secretName, app.Namespace, app.Name)
-			if r.appRefTracker.CheckAppExistsForRef(v1.Secret{}.Kind, secretName, app.Namespace, app.Name) {
-			}
+	for refName := range refNames {
+		if !r.appRefTracker.CheckAppExistsForRef(kind, refName, app.Namespace, app.Name) {
+			r.appRefTracker.AddAppToRefMap(kind, refName, app.Namespace, app.Name)
 		}
 	}
 

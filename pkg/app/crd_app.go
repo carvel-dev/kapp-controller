@@ -127,13 +127,9 @@ func (a *CRDApp) watchChanges(callback func(kcv1alpha1.App), cancelCh chan struc
 	return NewCRDAppWatcher(*a.appModel, a.appClient).Watch(callback, cancelCh)
 }
 
-func (a *CRDApp) GetApp() *App {
-	return a.app
-}
-
 // Get all SecretRefs from App spec
-func (a *CRDApp) GetSecretRefs() []string {
-	var secrets []string
+func (a *CRDApp) GetSecretRefs() map[string]struct{} {
+	secrets := make(map[string]struct{})
 
 	// Fetch SecretRefs
 	for _, fetch := range a.app.app.Spec.Fetch {
@@ -141,20 +137,20 @@ func (a *CRDApp) GetSecretRefs() []string {
 		case fetch.Inline != nil && fetch.Inline.PathsFrom != nil:
 			for _, pathsFrom := range fetch.Inline.PathsFrom {
 				if pathsFrom.SecretRef != nil {
-					secrets = append(secrets, pathsFrom.SecretRef.Name)
+					secrets[pathsFrom.SecretRef.Name] = struct{}{}
 				}
 			}
 		case fetch.Image != nil && fetch.Image.SecretRef != nil:
-			secrets = append(secrets, fetch.Image.SecretRef.Name)
+			secrets[fetch.Image.SecretRef.Name] = struct{}{}
 		case fetch.ImgpkgBundle != nil && fetch.ImgpkgBundle.SecretRef != nil:
-			secrets = append(secrets, fetch.ImgpkgBundle.SecretRef.Name)
+			secrets[fetch.ImgpkgBundle.SecretRef.Name] = struct{}{}
 		case fetch.HTTP != nil && fetch.HTTP.SecretRef != nil:
-			secrets = append(secrets, fetch.HTTP.SecretRef.Name)
+			secrets[fetch.HTTP.SecretRef.Name] = struct{}{}
 		case fetch.Git != nil && fetch.Git.SecretRef != nil:
-			secrets = append(secrets, fetch.Git.SecretRef.Name)
+			secrets[fetch.Git.SecretRef.Name] = struct{}{}
 		case fetch.HelmChart != nil && fetch.HelmChart.Repository != nil:
 			if fetch.HelmChart.Repository.SecretRef != nil {
-				secrets = append(secrets, fetch.HelmChart.Repository.SecretRef.Name)
+				secrets[fetch.HelmChart.Repository.SecretRef.Name] = struct{}{}
 			}
 		default:
 		}
@@ -166,13 +162,13 @@ func (a *CRDApp) GetSecretRefs() []string {
 		case tpl.Ytt != nil && tpl.Ytt.Inline != nil:
 			for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
 				if pathsFrom.SecretRef != nil {
-					secrets = append(secrets, pathsFrom.SecretRef.Name)
+					secrets[pathsFrom.SecretRef.Name] = struct{}{}
 				}
 			}
 		case tpl.HelmTemplate != nil && tpl.HelmTemplate.ValuesFrom != nil:
 			for _, valsFrom := range tpl.HelmTemplate.ValuesFrom {
 				if valsFrom.SecretRef != nil {
-					secrets = append(secrets, valsFrom.SecretRef.Name)
+					secrets[valsFrom.SecretRef.Name] = struct{}{}
 				}
 			}
 		default:
@@ -180,4 +176,43 @@ func (a *CRDApp) GetSecretRefs() []string {
 	}
 
 	return secrets
+}
+
+// Get all ConfigMapRefs from App spec
+func (a *CRDApp) GetConfigMapRefs() map[string]struct{} {
+	configMaps := make(map[string]struct{})
+
+	// Fetch ConfigMapRefs
+	for _, fetch := range a.app.app.Spec.Fetch {
+		switch {
+		case fetch.Inline != nil && fetch.Inline.PathsFrom != nil:
+			for _, pathsFrom := range fetch.Inline.PathsFrom {
+				if pathsFrom.ConfigMapRef != nil {
+					configMaps[pathsFrom.ConfigMapRef.Name] = struct{}{}
+				}
+			}
+		default:
+		}
+	}
+
+	// Templating ConfigMapRefs
+	for _, tpl := range a.app.app.Spec.Template {
+		switch {
+		case tpl.Ytt != nil && tpl.Ytt.Inline != nil:
+			for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
+				if pathsFrom.ConfigMapRef != nil {
+					configMaps[pathsFrom.ConfigMapRef.Name] = struct{}{}
+				}
+			}
+		case tpl.HelmTemplate != nil && tpl.HelmTemplate.ValuesFrom != nil:
+			for _, valsFrom := range tpl.HelmTemplate.ValuesFrom {
+				if valsFrom.ConfigMapRef != nil {
+					configMaps[valsFrom.ConfigMapRef.Name] = struct{}{}
+				}
+			}
+		default:
+		}
+	}
+
+	return configMaps
 }

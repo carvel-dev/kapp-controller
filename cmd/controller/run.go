@@ -77,14 +77,14 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	{ // add controller for apps
-		appSecrets := reftracker.NewAppRefTracker()
+		appRefTracker := reftracker.NewAppRefTracker()
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
 				delegate: &AppsReconciler{
 					appClient:     appClient,
 					appFactory:    appFactory,
 					log:           runLog.WithName("ar"),
-					appRefTracker: &appSecrets,
+					appRefTracker: &appRefTracker,
 				},
 				log: runLog.WithName("pr"),
 			}),
@@ -103,22 +103,19 @@ func Run(opts Options, runLog logr.Logger) {
 			os.Exit(1)
 		}
 
-		//Watches for secrets/configmaps for app controller
-		//Handler for both secret and configmap updates
-		//Store state in map secretName/secretNamespace -> [app]
-		sch := handlers.NewSecretHandler(runLog, &appSecrets)
+		sch := handlers.NewSecretHandler(runLog, &appRefTracker)
 		err = ctrlApp.Watch(&source.Kind{Type: &v1.Secret{}}, sch)
 		if err != nil {
 			runLog.Error(err, "unable to watch Secrets")
 			os.Exit(1)
 		}
 
-		// TODO: Add watching of ConfigMaps
-		//err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, &handlers.ConfigMapHandler{})
-		//if err != nil {
-		//	runLog.Error(err, "unable to watch ConfigMaps")
-		//	os.Exit(1)
-		//}
+		cfgmh := handlers.NewConfigMapHandler(runLog, &appRefTracker)
+		err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, cfgmh)
+		if err != nil {
+			runLog.Error(err, "unable to watch ConfigMaps")
+			os.Exit(1)
+		}
 	}
 
 	runLog.Info("starting manager")

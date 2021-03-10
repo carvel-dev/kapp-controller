@@ -84,7 +84,7 @@ stringData:
 
 		// check for successful deployment
 		if cr.Status.Deploy == nil || !cr.Status.Deploy.Finished || cr.Status.Deploy.ExitCode != 0 {
-			t.Fatalf("Expected simple-app deployment to succeed but got:\n%s", cr.Status.Deploy.Stdout)
+			t.Fatalf("Expected %s deployment to succeed but got:\n%s", name, cr.Status.Deploy.Stdout)
 		}
 	})
 
@@ -116,12 +116,125 @@ stringData:
 			}
 
 			if cm.Data["hello_msg"] != "updated" {
-				return fmt.Errorf("\nSecret message was not updated to \"updated\"\nGot: %s", cm.Data["hello_msg"])
+				return fmt.Errorf("\nsecret message was not updated to \"updated\"\nGot: %s", cm.Data["hello_msg"])
 			}
 			return nil
 		})
 		if err != nil {
-			t.Fatalf("Timed out wating for App to update: %s", err.Error())
+			t.Fatalf("%s", err.Error())
+		}
+	})
+}
+
+func Test_AppReconcileOccurs_WhenConfigMapUpdated(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+	sas := ServiceAccounts{env.Namespace}
+
+	name := "configmap-with-configmap"
+	// syncPeriod set to 5 minutes so that test
+	// won't pass because of reconcile from time sync.
+	appYaml := fmt.Sprintf(`
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: %s
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
+spec:
+  syncPeriod: 5m
+  serviceAccountName: kappctrl-e2e-ns-sa
+  fetch:
+    - inline:
+        paths:
+          file.yml: |
+            #@ load("@ytt:data", "data")
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: configmap
+            data:
+              hello_msg: #@ data.values.hello_msg
+  template:
+  - ytt:
+      inline:
+        pathsFrom:
+          - configMapRef:
+              name: simple-app-values
+      paths:
+        - file.yml
+  deploy:
+    - kapp: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simple-app-values
+data:
+  values.yml: |
+    #@data/values
+    ---
+    hello_msg: original`, name) + sas.ForNamespaceYAML()
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(appYaml)})
+		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
+
+		var cr v1alpha1.App
+		err := yaml.Unmarshal([]byte(out), &cr)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal: %s", err)
+		}
+
+		// check for successful deployment
+		if cr.Status.Deploy == nil || !cr.Status.Deploy.Finished || cr.Status.Deploy.ExitCode != 0 {
+			t.Fatalf("Expected %s deployment to succeed but got:\n%s", name, cr.Status.Deploy.Stdout)
+		}
+	})
+
+	logger.Section("update secret", func() {
+		updatedSecret := `
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simple-app-values
+data:
+  values.yml: |
+    #@data/values
+    ---
+    hello_msg: updated`
+
+		// Update secret
+		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(updatedSecret)})
+	})
+
+	logger.Section("check App uses new configmap", func() {
+		err := retry(10*time.Second, func() error {
+			out := kubectl.Run([]string{"get", "configmap/configmap", "-o", "yaml"})
+
+			var cm corev1.ConfigMap
+			err := yaml.Unmarshal([]byte(out), &cm)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal: %s", err)
+			}
+
+			if cm.Data["hello_msg"] != "updated" {
+				return fmt.Errorf("\nconfigmap message was not updated to \"updated\"\nGot: %s", cm.Data["hello_msg"])
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("%s", err.Error())
 		}
 	})
 }
