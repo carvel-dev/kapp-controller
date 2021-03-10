@@ -148,6 +148,6 @@ func Test_GetConfigMapRefs_RetrievesNoConfigMapRefs_WhenNonePresent(t *testing.T
 
 	out := crdApp.GetConfigMapRefs()
 	if len(out) != 0 {
-		t.Fatalf("\n Expected: %s\nGot: %s\n", "No SecretRefs to be returned", out)
+		t.Fatalf("\n Expected: %s\nGot: %s\n", "No ConfigMapRefs to be returned", out)
 	}
 }
