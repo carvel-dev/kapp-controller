@@ -4,6 +4,9 @@
 package app
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
@@ -12,9 +15,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
-	"reflect"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"testing"
 )
 
 func Test_GetSecretRefs_RetrievesAllSecretRefs(t *testing.T) {

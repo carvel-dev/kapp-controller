@@ -5,12 +5,13 @@ package e2e
 
 import (
 	"fmt"
-	"github.com/ghodss/yaml"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/ghodss/yaml"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func Test_AppReconcileOccurs_WhenSecretUpdated(t *testing.T) {
