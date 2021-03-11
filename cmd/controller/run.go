@@ -10,13 +10,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
-	v1 "k8s.io/api/core/v1"
-
 	"github.com/go-logr/logr"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp" // Initialize gcp client auth plugin
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
