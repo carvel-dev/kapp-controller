@@ -22,7 +22,7 @@ func Test_AppReconcileOccurs_WhenSecretUpdated(t *testing.T) {
 	sas := ServiceAccounts{env.Namespace}
 
 	name := "configmap-with-secret"
-	// syncPeriod set to 5 minutes so that test
+	// syncPeriod set to 1 hour so that test
 	// won't pass because of reconcile from time sync.
 	appYaml := fmt.Sprintf(`
 ---
@@ -33,7 +33,7 @@ metadata:
   annotations:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
 spec:
-  syncPeriod: 5m
+  syncPeriod: 1h
   serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
     - inline:
@@ -135,7 +135,7 @@ func Test_AppReconcileOccurs_WhenConfigMapUpdated(t *testing.T) {
 	sas := ServiceAccounts{env.Namespace}
 
 	name := "configmap-with-configmap"
-	// syncPeriod set to 5 minutes so that test
+	// syncPeriod set to 1 hour so that test
 	// won't pass because of reconcile from time sync.
 	appYaml := fmt.Sprintf(`
 ---
@@ -146,7 +146,7 @@ metadata:
   annotations:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
 spec:
-  syncPeriod: 5m
+  syncPeriod: 1h
   serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
     - inline:
