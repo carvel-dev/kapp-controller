@@ -40,8 +40,8 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 	}
 
 	crdApp := r.appFactory.NewCRDApp(existingApp, log)
-	r.updateAppRefs(crdApp.GetSecretRefs(), "secret", existingApp)
-	r.updateAppRefs(crdApp.GetConfigMapRefs(), "configmap", existingApp)
+	r.updateAppRefs(crdApp.SecretRefs(), "secret", existingApp)
+	r.updateAppRefs(crdApp.ConfigMapRefs(), "configmap", existingApp)
 
 	force := false
 	if r.appUpdateStatus.IsUpdateNeeded(existingApp.Name, existingApp.Namespace) {
