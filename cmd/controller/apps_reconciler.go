@@ -13,11 +13,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-const (
-	secret    = "secret"
-	configmap = "configmap"
-)
-
 type AppsReconciler struct {
 	appClient       kcclient.Interface
 	log             logr.Logger
@@ -46,8 +41,8 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 
 	force := false
 	crdApp := r.appFactory.NewCRDApp(existingApp, log)
-	r.updateAppRefs(crdApp.GetSecretRefs(), secret, existingApp)
-	r.updateAppRefs(crdApp.GetConfigMapRefs(), configmap, existingApp)
+	r.updateAppRefs(crdApp.GetSecretRefs(), "secret", existingApp)
+	r.updateAppRefs(crdApp.GetConfigMapRefs(), "configmap", existingApp)
 	if r.appUpdateStatus.IsUpdateNeeded(existingApp.Name, existingApp.Namespace) {
 		r.appUpdateStatus.MarkUpdated(existingApp.Name, existingApp.Namespace)
 		force = true
