@@ -26,8 +26,8 @@ RUN wget -O- https://github.com/vmware-tanzu/carvel-ytt/releases/download/v0.31.
   echo "32e7cdc38202b49fe673442bd22cb2b130e13f0f05ce724222a06522d7618395  /usr/local/bin/ytt" | sha256sum -c - && \
   chmod +x /usr/local/bin/ytt && ytt version
 
-RUN wget -O- https://github.com/vmware-tanzu/carvel-kapp/releases/download/v0.35.0/kapp-linux-amd64 > /usr/local/bin/kapp && \
-  echo "0f9d4daa8c833a8e245362c77e72f4ed06d4f0a12eed6c09813c87a992201676  /usr/local/bin/kapp" | sha256sum -c - && \
+RUN wget -O- https://github.com/vmware-tanzu/carvel-kapp/releases/download/v0.36.0/kapp-linux-amd64 > /usr/local/bin/kapp && \
+  echo "22fe308f1d9ebbb829a6ea10ca80d9468ff4b9aa911b0c33788fe67d04ccb383  /usr/local/bin/kapp" | sha256sum -c - && \
   chmod +x /usr/local/bin/kapp && kapp version
 
 RUN wget -O- https://github.com/vmware-tanzu/carvel-kbld/releases/download/v0.28.0/kbld-linux-amd64 > /usr/local/bin/kbld && \
