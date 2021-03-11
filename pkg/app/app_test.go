@@ -1,13 +1,14 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package app
+package app_test
 
 import (
 	"reflect"
 	"testing"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	apppkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
@@ -55,9 +56,9 @@ func Test_GetSecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	app := NewApp(appWithRefs, Hooks{}, fetchFac, tmpFac, deployFac, log)
+	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log)
 
-	out := app.getSecretRefs()
+	out := app.SecretRefs()
 	if !reflect.DeepEqual(out, expected) {
 		t.Fatalf("\n Expected: %s\nGot: %s\n", expected, out)
 	}
@@ -81,9 +82,9 @@ func Test_GetSecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	app := NewApp(appEmpty, Hooks{}, fetchFac, tmpFac, deployFac, log)
+	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log)
 
-	out := app.getSecretRefs()
+	out := app.SecretRefs()
 	if len(out) != 0 {
 		t.Fatalf("\n Expected: %s\nGot: %s\n", "No SecretRefs to be returned", out)
 	}
@@ -118,9 +119,9 @@ func Test_GetConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	app := NewApp(appWithRefs, Hooks{}, fetchFac, tmpFac, deployFac, log)
+	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log)
 
-	out := app.getConfigMapRefs()
+	out := app.ConfigMapRefs()
 	if !reflect.DeepEqual(out, expected) {
 		t.Fatalf("\n Expected: %s\nGot: %s\n", expected, out)
 	}
@@ -144,9 +145,9 @@ func Test_GetConfigMapRefs_RetrievesNoConfigMapRefs_WhenNonePresent(t *testing.T
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	app := NewApp(appEmpty, Hooks{}, fetchFac, tmpFac, deployFac, log)
+	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log)
 
-	out := app.getConfigMapRefs()
+	out := app.ConfigMapRefs()
 	if len(out) != 0 {
 		t.Fatalf("\n Expected: %s\nGot: %s\n", "No ConfigMapRefs to be returned", out)
 	}

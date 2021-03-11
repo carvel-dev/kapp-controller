@@ -116,7 +116,7 @@ func (a *App) newCancelCh() (chan struct{}, func()) {
 }
 
 // Get all SecretRefs from App spec
-func (a *App) getSecretRefs() map[string]struct{} {
+func (a *App) SecretRefs() map[string]struct{} {
 	secrets := make(map[string]struct{})
 
 	// Fetch SecretRefs
@@ -167,7 +167,7 @@ func (a *App) getSecretRefs() map[string]struct{} {
 }
 
 // Get all ConfigMapRefs from App spec
-func (a *App) getConfigMapRefs() map[string]struct{} {
+func (a *App) ConfigMapRefs() map[string]struct{} {
 	configMaps := make(map[string]struct{})
 
 	// Fetch ConfigMapRefs

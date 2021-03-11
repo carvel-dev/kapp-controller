@@ -129,10 +129,10 @@ func (a *CRDApp) watchChanges(callback func(kcv1alpha1.App), cancelCh chan struc
 
 // Get all SecretRefs from App spec
 func (a *CRDApp) GetSecretRefs() map[string]struct{} {
-	return a.app.getSecretRefs()
+	return a.app.SecretRefs()
 }
 
 // Get all ConfigMapRefs from App spec
 func (a *CRDApp) GetConfigMapRefs() map[string]struct{} {
-	return a.app.getConfigMapRefs()
+	return a.app.ConfigMapRefs()
 }
