@@ -33,13 +33,13 @@ func (sch *SecretHandler) Update(evt event.UpdateEvent, q workqueue.RateLimiting
 }
 
 func (sch *SecretHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
-	sch.appRefTacker.RemoveRefFromMap(v1.Secret{}.Kind, evt.Meta.GetName(), evt.Meta.GetNamespace())
+	sch.appRefTacker.RemoveRef(v1.Secret{}.Kind, evt.Meta.GetName(), evt.Meta.GetNamespace())
 }
 
 func (sch *SecretHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {}
 
 func (sch *SecretHandler) enqueueAppsForUpdate(secretName, secretNamespace string, q workqueue.RateLimitingInterface) error {
-	apps, err := sch.appRefTacker.GetAppsForRef("secret", secretName, secretNamespace)
+	apps, err := sch.appRefTacker.AppsForRef("secret", secretName, secretNamespace)
 	if err != nil {
 		return err
 	}

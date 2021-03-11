@@ -33,13 +33,13 @@ func (sch *ConfigMapHandler) Update(evt event.UpdateEvent, q workqueue.RateLimit
 }
 
 func (sch *ConfigMapHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
-	sch.appRefTacker.RemoveRefFromMap(v1.ConfigMap{}.Kind, evt.Meta.GetName(), evt.Meta.GetNamespace())
+	sch.appRefTacker.RemoveRef(v1.ConfigMap{}.Kind, evt.Meta.GetName(), evt.Meta.GetNamespace())
 }
 
 func (sch *ConfigMapHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {}
 
 func (sch *ConfigMapHandler) enqueueAppsForUpdate(cfgmName, cfgmNamespace string, q workqueue.RateLimitingInterface) error {
-	apps, err := sch.appRefTacker.GetAppsForRef("configmap", cfgmName, cfgmNamespace)
+	apps, err := sch.appRefTacker.AppsForRef("configmap", cfgmName, cfgmNamespace)
 	if err != nil {
 		return err
 	}
