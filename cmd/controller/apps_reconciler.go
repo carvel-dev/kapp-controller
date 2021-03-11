@@ -39,10 +39,11 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 		return reconcile.Result{}, err
 	}
 
-	force := false
 	crdApp := r.appFactory.NewCRDApp(existingApp, log)
 	r.updateAppRefs(crdApp.GetSecretRefs(), "secret", existingApp)
 	r.updateAppRefs(crdApp.GetConfigMapRefs(), "configmap", existingApp)
+
+	force := false
 	if r.appUpdateStatus.IsUpdateNeeded(existingApp.Name, existingApp.Namespace) {
 		r.appUpdateStatus.MarkUpdated(existingApp.Name, existingApp.Namespace)
 		force = true
@@ -54,16 +55,12 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 func (r *AppsReconciler) updateAppRefs(refNames map[string]struct{}, kind string, app *v1alpha1.App) {
 	// If App is being deleted, remove App from appRefTracker.
 	if app.DeletionTimestamp != nil {
-		for refName := range refNames {
-			r.appRefTracker.RemoveAppFromRefMap(kind, refName, app.Namespace, app.Name)
-		}
+		r.appRefTracker.RemoveAppFromAllRefs(refNames, kind, app.Namespace, app.Name)
 	}
 
 	// Make sure refs for App are always up to date
 	// in appRefTracker.
 	for refName := range refNames {
-		if !r.appRefTracker.CheckAppExistsForRef(kind, refName, app.Namespace, app.Name) {
-			r.appRefTracker.AddAppToRefMap(kind, refName, app.Namespace, app.Name)
-		}
+		r.appRefTracker.AddAppForRef(kind, refName, app.Namespace, app.Name)
 	}
 }
