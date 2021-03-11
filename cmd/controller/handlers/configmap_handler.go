@@ -6,7 +6,6 @@ package handlers
 import (
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -33,7 +32,7 @@ func (sch *ConfigMapHandler) Update(evt event.UpdateEvent, q workqueue.RateLimit
 }
 
 func (sch *ConfigMapHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
-	sch.appRefTacker.RemoveRef(v1.ConfigMap{}.Kind, evt.Meta.GetName(), evt.Meta.GetNamespace())
+	sch.appRefTacker.RemoveRef("configmap", evt.Meta.GetName(), evt.Meta.GetNamespace())
 }
 
 func (sch *ConfigMapHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {}
