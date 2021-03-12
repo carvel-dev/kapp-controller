@@ -17,7 +17,7 @@ type AppsReconciler struct {
 	appClient       kcclient.Interface
 	log             logr.Logger
 	appFactory      AppFactory
-	appRefTracker   *reftracker.AppRefTracker
+	AppRefTracker   *reftracker.AppRefTracker
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
@@ -40,8 +40,8 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 	}
 
 	crdApp := r.appFactory.NewCRDApp(existingApp, log)
-	r.updateAppRefs(crdApp.SecretRefs(), "secret", existingApp)
-	r.updateAppRefs(crdApp.ConfigMapRefs(), "configmap", existingApp)
+	r.UpdateAppRefs(crdApp.SecretRefs(), "secret", existingApp)
+	r.UpdateAppRefs(crdApp.ConfigMapRefs(), "configmap", existingApp)
 
 	force := false
 	if r.appUpdateStatus.IsUpdateNeeded(existingApp.Name, existingApp.Namespace) {
@@ -52,15 +52,19 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 	return crdApp.Reconcile(force)
 }
 
-func (r *AppsReconciler) updateAppRefs(refNames map[string]struct{}, kind string, app *v1alpha1.App) {
-	// If App is being deleted, remove App from appRefTracker.
+func (r *AppsReconciler) UpdateAppRefs(refNames map[string]struct{}, kind string, app *v1alpha1.App) {
+	// If App is being deleted, remove App from AppRefTracker.
 	if app.DeletionTimestamp != nil {
-		r.appRefTracker.RemoveAppFromAllRefs(refNames, kind, app.Namespace, app.Name)
+		r.AppRefTracker.RemoveAppFromAllRefs(refNames, kind, app.Namespace, app.Name)
 	}
 
 	// Make sure refs for App are always up to date
-	// in appRefTracker.
+	// in AppRefTracker.
 	for refName := range refNames {
-		r.appRefTracker.AddAppForRef(kind, refName, app.Namespace, app.Name)
+		r.AppRefTracker.AddAppForRef(kind, refName, app.Namespace, app.Name)
 	}
+
+	// Make sure AppRefTracker removes App from
+	// refs it is no longer associated with.
+	r.AppRefTracker.PruneAppRefs(refNames, kind, app.Namespace, app.Name)
 }

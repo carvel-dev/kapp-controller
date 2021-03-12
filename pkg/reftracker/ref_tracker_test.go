@@ -10,7 +10,11 @@ func Test_AddAppToRefMap_AddsApp_WhenRefNotInMap(t *testing.T) {
 	appRefTracker.AddAppForRef("secret", "secretName", "default", "app")
 
 	if _, ok := appRefTracker.refsToApps["secret:secretName:default"]["app"]; !ok {
-		t.Fatalf("app was not added to AppRefTracker when Ref key did not exist")
+		t.Fatalf("app was not added to AppRefTracker when ref key did not exist")
+	}
+
+	if _, ok := appRefTracker.appsToRefs["app:default"]["secretName:secret"]; !ok {
+		t.Fatalf("ref was not added to AppRefTracker when App key did not exist")
 	}
 }
 

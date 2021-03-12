@@ -84,7 +84,7 @@ func Run(opts Options, runLog logr.Logger) {
 					appClient:       appClient,
 					appFactory:      appFactory,
 					log:             runLog.WithName("ar"),
-					appRefTracker:   appRefTracker,
+					AppRefTracker:   appRefTracker,
 					appUpdateStatus: appUpdateStatus,
 				},
 				log: runLog.WithName("pr"),
