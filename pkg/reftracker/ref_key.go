@@ -14,15 +14,15 @@ func NewRefKey(kind, refName, namespace string) RefKey {
 }
 
 func NewSecretKey(refName, namespace string) RefKey {
-	return RefKey{"secret", refName, namespace}
+	return NewRefKey("secret", refName, namespace)
 }
 
 func NewConfigMapKey(refName, namespace string) RefKey {
-	return RefKey{"configmap", refName, namespace}
+	return NewRefKey("configmap", refName, namespace)
 }
 
 func NewAppKey(refName, namespace string) RefKey {
-	return RefKey{"app", refName, namespace}
+	return NewRefKey("app", refName, namespace)
 }
 
 func (r RefKey) Kind() string {
