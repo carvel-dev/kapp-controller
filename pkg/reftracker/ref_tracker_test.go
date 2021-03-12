@@ -5,7 +5,7 @@ package reftracker
 
 import "testing"
 
-func Test_AddAppToRefMap_AddsApp_WhenRefNotInMap(t *testing.T) {
+func Test_AddAppForRef_AddsApp_WhenRefNotInMap(t *testing.T) {
 	appRefTracker := NewAppRefTracker()
 	appRefTracker.AddAppForRef("secret", "secretName", "default", "app")
 
@@ -18,7 +18,7 @@ func Test_AddAppToRefMap_AddsApp_WhenRefNotInMap(t *testing.T) {
 	}
 }
 
-func Test_RemoveAppFromRefMap_RemovesApp(t *testing.T) {
+func Test_RemoveAppFromAllRefs_RemovesApp(t *testing.T) {
 	appRefTracker := NewAppRefTracker()
 	appRefTracker.AddAppForRef("secret", "secretName", "default", "app")
 

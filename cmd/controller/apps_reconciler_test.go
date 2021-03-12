@@ -95,18 +95,11 @@ func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
 	expected := map[string]struct{}{
 		"app": {},
 	}
-	out, _ := ar.AppRefTracker.AppsForRef("secret", "secretName2", "default")
-	if !reflect.DeepEqual(out, expected) {
-		t.Fatalf("\nExpected: %s\nGot: %s", expected, out)
-	}
 
-	out, _ = ar.AppRefTracker.AppsForRef("secret", "secretName3", "default")
-	if !reflect.DeepEqual(out, expected) {
-		t.Fatalf("\nExpected: %s\nGot: %s", expected, out)
-	}
-
-	out, _ = ar.AppRefTracker.AppsForRef("secret", "secretName", "default")
-	if !reflect.DeepEqual(out, expected) {
-		t.Fatalf("\nExpected: %s\nGot: %s", refMap, out)
+	for refName := range refMap {
+		out, _ := ar.AppRefTracker.AppsForRef("secret", refName, "default")
+		if !reflect.DeepEqual(out, expected) {
+			t.Fatalf("\nExpected: %s\nGot: %s", expected, out)
+		}
 	}
 }

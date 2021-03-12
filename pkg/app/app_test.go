@@ -18,7 +18,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-func Test_GetSecretRefs_RetrievesAllSecretRefs(t *testing.T) {
+func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	expected := map[string]struct{}{
 		"s":  struct{}{},
@@ -64,7 +64,7 @@ func Test_GetSecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	}
 }
 
-func Test_GetSecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
+func Test_SecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 	log := logf.Log.WithName("kc")
 
 	appEmpty := v1alpha1.App{
@@ -90,7 +90,7 @@ func Test_GetSecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 	}
 }
 
-func Test_GetConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
+func Test_ConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 	log := logf.Log.WithName("kc")
 
 	expected := map[string]struct{}{
@@ -127,7 +127,7 @@ func Test_GetConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 	}
 }
 
-func Test_GetConfigMapRefs_RetrievesNoConfigMapRefs_WhenNonePresent(t *testing.T) {
+func Test_ConfigMapRefs_RetrievesNoConfigMapRefs_WhenNonePresent(t *testing.T) {
 	log := logf.Log.WithName("kc")
 
 	appEmpty := v1alpha1.App{

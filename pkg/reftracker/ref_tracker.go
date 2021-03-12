@@ -94,10 +94,14 @@ func (a AppRefTracker) PruneAppFromRefs(currentRefs map[string]struct{}, resourc
 	var diff []string
 	for ref := range refsInState {
 		// The format of ref is refName:kind
-		// so we need to  get the refName portion
-		// to build the key for the refsToApps map.
+		// so we need to get the refName portion.
 		index := strings.Index(ref, ":")
 		if index == -1 {
+			// TODO: Communicate error in some way.
+			// This is only set by kapp-controller
+			// itself so we can expect proper format
+			// but might still be helpful for developers
+			// of kapp-controller.
 			continue
 		}
 		refName := ref[:index]
