@@ -66,5 +66,5 @@ func (r *AppsReconciler) UpdateAppRefs(refNames map[string]struct{}, kind string
 
 	// Make sure AppRefTracker removes App from
 	// refs it is no longer associated with.
-	r.AppRefTracker.PruneAppRefs(refNames, kind, app.Namespace, app.Name)
+	r.AppRefTracker.PruneAppFromRefs(refNames, kind, app.Namespace, app.Name)
 }

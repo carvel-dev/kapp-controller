@@ -82,7 +82,7 @@ func (a AppRefTracker) RemoveAppFromAllRefs(refs map[string]struct{}, resourceKi
 	delete(a.appsToRefs, appKey)
 }
 
-func (a AppRefTracker) PruneAppRefs(currentRefs map[string]struct{}, resourceKind, namespace, appName string) {
+func (a AppRefTracker) PruneAppFromRefs(currentRefs map[string]struct{}, resourceKind, namespace, appName string) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
