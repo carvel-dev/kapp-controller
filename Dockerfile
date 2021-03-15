@@ -34,12 +34,12 @@ RUN wget -O- https://github.com/vmware-tanzu/carvel-kbld/releases/download/v0.28
   echo "3174e5b42286aab4359d2bc12a85356ba520744fd4e26d6511fb8d705e7170c3  /usr/local/bin/kbld" | sha256sum -c - && \
   chmod +x /usr/local/bin/kbld && kbld version
 
-RUN wget -O- https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/v0.3.0/imgpkg-linux-amd64 > /usr/local/bin/imgpkg && \
-  echo "7ebd513bdb4d448764725202f0bfe41e052a594eddeb55e53681ebdf4c27d4dc  /usr/local/bin/imgpkg" | sha256sum -c - && \
+RUN wget -O- https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/v0.5.0/imgpkg-linux-amd64 > /usr/local/bin/imgpkg && \
+  echo "90dff1d3d88d51a1f73687f9239265afd8bc5275c9f3bc51e4d8f2f381b01f41  /usr/local/bin/imgpkg" | sha256sum -c - && \
   chmod +x /usr/local/bin/imgpkg && imgpkg version
 
-RUN wget -O- https://github.com/vmware-tanzu/carvel-vendir/releases/download/v0.17.0/vendir-linux-amd64 > /usr/local/bin/vendir && \
-  echo "93958682953a0e6f1f403b67a5df9507a070b964b0c1c961eedae0b25edf4df0  /usr/local/bin/vendir" | sha256sum -c - && \
+RUN wget -O- https://github.com/vmware-tanzu/carvel-vendir/releases/download/v0.18.0/vendir-linux-amd64 > /usr/local/bin/vendir && \
+  echo "d36b6ef34cb43966ebf7404edb83b30d9f819b62ea5bc08b1dadb805fd72ce1a  /usr/local/bin/vendir" | sha256sum -c - && \
   chmod +x /usr/local/bin/vendir && vendir version
 
 # helm

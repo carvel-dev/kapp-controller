@@ -7,7 +7,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strings"
 
+	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,18 +17,22 @@ import (
 	kyaml "sigs.k8s.io/yaml"
 )
 
-const vendirEntireDirPath = "."
+const (
+	vendirEntireDirPath = "."
+)
 
 type Vendir struct {
-	nsName     string
-	coreClient kubernetes.Interface
-	config     vendirconf.Config
+	nsName        string
+	coreClient    kubernetes.Interface
+	config        vendirconf.Config
+	skipTLSConfig SkipTLSConfig
 }
 
-func NewVendir(nsName string, coreClient kubernetes.Interface) *Vendir {
+func NewVendir(nsName string, coreClient kubernetes.Interface, skipTLSConfig SkipTLSConfig) *Vendir {
 	return &Vendir{
-		nsName:     nsName,
-		coreClient: coreClient,
+		nsName:        nsName,
+		coreClient:    coreClient,
+		skipTLSConfig: skipTLSConfig,
 		config: vendirconf.Config{
 			APIVersion: "vendir.k14s.io/v1alpha1", // TODO: use constant from vendir package
 			Kind:       "Config",                  // TODO: use constant from vendir package
@@ -79,8 +85,9 @@ func (v *Vendir) imageConf(image v1alpha1.AppFetchImage) vendirconf.DirectoryCon
 		Path:        vendirEntireDirPath,
 		NewRootPath: image.SubPath,
 		Image: &vendirconf.DirectoryContentsImage{
-			URL:       image.URL,
-			SecretRef: v.localRefConf(image.SecretRef),
+			URL:                    image.URL,
+			SecretRef:              v.localRefConf(image.SecretRef),
+			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(image.URL),
 		},
 	}
 }
@@ -89,8 +96,9 @@ func (v *Vendir) imgpkgBundleConf(imgpkgBundle v1alpha1.AppFetchImgpkgBundle) ve
 	return vendirconf.DirectoryContents{
 		Path: vendirEntireDirPath,
 		ImgpkgBundle: &vendirconf.DirectoryContentsImgpkgBundle{
-			Image:     imgpkgBundle.Image,
-			SecretRef: v.localRefConf(imgpkgBundle.SecretRef),
+			Image:                  imgpkgBundle.Image,
+			SecretRef:              v.localRefConf(imgpkgBundle.SecretRef),
+			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(imgpkgBundle.Image),
 		},
 	}
 }
@@ -326,4 +334,24 @@ func (v *Vendir) configMapBytes(configMapRef vendirconf.DirectoryContentsLocalRe
 	configMap.TypeMeta.APIVersion = "v1"
 
 	return kyaml.Marshal(configMap)
+}
+
+// This function only works on image refs. If in the future we decide to
+// expand this option to other fetch options, we will need to add hostname
+// extraction for those
+func (v *Vendir) shouldSkipTLSVerify(url string) bool {
+	hostname := v.extractImageRefHostname(url)
+	skip := v.skipTLSConfig.ShouldSkipTLSForDomain(hostname)
+	return skip
+}
+
+func (v *Vendir) extractImageRefHostname(ref string) string {
+	parsedRef, err := name.ParseReference(ref)
+	if err != nil {
+		return ""
+	}
+
+	hostnameAndPort := parsedRef.Context().RegistryStr()
+
+	return strings.Split(hostnameAndPort, ":")[0]
 }
