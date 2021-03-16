@@ -13,6 +13,18 @@ func NewRefKey(kind, refName, namespace string) RefKey {
 	return RefKey{kind, refName, namespace}
 }
 
+func NewSecretKey(refName, namespace string) RefKey {
+	return RefKey{"secret", refName, namespace}
+}
+
+func NewConfigMapKey(refName, namespace string) RefKey {
+	return RefKey{"configmap", refName, namespace}
+}
+
+func NewAppKey(refName, namespace string) RefKey {
+	return RefKey{"app", refName, namespace}
+}
+
 func (r RefKey) Kind() string {
 	return r.kind
 }

@@ -17,9 +17,9 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 	appRefTracker := reftracker.NewAppRefTracker()
 	// Add secrets to appRefTracker and have all of them
 	// be aware of App named "app"
-	keySecretName := reftracker.NewRefKey("secret", "secretName", "default")
-	keySecretName2 := reftracker.NewRefKey("secret", "secretName2", "default")
-	keySecretName3 := reftracker.NewRefKey("secret", "secretName3", "default")
+	keySecretName := reftracker.NewSecretKey("secretName", "default")
+	keySecretName2 := reftracker.NewSecretKey("secretName2", "default")
+	keySecretName3 := reftracker.NewSecretKey("secretName3", "default")
 	appRefTracker.AddAppForRef(keySecretName, "app")
 	appRefTracker.AddAppForRef(keySecretName2, "app")
 	appRefTracker.AddAppForRef(keySecretName3, "app")
@@ -55,7 +55,7 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 		t.Fatalf("\nExpected: %s\nGot: %s", expected, out)
 	}
 
-	appKey := reftracker.NewRefKey("app", "app", "default")
+	appKey := reftracker.NewAppKey("app", "default")
 	expected = map[reftracker.RefKey]struct{}{
 		appKey: {},
 	}
@@ -69,9 +69,9 @@ func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
 	appRefTracker := reftracker.NewAppRefTracker()
 	// Add secrets to appRefTracker and have all of them
 	// be aware of App named "app"
-	keySecretName := reftracker.NewRefKey("secret", "secretName", "default")
-	keySecretName2 := reftracker.NewRefKey("secret", "secretName2", "default")
-	keySecretName3 := reftracker.NewRefKey("secret", "secretName3", "default")
+	keySecretName := reftracker.NewSecretKey("secretName", "default")
+	keySecretName2 := reftracker.NewSecretKey("secretName2", "default")
+	keySecretName3 := reftracker.NewSecretKey("secretName3", "default")
 	appRefTracker.AddAppForRef(keySecretName, "app")
 	appRefTracker.AddAppForRef(keySecretName2, "app")
 	appRefTracker.AddAppForRef(keySecretName3, "app")
@@ -96,7 +96,7 @@ func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
 	ar.UpdateAppRefs(refMap, &app)
 
 	// Expect all refs to be associated with app
-	appKey := reftracker.NewRefKey("app", "app", "default")
+	appKey := reftracker.NewAppKey("app", "default")
 	expected := map[reftracker.RefKey]struct{}{
 		appKey: {},
 	}

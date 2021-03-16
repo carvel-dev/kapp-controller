@@ -27,7 +27,7 @@ func (a AppRefTracker) AddAppForRef(refKey RefKey, appName string) {
 		apps = map[RefKey]struct{}{}
 	}
 
-	appKey := NewRefKey("app", appName, refKey.Namespace())
+	appKey := NewAppKey(appName, refKey.Namespace())
 	refs := a.appsToRefs[appKey]
 	if refs == nil {
 		refs = map[RefKey]struct{}{}
@@ -99,7 +99,7 @@ func (a AppRefTracker) ReconcileRefs(currentRefs map[RefKey]struct{}, appKey Ref
 			apps = map[RefKey]struct{}{}
 		}
 
-		appKey := NewRefKey("app", appKey.RefName(), refKey.Namespace())
+		appKey := NewAppKey(appKey.RefName(), refKey.Namespace())
 		refs := a.appsToRefs[appKey]
 		if refs == nil {
 			refs = map[RefKey]struct{}{}

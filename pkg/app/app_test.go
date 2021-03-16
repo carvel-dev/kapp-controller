@@ -22,14 +22,14 @@ import (
 func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	expected := map[reftracker.RefKey]struct{}{
-		reftracker.NewRefKey("secret", "s", "default"):  struct{}{},
-		reftracker.NewRefKey("secret", "s1", "default"): struct{}{},
-		reftracker.NewRefKey("secret", "s2", "default"): struct{}{},
-		reftracker.NewRefKey("secret", "s3", "default"): struct{}{},
-		reftracker.NewRefKey("secret", "s4", "default"): struct{}{},
-		reftracker.NewRefKey("secret", "s5", "default"): struct{}{},
-		reftracker.NewRefKey("secret", "s6", "default"): struct{}{},
-		reftracker.NewRefKey("secret", "s7", "default"): struct{}{},
+		reftracker.NewSecretKey("s", "default"):  struct{}{},
+		reftracker.NewSecretKey("s1", "default"): struct{}{},
+		reftracker.NewSecretKey("s2", "default"): struct{}{},
+		reftracker.NewSecretKey("s3", "default"): struct{}{},
+		reftracker.NewSecretKey("s4", "default"): struct{}{},
+		reftracker.NewSecretKey("s5", "default"): struct{}{},
+		reftracker.NewSecretKey("s6", "default"): struct{}{},
+		reftracker.NewSecretKey("s7", "default"): struct{}{},
 	}
 
 	appWithRefs := v1alpha1.App{
@@ -96,9 +96,9 @@ func Test_ConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 	log := logf.Log.WithName("kc")
 
 	expected := map[reftracker.RefKey]struct{}{
-		reftracker.NewRefKey("configmap", "c", "default"):  struct{}{},
-		reftracker.NewRefKey("configmap", "c1", "default"): struct{}{},
-		reftracker.NewRefKey("configmap", "c2", "default"): struct{}{},
+		reftracker.NewConfigMapKey("c", "default"):  struct{}{},
+		reftracker.NewConfigMapKey("c1", "default"): struct{}{},
+		reftracker.NewConfigMapKey("c2", "default"): struct{}{},
 	}
 
 	appWithRefs := v1alpha1.App{

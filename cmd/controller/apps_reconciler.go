@@ -47,7 +47,7 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 	r.UpdateAppRefs(crdApp.ResourceRefs(), existingApp)
 
 	force := false
-	appKey := reftracker.NewRefKey("app", existingApp.Name, existingApp.Namespace)
+	appKey := reftracker.NewAppKey(existingApp.Name, existingApp.Namespace)
 	if r.appUpdateStatus.IsUpdateNeeded(appKey) {
 		r.appUpdateStatus.MarkUpdated(appKey)
 		force = true
@@ -57,7 +57,7 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 }
 
 func (r *AppsReconciler) UpdateAppRefs(refKeys map[reftracker.RefKey]struct{}, app *v1alpha1.App) {
-	appKey := reftracker.NewRefKey("app", app.Name, app.Namespace)
+	appKey := reftracker.NewAppKey(app.Name, app.Namespace)
 	// If App is being deleted, remove the App
 	// from all its associated references.
 	if app.DeletionTimestamp != nil {
