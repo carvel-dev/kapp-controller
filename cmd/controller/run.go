@@ -80,14 +80,8 @@ func Run(opts Options, runLog logr.Logger) {
 		appUpdateStatus := reftracker.NewAppUpdateStatus()
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
-				delegate: &AppsReconciler{
-					appClient:       appClient,
-					appFactory:      appFactory,
-					log:             runLog.WithName("ar"),
-					appRefTracker:   appRefTracker,
-					appUpdateStatus: appUpdateStatus,
-				},
-				log: runLog.WithName("pr"),
+				delegate: NewAppsReconciler(appClient, runLog.WithName("ar"), appFactory, appRefTracker, appUpdateStatus),
+				log:      runLog.WithName("pr"),
 			}),
 			MaxConcurrentReconciles: opts.Concurrency,
 		}

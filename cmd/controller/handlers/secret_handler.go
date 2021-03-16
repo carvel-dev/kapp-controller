@@ -46,11 +46,11 @@ func (sch *SecretHandler) enqueueAppsForUpdate(secretName, secretNamespace strin
 		return err
 	}
 
-	for appName := range apps {
-		sch.log.Info("enqueueing App " + appName + " from update to secret " + secretName)
-		sch.appUpdateStatus.MarkNeedsUpdate(appName, secretNamespace)
+	for appKey := range apps {
+		sch.log.Info("enqueueing App " + appKey.Description() + " from update to secret " + secretName)
+		sch.appUpdateStatus.MarkNeedsUpdate(appKey)
 		q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
-			Name:      appName,
+			Name:      appKey.RefName(),
 			Namespace: secretNamespace,
 		}})
 	}

@@ -31,8 +31,7 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 		},
 	}
 
-	ar := controller.AppsReconciler{}
-	ar.SetAppRefTracker(appRefTracker)
+	ar := controller.NewAppsReconciler(nil, nil, controller.AppFactory{}, appRefTracker, nil)
 
 	// This map represents the secrets the App has on its spec
 	refMap := map[reftracker.RefKey]struct{}{
@@ -45,7 +44,7 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 	ar.UpdateAppRefs(refMap, &app)
 
 	appRefTracker = ar.AppRefTracker()
-	expected := map[string]struct{}{}
+	expected := map[reftracker.RefKey]struct{}{}
 	out, _ := appRefTracker.AppsForRef(keySecretName2)
 	if !reflect.DeepEqual(out, expected) {
 		t.Fatalf("\nExpected: %s\nGot: %s", expected, out)
@@ -56,8 +55,9 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 		t.Fatalf("\nExpected: %s\nGot: %s", expected, out)
 	}
 
-	expected = map[string]struct{}{
-		"app": {},
+	appKey := reftracker.NewRefKey("app", "app", "default")
+	expected = map[reftracker.RefKey]struct{}{
+		appKey: {},
 	}
 	out, _ = appRefTracker.AppsForRef(keySecretName)
 	if !reflect.DeepEqual(out, expected) {
@@ -83,8 +83,7 @@ func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
 		},
 	}
 
-	ar := controller.AppsReconciler{}
-	ar.SetAppRefTracker(appRefTracker)
+	ar := controller.NewAppsReconciler(nil, nil, controller.AppFactory{}, appRefTracker, nil)
 
 	// This map represents the secrets the App has
 	// on its spec
@@ -97,8 +96,9 @@ func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
 	ar.UpdateAppRefs(refMap, &app)
 
 	// Expect all refs to be associated with app
-	expected := map[string]struct{}{
-		"app": {},
+	appKey := reftracker.NewRefKey("app", "app", "default")
+	expected := map[reftracker.RefKey]struct{}{
+		appKey: {},
 	}
 
 	for refKey := range refMap {

@@ -46,11 +46,11 @@ func (sch *ConfigMapHandler) enqueueAppsForUpdate(cfgmName, cfgmNamespace string
 		return err
 	}
 
-	for appName := range apps {
-		sch.log.Info("enqueueing App " + appName + " from update to configmap " + cfgmName)
-		sch.appUpdateStatus.MarkNeedsUpdate(appName, cfgmNamespace)
+	for appKey := range apps {
+		sch.log.Info("enqueueing App " + appKey.Description() + " from update to configmap " + cfgmName)
+		sch.appUpdateStatus.MarkNeedsUpdate(appKey)
 		q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
-			Name:      appName,
+			Name:      appKey.RefName(),
 			Namespace: cfgmNamespace,
 		}})
 	}

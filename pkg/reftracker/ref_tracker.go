@@ -10,12 +10,12 @@ import (
 
 type AppRefTracker struct {
 	lock       sync.Mutex
-	refsToApps map[RefKey]map[string]struct{}
-	appsToRefs map[string]map[RefKey]struct{}
+	refsToApps map[RefKey]map[RefKey]struct{}
+	appsToRefs map[RefKey]map[RefKey]struct{}
 }
 
 func NewAppRefTracker() *AppRefTracker {
-	return &AppRefTracker{refsToApps: map[RefKey]map[string]struct{}{}, appsToRefs: map[string]map[RefKey]struct{}{}}
+	return &AppRefTracker{refsToApps: map[RefKey]map[RefKey]struct{}{}, appsToRefs: map[RefKey]map[RefKey]struct{}{}}
 }
 
 func (a AppRefTracker) AddAppForRef(refKey RefKey, appName string) {
@@ -24,41 +24,40 @@ func (a AppRefTracker) AddAppForRef(refKey RefKey, appName string) {
 
 	apps := a.refsToApps[refKey]
 	if apps == nil {
-		apps = map[string]struct{}{}
+		apps = map[RefKey]struct{}{}
 	}
 
-	appKey := fmt.Sprintf(`%s:%s`, appName, refKey.Namespace())
+	appKey := NewRefKey("app", appName, refKey.Namespace())
 	refs := a.appsToRefs[appKey]
 	if refs == nil {
 		refs = map[RefKey]struct{}{}
 	}
 
-	apps[appName] = struct{}{}
+	apps[appKey] = struct{}{}
 	a.refsToApps[refKey] = apps
 
 	refs[refKey] = struct{}{}
 	a.appsToRefs[appKey] = refs
 }
 
-func (a AppRefTracker) AppsForRef(refKey RefKey) (map[string]struct{}, error) {
+func (a AppRefTracker) AppsForRef(refKey RefKey) (map[RefKey]struct{}, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
 	apps := a.refsToApps[refKey]
 	if apps == nil {
-		return nil, fmt.Errorf("could not find ref %s/%s", refKey.Kind(), refKey.RefName())
+		return nil, fmt.Errorf("could not find ref %s", refKey.Description())
 	}
 
 	return apps, nil
 }
 
-func (a AppRefTracker) RefsForApp(appName, namespace string) (map[RefKey]struct{}, error) {
+func (a AppRefTracker) RefsForApp(appKey RefKey) (map[RefKey]struct{}, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	appKey := fmt.Sprintf(`%s:%s`, appName, namespace)
 	if a.appsToRefs[appKey] == nil {
-		return nil, fmt.Errorf("could not find refs for App %s", appName)
+		return nil, fmt.Errorf("could not find refs for App %s", appKey.RefName())
 	}
 
 	return a.appsToRefs[appKey], nil
@@ -71,11 +70,10 @@ func (a AppRefTracker) RemoveRef(refKey RefKey) {
 	delete(a.refsToApps, refKey)
 }
 
-func (a AppRefTracker) RemoveAppFromAllRefs(appName, namespace string) {
+func (a AppRefTracker) RemoveAppFromAllRefs(appKey RefKey) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	appKey := fmt.Sprintf(`%s:%s`, appName, namespace)
 	refKeys := a.appsToRefs[appKey]
 	for refKey := range refKeys {
 		apps := a.refsToApps[refKey]
@@ -83,22 +81,40 @@ func (a AppRefTracker) RemoveAppFromAllRefs(appName, namespace string) {
 			continue
 		}
 
-		delete(apps, appName)
+		delete(apps, appKey)
 		a.refsToApps[refKey] = apps
 	}
 
 	delete(a.appsToRefs, appKey)
 }
 
-func (a AppRefTracker) PruneAppFromRefs(currentRefs map[RefKey]struct{}, appName, namespace string) {
+func (a AppRefTracker) ReconcileRefs(currentRefs map[RefKey]struct{}, appKey RefKey) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	appKey := fmt.Sprintf(`%s:%s`, appName, namespace)
-	refsInState := a.appsToRefs[appKey]
+	// Add all new refs to AppRefTracker
+	for refKey := range currentRefs {
+		apps := a.refsToApps[refKey]
+		if apps == nil {
+			apps = map[RefKey]struct{}{}
+		}
+
+		appKey := NewRefKey("app", appKey.RefName(), refKey.Namespace())
+		refs := a.appsToRefs[appKey]
+		if refs == nil {
+			refs = map[RefKey]struct{}{}
+		}
+
+		apps[appKey] = struct{}{}
+		a.refsToApps[refKey] = apps
+
+		refs[refKey] = struct{}{}
+		a.appsToRefs[appKey] = refs
+	}
 
 	// Compare current state against App's
 	// previous refs.
+	refsInState := a.appsToRefs[appKey]
 	var diff []RefKey
 	for refKey := range refsInState {
 		if _, refExists := currentRefs[refKey]; !refExists {
@@ -110,7 +126,7 @@ func (a AppRefTracker) PruneAppFromRefs(currentRefs map[RefKey]struct{}, appName
 	// current state and previous state
 	for _, refKey := range diff {
 		apps := a.refsToApps[refKey]
-		delete(apps, appName)
+		delete(apps, appKey)
 		a.refsToApps[refKey] = apps
 	}
 

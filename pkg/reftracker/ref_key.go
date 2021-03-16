@@ -3,6 +3,8 @@
 
 package reftracker
 
+import "fmt"
+
 type RefKey struct {
 	kind, refName, namespace string
 }
@@ -21,4 +23,8 @@ func (r RefKey) RefName() string {
 
 func (r RefKey) Namespace() string {
 	return r.namespace
+}
+
+func (r RefKey) Description() string {
+	return fmt.Sprintf(`%s:%s:%s`, r.kind, r.refName, r.namespace)
 }

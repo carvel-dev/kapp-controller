@@ -4,31 +4,26 @@
 package reftracker
 
 import (
-	"fmt"
 	"sync"
 )
 
 type AppUpdateStatus struct {
 	lock               sync.Mutex
-	appsToUpdateStatus map[string]struct{}
+	appsToUpdateStatus map[RefKey]struct{}
 }
 
 func NewAppUpdateStatus() *AppUpdateStatus {
-	return &AppUpdateStatus{appsToUpdateStatus: map[string]struct{}{}}
+	return &AppUpdateStatus{appsToUpdateStatus: map[RefKey]struct{}{}}
 }
 
-func (a AppUpdateStatus) MarkNeedsUpdate(appName, namespace string) {
-	appKey := fmt.Sprintf(`%s:%s`, appName, namespace)
-
+func (a AppUpdateStatus) MarkNeedsUpdate(appKey RefKey) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
 	a.appsToUpdateStatus[appKey] = struct{}{}
 }
 
-func (a AppUpdateStatus) IsUpdateNeeded(appName, namespace string) bool {
-	appKey := fmt.Sprintf(`%s:%s`, appName, namespace)
-
+func (a AppUpdateStatus) IsUpdateNeeded(appKey RefKey) bool {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
@@ -36,9 +31,7 @@ func (a AppUpdateStatus) IsUpdateNeeded(appName, namespace string) bool {
 	return keyExists
 }
 
-func (a AppUpdateStatus) MarkUpdated(appName, namespace string) {
-	appKey := fmt.Sprintf(`%s:%s`, appName, namespace)
-
+func (a AppUpdateStatus) MarkUpdated(appKey RefKey) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 

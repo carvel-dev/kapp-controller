@@ -1,14 +1,18 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package reftracker
+package reftracker_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
+)
 
 func Test_AddAppForRef_AddsApp_WhenRefNotInMap(t *testing.T) {
-	appRefTracker := NewAppRefTracker()
+	appRefTracker := reftracker.NewAppRefTracker()
 
-	refKey := RefKey{"secret", "secretName", "default"}
+	refKey := reftracker.NewRefKey("secret", "secretName", "default")
 	appRefTracker.AddAppForRef(refKey, "app")
 
 	apps, err := appRefTracker.AppsForRef(refKey)
@@ -16,11 +20,12 @@ func Test_AddAppForRef_AddsApp_WhenRefNotInMap(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if _, ok := apps["app"]; !ok {
+	appKey := reftracker.NewRefKey("app", "app", "default")
+	if _, ok := apps[appKey]; !ok {
 		t.Fatalf("app was not added to appRefTracker when ref key did not exist")
 	}
 
-	refs, err := appRefTracker.RefsForApp("app", "default")
+	refs, err := appRefTracker.RefsForApp(reftracker.NewRefKey("app", "app", "default"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -31,19 +36,20 @@ func Test_AddAppForRef_AddsApp_WhenRefNotInMap(t *testing.T) {
 }
 
 func Test_RemoveAppFromAllRefs_RemovesApp(t *testing.T) {
-	appRefTracker := NewAppRefTracker()
+	appRefTracker := reftracker.NewAppRefTracker()
 
-	refKey := RefKey{"secret", "secretName", "default"}
+	refKey := reftracker.NewRefKey("secret", "secretName", "default")
 	appRefTracker.AddAppForRef(refKey, "app")
 
-	appRefTracker.RemoveAppFromAllRefs("app", "default")
+	appKey := reftracker.NewRefKey("app", "app", "default")
+	appRefTracker.RemoveAppFromAllRefs(appKey)
 
 	apps, err := appRefTracker.AppsForRef(refKey)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if _, ok := apps["app"]; ok {
+	if _, ok := apps[appKey]; ok {
 		t.Fatalf("expected app to be removed from appRefTracker after deletion")
 	}
 }

@@ -21,6 +21,10 @@ type AppsReconciler struct {
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
+func NewAppsReconciler(appClient kcclient.Interface, log logr.Logger, appFactory AppFactory, appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *AppsReconciler {
+	return &AppsReconciler{appClient, log, appFactory, appRefTracker, appUpdateStatus}
+}
+
 var _ reconcile.Reconciler = &AppsReconciler{}
 
 func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
@@ -43,8 +47,9 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 	r.UpdateAppRefs(crdApp.ResourceRefs(), existingApp)
 
 	force := false
-	if r.appUpdateStatus.IsUpdateNeeded(existingApp.Name, existingApp.Namespace) {
-		r.appUpdateStatus.MarkUpdated(existingApp.Name, existingApp.Namespace)
+	appKey := reftracker.NewRefKey("app", existingApp.Name, existingApp.Namespace)
+	if r.appUpdateStatus.IsUpdateNeeded(appKey) {
+		r.appUpdateStatus.MarkUpdated(appKey)
 		force = true
 	}
 
@@ -52,28 +57,19 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 }
 
 func (r *AppsReconciler) UpdateAppRefs(refKeys map[reftracker.RefKey]struct{}, app *v1alpha1.App) {
+	appKey := reftracker.NewRefKey("app", app.Name, app.Namespace)
 	// If App is being deleted, remove the App
 	// from all its associated references.
 	if app.DeletionTimestamp != nil {
-		r.appRefTracker.RemoveAppFromAllRefs(app.Name, app.Namespace)
+		r.appRefTracker.RemoveAppFromAllRefs(appKey)
 		return
 	}
 
-	// Make sure refs for App are always up to date
-	// in appRefTracker.
-	for refKey := range refKeys {
-		r.appRefTracker.AddAppForRef(refKey, app.Name)
-	}
-
-	// Remove any reference associations for App
-	// if the App no longer uses refs it once did.
-	r.appRefTracker.PruneAppFromRefs(refKeys, app.Name, app.Namespace)
+	// Add new refs for App to AppRefTracker/remove
+	// any formerly but now unused refs for App.
+	r.appRefTracker.ReconcileRefs(refKeys, appKey)
 }
 
 func (r *AppsReconciler) AppRefTracker() *reftracker.AppRefTracker {
 	return r.appRefTracker
-}
-
-func (r *AppsReconciler) SetAppRefTracker(appRefTracker *reftracker.AppRefTracker) {
-	r.appRefTracker = appRefTracker
 }
