@@ -7,27 +7,43 @@ import "testing"
 
 func Test_AddAppForRef_AddsApp_WhenRefNotInMap(t *testing.T) {
 	appRefTracker := NewAppRefTracker()
-	appRefTracker.AddAppForRef("secret", "secretName", "default", "app")
 
-	if _, ok := appRefTracker.refsToApps["secret:secretName:default"]["app"]; !ok {
-		t.Fatalf("app was not added to AppRefTracker when ref key did not exist")
+	refKey := RefKey{"secret", "secretName", "default"}
+	appRefTracker.AddAppForRef(refKey, "app")
+
+	apps, err := appRefTracker.AppsForRef(refKey)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if _, ok := appRefTracker.appsToRefs["app:default"]["secretName:secret"]; !ok {
-		t.Fatalf("ref was not added to AppRefTracker when App key did not exist")
+	if _, ok := apps["app"]; !ok {
+		t.Fatalf("app was not added to appRefTracker when ref key did not exist")
+	}
+
+	refs, err := appRefTracker.RefsForApp("app", "default")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, ok := refs[refKey]; !ok {
+		t.Fatalf("ref was not added to appRefTracker when App key did not exist")
 	}
 }
 
 func Test_RemoveAppFromAllRefs_RemovesApp(t *testing.T) {
 	appRefTracker := NewAppRefTracker()
-	appRefTracker.AddAppForRef("secret", "secretName", "default", "app")
 
-	refs := map[string]struct{}{
-		"secretName": struct{}{},
+	refKey := RefKey{"secret", "secretName", "default"}
+	appRefTracker.AddAppForRef(refKey, "app")
+
+	appRefTracker.RemoveAppFromAllRefs("app", "default")
+
+	apps, err := appRefTracker.AppsForRef(refKey)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
-	appRefTracker.RemoveAppFromAllRefs(refs, "secret", "default", "app")
 
-	if _, ok := appRefTracker.refsToApps["secret:secretName:default"]["app"]; ok {
-		t.Fatalf("expected app to be removed from AppRefTracker after deletion")
+	if _, ok := apps["app"]; ok {
+		t.Fatalf("expected app to be removed from appRefTracker after deletion")
 	}
 }

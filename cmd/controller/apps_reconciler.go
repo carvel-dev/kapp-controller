@@ -17,7 +17,7 @@ type AppsReconciler struct {
 	appClient       kcclient.Interface
 	log             logr.Logger
 	appFactory      AppFactory
-	AppRefTracker   *reftracker.AppRefTracker
+	appRefTracker   *reftracker.AppRefTracker
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
@@ -40,8 +40,9 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 	}
 
 	crdApp := r.appFactory.NewCRDApp(existingApp, log)
-	r.UpdateAppRefs(crdApp.SecretRefs(), "secret", existingApp)
-	r.UpdateAppRefs(crdApp.ConfigMapRefs(), "configmap", existingApp)
+	//r.UpdateAppRefs(crdApp.ConfigMapRefs(), existingApp)
+	//r.UpdateAppRefs(crdApp.SecretRefs(), existingApp)
+	r.UpdateAppRefs(crdApp.ResourceRefs(), existingApp)
 
 	force := false
 	if r.appUpdateStatus.IsUpdateNeeded(existingApp.Name, existingApp.Namespace) {
@@ -52,19 +53,29 @@ func (r *AppsReconciler) Reconcile(request reconcile.Request) (reconcile.Result,
 	return crdApp.Reconcile(force)
 }
 
-func (r *AppsReconciler) UpdateAppRefs(refNames map[string]struct{}, kind string, app *v1alpha1.App) {
-	// If App is being deleted, remove App from AppRefTracker.
+func (r *AppsReconciler) UpdateAppRefs(refKeys map[reftracker.RefKey]struct{}, app *v1alpha1.App) {
+	// If App is being deleted, remove the App
+	// from all its associated references.
 	if app.DeletionTimestamp != nil {
-		r.AppRefTracker.RemoveAppFromAllRefs(refNames, kind, app.Namespace, app.Name)
+		r.appRefTracker.RemoveAppFromAllRefs(app.Name, app.Namespace)
+		return
 	}
 
 	// Make sure refs for App are always up to date
-	// in AppRefTracker.
-	for refName := range refNames {
-		r.AppRefTracker.AddAppForRef(kind, refName, app.Namespace, app.Name)
+	// in appRefTracker.
+	for refKey := range refKeys {
+		r.appRefTracker.AddAppForRef(refKey, app.Name)
 	}
 
-	// Make sure AppRefTracker removes App from
-	// refs it is no longer associated with.
-	r.AppRefTracker.PruneAppFromRefs(refNames, kind, app.Namespace, app.Name)
+	// Remove any reference associations for App
+	// if the App no longer uses refs it once did.
+	r.appRefTracker.PruneAppFromRefs(refKeys, app.Name, app.Namespace)
+}
+
+func (r *AppsReconciler) AppRefTracker() *reftracker.AppRefTracker {
+	return r.appRefTracker
+}
+
+func (r *AppsReconciler) SetAppRefTracker(appRefTracker *reftracker.AppRefTracker) {
+	r.appRefTracker = appRefTracker
 }

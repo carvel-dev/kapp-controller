@@ -11,6 +11,7 @@ import (
 	apppkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,20 +21,21 @@ import (
 
 func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	log := logf.Log.WithName("kc")
-	expected := map[string]struct{}{
-		"s":  struct{}{},
-		"s1": struct{}{},
-		"s2": struct{}{},
-		"s3": struct{}{},
-		"s4": struct{}{},
-		"s5": struct{}{},
-		"s6": struct{}{},
-		"s7": struct{}{},
+	expected := map[reftracker.RefKey]struct{}{
+		reftracker.NewRefKey("secret", "s", "default"):  struct{}{},
+		reftracker.NewRefKey("secret", "s1", "default"): struct{}{},
+		reftracker.NewRefKey("secret", "s2", "default"): struct{}{},
+		reftracker.NewRefKey("secret", "s3", "default"): struct{}{},
+		reftracker.NewRefKey("secret", "s4", "default"): struct{}{},
+		reftracker.NewRefKey("secret", "s5", "default"): struct{}{},
+		reftracker.NewRefKey("secret", "s6", "default"): struct{}{},
+		reftracker.NewRefKey("secret", "s7", "default"): struct{}{},
 	}
 
 	appWithRefs := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "simple-app",
+			Name:      "simple-app",
+			Namespace: "default",
 		},
 		Spec: v1alpha1.AppSpec{
 			Fetch: []v1alpha1.AppFetch{
@@ -93,23 +95,24 @@ func Test_SecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 func Test_ConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 	log := logf.Log.WithName("kc")
 
-	expected := map[string]struct{}{
-		"s":  struct{}{},
-		"s1": struct{}{},
-		"s2": struct{}{},
+	expected := map[reftracker.RefKey]struct{}{
+		reftracker.NewRefKey("configmap", "c", "default"):  struct{}{},
+		reftracker.NewRefKey("configmap", "c1", "default"): struct{}{},
+		reftracker.NewRefKey("configmap", "c2", "default"): struct{}{},
 	}
 
 	appWithRefs := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "simple-app",
+			Name:      "simple-app",
+			Namespace: "default",
 		},
 		Spec: v1alpha1.AppSpec{
 			Fetch: []v1alpha1.AppFetch{
-				v1alpha1.AppFetch{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{ConfigMapRef: &v1alpha1.AppFetchInlineSourceRef{"", v1.LocalObjectReference{Name: "s"}}}}}},
+				v1alpha1.AppFetch{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{ConfigMapRef: &v1alpha1.AppFetchInlineSourceRef{"", v1.LocalObjectReference{Name: "c"}}}}}},
 			},
 			Template: []v1alpha1.AppTemplate{
-				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{ConfigMapRef: &v1alpha1.AppFetchInlineSourceRef{"", v1.LocalObjectReference{Name: "s1"}}}}}}},
-				v1alpha1.AppTemplate{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{ValuesFrom: []v1alpha1.AppTemplateHelmTemplateValuesSource{{ConfigMapRef: &v1alpha1.AppTemplateHelmTemplateValuesSourceRef{v1.LocalObjectReference{Name: "s2"}}}}}},
+				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{ConfigMapRef: &v1alpha1.AppFetchInlineSourceRef{"", v1.LocalObjectReference{Name: "c1"}}}}}}},
+				v1alpha1.AppTemplate{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{ValuesFrom: []v1alpha1.AppTemplateHelmTemplateValuesSource{{ConfigMapRef: &v1alpha1.AppTemplateHelmTemplateValuesSourceRef{v1.LocalObjectReference{Name: "c2"}}}}}},
 			},
 		},
 	}

@@ -15,11 +15,14 @@ import (
 
 func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *testing.T) {
 	appRefTracker := reftracker.NewAppRefTracker()
-	// Add secrets to AppRefTracker and have all of them
+	// Add secrets to appRefTracker and have all of them
 	// be aware of App named "app"
-	appRefTracker.AddAppForRef("secret", "secretName", "default", "app")
-	appRefTracker.AddAppForRef("secret", "secretName2", "default", "app")
-	appRefTracker.AddAppForRef("secret", "secretName3", "default", "app")
+	keySecretName := reftracker.NewRefKey("secret", "secretName", "default")
+	keySecretName2 := reftracker.NewRefKey("secret", "secretName2", "default")
+	keySecretName3 := reftracker.NewRefKey("secret", "secretName3", "default")
+	appRefTracker.AddAppForRef(keySecretName, "app")
+	appRefTracker.AddAppForRef(keySecretName2, "app")
+	appRefTracker.AddAppForRef(keySecretName3, "app")
 
 	app := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
@@ -28,27 +31,27 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 		},
 	}
 
-	ar := controller.AppsReconciler{
-		AppRefTracker: appRefTracker,
-	}
+	ar := controller.AppsReconciler{}
+	ar.SetAppRefTracker(appRefTracker)
 
 	// This map represents the secrets the App has on its spec
-	refMap := map[string]struct{}{
-		"secretName": {},
+	refMap := map[reftracker.RefKey]struct{}{
+		keySecretName: {},
 	}
 
-	// We expect this method will clean up the AppRefTracker
+	// We expect this method will clean up the appRefTracker
 	// if the App above is no longer using a secret that it
 	// once did.
-	ar.UpdateAppRefs(refMap, "secret", &app)
+	ar.UpdateAppRefs(refMap, &app)
 
+	appRefTracker = ar.AppRefTracker()
 	expected := map[string]struct{}{}
-	out, _ := ar.AppRefTracker.AppsForRef("secret", "secretName2", "default")
+	out, _ := appRefTracker.AppsForRef(keySecretName2)
 	if !reflect.DeepEqual(out, expected) {
 		t.Fatalf("\nExpected: %s\nGot: %s", expected, out)
 	}
 
-	out, _ = ar.AppRefTracker.AppsForRef("secret", "secretName3", "default")
+	out, _ = appRefTracker.AppsForRef(keySecretName3)
 	if !reflect.DeepEqual(out, expected) {
 		t.Fatalf("\nExpected: %s\nGot: %s", expected, out)
 	}
@@ -56,7 +59,7 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 	expected = map[string]struct{}{
 		"app": {},
 	}
-	out, _ = ar.AppRefTracker.AppsForRef("secret", "secretName", "default")
+	out, _ = appRefTracker.AppsForRef(keySecretName)
 	if !reflect.DeepEqual(out, expected) {
 		t.Fatalf("\nExpected: %s\nGot: %s", expected, out)
 	}
@@ -64,11 +67,14 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 
 func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
 	appRefTracker := reftracker.NewAppRefTracker()
-	// Add secrets to AppRefTracker and have all of them
+	// Add secrets to appRefTracker and have all of them
 	// be aware of App named "app"
-	appRefTracker.AddAppForRef("secret", "secretName", "default", "app")
-	appRefTracker.AddAppForRef("secret", "secretName2", "default", "app")
-	appRefTracker.AddAppForRef("secret", "secretName3", "default", "app")
+	keySecretName := reftracker.NewRefKey("secret", "secretName", "default")
+	keySecretName2 := reftracker.NewRefKey("secret", "secretName2", "default")
+	keySecretName3 := reftracker.NewRefKey("secret", "secretName3", "default")
+	appRefTracker.AddAppForRef(keySecretName, "app")
+	appRefTracker.AddAppForRef(keySecretName2, "app")
+	appRefTracker.AddAppForRef(keySecretName3, "app")
 
 	app := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
@@ -77,27 +83,26 @@ func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
 		},
 	}
 
-	ar := controller.AppsReconciler{
-		AppRefTracker: appRefTracker,
-	}
+	ar := controller.AppsReconciler{}
+	ar.SetAppRefTracker(appRefTracker)
 
 	// This map represents the secrets the App has
 	// on its spec
-	refMap := map[string]struct{}{
-		"secretName":  {},
-		"secretName2": {},
-		"secretName3": {},
+	refMap := map[reftracker.RefKey]struct{}{
+		keySecretName:  {},
+		keySecretName2: {},
+		keySecretName3: {},
 	}
 
-	ar.UpdateAppRefs(refMap, "secret", &app)
+	ar.UpdateAppRefs(refMap, &app)
 
 	// Expect all refs to be associated with app
 	expected := map[string]struct{}{
 		"app": {},
 	}
 
-	for refName := range refMap {
-		out, _ := ar.AppRefTracker.AppsForRef("secret", refName, "default")
+	for refKey := range refMap {
+		out, _ := ar.AppRefTracker().AppsForRef(refKey)
 		if !reflect.DeepEqual(out, expected) {
 			t.Fatalf("\nExpected: %s\nGot: %s", expected, out)
 		}

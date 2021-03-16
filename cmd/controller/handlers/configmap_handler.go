@@ -25,20 +25,23 @@ func NewConfigMapHandler(log logr.Logger, as *reftracker.AppRefTracker, aus *ref
 	return &ConfigMapHandler{log, as, aus}
 }
 
-func (sch *ConfigMapHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {}
+func (sch *ConfigMapHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
+	sch.enqueueAppsForUpdate(evt.Meta.GetName(), evt.Meta.GetNamespace(), q)
+}
 
 func (sch *ConfigMapHandler) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
 	sch.enqueueAppsForUpdate(evt.MetaNew.GetName(), evt.MetaNew.GetNamespace(), q)
 }
 
 func (sch *ConfigMapHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
-	sch.appRefTacker.RemoveRef("configmap", evt.Meta.GetName(), evt.Meta.GetNamespace())
+	sch.enqueueAppsForUpdate(evt.Meta.GetName(), evt.Meta.GetNamespace(), q)
+	sch.appRefTacker.RemoveRef(reftracker.NewRefKey("configmap", evt.Meta.GetName(), evt.Meta.GetNamespace()))
 }
 
 func (sch *ConfigMapHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {}
 
 func (sch *ConfigMapHandler) enqueueAppsForUpdate(cfgmName, cfgmNamespace string, q workqueue.RateLimitingInterface) error {
-	apps, err := sch.appRefTacker.AppsForRef("configmap", cfgmName, cfgmNamespace)
+	apps, err := sch.appRefTacker.AppsForRef(reftracker.NewRefKey("configmap", cfgmName, cfgmNamespace))
 	if err != nil {
 		return err
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 )
 
@@ -116,8 +117,8 @@ func (a *App) newCancelCh() (chan struct{}, func()) {
 }
 
 // Get all SecretRefs from App spec
-func (a *App) SecretRefs() map[string]struct{} {
-	secrets := make(map[string]struct{})
+func (a *App) SecretRefs() map[reftracker.RefKey]struct{} {
+	secrets := map[reftracker.RefKey]struct{}{}
 
 	// Fetch SecretRefs
 	for _, fetch := range a.app.Spec.Fetch {
@@ -125,20 +126,26 @@ func (a *App) SecretRefs() map[string]struct{} {
 		case fetch.Inline != nil && fetch.Inline.PathsFrom != nil:
 			for _, pathsFrom := range fetch.Inline.PathsFrom {
 				if pathsFrom.SecretRef != nil {
-					secrets[pathsFrom.SecretRef.Name] = struct{}{}
+					refKey := reftracker.NewRefKey("secret", pathsFrom.SecretRef.Name, a.app.Namespace)
+					secrets[refKey] = struct{}{}
 				}
 			}
 		case fetch.Image != nil && fetch.Image.SecretRef != nil:
-			secrets[fetch.Image.SecretRef.Name] = struct{}{}
+			refKey := reftracker.NewRefKey("secret", fetch.Image.SecretRef.Name, a.app.Namespace)
+			secrets[refKey] = struct{}{}
 		case fetch.ImgpkgBundle != nil && fetch.ImgpkgBundle.SecretRef != nil:
-			secrets[fetch.ImgpkgBundle.SecretRef.Name] = struct{}{}
+			refKey := reftracker.NewRefKey("secret", fetch.ImgpkgBundle.SecretRef.Name, a.app.Namespace)
+			secrets[refKey] = struct{}{}
 		case fetch.HTTP != nil && fetch.HTTP.SecretRef != nil:
-			secrets[fetch.HTTP.SecretRef.Name] = struct{}{}
+			refKey := reftracker.NewRefKey("secret", fetch.HTTP.SecretRef.Name, a.app.Namespace)
+			secrets[refKey] = struct{}{}
 		case fetch.Git != nil && fetch.Git.SecretRef != nil:
-			secrets[fetch.Git.SecretRef.Name] = struct{}{}
+			refKey := reftracker.NewRefKey("secret", fetch.Git.SecretRef.Name, a.app.Namespace)
+			secrets[refKey] = struct{}{}
 		case fetch.HelmChart != nil && fetch.HelmChart.Repository != nil:
 			if fetch.HelmChart.Repository.SecretRef != nil {
-				secrets[fetch.HelmChart.Repository.SecretRef.Name] = struct{}{}
+				refKey := reftracker.NewRefKey("secret", fetch.HelmChart.Repository.SecretRef.Name, a.app.Namespace)
+				secrets[refKey] = struct{}{}
 			}
 		default:
 		}
@@ -150,13 +157,15 @@ func (a *App) SecretRefs() map[string]struct{} {
 		case tpl.Ytt != nil && tpl.Ytt.Inline != nil:
 			for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
 				if pathsFrom.SecretRef != nil {
-					secrets[pathsFrom.SecretRef.Name] = struct{}{}
+					refKey := reftracker.NewRefKey("secret", pathsFrom.SecretRef.Name, a.app.Namespace)
+					secrets[refKey] = struct{}{}
 				}
 			}
 		case tpl.HelmTemplate != nil && tpl.HelmTemplate.ValuesFrom != nil:
 			for _, valsFrom := range tpl.HelmTemplate.ValuesFrom {
 				if valsFrom.SecretRef != nil {
-					secrets[valsFrom.SecretRef.Name] = struct{}{}
+					refKey := reftracker.NewRefKey("secret", valsFrom.SecretRef.Name, a.app.Namespace)
+					secrets[refKey] = struct{}{}
 				}
 			}
 		default:
@@ -167,8 +176,8 @@ func (a *App) SecretRefs() map[string]struct{} {
 }
 
 // Get all ConfigMapRefs from App spec
-func (a *App) ConfigMapRefs() map[string]struct{} {
-	configMaps := make(map[string]struct{})
+func (a *App) ConfigMapRefs() map[reftracker.RefKey]struct{} {
+	configMaps := map[reftracker.RefKey]struct{}{}
 
 	// Fetch ConfigMapRefs
 	for _, fetch := range a.app.Spec.Fetch {
@@ -176,7 +185,8 @@ func (a *App) ConfigMapRefs() map[string]struct{} {
 		case fetch.Inline != nil && fetch.Inline.PathsFrom != nil:
 			for _, pathsFrom := range fetch.Inline.PathsFrom {
 				if pathsFrom.ConfigMapRef != nil {
-					configMaps[pathsFrom.ConfigMapRef.Name] = struct{}{}
+					refKey := reftracker.NewRefKey("configmap", pathsFrom.ConfigMapRef.Name, a.app.Namespace)
+					configMaps[refKey] = struct{}{}
 				}
 			}
 		default:
@@ -189,13 +199,15 @@ func (a *App) ConfigMapRefs() map[string]struct{} {
 		case tpl.Ytt != nil && tpl.Ytt.Inline != nil:
 			for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
 				if pathsFrom.ConfigMapRef != nil {
-					configMaps[pathsFrom.ConfigMapRef.Name] = struct{}{}
+					refKey := reftracker.NewRefKey("configmap", pathsFrom.ConfigMapRef.Name, a.app.Namespace)
+					configMaps[refKey] = struct{}{}
 				}
 			}
 		case tpl.HelmTemplate != nil && tpl.HelmTemplate.ValuesFrom != nil:
 			for _, valsFrom := range tpl.HelmTemplate.ValuesFrom {
 				if valsFrom.ConfigMapRef != nil {
-					configMaps[valsFrom.ConfigMapRef.Name] = struct{}{}
+					refKey := reftracker.NewRefKey("configmap", valsFrom.ConfigMapRef.Name, a.app.Namespace)
+					configMaps[refKey] = struct{}{}
 				}
 			}
 		default:

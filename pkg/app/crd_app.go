@@ -12,6 +12,7 @@ import (
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -128,11 +129,29 @@ func (a *CRDApp) watchChanges(callback func(kcv1alpha1.App), cancelCh chan struc
 }
 
 // Get all SecretRefs from App spec
-func (a *CRDApp) SecretRefs() map[string]struct{} {
+func (a *CRDApp) SecretRefs() map[reftracker.RefKey]struct{} {
 	return a.app.SecretRefs()
 }
 
 // Get all ConfigMapRefs from App spec
-func (a *CRDApp) ConfigMapRefs() map[string]struct{} {
+func (a *CRDApp) ConfigMapRefs() map[reftracker.RefKey]struct{} {
 	return a.app.ConfigMapRefs()
+}
+
+// Get both secret refs/configmap refs
+// as single map with all ref entries.
+func (a *CRDApp) ResourceRefs() map[reftracker.RefKey]struct{} {
+	secrets := a.app.SecretRefs()
+	configmaps := a.app.ConfigMapRefs()
+	allRefs := map[reftracker.RefKey]struct{}{}
+
+	for secret := range secrets {
+		allRefs[secret] = struct{}{}
+	}
+
+	for configmap := range configmaps {
+		allRefs[configmap] = struct{}{}
+	}
+
+	return allRefs
 }

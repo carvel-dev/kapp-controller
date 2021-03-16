@@ -5,70 +5,79 @@ package reftracker
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 )
 
 type AppRefTracker struct {
 	lock       sync.Mutex
-	refsToApps map[string]map[string]struct{}
-	appsToRefs map[string]map[string]struct{}
+	refsToApps map[RefKey]map[string]struct{}
+	appsToRefs map[string]map[RefKey]struct{}
 }
 
 func NewAppRefTracker() *AppRefTracker {
-	return &AppRefTracker{refsToApps: map[string]map[string]struct{}{}, appsToRefs: map[string]map[string]struct{}{}}
+	return &AppRefTracker{refsToApps: map[RefKey]map[string]struct{}{}, appsToRefs: map[string]map[RefKey]struct{}{}}
 }
 
-func (a AppRefTracker) AddAppForRef(resourceKind, refName, namespace, appName string) {
+func (a AppRefTracker) AddAppForRef(refKey RefKey, appName string) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	refKey := fmt.Sprintf(`%s:%s:%s`, resourceKind, refName, namespace)
 	apps := a.refsToApps[refKey]
 	if apps == nil {
 		apps = map[string]struct{}{}
 	}
 
-	appKey := fmt.Sprintf(`%s:%s`, appName, namespace)
+	appKey := fmt.Sprintf(`%s:%s`, appName, refKey.Namespace())
 	refs := a.appsToRefs[appKey]
 	if refs == nil {
-		refs = map[string]struct{}{}
+		refs = map[RefKey]struct{}{}
 	}
 
 	apps[appName] = struct{}{}
 	a.refsToApps[refKey] = apps
 
-	appsRefKey := fmt.Sprintf(`%s:%s`, refName, resourceKind)
-	refs[appsRefKey] = struct{}{}
+	refs[refKey] = struct{}{}
 	a.appsToRefs[appKey] = refs
 }
 
-func (a AppRefTracker) AppsForRef(resourceKind, resourceName, namespace string) (map[string]struct{}, error) {
+func (a AppRefTracker) AppsForRef(refKey RefKey) (map[string]struct{}, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	refKey := fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace)
-	if a.refsToApps[refKey] == nil {
-		return nil, fmt.Errorf("could not find App ref %s/%s", resourceKind, resourceName)
+	apps := a.refsToApps[refKey]
+	if apps == nil {
+		return nil, fmt.Errorf("could not find ref %s/%s", refKey.Kind(), refKey.RefName())
 	}
 
-	return a.refsToApps[refKey], nil
+	return apps, nil
 }
 
-func (a AppRefTracker) RemoveRef(resourceKind, resourceName, namespace string) {
+func (a AppRefTracker) RefsForApp(appName, namespace string) (map[RefKey]struct{}, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	refKey := fmt.Sprintf(`%s:%s:%s`, resourceKind, resourceName, namespace)
+	appKey := fmt.Sprintf(`%s:%s`, appName, namespace)
+	if a.appsToRefs[appKey] == nil {
+		return nil, fmt.Errorf("could not find refs for App %s", appName)
+	}
+
+	return a.appsToRefs[appKey], nil
+}
+
+func (a AppRefTracker) RemoveRef(refKey RefKey) {
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
 	delete(a.refsToApps, refKey)
 }
 
-func (a AppRefTracker) RemoveAppFromAllRefs(refs map[string]struct{}, resourceKind, namespace, appName string) {
+func (a AppRefTracker) RemoveAppFromAllRefs(appName, namespace string) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	for ref := range refs {
-		refKey := fmt.Sprintf(`%s:%s:%s`, resourceKind, ref, namespace)
+	appKey := fmt.Sprintf(`%s:%s`, appName, namespace)
+	refKeys := a.appsToRefs[appKey]
+	for refKey := range refKeys {
 		apps := a.refsToApps[refKey]
 		if apps == nil {
 			continue
@@ -78,11 +87,10 @@ func (a AppRefTracker) RemoveAppFromAllRefs(refs map[string]struct{}, resourceKi
 		a.refsToApps[refKey] = apps
 	}
 
-	appKey := fmt.Sprintf(`%s:%s`, appName, namespace)
 	delete(a.appsToRefs, appKey)
 }
 
-func (a AppRefTracker) PruneAppFromRefs(currentRefs map[string]struct{}, resourceKind, namespace, appName string) {
+func (a AppRefTracker) PruneAppFromRefs(currentRefs map[RefKey]struct{}, appName, namespace string) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
@@ -91,23 +99,9 @@ func (a AppRefTracker) PruneAppFromRefs(currentRefs map[string]struct{}, resourc
 
 	// Compare current state against App's
 	// previous refs.
-	var diff []string
-	for ref := range refsInState {
-		// The format of ref is refName:kind
-		// so we need to get the refName portion.
-		index := strings.Index(ref, ":")
-		if index == -1 {
-			// TODO: Communicate error in some way.
-			// This is only set by kapp-controller
-			// itself so we can expect proper format
-			// but might still be helpful for developers
-			// of kapp-controller.
-			continue
-		}
-		refName := ref[:index]
-		refKey := fmt.Sprintf(`%s:%s:%s`, resourceKind, refName, namespace)
-
-		if _, appExists := currentRefs[refName]; !appExists {
+	var diff []RefKey
+	for refKey := range refsInState {
+		if _, refExists := currentRefs[refKey]; !refExists {
 			diff = append(diff, refKey)
 		}
 	}
@@ -120,11 +114,7 @@ func (a AppRefTracker) PruneAppFromRefs(currentRefs map[string]struct{}, resourc
 		a.refsToApps[refKey] = apps
 	}
 
-	// Update App state to reflect new refs
-	refs := map[string]struct{}{}
-	for refName := range currentRefs {
-		appsRefKey := fmt.Sprintf(`%s:%s`, refName, resourceKind)
-		refs[appsRefKey] = struct{}{}
-	}
-	a.appsToRefs[appKey] = refs
+	// Make sure appsToRefs uses refs currently
+	// on App spec.
+	a.appsToRefs[appKey] = currentRefs
 }
