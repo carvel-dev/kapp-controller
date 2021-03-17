@@ -4,8 +4,9 @@
 package template
 
 import (
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"io"
+
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
 
 const (

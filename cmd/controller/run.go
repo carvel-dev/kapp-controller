@@ -11,8 +11,11 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp" // Initialize gcp client auth plugin
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -73,14 +76,12 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	{ // add controller for apps
+		appRefTracker := reftracker.NewAppRefTracker()
+		appUpdateStatus := reftracker.NewAppUpdateStatus()
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
-				delegate: &AppsReconciler{
-					appClient:  appClient,
-					appFactory: appFactory,
-					log:        runLog.WithName("ar"),
-				},
-				log: runLog.WithName("pr"),
+				delegate: NewAppsReconciler(appClient, runLog.WithName("ar"), appFactory, appRefTracker, appUpdateStatus),
+				log:      runLog.WithName("pr"),
 			}),
 			MaxConcurrentReconciles: opts.Concurrency,
 		}
@@ -93,7 +94,21 @@ func Run(opts Options, runLog logr.Logger) {
 
 		err = ctrlApp.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForObject{})
 		if err != nil {
-			runLog.Error(err, "unable to watch *kcv1alpha1.App")
+			runLog.Error(err, "unable to watch Apps")
+			os.Exit(1)
+		}
+
+		sch := handlers.NewSecretHandler(runLog, appRefTracker, appUpdateStatus)
+		err = ctrlApp.Watch(&source.Kind{Type: &v1.Secret{}}, sch)
+		if err != nil {
+			runLog.Error(err, "unable to watch Secrets")
+			os.Exit(1)
+		}
+
+		cfgmh := handlers.NewConfigMapHandler(runLog, appRefTracker, appUpdateStatus)
+		err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, cfgmh)
+		if err != nil {
+			runLog.Error(err, "unable to watch ConfigMaps")
 			os.Exit(1)
 		}
 	}

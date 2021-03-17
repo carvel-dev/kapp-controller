@@ -33,6 +33,7 @@ func (rt ReconcileTimer) IsReadyAt(timeAt time.Time) bool {
 		return true
 	}
 
+	// TODO: Is this needed due to first case statement?
 	// If canceled/paused, then no reconcilation until unpaused
 	if rt.app.Spec.Canceled || rt.app.Spec.Paused {
 		return false

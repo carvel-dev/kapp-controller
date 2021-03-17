@@ -11,6 +11,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 )
 
@@ -113,4 +114,105 @@ func (a *App) newCancelCh() (chan struct{}, func()) {
 	}()
 
 	return cancelCh, cancelFunc
+}
+
+// Get all SecretRefs from App spec
+func (a *App) SecretRefs() map[reftracker.RefKey]struct{} {
+	secrets := map[reftracker.RefKey]struct{}{}
+
+	// Fetch SecretRefs
+	for _, fetch := range a.app.Spec.Fetch {
+		switch {
+		case fetch.Inline != nil && fetch.Inline.PathsFrom != nil:
+			for _, pathsFrom := range fetch.Inline.PathsFrom {
+				if pathsFrom.SecretRef != nil {
+					refKey := reftracker.NewSecretKey(pathsFrom.SecretRef.Name, a.app.Namespace)
+					secrets[refKey] = struct{}{}
+				}
+			}
+		case fetch.Image != nil && fetch.Image.SecretRef != nil:
+			refKey := reftracker.NewSecretKey(fetch.Image.SecretRef.Name, a.app.Namespace)
+			secrets[refKey] = struct{}{}
+		case fetch.ImgpkgBundle != nil && fetch.ImgpkgBundle.SecretRef != nil:
+			refKey := reftracker.NewSecretKey(fetch.ImgpkgBundle.SecretRef.Name, a.app.Namespace)
+			secrets[refKey] = struct{}{}
+		case fetch.HTTP != nil && fetch.HTTP.SecretRef != nil:
+			refKey := reftracker.NewSecretKey(fetch.HTTP.SecretRef.Name, a.app.Namespace)
+			secrets[refKey] = struct{}{}
+		case fetch.Git != nil && fetch.Git.SecretRef != nil:
+			refKey := reftracker.NewSecretKey(fetch.Git.SecretRef.Name, a.app.Namespace)
+			secrets[refKey] = struct{}{}
+		case fetch.HelmChart != nil && fetch.HelmChart.Repository != nil:
+			if fetch.HelmChart.Repository.SecretRef != nil {
+				refKey := reftracker.NewSecretKey(fetch.HelmChart.Repository.SecretRef.Name, a.app.Namespace)
+				secrets[refKey] = struct{}{}
+			}
+		default:
+		}
+	}
+
+	// Templating SecretRefs
+	for _, tpl := range a.app.Spec.Template {
+		switch {
+		case tpl.Ytt != nil && tpl.Ytt.Inline != nil:
+			for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
+				if pathsFrom.SecretRef != nil {
+					refKey := reftracker.NewSecretKey(pathsFrom.SecretRef.Name, a.app.Namespace)
+					secrets[refKey] = struct{}{}
+				}
+			}
+		case tpl.HelmTemplate != nil && tpl.HelmTemplate.ValuesFrom != nil:
+			for _, valsFrom := range tpl.HelmTemplate.ValuesFrom {
+				if valsFrom.SecretRef != nil {
+					refKey := reftracker.NewSecretKey(valsFrom.SecretRef.Name, a.app.Namespace)
+					secrets[refKey] = struct{}{}
+				}
+			}
+		default:
+		}
+	}
+
+	return secrets
+}
+
+// Get all ConfigMapRefs from App spec
+func (a *App) ConfigMapRefs() map[reftracker.RefKey]struct{} {
+	configMaps := map[reftracker.RefKey]struct{}{}
+
+	// Fetch ConfigMapRefs
+	for _, fetch := range a.app.Spec.Fetch {
+		switch {
+		case fetch.Inline != nil && fetch.Inline.PathsFrom != nil:
+			for _, pathsFrom := range fetch.Inline.PathsFrom {
+				if pathsFrom.ConfigMapRef != nil {
+					refKey := reftracker.NewConfigMapKey(pathsFrom.ConfigMapRef.Name, a.app.Namespace)
+					configMaps[refKey] = struct{}{}
+				}
+			}
+		default:
+		}
+	}
+
+	// Templating ConfigMapRefs
+	for _, tpl := range a.app.Spec.Template {
+		switch {
+		case tpl.Ytt != nil && tpl.Ytt.Inline != nil:
+			for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
+				if pathsFrom.ConfigMapRef != nil {
+					refKey := reftracker.NewConfigMapKey(pathsFrom.ConfigMapRef.Name, a.app.Namespace)
+					configMaps[refKey] = struct{}{}
+				}
+			}
+		case tpl.HelmTemplate != nil && tpl.HelmTemplate.ValuesFrom != nil:
+			for _, valsFrom := range tpl.HelmTemplate.ValuesFrom {
+				if valsFrom.ConfigMapRef != nil {
+					refKey := reftracker.NewConfigMapKey(valsFrom.ConfigMapRef.Name, a.app.Namespace)
+					configMaps[refKey] = struct{}{}
+				}
+			}
+		default:
+		}
+	}
+
+	return configMaps
 }
