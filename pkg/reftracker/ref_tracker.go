@@ -77,7 +77,6 @@ func (a AppRefTracker) ReconcileRefs(currentRefs map[RefKey]struct{}, appKey Ref
 			apps = map[RefKey]struct{}{}
 		}
 
-		appKey := NewAppKey(appKey.RefName(), refKey.Namespace())
 		refs := a.appsToRefs[appKey]
 		if refs == nil {
 			refs = map[RefKey]struct{}{}
@@ -93,16 +92,16 @@ func (a AppRefTracker) ReconcileRefs(currentRefs map[RefKey]struct{}, appKey Ref
 	// Compare current state against App's
 	// previous refs.
 	refsInState := a.appsToRefs[appKey]
-	var diff []RefKey
+	var refsToRemove []RefKey
 	for refKey := range refsInState {
 		if _, refExists := currentRefs[refKey]; !refExists {
-			diff = append(diff, refKey)
+			refsToRemove = append(refsToRemove, refKey)
 		}
 	}
 
 	// Remove any differences between App's
 	// current state and previous state
-	for _, refKey := range diff {
+	for _, refKey := range refsToRemove {
 		apps := a.refsToApps[refKey]
 		delete(apps, appKey)
 		a.refsToApps[refKey] = apps

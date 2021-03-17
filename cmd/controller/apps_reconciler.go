@@ -21,7 +21,8 @@ type AppsReconciler struct {
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
-func NewAppsReconciler(appClient kcclient.Interface, log logr.Logger, appFactory AppFactory, appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *AppsReconciler {
+func NewAppsReconciler(appClient kcclient.Interface, log logr.Logger, appFactory AppFactory,
+	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *AppsReconciler {
 	return &AppsReconciler{appClient, log, appFactory, appRefTracker, appUpdateStatus}
 }
 

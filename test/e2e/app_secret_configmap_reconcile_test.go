@@ -82,11 +82,6 @@ stringData:
 		if err != nil {
 			t.Fatalf("Failed to unmarshal: %s", err)
 		}
-
-		// check for successful deployment
-		if cr.Status.Deploy == nil || !cr.Status.Deploy.Finished || cr.Status.Deploy.ExitCode != 0 {
-			t.Fatalf("Expected %s deployment to succeed but got:\n%s", name, cr.Status.Deploy.Stdout)
-		}
 	})
 
 	logger.Section("update secret", func() {
@@ -194,11 +189,6 @@ data:
 		err := yaml.Unmarshal([]byte(out), &cr)
 		if err != nil {
 			t.Fatalf("Failed to unmarshal: %s", err)
-		}
-
-		// check for successful deployment
-		if cr.Status.Deploy == nil || !cr.Status.Deploy.Finished || cr.Status.Deploy.ExitCode != 0 {
-			t.Fatalf("Expected %s deployment to succeed but got:\n%s", name, cr.Status.Deploy.Stdout)
 		}
 	})
 

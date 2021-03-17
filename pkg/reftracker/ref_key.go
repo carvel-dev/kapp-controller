@@ -38,5 +38,5 @@ func (r RefKey) Namespace() string {
 }
 
 func (r RefKey) Description() string {
-	return fmt.Sprintf(`%s:%s:%s`, r.kind, r.refName, r.namespace)
+	return fmt.Sprintf("%s:%s:%s", r.kind, r.refName, r.namespace)
 }
