@@ -16,7 +16,7 @@ import (
 )
 
 // Reconcile is not expected to be called concurrently
-func (a *App) Reconcile() (reconcile.Result, error) {
+func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 	defer a.flushUpdateStatus("app reconciled")
 
 	var err error
@@ -36,7 +36,7 @@ func (a *App) Reconcile() (reconcile.Result, error) {
 
 		err = a.reconcileDelete()
 
-	case NewReconcileTimer(a.app).IsReadyAt(time.Now()):
+	case force || NewReconcileTimer(a.app).IsReadyAt(time.Now()):
 		a.log.Info("Started deploy")
 		defer func() { a.log.Info("Completed deploy") }()
 
