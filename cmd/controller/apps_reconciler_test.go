@@ -20,9 +20,11 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 	keySecretName := reftracker.NewSecretKey("secretName", "default")
 	keySecretName2 := reftracker.NewSecretKey("secretName2", "default")
 	keySecretName3 := reftracker.NewSecretKey("secretName3", "default")
-	appRefTracker.AddAppForRef(keySecretName, "app")
-	appRefTracker.AddAppForRef(keySecretName2, "app")
-	appRefTracker.AddAppForRef(keySecretName3, "app")
+	refKeyMap := map[reftracker.RefKey]struct{}{
+		keySecretName:  {},
+		keySecretName2: {},
+		keySecretName3: {},
+	}
 
 	app := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
@@ -30,6 +32,9 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 			Namespace: "default",
 		},
 	}
+
+	appKey := reftracker.NewAppKey(app.Name, app.Namespace)
+	appRefTracker.ReconcileRefs(refKeyMap, appKey)
 
 	ar := controller.NewAppsReconciler(nil, nil, controller.AppFactory{}, appRefTracker, nil)
 
@@ -55,7 +60,6 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 		t.Fatalf("\nExpected: %s\nGot: %s", expected, out)
 	}
 
-	appKey := reftracker.NewAppKey("app", "default")
 	expected = map[reftracker.RefKey]struct{}{
 		appKey: {},
 	}
@@ -72,9 +76,11 @@ func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
 	keySecretName := reftracker.NewSecretKey("secretName", "default")
 	keySecretName2 := reftracker.NewSecretKey("secretName2", "default")
 	keySecretName3 := reftracker.NewSecretKey("secretName3", "default")
-	appRefTracker.AddAppForRef(keySecretName, "app")
-	appRefTracker.AddAppForRef(keySecretName2, "app")
-	appRefTracker.AddAppForRef(keySecretName3, "app")
+	refKeyMap := map[reftracker.RefKey]struct{}{
+		keySecretName:  {},
+		keySecretName2: {},
+		keySecretName3: {},
+	}
 
 	app := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
@@ -82,6 +88,9 @@ func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
 			Namespace: "default",
 		},
 	}
+
+	appKey := reftracker.NewAppKey(app.Name, app.Namespace)
+	appRefTracker.ReconcileRefs(refKeyMap, appKey)
 
 	ar := controller.NewAppsReconciler(nil, nil, controller.AppFactory{}, appRefTracker, nil)
 
@@ -96,7 +105,6 @@ func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
 	ar.UpdateAppRefs(refMap, &app)
 
 	// Expect all refs to be associated with app
-	appKey := reftracker.NewAppKey("app", "default")
 	expected := map[reftracker.RefKey]struct{}{
 		appKey: {},
 	}

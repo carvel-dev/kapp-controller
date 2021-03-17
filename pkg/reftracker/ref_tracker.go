@@ -18,28 +18,6 @@ func NewAppRefTracker() *AppRefTracker {
 	return &AppRefTracker{refsToApps: map[RefKey]map[RefKey]struct{}{}, appsToRefs: map[RefKey]map[RefKey]struct{}{}}
 }
 
-func (a AppRefTracker) AddAppForRef(refKey RefKey, appName string) {
-	a.lock.Lock()
-	defer a.lock.Unlock()
-
-	apps := a.refsToApps[refKey]
-	if apps == nil {
-		apps = map[RefKey]struct{}{}
-	}
-
-	appKey := NewAppKey(appName, refKey.Namespace())
-	refs := a.appsToRefs[appKey]
-	if refs == nil {
-		refs = map[RefKey]struct{}{}
-	}
-
-	apps[appKey] = struct{}{}
-	a.refsToApps[refKey] = apps
-
-	refs[refKey] = struct{}{}
-	a.appsToRefs[appKey] = refs
-}
-
 func (a AppRefTracker) AppsForRef(refKey RefKey) (map[RefKey]struct{}, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
