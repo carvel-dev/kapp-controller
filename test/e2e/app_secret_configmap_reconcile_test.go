@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -75,13 +74,6 @@ stringData:
 
 	logger.Section("deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(appYaml)})
-		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
-
-		var cr v1alpha1.App
-		err := yaml.Unmarshal([]byte(out), &cr)
-		if err != nil {
-			t.Fatalf("Failed to unmarshal: %s", err)
-		}
 	})
 
 	logger.Section("update secret", func() {
@@ -183,13 +175,6 @@ data:
 
 	logger.Section("deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(appYaml)})
-		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
-
-		var cr v1alpha1.App
-		err := yaml.Unmarshal([]byte(out), &cr)
-		if err != nil {
-			t.Fatalf("Failed to unmarshal: %s", err)
-		}
 	})
 
 	logger.Section("update configmap", func() {
