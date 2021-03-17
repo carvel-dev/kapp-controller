@@ -214,18 +214,3 @@ data:
 		}
 	})
 }
-
-func retry(timeout time.Duration, f func() error) error {
-	var err error
-	stopTime := time.Now().Add(timeout)
-	for {
-		err = f()
-		if err == nil {
-			return nil
-		}
-		if time.Now().After(stopTime) {
-			return fmt.Errorf("retry timed out after %s: %v", timeout.String(), err)
-		}
-		time.Sleep(1 * time.Second)
-	}
-}
