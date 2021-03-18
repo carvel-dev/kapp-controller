@@ -5,6 +5,7 @@
 - Slack: [#carvel in Kubernetes slack](https://slack.kubernetes.io)
 - [Docs](docs/README.md) with topics about installation, config, etc.
 - Install: see [Install instructions](docs/install.md)
+- Backlog: [See what we're up to](https://app.zenhub.com/workspaces/carvel-backlog-6013063a24147d0011410709/board?repos=220090417). (Note: we use ZenHub which requires GitHub authorization).
 
 kapp controller provides a way to specify which applications should run on your K8s cluster via one or more App CRs. It will install, and continuously apply updates.
 
