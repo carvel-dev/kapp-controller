@@ -15,7 +15,6 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -27,8 +26,6 @@ func init() {
 type CRDApp struct {
 	app      *App
 	appModel *kcv1alpha1.App
-	nsName   types.NamespacedName // TODO fill in?
-
 	log       logr.Logger
 	appClient kcclient.Interface
 }
