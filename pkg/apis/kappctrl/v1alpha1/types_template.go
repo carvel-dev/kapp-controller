@@ -21,6 +21,7 @@ type AppTemplateYtt struct {
 	Strict                bool            `json:"strict,omitempty"`
 	Inline                *AppFetchInline `json:"inline,omitempty"`
 	Paths                 []string        `json:"paths,omitempty"`
+	FileMarks             []string        `json:"fileMarks,omitempty"`
 }
 
 type AppTemplateKbld struct {

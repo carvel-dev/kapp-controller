@@ -52,6 +52,8 @@ func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		return exec.NewCmdRunResultWithErr(err)
 	}
 
+	args = t.addFileMarks(args)
+
 	var stdoutBs, stderrBs bytes.Buffer
 
 	cmd := goexec.Command("ytt", args...)
@@ -128,4 +130,17 @@ func (t *Ytt) addInlinePaths(args []string) ([]string, *memdir.TmpDir, error) {
 	args = append(args, []string{"-f", inlineDir.Path()}...)
 
 	return args, inlineDir, nil
+}
+
+func (t *Ytt) addFileMarks(args []string) []string {
+	fileMarks := t.opts.FileMarks
+	if len(fileMarks) == 0 {
+		return args
+	}
+
+	for _, fileMark := range fileMarks {
+		args = append(args, []string{"--file-mark", fileMark}...)
+	}
+
+	return args
 }
