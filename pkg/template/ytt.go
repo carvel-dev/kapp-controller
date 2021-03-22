@@ -133,12 +133,7 @@ func (t *Ytt) addInlinePaths(args []string) ([]string, *memdir.TmpDir, error) {
 }
 
 func (t *Ytt) addFileMarks(args []string) []string {
-	fileMarks := t.opts.FileMarks
-	if len(fileMarks) == 0 {
-		return args
-	}
-
-	for _, fileMark := range fileMarks {
+	for _, fileMark := range t.opts.FileMarks {
 		args = append(args, []string{"--file-mark", fileMark}...)
 	}
 
