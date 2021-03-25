@@ -54,26 +54,27 @@ func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 	}
 
 	var result exec.CmdRunResult
+	if !a.app.Spec.NoopDelete {
+		for _, dep := range a.app.Spec.Deploy {
+			switch {
+			case dep.Kapp != nil:
+				cancelCh, closeCancelCh := a.newCancelCh()
+				defer closeCancelCh()
 
-	for _, dep := range a.app.Spec.Deploy {
-		switch {
-		case dep.Kapp != nil:
-			cancelCh, closeCancelCh := a.newCancelCh()
-			defer closeCancelCh()
+				kapp, err := a.newKapp(*dep.Kapp, cancelCh)
+				if err != nil {
+					return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
+				}
 
-			kapp, err := a.newKapp(*dep.Kapp, cancelCh)
-			if err != nil {
-				return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
+				result = kapp.Delete(a.startFlushingAllStatusUpdates, changedFunc)
+
+			default:
+				result.AttachErrorf("%s", fmt.Errorf("Unsupported way to delete"))
 			}
 
-			result = kapp.Delete(a.startFlushingAllStatusUpdates, changedFunc)
-
-		default:
-			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to delete"))
-		}
-
-		if result.Error != nil {
-			break
+			if result.Error != nil {
+				break
+			}
 		}
 	}
 
