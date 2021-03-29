@@ -48,6 +48,9 @@ type AppSpec struct {
 	Canceled bool `json:"canceled,omitempty"`
 	// Controls frequency of app reconciliation
 	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
+	// When NoopDeletion set to true, App deletion should
+	// delete App CR but preserve App's associated resources
+	NoopDelete bool `json:"noopDelete,omitempty"`
 }
 
 type AppCluster struct {
