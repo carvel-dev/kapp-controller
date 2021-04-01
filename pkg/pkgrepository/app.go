@@ -37,6 +37,7 @@ func NewApp(existingApp *kcv1alpha1.App, pkgRepository *instpkgv1alpha1.PackageR
 		Template: []kcv1alpha1.AppTemplate{{
 			Ytt: &kcv1alpha1.AppTemplateYtt{
 				IgnoreUnknownComments: true,
+				Paths:                 []string{"packages"},
 			},
 		}},
 		Deploy: []kcv1alpha1.AppDeploy{{
