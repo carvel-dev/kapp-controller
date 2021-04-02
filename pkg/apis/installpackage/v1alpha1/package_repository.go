@@ -39,10 +39,10 @@ type PackageRepositorySpec struct {
 }
 
 type PackageRepositoryFetch struct {
-	Image  *v1alpha1.AppFetchImage        `json:"image,omitempty"`
-	HTTP   *v1alpha1.AppFetchHTTP         `json:"http,omitempty"`
-	Git    *v1alpha1.AppFetchGit          `json:"git,omitempty"`
-	Bundle *v1alpha1.AppFetchImgpkgBundle `json:"bundle,omitempty"`
+	Image        *v1alpha1.AppFetchImage        `json:"image,omitempty"`
+	HTTP         *v1alpha1.AppFetchHTTP         `json:"http,omitempty"`
+	Git          *v1alpha1.AppFetchGit          `json:"git,omitempty"`
+	ImgpkgBundle *v1alpha1.AppFetchImgpkgBundle `json:"imgpkgBundle,omitempty"`
 }
 
 type PackageRepositoryStatus struct {

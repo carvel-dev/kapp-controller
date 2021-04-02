@@ -28,7 +28,7 @@ metadata:
   # cluster scoped
 spec:
   fetch:
-    bundle:
+    imgpkgBundle:
       image: k8slt/kappctrl-e2e-repo-bundle`
 
 	cleanUp := func() {
@@ -69,7 +69,7 @@ metadata:
   name: basic.delete.test.carvel.dev
 spec:
   fetch:
-    bundle:
+    imgpkgBundle:
       image: k8slt/kappctrl-e2e-repo-bundle`
 
 	packageNames := []string{"pkg.test.carvel.dev.1.0.0", "pkg.test.carvel.dev.2.0.0"}
