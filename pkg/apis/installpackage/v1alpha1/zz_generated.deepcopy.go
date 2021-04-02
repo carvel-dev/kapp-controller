@@ -225,8 +225,8 @@ func (in *PackageRepositoryFetch) DeepCopyInto(out *PackageRepositoryFetch) {
 		*out = new(kappctrlv1alpha1.AppFetchGit)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.Bundle != nil {
-		in, out := &in.Bundle, &out.Bundle
+	if in.ImgpkgBundle != nil {
+		in, out := &in.ImgpkgBundle, &out.ImgpkgBundle
 		*out = new(kappctrlv1alpha1.AppFetchImgpkgBundle)
 		(*in).DeepCopyInto(*out)
 	}

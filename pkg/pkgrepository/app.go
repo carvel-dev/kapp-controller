@@ -32,11 +32,12 @@ func NewApp(existingApp *kcv1alpha1.App, pkgRepository *instpkgv1alpha1.PackageR
 			Image:        pkgRepository.Spec.Fetch.Image,
 			Git:          pkgRepository.Spec.Fetch.Git,
 			HTTP:         pkgRepository.Spec.Fetch.HTTP,
-			ImgpkgBundle: pkgRepository.Spec.Fetch.Bundle,
+			ImgpkgBundle: pkgRepository.Spec.Fetch.ImgpkgBundle,
 		}},
 		Template: []kcv1alpha1.AppTemplate{{
 			Ytt: &kcv1alpha1.AppTemplateYtt{
 				IgnoreUnknownComments: true,
+				Paths:                 []string{"packages"},
 			},
 		}},
 		Deploy: []kcv1alpha1.AppDeploy{{
