@@ -54,7 +54,7 @@ func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	}
 
 	k8scs := k8sfake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs)
+	fetchFac := fetch.NewFactory(k8scs, nil)
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
@@ -80,7 +80,7 @@ func Test_SecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 	}
 
 	k8scs := k8sfake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs)
+	fetchFac := fetch.NewFactory(k8scs, nil)
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
@@ -118,7 +118,7 @@ func Test_ConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 	}
 
 	k8scs := k8sfake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs)
+	fetchFac := fetch.NewFactory(k8scs, nil)
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
@@ -144,7 +144,7 @@ func Test_ConfigMapRefs_RetrievesNoConfigMapRefs_WhenNonePresent(t *testing.T) {
 	}
 
 	k8scs := k8sfake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs)
+	fetchFac := fetch.NewFactory(k8scs, nil)
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 

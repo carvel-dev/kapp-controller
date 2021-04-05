@@ -42,5 +42,8 @@ data:
   #! Uncomment and fill in a value to test with https proxy
   #! httpsProxy: ""
 
-  #! must match the value in proxy_test.go
-  noProxy: github.com,docker.io
+  #! must match the value in proxy_test.go and service dns in test/e2e/assests/registry/registry.yml
+  noProxy: github.com,docker.io,registry-svc.registry.svc.cluster.local
+
+  #! second index (split on .) needs to match serverNamespace in http_test.go's skip tls test
+  dangerousSkipTLSVerify: registry-svc.registry.svc.cluster.local

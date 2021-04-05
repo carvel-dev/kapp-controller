@@ -1,0 +1,127 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: https-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: https-server
+  name: https-svc
+spec:
+  selector:
+    app: self-signed-https-server
+  ports:
+  - port: 443
+    targetPort: 443
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: self-signed-https-server
+  namespace: https-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app:  self-signed-https-server
+  template:
+    metadata:
+      labels:
+        app: self-signed-https-server
+    spec:
+      containers:
+      - name: self-signed-https-server
+        image: nginx
+        ports:
+        - containerPort: 443
+        volumeMounts:
+        - mountPath: /www/data
+          name: data
+        - mountPath: /etc/nginx
+          readOnly: true
+          name: nginx-conf
+        - mountPath: /etc/ssl
+          readOnly: true
+          name: nginx-certs
+      volumes:
+      - name: data
+        configMap:
+          name: nginx-data
+      - name: nginx-conf
+        configMap:
+          name: nginx-conf
+          items:
+          - key: nginx.conf
+            path: nginx.conf
+      - name: nginx-certs
+        secret:
+          secretName: nginx-certs
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-conf
+  namespace: https-server
+data:
+  nginx.conf: |
+    events {
+      worker_connections  1024;  ## Default: 1024
+    }
+
+    http {
+      server {
+        listen 443;
+
+        ssl on;
+        ssl_certificate /etc/ssl/https-server.crt;
+        ssl_certificate_key /etc/ssl/https-server.key;
+        server_name https-svc.default.svc.cluster.local;
+
+        location / {
+          root /www/data;
+        }
+      }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-data
+  namespace: https-server
+data:
+  deployment.yml: |
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      namespace: default
+      name: simple-app
+    spec:
+      ports:
+      - port: 80
+        targetPort: 80
+      selector:
+        simple-app: ""
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      namespace: default
+      name: simple-app
+    spec:
+      selector:
+        matchLabels:
+          simple-app: ""
+      template:
+        metadata:
+          labels:
+            simple-app: ""
+        spec:
+          containers:
+          - name: simple-app
+            image: docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0
+            env:
+            - name: HELLO_MSG
+              value: stranger

@@ -13,7 +13,9 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/config/global"
+	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
+	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 const (
@@ -81,12 +83,18 @@ func runControllerCmd(cmdName string, args []string) error {
 }
 
 func configureSystem() error {
-	globalConfigurer, err := global.NewConfigurer()
+	restConfig := config.GetConfigOrDie()
+	coreClient, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return fmt.Errorf("Buidling client: %s", err)
+	}
+
+	globalConfig, err := kcconfig.GetConfig(coreClient)
 	if err != nil {
 		return fmt.Errorf("Creating configurer: %s", err)
 	}
 
-	err = globalConfigurer.Configure()
+	err = globalConfig.Apply()
 	if err != nil {
 		return fmt.Errorf("Applying configuration: %s", err)
 	}
