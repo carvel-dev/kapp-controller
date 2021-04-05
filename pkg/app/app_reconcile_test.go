@@ -36,7 +36,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 
 	k8scs := k8sfake.NewSimpleClientset()
 	kappcs := fake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs)
+	fetchFac := fetch.NewFactory(k8scs, nil)
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 

@@ -14,6 +14,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -70,9 +71,16 @@ func Run(opts Options, runLog logr.Logger) {
 		os.Exit(1)
 	}
 
+	kcConfig, err := kcconfig.GetConfig(coreClient)
+	if err != nil {
+		runLog.Error(err, "getting kapp-controller config")
+		os.Exit(1)
+	}
+
 	appFactory := AppFactory{
 		coreClient: coreClient,
 		appClient:  appClient,
+		kcConfig:   kcConfig,
 	}
 
 	{ // add controller for apps

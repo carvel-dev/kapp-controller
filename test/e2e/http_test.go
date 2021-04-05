@@ -160,7 +160,7 @@ spec:
 	defer cleanUp()
 
 	logger.Section("deploy https server with self signed certs", func() {
-		kapp.Run([]string{"deploy", "-f", "assets/self-signed-https-server.yml", "-a", httpsServerName})
+		kapp.Run([]string{"deploy", "-f", "assets/https-server/server.yml", "-f", "assets/https-server/certs-for-custom-ca.yml", "-a", httpsServerName})
 	})
 
 	logger.Section("deploy", func() {

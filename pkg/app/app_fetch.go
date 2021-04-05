@@ -21,8 +21,9 @@ func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
 		return "", exec.NewCmdRunResultWithErr(fmt.Errorf("Expected at least one fetch option"))
 	}
 
-	vendir := a.fetchFactory.NewVendir(a.app.Namespace)
 	var result exec.CmdRunResult
+
+	vendir := a.fetchFactory.NewVendir(a.app.Namespace)
 
 	// Because vendir doesn't allow placing contents in the vendir root, we
 	// place all contents in sub dirs. For backwards compatibility, we must

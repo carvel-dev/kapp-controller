@@ -24,8 +24,8 @@ func init() {
 }
 
 type CRDApp struct {
-	app      *App
-	appModel *kcv1alpha1.App
+	app       *App
+	appModel  *kcv1alpha1.App
 	log       logr.Logger
 	appClient kcclient.Interface
 }
