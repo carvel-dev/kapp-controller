@@ -10,7 +10,7 @@ ENV GO_REL_SHA 0b8573c2335bebef53e819ab8d323456dc2b94838bebdbd8cc6623bb8a6d77b7
 
 RUN set eux; \
     wget -O go.tgz "https://golang.org/dl/go${GOLANG_VERSION}.${GO_REL_ARCH}.tar.gz" --progress=dot:giga; \
-    echo "${GO_REL_SHA} *go.tgz" | sha256sum -c -; \
+    echo "${GO_REL_SHA} go.tgz" | sha256sum -c -; \
     tar -C /usr/local -xzf go.tgz; \
     rm go.tgz; \
     go version
