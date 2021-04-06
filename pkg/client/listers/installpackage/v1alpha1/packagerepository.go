@@ -10,10 +10,13 @@ import (
 )
 
 // PackageRepositoryLister helps list PackageRepositories.
+// All objects returned here must be treated as read-only.
 type PackageRepositoryLister interface {
 	// List lists all PackageRepositories in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.PackageRepository, err error)
 	// Get retrieves the PackageRepository from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.PackageRepository, error)
 	PackageRepositoryListerExpansion
 }

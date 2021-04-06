@@ -13,7 +13,7 @@ type KappctrlV1alpha1Interface interface {
 	AppsGetter
 }
 
-// KappctrlV1alpha1Client is used to interact with features provided by the kappctrl group.
+// KappctrlV1alpha1Client is used to interact with features provided by the kappctrl.k14s.io group.
 type KappctrlV1alpha1Client struct {
 	restClient rest.Interface
 }

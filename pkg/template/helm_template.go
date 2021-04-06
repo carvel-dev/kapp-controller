@@ -5,6 +5,7 @@ package template
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -117,7 +118,7 @@ func (t *HelmTemplate) TemplateStream(_ io.Reader, _ string) exec.CmdRunResult {
 }
 
 func (t *HelmTemplate) writeFromSecret(dstPath string, secretRef v1alpha1.AppTemplateHelmTemplateValuesSourceRef) ([]string, error) {
-	secret, err := t.coreClient.CoreV1().Secrets(t.genericOpts.Namespace).Get(secretRef.Name, metav1.GetOptions{})
+	secret, err := t.coreClient.CoreV1().Secrets(t.genericOpts.Namespace).Get(context.Background(), secretRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +137,7 @@ func (t *HelmTemplate) writeFromSecret(dstPath string, secretRef v1alpha1.AppTem
 }
 
 func (t *HelmTemplate) writeFromConfigMap(dstPath string, configMapRef v1alpha1.AppTemplateHelmTemplateValuesSourceRef) ([]string, error) {
-	configMap, err := t.coreClient.CoreV1().ConfigMaps(t.genericOpts.Namespace).Get(configMapRef.Name, metav1.GetOptions{})
+	configMap, err := t.coreClient.CoreV1().ConfigMaps(t.genericOpts.Namespace).Get(context.Background(), configMapRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,8 @@
 package controller
 
 import (
+	"context"
+
 	"github.com/go-logr/logr"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
@@ -19,10 +21,10 @@ type PkgRepositoryReconciler struct {
 
 var _ reconcile.Reconciler = &PkgRepositoryReconciler{}
 
-func (r *PkgRepositoryReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
-	existingPkgRepository, err := r.client.InstallV1alpha1().PackageRepositories().Get(request.Name, metav1.GetOptions{})
+	existingPkgRepository, err := r.client.InstallV1alpha1().PackageRepositories().Get(ctx, request.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.Info("Could not find PkgRepository", "name", request.Name)

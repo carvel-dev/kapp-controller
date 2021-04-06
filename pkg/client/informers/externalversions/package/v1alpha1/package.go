@@ -3,7 +3,8 @@
 package v1alpha1
 
 import (
-	"time"
+	"context"
+	time "time"
 
 	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/package/v1alpha1"
 	versioned "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
@@ -27,14 +28,14 @@ type packageInformer struct {
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 }
 
-// NewPackageInformer constructs a new informer for Pkg type.
+// NewPackageInformer constructs a new informer for Package type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
 func NewPackageInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
 	return NewFilteredPackageInformer(client, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredPackageInformer constructs a new informer for Pkg type.
+// NewFilteredPackageInformer constructs a new informer for Package type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredPackageInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
@@ -44,13 +45,13 @@ func NewFilteredPackageInformer(client versioned.Interface, resyncPeriod time.Du
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.PackageV1alpha1().Packages().List(options)
+				return client.PackageV1alpha1().Packages().List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.PackageV1alpha1().Packages().Watch(options)
+				return client.PackageV1alpha1().Packages().Watch(context.TODO(), options)
 			},
 		},
 		&pkgv1alpha1.Package{},

@@ -10,10 +10,13 @@ import (
 )
 
 // PackageLister helps list Packages.
+// All objects returned here must be treated as read-only.
 type PackageLister interface {
 	// List lists all Packages in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.Package, err error)
-	// Get retrieves the Pkg from the index for a given name.
+	// Get retrieves the Package from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.Package, error)
 	PackageListerExpansion
 }
@@ -36,7 +39,7 @@ func (s *packageLister) List(selector labels.Selector) (ret []*v1alpha1.Package,
 	return ret, err
 }
 
-// Get retrieves the Pkg from the index for a given name.
+// Get retrieves the Package from the index for a given name.
 func (s *packageLister) Get(name string) (*v1alpha1.Package, error) {
 	obj, exists, err := s.indexer.GetByKey(name)
 	if err != nil {

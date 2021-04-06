@@ -4,6 +4,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -47,7 +48,7 @@ func (w CRDAppWatcher) watch(callback func(v1alpha1.App), cancelCh chan struct{}
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", string(w.app.Name)).String(),
 	}
 
-	watcher, err := w.appClient.KappctrlV1alpha1().Apps(w.app.Namespace).Watch(listOpts)
+	watcher, err := w.appClient.KappctrlV1alpha1().Apps(w.app.Namespace).Watch(context.Background(), listOpts)
 	if err != nil {
 		return false, fmt.Errorf("Creating app watcher: %s", err)
 	}
