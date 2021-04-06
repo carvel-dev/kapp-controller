@@ -8,7 +8,7 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
-	// Pkgs returns a PackageInformer.
+	// Packages returns a PackageInformer.
 	Packages() PackageInformer
 }
 
@@ -23,7 +23,7 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// Pkgs returns a PackageInformer.
+// Packages returns a PackageInformer.
 func (v *version) Packages() PackageInformer {
 	return &packageInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }

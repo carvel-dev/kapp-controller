@@ -4,6 +4,7 @@
 package fetch
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -55,7 +56,7 @@ func (t *Inline) Retrieve(dstPath string) error {
 }
 
 func (t *Inline) writeFromSecret(dstPath string, secretRef v1alpha1.AppFetchInlineSourceRef) error {
-	secret, err := t.coreClient.CoreV1().Secrets(t.nsName).Get(secretRef.Name, metav1.GetOptions{})
+	secret, err := t.coreClient.CoreV1().Secrets(t.nsName).Get(context.Background(), secretRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -71,7 +72,7 @@ func (t *Inline) writeFromSecret(dstPath string, secretRef v1alpha1.AppFetchInli
 }
 
 func (t *Inline) writeFromConfigMap(dstPath string, configMapRef v1alpha1.AppFetchInlineSourceRef) error {
-	configMap, err := t.coreClient.CoreV1().ConfigMaps(t.nsName).Get(configMapRef.Name, metav1.GetOptions{})
+	configMap, err := t.coreClient.CoreV1().ConfigMaps(t.nsName).Get(context.Background(), configMapRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}

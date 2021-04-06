@@ -5,6 +5,7 @@ package template
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -236,7 +237,7 @@ func (t *Sops) configPaths() (*memdir.TmpDir, string, error) {
 }
 
 func (t *Sops) getFromSecret(secretRef v1alpha1.AppTemplateSopsPGPPrivateKeysSecretRef) (string, error) {
-	secret, err := t.coreClient.CoreV1().Secrets(t.genericOpts.Namespace).Get(secretRef.Name, metav1.GetOptions{})
+	secret, err := t.coreClient.CoreV1().Secrets(t.genericOpts.Namespace).Get(context.Background(), secretRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}

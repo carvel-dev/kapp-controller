@@ -3,6 +3,7 @@
 package v1alpha1
 
 import (
+	"context"
 	time "time"
 
 	installpackagev1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
@@ -45,13 +46,13 @@ func NewFilteredInstalledPackageInformer(client versioned.Interface, namespace s
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.InstallV1alpha1().InstalledPackages(namespace).List(options)
+				return client.InstallV1alpha1().InstalledPackages(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.InstallV1alpha1().InstalledPackages(namespace).Watch(options)
+				return client.InstallV1alpha1().InstalledPackages(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&installpackagev1alpha1.InstalledPackage{},

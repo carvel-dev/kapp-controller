@@ -10,8 +10,10 @@ import (
 )
 
 // InstalledPackageLister helps list InstalledPackages.
+// All objects returned here must be treated as read-only.
 type InstalledPackageLister interface {
 	// List lists all InstalledPackages in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.InstalledPackage, err error)
 	// InstalledPackages returns an object that can list and get InstalledPackages.
 	InstalledPackages(namespace string) InstalledPackageNamespaceLister
@@ -42,10 +44,13 @@ func (s *installedPackageLister) InstalledPackages(namespace string) InstalledPa
 }
 
 // InstalledPackageNamespaceLister helps list and get InstalledPackages.
+// All objects returned here must be treated as read-only.
 type InstalledPackageNamespaceLister interface {
 	// List lists all InstalledPackages in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.InstalledPackage, err error)
 	// Get retrieves the InstalledPackage from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.InstalledPackage, error)
 	InstalledPackageNamespaceListerExpansion
 }

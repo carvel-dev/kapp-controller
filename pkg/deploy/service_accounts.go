@@ -4,6 +4,7 @@
 package deploy
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 
@@ -40,13 +41,13 @@ func (s *ServiceAccounts) Find(genericOpts GenericOpts, saName string) (GenericO
 }
 
 func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (string, error) {
-	sa, err := s.coreClient.CoreV1().ServiceAccounts(nsName).Get(saName, metav1.GetOptions{})
+	sa, err := s.coreClient.CoreV1().ServiceAccounts(nsName).Get(context.Background(), saName, metav1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("Getting service account: %s", err)
 	}
 
 	for _, secretRef := range sa.Secrets {
-		secret, err := s.coreClient.CoreV1().Secrets(nsName).Get(secretRef.Name, metav1.GetOptions{})
+		secret, err := s.coreClient.CoreV1().Secrets(nsName).Get(context.Background(), secretRef.Name, metav1.GetOptions{})
 		if err != nil {
 			return "", fmt.Errorf("Getting service account secret: %s", err)
 		}
