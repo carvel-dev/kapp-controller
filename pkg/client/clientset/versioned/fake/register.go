@@ -15,7 +15,7 @@ import (
 
 var scheme = runtime.NewScheme()
 var codecs = serializer.NewCodecFactory(scheme)
-var parameterCodec = runtime.NewParameterCodec(scheme)
+
 var localSchemeBuilder = runtime.SchemeBuilder{
 	installv1alpha1.AddToScheme,
 	kappctrlv1alpha1.AddToScheme,
@@ -28,7 +28,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 //   import (
 //     "k8s.io/client-go/kubernetes"
 //     clientsetscheme "k8s.io/client-go/kubernetes/scheme"
-//     aggregatorclientsetscheme "k8s.io/kube-aggregator/package/client/clientset_generated/clientset/scheme"
+//     aggregatorclientsetscheme "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/scheme"
 //   )
 //
 //   kclientset, _ := kubernetes.NewForConfig(c)

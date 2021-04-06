@@ -3,6 +3,8 @@
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -22,7 +24,7 @@ var packagerepositoriesResource = schema.GroupVersionResource{Group: "install.pa
 var packagerepositoriesKind = schema.GroupVersionKind{Group: "install.package.carvel.dev", Version: "v1alpha1", Kind: "PackageRepository"}
 
 // Get takes name of the packageRepository, and returns the corresponding packageRepository object, and an error if there is any.
-func (c *FakePackageRepositories) Get(name string, options v1.GetOptions) (result *v1alpha1.PackageRepository, err error) {
+func (c *FakePackageRepositories) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.PackageRepository, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(packagerepositoriesResource, name), &v1alpha1.PackageRepository{})
 	if obj == nil {
@@ -32,7 +34,7 @@ func (c *FakePackageRepositories) Get(name string, options v1.GetOptions) (resul
 }
 
 // List takes label and field selectors, and returns the list of PackageRepositories that match those selectors.
-func (c *FakePackageRepositories) List(opts v1.ListOptions) (result *v1alpha1.PackageRepositoryList, err error) {
+func (c *FakePackageRepositories) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.PackageRepositoryList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(packagerepositoriesResource, packagerepositoriesKind, opts), &v1alpha1.PackageRepositoryList{})
 	if obj == nil {
@@ -53,13 +55,13 @@ func (c *FakePackageRepositories) List(opts v1.ListOptions) (result *v1alpha1.Pa
 }
 
 // Watch returns a watch.Interface that watches the requested packageRepositories.
-func (c *FakePackageRepositories) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakePackageRepositories) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(packagerepositoriesResource, opts))
 }
 
 // Create takes the representation of a packageRepository and creates it.  Returns the server's representation of the packageRepository, and an error, if there is any.
-func (c *FakePackageRepositories) Create(packageRepository *v1alpha1.PackageRepository) (result *v1alpha1.PackageRepository, err error) {
+func (c *FakePackageRepositories) Create(ctx context.Context, packageRepository *v1alpha1.PackageRepository, opts v1.CreateOptions) (result *v1alpha1.PackageRepository, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(packagerepositoriesResource, packageRepository), &v1alpha1.PackageRepository{})
 	if obj == nil {
@@ -69,7 +71,7 @@ func (c *FakePackageRepositories) Create(packageRepository *v1alpha1.PackageRepo
 }
 
 // Update takes the representation of a packageRepository and updates it. Returns the server's representation of the packageRepository, and an error, if there is any.
-func (c *FakePackageRepositories) Update(packageRepository *v1alpha1.PackageRepository) (result *v1alpha1.PackageRepository, err error) {
+func (c *FakePackageRepositories) Update(ctx context.Context, packageRepository *v1alpha1.PackageRepository, opts v1.UpdateOptions) (result *v1alpha1.PackageRepository, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(packagerepositoriesResource, packageRepository), &v1alpha1.PackageRepository{})
 	if obj == nil {
@@ -80,7 +82,7 @@ func (c *FakePackageRepositories) Update(packageRepository *v1alpha1.PackageRepo
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakePackageRepositories) UpdateStatus(packageRepository *v1alpha1.PackageRepository) (*v1alpha1.PackageRepository, error) {
+func (c *FakePackageRepositories) UpdateStatus(ctx context.Context, packageRepository *v1alpha1.PackageRepository, opts v1.UpdateOptions) (*v1alpha1.PackageRepository, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(packagerepositoriesResource, "status", packageRepository), &v1alpha1.PackageRepository{})
 	if obj == nil {
@@ -90,22 +92,22 @@ func (c *FakePackageRepositories) UpdateStatus(packageRepository *v1alpha1.Packa
 }
 
 // Delete takes name of the packageRepository and deletes it. Returns an error if one occurs.
-func (c *FakePackageRepositories) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakePackageRepositories) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(packagerepositoriesResource, name), &v1alpha1.PackageRepository{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakePackageRepositories) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(packagerepositoriesResource, listOptions)
+func (c *FakePackageRepositories) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(packagerepositoriesResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.PackageRepositoryList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched packageRepository.
-func (c *FakePackageRepositories) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.PackageRepository, err error) {
+func (c *FakePackageRepositories) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.PackageRepository, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(packagerepositoriesResource, name, pt, data, subresources...), &v1alpha1.PackageRepository{})
 	if obj == nil {

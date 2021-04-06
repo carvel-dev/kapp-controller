@@ -4,6 +4,7 @@
 package pkgrepository
 
 import (
+	"context"
 	"fmt"
 
 	instpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
@@ -43,7 +44,7 @@ func (ip *PackageRepositoryCR) Reconcile() (reconcile.Result, error) {
 	// of packages from kubernetes etcd. Most likely we will rely on k8s API agg layer
 	// to serve packages apis directly.
 
-	existingApp, err := ip.client.KappctrlV1alpha1().Apps(appNs).Get(ip.model.Name, metav1.GetOptions{})
+	existingApp, err := ip.client.KappctrlV1alpha1().Apps(appNs).Get(context.Background(), ip.model.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return ip.createApp()
@@ -60,7 +61,7 @@ func (ip *PackageRepositoryCR) createApp() (reconcile.Result, error) {
 		return reconcile.Result{Requeue: true}, err
 	}
 
-	_, err = ip.client.KappctrlV1alpha1().Apps(desiredApp.Namespace).Create(desiredApp)
+	_, err = ip.client.KappctrlV1alpha1().Apps(desiredApp.Namespace).Create(context.Background(), desiredApp, metav1.CreateOptions{})
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
 	}
@@ -75,7 +76,7 @@ func (ip *PackageRepositoryCR) reconcileApp(existingApp *kcv1alpha1.App) (reconc
 	}
 
 	if !equality.Semantic.DeepEqual(desiredApp, existingApp) {
-		_, err = ip.client.KappctrlV1alpha1().Apps(desiredApp.Namespace).Update(desiredApp)
+		_, err = ip.client.KappctrlV1alpha1().Apps(desiredApp.Namespace).Update(context.Background(), desiredApp, metav1.UpdateOptions{})
 		if err != nil {
 			return reconcile.Result{Requeue: true}, err
 		}
