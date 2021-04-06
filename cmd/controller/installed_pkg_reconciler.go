@@ -4,6 +4,8 @@
 package controller
 
 import (
+	"context"
+
 	"github.com/go-logr/logr"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/installedpkg"
@@ -19,10 +21,10 @@ type InstalledPkgReconciler struct {
 
 var _ reconcile.Reconciler = &InstalledPkgReconciler{}
 
-func (r *InstalledPkgReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *InstalledPkgReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
-	existingInstalledPkg, err := r.intalledPkgClient.InstallV1alpha1().InstalledPackages(request.Namespace).Get(request.Name, metav1.GetOptions{})
+	existingInstalledPkg, err := r.intalledPkgClient.InstallV1alpha1().InstalledPackages(request.Namespace).Get(ctx, request.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.Info("Could not find InstalledPkg", "name", request.Name)

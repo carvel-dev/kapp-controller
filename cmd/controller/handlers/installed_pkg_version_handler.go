@@ -4,6 +4,8 @@
 package handlers
 
 import (
+	"context"
+
 	"github.com/go-logr/logr"
 	ipkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/package/v1alpha1"
@@ -67,7 +69,7 @@ func (ipvh *InstalledPkgVersionHandler) Generic(evt event.GenericEvent, q workqu
 
 func (ipvh *InstalledPkgVersionHandler) enqueueEligibleInstalledPackages(q workqueue.RateLimitingInterface, obj runtime.Object) error {
 	pkg := obj.(*pkgv1alpha1.Package)
-	installedPkgList, err := ipvh.client.InstallV1alpha1().InstalledPackages("").List(metav1.ListOptions{})
+	installedPkgList, err := ipvh.client.InstallV1alpha1().InstalledPackages("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}

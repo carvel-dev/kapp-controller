@@ -32,7 +32,7 @@ func main() {
 
 	log := logf.Log.WithName("kc")
 
-	logf.SetLogger(zap.Logger(false))
+	logf.SetLogger(zap.New(zap.UseDevMode(false)))
 
 	mainLog := log.WithName("main")
 	mainLog.Info("kapp-controller", "version", Version)
