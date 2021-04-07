@@ -51,7 +51,7 @@ func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 		namespace = t.opts.Namespace
 	}
 
-	args := []string{"template", chartPath, "--name", name, "--namespace", namespace}
+	args := []string{"template", name, chartPath, "--namespace", namespace, "--include-crds"}
 
 	for _, source := range t.opts.ValuesFrom {
 		var paths []string

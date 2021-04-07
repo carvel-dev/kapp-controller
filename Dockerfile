@@ -42,9 +42,8 @@ RUN wget -O- https://github.com/vmware-tanzu/carvel-vendir/releases/download/v0.
   echo "d36b6ef34cb43966ebf7404edb83b30d9f819b62ea5bc08b1dadb805fd72ce1a  /usr/local/bin/vendir" | sha256sum -c - && \
   chmod +x /usr/local/bin/vendir && vendir version
 
-# helm
-RUN wget -O- https://get.helm.sh/helm-v2.17.0-linux-amd64.tar.gz > /helm && \
-  echo "f3bec3c7c55f6a9eb9e6586b8c503f370af92fe987fcbf741f37707606d70296  /helm" | sha256sum -c - && \
+RUN wget -O- https://get.helm.sh/helm-v3.5.3-linux-amd64.tar.gz > /helm && \
+  echo "2170a1a644a9e0b863f00c17b761ce33d4323da64fc74562a3a6df2abbf6cd70  /helm" | sha256sum -c - && \
   mkdir /helm-unpacked && tar -C /helm-unpacked -xzvf /helm
 
 # sops
