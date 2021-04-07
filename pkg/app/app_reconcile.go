@@ -226,6 +226,7 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 		a.app.Status.ConsecutiveReconcileFailures++
 		a.app.Status.ConsecutiveReconcileSuccesses = 0
 		a.app.Status.FriendlyDescription = fmt.Sprintf("Reconcile failed: %s", result.ErrorStr())
+		a.setUsefulErrorMessage(result)
 	} else {
 		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
 			Type:    v1alpha1.ReconcileSucceeded,
@@ -235,6 +236,7 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 		a.app.Status.ConsecutiveReconcileSuccesses++
 		a.app.Status.ConsecutiveReconcileFailures = 0
 		a.app.Status.FriendlyDescription = "Reconcile succeeded"
+		a.app.Status.UsefulErrorMessage = ""
 	}
 }
 
@@ -259,6 +261,7 @@ func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
 			Message: result.ErrorStr(),
 		})
 		a.app.Status.FriendlyDescription = fmt.Sprintf("Delete failed: %s", result.ErrorStr())
+		a.setUsefulErrorMessage(result)
 	} else {
 		// assume resource will be deleted, hence nothing to update
 	}
@@ -266,4 +269,13 @@ func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
 
 func (a *App) removeAllConditions() {
 	a.app.Status.Conditions = nil
+}
+
+func (a *App) setUsefulErrorMessage(result exec.CmdRunResult) {
+	switch {
+	case result.Stderr != "":
+		a.app.Status.UsefulErrorMessage = result.Stderr
+	default:
+		a.app.Status.UsefulErrorMessage = result.ErrorStr()
+	}
 }

@@ -78,6 +78,7 @@ type AppStatus struct {
 	Conditions         []AppCondition `json:"conditions"`
 
 	FriendlyDescription string `json:"friendlyDescription"`
+	UsefulErrorMessage  string `json:"usefulErrorMessage"`
 }
 
 type AppStatusFetch struct {
