@@ -179,7 +179,7 @@ func (t *HelmTemplate) writeFile(dstPath, subPath string, content []byte) (strin
 	return newPath, nil
 }
 
-type helmTemplateCMDArgs struct {
+type helmTemplateCmdArgs struct {
 	binaryName string
 	args       []string
 }
@@ -187,10 +187,10 @@ type helmTemplateCMDArgs struct {
 const helmBinaryName = "helm"
 
 // DEPRECATED
-const helm2ChartSpecVersion = "v1"
 const helm2BinaryName = "helmv2"
+const helm2ChartSpecVersion = "v1"
 
-// auxiliary struct used during Chart.yaml unmarshall
+// auxiliary struct used for Chart.yaml unmarshalling
 type chartSpec struct {
 	APIVersion string
 }
@@ -199,7 +199,8 @@ type chartSpec struct {
 // Returns the Helm Binary Name and the arguments required to be passed to the "helm template" subcommand
 // The returned values depend on the ApiVersion property inside the Chart.yaml file.
 // apiVersion==v1 will fallback to old Helm 2 binary and command format.
-func helmTemplateCmdLookup(releaseName, chartPath, namespace string) (*helmTemplateCMDArgs, error) {
+func helmTemplateCmdLookup(releaseName, chartPath, namespace string) (*helmTemplateCmdArgs, error) {
+	// Load [chartPath]/Chart.yaml and inspect apiVersion value.
 	bs, err := ioutil.ReadFile(path.Join(chartPath, "Chart.yaml"))
 	if err != nil {
 		return nil, fmt.Errorf("helmTemplateCmdLookup: %w", err)
@@ -210,8 +211,8 @@ func helmTemplateCmdLookup(releaseName, chartPath, namespace string) (*helmTempl
 		return nil, fmt.Errorf("helmTemplateCmdLookup: %w", err)
 	}
 
-	// By default use Helm 3+ format except for chart.apiSpec=v1
-	res := &helmTemplateCMDArgs{
+	// By default, use Helm 3+ format except for chart.apiSpec=v1
+	res := &helmTemplateCmdArgs{
 		binaryName: helmBinaryName,
 		args:       []string{"template", releaseName, chartPath, "--namespace", namespace, "--include-crds"},
 	}
