@@ -9,6 +9,9 @@ import (
 	"io"
 	"io/ioutil"
 	goexec "os/exec"
+	"path"
+
+	"github.com/ghodss/yaml"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
@@ -51,7 +54,15 @@ func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 		namespace = t.opts.Namespace
 	}
 
-	args := []string{"template", name, chartPath, "--namespace", namespace, "--include-crds"}
+	// Return Helm binary name and arguments based on the version defined on the Chart.yaml file.
+	// NOTE: This will be removed once we remove retro-compatibility with Helm V2 binary
+	cmdCtx, err := helmTemplateCmdLookup(name, chartPath, namespace)
+	if err != nil {
+		return exec.NewCmdRunResultWithErr(err), true
+	}
+
+	// Actual helm template arguments
+	args := cmdCtx.args
 
 	for _, source := range t.opts.ValuesFrom {
 		var paths []string
@@ -97,11 +108,11 @@ func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 
 	var stdoutBs, stderrBs bytes.Buffer
 
-	cmd := goexec.Command("helm", args...)
+	cmd := goexec.Command(cmdCtx.binaryName, args...)
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
-	err := cmd.Run()
+	err = cmd.Run()
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),
@@ -166,4 +177,50 @@ func (t *HelmTemplate) writeFile(dstPath, subPath string, content []byte) (strin
 	}
 
 	return newPath, nil
+}
+
+type helmTemplateCMDArgs struct {
+	binaryName string
+	args       []string
+}
+
+const helmBinaryName = "helm"
+
+// DEPRECATED
+const helm2ChartSpecVersion = "v1"
+const helm2BinaryName = "helmv2"
+
+// auxiliary struct used during Chart.yaml unmarshall
+type chartSpec struct {
+	APIVersion string
+}
+
+// DEPRECATED. This method will not be required once support for Helm 2 is dropped
+// Returns the Helm Binary Name and the arguments required to be passed to the "helm template" subcommand
+// The returned values depend on the ApiVersion property inside the Chart.yaml file.
+// apiVersion==v1 will fallback to old Helm 2 binary and command format.
+func helmTemplateCmdLookup(releaseName, chartPath, namespace string) (*helmTemplateCMDArgs, error) {
+	bs, err := ioutil.ReadFile(path.Join(chartPath, "Chart.yaml"))
+	if err != nil {
+		return nil, fmt.Errorf("helmTemplateCmdLookup: %w", err)
+	}
+
+	var chartSpec chartSpec
+	if err := yaml.Unmarshal(bs, &chartSpec); err != nil {
+		return nil, fmt.Errorf("helmTemplateCmdLookup: %w", err)
+	}
+
+	// By default use Helm 3+ format except for chart.apiSpec=v1
+	res := &helmTemplateCMDArgs{
+		binaryName: helmBinaryName,
+		args:       []string{"template", releaseName, chartPath, "--namespace", namespace, "--include-crds"},
+	}
+
+	// DEPRECATED: Helm V2 will be removed in a future release
+	if chartSpec.APIVersion == helm2ChartSpecVersion {
+		res.binaryName = helm2BinaryName
+		res.args = []string{"template", chartPath, "--name", releaseName, "--namespace", namespace}
+	}
+
+	return res, nil
 }
