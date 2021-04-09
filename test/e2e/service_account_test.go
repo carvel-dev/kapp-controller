@@ -85,7 +85,7 @@ spec:
 			t.Fatalf("Expected err, but was nil")
 		}
 
-		if !strings.Contains(err.Error(), "Reconcile failed:  (message: Deploying: exit status 1)") {
+		if !strings.Contains(err.Error(), "Reconcile failed:  (message: Deploying: Error (see .status.usefulErrorMessage for details))") {
 			t.Fatalf("Expected err to contain service account failure, but was: %s", err)
 		}
 
