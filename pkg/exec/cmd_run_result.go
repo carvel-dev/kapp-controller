@@ -35,7 +35,12 @@ func (r *CmdRunResult) AttachErrorf(msg string, err error) {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			r.ExitCode = exitError.ExitCode()
 		}
-		r.Error = fmt.Errorf(msg, err)
+
+		if err.Error() == "exit status 1" {
+			r.Error = fmt.Errorf(msg, "Error (see .status.usefulErrorMessage for details)")
+		} else {
+			r.Error = fmt.Errorf(msg, err)
+		}
 	}
 }
 

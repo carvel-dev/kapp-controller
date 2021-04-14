@@ -52,15 +52,15 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 		Conditions: []v1alpha1.AppCondition{{
 			Type:    v1alpha1.ReconcileFailed,
 			Status:  corev1.ConditionTrue,
-			Message: "Fetching resources: exit status 1",
+			Message: "Fetching resources: Error (see .status.usefulErrorMessage for details)",
 		}},
 		Fetch: &v1alpha1.AppStatusFetch{
-			Error:    "Fetching resources: exit status 1",
+			Error:    "Fetching resources: Error (see .status.usefulErrorMessage for details)",
 			ExitCode: 1,
 		},
 		ConsecutiveReconcileFailures: 1,
 		ObservedGeneration:           0,
-		FriendlyDescription:          "Reconcile failed: Fetching resources: exit status 1",
+		FriendlyDescription:          "Reconcile failed: Fetching resources: Error (see .status.usefulErrorMessage for details)",
 		UsefulErrorMessage:           "Error: Syncing directory '0': Syncing directory '.' with HTTP contents: Downloading URL: Initiating URL download: Get i-dont-exist: unsupported protocol scheme \"\"\n",
 	}
 
@@ -114,18 +114,18 @@ foo: bar`,
 		Conditions: []v1alpha1.AppCondition{{
 			Type:    v1alpha1.ReconcileFailed,
 			Status:  corev1.ConditionTrue,
-			Message: "Templating dir: exit status 1",
+			Message: "Templating dir: Error (see .status.usefulErrorMessage for details)",
 		}},
 		Fetch: &v1alpha1.AppStatusFetch{
 			ExitCode: 0,
 		},
 		Template: &v1alpha1.AppStatusTemplate{
-			Error:    "Templating dir: exit status 1",
+			Error:    "Templating dir: Error (see .status.usefulErrorMessage for details)",
 			ExitCode: 1,
 		},
 		ConsecutiveReconcileFailures: 1,
 		ObservedGeneration:           0,
-		FriendlyDescription:          "Reconcile failed: Templating dir: exit status 1",
+		FriendlyDescription:          "Reconcile failed: Templating dir: Error (see .status.usefulErrorMessage for details)",
 		UsefulErrorMessage:           "ytt: Error: Non-ytt comment at line file.yml:1: '# comment':\n  Unrecognized comment type (expected '#@' or '#!'). (hint: if this is plain YAML — not a template — consider `--file-mark '<filename>:type=yaml-plain'`)\n",
 	}
 
