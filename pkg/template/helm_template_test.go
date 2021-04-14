@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package template
+package template_test
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 )
 
 func TestHelmTemplateCmdLookup(t *testing.T) {
@@ -21,21 +22,21 @@ func TestHelmTemplateCmdLookup(t *testing.T) {
 	}{
 		{
 			"v1",
-			helm2BinaryName,
+			"helmv2",
 			func(path string) []string {
 				return []string{"template", path, "--name", "testRelease", "--namespace", "testNs"}
 			},
 		},
 		{
 			"v2",
-			helmBinaryName,
+			"helm",
 			func(path string) []string {
 				return []string{"template", "testRelease", path, "--namespace", "testNs", "--include-crds"}
 			},
 		},
 		{
 			"v3", // Non existent today but will fallback to newer version of the binary and format
-			helmBinaryName,
+			"helm",
 			func(path string) []string {
 				return []string{"template", "testRelease", path, "--namespace", "testNs", "--include-crds"}
 			},
@@ -49,16 +50,16 @@ func TestHelmTemplateCmdLookup(t *testing.T) {
 		}
 		defer tmpDir.Remove()
 
-		cmd, err := helmTemplateCmdLookup("testRelease", tmpDir.Path(), "testNs")
+		cmd, err := template.NewHelmTemplateCmdArgs("testRelease", tmpDir.Path(), "testNs")
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if got, want := cmd.binaryName, tc.binaryName; got != want {
+		if got, want := cmd.BinaryName, tc.binaryName; got != want {
 			t.Errorf("got=%q, want=%q", got, want)
 		}
 
-		if got, want := cmd.args, tc.args(tmpDir.Path()); !reflect.DeepEqual(got, want) {
+		if got, want := cmd.Args, tc.args(tmpDir.Path()); !reflect.DeepEqual(got, want) {
 			t.Errorf("got=%q, want=%q", got, want)
 		}
 	}
