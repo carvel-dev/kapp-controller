@@ -70,7 +70,7 @@ func (s *Status) SetReconcileCompleted(err error) {
 			Status:  corev1.ConditionTrue,
 			Message: err.Error(),
 		})
-		s.S.FriendlyDescription = s.friendlyErrMsg(fmt.Sprintf("Reconcile failed: %s", err))
+		s.S.FriendlyDescription = s.friendlyErrMsg(fmt.Sprintf("Reconcile failed: %s", err.Error()))
 	} else {
 		s.S.Conditions = append(s.S.Conditions, kcv1alpha1.AppCondition{
 			Type:    kcv1alpha1.ReconcileSucceeded,
@@ -78,6 +78,7 @@ func (s *Status) SetReconcileCompleted(err error) {
 			Message: "",
 		})
 		s.S.FriendlyDescription = "Reconcile succeeded"
+		s.S.UsefulErrorMessage = ""
 	}
 
 	s.UpdateFunc(s.S)
@@ -104,4 +105,8 @@ func (s *Status) markObservedLatest(meta metav1.ObjectMeta) {
 
 func (s *Status) removeAllConditions() {
 	s.S.Conditions = nil
+}
+
+func (s *Status) SetUsefulErrorMessage(errMsg string) {
+	s.S.UsefulErrorMessage = errMsg
 }
