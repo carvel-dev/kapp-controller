@@ -6,7 +6,7 @@ package template_test
 import (
 	"fmt"
 	"io/ioutil"
-	"path"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -82,7 +82,7 @@ name: myApp
 
 	chartPath := tmpDir.Path()
 
-	err = ioutil.WriteFile(path.Join(chartPath, "Chart.yaml"), []byte(chartSpecContent), 0600)
+	err = ioutil.WriteFile(filepath.Join(chartPath, "Chart.yaml"), []byte(chartSpecContent), 0600)
 	if err != nil {
 		return nil, err
 	}
