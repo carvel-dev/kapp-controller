@@ -152,18 +152,34 @@ func Test_InstalledPackageStatus_DisplaysUsefulErrorMessage_ForDeploymentFailure
 	sas := ServiceAccounts{env.Namespace}
 	name := "instl-pkg-test-fail"
 
-	// contents of this repo (k8slt/installedpackage-fail)
-	// under test/e2e/assets/installedpackage-fail-test
 	installPkgYaml := fmt.Sprintf(`---
-apiVersion: install.package.carvel.dev/v1alpha1
-kind: PackageRepository
+apiVersion: package.carvel.dev/v1alpha1
+kind: Package
 metadata:
-  name: fail-repo
-  # cluster scoped
+  name: pkg.fail.carvel.dev.1.0.0
 spec:
-  fetch:
-    image:
-      url: k8slt/installedpackage-fail@sha256:d17671179e8304f6cb81a4e989d1724c795b506d07669cd8c375ab4e5e012d47
+  publicName: pkg.fail.carvel.dev
+  version: 1.0.0
+  displayName: "Test Package in repo"
+  description: "Package used for testing"
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v1.0.0
+      template:
+      - ytt:
+          paths:
+          - "config.yml"
+          - "values.yml"
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
+      deploy:
+      - kapp:
+          # this is done intentionally for testing
+          intoNs: does-not-exist
 ---
 apiVersion: install.package.carvel.dev/v1alpha1
 kind: InstalledPackage
@@ -204,19 +220,6 @@ stringData:
 	// Create Repo, InstalledPackage, and App from YAML
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
-	expectedStatus := v1alpha12.InstalledPackageStatus{
-		GenericStatus: v1alpha1.GenericStatus{
-			Conditions: []v1alpha1.AppCondition{{
-				Type:    v1alpha1.ReconcileFailed,
-				Status:  corev1.ConditionTrue,
-				Message: "Error (see .status.usefulErrorMessage for details)",
-			}},
-			ObservedGeneration:  1,
-			FriendlyDescription: "Reconcile failed: Error (see .status.usefulErrorMessage for details)",
-		},
-		Version: "1.0.0",
-	}
-
 	// wait for status to update for InstalledPackage
 	var cr v1alpha12.InstalledPackage
 	retryFunc := func() error {
@@ -230,16 +233,14 @@ stringData:
 			return fmt.Errorf("\nExpected useful error message to contain deploy error\nGot:\n%s", cr.Status.UsefulErrorMessage)
 		}
 
+		if !strings.Contains(cr.Status.FriendlyDescription, "Error (see .status.usefulErrorMessage for details)") {
+			return fmt.Errorf("\nExpected friendly description to contain error\nGot:\n%s", cr.Status.FriendlyDescription)
+		}
+
 		return err
 	}
 	err := retry(30*time.Second, retryFunc)
 	if err != nil {
 		t.Fatalf("Expected error from InstalledPackage %s: %v", name, err)
-	}
-	// Remove error message since asserted on already
-	cr.Status.UsefulErrorMessage = ""
-
-	if !reflect.DeepEqual(expectedStatus, cr.Status) {
-		t.Fatalf("\nStatus is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, cr.Status)
 	}
 }
