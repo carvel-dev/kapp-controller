@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	instpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reconciler"
 
 	"github.com/go-logr/logr"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -19,7 +20,8 @@ import (
 )
 
 type PackageRepositoryCR struct {
-	model *instpkgv1alpha1.PackageRepository
+	model           *instpkgv1alpha1.PackageRepository
+	unmodifiedModel *instpkgv1alpha1.PackageRepository
 
 	log    logr.Logger
 	client kcclient.Interface
@@ -28,7 +30,7 @@ type PackageRepositoryCR struct {
 func NewPkgRepositoryCR(model *instpkgv1alpha1.PackageRepository, log logr.Logger,
 	client kcclient.Interface) *PackageRepositoryCR {
 
-	return &PackageRepositoryCR{model: model, log: log, client: client}
+	return &PackageRepositoryCR{model: model, unmodifiedModel: model.DeepCopy(), log: log, client: client}
 }
 
 func (ip *PackageRepositoryCR) Reconcile() (reconcile.Result, error) {
@@ -52,7 +54,35 @@ func (ip *PackageRepositoryCR) Reconcile() (reconcile.Result, error) {
 		return reconcile.Result{Requeue: true}, err
 	}
 
-	return ip.reconcileApp(existingApp)
+	status := &reconciler.Status{
+		ip.model.Status.GenericStatus,
+		func(st kcv1alpha1.GenericStatus) { ip.model.Status.GenericStatus = st },
+	}
+
+	appStatus := reconciler.Status{S: existingApp.Status.GenericStatus}
+	ip.log.Info(fmt.Sprintf("Reconciling InstalledPackage '%s/%s'", ip.model.Namespace, ip.model.Name))
+	switch {
+	case appStatus.IsReconciling():
+		status.SetReconciling(ip.model.ObjectMeta)
+	case appStatus.IsReconcileSucceeded():
+		status.SetReconcileCompleted(nil)
+	case appStatus.IsReconcileFailed():
+		status.SetUsefulErrorMessage(existingApp.Status.UsefulErrorMessage)
+		status.SetReconcileCompleted(fmt.Errorf("Syncing packages: (see .status.usefulErrorMessage for details)"))
+	}
+
+	result, err := ip.reconcileApp(existingApp)
+	if err != nil {
+		status.SetReconcileCompleted(err)
+	}
+
+	// Always update status
+	statusErr := ip.updateStatus()
+	if statusErr != nil {
+		return reconcile.Result{Requeue: true}, statusErr
+	}
+
+	return result, err
 }
 
 func (ip *PackageRepositoryCR) createApp() (reconcile.Result, error) {
@@ -83,4 +113,14 @@ func (ip *PackageRepositoryCR) reconcileApp(existingApp *kcv1alpha1.App) (reconc
 	}
 
 	return reconcile.Result{}, nil
+}
+
+func (ip *PackageRepositoryCR) updateStatus() error {
+	if !equality.Semantic.DeepEqual(ip.unmodifiedModel.Status, ip.model.Status) {
+		_, err := ip.client.InstallV1alpha1().PackageRepositories().UpdateStatus(context.Background(), ip.model, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("Updating package repository status: %s", err)
+		}
+	}
+	return nil
 }
