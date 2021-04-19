@@ -8,7 +8,7 @@ spec:
   fetch:
   - helmChart:
       name: redis
-      version: "11.3.4"
+      version: "12.10.1"
       repository:
         url: https://charts.bitnami.com/bitnami
   template:
