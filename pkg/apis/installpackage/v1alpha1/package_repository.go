@@ -46,6 +46,5 @@ type PackageRepositoryFetch struct {
 }
 
 type PackageRepositoryStatus struct {
-	ObservedGeneration int64                   `json:"observedGeneration"`
-	Conditions         []v1alpha1.AppCondition `json:"conditions"`
+	v1alpha1.GenericStatus `json:",inline"`
 }
