@@ -9,15 +9,14 @@ import (
 	"io"
 	"io/ioutil"
 	goexec "os/exec"
-	"path"
-
-	kyaml "sigs.k8s.io/yaml"
+	"path/filepath"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	kyaml "sigs.k8s.io/yaml"
 )
 
 type HelmTemplate struct {
@@ -185,12 +184,6 @@ func (t *HelmTemplate) writeFile(dstPath, subPath string, content []byte) (strin
 	return newPath, nil
 }
 
-const helmBinaryName = "helm"
-
-// DEPRECATED
-const helm2BinaryName = "helmv2"
-const helm2ChartSpecVersion = "v1"
-
 // auxiliary struct used for Chart.yaml unmarshalling
 type chartSpec struct {
 	APIVersion string
@@ -201,15 +194,24 @@ type chartSpec struct {
 // The returned values depend on the ApiVersion property inside the Chart.yaml file.
 // apiVersion==v1 will fallback to old Helm 2 binary and command format.
 func NewHelmTemplateCmdArgs(releaseName, chartPath, namespace string) (*HelmTemplateCmdArgs, error) {
+	const (
+		helmBinaryName = "helm"
+
+		helm2BinaryName       = "helmv2" // DEPRECATED
+		helm2ChartSpecVersion = "v1"     // DEPRECATED
+	)
+
 	// Load [chartPath]/Chart.yaml and inspect apiVersion value.
-	bs, err := ioutil.ReadFile(path.Join(chartPath, "Chart.yaml"))
+	bs, err := ioutil.ReadFile(filepath.Join(chartPath, "Chart.yaml"))
 	if err != nil {
-		return nil, fmt.Errorf("helmTemplateCmdLookup: %w", err)
+		return nil, fmt.Errorf("Reading Chart.yaml: %w", err)
 	}
 
 	var chartSpec chartSpec
-	if err := kyaml.Unmarshal(bs, &chartSpec); err != nil {
-		return nil, fmt.Errorf("helmTemplateCmdLookup: %w", err)
+
+	err = kyaml.Unmarshal(bs, &chartSpec)
+	if err != nil {
+		return nil, fmt.Errorf("Unmarshaling Chart.yaml: %w", err)
 	}
 
 	// By default, use Helm 3+ format except for chart.apiSpec=v1
