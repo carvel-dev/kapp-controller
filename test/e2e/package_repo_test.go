@@ -5,14 +5,143 @@ package e2e
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/ghodss/yaml"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
+	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // TODO: Right now the implementation of the package repo reconciler needs improvement
 // hopefully after which, these tests can be cleaned up to remove retries and time related
 // falkeyness
+
+func Test_PackageRepoStatus_Failing(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+	name := "repo"
+
+	repoYaml := `apiVersion: install.package.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: test-repo
+spec:
+  fetch:
+    imgpkgBundle:
+      image: k8slt/i-dont-exist`
+
+	expectedStatus := v1alpha1.PackageRepositoryStatus{
+		GenericStatus: kcv1alpha1.GenericStatus{
+			Conditions: []kcv1alpha1.AppCondition{{
+				Type:    kcv1alpha1.ReconcileFailed,
+				Status:  corev1.ConditionTrue,
+				Message: "Syncing packages: (see .status.usefulErrorMessage for details)",
+			}},
+			ObservedGeneration:  1,
+			FriendlyDescription: "Reconcile failed: Syncing packages: (see .status.usefulErrorMessage for details)",
+			UsefulErrorMessage:  "Error: Syncing directory '0': Syncing directory '.' with imgpkgBundle contents: Imgpkg: exit status 1 (stderr: Error: Checking if image is bundle: Collecting images: Working with index.docker.io/k8slt/i-dont-exist:latest: GET https://index.docker.io/v2/k8slt/i-dont-exist/manifests/latest: UNAUTHORIZED: authentication required; [map[Action:pull Class: Name:k8slt/i-dont-exist Type:repository]]\n)\n",
+		},
+	}
+
+	// deploy failing repo
+	logger.Section("deploy failing repo", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{StdinReader: strings.NewReader(repoYaml)})
+	})
+
+	retryFunc := func() error {
+		// fetch repo
+		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=PackageRepository"})
+
+		var cr v1alpha1.PackageRepository
+		err := yaml.Unmarshal([]byte(out), &cr)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal: %s", err)
+		}
+
+		// assert on expectedStatus
+		if !reflect.DeepEqual(expectedStatus, cr.Status) {
+			return fmt.Errorf("\nstatus is not same:\nExpected:\n%#v\nGot:\n%#v", expectedStatus, cr.Status)
+		}
+		return nil
+	}
+
+	err := retry(30*time.Second, retryFunc)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+}
+
+func Test_PackageRepoStatus_Success(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+	name := "test-repo-status-success"
+
+	repoYml := `---
+apiVersion: install.package.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: basic.test.carvel.dev
+  # cluster scoped
+spec:
+  fetch:
+    imgpkgBundle:
+      image: k8slt/kappctrl-e2e-repo-bundle`
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{StdinReader: strings.NewReader(repoYml)})
+	})
+
+	expectedStatus := v1alpha1.PackageRepositoryStatus{
+		GenericStatus: kcv1alpha1.GenericStatus{
+			Conditions: []kcv1alpha1.AppCondition{{
+				Type:    kcv1alpha1.ReconcileSucceeded,
+				Status:  corev1.ConditionTrue,
+				Message: "",
+			}},
+			ObservedGeneration:  1,
+			FriendlyDescription: "Reconcile succeeded",
+			UsefulErrorMessage:  "",
+		},
+	}
+
+	retryFunc := func() error {
+		// fetch repo
+		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=PackageRepository"})
+
+		var cr v1alpha1.PackageRepository
+		err := yaml.Unmarshal([]byte(out), &cr)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal: %s", err)
+		}
+
+		// assert on expectedStatus
+		if !reflect.DeepEqual(expectedStatus, cr.Status) {
+			return fmt.Errorf("\nstatus is not same:\nExpected:\n%#v\nGot:\n%#v", expectedStatus, cr.Status)
+		}
+		return nil
+	}
+
+	err := retry(30*time.Second, retryFunc)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+}
 
 func Test_PackageRepoBundle_PackagesAvailable(t *testing.T) {
 	env := BuildEnv(t)

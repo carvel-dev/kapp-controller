@@ -200,6 +200,15 @@ func Run(opts Options, runLog logr.Logger) {
 			runLog.Error(err, "unable to watch *instpkgv1alpha1.PackageRepository")
 			os.Exit(1)
 		}
+
+		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
+			OwnerType:    &instpkgv1alpha1.PackageRepository{},
+			IsController: true,
+		})
+		if err != nil {
+			runLog.Error(err, "unable to watch *kcv1alpha1.App for PackageRepository")
+			os.Exit(1)
+		}
 	}
 
 	runLog.Info("starting manager")
