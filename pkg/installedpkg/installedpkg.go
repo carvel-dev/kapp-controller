@@ -91,7 +91,8 @@ func (ip *InstalledPackageCR) reconcile(modelStatus *reconciler.Status) (reconci
 	case appStatus.IsReconcileSucceeded():
 		modelStatus.SetReconcileCompleted(nil)
 	case appStatus.IsReconcileFailed():
-		modelStatus.SetReconcileCompleted(fmt.Errorf("App failed reconciling"))
+		modelStatus.SetUsefulErrorMessage(existingApp.Status.UsefulErrorMessage)
+		modelStatus.SetReconcileCompleted(fmt.Errorf("Error (see .status.usefulErrorMessage for details)"))
 	}
 
 	return ip.reconcileAppWithPackage(existingApp, pkg)

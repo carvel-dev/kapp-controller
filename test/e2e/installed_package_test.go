@@ -8,6 +8,9 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
+
+	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 
 	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -23,7 +26,7 @@ func Test_PackageInstalled_FromInstalledPackage_Successfully(t *testing.T) {
 	sas := ServiceAccounts{env.Namespace}
 	name := "instl-pkg-test"
 
-	// contents of this bundle (k8slt/k8slt/kappctrl-e2e-repo-bundle)
+	// contents of this bundle (k8slt/kappctrl-e2e-repo)
 	// under examples/packaging-demo
 	installPkgYaml := fmt.Sprintf(`---
 apiVersion: install.package.carvel.dev/v1alpha1
@@ -34,7 +37,7 @@ metadata:
 spec:
   fetch:
     image:
-      url: k8slt/kappctrl-e2e-repo
+      url: k8slt/kappctrl-e2e-repo@sha256:c3e68921d828cf30c9dfc22d5d0691dc2558b6243b51824883d4068669fece67
 ---
 apiVersion: install.package.carvel.dev/v1alpha1
 kind: InstalledPackage
@@ -64,10 +67,8 @@ stringData:
 `, name, env.Namespace) + sas.ForNamespaceYAML()
 
 	cleanUp := func() {
-		// Delete App with kubectl since kapp doesn't
-		// know of App that is created by kapp-controller.
-		// AllowError = true since kubectl errors if it can't
-		// find resource to delete.
+		// Delete App with kubectl first since kapp
+		// deletes ServiceAccount before App
 		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, RunOpts{AllowError: true})
 		kapp.Run([]string{"delete", "-a", name})
 	}
@@ -143,3 +144,103 @@ stringData:
 	}
 }
 
+func Test_InstalledPackageStatus_DisplaysUsefulErrorMessage_ForDeploymentFailure(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+	sas := ServiceAccounts{env.Namespace}
+	name := "instl-pkg-test-fail"
+
+	installPkgYaml := fmt.Sprintf(`---
+apiVersion: package.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg.fail.carvel.dev.1.0.0
+spec:
+  publicName: pkg.fail.carvel.dev
+  version: 1.0.0
+  displayName: "Test Package in repo"
+  description: "Package used for testing"
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v1.0.0
+      template:
+      - ytt:
+          paths:
+          - "config.yml"
+          - "values.yml"
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
+      deploy:
+      - kapp:
+          # this is done intentionally for testing
+          intoNs: does-not-exist
+---
+apiVersion: install.package.carvel.dev/v1alpha1
+kind: InstalledPackage
+metadata:
+  name: %s
+  namespace: %s
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/installedpackages
+spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
+  packageRef:
+    publicName: pkg.fail.carvel.dev
+    version: 1.0.0
+  values:
+  - secretRef:
+      name: pkg-demo-values
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pkg-demo-values
+stringData:
+  values.yml: |
+    #@data/values
+    ---
+    hello_msg: "hi"
+`, name, env.Namespace) + sas.ForNamespaceYAML()
+
+	cleanUp := func() {
+		// Delete App with kubectl first since kapp
+		// deletes ServiceAccount before App
+		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", name})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	// Create Repo, InstalledPackage, and App from YAML
+	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+
+	// wait for status to update for InstalledPackage
+	var cr v1alpha12.InstalledPackage
+	retryFunc := func() error {
+		out := kubectl.Run([]string{"get", fmt.Sprintf("ipkg/%s", name), "-o", "yaml"})
+		err := yaml.Unmarshal([]byte(out), &cr)
+		if err != nil {
+			return fmt.Errorf("Failed to unmarshal: %s", err)
+		}
+
+		if !strings.Contains(cr.Status.UsefulErrorMessage, "kapp: Error") {
+			return fmt.Errorf("\nExpected useful error message to contain deploy error\nGot:\n%s", cr.Status.UsefulErrorMessage)
+		}
+
+		if !strings.Contains(cr.Status.FriendlyDescription, "Error (see .status.usefulErrorMessage for details)") {
+			return fmt.Errorf("\nExpected friendly description to contain error\nGot:\n%s", cr.Status.FriendlyDescription)
+		}
+
+		return err
+	}
+	err := retry(30*time.Second, retryFunc)
+	if err != nil {
+		t.Fatalf("Expected error from InstalledPackage %s: %v", name, err)
+	}
+}
