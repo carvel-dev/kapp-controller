@@ -77,8 +77,9 @@ type AppStatus struct {
 	ObservedGeneration int64          `json:"observedGeneration"`
 	Conditions         []AppCondition `json:"conditions"`
 
-	FriendlyDescription string `json:"friendlyDescription"`
-	UsefulErrorMessage  string `json:"usefulErrorMessage"`
+	FriendlyDescription  string `json:"friendlyDescription"`
+	UsefulErrorMessage   string `json:"usefulErrorMessage"`
+	HasDeployedResources bool
 }
 
 type AppStatusFetch struct {

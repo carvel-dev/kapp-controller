@@ -1,9 +1,10 @@
- // Copyright 2020 VMware, Inc.
- // SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
 
 package e2e
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -42,7 +43,7 @@ spec:
   - ytt: {}
   deploy:
   - kapp: {}
-`+sas.ForNamespaceYAML()
+` + sas.ForNamespaceYAML()
 
 	yaml2 := `
 ---
@@ -68,7 +69,7 @@ spec:
   - ytt: {}
   deploy:
   - kapp: {}
-`+sas.ForNamespaceYAML()
+` + sas.ForNamespaceYAML()
 
 	name := "test-service-account-not-allowed"
 	cleanUp := func() {
@@ -108,5 +109,57 @@ spec:
 	logger.Section("deploy allowed resources", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+	})
+}
+
+func Test_AppDeletes_WhenServiceAccountDoesNotExist_AndNoAppResourcesDeployed(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+
+	name := "test-sa-not-exist"
+	appYamlNoSA := fmt.Sprintf(`
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: %s
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
+spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
+  fetch:
+  - inline:
+      paths:
+        config.yml: |
+          kind: ConfigMap
+          apiVersion: v1
+          metadata:
+            name: test-no-sa
+  template:
+  - ytt: {}
+  deploy:
+  - kapp: {}
+`, name)
+
+	cleanUp := func() {
+		// Since no error is expected, this serves
+		// as final assertion for test
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy App with non-existent serviceaccount", func() {
+		stdout, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(appYamlNoSA), AllowError: true})
+		if err == nil {
+			t.Fatalf("Expected err, but was nil.\nStdout: %s", stdout)
+		}
+
+		if !strings.Contains(err.Error(), "Preparing kapp: Getting service account: serviceaccounts \"kappctrl-e2e-ns-sa\" not found") {
+			t.Fatalf("Expected err to contain service account failure, but was: %s", err)
+		}
 	})
 }

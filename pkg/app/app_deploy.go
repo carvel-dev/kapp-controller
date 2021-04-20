@@ -5,6 +5,7 @@ package app
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	ctldep "github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
@@ -63,6 +64,10 @@ func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 
 				kapp, err := a.newKapp(*dep.Kapp, cancelCh)
 				if err != nil {
+					if strings.Contains(err.Error(), "Getting service account") && !a.app.Status.HasDeployedResources {
+						err = a.unblockDeletion()
+					}
+
 					return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 				}
 

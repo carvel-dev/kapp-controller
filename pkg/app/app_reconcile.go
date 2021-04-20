@@ -5,6 +5,7 @@ package app
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -160,6 +161,10 @@ func (a *App) updateLastDeploy(result exec.CmdRunResult) exec.CmdRunResult {
 		Error:     result.ErrorStr(),
 		StartedAt: a.app.Status.Deploy.StartedAt,
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
+	}
+
+	if strings.Contains(a.app.Status.Deploy.Stdout, "ok: reconcile") {
+		a.app.Status.HasDeployedResources = true
 	}
 
 	a.updateStatus("marking last deploy")
