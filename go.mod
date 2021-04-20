@@ -9,7 +9,7 @@ require (
 	github.com/google/go-containerregistry v0.1.2
 	github.com/prometheus/common v0.6.0 // indirect
 	github.com/prometheus/procfs v0.0.3 // indirect
-	github.com/vmware-tanzu/carvel-vendir v0.18.0
+	github.com/vmware-tanzu/carvel-vendir v0.19.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	k8s.io/api v0.17.4
 	k8s.io/apimachinery v0.17.4
