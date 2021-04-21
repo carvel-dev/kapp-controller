@@ -6,6 +6,7 @@ package deploy
 import (
 	"fmt"
 
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/customerrors"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -30,7 +31,8 @@ func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
 	case len(saName) > 0:
 		genericOpts, err = f.serviceAccounts.Find(genericOpts, saName)
 		if err != nil {
-			return nil, err
+			saErr := customerrors.NewServiceAccountError(err.Error(), customerrors.ServiceAccountNotFound)
+			return nil, saErr
 		}
 
 	case clusterOpts != nil:

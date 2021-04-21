@@ -116,6 +116,8 @@ func Test_AppDeletes_WhenServiceAccountDoesNotExist_AndNoAppResourcesDeployed(t 
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+	sas := ServiceAccounts{env.Namespace}
 
 	name := "test-sa-not-exist"
 	appYamlNoSA := fmt.Sprintf(`
@@ -142,13 +144,14 @@ spec:
   - kapp: {}
 `, name)
 
+	kapp.Run([]string{"delete", "-a", name})
 	cleanUp := func() {
-		// Since no error is expected, this serves
-		// as final assertion for test
+		// We need to create ServiceAccount if test fails
+		// to assure environment is clean
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(appYamlNoSA + sas.ForNamespaceYAML())})
 		kapp.Run([]string{"delete", "-a", name})
 	}
-
-	cleanUp()
 	defer cleanUp()
 
 	logger.Section("deploy App with non-existent serviceaccount", func() {
@@ -161,5 +164,12 @@ spec:
 		if !strings.Contains(err.Error(), "Preparing kapp: Getting service account: serviceaccounts \"kappctrl-e2e-ns-sa\" not found") {
 			t.Fatalf("Expected err to contain service account failure, but was: %s", err)
 		}
+	})
+
+	logger.Section("delete App", func() {
+		// If a failure occurs with this test, the App will probably
+		// not delete so need to use kubectl delete --timeout to make
+		// sure test ends with failure
+		kubectl.Run([]string{"delete", "apps/" + name, "--timeout", "30s"})
 	})
 }

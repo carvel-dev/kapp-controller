@@ -5,9 +5,9 @@ package app
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/customerrors"
 	ctldep "github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
@@ -64,8 +64,10 @@ func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 
 				kapp, err := a.newKapp(*dep.Kapp, cancelCh)
 				if err != nil {
-					if strings.Contains(err.Error(), "Getting service account") && !a.app.Status.HasDeployedResources {
-						err = a.unblockDeletion()
+					if saErr, ok := err.(*customerrors.ServiceAccountError); ok {
+						if saErr.Kind() == customerrors.ServiceAccountNotFound && !a.app.Status.HasDeployedResources {
+							err = a.unblockDeletion()
+						}
 					}
 
 					return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
