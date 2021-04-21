@@ -222,7 +222,7 @@ stringData:
 
 	// wait for status to update for InstalledPackage
 	var cr v1alpha12.InstalledPackage
-	retryFunc := func() error {
+	retry(t, 30*time.Second, func() error {
 		out := kubectl.Run([]string{"get", fmt.Sprintf("ipkg/%s", name), "-o", "yaml"})
 		err := yaml.Unmarshal([]byte(out), &cr)
 		if err != nil {
@@ -238,9 +238,5 @@ stringData:
 		}
 
 		return err
-	}
-	err := retry(30*time.Second, retryFunc)
-	if err != nil {
-		t.Fatalf("Expected error from InstalledPackage %s: %v", name, err)
-	}
+	})
 }
