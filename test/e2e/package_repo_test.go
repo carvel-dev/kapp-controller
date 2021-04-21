@@ -54,7 +54,7 @@ spec:
 			RunOpts{StdinReader: strings.NewReader(repoYaml)})
 	})
 
-	retryFunc := func() error {
+	retry(t, 30*time.Second, func() error {
 		// fetch repo
 		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=PackageRepository"})
 
@@ -69,13 +69,7 @@ spec:
 			return fmt.Errorf("\nstatus is not same:\nExpected:\n%#v\nGot:\n%#v", expectedStatus, cr.Status)
 		}
 		return nil
-	}
-
-	err := retry(30*time.Second, retryFunc)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
+	})
 }
 
 func Test_PackageRepoStatus_Success(t *testing.T) {
@@ -120,7 +114,7 @@ spec:
 		},
 	}
 
-	retryFunc := func() error {
+	retry(t, 30*time.Second, func() error {
 		// fetch repo
 		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=PackageRepository"})
 
@@ -135,12 +129,7 @@ spec:
 			return fmt.Errorf("\nstatus is not same:\nExpected:\n%#v\nGot:\n%#v", expectedStatus, cr.Status)
 		}
 		return nil
-	}
-
-	err := retry(30*time.Second, retryFunc)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
+	})
 }
 
 func Test_PackageRepoBundle_PackagesAvailable(t *testing.T) {
@@ -167,22 +156,17 @@ spec:
 
 	kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(yamlRepo)})
 
-	retryFunc := func() error {
+	retry(t, 10*time.Second, func() error {
 		_, err := kubectl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"}, RunOpts{NoNamespace: true, AllowError: true})
 		if err != nil {
-			return err
+			return fmt.Errorf("Expected to find pkgs (pkg.test.carvel.dev.1.0.0, pkg.test.carvel.dev.2.0.0) but couldn't: %v", err)
 		}
 		_, err = kubectl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"}, RunOpts{NoNamespace: true, AllowError: true})
 		if err != nil {
-			return err
+			return fmt.Errorf("Expected to find pkgs (pkg.test.carvel.dev.1.0.0, pkg.test.carvel.dev.2.0.0) but couldn't: %v", err)
 		}
 		return nil
-	}
-
-	err := retry(10*time.Second, retryFunc)
-	if err != nil {
-		t.Fatalf("Expected to find pkgs (pkg.test.carvel.dev.1.0.0, pkg.test.carvel.dev.2.0.0) but couldn't: %v", err)
-	}
+	})
 }
 
 func Test_PackageRepoDelete(t *testing.T) {
@@ -217,22 +201,18 @@ spec:
 	})
 
 	logger.Section("check packages exist", func() {
-		err := retry(20*time.Second, func() error {
+		retry(t, 20*time.Second, func() error {
 			_, err := kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
 			if err != nil {
-				return err
+				return fmt.Errorf("Expected to find package pkg.test.carvel.dev.1.0.0: %v", err)
 			}
 
 			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
 			if err != nil {
-				return err
+				return fmt.Errorf("Expected to find package pkg.test.carvel.dev.2.0.0: %v", err)
 			}
 			return nil
 		})
-
-		if err != nil {
-			t.Fatalf("Expected to find pkgs '%s' but couldn't: %v", strings.Join(packageNames, ", "), err)
-		}
 	})
 
 	logger.Section("delete repo", func() {
@@ -240,34 +220,31 @@ spec:
 	})
 
 	logger.Section("check packages are deleted too", func() {
-		err := retry(10*time.Second, func() error {
+		retry(t, 10*time.Second, func() error {
 			_, err := kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
 			if err == nil || !strings.Contains(err.Error(), "\"pkg.test.carvel.dev.1.0.0\" not found") {
-				return fmt.Errorf("found package pkg.test.carvel.dev.1.0.0")
+				return fmt.Errorf("Expected not to find package pkg.test.carvel.dev.1.0.0, but did")
 			}
 
 			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
 			if err == nil || !strings.Contains(err.Error(), "\"pkg.test.carvel.dev.2.0.0\" not found") {
-				return fmt.Errorf("found package pkg.test.carvel.dev.2.0.0")
+				return fmt.Errorf("Expected no to find package pkg.test.carvel.dev.2.0.0, but did")
 			}
 			return nil
 		})
-		if err != nil {
-			t.Fatalf("Expected not to find pkgs '%s' but %s", strings.Join(packageNames, ", "), err)
-		}
 	})
 }
 
-func retry(timeout time.Duration, f func() error) error {
+func retry(t *testing.T, timeout time.Duration, f func() error) {
 	var err error
 	stopTime := time.Now().Add(timeout)
 	for {
 		err = f()
 		if err == nil {
-			return nil
+			return
 		}
 		if time.Now().After(stopTime) {
-			return fmt.Errorf("retry timed out after %s: %v", timeout.String(), err)
+			t.Fatalf("retry timed out after %s: %v", timeout.String(), err)
 		}
 		time.Sleep(1 * time.Second)
 	}
