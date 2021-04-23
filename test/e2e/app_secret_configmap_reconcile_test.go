@@ -94,7 +94,7 @@ stringData:
 	})
 
 	logger.Section("check App uses new secret", func() {
-		err := retry(10*time.Second, func() error {
+		retry(t, 10*time.Second, func() error {
 			out := kubectl.Run([]string{"get", "configmap/configmap", "-o", "yaml"})
 
 			var cm corev1.ConfigMap
@@ -108,9 +108,6 @@ stringData:
 			}
 			return nil
 		})
-		if err != nil {
-			t.Fatalf("%s", err.Error())
-		}
 	})
 }
 
@@ -195,7 +192,7 @@ data:
 	})
 
 	logger.Section("check App uses new configmap", func() {
-		err := retry(10*time.Second, func() error {
+		retry(t, 10*time.Second, func() error {
 			out := kubectl.Run([]string{"get", "configmap/configmap", "-o", "yaml"})
 
 			var cm corev1.ConfigMap
@@ -209,23 +206,5 @@ data:
 			}
 			return nil
 		})
-		if err != nil {
-			t.Fatalf("%s", err.Error())
-		}
 	})
-}
-
-func retry(timeout time.Duration, f func() error) error {
-	var err error
-	stopTime := time.Now().Add(timeout)
-	for {
-		err = f()
-		if err == nil {
-			return nil
-		}
-		if time.Now().After(stopTime) {
-			return fmt.Errorf("retry timed out after %s: %v", timeout.String(), err)
-		}
-		time.Sleep(1 * time.Second)
-	}
 }

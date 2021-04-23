@@ -4,6 +4,7 @@
 package controller
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -18,10 +19,10 @@ type ErrReconciler struct {
 
 var _ reconcile.Reconciler = &ErrReconciler{}
 
-func (r *ErrReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ErrReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
-	res, err := r.delegate.Reconcile(request)
+	res, err := r.delegate.Reconcile(ctx, request)
 
 	switch {
 	// Check before error check, since error check does not queue immediately
