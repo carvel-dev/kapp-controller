@@ -1,0 +1,36 @@
+---
+apiVersion: install.package.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: basic.test.carvel.dev
+  # cluster scoped
+spec:
+  fetch:
+    git:
+      url: https://github.com/vmware-tanzu/carvel-kapp-controller
+      ref: origin/pkg-poc
+      subPath: examples/pkgrepository
+---
+apiVersion: install.package.carvel.dev/v1alpha1
+kind: InstalledPackage
+metadata:
+  name: installed-pkg-test-in-repo
+  namespace: default
+spec:
+  serviceAccountName: default-ns-sa
+  pkgRef:
+    publicName: pkg2.test.carvel.dev
+    version: v2.0
+  values:
+  - secretRef:
+      name: installed-pkg-test-in-repo-values
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: installed-pkg-test-in-repo-values
+stringData:
+  values.yml: |
+    #@data/values
+    ---
+    hello_msg: "hi"

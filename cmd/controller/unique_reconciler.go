@@ -4,6 +4,7 @@
 package controller
 
 import (
+	"context"
 	"sync"
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -33,11 +34,11 @@ func NewUniqueReconciler(delegate reconcile.Reconciler) *UniqueReconciler {
 	}
 }
 
-func (r *UniqueReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *UniqueReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	resKey := request.NamespacedName.String()
 
 	if r.shouldReconcileAndMarkOngoing(resKey) {
-		res, err := r.delegate.Reconcile(request)
+		res, err := r.delegate.Reconcile(ctx, request)
 
 		// If there are any pending "reconciliation requests", reconcile immediately
 		if r.isPendingAndUnmark(resKey) {

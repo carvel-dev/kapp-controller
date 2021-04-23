@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	Version = "0.19.0"
+	Version = "0.19.0-alpha.5"
 )
 
 func main() {
@@ -32,7 +32,7 @@ func main() {
 
 	log := logf.Log.WithName("kc")
 
-	logf.SetLogger(zap.Logger(false))
+	logf.SetLogger(zap.New(zap.UseDevMode(false)))
 
 	mainLog := log.WithName("main")
 	mainLog.Info("kapp-controller", "version", Version)

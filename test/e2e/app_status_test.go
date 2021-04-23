@@ -68,15 +68,20 @@ spec:
 	}
 
 	expectedStatus := v1alpha1.AppStatus{
-		Conditions: []v1alpha1.AppCondition{{
-			Type:   v1alpha1.ReconcileFailed,
-			Status: corev1.ConditionTrue,
-			Message: "Deploying: Error (see .status.usefulErrorMessage for details)",
-		}},
+		GenericStatus: v1alpha1.GenericStatus{
+			Conditions: []v1alpha1.AppCondition{{
+				Type:    v1alpha1.ReconcileFailed,
+				Status:  corev1.ConditionTrue,
+				Message: "Deploying: Error (see .status.usefulErrorMessage for details)",
+			}},
+			ObservedGeneration:  1,
+			FriendlyDescription: "Reconcile failed: Deploying: Error (see .status.usefulErrorMessage for details)",
+			UsefulErrorMessage:  "kapp: Error: Checking existance of resource configmap/configmap (v1) namespace: does-not-exist: configmaps \"configmap\" is forbidden:\n  User \"system:serviceaccount:" + env.Namespace + ":kappctrl-e2e-ns-sa\" cannot get resource \"configmaps\" in API group \"\" in the namespace \"does-not-exist\" (reason: Forbidden)",
+		},
 		Deploy: &v1alpha1.AppStatusDeploy{
 			ExitCode: 1,
 			Finished: true,
-			Error: "Deploying: Error (see .status.usefulErrorMessage for details)",
+			Error:    "Deploying: Error (see .status.usefulErrorMessage for details)",
 		},
 		Fetch: &v1alpha1.AppStatusFetch{
 			ExitCode: 0,
@@ -89,9 +94,6 @@ spec:
 		},
 		ConsecutiveReconcileSuccesses: 0,
 		ConsecutiveReconcileFailures:  1,
-		ObservedGeneration:            1,
-		FriendlyDescription:           "Reconcile failed: Deploying: Error (see .status.usefulErrorMessage for details)",
-		UsefulErrorMessage:            "kapp: Error: Checking existance of resource configmap/configmap (v1) namespace: does-not-exist: configmaps \"configmap\" is forbidden:\n  User \"system:serviceaccount:" + env.Namespace + ":kappctrl-e2e-ns-sa\" cannot get resource \"configmaps\" in API group \"\" in the namespace \"does-not-exist\" (reason: Forbidden)",
 	}
 
 	{

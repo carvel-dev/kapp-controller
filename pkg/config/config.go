@@ -4,6 +4,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -43,7 +44,7 @@ func GetConfig(client kubernetes.Interface) (*Config, error) {
 		return nil, fmt.Errorf("Getting namespace: %s", err)
 	}
 
-	configMap, err := client.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
+	configMap, err := client.CoreV1().ConfigMaps(namespace).Get(context.Background(), configMapName, metav1.GetOptions{})
 
 	if errors.IsNotFound(err) {
 		return &Config{}, nil

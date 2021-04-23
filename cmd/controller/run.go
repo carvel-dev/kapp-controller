@@ -12,9 +12,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
-	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -25,6 +23,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	instpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
+	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
+
+	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/v1alpha1"
+	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 )
 
 const (
@@ -49,7 +55,7 @@ func Run(opts Options, runLog logr.Logger) {
 		restConfig.Timeout = opts.APIRequestTimeout
 	}
 
-	mgr, err := manager.New(restConfig, manager.Options{Namespace: opts.Namespace})
+	mgr, err := manager.New(restConfig, manager.Options{Namespace: opts.Namespace, Scheme: kcconfig.Scheme})
 	if err != nil {
 		runLog.Error(err, "unable to set up overall controller manager")
 		os.Exit(1)
@@ -65,7 +71,7 @@ func Run(opts Options, runLog logr.Logger) {
 		os.Exit(1)
 	}
 
-	appClient, err := kcclient.NewForConfig(restConfig)
+	kcClient, err := kcclient.NewForConfig(restConfig)
 	if err != nil {
 		runLog.Error(err, "building app client")
 		os.Exit(1)
@@ -77,18 +83,33 @@ func Run(opts Options, runLog logr.Logger) {
 		os.Exit(1)
 	}
 
+	pkgClient, err := pkgclient.NewForConfig(restConfig)
+	if err != nil {
+		runLog.Error(err, "building app client")
+		os.Exit(1)
+	}
+
 	appFactory := AppFactory{
 		coreClient: coreClient,
-		appClient:  appClient,
 		kcConfig:   kcConfig,
+		appClient:  kcClient,
 	}
+
+	server, err := apiserver.NewAPIServer(restConfig)
+	if err != nil {
+		runLog.Error(err, "creating server")
+		os.Exit(1)
+	}
+	server.Run()
+
+	// TODO: we may need to sleep here to give the server time to start up
 
 	{ // add controller for apps
 		appRefTracker := reftracker.NewAppRefTracker()
 		appUpdateStatus := reftracker.NewAppUpdateStatus()
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
-				delegate: NewAppsReconciler(appClient, runLog.WithName("ar"), appFactory, appRefTracker, appUpdateStatus),
+				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), appFactory, appRefTracker, appUpdateStatus),
 				log:      runLog.WithName("pr"),
 			}),
 			MaxConcurrentReconciles: opts.Concurrency,
@@ -121,6 +142,75 @@ func Run(opts Options, runLog logr.Logger) {
 		}
 	}
 
+	{ // add controller for installedPkgs
+		installedPkgsCtrlOpts := controller.Options{
+			Reconciler: &InstalledPkgReconciler{
+				kcClient:  kcClient,
+				pkgClient: pkgClient,
+				log:       runLog.WithName("ipr"),
+			},
+			MaxConcurrentReconciles: opts.Concurrency,
+		}
+
+		installedPkgCtrl, err := controller.New("kapp-controller-installed-package", mgr, installedPkgsCtrlOpts)
+		if err != nil {
+			runLog.Error(err, "unable to set up kapp-controller-installed-package")
+			os.Exit(1)
+		}
+
+		err = installedPkgCtrl.Watch(&source.Kind{Type: &instpkgv1alpha1.InstalledPackage{}}, &handler.EnqueueRequestForObject{})
+		if err != nil {
+			runLog.Error(err, "unable to watch *instpkgv1alpha1.InstalledPackage")
+			os.Exit(1)
+		}
+
+		err = installedPkgCtrl.Watch(&source.Kind{Type: &pkgv1alpha1.Package{}}, handlers.NewInstalledPkgVersionHandler(kcClient, runLog.WithName("handler")))
+		if err != nil {
+			runLog.Error(err, "unable to watch *pkgv1alpha1.Package for InstalledPackage")
+			os.Exit(1)
+		}
+
+		err = installedPkgCtrl.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
+			OwnerType:    &instpkgv1alpha1.InstalledPackage{},
+			IsController: true,
+		})
+		if err != nil {
+			runLog.Error(err, "unable to watch *kcv1alpha1.App for InstalledPackage")
+			os.Exit(1)
+		}
+	}
+
+	{ // add controller for pkgrepositories
+		pkgRepositoriesCtrlOpts := controller.Options{
+			Reconciler: &PkgRepositoryReconciler{
+				client: kcClient,
+				log:    runLog.WithName("prr"),
+			},
+			MaxConcurrentReconciles: opts.Concurrency,
+		}
+
+		pkgRepositoryCtrl, err := controller.New("kapp-controller-package-repository", mgr, pkgRepositoriesCtrlOpts)
+		if err != nil {
+			runLog.Error(err, "unable to set up kapp-controller-package-repository")
+			os.Exit(1)
+		}
+
+		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &instpkgv1alpha1.PackageRepository{}}, &handler.EnqueueRequestForObject{})
+		if err != nil {
+			runLog.Error(err, "unable to watch *instpkgv1alpha1.PackageRepository")
+			os.Exit(1)
+		}
+
+		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
+			OwnerType:    &instpkgv1alpha1.PackageRepository{},
+			IsController: true,
+		})
+		if err != nil {
+			runLog.Error(err, "unable to watch *kcv1alpha1.App for PackageRepository")
+			os.Exit(1)
+		}
+	}
+
 	runLog.Info("starting manager")
 
 	if opts.EnablePprof {
@@ -136,6 +226,7 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	runLog.Info("Exiting")
+	server.Stop()
 	os.Exit(0)
 }
 

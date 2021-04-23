@@ -1,0 +1,30 @@
+---
+apiVersion: install.package.carvel.dev/v1alpha1
+kind: InstalledPackage
+metadata:
+  name: package-demo
+  namespace: default
+spec:
+  serviceAccountName: default-ns-sa
+  packageRef:
+    publicName: simple-app.corp.com
+    # Kapp controller will keep this installed package up to date with the latest
+    # available version of the packages matching the publicName. Users are also able to
+    # pin to a specific version or specify specific constraints for the selection. You can
+    # find out more in the packaging docs
+    versionSelection: {}
+  # We are going to include the values in the secret below to customize the package installation
+  # These will be included in the templating steps defined in the package
+  values:
+  - secretRef:
+      name: package-demo-values
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: package-demo-values
+stringData:
+  values.yml: |
+    #@data/values
+    ---
+    hello_msg: "hi"
