@@ -23,7 +23,7 @@ type PackageInformer interface {
 	Lister() v1alpha1.PackageLister
 }
 
-type pkgInformer struct {
+type packageInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 }
@@ -60,14 +60,14 @@ func NewFilteredPackageInformer(client versioned.Interface, resyncPeriod time.Du
 	)
 }
 
-func (f *pkgInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+func (f *packageInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
 	return NewFilteredPackageInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *pkgInformer) Informer() cache.SharedIndexInformer {
+func (f *packageInformer) Informer() cache.SharedIndexInformer {
 	return f.factory.InformerFor(&packagesv1alpha1.Package{}, f.defaultInformer)
 }
 
-func (f *pkgInformer) Lister() v1alpha1.PackageLister {
+func (f *packageInformer) Lister() v1alpha1.PackageLister {
 	return v1alpha1.NewPackageLister(f.Informer().GetIndexer())
 }

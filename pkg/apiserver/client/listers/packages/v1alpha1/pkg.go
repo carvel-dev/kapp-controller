@@ -21,18 +21,18 @@ type PackageLister interface {
 	PackageListerExpansion
 }
 
-// pkgLister implements the PackageLister interface.
-type pkgLister struct {
+// packageLister implements the PackageLister interface.
+type packageLister struct {
 	indexer cache.Indexer
 }
 
 // NewPackageLister returns a new PackageLister.
 func NewPackageLister(indexer cache.Indexer) PackageLister {
-	return &pkgLister{indexer: indexer}
+	return &packageLister{indexer: indexer}
 }
 
 // List lists all Packages in the indexer.
-func (s *pkgLister) List(selector labels.Selector) (ret []*v1alpha1.Package, err error) {
+func (s *packageLister) List(selector labels.Selector) (ret []*v1alpha1.Package, err error) {
 	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
 		ret = append(ret, m.(*v1alpha1.Package))
 	})
@@ -40,13 +40,13 @@ func (s *pkgLister) List(selector labels.Selector) (ret []*v1alpha1.Package, err
 }
 
 // Get retrieves the Package from the index for a given name.
-func (s *pkgLister) Get(name string) (*v1alpha1.Package, error) {
+func (s *packageLister) Get(name string) (*v1alpha1.Package, error) {
 	obj, exists, err := s.indexer.GetByKey(name)
 	if err != nil {
 		return nil, err
 	}
 	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("pkg"), name)
+		return nil, errors.NewNotFound(v1alpha1.Resource("package"), name)
 	}
 	return obj.(*v1alpha1.Package), nil
 }
