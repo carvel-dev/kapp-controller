@@ -1,0 +1,169 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: packagerepositories.install.package.carvel.dev
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .metadata.creationTimestamp
+    description: Time since creation
+    name: Age
+    type: date
+  group: install.package.carvel.dev
+  names:
+    kind: PackageRepository
+    listKind: PackageRepositoryList
+    plural: packagerepositories
+    shortNames:
+    - pkgr
+    singular: packagerepository
+  scope: Cluster
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          description: 'Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.'
+          type: object
+        spec:
+          properties:
+            fetch:
+              properties:
+                git:
+                  description: TODO implement git
+                  properties:
+                    lfsSkipSmudge:
+                      type: boolean
+                    ref:
+                      type: string
+                    secretRef:
+                      description: 'Secret may include one or more keys: ssh-privatekey,
+                        ssh-knownhosts'
+                      properties:
+                        name:
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
+                          type: string
+                      type: object
+                    subPath:
+                      type: string
+                    url:
+                      type: string
+                  type: object
+                http:
+                  properties:
+                    secretRef:
+                      description: 'Secret may include one or more keys: username,
+                        password'
+                      properties:
+                        name:
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
+                          type: string
+                      type: object
+                    sha256:
+                      type: string
+                    subPath:
+                      type: string
+                    url:
+                      description: 'URL can point to one of following formats: text,
+                        tgz, zip'
+                      type: string
+                  type: object
+                image:
+                  properties:
+                    secretRef:
+                      description: 'Secret may include one or more keys: username,
+                        password, token. By default anonymous access is used for authentication.
+                        TODO support docker config formated secret'
+                      properties:
+                        name:
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
+                          type: string
+                      type: object
+                    subPath:
+                      type: string
+                    url:
+                      description: 'Example: username/app1-config:v0.1.0'
+                      type: string
+                  type: object
+                imgpkgBundle:
+                  properties:
+                    image:
+                      type: string
+                    secretRef:
+                      description: 'Secret may include one or more keys: username,
+                        password, token. By default anonymous access is used for authentication.
+                        TODO support docker config formated secret'
+                      properties:
+                        name:
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
+                          type: string
+                      type: object
+                  type: object
+              type: object
+          required:
+          - fetch
+          type: object
+        status:
+          properties:
+            conditions:
+              items:
+                description: TODO rename to Condition
+                properties:
+                  message:
+                    description: Human-readable message indicating details about last
+                      transition.
+                    type: string
+                  reason:
+                    description: Unique, this should be a short, machine understandable
+                      string that gives the reason for condition's last transition.
+                      If it reports "ResizeStarted" that means the underlying persistent
+                      volume is being resized.
+                    type: string
+                  status:
+                    type: string
+                  type:
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              type: array
+            friendlyDescription:
+              type: string
+            observedGeneration:
+              format: int64
+              type: integer
+            usefulErrorMessage:
+              type: string
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
