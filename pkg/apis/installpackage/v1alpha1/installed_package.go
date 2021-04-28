@@ -19,14 +19,11 @@ import (
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
 type InstalledPackage struct {
 	metav1.TypeMeta `json:",inline"`
-
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-
 	// +optional
 	Spec InstalledPackageSpec `json:"spec,omitempty"`
-
 	// +optional
 	Status InstalledPackageStatus `json:"status,omitempty"`
 }
@@ -46,13 +43,10 @@ type InstalledPackageList struct {
 type InstalledPackageSpec struct {
 	// +optional
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
-
 	// +optional
 	Cluster *v1alpha1.AppCluster `json:"cluster,omitempty"`
-
 	// +optional
 	PkgRef *PackageRef `json:"packageRef,omitempty"`
-
 	// +optional
 	Values []InstalledPackageValues `json:"values,omitempty"`
 
@@ -62,10 +56,8 @@ type InstalledPackageSpec struct {
 type PackageRef struct {
 	// +optional
 	PublicName string `json:"publicName,omitempty"`
-
 	// +optional
 	Version string `json:"version,omitempty"`
-
 	// +optional
 	VersionSelection *versions.VersionSelectionSemver `json:"versionSelection,omitempty"`
 }
@@ -78,14 +70,13 @@ type InstalledPackageValues struct {
 type InstalledPackageValuesSecretRef struct {
 	// +optional
 	Name string `json:"name,omitempty"`
-
 	// +optional
 	Key string `json:"key,omitempty"`
 }
 
 type InstalledPackageStatus struct {
 	v1alpha1.GenericStatus `json:",inline"`
-
 	// TODO this is desired resolved version (not actually deployed)
+	// +optional
 	Version string `json:"version,omitempty"`
 }
