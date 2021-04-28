@@ -11,6 +11,9 @@ import (
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:shortName=pkgr,scope=Cluster
+// +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
 type PackageRepository struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -18,8 +21,11 @@ type PackageRepository struct {
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   PackageRepositorySpec   `json:"spec"`
-	Status PackageRepositoryStatus `json:"status"`
+	// +optional
+	Spec PackageRepositorySpec `json:"spec,omitempty"`
+
+	// +optional
+	Status PackageRepositoryStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -39,9 +45,16 @@ type PackageRepositorySpec struct {
 }
 
 type PackageRepositoryFetch struct {
-	Image        *v1alpha1.AppFetchImage        `json:"image,omitempty"`
-	HTTP         *v1alpha1.AppFetchHTTP         `json:"http,omitempty"`
-	Git          *v1alpha1.AppFetchGit          `json:"git,omitempty"`
+	// +optional
+	Image *v1alpha1.AppFetchImage `json:"image,omitempty"`
+
+	// +optional
+	HTTP *v1alpha1.AppFetchHTTP `json:"http,omitempty"`
+
+	// +optional
+	Git *v1alpha1.AppFetchGit `json:"git,omitempty"`
+
+	// +optional
 	ImgpkgBundle *v1alpha1.AppFetchImgpkgBundle `json:"imgpkgBundle,omitempty"`
 }
 
