@@ -47,13 +47,13 @@ type AppSpec struct {
 	// +optional
 	Cluster *AppCluster `json:"cluster,omitempty"`
 
-	// +kubebuilder:validation:MinItems=1
+	// +optional
 	Fetch []AppFetch `json:"fetch,omitempty"`
 
-	// +kubebuilder:validation:MinItems=1
+	// +optional
 	Template []AppTemplate `json:"template,omitempty"`
 
-	// +kubebuilder:validation:MinItems=1
+	// +optional
 	Deploy []AppDeploy `json:"deploy,omitempty"`
 
 	// Paused when set to true will ignore all pending changes,

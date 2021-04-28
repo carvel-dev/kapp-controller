@@ -95,7 +95,6 @@ spec:
                         type: array
                     type: object
                 type: object
-              minItems: 1
               type: array
             fetch:
               items:
@@ -228,7 +227,6 @@ spec:
                         type: array
                     type: object
                 type: object
-              minItems: 1
               type: array
             noopDelete:
               description: When NoopDeletion set to true, App deletion should delete
@@ -356,7 +354,6 @@ spec:
                         type: boolean
                     type: object
                 type: object
-              minItems: 1
               type: array
           type: object
         status:
