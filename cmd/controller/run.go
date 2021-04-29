@@ -100,7 +100,12 @@ func Run(opts Options, runLog logr.Logger) {
 		runLog.Error(err, "creating server")
 		os.Exit(1)
 	}
-	server.Run()
+
+	err = server.Run()
+	if err != nil {
+		runLog.Error(err, "starting server")
+		os.Exit(1)
+	}
 
 	// TODO: we may need to sleep here to give the server time to start up
 

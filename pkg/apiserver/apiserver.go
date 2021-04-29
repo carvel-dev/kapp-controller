@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/openapi"
 
@@ -29,6 +30,7 @@ import (
 
 	genericopenapi "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/klog"
+	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	aggregatorclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 )
 
@@ -65,8 +67,9 @@ func init() {
 }
 
 type APIServer struct {
-	server *genericapiserver.GenericAPIServer
-	stopCh chan struct{}
+	server    *genericapiserver.GenericAPIServer
+	stopCh    chan struct{}
+	aggClient aggregatorclient.Interface
 }
 
 func NewAPIServer(clientConfig *rest.Config) (*APIServer, error) {
@@ -102,16 +105,47 @@ func NewAPIServer(clientConfig *rest.Config) (*APIServer, error) {
 		return nil, err
 	}
 
-	return &APIServer{server, make(chan struct{})}, nil
+	return &APIServer{server, make(chan struct{}), aggClient}, nil
 }
 
 // Spawns go routine that exits when apiserver is stopped
-func (as *APIServer) Run() {
+func (as *APIServer) Run() error {
+	const (
+		retries = 30
+	)
 	go as.server.PrepareRun().Run(as.stopCh)
+
+	for i := 0; i < retries; i++ {
+		ready, err := as.isReady()
+		if err != nil {
+			return fmt.Errorf("checking readiness: %v", err)
+		}
+
+		if ready {
+			return nil
+		}
+		time.Sleep(1 * time.Second)
+	}
+	return fmt.Errorf("timed out after %s waiting for api server to become healthy", retries*time.Second)
 }
 
 func (as *APIServer) Stop() {
 	close(as.stopCh)
+}
+
+func (as *APIServer) isReady() (bool, error) {
+	apiService, err := as.aggClient.ApiregistrationV1().APIServices().Get(context.TODO(), apiServiceName, metav1.GetOptions{})
+	if err != nil {
+		return false, fmt.Errorf("error getting APIService %s: %v", apiServiceName, err)
+	}
+
+	for _, condition := range apiService.Status.Conditions {
+		if condition.Type == apiregv1.Available {
+			return condition.Status == apiregv1.ConditionTrue, nil
+		}
+	}
+
+	return false, nil
 }
 
 func newServerConfig(aggClient aggregatorclient.Interface) (*genericapiserver.RecommendedConfig, error) {
