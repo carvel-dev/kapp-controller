@@ -31,7 +31,7 @@ type AppList struct {
 	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items []App `json:"items"`
+	Items           []App `json:"items"`
 }
 
 // +k8s:openapi-gen=true

@@ -32,7 +32,7 @@ type PackageRepositoryList struct {
 	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items []PackageRepository `json:"items"`
+	Items           []PackageRepository `json:"items"`
 }
 
 type PackageRepositorySpec struct {
