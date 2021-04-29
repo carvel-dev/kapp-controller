@@ -18,8 +18,8 @@ type App struct {
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	// +optional
-	Spec AppSpec `json:"spec,omitempty"`
+
+	Spec AppSpec `json:"spec"`
 	// +optional
 	Status AppStatus `json:"status,omitempty"`
 }
@@ -31,7 +31,8 @@ type AppList struct {
 	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []App `json:"items"`
+
+	Items []App `json:"items"`
 }
 
 // +k8s:openapi-gen=true
@@ -66,15 +67,16 @@ type AppSpec struct {
 type AppCluster struct {
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
-
 	// +optional
 	KubeconfigSecretRef *AppClusterKubeconfigSecretRef `json:"kubeconfigSecretRef,omitempty"`
 }
 
 // +k8s:openapi-gen=true
 type AppClusterKubeconfigSecretRef struct {
+	// +optional
 	Name string `json:"name,omitempty"`
-	Key  string `json:"key,omitempty"`
+	// +optional
+	Key string `json:"key,omitempty"`
 }
 
 type AppStatus struct {
@@ -92,7 +94,7 @@ type AppStatus struct {
 	ConsecutiveReconcileSuccesses int `json:"consecutiveReconcileSuccesses,omitempty"`
 	// +optional
 	ConsecutiveReconcileFailures int `json:"consecutiveReconcileFailures,omitempty"`
-
+	// +optional
 	GenericStatus `json:",inline"`
 }
 
