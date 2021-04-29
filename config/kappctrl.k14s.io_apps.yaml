@@ -459,6 +459,8 @@ spec:
           - friendlyDescription
           - observedGeneration
           type: object
+      required:
+      - spec
       type: object
   version: v1alpha1
   versions:

@@ -19,8 +19,8 @@ type PackageRepository struct {
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	// +optional
-	Spec PackageRepositorySpec `json:"spec,omitempty"`
+
+	Spec PackageRepositorySpec `json:"spec"`
 	// +optional
 	Status PackageRepositoryStatus `json:"status,omitempty"`
 }
@@ -51,5 +51,6 @@ type PackageRepositoryFetch struct {
 }
 
 type PackageRepositoryStatus struct {
+	// +optional
 	v1alpha1.GenericStatus `json:",inline"`
 }

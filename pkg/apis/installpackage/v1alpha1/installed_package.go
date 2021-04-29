@@ -22,8 +22,8 @@ type InstalledPackage struct {
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	// +optional
-	Spec InstalledPackageSpec `json:"spec,omitempty"`
+
+	Spec InstalledPackageSpec `json:"spec"`
 	// +optional
 	Status InstalledPackageStatus `json:"status,omitempty"`
 }
@@ -75,6 +75,7 @@ type InstalledPackageValuesSecretRef struct {
 }
 
 type InstalledPackageStatus struct {
+	// +optional
 	v1alpha1.GenericStatus `json:",inline"`
 	// TODO this is desired resolved version (not actually deployed)
 	// +optional
