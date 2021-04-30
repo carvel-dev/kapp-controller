@@ -260,7 +260,9 @@ func (r *CRDREST) packageToInternalPackage(pkg *packages.Package) *installv1alph
 }
 
 func (r *CRDREST) translate(evt watch.Event) watch.Event {
-	intpkg := evt.Object.(*installv1alpha1.InternalPackage)
-	evt.Object = r.internalPackageToPackage(intpkg)
+	if evt.Object != nil {
+		intpkg := evt.Object.(*installv1alpha1.InternalPackage)
+		evt.Object = r.internalPackageToPackage(intpkg)
+	}
 	return evt
 }
