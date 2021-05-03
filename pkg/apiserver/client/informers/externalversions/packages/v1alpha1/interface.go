@@ -25,5 +25,5 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 
 // Packages returns a PackageInformer.
 func (v *version) Packages() PackageInformer {
-	return &pkgInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+	return &packageInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }

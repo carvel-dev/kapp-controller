@@ -186,6 +186,10 @@ spec:
 		// To avoid the complexity associated with preloading our deployed registry with an image, and because
 		// imgpkg will fall back to http to pull the image if https fails, this explicitly expects an error and
 		// asserts the error message is due to a manifest unknown error and not TLS verification.
+		if cr.Status.Fetch == nil {
+			t.Fatalf("Expected status to have fetch stage, it did not")
+		}
+
 		if cr.Status.Fetch.ExitCode != 1 {
 			t.Fatalf("Expected fetch stage to fail, it did not")
 		}

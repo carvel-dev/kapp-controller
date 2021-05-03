@@ -38,11 +38,26 @@ type PackageSpec struct {
 	PublicName string `json:"publicName,omitempty"`
 	Version    string `json:"version,omitempty"`
 
-	DisplayName string `json:"displayName,omitempty"`
-	Description string `json:"description,omitempty"`
+	DisplayName                     string       `json:"displayName,omitempty"`
+	LongDescription                 string       `json:"longDescription,omitempty"`
+	ShortDescription                string       `json:"shortDescription,omitempty"`
+	IconSVGBase64                   string       `json:"iconSVGBase64,omitempty"`
+	ProviderName                    string       `json:"providerName,omitempty"`
+	Maintainers                     []Maintainer `json:"maintainers,omitempty"`
+	ReleaseNotes                    string       `json:"releaseNotes,omitempty"`
+	Categories                      []string     `json:"categories,omitempty"`
+	SupportDescription              string       `json:"supportDescription,omitempty"`
+	CapactiyRequirementsDescription string       `json:"capacityRequirementsDescription,omitempty"`
+	Licenses                        []string     `json:"licenses,omitempty"`
+
+	ReleasedAt string `json:"releasedAt,omitempty"`
 
 	Template AppTemplateSpec `json:"template,omitempty"`
 	// TODO ValuesSchema
+}
+
+type Maintainer struct {
+	Name string `json:"name,omitempty"`
 }
 
 type AppTemplateSpec struct {
