@@ -3,6 +3,9 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: (devel)
+  creationTimestamp: null
   name: installedpackages.install.package.carvel.dev
 spec:
   additionalPrinterColumns:
@@ -47,6 +50,9 @@ spec:
             object represents. Servers may infer this from the endpoint the client
             submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
+        metadata:
+          description: 'Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.'
+          type: object
         spec:
           properties:
             cluster:
@@ -143,3 +149,9 @@ spec:
   - name: v1alpha1
     served: true
     storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
