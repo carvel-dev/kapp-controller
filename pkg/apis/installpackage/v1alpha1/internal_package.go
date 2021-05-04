@@ -11,7 +11,18 @@ import (
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type InternalPackage packages.Package
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
+type InternalPackage struct {
+	metav1.TypeMeta `json:",inline"`
+	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec packages.PackageSpec `json:"spec"`
+	// +optional
+	Status packages.PackageStatus `json:"status,omitempty"`
+}
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type InternalPackageList struct {

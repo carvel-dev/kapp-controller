@@ -1,5 +1,5 @@
 #@ load("@ytt:overlay", "overlay")
-#@ names = ["installedpackages.install.package.carvel.dev","packagerepositories.install.package.carvel.dev","apps.kappctrl.k14s.io"]
+#@ names = ["installedpackages.install.package.carvel.dev","packagerepositories.install.package.carvel.dev","apps.kappctrl.k14s.io","internalpackages.install.package.carvel.dev"]
 #@ for name in names:
 #@overlay/match by=overlay.subset({"metadata":{"name": name}})
 ---
