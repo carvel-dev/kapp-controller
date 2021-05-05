@@ -64,7 +64,13 @@ func (r *CRDREST) Create(ctx context.Context, obj runtime.Object, createValidati
 
 	pkg := obj.(*packages.Package)
 	intpkg := r.packageToInternalPackage(pkg)
-	intpkg, err := r.crdClient.InstallV1alpha1().InternalPackages().Create(ctx, intpkg, *options)
+
+	err := intpkg.ValidatePackageName()
+	if err != nil {
+		return nil, err
+	}
+
+	intpkg, err = r.crdClient.InstallV1alpha1().InternalPackages().Create(ctx, intpkg, *options)
 	return r.internalPackageToPackage(intpkg), err
 }
 

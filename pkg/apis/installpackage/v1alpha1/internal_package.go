@@ -4,6 +4,9 @@
 package v1alpha1
 
 import (
+	"fmt"
+	"regexp"
+
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -23,4 +26,13 @@ type InternalPackageList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []InternalPackage `json:"items"`
+}
+
+func (ip InternalPackage) ValidatePackageName() error {
+	const pkgNameRegex = ".*\\..*\\..*"
+	reg := regexp.MustCompile(pkgNameRegex)
+	if !reg.MatchString(ip.Name) {
+		return fmt.Errorf("package name requires at least two periods. Recommended package naming convention is publicName.packageRepo.version")
+	}
+	return nil
 }
