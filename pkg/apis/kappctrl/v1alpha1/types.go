@@ -9,21 +9,24 @@ import (
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
+// +kubebuilder:printcolumn:name=Since-Deploy,JSONPath=.status.deploy.startedAt,description=Last time app started being deployed. Does not mean anything was changed.,type=date
+// +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
 type App struct {
 	metav1.TypeMeta `json:",inline"`
-
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AppSpec   `json:"spec"`
-	Status AppStatus `json:"status"`
+	Spec AppSpec `json:"spec"`
+	// +optional
+	Status AppStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type AppList struct {
 	metav1.TypeMeta `json:",inline"`
-
 	// Standard list metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
 	// +optional
@@ -34,81 +37,119 @@ type AppList struct {
 
 // +k8s:openapi-gen=true
 type AppSpec struct {
-	ServiceAccountName string      `json:"serviceAccountName,omitempty"`
-	Cluster            *AppCluster `json:"cluster,omitempty"`
-
-	Fetch    []AppFetch    `json:"fetch,omitempty"`
+	// +optional
+	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+	// +optional
+	Cluster *AppCluster `json:"cluster,omitempty"`
+	// +optional
+	Fetch []AppFetch `json:"fetch,omitempty"`
+	// +optional
 	Template []AppTemplate `json:"template,omitempty"`
-	Deploy   []AppDeploy   `json:"deploy,omitempty"`
-
+	// +optional
+	Deploy []AppDeploy `json:"deploy,omitempty"`
 	// Paused when set to true will ignore all pending changes,
 	// once it set back to false, pending changes will be applied
+	// +optional
 	Paused bool `json:"paused,omitempty"`
 	// Canceled when set to true will stop all active changes
+	// +optional
 	Canceled bool `json:"canceled,omitempty"`
 	// Controls frequency of app reconciliation
+	// +optional
 	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
 	// When NoopDeletion set to true, App deletion should
 	// delete App CR but preserve App's associated resources
+	// +optional
 	NoopDelete bool `json:"noopDelete,omitempty"`
 }
 
 // +k8s:openapi-gen=true
 type AppCluster struct {
-	Namespace           string                         `json:"namespace,omitempty"`
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+	// +optional
 	KubeconfigSecretRef *AppClusterKubeconfigSecretRef `json:"kubeconfigSecretRef,omitempty"`
 }
 
 // +k8s:openapi-gen=true
 type AppClusterKubeconfigSecretRef struct {
+	// +optional
 	Name string `json:"name,omitempty"`
-	Key  string `json:"key,omitempty"`
+	// +optional
+	Key string `json:"key,omitempty"`
 }
 
 type AppStatus struct {
+	// +optional
 	ManagedAppName string `json:"managedAppName,omitempty"`
-
-	Fetch    *AppStatusFetch    `json:"fetch,omitempty"`
+	// +optional
+	Fetch *AppStatusFetch `json:"fetch,omitempty"`
+	// +optional
 	Template *AppStatusTemplate `json:"template,omitempty"`
-	Deploy   *AppStatusDeploy   `json:"deploy,omitempty"`
-	Inspect  *AppStatusInspect  `json:"inspect,omitempty"`
-
+	// +optional
+	Deploy *AppStatusDeploy `json:"deploy,omitempty"`
+	// +optional
+	Inspect *AppStatusInspect `json:"inspect,omitempty"`
+	// +optional
 	ConsecutiveReconcileSuccesses int `json:"consecutiveReconcileSuccesses,omitempty"`
-	ConsecutiveReconcileFailures  int `json:"consecutiveReconcileFailures,omitempty"`
-
+	// +optional
+	ConsecutiveReconcileFailures int `json:"consecutiveReconcileFailures,omitempty"`
+	// +optional
 	GenericStatus `json:",inline"`
 }
 
 type AppStatusFetch struct {
-	Stderr    string      `json:"stderr,omitempty"`
-	Stdout    string      `json:"stdout,omitempty"`
-	ExitCode  int         `json:"exitCode"`
-	Error     string      `json:"error,omitempty"`
+	// +optional
+	Stderr string `json:"stderr,omitempty"`
+	// +optional
+	Stdout string `json:"stdout,omitempty"`
+	// +optional
+	ExitCode int `json:"exitCode"`
+	// +optional
+	Error string `json:"error,omitempty"`
+	// +optional
 	StartedAt metav1.Time `json:"startedAt,omitempty"`
+	// +optional
 	UpdatedAt metav1.Time `json:"updatedAt,omitempty"`
 }
 
 type AppStatusTemplate struct {
-	Stderr    string      `json:"stderr,omitempty"`
-	ExitCode  int         `json:"exitCode"`
-	Error     string      `json:"error,omitempty"`
+	// +optional
+	Stderr string `json:"stderr,omitempty"`
+	// +optional
+	ExitCode int `json:"exitCode"`
+	// +optional
+	Error string `json:"error,omitempty"`
+	// +optional
 	UpdatedAt metav1.Time `json:"updatedAt,omitempty"`
 }
 
 type AppStatusDeploy struct {
-	Stdout    string      `json:"stdout,omitempty"`
-	Stderr    string      `json:"stderr,omitempty"`
-	Finished  bool        `json:"finished"`
-	ExitCode  int         `json:"exitCode"`
-	Error     string      `json:"error,omitempty"`
+	// +optional
+	Stdout string `json:"stdout,omitempty"`
+	// +optional
+	Stderr string `json:"stderr,omitempty"`
+	// +optional
+	Finished bool `json:"finished"`
+	// +optional
+	ExitCode int `json:"exitCode"`
+	// +optional
+	Error string `json:"error,omitempty"`
+	// +optional
 	StartedAt metav1.Time `json:"startedAt,omitempty"`
+	// +optional
 	UpdatedAt metav1.Time `json:"updatedAt,omitempty"`
 }
 
 type AppStatusInspect struct {
-	Stdout    string      `json:"stdout,omitempty"`
-	Stderr    string      `json:"stderr,omitempty"`
-	ExitCode  int         `json:"exitCode"`
-	Error     string      `json:"error,omitempty"`
+	// +optional
+	Stdout string `json:"stdout,omitempty"`
+	// +optional
+	Stderr string `json:"stderr,omitempty"`
+	// +optional
+	ExitCode int `json:"exitCode"`
+	// +optional
+	Error string `json:"error,omitempty"`
+	// +optional
 	UpdatedAt metav1.Time `json:"updatedAt,omitempty"`
 }

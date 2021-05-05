@@ -11,7 +11,7 @@ type GenericStatus struct {
 	ObservedGeneration  int64          `json:"observedGeneration"`
 	Conditions          []AppCondition `json:"conditions"`
 	FriendlyDescription string         `json:"friendlyDescription"`
-	UsefulErrorMessage  string         `json:"usefulErrorMessage"`
+	UsefulErrorMessage  string         `json:"usefulErrorMessage,omitempty"`
 }
 
 type AppConditionType string
