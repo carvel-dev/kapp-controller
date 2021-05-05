@@ -39,20 +39,29 @@ func (rt ReconcileTimer) IsReadyAt(timeAt time.Time) bool {
 		return false
 	}
 
-	// Did we deploy at least once?
+	var lastReconcileTime time.Time
+
+	// Use latest deploy time if available, otherwise fallback to fetch
+	// If no timestamp is available, enqueue immediately
+	lastDeploy := rt.app.Status.Deploy
 	lastFetch := rt.app.Status.Fetch
-	if lastFetch == nil {
-		return true
+	if lastDeploy != nil && !lastDeploy.UpdatedAt.Time.IsZero() {
+		lastReconcileTime = rt.app.Status.Deploy.UpdatedAt.Time
+	} else {
+		if lastFetch == nil {
+			return true
+		}
+		lastReconcileTime = lastFetch.UpdatedAt.Time
 	}
 
 	if rt.hasReconcileStatus(v1alpha1.ReconcileFailed) {
-		if timeAt.UTC().Sub(lastFetch.UpdatedAt.Time) >= rt.failureSyncPeriod() {
+		if timeAt.UTC().Sub(lastReconcileTime) >= rt.failureSyncPeriod() {
 			return true
 		}
 	}
 
 	// Did we deploy too long ago?
-	if timeAt.UTC().Sub(lastFetch.UpdatedAt.Time) >= rt.syncPeriod() {
+	if timeAt.UTC().Sub(lastReconcileTime) >= rt.syncPeriod() {
 		return true
 	}
 
