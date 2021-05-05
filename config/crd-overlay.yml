@@ -1,0 +1,19 @@
+#@ load("@ytt:overlay", "overlay")
+#@ names = ["installedpackages.install.package.carvel.dev","packagerepositories.install.package.carvel.dev","apps.kappctrl.k14s.io","internalpackages.install.package.carvel.dev"]
+#@ for name in names:
+#@overlay/match by=overlay.subset({"metadata":{"name": name}})
+---
+metadata:
+  #@overlay/remove
+  creationTimestamp: null
+  #@overlay/remove
+  annotations:
+spec:
+  validation:
+    openAPIV3Schema:
+      properties:
+        #@overlay/remove
+        metadata:
+#@overlay/remove
+status:
+#@ end
