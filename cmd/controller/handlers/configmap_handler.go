@@ -15,7 +15,7 @@ import (
 
 type ConfigMapHandler struct {
 	log             logr.Logger
-	appRefTacker    *reftracker.AppRefTracker
+	appRefTracker    *reftracker.AppRefTracker
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
@@ -35,13 +35,13 @@ func (sch *ConfigMapHandler) Update(evt event.UpdateEvent, q workqueue.RateLimit
 
 func (sch *ConfigMapHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
 	sch.enqueueAppsForUpdate(evt.Object.GetName(), evt.Object.GetNamespace(), q)
-	sch.appRefTacker.RemoveRef(reftracker.NewConfigMapKey(evt.Object.GetName(), evt.Object.GetNamespace()))
+	sch.appRefTracker.RemoveRef(reftracker.NewConfigMapKey(evt.Object.GetName(), evt.Object.GetNamespace()))
 }
 
 func (sch *ConfigMapHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {}
 
 func (sch *ConfigMapHandler) enqueueAppsForUpdate(cfgmName, cfgmNamespace string, q workqueue.RateLimitingInterface) error {
-	apps, err := sch.appRefTacker.AppsForRef(reftracker.NewConfigMapKey(cfgmName, cfgmNamespace))
+	apps, err := sch.appRefTracker.AppsForRef(reftracker.NewConfigMapKey(cfgmName, cfgmNamespace))
 	if err != nil {
 		return err
 	}

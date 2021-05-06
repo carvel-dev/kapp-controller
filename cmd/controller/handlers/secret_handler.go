@@ -15,7 +15,7 @@ import (
 
 type SecretHandler struct {
 	log             logr.Logger
-	appRefTacker    *reftracker.AppRefTracker
+	appRefTracker    *reftracker.AppRefTracker
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
@@ -35,13 +35,13 @@ func (sch *SecretHandler) Update(evt event.UpdateEvent, q workqueue.RateLimiting
 
 func (sch *SecretHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
 	sch.enqueueAppsForUpdate(evt.Object.GetName(), evt.Object.GetNamespace(), q)
-	sch.appRefTacker.RemoveRef(reftracker.NewSecretKey(evt.Object.GetName(), evt.Object.GetNamespace()))
+	sch.appRefTracker.RemoveRef(reftracker.NewSecretKey(evt.Object.GetName(), evt.Object.GetNamespace()))
 }
 
 func (sch *SecretHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {}
 
 func (sch *SecretHandler) enqueueAppsForUpdate(secretName, secretNamespace string, q workqueue.RateLimitingInterface) error {
-	apps, err := sch.appRefTacker.AppsForRef(reftracker.NewSecretKey(secretName, secretNamespace))
+	apps, err := sch.appRefTracker.AppsForRef(reftracker.NewSecretKey(secretName, secretNamespace))
 	if err != nil {
 		return err
 	}
