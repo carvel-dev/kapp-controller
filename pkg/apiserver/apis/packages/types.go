@@ -53,7 +53,10 @@ type PackageSpec struct {
 	ReleasedAt string `json:"releasedAt,omitempty"`
 
 	Template AppTemplateSpec `json:"template,omitempty"`
-	// TODO ValuesSchema
+	// valuesSchema can be used to show template values that
+	// can be configured by users when a Package is installed
+	// in an OpenAPI schema format.
+	// +optional
 	ValuesSchema map[string]string `json:"valuesSchema,omitempty"`
 }
 
