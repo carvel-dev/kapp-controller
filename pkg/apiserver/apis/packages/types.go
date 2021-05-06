@@ -54,6 +54,7 @@ type PackageSpec struct {
 
 	Template AppTemplateSpec `json:"template,omitempty"`
 	// TODO ValuesSchema
+	ValuesSchema map[string]string `json:"valuesSchema,omitempty"`
 }
 
 type Maintainer struct {
