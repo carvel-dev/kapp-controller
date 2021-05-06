@@ -1,11 +1,5 @@
 ## Docs
 
-- [Why](why.md)
-- [Install](install.md)
-- [Walkthrough](walkthrough.md)
-- [Config](config.md)
-- [App CRD spec](app-spec.md)
-- [Security model](security-model.md)
-- [Mozilla's sops integration](sops.md)
-- [Dangerous Flags](dangerous-flags.md)
-- [examples/ directory](../examples/)
+The documentation can be found at https://carvel.dev/kapp-controller/docs/latest/.
+
+If you want to contribute to the documentation, the documentation source can be found at https://github.com/vmware-tanzu/carvel.dev/tree/develop/content/kapp-controller
