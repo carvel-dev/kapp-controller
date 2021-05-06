@@ -15,7 +15,7 @@ import (
 
 type ConfigMapHandler struct {
 	log             logr.Logger
-	appRefTacker    *reftracker.AppRefTracker
+	appRefTracker    *reftracker.AppRefTracker
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
