@@ -58,8 +58,7 @@ type PackageSpec struct {
 	// can be configured by users when a Package is installed
 	// in an OpenAPI schema format.
 	// +optional
-	// +kubebuilder:pruning:PreserveUnknownFields
-	ValuesSchema runtime.RawExtension `json:"valuesSchema,omitempty"`
+	ValuesSchema ValuesSchema `json:"valuesSchema,omitempty"`
 }
 
 type Maintainer struct {
@@ -73,4 +72,10 @@ type AppTemplateSpec struct {
 type PackageStatus struct {
 	ObservedGeneration int64                     `json:"observedGeneration"`
 	Conditions         []kcv1alpha1.AppCondition `json:"conditions"`
+}
+
+type ValuesSchema struct {
+	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
+	OpenAPISchemaV3 runtime.RawExtension `json:"openAPISchemaV3,omitempty"`
 }
