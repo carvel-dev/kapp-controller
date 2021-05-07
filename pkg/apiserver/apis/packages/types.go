@@ -6,6 +6,7 @@ package packages
 import (
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // +genclient
@@ -57,7 +58,8 @@ type PackageSpec struct {
 	// can be configured by users when a Package is installed
 	// in an OpenAPI schema format.
 	// +optional
-	ValuesSchema map[string]string `json:"valuesSchema,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	ValuesSchema runtime.RawExtension `json:"valuesSchema,omitempty"`
 }
 
 type Maintainer struct {

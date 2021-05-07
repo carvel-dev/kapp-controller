@@ -403,12 +403,11 @@ spec:
               - spec
               type: object
             valuesSchema:
-              additionalProperties:
-                type: string
               description: valuesSchema can be used to show template values that can
                 be configured by users when a Package is installed in an OpenAPI schema
                 format.
               type: object
+              x-kubernetes-preserve-unknown-fields: true
             version:
               type: string
           type: object
