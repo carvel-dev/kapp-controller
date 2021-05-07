@@ -4,7 +4,6 @@
 package e2e
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -32,18 +31,13 @@ spec:
   description: "Package used for testing"
   valuesSchema:
     openAPIv3:
-      {
-   "properties": {
-      "svc_port": {
-        "description": "Port number for service. Defaults to 80.",
-         "type": "int"
-      },
-      "hello_msg": {
-         "description": "The message simple-app will display",
-         "type": "string"
-      }
-   }
-}
+      properties:
+        svc_port:
+          description: Port number for service. Defaults to 80.
+          type: int
+        hello_msg:
+          description: The message simple-app will display
+          type: string
   template:
     spec:
       fetch:
@@ -82,7 +76,7 @@ spec:
 	}
 
 	var into interface{}
-	err = json.Unmarshal(cr.Spec.ValuesSchema.OpenAPIv3.Raw, &into)
+	err = yaml.Unmarshal(cr.Spec.ValuesSchema.OpenAPIv3.Raw, &into)
 	if err != nil {
 		t.Fatalf("failed to unmarshal: %s", err)
 	}
