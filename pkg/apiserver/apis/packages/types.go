@@ -76,6 +76,7 @@ type PackageStatus struct {
 
 type ValuesSchema struct {
 	// +optional
+	// +nullable
 	// +kubebuilder:pruning:PreserveUnknownFields
-	OpenAPISchemaV3 runtime.RawExtension `json:"openAPISchemaV3,omitempty"`
+	OpenAPIv3 runtime.RawExtension `json:"openAPIv3,omitempty"`
 }

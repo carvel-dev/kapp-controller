@@ -31,7 +31,7 @@ spec:
   displayName: "Test Package in repo"
   description: "Package used for testing"
   valuesSchema:
-    openAPISchemaV3:
+    openAPIv3:
       {
    "properties": {
       "svc_port": {
@@ -69,7 +69,7 @@ spec:
 
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkgYaml)})
 
-	out := kubectl.Run([]string{"get", "packages/pkg-with-schema", "-o=jsonpath={.spec.valuesSchema.openAPISchemaV3}"})
+	out := kubectl.Run([]string{"get", "packages/pkg-with-schema", "-o=jsonpath={.spec.valuesSchema.openAPIv3}"})
 	if !strings.Contains(out, "properties") && !strings.Contains(out, "hello_msg") && !strings.Contains(out, "svc_port") {
 		t.Fatalf("Could not find properties on values schema. Got:\n%s", out)
 	}
@@ -82,7 +82,7 @@ spec:
 	}
 
 	var into interface{}
-	err = json.Unmarshal(cr.Spec.ValuesSchema.OpenAPISchemaV3.Raw, &into)
+	err = json.Unmarshal(cr.Spec.ValuesSchema.OpenAPIv3.Raw, &into)
 	if err != nil {
 		t.Fatalf("failed to unmarshal: %s", err)
 	}

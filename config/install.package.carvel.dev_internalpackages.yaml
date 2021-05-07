@@ -407,7 +407,8 @@ spec:
                 be configured by users when a Package is installed in an OpenAPI schema
                 format.
               properties:
-                openAPISchemaV3:
+                openAPIv3:
+                  nullable: true
                   type: object
                   x-kubernetes-preserve-unknown-fields: true
               type: object
