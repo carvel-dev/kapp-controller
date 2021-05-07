@@ -17,7 +17,7 @@ func Test_PackageWithValuesSchema_PreservesSchemaData(t *testing.T) {
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
 	kubectl := Kubectl{t: t, namespace: env.Namespace, l: logger}
-	name := "pkg-with-schema"
+	name := "pkg-with-schema.1.0.0"
 
 	pkgYaml := fmt.Sprintf(`---
 apiVersion: package.carvel.dev/v1alpha1
@@ -25,7 +25,7 @@ kind: Package
 metadata:
   name: %s
 spec:
-  publicName: pkg.fail.carvel.dev
+  publicName: pkg-with-schema
   version: 1.0.0
   displayName: "Test Package in repo"
   description: "Package used for testing"
@@ -63,7 +63,7 @@ spec:
 
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkgYaml)})
 
-	out := kubectl.Run([]string{"get", "packages/pkg-with-schema", "-o=jsonpath={.spec.valuesSchema.openAPIv3}"})
+	out := kubectl.Run([]string{"get", "packages/"+name, "-o=jsonpath={.spec.valuesSchema.openAPIv3}"})
 	if !strings.Contains(out, "properties") && !strings.Contains(out, "hello_msg") && !strings.Contains(out, "svc_port") {
 		t.Fatalf("Could not find properties on values schema. Got:\n%s", out)
 	}
