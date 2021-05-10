@@ -22,26 +22,33 @@ func Test_NoopDelete_DeletesAfterServiceAccountDeleted(t *testing.T) {
 apiVersion: package.carvel.dev/v1alpha1
 kind: Package
 metadata:
- name: noopdelete.pkg.1.0.0
+  name: noopdelete.pkg
 spec:
- publicName: noopdelete.pkg
- version: 1.0.0
- template:
-   spec:
-     fetch:
-     - inline:
-         paths:
-           file.yml: |
-             apiVersion: v1
-             kind: ConfigMap
-             metadata:
-               name: %s
-             data:
-               key: value
-     template:
-     - ytt: {}
-     deploy:
-     - kapp: {}
+  longDescription: noopdelete-test
+---
+apiVersion: package.carvel.dev/v1alpha1
+kind: PackageVersion
+metadata:
+  name: noopdelete.pkg.1.0.0
+spec:
+  packageName: noopdelete.pkg
+  version: 1.0.0
+  template:
+    spec:
+      fetch:
+      - inline:
+          paths:
+            file.yml: |
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: %s
+              data:
+                key: value
+      template:
+      - ytt: {}
+      deploy:
+      - kapp: {}
 ---
 apiVersion: install.package.carvel.dev/v1alpha1
 kind: InstalledPackage
@@ -53,9 +60,10 @@ metadata:
 spec:
  serviceAccountName: kappctrl-e2e-ns-sa
  noopDelete: true
- packageRef:
-   publicName: noopdelete.pkg
-   version: 1.0.0
+ packageVersionRef:
+   packageName: noopdelete.pkg
+   versionSelection:
+     constraint: 1.0.0
 `, cfgMapName, name, env.Namespace) + sas.ForNamespaceYAML()
 
 	cleanUpIpkg := func() {

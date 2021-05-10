@@ -4,11 +4,11 @@ kind: PackageVersion
 metadata:
   # This is just the resource name and shouldn't be used to reference this package
   # in other resources
-  name: simple-app.corp.com.1.0.0
+  name: pkg.test.carvel.dev.1.0.0
   # cluster scoped
 spec:
   # This is the name we want to reference in resources such as InstalledPackage.
-  packageName: simple-app.corp.com
+  packageName: pkg.test.carvel.dev
   version: 1.0.0
   template:
     # This is just an app template that will be combined with any values given in the
@@ -20,10 +20,7 @@ spec:
       - imgpkgBundle:
           image: k8slt/kctrl-example-pkg:v1.0.0
       template:
-      - ytt:
-          paths:
-          - "config.yml"
-          - "values.yml"
+      - ytt: {}
       - kbld:
           paths:
           - "-"

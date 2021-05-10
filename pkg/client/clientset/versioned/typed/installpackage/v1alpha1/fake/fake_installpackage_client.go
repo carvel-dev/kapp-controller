@@ -20,6 +20,10 @@ func (c *FakeInstallV1alpha1) InternalPackages() v1alpha1.InternalPackageInterfa
 	return &FakeInternalPackages{c}
 }
 
+func (c *FakeInstallV1alpha1) InternalPackageVersions() v1alpha1.InternalPackageVersionInterface {
+	return &FakeInternalPackageVersions{c}
+}
+
 func (c *FakeInstallV1alpha1) PackageRepositories() v1alpha1.PackageRepositoryInterface {
 	return &FakePackageRepositories{c}
 }

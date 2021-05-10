@@ -10,6 +10,7 @@ import (
 	ipv1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 	packagev1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
+	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -17,18 +18,18 @@ import (
 // https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
 func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 	// Package with prerelease version
-	expectedPkg := packagev1.Package{
+	expectedPackageVersion := packagev1.PackageVersion{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "pkg.test.carvel.dev",
 		},
-		Spec: packagev1.PackageSpec{
-			PublicName: "pkg.test.carvel.dev",
-			Version:    "3.0.0-rc.1",
+		Spec: packagev1.PackageVersionSpec{
+			PackageName: "pkg.test.carvel.dev",
+			Version:     "3.0.0-rc.1",
 		},
 	}
 
 	// Load package into fake client
-	fakePkgClient := fake.NewSimpleClientset(&expectedPkg)
+	fakePkgClient := fake.NewSimpleClientset(&expectedPackageVersion)
 
 	// InstalledPackage that has PackageRef with prerelease
 	ip := InstalledPackageCR{
@@ -37,49 +38,54 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 				Name: "instl-pkg-prerelease",
 			},
 			Spec: ipv1.InstalledPackageSpec{
-				PkgRef: &ipv1.PackageRef{
-					PublicName: "pkg.test.carvel.dev",
-					Version:    "3.0.0-rc.1",
+				PackageVersionRef: &ipv1.PackageVersionRef{
+					PackageName: "pkg.test.carvel.dev",
+					VersionSelection: &versions.VersionSelectionSemver{
+						Constraints: "3.0.0-rc.1",
+						Prereleases: &versions.VersionSelectionSemverPrereleases{
+							Identifiers: []string{"rc"},
+						},
+					},
 				},
 			},
 		},
 		pkgclient: fakePkgClient,
 	}
 
-	out, err := ip.referencedPkg()
+	out, err := ip.referencedPkgVersion()
 	if err != nil {
 		t.Fatalf("\nExpected no error from getting PackageRef with prerelease\nBut got:\n%v\n", err)
 	}
 
-	if !reflect.DeepEqual(out, expectedPkg) {
-		t.Fatalf("\nPackage is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedPkg, out)
+	if !reflect.DeepEqual(out, expectedPackageVersion) {
+		t.Fatalf("\nPackageVersion is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedPackageVersion, out)
 	}
 }
 
 func Test_PackageRefUsesName(t *testing.T) {
 	// Package with prerelease version
-	expectedPkg := packagev1.Package{
+	expectedPackageVersion := packagev1.PackageVersion{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "expected-pkg",
 		},
-		Spec: packagev1.PackageSpec{
-			PublicName: "expected-pkg",
-			Version:    "1.0.0",
+		Spec: packagev1.PackageVersionSpec{
+			PackageName: "expected-pkg",
+			Version:     "1.0.0",
 		},
 	}
 
-	alternatePkg := packagev1.Package{
+	alternatePackageVersion := packagev1.PackageVersion{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "alternate-pkg",
 		},
-		Spec: packagev1.PackageSpec{
-			PublicName: "alternate-pkg",
-			Version:    "1.0.0",
+		Spec: packagev1.PackageVersionSpec{
+			PackageName: "alternate-pkg",
+			Version:     "1.0.0",
 		},
 	}
 
 	// Load package into fake client
-	fakePkgClient := fake.NewSimpleClientset(&expectedPkg, &alternatePkg)
+	fakePkgClient := fake.NewSimpleClientset(&expectedPackageVersion, &alternatePackageVersion)
 
 	// InstalledPackage that has PackageRef with prerelease
 	ip := InstalledPackageCR{
@@ -88,21 +94,23 @@ func Test_PackageRefUsesName(t *testing.T) {
 				Name: "instl-pkg",
 			},
 			Spec: ipv1.InstalledPackageSpec{
-				PkgRef: &ipv1.PackageRef{
-					PublicName: "expected-pkg",
-					Version:    "1.0.0",
+				PackageVersionRef: &ipv1.PackageVersionRef{
+					PackageName: "expected-pkg",
+					VersionSelection: &versions.VersionSelectionSemver{
+						Constraints: "1.0.0",
+					},
 				},
 			},
 		},
 		pkgclient: fakePkgClient,
 	}
 
-	out, err := ip.referencedPkg()
+	out, err := ip.referencedPkgVersion()
 	if err != nil {
 		t.Fatalf("\nExpected no error from resolving referenced package\nBut got:\n%v\n", err)
 	}
 
-	if !reflect.DeepEqual(out, expectedPkg) {
-		t.Fatalf("\nPackage is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedPkg, out)
+	if !reflect.DeepEqual(out, expectedPackageVersion) {
+		t.Fatalf("\nPackageVersion is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedPackageVersion, out)
 	}
 }

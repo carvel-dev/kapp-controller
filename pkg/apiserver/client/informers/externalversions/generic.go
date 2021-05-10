@@ -37,7 +37,9 @@ func (f *genericInformer) Lister() cache.GenericLister {
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
 	// Group=package.carvel.dev, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("packages"):
+	case v1alpha1.SchemeGroupVersion.WithResource("packageversions"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Package().V1alpha1().PackageVersions().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("pkgs"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Package().V1alpha1().Packages().Informer()}, nil
 
 	}

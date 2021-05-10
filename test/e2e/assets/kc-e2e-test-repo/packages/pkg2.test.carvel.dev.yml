@@ -1,0 +1,13 @@
+---
+apiVersion: package.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  # This is just the resource name and shouldn't be used to reference this package
+  # in other resources
+  name: pkg.test.carvel.dev
+  # cluster scoped
+spec:
+  # This is the name we want to reference in resources such as InstalledPackage.
+  displayName: "Test Package in repo"
+  shortDescription: "Package used for testing"
+

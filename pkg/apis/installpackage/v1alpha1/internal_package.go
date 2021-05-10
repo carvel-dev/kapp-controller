@@ -20,8 +20,6 @@ type InternalPackage struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec packages.PackageSpec `json:"spec"`
-	// +optional
-	Status packages.PackageStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -34,4 +32,30 @@ type InternalPackageList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []InternalPackage `json:"items"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
+type InternalPackageVersion struct {
+	metav1.TypeMeta `json:",inline"`
+	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec packages.PackageVersionSpec `json:"spec"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type InternalPackageVersionList struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Standard list metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []InternalPackageVersion `json:"items"`
 }

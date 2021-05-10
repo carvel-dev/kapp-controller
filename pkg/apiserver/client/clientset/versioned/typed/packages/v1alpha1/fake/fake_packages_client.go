@@ -12,6 +12,10 @@ type FakePackageV1alpha1 struct {
 	*testing.Fake
 }
 
+func (c *FakePackageV1alpha1) PackageVersions() v1alpha1.PackageVersionInterface {
+	return &FakePackageVersions{c}
+}
+
 func (c *FakePackageV1alpha1) Packages() v1alpha1.PackageInterface {
 	return &FakePackages{c}
 }
