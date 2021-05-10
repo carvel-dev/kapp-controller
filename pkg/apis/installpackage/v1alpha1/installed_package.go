@@ -13,7 +13,7 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName=ipkg
-// +kubebuilder:printcolumn:name=Package name,JSONPath=.spec.packageRef.publicName,description=Package public name,type=string
+// +kubebuilder:printcolumn:name=Package name,JSONPath=.spec.packageName,description=Package public name,type=string
 // +kubebuilder:printcolumn:name=Package version,JSONPath=.status.version,description=Package version,type=string
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
@@ -46,7 +46,7 @@ type InstalledPackageSpec struct {
 	// +optional
 	Cluster *v1alpha1.AppCluster `json:"cluster,omitempty"`
 	// +optional
-	PkgRef *PackageRef `json:"packageRef,omitempty"`
+	PackageVersionRef *PackageVersionRef `json:"packageVersionRef,omitempty"`
 	// +optional
 	Values []InstalledPackageValues `json:"values,omitempty"`
 	// Paused when set to true will ignore all pending changes,
@@ -68,11 +68,9 @@ type InstalledPackageSpec struct {
 	NoopDelete bool `json:"noopDelete,omitempty"`
 }
 
-type PackageRef struct {
+type PackageVersionRef struct {
 	// +optional
-	PublicName string `json:"publicName,omitempty"`
-	// +optional
-	Version string `json:"version,omitempty"`
+	PackageName string `json:"packageName,omitempty"`
 	// +optional
 	VersionSelection *versions.VersionSelectionSemver `json:"versionSelection,omitempty"`
 }

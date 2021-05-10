@@ -40,6 +40,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*Package)(nil), (*packages.Package)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_Package_To_packages_Package(a.(*Package), b.(*packages.Package), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*packages.Package)(nil), (*Package)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_packages_Package_To_v1alpha1_Package(a.(*packages.Package), b.(*Package), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*PackageList)(nil), (*packages.PackageList)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_PackageList_To_packages_PackageList(a.(*PackageList), b.(*packages.PackageList), scope)
 	}); err != nil {
@@ -60,23 +70,43 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*PackageStatus)(nil), (*packages.PackageStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_PackageStatus_To_packages_PackageStatus(a.(*PackageStatus), b.(*packages.PackageStatus), scope)
+	if err := s.AddGeneratedConversionFunc((*PackageVersion)(nil), (*packages.PackageVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_PackageVersion_To_packages_PackageVersion(a.(*PackageVersion), b.(*packages.PackageVersion), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*packages.PackageStatus)(nil), (*PackageStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_packages_PackageStatus_To_v1alpha1_PackageStatus(a.(*packages.PackageStatus), b.(*PackageStatus), scope)
+	if err := s.AddGeneratedConversionFunc((*packages.PackageVersion)(nil), (*PackageVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_packages_PackageVersion_To_v1alpha1_PackageVersion(a.(*packages.PackageVersion), b.(*PackageVersion), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*Package)(nil), (*packages.Package)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_Package_To_packages_Package(a.(*Package), b.(*packages.Package), scope)
+	if err := s.AddGeneratedConversionFunc((*PackageVersionList)(nil), (*packages.PackageVersionList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_PackageVersionList_To_packages_PackageVersionList(a.(*PackageVersionList), b.(*packages.PackageVersionList), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*packages.Package)(nil), (*Package)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_packages_Package_To_v1alpha1_Package(a.(*packages.Package), b.(*Package), scope)
+	if err := s.AddGeneratedConversionFunc((*packages.PackageVersionList)(nil), (*PackageVersionList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_packages_PackageVersionList_To_v1alpha1_PackageVersionList(a.(*packages.PackageVersionList), b.(*PackageVersionList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*PackageVersionSpec)(nil), (*packages.PackageVersionSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_PackageVersionSpec_To_packages_PackageVersionSpec(a.(*PackageVersionSpec), b.(*packages.PackageVersionSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*packages.PackageVersionSpec)(nil), (*PackageVersionSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_packages_PackageVersionSpec_To_v1alpha1_PackageVersionSpec(a.(*packages.PackageVersionSpec), b.(*PackageVersionSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ValuesSchema)(nil), (*packages.ValuesSchema)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_ValuesSchema_To_packages_ValuesSchema(a.(*ValuesSchema), b.(*packages.ValuesSchema), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*packages.ValuesSchema)(nil), (*ValuesSchema)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_packages_ValuesSchema_To_v1alpha1_ValuesSchema(a.(*packages.ValuesSchema), b.(*ValuesSchema), scope)
 	}); err != nil {
 		return err
 	}
@@ -123,6 +153,32 @@ func Convert_packages_Maintainer_To_v1alpha1_Maintainer(in *packages.Maintainer,
 	return autoConvert_packages_Maintainer_To_v1alpha1_Maintainer(in, out, s)
 }
 
+func autoConvert_v1alpha1_Package_To_packages_Package(in *Package, out *packages.Package, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1alpha1_PackageSpec_To_packages_PackageSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1alpha1_Package_To_packages_Package is an autogenerated conversion function.
+func Convert_v1alpha1_Package_To_packages_Package(in *Package, out *packages.Package, s conversion.Scope) error {
+	return autoConvert_v1alpha1_Package_To_packages_Package(in, out, s)
+}
+
+func autoConvert_packages_Package_To_v1alpha1_Package(in *packages.Package, out *Package, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_packages_PackageSpec_To_v1alpha1_PackageSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_packages_Package_To_v1alpha1_Package is an autogenerated conversion function.
+func Convert_packages_Package_To_v1alpha1_Package(in *packages.Package, out *Package, s conversion.Scope) error {
+	return autoConvert_packages_Package_To_v1alpha1_Package(in, out, s)
+}
+
 func autoConvert_v1alpha1_PackageList_To_packages_PackageList(in *PackageList, out *packages.PackageList, s conversion.Scope) error {
 	out.ListMeta = in.ListMeta
 	out.Items = *(*[]packages.Package)(unsafe.Pointer(&in.Items))
@@ -146,24 +202,14 @@ func Convert_packages_PackageList_To_v1alpha1_PackageList(in *packages.PackageLi
 }
 
 func autoConvert_v1alpha1_PackageSpec_To_packages_PackageSpec(in *PackageSpec, out *packages.PackageSpec, s conversion.Scope) error {
-	out.PublicName = in.PublicName
-	out.Version = in.Version
 	out.DisplayName = in.DisplayName
 	out.LongDescription = in.LongDescription
 	out.ShortDescription = in.ShortDescription
 	out.IconSVGBase64 = in.IconSVGBase64
 	out.ProviderName = in.ProviderName
 	out.Maintainers = *(*[]packages.Maintainer)(unsafe.Pointer(&in.Maintainers))
-	out.ReleaseNotes = in.ReleaseNotes
 	out.Categories = *(*[]string)(unsafe.Pointer(&in.Categories))
 	out.SupportDescription = in.SupportDescription
-	out.CapactiyRequirementsDescription = in.CapactiyRequirementsDescription
-	out.Licenses = *(*[]string)(unsafe.Pointer(&in.Licenses))
-	out.ReleasedAt = in.ReleasedAt
-	out.ValuesSchema = in.ValuesSchema
-	if err := Convert_v1alpha1_AppTemplateSpec_To_packages_AppTemplateSpec(&in.Template, &out.Template, s); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -173,24 +219,14 @@ func Convert_v1alpha1_PackageSpec_To_packages_PackageSpec(in *PackageSpec, out *
 }
 
 func autoConvert_packages_PackageSpec_To_v1alpha1_PackageSpec(in *packages.PackageSpec, out *PackageSpec, s conversion.Scope) error {
-	out.PublicName = in.PublicName
-	out.Version = in.Version
 	out.DisplayName = in.DisplayName
 	out.LongDescription = in.LongDescription
 	out.ShortDescription = in.ShortDescription
 	out.IconSVGBase64 = in.IconSVGBase64
 	out.ProviderName = in.ProviderName
 	out.Maintainers = *(*[]Maintainer)(unsafe.Pointer(&in.Maintainers))
-	out.ReleaseNotes = in.ReleaseNotes
 	out.Categories = *(*[]string)(unsafe.Pointer(&in.Categories))
 	out.SupportDescription = in.SupportDescription
-	out.CapactiyRequirementsDescription = in.CapactiyRequirementsDescription
-	out.Licenses = *(*[]string)(unsafe.Pointer(&in.Licenses))
-	out.ReleasedAt = in.ReleasedAt
-	out.ValuesSchema = in.ValuesSchema
-	if err := Convert_packages_AppTemplateSpec_To_v1alpha1_AppTemplateSpec(&in.Template, &out.Template, s); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -199,56 +235,112 @@ func Convert_packages_PackageSpec_To_v1alpha1_PackageSpec(in *packages.PackageSp
 	return autoConvert_packages_PackageSpec_To_v1alpha1_PackageSpec(in, out, s)
 }
 
-func autoConvert_v1alpha1_PackageStatus_To_packages_PackageStatus(in *PackageStatus, out *packages.PackageStatus, s conversion.Scope) error {
-	out.ObservedGeneration = in.ObservedGeneration
-	out.Conditions = *(*[]kappctrlv1alpha1.AppCondition)(unsafe.Pointer(&in.Conditions))
-	return nil
-}
-
-// Convert_v1alpha1_PackageStatus_To_packages_PackageStatus is an autogenerated conversion function.
-func Convert_v1alpha1_PackageStatus_To_packages_PackageStatus(in *PackageStatus, out *packages.PackageStatus, s conversion.Scope) error {
-	return autoConvert_v1alpha1_PackageStatus_To_packages_PackageStatus(in, out, s)
-}
-
-func autoConvert_packages_PackageStatus_To_v1alpha1_PackageStatus(in *packages.PackageStatus, out *PackageStatus, s conversion.Scope) error {
-	out.ObservedGeneration = in.ObservedGeneration
-	out.Conditions = *(*[]kappctrlv1alpha1.AppCondition)(unsafe.Pointer(&in.Conditions))
-	return nil
-}
-
-// Convert_packages_PackageStatus_To_v1alpha1_PackageStatus is an autogenerated conversion function.
-func Convert_packages_PackageStatus_To_v1alpha1_PackageStatus(in *packages.PackageStatus, out *PackageStatus, s conversion.Scope) error {
-	return autoConvert_packages_PackageStatus_To_v1alpha1_PackageStatus(in, out, s)
-}
-
-func autoConvert_v1alpha1_Package_To_packages_Package(in *Package, out *packages.Package, s conversion.Scope) error {
+func autoConvert_v1alpha1_PackageVersion_To_packages_PackageVersion(in *PackageVersion, out *packages.PackageVersion, s conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	if err := Convert_v1alpha1_PackageSpec_To_packages_PackageSpec(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
-	if err := Convert_v1alpha1_PackageStatus_To_packages_PackageStatus(&in.Status, &out.Status, s); err != nil {
+	if err := Convert_v1alpha1_PackageVersionSpec_To_packages_PackageVersionSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Convert_v1alpha1_Package_To_packages_Package is an autogenerated conversion function.
-func Convert_v1alpha1_Package_To_packages_Package(in *Package, out *packages.Package, s conversion.Scope) error {
-	return autoConvert_v1alpha1_Package_To_packages_Package(in, out, s)
+// Convert_v1alpha1_PackageVersion_To_packages_PackageVersion is an autogenerated conversion function.
+func Convert_v1alpha1_PackageVersion_To_packages_PackageVersion(in *PackageVersion, out *packages.PackageVersion, s conversion.Scope) error {
+	return autoConvert_v1alpha1_PackageVersion_To_packages_PackageVersion(in, out, s)
 }
 
-func autoConvert_packages_Package_To_v1alpha1_Package(in *packages.Package, out *Package, s conversion.Scope) error {
+func autoConvert_packages_PackageVersion_To_v1alpha1_PackageVersion(in *packages.PackageVersion, out *PackageVersion, s conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	if err := Convert_packages_PackageSpec_To_v1alpha1_PackageSpec(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
-	if err := Convert_packages_PackageStatus_To_v1alpha1_PackageStatus(&in.Status, &out.Status, s); err != nil {
+	if err := Convert_packages_PackageVersionSpec_To_v1alpha1_PackageVersionSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Convert_packages_Package_To_v1alpha1_Package is an autogenerated conversion function.
-func Convert_packages_Package_To_v1alpha1_Package(in *packages.Package, out *Package, s conversion.Scope) error {
-	return autoConvert_packages_Package_To_v1alpha1_Package(in, out, s)
+// Convert_packages_PackageVersion_To_v1alpha1_PackageVersion is an autogenerated conversion function.
+func Convert_packages_PackageVersion_To_v1alpha1_PackageVersion(in *packages.PackageVersion, out *PackageVersion, s conversion.Scope) error {
+	return autoConvert_packages_PackageVersion_To_v1alpha1_PackageVersion(in, out, s)
+}
+
+func autoConvert_v1alpha1_PackageVersionList_To_packages_PackageVersionList(in *PackageVersionList, out *packages.PackageVersionList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]packages.PackageVersion)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1alpha1_PackageVersionList_To_packages_PackageVersionList is an autogenerated conversion function.
+func Convert_v1alpha1_PackageVersionList_To_packages_PackageVersionList(in *PackageVersionList, out *packages.PackageVersionList, s conversion.Scope) error {
+	return autoConvert_v1alpha1_PackageVersionList_To_packages_PackageVersionList(in, out, s)
+}
+
+func autoConvert_packages_PackageVersionList_To_v1alpha1_PackageVersionList(in *packages.PackageVersionList, out *PackageVersionList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]PackageVersion)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_packages_PackageVersionList_To_v1alpha1_PackageVersionList is an autogenerated conversion function.
+func Convert_packages_PackageVersionList_To_v1alpha1_PackageVersionList(in *packages.PackageVersionList, out *PackageVersionList, s conversion.Scope) error {
+	return autoConvert_packages_PackageVersionList_To_v1alpha1_PackageVersionList(in, out, s)
+}
+
+func autoConvert_v1alpha1_PackageVersionSpec_To_packages_PackageVersionSpec(in *PackageVersionSpec, out *packages.PackageVersionSpec, s conversion.Scope) error {
+	out.PackageName = in.PackageName
+	out.Version = in.Version
+	out.Licenses = *(*[]string)(unsafe.Pointer(&in.Licenses))
+	out.ReleasedAt = in.ReleasedAt
+	out.CapactiyRequirementsDescription = in.CapactiyRequirementsDescription
+	out.ReleaseNotes = in.ReleaseNotes
+	if err := Convert_v1alpha1_AppTemplateSpec_To_packages_AppTemplateSpec(&in.Template, &out.Template, s); err != nil {
+		return err
+	}
+	if err := Convert_v1alpha1_ValuesSchema_To_packages_ValuesSchema(&in.ValuesSchema, &out.ValuesSchema, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1alpha1_PackageVersionSpec_To_packages_PackageVersionSpec is an autogenerated conversion function.
+func Convert_v1alpha1_PackageVersionSpec_To_packages_PackageVersionSpec(in *PackageVersionSpec, out *packages.PackageVersionSpec, s conversion.Scope) error {
+	return autoConvert_v1alpha1_PackageVersionSpec_To_packages_PackageVersionSpec(in, out, s)
+}
+
+func autoConvert_packages_PackageVersionSpec_To_v1alpha1_PackageVersionSpec(in *packages.PackageVersionSpec, out *PackageVersionSpec, s conversion.Scope) error {
+	out.PackageName = in.PackageName
+	out.Version = in.Version
+	out.Licenses = *(*[]string)(unsafe.Pointer(&in.Licenses))
+	out.ReleasedAt = in.ReleasedAt
+	out.CapactiyRequirementsDescription = in.CapactiyRequirementsDescription
+	out.ReleaseNotes = in.ReleaseNotes
+	if err := Convert_packages_AppTemplateSpec_To_v1alpha1_AppTemplateSpec(&in.Template, &out.Template, s); err != nil {
+		return err
+	}
+	if err := Convert_packages_ValuesSchema_To_v1alpha1_ValuesSchema(&in.ValuesSchema, &out.ValuesSchema, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_packages_PackageVersionSpec_To_v1alpha1_PackageVersionSpec is an autogenerated conversion function.
+func Convert_packages_PackageVersionSpec_To_v1alpha1_PackageVersionSpec(in *packages.PackageVersionSpec, out *PackageVersionSpec, s conversion.Scope) error {
+	return autoConvert_packages_PackageVersionSpec_To_v1alpha1_PackageVersionSpec(in, out, s)
+}
+
+func autoConvert_v1alpha1_ValuesSchema_To_packages_ValuesSchema(in *ValuesSchema, out *packages.ValuesSchema, s conversion.Scope) error {
+	out.OpenAPIv3 = in.OpenAPIv3
+	return nil
+}
+
+// Convert_v1alpha1_ValuesSchema_To_packages_ValuesSchema is an autogenerated conversion function.
+func Convert_v1alpha1_ValuesSchema_To_packages_ValuesSchema(in *ValuesSchema, out *packages.ValuesSchema, s conversion.Scope) error {
+	return autoConvert_v1alpha1_ValuesSchema_To_packages_ValuesSchema(in, out, s)
+}
+
+func autoConvert_packages_ValuesSchema_To_v1alpha1_ValuesSchema(in *packages.ValuesSchema, out *ValuesSchema, s conversion.Scope) error {
+	out.OpenAPIv3 = in.OpenAPIv3
+	return nil
+}
+
+// Convert_packages_ValuesSchema_To_v1alpha1_ValuesSchema is an autogenerated conversion function.
+func Convert_packages_ValuesSchema_To_v1alpha1_ValuesSchema(in *packages.ValuesSchema, out *ValuesSchema, s conversion.Scope) error {
+	return autoConvert_packages_ValuesSchema_To_v1alpha1_ValuesSchema(in, out, s)
 }

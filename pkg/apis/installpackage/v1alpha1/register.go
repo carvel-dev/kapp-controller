@@ -22,6 +22,7 @@ func init() {
 		scheme.AddKnownTypes(SchemeGroupVersion, &PackageRepository{}, &PackageRepositoryList{})
 		scheme.AddKnownTypes(SchemeGroupVersion, &InstalledPackage{}, &InstalledPackageList{})
 		scheme.AddKnownTypes(SchemeGroupVersion, &InternalPackage{}, &InternalPackageList{})
+		scheme.AddKnownTypes(SchemeGroupVersion, &InternalPackageVersion{}, &InternalPackageVersionList{})
 		scheme.AddKnownTypes(SchemeGroupVersion, &metav1.Status{})
 		metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 		return nil

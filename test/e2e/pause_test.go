@@ -101,26 +101,33 @@ func installedPackageYAML(name, namespace, configMapValue string, paused bool) s
 apiVersion: package.carvel.dev/v1alpha1
 kind: Package
 metadata:
- name: pause.pkg.1.0.0
+ name: pause.pkg
 spec:
- publicName: pause.pkg
- version: 1.0.0
- template:
-   spec:
-     fetch:
-     - inline:
-         paths:
-           file.yml: |
-             apiVersion: v1
-             kind: ConfigMap
-             metadata:
-               name: configmap
-             data:
-               key: %s
-     template:
-     - ytt: {}
-     deploy:
-     - kapp: {}
+  longDescription: test-pause
+---
+apiVersion: package.carvel.dev/v1alpha1
+kind: PackageVersion
+metadata:
+  name: pause.pkg.1.0.0
+spec:
+  packageName: pause.pkg
+  version: 1.0.0
+  template:
+    spec:
+      fetch:
+      - inline:
+          paths:
+            file.yml: |
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: configmap
+              data:
+                key: %s
+      template:
+      - ytt: {}
+      deploy:
+      - kapp: {}
 ---
 apiVersion: install.package.carvel.dev/v1alpha1
 kind: InstalledPackage
@@ -132,8 +139,9 @@ metadata:
 spec:
  serviceAccountName: kappctrl-e2e-ns-sa
  paused: %t
- packageRef:
-   publicName: pause.pkg
-   version: 1.0.0
+ packageVersionRef:
+   packageName: pause.pkg
+   versionSelection:
+     constraint: 1.0.0
 `, configMapValue, name, namespace, paused) + sas.ForNamespaceYAML()
 }

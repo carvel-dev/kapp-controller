@@ -12,7 +12,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 )
 
-func Test_PackageWithValuesSchema_PreservesSchemaData(t *testing.T) {
+func Test_PackageVersionWithValuesSchema_PreservesSchemaData(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
@@ -21,14 +21,11 @@ func Test_PackageWithValuesSchema_PreservesSchemaData(t *testing.T) {
 
 	pkgYaml := fmt.Sprintf(`---
 apiVersion: package.carvel.dev/v1alpha1
-kind: Package
+kind: PackageVersion
 metadata:
   name: %s
 spec:
-  publicName: pkg-with-schema
   version: 1.0.0
-  displayName: "Test Package in repo"
-  description: "Package used for testing"
   valuesSchema:
     openAPIv3:
       properties:
@@ -63,13 +60,13 @@ spec:
 
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkgYaml)})
 
-	out := kubectl.Run([]string{"get", "packages/"+name, "-o=jsonpath={.spec.valuesSchema.openAPIv3}"})
+	out := kubectl.Run([]string{"get", "packageversions/" + name, "-o=jsonpath={.spec.valuesSchema.openAPIv3}"})
 	if !strings.Contains(out, "properties") && !strings.Contains(out, "hello_msg") && !strings.Contains(out, "svc_port") {
 		t.Fatalf("Could not find properties on values schema. Got:\n%s", out)
 	}
 
-	out = kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=Package"})
-	var cr v1alpha1.InternalPackage
+	out = kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=PackageVersion"})
+	var cr v1alpha1.InternalPackageVersion
 	err := yaml.Unmarshal([]byte(out), &cr)
 	if err != nil {
 		t.Fatalf("failed to unmarshal: %s", err)
