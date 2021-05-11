@@ -402,6 +402,16 @@ spec:
               required:
               - spec
               type: object
+            valuesSchema:
+              description: valuesSchema can be used to show template values that can
+                be configured by users when a Package is installed in an OpenAPI schema
+                format.
+              properties:
+                openAPIv3:
+                  nullable: true
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+              type: object
             version:
               type: string
           type: object
