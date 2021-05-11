@@ -5,6 +5,7 @@ package v1alpha1
 
 import (
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -53,7 +54,12 @@ type PackageSpec struct {
 	ReleasedAt string `json:"releasedAt,omitempty"`
 
 	Template AppTemplateSpec `json:"template,omitempty"`
-	// TODO ValuesSchema
+	// valuesSchema can be used to show template values that
+	// can be configured by users when a Package is installed
+	// in an OpenAPI schema format.
+	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
+	ValuesSchema packages.ValuesSchema `json:"valuesSchema,omitempty"`
 }
 
 type Maintainer struct {

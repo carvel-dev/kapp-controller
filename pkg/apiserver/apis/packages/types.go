@@ -6,6 +6,7 @@ package packages
 import (
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // +genclient
@@ -53,7 +54,11 @@ type PackageSpec struct {
 	ReleasedAt string `json:"releasedAt,omitempty"`
 
 	Template AppTemplateSpec `json:"template,omitempty"`
-	// TODO ValuesSchema
+	// valuesSchema can be used to show template values that
+	// can be configured by users when a Package is installed
+	// in an OpenAPI schema format.
+	// +optional
+	ValuesSchema ValuesSchema `json:"valuesSchema,omitempty"`
 }
 
 type Maintainer struct {
@@ -67,4 +72,11 @@ type AppTemplateSpec struct {
 type PackageStatus struct {
 	ObservedGeneration int64                     `json:"observedGeneration"`
 	Conditions         []kcv1alpha1.AppCondition `json:"conditions"`
+}
+
+type ValuesSchema struct {
+	// +optional
+	// +nullable
+	// +kubebuilder:pruning:PreserveUnknownFields
+	OpenAPIv3 runtime.RawExtension `json:"openAPIv3,omitempty"`
 }

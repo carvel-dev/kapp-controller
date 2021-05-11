@@ -160,6 +160,7 @@ func autoConvert_v1alpha1_PackageSpec_To_packages_PackageSpec(in *PackageSpec, o
 	out.CapactiyRequirementsDescription = in.CapactiyRequirementsDescription
 	out.Licenses = *(*[]string)(unsafe.Pointer(&in.Licenses))
 	out.ReleasedAt = in.ReleasedAt
+	out.ValuesSchema = in.ValuesSchema
 	if err := Convert_v1alpha1_AppTemplateSpec_To_packages_AppTemplateSpec(&in.Template, &out.Template, s); err != nil {
 		return err
 	}
@@ -186,6 +187,7 @@ func autoConvert_packages_PackageSpec_To_v1alpha1_PackageSpec(in *packages.Packa
 	out.CapactiyRequirementsDescription = in.CapactiyRequirementsDescription
 	out.Licenses = *(*[]string)(unsafe.Pointer(&in.Licenses))
 	out.ReleasedAt = in.ReleasedAt
+	out.ValuesSchema = in.ValuesSchema
 	if err := Convert_packages_AppTemplateSpec_To_v1alpha1_AppTemplateSpec(&in.Template, &out.Template, s); err != nil {
 		return err
 	}
