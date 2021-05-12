@@ -1,3 +1,6 @@
+// Copyright 2021 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package e2e
 
 import (
@@ -53,11 +56,10 @@ func Test_InstalledPackage_SetsPauseOnApp(t *testing.T) {
 	}
 
 	if cr.Status.FriendlyDescription != "Canceled/paused" {
-		t.Fatalf("expected App for InstalledPackage to have status show paused\nGot: %s", cr.Status.FriendlyDescription)
+		t.Fatalf("expected App for InstalledPackage to have status show Canceled/paused\nGot: %s", cr.Status.FriendlyDescription)
 	}
 
 	out = kubectl.Run([]string{"get", "configmap/configmap", "-o", "yaml"})
-	// assert syncPeriod hasn't changed due to pause
 	var cm corev1.ConfigMap
 	err = yaml.Unmarshal([]byte(out), &cm)
 	if err != nil {

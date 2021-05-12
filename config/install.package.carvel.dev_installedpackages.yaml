@@ -55,6 +55,9 @@ spec:
           type: object
         spec:
           properties:
+            canceled:
+              description: Canceled when set to true will stop all active changes
+              type: boolean
             cluster:
               properties:
                 kubeconfigSecretRef:

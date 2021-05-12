@@ -53,6 +53,9 @@ type InstalledPackageSpec struct {
 	// once it set back to false, pending changes will be applied
 	// +optional
 	Paused bool `json:"paused,omitempty"`
+	// Canceled when set to true will stop all active changes
+	// +optional
+	Canceled bool `json:"canceled,omitempty"`
 	// Controls frequency of App reconciliation in time + unit
 	// format. Always >= 30s. If value below 30s is specified,
 	// 30s will be used.
