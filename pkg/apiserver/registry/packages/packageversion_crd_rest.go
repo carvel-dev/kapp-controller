@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -149,6 +150,11 @@ func (r *PackageVersionCRDREST) Get(ctx context.Context, name string, options *m
 }
 
 func (r *PackageVersionCRDREST) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	// field selector isnt supported by CRD's so reset it, we will apply it later
+	fs := options.FieldSelector
+	options.FieldSelector = fields.Everything()
+
+	// Label selectors and other options will be applied here
 	list, err := r.crdClient.InstallV1alpha1().InternalPackageVersions().List(ctx, r.internalToMetaListOpts(*options))
 	pkgList := packages.PackageVersionList{
 		TypeMeta: list.TypeMeta,
@@ -158,7 +164,8 @@ func (r *PackageVersionCRDREST) List(ctx context.Context, options *internalversi
 		pkgList.Items = append(pkgList.Items, *r.internalPackageVersionToPackageVersion(&ipv))
 	}
 
-	return &pkgList, err
+	filteredList := r.applySelector(pkgList, fs)
+	return &filteredList, err
 }
 
 func (r *PackageVersionCRDREST) NamespaceScoped() bool {
@@ -166,8 +173,10 @@ func (r *PackageVersionCRDREST) NamespaceScoped() bool {
 }
 
 func (r *PackageVersionCRDREST) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+	fs := options.FieldSelector
+	options.FieldSelector = fields.Everything()
 	watcher, err := r.crdClient.InstallV1alpha1().InternalPackageVersions().Watch(ctx, r.internalToMetaListOpts(*options))
-	return watchers.NewTranslationWatcher(r.translate, watcher), err
+	return watchers.NewTranslationWatcher(r.translateFunc(), r.filterFunc(fs), watcher), err
 }
 
 func (r *PackageVersionCRDREST) ConvertToTable(ctx context.Context, obj runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -259,9 +268,51 @@ func (r *PackageVersionCRDREST) packageVersionToInternalPackageVersion(pv *packa
 	return ipv
 }
 
-func (r *PackageVersionCRDREST) translate(evt watch.Event) watch.Event {
-	if pv, ok := evt.Object.(*installv1alpha1.InternalPackageVersion); ok {
-		evt.Object = r.internalPackageVersionToPackageVersion(pv)
+func (r *PackageVersionCRDREST) translateFunc() func(watch.Event) watch.Event {
+	return func(evt watch.Event) watch.Event {
+		if pv, ok := evt.Object.(*installv1alpha1.InternalPackageVersion); ok {
+			evt.Object = r.internalPackageVersionToPackageVersion(pv)
+		}
+		return evt
 	}
-	return evt
+}
+
+func (r *PackageVersionCRDREST) filterFunc(fs fields.Selector) func(evt watch.Event) bool {
+	dontFilter := func(evt watch.Event) bool {
+		return true
+	}
+
+	filter := func(evt watch.Event) bool {
+		if pv, ok := evt.Object.(*packages.PackageVersion); ok {
+			fieldSet := fields.Set{"spec.packageName": pv.Spec.PackageName}
+			if fs.Matches(fieldSet) {
+				return true
+			}
+			return false
+		}
+		return true
+	}
+
+	if fs == nil || fs.Empty() {
+		return dontFilter
+	}
+
+	return filter
+}
+
+func (r *PackageVersionCRDREST) applySelector(list packages.PackageVersionList, selector fields.Selector) packages.PackageVersionList {
+	if selector == nil || selector.Empty() {
+		return list
+	}
+
+	filteredPVs := []packages.PackageVersion{}
+	for _, pv := range list.Items {
+		fieldSet := fields.Set{"spec.packageName": pv.Spec.PackageName}
+		if selector.Matches(fieldSet) {
+			filteredPVs = append(filteredPVs, pv)
+		}
+	}
+
+	list.Items = filteredPVs
+	return list
 }
