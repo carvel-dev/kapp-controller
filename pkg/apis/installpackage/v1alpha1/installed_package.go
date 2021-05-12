@@ -49,8 +49,11 @@ type InstalledPackageSpec struct {
 	PkgRef *PackageRef `json:"packageRef,omitempty"`
 	// +optional
 	Values []InstalledPackageValues `json:"values,omitempty"`
-
-	// TODO other App CR related fields
+	// Controls frequency of App reconciliation in time + unit
+	// format. Always >= 30s. If value below 30s is specified,
+	// 30s will be used.
+	// +optional
+	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
 }
 
 type PackageRef struct {

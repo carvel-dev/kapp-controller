@@ -88,6 +88,11 @@ spec:
               type: object
             serviceAccountName:
               type: string
+            syncPeriod:
+              description: Controls frequency of App reconciliation in time + unit
+                format. Always >= 30s. If value below 30s is specified, 30s will be
+                used.
+              type: string
             values:
               items:
                 properties:

@@ -240,3 +240,74 @@ stringData:
 		return err
 	})
 }
+
+func Test_InstalledPackage_SetsSyncPeriodOnApp(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+	sas := ServiceAccounts{env.Namespace}
+	name := "instl-pkg-sync-period"
+
+	installPkgYaml := fmt.Sprintf(`---
+apiVersion: package.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg.carvel.dev.1.0.0
+spec:
+  publicName: pkg.carvel.dev
+  version: 1.0.0
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v1.0.0
+      template:
+      - ytt:
+          paths:
+          - "config.yml"
+          - "values.yml"
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
+      deploy:
+      - kapp: {}
+---
+apiVersion: install.package.carvel.dev/v1alpha1
+kind: InstalledPackage
+metadata:
+  name: %s
+  namespace: %s
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/installedpackages
+spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
+  syncPeriod: 10m
+  packageRef:
+    publicName: pkg.carvel.dev
+    version: 1.0.0
+`, name, env.Namespace) + sas.ForNamespaceYAML()
+
+	cleanUp := func() {
+		// Delete App with kubectl first since kapp
+		// deletes ServiceAccount before App
+		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", name})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+	out := kubectl.Run([]string{"get", "apps/"+name, "-o", "yaml"})
+
+	var cr v1alpha1.App
+	err := yaml.Unmarshal([]byte(out), &cr)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal: %s", err)
+	}
+
+	if cr.Spec.SyncPeriod.Duration.String() != "10m0s" {
+		t.Fatalf("expected App syncPeriod to be 10m0s but was %s", cr.Spec.SyncPeriod.Duration.String())
+	}
+}
