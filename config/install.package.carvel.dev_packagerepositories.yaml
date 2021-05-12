@@ -155,10 +155,6 @@ spec:
               type: integer
             usefulErrorMessage:
               type: string
-          required:
-          - conditions
-          - friendlyDescription
-          - observedGeneration
           type: object
       required:
       - spec

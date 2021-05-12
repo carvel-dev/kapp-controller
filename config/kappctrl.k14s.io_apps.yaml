@@ -457,10 +457,6 @@ spec:
               type: object
             usefulErrorMessage:
               type: string
-          required:
-          - conditions
-          - friendlyDescription
-          - observedGeneration
           type: object
       required:
       - spec

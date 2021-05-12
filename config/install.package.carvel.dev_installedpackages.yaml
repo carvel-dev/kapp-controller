@@ -91,6 +91,10 @@ spec:
                       type: object
                   type: object
               type: object
+            paused:
+              description: Paused when set to true will ignore all pending changes,
+                once it set back to false, pending changes will be applied
+              type: boolean
             serviceAccountName:
               type: string
             syncPeriod:
@@ -146,10 +150,6 @@ spec:
             version:
               description: TODO this is desired resolved version (not actually deployed)
               type: string
-          required:
-          - conditions
-          - friendlyDescription
-          - observedGeneration
           type: object
       required:
       - spec
