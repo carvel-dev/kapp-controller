@@ -299,7 +299,7 @@ spec:
 	defer cleanUp()
 
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
-	out := kubectl.Run([]string{"get", "apps/"+name, "-o", "yaml"})
+	out := kubectl.Run([]string{"get", "apps/" + name, "-o", "yaml"})
 
 	var cr v1alpha1.App
 	err := yaml.Unmarshal([]byte(out), &cr)

@@ -67,6 +67,11 @@ spec:
                 namespace:
                   type: string
               type: object
+            noopDelete:
+              description: When NoopDelete set to true, InstalledPackage deletion
+                should delete InstalledPackage/App CR but preserve App's associated
+                resources.
+              type: boolean
             packageRef:
               properties:
                 publicName:

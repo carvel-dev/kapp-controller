@@ -54,6 +54,11 @@ type InstalledPackageSpec struct {
 	// 30s will be used.
 	// +optional
 	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
+	// When NoopDelete set to true, InstalledPackage deletion
+	// should delete InstalledPackage/App CR but preserve App's
+	// associated resources.
+	// +optional
+	NoopDelete bool `json:"noopDelete,omitempty"`
 }
 
 type PackageRef struct {

@@ -21,6 +21,7 @@ func NewApp(existingApp *v1alpha1.App, installedPkg *instpkgv1alpha1.InstalledPa
 	desiredApp.Spec = *pkg.Spec.Template.Spec
 	desiredApp.Spec.ServiceAccountName = installedPkg.Spec.ServiceAccountName
 	desiredApp.Spec.SyncPeriod = installedPkg.Spec.SyncPeriod
+	desiredApp.Spec.NoopDelete = installedPkg.Spec.NoopDelete
 
 	err := controllerutil.SetControllerReference(installedPkg, desiredApp, scheme.Scheme)
 	if err != nil {
