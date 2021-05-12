@@ -60,7 +60,7 @@ func (ip *PackageRepositoryCR) Reconcile() (reconcile.Result, error) {
 	}
 
 	appStatus := reconciler.Status{S: existingApp.Status.GenericStatus}
-	ip.log.Info(fmt.Sprintf("Reconciling InstalledPackage '%s/%s'", ip.model.Namespace, ip.model.Name))
+	ip.log.Info(fmt.Sprintf("Reconciling PackageRepository '%s/%s'", ip.model.Namespace, ip.model.Name))
 	switch {
 	case appStatus.IsReconciling():
 		status.SetReconciling(ip.model.ObjectMeta)
