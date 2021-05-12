@@ -21,7 +21,7 @@ var (
 )
 
 func init() {
-	localSchemeBuilder.Register(addKnownTypes)
+	localSchemeBuilder.Register(addKnownTypes, addConversionFuncs)
 }
 
 func addKnownTypes(scheme *runtime.Scheme) error {

@@ -168,7 +168,7 @@ func (r *PackageCRDREST) NamespaceScoped() bool {
 
 func (r *PackageCRDREST) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
 	watcher, err := r.crdClient.InstallV1alpha1().InternalPackages().Watch(ctx, r.internalToMetaListOpts(*options))
-	return watchers.NewTranslationWatcher(r.translate, watcher), err
+	return watchers.NewTranslationWatcher(r.translateFunc(), r.filterFunc(), watcher), err
 }
 
 func (r *PackageCRDREST) ConvertToTable(ctx context.Context, obj runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -266,11 +266,19 @@ func (r *PackageCRDREST) packageToInternalPackage(pkg *packages.Package) *instal
 	return intpkg
 }
 
-func (r *PackageCRDREST) translate(evt watch.Event) watch.Event {
-	if intpkg, ok := evt.Object.(*installv1alpha1.InternalPackage); ok {
-		evt.Object = r.internalPackageToPackage(intpkg)
+func (r *PackageCRDREST) translateFunc() func(evt watch.Event) watch.Event {
+	return func(evt watch.Event) watch.Event {
+		if intpkg, ok := evt.Object.(*installv1alpha1.InternalPackage); ok {
+			evt.Object = r.internalPackageToPackage(intpkg)
+		}
+		return evt
 	}
-	return evt
+}
+
+func (r *PackageCRDREST) filterFunc() func(evt watch.Event) bool {
+	return func(evt watch.Event) bool {
+		return true
+	}
 }
 
 func (r *PackageCRDREST) format(in string) string {

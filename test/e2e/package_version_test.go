@@ -78,3 +78,97 @@ spec:
 		t.Fatalf("failed to unmarshal: %s", err)
 	}
 }
+
+func Test_PackageVersion_FieldSelectors(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+	name := "test-package-version-field-selector"
+	packageName := "test-package.vmware.com"
+	filteredPackageName := "you-shouldnt-see-me"
+	packcageYamls := fmt.Sprintf(`---
+kind: Package
+apiVersion: package.carvel.dev/v1alpha1
+metadata:
+  name: %s
+spec:
+  shortDescription: "Package for testing"
+---
+kind: PackageVersion
+apiVersion: package.carvel.dev/v1alpha1
+metadata:
+  name: test-package.1.0.0
+spec:
+  packageName: %s
+  template:
+    spec:
+      fetch:
+      - inline:
+          paths:
+            file.yml: |
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: configmap
+              data:
+                hello_msg: hi
+      template:
+      - ytt: {}
+      deploy:
+      - kapp: {}
+---
+kind: Package
+apiVersion: package.carvel.dev/v1alpha1
+metadata:
+  name: %s
+spec:
+  shortDescription: "Package for testing"
+---
+kind: PackageVersion
+apiVersion: package.carvel.dev/v1alpha1
+metadata:
+  name: %s.1.0.0
+spec:
+  packageName: %s
+  template:
+    spec:
+      fetch:
+      - inline:
+          paths:
+            file.yml: |
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: configmap
+              data:
+                hello_msg: hi
+      template:
+      - ytt: {}
+      deploy:
+      - kapp: {}
+`, packageName, packageName, filteredPackageName, filteredPackageName, filteredPackageName)
+
+	cleanup := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+	defer cleanup()
+
+	logger.Section("deploy package and package version", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{StdinReader: strings.NewReader(packcageYamls)})
+	})
+
+	logger.Section("check field selector", func() {
+		out, err := kubectl.RunWithOpts([]string{"get", "packageversions",
+			"--field-selector", fmt.Sprintf("spec.packageName=%s", packageName)}, RunOpts{AllowError: true})
+
+		if err != nil {
+			t.Fatalf("Expected field selector to successfully return a package version but got error: %v", err)
+		}
+
+		if strings.Contains(out, filteredPackageName) {
+			t.Fatalf("Expected not to see filtered package in output:\n %s", out)
+		}
+	})
+}
