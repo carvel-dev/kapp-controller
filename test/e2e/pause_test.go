@@ -5,12 +5,13 @@ package e2e
 
 import (
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func Test_InstalledPackage_SetsPauseOnApp(t *testing.T) {
@@ -37,38 +38,55 @@ func Test_InstalledPackage_SetsPauseOnApp(t *testing.T) {
 	// App will not create original resources.
 	installPkgYaml := installedPackageYAML(name, env.Namespace, "original", false)
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
+
+	retry(t, 10*time.Second, func() error {
+		_, err := kubectl.RunWithOpts([]string{"get", "apps/" + name}, RunOpts{AllowError: true})
+		if err != nil {
+			return fmt.Errorf("failed to get App for InstalledPackage %s", name)
+		}
+		return nil
+	})
 
 	// update App to be paused
 	installPkgYaml = installedPackageYAML(name, env.Namespace, "original", true)
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
 
 	// try to change configmap value
 	installPkgYaml = installedPackageYAML(name, env.Namespace, "change", true)
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
-	out := kubectl.Run([]string{"get", "app/" + name, "-o", "yaml"})
 	var cr v1alpha1.App
-	err := yaml.Unmarshal([]byte(out), &cr)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal: %s", err)
-	}
+	retry(t, 10*time.Second, func() error {
+		out, err := kubectl.RunWithOpts([]string{"get", "apps/" + name, "-o", "yaml"}, RunOpts{AllowError: true})
+		if err != nil {
+			return fmt.Errorf("failed to get App for InstalledPackage %s", name)
+		}
 
-	if cr.Status.FriendlyDescription != "Canceled/paused" {
-		t.Fatalf("expected App for InstalledPackage to have status show Canceled/paused\nGot: %s", cr.Status.FriendlyDescription)
-	}
+		err = yaml.Unmarshal([]byte(out), &cr)
+		if err != nil {
+			return fmt.Errorf("Failed to unmarshal: %s", err)
+		}
 
-	out = kubectl.Run([]string{"get", "configmap/configmap", "-o", "yaml"})
-	var cm corev1.ConfigMap
-	err = yaml.Unmarshal([]byte(out), &cm)
-	if err != nil {
-		t.Fatalf("failed to unmarshal: %s", err)
-	}
+		if cr.Status.FriendlyDescription != "Canceled/paused" {
+			return fmt.Errorf("expected App for InstalledPackage to have status show Canceled/paused\nGot: %s", cr.Status.FriendlyDescription)
+		}
 
-	if cm.Data["key"] != "original" {
-		 t.Fatalf("configmap message was updated to despite App being paused\nGot: %s", cm.Data["key"])
-	}
+		return nil
+	})
+
+	retry(t, 10*time.Second, func() error {
+		out := kubectl.Run([]string{"get", "configmap/configmap", "-o", "yaml"})
+		var cm corev1.ConfigMap
+		err := yaml.Unmarshal([]byte(out), &cm)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal: %s", err)
+		}
+
+		if cm.Data["key"] != "original" {
+			return fmt.Errorf("configmap message was updated despite App being paused\nGot: %s", cm.Data["key"])
+		}
+		return nil
+	})
 }
 
 func installedPackageYAML(name, namespace, configMapValue string, paused bool) string {

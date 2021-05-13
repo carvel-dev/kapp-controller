@@ -299,13 +299,21 @@ spec:
 	defer cleanUp()
 
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
-	out := kubectl.Run([]string{"get", "apps/" + name, "-o", "yaml"})
 
 	var cr v1alpha1.App
-	err := yaml.Unmarshal([]byte(out), &cr)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal: %s", err)
-	}
+	retry(t, 10*time.Second, func() error {
+		out, err := kubectl.RunWithOpts([]string{"get", "apps/" + name, "-o", "yaml"}, RunOpts{AllowError: true})
+		if err != nil {
+			return fmt.Errorf("failed to get App for InstalledPackage %s", name)
+		}
+
+		err = yaml.Unmarshal([]byte(out), &cr)
+		if err != nil {
+			return fmt.Errorf("Failed to unmarshal: %s", err)
+		}
+
+		return nil
+	})
 
 	if cr.Spec.SyncPeriod.Duration.String() != "10m0s" {
 		t.Fatalf("expected App syncPeriod to be 10m0s but was %s", cr.Spec.SyncPeriod.Duration.String())
