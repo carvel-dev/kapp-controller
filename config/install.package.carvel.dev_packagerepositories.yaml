@@ -13,6 +13,10 @@ spec:
     description: Time since creation
     name: Age
     type: date
+  - JSONPath: .status.friendlyDescription
+    description: Friendly description
+    name: Description
+    type: string
   group: install.package.carvel.dev
   names:
     kind: PackageRepository

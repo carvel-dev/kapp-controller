@@ -235,6 +235,45 @@ spec:
 	})
 }
 
+func Test_PackageRepoStatus_ShowsWithKubectlGet(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+	name := "repo-status"
+
+	repoYaml := fmt.Sprintf(`apiVersion: install.package.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: %s
+spec:
+  fetch:
+    imgpkgBundle:
+      image: k8slt/i-dont-exist`, name)
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	// deploy failing repo
+	logger.Section("deploy failing repo", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{StdinReader: strings.NewReader(repoYaml)})
+	})
+
+	out, err := kubectl.RunWithOpts([]string{"get", "pkgr/"+name}, RunOpts{NoNamespace: true, AllowError: true})
+	if err != nil {
+		t.Fatalf("encountered unknown error from kubectl get pkgr: %v", err)
+	}
+
+	if !strings.Contains(out, "DESCRIPTION") && !strings.Contains(out, "Reconcile failed") {
+		t.Fatalf("output did not contain DESCRIPTION column from kubectl get.\nGot:\n%s", out)
+	}
+}
+
 func retry(t *testing.T, timeout time.Duration, f func() error) {
 	var err error
 	stopTime := time.Now().Add(timeout)
