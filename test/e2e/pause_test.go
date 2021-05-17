@@ -75,9 +75,13 @@ func Test_InstalledPackage_SetsPauseOnApp(t *testing.T) {
 	})
 
 	retry(t, 10*time.Second, func() error {
-		out := kubectl.Run([]string{"get", "configmap/configmap", "-o", "yaml"})
+		out, err := kubectl.RunWithOpts([]string{"get", "configmap/configmap", "-o", "yaml"}, RunOpts{AllowError: true})
+		if err != nil {
+			return fmt.Errorf("failed to get configmap/configmap")
+		}
+
 		var cm corev1.ConfigMap
-		err := yaml.Unmarshal([]byte(out), &cm)
+		err = yaml.Unmarshal([]byte(out), &cm)
 		if err != nil {
 			return fmt.Errorf("failed to unmarshal: %s", err)
 		}
