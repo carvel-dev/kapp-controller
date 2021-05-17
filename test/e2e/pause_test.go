@@ -14,7 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func Test_InstalledPackage_SetsPauseOnApp(t *testing.T) {
+func Test_InstalledPackage_PausesApp(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
@@ -46,6 +46,8 @@ func Test_InstalledPackage_SetsPauseOnApp(t *testing.T) {
 		}
 		return nil
 	})
+
+	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
 
 	// update App to be paused
 	installPkgYaml = installedPackageYAML(name, env.Namespace, "original", true)
