@@ -10,12 +10,17 @@ import (
 
 type PackageV1alpha1Interface interface {
 	RESTClient() rest.Interface
+	PackageVersionsGetter
 	PackagesGetter
 }
 
 // PackageV1alpha1Client is used to interact with features provided by the package.carvel.dev group.
 type PackageV1alpha1Client struct {
 	restClient rest.Interface
+}
+
+func (c *PackageV1alpha1Client) PackageVersions() PackageVersionInterface {
+	return newPackageVersions(c)
 }
 
 func (c *PackageV1alpha1Client) Packages() PackageInterface {

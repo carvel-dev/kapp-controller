@@ -1,0 +1,27 @@
+---
+apiVersion: package.carvel.dev/v1alpha1
+kind: PackageVersion
+metadata:
+  name: pkg.test.carvel.dev.3.0.0-rc.1
+  # cluster scoped
+spec:
+  packageName: pkg.test.carvel.dev
+  # This is a pre-release, which kapp-contorller will not automatically bump
+  # InstalledPackages to unless it explicitly allowed within the InstalledPackage
+  # version selection.
+  version: 3.0.0-rc.1
+  template:
+    spec:
+      fetch:
+      - image:
+          url: k8slt/kctrl-example-pkg:v2.0.0
+      template:
+      - ytt:
+          paths:
+          - config-step-2-template
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
+      deploy:
+      - kapp: {}

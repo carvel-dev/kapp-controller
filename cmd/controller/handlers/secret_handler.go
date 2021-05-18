@@ -15,7 +15,7 @@ import (
 
 type SecretHandler struct {
 	log             logr.Logger
-	appRefTracker    *reftracker.AppRefTracker
+	appRefTracker   *reftracker.AppRefTracker
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 

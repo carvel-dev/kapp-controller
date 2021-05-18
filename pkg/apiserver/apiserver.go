@@ -38,9 +38,8 @@ const (
 	// selfSignedCertDir is the dir kapp-controller self signed certificates are created in.
 	selfSignedCertDir = "/home/kapp-controller/kc-agg-api-selfsigned-certs"
 
-	bindAddress = "0.0.0.0"
-	bindPort    = 10349
-	TokenPath   = "/token-dir"
+	bindPort  = 10349
+	TokenPath = "/token-dir"
 
 	apiServerEndpoint = "packages-api.kapp-controller.svc"
 	apiServiceName    = "v1alpha1.package.carvel.dev"
@@ -93,11 +92,13 @@ func NewAPIServer(clientConfig *rest.Config) (*APIServer, error) {
 		return nil, fmt.Errorf("Creating internal CRD client: %s", err)
 
 	}
-	packagesStorage := packagerest.NewCRDREST(kcClient)
+	packagesStorage := packagerest.NewPackageCRDREST(kcClient)
+	packageVersionsStorage := packagerest.NewPackageVersionCRDREST(kcClient)
 
 	pkgGroup := genericapiserver.NewDefaultAPIGroupInfo(packages.GroupName, Scheme, metav1.ParameterCodec, Codecs)
 	pkgv1alpha1Storage := map[string]apirest.Storage{}
 	pkgv1alpha1Storage["packages"] = packagesStorage
+	pkgv1alpha1Storage["packageversions"] = packageVersionsStorage
 	pkgGroup.VersionedResourcesStorageMap["v1alpha1"] = pkgv1alpha1Storage
 
 	err = server.InstallAPIGroup(&pkgGroup)
@@ -155,7 +156,6 @@ func newServerConfig(aggClient aggregatorclient.Interface) (*genericapiserver.Re
 	// Set the PairName and CertDirectory to generate the certificate files.
 	recommendedOptions.SecureServing.ServerCert.CertDirectory = selfSignedCertDir
 	recommendedOptions.SecureServing.ServerCert.PairName = "kapp-controller"
-	recommendedOptions.SecureServing.BindAddress = net.ParseIP(bindAddress)
 	recommendedOptions.SecureServing.BindPort = bindPort
 
 	if err := recommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts("kapp-controller", []string{apiServerEndpoint}, []net.IP{net.ParseIP("127.0.0.1")}); err != nil {

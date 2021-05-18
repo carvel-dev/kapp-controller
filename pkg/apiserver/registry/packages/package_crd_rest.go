@@ -5,6 +5,7 @@ package packages
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	installv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
@@ -22,16 +23,16 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
-// CRDREST is a rest implementation that proxies the rest endpoints provided by
+// PackageCRDREST is a rest implementation that proxies the rest endpoints provided by
 // CRDs. This will allow us to introduce the api server without the
 // complexities associated with custom storage options for now.
-type CRDREST struct {
+type PackageCRDREST struct {
 	crdClient installclient.Interface
 }
 
 var (
-	_ rest.StandardStorage    = &CRDREST{}
-	_ rest.ShortNamesProvider = &CRDREST{}
+	_ rest.StandardStorage    = &PackageCRDREST{}
+	_ rest.ShortNamesProvider = &PackageCRDREST{}
 )
 
 const (
@@ -39,23 +40,23 @@ const (
 	internalPackageName = "InternalPackage"
 )
 
-func NewCRDREST(crdClient installclient.Interface) *CRDREST {
-	return &CRDREST{crdClient}
+func NewPackageCRDREST(crdClient installclient.Interface) *PackageCRDREST {
+	return &PackageCRDREST{crdClient}
 }
 
-func (r *CRDREST) ShortNames() []string {
+func (r *PackageCRDREST) ShortNames() []string {
 	return []string{"pkg"}
 }
 
-func (r *CRDREST) New() runtime.Object {
+func (r *PackageCRDREST) New() runtime.Object {
 	return &packages.Package{}
 }
 
-func (r *CRDREST) NewList() runtime.Object {
+func (r *PackageCRDREST) NewList() runtime.Object {
 	return &packages.PackageList{}
 }
 
-func (r *CRDREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (r *PackageCRDREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	if createValidation != nil {
 		if err := createValidation(ctx, obj); err != nil {
 			return nil, err
@@ -68,7 +69,7 @@ func (r *CRDREST) Create(ctx context.Context, obj runtime.Object, createValidati
 	return r.internalPackageToPackage(intpkg), err
 }
 
-func (r *CRDREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	pkg, err := r.Get(ctx, name, &metav1.GetOptions{})
 
 	if errors.IsNotFound(err) {
@@ -101,7 +102,7 @@ func (r *CRDREST) Update(ctx context.Context, name string, objInfo rest.UpdatedO
 	return r.internalPackageToPackage(updatedIntPkg), false, err
 }
 
-func (r *CRDREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (r *PackageCRDREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	intPkg, err := r.crdClient.InstallV1alpha1().InternalPackages().Get(ctx, name, metav1.GetOptions{})
 
 	if errors.IsNotFound(err) {
@@ -126,7 +127,7 @@ func (r *CRDREST) Delete(ctx context.Context, name string, deleteValidation rest
 	return nil, true, nil
 }
 
-func (r *CRDREST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+func (r *PackageCRDREST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	objs, err := r.List(ctx, listOptions)
 	if err != nil {
 		return nil, err
@@ -143,12 +144,12 @@ func (r *CRDREST) DeleteCollection(ctx context.Context, deleteValidation rest.Va
 	return &packages.PackageList{Items: deletedPackages}, err
 }
 
-func (r *CRDREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (r *PackageCRDREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	intpkg, err := r.crdClient.InstallV1alpha1().InternalPackages().Get(ctx, name, *options)
 	return r.internalPackageToPackage(intpkg), err
 }
 
-func (r *CRDREST) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	list, err := r.crdClient.InstallV1alpha1().InternalPackages().List(ctx, r.internalToMetaListOpts(*options))
 	pkgList := packages.PackageList{
 		TypeMeta: list.TypeMeta,
@@ -161,21 +162,26 @@ func (r *CRDREST) List(ctx context.Context, options *internalversion.ListOptions
 	return &pkgList, err
 }
 
-func (r *CRDREST) NamespaceScoped() bool {
+func (r *PackageCRDREST) NamespaceScoped() bool {
 	return false
 }
 
-func (r *CRDREST) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+func (r *PackageCRDREST) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
 	watcher, err := r.crdClient.InstallV1alpha1().InternalPackages().Watch(ctx, r.internalToMetaListOpts(*options))
-	return watchers.NewTranslationWatcher(r.translate, watcher), err
+	return watchers.NewTranslationWatcher(r.translateFunc(), r.filterFunc(), watcher), err
 }
 
-func (r *CRDREST) ConvertToTable(ctx context.Context, obj runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+func (r *PackageCRDREST) ConvertToTable(ctx context.Context, obj runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	var table metav1.Table
 	fn := func(obj runtime.Object) error {
 		pkg := obj.(*packages.Package)
 		table.Rows = append(table.Rows, metav1.TableRow{
-			Cells:  []interface{}{pkg.Name, pkg.Spec.PublicName, pkg.Spec.Version, time.Since(pkg.ObjectMeta.CreationTimestamp.Time).Round(1 * time.Second).String()},
+			Cells: []interface{}{
+				pkg.Name, pkg.Spec.DisplayName,
+				r.format(strings.Join(pkg.Spec.Categories, ",")),
+				r.format(pkg.Spec.ShortDescription),
+				time.Since(pkg.ObjectMeta.CreationTimestamp.Time).Round(1 * time.Second).String(),
+			},
 			Object: runtime.RawExtension{Object: obj},
 		})
 		return nil
@@ -204,15 +210,16 @@ func (r *CRDREST) ConvertToTable(ctx context.Context, obj runtime.Object, tableO
 	if opt, ok := tableOptions.(*metav1.TableOptions); !ok || !opt.NoHeaders {
 		table.ColumnDefinitions = []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name", Description: "Package resource name"},
-			{Name: "PublicName", Type: "string", Description: "User facing package name"},
-			{Name: "Version", Type: "string", Description: "Package version"},
+			{Name: "Display Name", Type: "string", Description: "User facing package name"},
+			{Name: "Categories", Type: "string", Description: "Package description"},
+			{Name: "Short Description", Type: "array", Description: "Package categories"},
 			{Name: "Age", Type: "date", Description: "Time since resource creation"},
 		}
 	}
 	return &table, nil
 }
 
-func (r *CRDREST) internalToMetaListOpts(options internalversion.ListOptions) metav1.ListOptions {
+func (r *PackageCRDREST) internalToMetaListOpts(options internalversion.ListOptions) metav1.ListOptions {
 	lo := metav1.ListOptions{
 		TypeMeta:             options.TypeMeta,
 		Watch:                options.Watch,
@@ -234,7 +241,7 @@ func (r *CRDREST) internalToMetaListOpts(options internalversion.ListOptions) me
 	return lo
 }
 
-func (r *CRDREST) internalPackageToPackage(intpkg *installv1alpha1.InternalPackage) *packages.Package {
+func (r *PackageCRDREST) internalPackageToPackage(intpkg *installv1alpha1.InternalPackage) *packages.Package {
 	pkg := (*packages.Package)(intpkg)
 	for i := range pkg.ManagedFields {
 		mf := pkg.ManagedFields[i]
@@ -247,7 +254,7 @@ func (r *CRDREST) internalPackageToPackage(intpkg *installv1alpha1.InternalPacka
 	return pkg
 }
 
-func (r *CRDREST) packageToInternalPackage(pkg *packages.Package) *installv1alpha1.InternalPackage {
+func (r *PackageCRDREST) packageToInternalPackage(pkg *packages.Package) *installv1alpha1.InternalPackage {
 	intpkg := (*installv1alpha1.InternalPackage)(pkg)
 	for i := range intpkg.ManagedFields {
 		if intpkg.ManagedFields[i].APIVersion == pkgv1alpha1.SchemeGroupVersion.Identifier() {
@@ -259,10 +266,24 @@ func (r *CRDREST) packageToInternalPackage(pkg *packages.Package) *installv1alph
 	return intpkg
 }
 
-func (r *CRDREST) translate(evt watch.Event) watch.Event {
-	if evt.Object != nil {
-		intpkg := evt.Object.(*installv1alpha1.InternalPackage)
-		evt.Object = r.internalPackageToPackage(intpkg)
+func (r *PackageCRDREST) translateFunc() func(evt watch.Event) watch.Event {
+	return func(evt watch.Event) watch.Event {
+		if intpkg, ok := evt.Object.(*installv1alpha1.InternalPackage); ok {
+			evt.Object = r.internalPackageToPackage(intpkg)
+		}
+		return evt
 	}
-	return evt
+}
+
+func (r *PackageCRDREST) filterFunc() func(evt watch.Event) bool {
+	return func(evt watch.Event) bool {
+		return true
+	}
+}
+
+func (r *PackageCRDREST) format(in string) string {
+	if len(in) > 50 {
+		return in[:47] + "..."
+	}
+	return in
 }

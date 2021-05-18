@@ -6,4 +6,6 @@ type InstalledPackageExpansion interface{}
 
 type InternalPackageExpansion interface{}
 
+type InternalPackageVersionExpansion interface{}
+
 type PackageRepositoryExpansion interface{}
