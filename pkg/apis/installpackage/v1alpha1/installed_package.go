@@ -49,8 +49,23 @@ type InstalledPackageSpec struct {
 	PkgRef *PackageRef `json:"packageRef,omitempty"`
 	// +optional
 	Values []InstalledPackageValues `json:"values,omitempty"`
-
-	// TODO other App CR related fields
+	// Paused when set to true will ignore all pending changes,
+	// once it set back to false, pending changes will be applied
+	// +optional
+	Paused bool `json:"paused,omitempty"`
+	// Canceled when set to true will stop all active changes
+	// +optional
+	Canceled bool `json:"canceled,omitempty"`
+	// Controls frequency of App reconciliation in time + unit
+	// format. Always >= 30s. If value below 30s is specified,
+	// 30s will be used.
+	// +optional
+	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
+	// When NoopDelete set to true, InstalledPackage deletion
+	// should delete InstalledPackage/App CR but preserve App's
+	// associated resources.
+	// +optional
+	NoopDelete bool `json:"noopDelete,omitempty"`
 }
 
 type PackageRef struct {

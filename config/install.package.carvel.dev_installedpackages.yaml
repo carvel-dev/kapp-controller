@@ -55,6 +55,9 @@ spec:
           type: object
         spec:
           properties:
+            canceled:
+              description: Canceled when set to true will stop all active changes
+              type: boolean
             cluster:
               properties:
                 kubeconfigSecretRef:
@@ -67,6 +70,11 @@ spec:
                 namespace:
                   type: string
               type: object
+            noopDelete:
+              description: When NoopDelete set to true, InstalledPackage deletion
+                should delete InstalledPackage/App CR but preserve App's associated
+                resources.
+              type: boolean
             packageRef:
               properties:
                 publicName:
@@ -86,7 +94,16 @@ spec:
                       type: object
                   type: object
               type: object
+            paused:
+              description: Paused when set to true will ignore all pending changes,
+                once it set back to false, pending changes will be applied
+              type: boolean
             serviceAccountName:
+              type: string
+            syncPeriod:
+              description: Controls frequency of App reconciliation in time + unit
+                format. Always >= 30s. If value below 30s is specified, 30s will be
+                used.
               type: string
             values:
               items:
@@ -136,10 +153,6 @@ spec:
             version:
               description: TODO this is desired resolved version (not actually deployed)
               type: string
-          required:
-          - conditions
-          - friendlyDescription
-          - observedGeneration
           type: object
       required:
       - spec
