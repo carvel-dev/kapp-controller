@@ -15,56 +15,71 @@ func Test_NoopDelete_DeletesAfterServiceAccountDeleted(t *testing.T) {
 	kapp := Kapp{t, env.Namespace, logger}
 	kubectl := Kubectl{t, env.Namespace, logger}
 	sas := ServiceAccounts{env.Namespace}
+	name := "instl-pkg-noop-delete"
+	cfgMapName := "configmap"
 
-	appName := "noop-delete-app-with-no-sa"
-	cfgMapName := "noop-configmap-with-no-sa"
-	appYaml := fmt.Sprintf(`
----
-apiVersion: kappctrl.k14s.io/v1alpha1
-kind: App
+	installPkgYaml := fmt.Sprintf(`---
+apiVersion: package.carvel.dev/v1alpha1
+kind: Package
 metadata:
-  name: %s
-  annotations:
-    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
+ name: noopdelete.pkg.1.0.0
 spec:
-  serviceAccountName: kappctrl-e2e-ns-sa
-  noopDelete: true
-  fetch:
-    - inline:
-        paths:
-          file.yml: |
-            apiVersion: v1
-            kind: ConfigMap
-            metadata:
-              name: %s
-            data:
-              key: value
-  template:
-    - ytt: {}
-  deploy:
-    - kapp: {}`, appName, cfgMapName) + sas.ForNamespaceYAML()
+ publicName: noopdelete.pkg
+ version: 1.0.0
+ template:
+   spec:
+     fetch:
+     - inline:
+         paths:
+           file.yml: |
+             apiVersion: v1
+             kind: ConfigMap
+             metadata:
+               name: %s
+             data:
+               key: value
+     template:
+     - ytt: {}
+     deploy:
+     - kapp: {}
+---
+apiVersion: install.package.carvel.dev/v1alpha1
+kind: InstalledPackage
+metadata:
+ name: %s
+ namespace: %s
+ annotations:
+   kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/installedpackages
+spec:
+ serviceAccountName: kappctrl-e2e-ns-sa
+ noopDelete: true
+ packageRef:
+   publicName: noopdelete.pkg
+   version: 1.0.0
+`, cfgMapName, name, env.Namespace) + sas.ForNamespaceYAML()
 
-	cleanUpApp := func() {
-		kapp.Run([]string{"delete", "-a", appName})
+	cleanUpIpkg := func() {
+		kapp.Run([]string{"delete", "-a", name})
 	}
 	cleanUpConfigMap := func() {
 		kubectl.Run([]string{"delete", "configmap", cfgMapName})
 	}
 
-	cleanUpApp()
-	defer cleanUpApp()
+	cleanUpIpkg()
+	defer cleanUpIpkg()
 	defer cleanUpConfigMap()
 
 	logger.Section("deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName}, RunOpts{StdinReader: strings.NewReader(appYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 	})
 
-	logger.Section("delete Service Account and App", func() {
+	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
+	logger.Section("delete Service Account and InstalledPackage", func() {
 		kubectl.Run([]string{"delete", "serviceaccount", "kappctrl-e2e-ns-sa"})
-		cleanUpApp()
+		cleanUpIpkg()
 	})
 
 	logger.Section("check ConfigMap still exists after delete", func() {
-		kubectl.Run([]string{"get", "configmap", cfgMapName})
+		kubectl.Run([]string{"get", "configmap/" + cfgMapName})
 	})
 }

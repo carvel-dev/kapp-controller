@@ -8,10 +8,14 @@ import (
 )
 
 type GenericStatus struct {
-	ObservedGeneration  int64          `json:"observedGeneration"`
-	Conditions          []AppCondition `json:"conditions"`
-	FriendlyDescription string         `json:"friendlyDescription"`
-	UsefulErrorMessage  string         `json:"usefulErrorMessage,omitempty"`
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration"`
+	// +optional
+	Conditions []AppCondition `json:"conditions"`
+	// +optional
+	FriendlyDescription string `json:"friendlyDescription"`
+	// +optional
+	UsefulErrorMessage string `json:"usefulErrorMessage,omitempty"`
 }
 
 type AppConditionType string
