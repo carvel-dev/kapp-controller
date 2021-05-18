@@ -42,12 +42,15 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Install().V1alpha1().InstalledPackages().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("internalpackages"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Install().V1alpha1().InternalPackages().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("internalpackageversions"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Install().V1alpha1().InternalPackageVersions().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("packagerepositories"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Install().V1alpha1().PackageRepositories().Informer()}, nil
 
 		// Group=kappctrl.k14s.io, Version=v1alpha1
 	case kappctrlv1alpha1.SchemeGroupVersion.WithResource("apps"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Kappctrl().V1alpha1().Apps().Informer()}, nil
+
 	}
 
 	return nil, fmt.Errorf("no informer found for %v", resource)

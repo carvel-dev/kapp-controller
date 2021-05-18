@@ -12,6 +12,8 @@ type Interface interface {
 	InstalledPackages() InstalledPackageInformer
 	// InternalPackages returns a InternalPackageInformer.
 	InternalPackages() InternalPackageInformer
+	// InternalPackageVersions returns a InternalPackageVersionInformer.
+	InternalPackageVersions() InternalPackageVersionInformer
 	// PackageRepositories returns a PackageRepositoryInformer.
 	PackageRepositories() PackageRepositoryInformer
 }
@@ -35,6 +37,11 @@ func (v *version) InstalledPackages() InstalledPackageInformer {
 // InternalPackages returns a InternalPackageInformer.
 func (v *version) InternalPackages() InternalPackageInformer {
 	return &internalPackageInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// InternalPackageVersions returns a InternalPackageVersionInformer.
+func (v *version) InternalPackageVersions() InternalPackageVersionInformer {
+	return &internalPackageVersionInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // PackageRepositories returns a PackageRepositoryInformer.

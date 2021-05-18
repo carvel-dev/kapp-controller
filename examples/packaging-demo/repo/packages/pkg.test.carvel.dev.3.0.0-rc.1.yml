@@ -1,17 +1,15 @@
 ---
 apiVersion: package.carvel.dev/v1alpha1
-kind: Package
+kind: PackageVersion
 metadata:
   name: simple-app.corp.com.3.0.0-rc.1
   # cluster scoped
 spec:
-  publicName: simple-app.corp.com
+  packageName: simple-app.corp.com
   # This is a pre-release, which kapp-contorller will not automatically bump
   # InstalledPackages to unless it explicitly allowed within the InstalledPackage
   # version selection.
   version: 3.0.0-rc.1
-  displayName: "simple-app 3.0.0-rc.1"
-  description: "simple-app version 3.0.0-rc.1 is a pre-release"
   template:
     spec:
       fetch:

@@ -14,6 +14,10 @@ type InstalledPackageNamespaceListerExpansion interface{}
 // InternalPackageLister.
 type InternalPackageListerExpansion interface{}
 
+// InternalPackageVersionListerExpansion allows custom methods to be added to
+// InternalPackageVersionLister.
+type InternalPackageVersionListerExpansion interface{}
+
 // PackageRepositoryListerExpansion allows custom methods to be added to
 // PackageRepositoryLister.
 type PackageRepositoryListerExpansion interface{}

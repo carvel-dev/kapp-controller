@@ -19,8 +19,32 @@ type Package struct {
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   PackageSpec   `json:"spec"`
-	Status PackageStatus `json:"status"`
+	Spec PackageSpec `json:"spec"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type PackageVersion struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec PackageVersionSpec `json:"spec"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type PackageVersionList struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Standard list metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []PackageVersion `json:"items"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -35,30 +59,32 @@ type PackageList struct {
 	Items []Package `json:"items"`
 }
 
-type PackageSpec struct {
-	PublicName string `json:"publicName,omitempty"`
-	Version    string `json:"version,omitempty"`
-
-	DisplayName                     string       `json:"displayName,omitempty"`
-	LongDescription                 string       `json:"longDescription,omitempty"`
-	ShortDescription                string       `json:"shortDescription,omitempty"`
-	IconSVGBase64                   string       `json:"iconSVGBase64,omitempty"`
-	ProviderName                    string       `json:"providerName,omitempty"`
-	Maintainers                     []Maintainer `json:"maintainers,omitempty"`
-	ReleaseNotes                    string       `json:"releaseNotes,omitempty"`
-	Categories                      []string     `json:"categories,omitempty"`
-	SupportDescription              string       `json:"supportDescription,omitempty"`
-	CapactiyRequirementsDescription string       `json:"capacityRequirementsDescription,omitempty"`
-	Licenses                        []string     `json:"licenses,omitempty"`
-
-	ReleasedAt string `json:"releasedAt,omitempty"`
+type PackageVersionSpec struct {
+	PackageName                     string   `json:"packageName,omitempty"`
+	Version                         string   `json:"version,omitempty"`
+	Licenses                        []string `json:"licenses,omitempty"`
+	ReleasedAt                      string   `json:"releasedAt,omitempty"`
+	CapactiyRequirementsDescription string   `json:"capacityRequirementsDescription,omitempty"`
+	ReleaseNotes                    string   `json:"releaseNotes,omitempty"`
 
 	Template AppTemplateSpec `json:"template,omitempty"`
+
 	// valuesSchema can be used to show template values that
-	// can be configured by users when a Package is installed
+	// can be configured by users when a PackageVersion is installed
 	// in an OpenAPI schema format.
 	// +optional
 	ValuesSchema ValuesSchema `json:"valuesSchema,omitempty"`
+}
+
+type PackageSpec struct {
+	DisplayName        string       `json:"displayName,omitempty"`
+	LongDescription    string       `json:"longDescription,omitempty"`
+	ShortDescription   string       `json:"shortDescription,omitempty"`
+	IconSVGBase64      string       `json:"iconSVGBase64,omitempty"`
+	ProviderName       string       `json:"providerName,omitempty"`
+	Maintainers        []Maintainer `json:"maintainers,omitempty"`
+	Categories         []string     `json:"categories,omitempty"`
+	SupportDescription string       `json:"supportDescription,omitempty"`
 }
 
 type Maintainer struct {
@@ -67,11 +93,6 @@ type Maintainer struct {
 
 type AppTemplateSpec struct {
 	Spec *kcv1alpha1.AppSpec `json:"spec"`
-}
-
-type PackageStatus struct {
-	ObservedGeneration int64                     `json:"observedGeneration"`
-	Conditions         []kcv1alpha1.AppCondition `json:"conditions"`
 }
 
 type ValuesSchema struct {

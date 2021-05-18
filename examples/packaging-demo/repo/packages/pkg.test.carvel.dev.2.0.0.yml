@@ -1,16 +1,14 @@
 ---
 apiVersion: package.carvel.dev/v1alpha1
-kind: Package
+kind: PackageVersion
 metadata:
   name: simple-app.corp.com.2.0.0
   # cluster scoped
 spec:
-  publicName: simple-app.corp.com
+  packageName: simple-app.corp.com
   # In this new version of the package, we are including some overlays
   # which will increase the pod count for the simple app.
   version: 2.0.0
-  displayName: "simple-app v2.0.0"
-  description: "simple-app v2.0.0 includes ytt overlays which increase the pod count for the simple app"
   template:
     spec:
       fetch:

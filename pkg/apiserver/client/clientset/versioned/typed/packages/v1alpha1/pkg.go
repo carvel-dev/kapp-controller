@@ -24,7 +24,6 @@ type PackagesGetter interface {
 type PackageInterface interface {
 	Create(ctx context.Context, pkg *v1alpha1.Package, opts v1.CreateOptions) (*v1alpha1.Package, error)
 	Update(ctx context.Context, pkg *v1alpha1.Package, opts v1.UpdateOptions) (*v1alpha1.Package, error)
-	UpdateStatus(ctx context.Context, pkg *v1alpha1.Package, opts v1.UpdateOptions) (*v1alpha1.Package, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.Package, error)
@@ -106,21 +105,6 @@ func (c *packages) Update(ctx context.Context, pkg *v1alpha1.Package, opts v1.Up
 	err = c.client.Put().
 		Resource("packages").
 		Name(pkg.Name).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(pkg).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *packages) UpdateStatus(ctx context.Context, pkg *v1alpha1.Package, opts v1.UpdateOptions) (result *v1alpha1.Package, err error) {
-	result = &v1alpha1.Package{}
-	err = c.client.Put().
-		Resource("packages").
-		Name(pkg.Name).
-		SubResource("status").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(pkg).
 		Do(ctx).

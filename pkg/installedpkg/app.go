@@ -13,12 +13,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func NewApp(existingApp *v1alpha1.App, installedPkg *instpkgv1alpha1.InstalledPackage, pkg pkgv1alpha1.Package) (*v1alpha1.App, error) {
+func NewApp(existingApp *v1alpha1.App, installedPkg *instpkgv1alpha1.InstalledPackage, pkgVersion pkgv1alpha1.PackageVersion) (*v1alpha1.App, error) {
 	desiredApp := existingApp.DeepCopy()
 
 	desiredApp.Name = installedPkg.Name
 	desiredApp.Namespace = installedPkg.Namespace
-	desiredApp.Spec = *pkg.Spec.Template.Spec
+	desiredApp.Spec = *pkgVersion.Spec.Template.Spec
 	desiredApp.Spec.ServiceAccountName = installedPkg.Spec.ServiceAccountName
 	desiredApp.Spec.SyncPeriod = installedPkg.Spec.SyncPeriod
 	desiredApp.Spec.NoopDelete = installedPkg.Spec.NoopDelete

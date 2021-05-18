@@ -1,36 +1,20 @@
 ---
-apiVersion: package.carvel.dev
+apiVersion: package.carvel.dev/v1alpha1
 kind: Package
 metadata:
-  name: pkg1.test.carvel.dev.1.0.0
+  name: pkg1.test.carvel.dev
   # cluster scoped
 spec:
-  publicName: pkg1.test.carvel.dev
-  version: 1.0.0
   displayName: "Test Package"
-  description: "Package used for testing"
-  template: # type of App CR
-    spec:
-      fetch:
-      - git:
-          url: https://github.com/k14s/k8s-simple-app-example
-          ref: origin/develop
-          subPath: config-step-2-template
-      template:
-      - ytt: {}
-      deploy:
-      - kapp: {}
+  shortDescription: "Package used for testing"
 ---
-apiVersion: package.carvel.dev
-kind: Package
+apiVersion: package.carvel.dev/v1alpha1
+kind: PackageVersion
 metadata:
   name: pkg1.test.carvel.dev.2.0.0
-  # cluster scoped
 spec:
-  publicName: pkg1.test.carvel.dev
+  packageName: pkg1.test.carvel.dev
   version: 2.0.0
-  displayName: "Test Package"
-  description: "Package used for testing"
   template: # type of App CR
     spec:
       fetch:
@@ -45,22 +29,16 @@ spec:
       deploy:
       - kapp: {}
 ---
-apiVersion: install.package.carvel.dev
+apiVersion: install.package.carvel.dev/v1alpha1
 kind: InstalledPackage
 metadata:
   name: installed-pkg-test
   namespace: default
 spec:
   serviceAccountName: default-ns-sa
-  pkgRef:
-    publicName: pkg1.test.carvel.dev
-    ## explicit
-    # version: 1.0.0
-    ## latest
-    versionSelection: {}
-    ## constraint
-    # versionSelection:
-    #   constraint: "<2.0.0"
+  packageName: pkg1.test.carvel.dev
+  versionSelection:
+    constraints: "2.0.0"
   values:
   - secretRef:
       name: simple-values

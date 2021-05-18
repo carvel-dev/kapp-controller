@@ -36,8 +36,8 @@ metadata:
   # cluster scoped
 spec:
   fetch:
-    image:
-      url: k8slt/kappctrl-e2e-repo@sha256:c3e68921d828cf30c9dfc22d5d0691dc2558b6243b51824883d4068669fece67
+    imgpkgBundle:
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:138f9917632efe462e7d221cd1bac73a5916ebdc182b31058aa9693001090290
 ---
 apiVersion: install.package.carvel.dev/v1alpha1
 kind: InstalledPackage
@@ -48,9 +48,10 @@ metadata:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/installedpackages
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
-  packageRef:
-    publicName: pkg.test.carvel.dev
-    version: 1.0.0
+  packageVersionRef:
+    packageName: pkg.test.carvel.dev
+    versionSelection:
+      constraints: 1.0.0
   values:
   - secretRef:
       name: pkg-demo-values
@@ -156,12 +157,18 @@ func Test_InstalledPackageStatus_DisplaysUsefulErrorMessage_ForDeploymentFailure
 apiVersion: package.carvel.dev/v1alpha1
 kind: Package
 metadata:
+  name: pkg.fail.carvel.dev
+spec:
+  displayName: "Test Package in repo"
+  shortDescription: "Package used for testing"
+---
+apiVersion: package.carvel.dev/v1alpha1
+kind: PackageVersion
+metadata:
   name: pkg.fail.carvel.dev.1.0.0
 spec:
-  publicName: pkg.fail.carvel.dev
+  packageName: pkg.fail.carvel.dev
   version: 1.0.0
-  displayName: "Test Package in repo"
-  description: "Package used for testing"
   template:
     spec:
       fetch:
@@ -190,9 +197,10 @@ metadata:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/installedpackages
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
-  packageRef:
-    publicName: pkg.fail.carvel.dev
-    version: 1.0.0
+  packageVersionRef:
+    packageName: pkg.fail.carvel.dev
+    versionSelection:
+      constraints: 1.0.0
   values:
   - secretRef:
       name: pkg-demo-values

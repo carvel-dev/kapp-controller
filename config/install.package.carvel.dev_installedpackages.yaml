@@ -9,7 +9,7 @@ metadata:
   name: installedpackages.install.package.carvel.dev
 spec:
   additionalPrinterColumns:
-  - JSONPath: .spec.packageRef.publicName
+  - JSONPath: .spec.packageName
     description: Package public name
     name: Package name
     type: string
@@ -75,11 +75,9 @@ spec:
                 should delete InstalledPackage/App CR but preserve App's associated
                 resources.
               type: boolean
-            packageRef:
+            packageVersionRef:
               properties:
-                publicName:
-                  type: string
-                version:
+                packageName:
                   type: string
                 versionSelection:
                   properties:
