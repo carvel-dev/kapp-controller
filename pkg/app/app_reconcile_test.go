@@ -80,8 +80,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	log := logf.Log.WithName("kc")
 
 	fetchInline := map[string]string{
-		"file.yml": `# comment
-foo: bar`,
+		"file.yml": `foo: #@ data.values.nothere`,
 	}
 	app := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
@@ -120,7 +119,7 @@ foo: bar`,
 			}},
 			ObservedGeneration:  0,
 			FriendlyDescription: "Reconcile failed: Templating dir: Error (see .status.usefulErrorMessage for details)",
-			UsefulErrorMessage:  "ytt: Error: Non-ytt comment at line file.yml:1: '# comment':\n  Unrecognized comment type (expected '#@' or '#!'). (hint: if this is plain YAML — not a template — consider `--file-mark '<filename>:type=yaml-plain'`)\n",
+			UsefulErrorMessage:  "ytt: Error: \n- undefined: data\n    file.yml:1 | foo: #@ data.values.nothere\n",
 		},
 		Fetch: &v1alpha1.AppStatusFetch{
 			ExitCode: 0,
