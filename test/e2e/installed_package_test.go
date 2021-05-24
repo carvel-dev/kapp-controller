@@ -37,7 +37,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:138f9917632efe462e7d221cd1bac73a5916ebdc182b31058aa9693001090290
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:e0217ba1944c46b52347b28d288359310d471bebf6ac36851ccb43449c7c112b
 ---
 apiVersion: install.package.carvel.dev/v1alpha1
 kind: InstalledPackage

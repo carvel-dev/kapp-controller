@@ -4,12 +4,17 @@ kind: PackageVersion
 metadata:
   # This is just the resource name and shouldn't be used to reference this package
   # in other resources
-  name: pkg.test.carvel.dev.1.0.0
+  name: simple-app.corp.com.1.0.0
   # cluster scoped
 spec:
   # This is the name we want to reference in resources such as InstalledPackage.
-  packageName: pkg.test.carvel.dev
+  packageName: simple-app.corp.com
   version: 1.0.0
+  licenses:
+  - Apache 2.0
+  capactiyRequirementsDescription: "cpu: 1,RAM: 2, Disk: 3"
+  releaseNotes: |
+    - Introduce simple-app package
   template:
     # This is just an app template that will be combined with any values given in the
     # InstalledPackage and turned in to an App CR in the cluster. kapp-controller will then
@@ -20,7 +25,10 @@ spec:
       - imgpkgBundle:
           image: k8slt/kctrl-example-pkg:v1.0.0
       template:
-      - ytt: {}
+      - ytt:
+          paths:
+          - "config.yml"
+          - "values.yml"
       - kbld:
           paths:
           - "-"

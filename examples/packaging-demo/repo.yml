@@ -12,4 +12,4 @@ spec:
       # This image was create by running `imgpkg push -b <repo> -f repo`. The resulting
       # image will contain the packages within the packages folder and, by adding this repo to the cluster,
       # those packages will also be available for installation.
-      image: index.docker.io/k8slt/kc-e2e-repo-bundle@sha256:388d353574446eea0bba4e3f656079963660704e0d474fbc87b3a9bc6efb1688
+      image: index.docker.io/k8slt/demo-repo@sha256:edc1bfd1317c6f63b7816a6d02ce0bfbe75214946887783e4d0c21e360248308
