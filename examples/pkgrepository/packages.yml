@@ -1,14 +1,21 @@
 ---
-apiVersion: package.carvel.dev
+apiVersion: package.carvel.dev/v1alpha1
 kind: Package
+metadata:
+  name: pkg2.test.carvel.dev
+  # cluster scoped
+spec:
+  displayName: "Test Package in repo"
+  description: "Package used for testing"
+---
+apiVersion: package.carvel.dev/v1alpha1
+kind: PackageVersion
 metadata:
   name: pkg2.test.carvel.dev.1.0.0
   # cluster scoped
 spec:
-  publicName: pkg2.test.carvel.dev
+  packageName: pkg2.test.carvel.dev
   version: 1.0.0
-  displayName: "Test Package in repo"
-  description: "Package used for testing"
   template:
     spec:
       fetch:
@@ -21,16 +28,14 @@ spec:
       deploy:
       - kapp: {}
 ---
-apiVersion: package.carvel.dev
-kind: Package
+apiVersion: package.carvel.dev/v1alpha1
+kind: PackageVersion
 metadata:
   name: pkg2.test.carvel.dev.2.0.0
   # cluster scoped
 spec:
-  publicName: pkg2.test.carvel.dev
+  packageName: pkg2.test.carvel.dev
   version: 2.0.0
-  displayName: "Test Package in repo"
-  description: "Package used for testing"
   template:
     spec:
       fetch:
