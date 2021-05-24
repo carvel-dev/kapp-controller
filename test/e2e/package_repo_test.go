@@ -87,7 +87,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:138f9917632efe462e7d221cd1bac73a5916ebdc182b31058aa9693001090290`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:e0217ba1944c46b52347b28d288359310d471bebf6ac36851ccb43449c7c112b`
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
@@ -147,7 +147,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:138f9917632efe462e7d221cd1bac73a5916ebdc182b31058aa9693001090290`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:e0217ba1944c46b52347b28d288359310d471bebf6ac36851ccb43449c7c112b`
 
 	cleanUp := func() {
 		kubectl.RunWithOpts([]string{"delete", "pkgr/basic.test.carvel.dev"}, RunOpts{NoNamespace: true})
@@ -188,7 +188,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:138f9917632efe462e7d221cd1bac73a5916ebdc182b31058aa9693001090290`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:e0217ba1944c46b52347b28d288359310d471bebf6ac36851ccb43449c7c112b`
 
 	packageNames := []string{"pkg.test.carvel.dev.1.0.0", "pkg.test.carvel.dev.2.0.0"}
 
@@ -279,7 +279,7 @@ spec:
 			RunOpts{StdinReader: strings.NewReader(repoYaml)})
 	})
 
-	out, err := kubectl.RunWithOpts([]string{"get", "pkgr/"+name}, RunOpts{NoNamespace: true, AllowError: true})
+	out, err := kubectl.RunWithOpts([]string{"get", "pkgr/" + name}, RunOpts{NoNamespace: true, AllowError: true})
 	if err != nil {
 		t.Fatalf("encountered unknown error from kubectl get pkgr: %v", err)
 	}

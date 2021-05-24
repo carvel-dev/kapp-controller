@@ -10,4 +10,12 @@ spec:
   # This is the name we want to reference in resources such as InstalledPackage.
   displayName: "Test Package in repo"
   shortDescription: "Package used for testing"
+  longDescription: "A longer, more detailed description of what the package contains and what it is for"
+  providerName: Carvel
+  maintainers:
+  - name: carvel
+  categories:
+  - testing
+  supportDescription: "Description of support provided for the package"
+
 

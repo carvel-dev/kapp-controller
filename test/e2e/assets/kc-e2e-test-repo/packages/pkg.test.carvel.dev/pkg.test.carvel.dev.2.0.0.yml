@@ -2,14 +2,18 @@
 apiVersion: package.carvel.dev/v1alpha1
 kind: PackageVersion
 metadata:
-  name: pkg.test.carvel.dev.3.0.0-rc.1
+  name: pkg.test.carvel.dev.2.0.0
   # cluster scoped
 spec:
-  packageName: pkg.test.carvel.dev
-  # This is a pre-release, which kapp-contorller will not automatically bump
-  # InstalledPackages to unless it explicitly allowed within the InstalledPackage
-  # version selection.
-  version: 3.0.0-rc.1
+  packageName: pkg2.test.carvel.dev
+  # In this new version of the package, we are including some overlays
+  # which will increase the pod count for the simple app.
+  version: 2.0.0
+  licenses:
+  - Apache 2.0
+  capactiyRequirementsDescription: "cpu: 1,RAM: 2, Disk: 3"
+  releaseNotes: |
+    - add overlays to scale
   template:
     spec:
       fetch:
@@ -19,6 +23,7 @@ spec:
       - ytt:
           paths:
           - config-step-2-template
+          - config-step-2a-overlays
       - kbld:
           paths:
           - "-"

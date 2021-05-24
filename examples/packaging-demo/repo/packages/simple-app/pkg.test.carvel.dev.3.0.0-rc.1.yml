@@ -1,0 +1,33 @@
+---
+apiVersion: package.carvel.dev/v1alpha1
+kind: PackageVersion
+metadata:
+  name: simple-app.corp.com.3.0.0-rc.1
+  # cluster scoped
+spec:
+  packageName: simple-app.corp.com
+  # This is a pre-release, which kapp-contorller will not automatically bump
+  # InstalledPackages to unless it explicitly allowed within the InstalledPackage
+  # version selection.
+  version: 3.0.0-rc.1
+  licenses:
+  - Apache 2.0
+  capactiyRequirementsDescription: "cpu: 1,RAM: 2, Disk: 3"
+  releaseNotes: |
+    - remove overlays introduced in v2
+    - revert back to v1
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v2.0.0
+      template:
+      - ytt:
+          paths:
+          - config-step-2-template
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
+      deploy:
+      - kapp: {}
