@@ -18,9 +18,10 @@ metadata:
   namespace: default
 spec:
   serviceAccountName: default-ns-sa
-  pkgRef:
-    publicName: pkg2.test.carvel.dev
-    version: v2.0
+  packageVersionRef:
+    packageName: pkg2.test.carvel.dev
+    versionSelection:
+      constraint: 2.0.0
   values:
   - secretRef:
       name: installed-pkg-test-in-repo-values

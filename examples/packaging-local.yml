@@ -36,9 +36,10 @@ metadata:
   namespace: default
 spec:
   serviceAccountName: default-ns-sa
-  packageName: pkg1.test.carvel.dev
-  versionSelection:
-    constraints: "2.0.0"
+  packageVersionRef:
+    packageName: pkg1.test.carvel.dev
+    versionSelection:
+      constraints: "2.0.0"
   values:
   - secretRef:
       name: simple-values
