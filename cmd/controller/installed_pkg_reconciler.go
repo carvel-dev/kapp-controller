@@ -26,7 +26,7 @@ var _ reconcile.Reconciler = &InstalledPkgReconciler{}
 func (r *InstalledPkgReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
-	existingInstalledPkg, err := r.kcClient.InstallV1alpha1().InstalledPackages(request.Namespace).Get(ctx, request.Name, metav1.GetOptions{})
+	existingInstalledPkg, err := r.kcClient.PackagingV1alpha1().InstalledPackages(request.Namespace).Get(ctx, request.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.Info("Could not find InstalledPkg", "name", request.Name)

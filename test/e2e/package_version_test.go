@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/ghodss/yaml"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 )
 
 func Test_PackageVersionIsValidated_Name(t *testing.T) {
@@ -21,7 +21,7 @@ func Test_PackageVersionIsValidated_Name(t *testing.T) {
 	invalidPackageVersionName := "notThePackage-notTheVersion"
 
 	invalidPkgVersionYML := fmt.Sprintf(`---
-apiVersion: package.carvel.dev/v1alpha1
+apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageVersion
 metadata:
   name: %s
@@ -78,7 +78,7 @@ func Test_PackageVersionWithValuesSchema_PreservesSchemaData(t *testing.T) {
 	version := "1.0.0"
 
 	pkgYaml := fmt.Sprintf(`---
-apiVersion: package.carvel.dev/v1alpha1
+apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageVersion
 metadata:
   name: %s.%s
@@ -125,7 +125,7 @@ spec:
 	}
 
 	out = kapp.Run([]string{"inspect", "-a", appName, "--raw", "--tty=false", "--filter-kind=PackageVersion"})
-	var cr v1alpha1.InternalPackageVersion
+	var cr v1alpha1.PackageVersion
 	err := yaml.Unmarshal([]byte(out), &cr)
 	if err != nil {
 		t.Fatalf("failed to unmarshal: %s", err)
@@ -148,14 +148,14 @@ func Test_PackageVersion_FieldSelectors(t *testing.T) {
 	filteredPackageName := "you-shouldnt-see-me.carvel.dev"
 	packcageYamls := fmt.Sprintf(`---
 kind: Package
-apiVersion: package.carvel.dev/v1alpha1
+apiVersion: data.packaging.carvel.dev/v1alpha1
 metadata:
   name: %[1]s
 spec:
   shortDescription: "Package for testing"
 ---
 kind: PackageVersion
-apiVersion: package.carvel.dev/v1alpha1
+apiVersion: data.packaging.carvel.dev/v1alpha1
 metadata:
   name: %[1]s.1.0.0
 spec:
@@ -179,14 +179,14 @@ spec:
       - kapp: {}
 ---
 kind: Package
-apiVersion: package.carvel.dev/v1alpha1
+apiVersion: data.packaging.carvel.dev/v1alpha1
 metadata:
   name: %[2]s
 spec:
   shortDescription: "Package for testing"
 ---
 kind: PackageVersion
-apiVersion: package.carvel.dev/v1alpha1
+apiVersion: data.packaging.carvel.dev/v1alpha1
 metadata:
   name: %[2]s.1.0.0
 spec:

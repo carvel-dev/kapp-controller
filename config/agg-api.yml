@@ -3,9 +3,9 @@
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
-  name: v1alpha1.package.carvel.dev
+  name: v1alpha1.data.packaging.carvel.dev
 spec:
-  group: package.carvel.dev
+  group: data.packaging.carvel.dev
   groupPriorityMinimum: 100
   version: v1alpha1
   versionPriority: 100

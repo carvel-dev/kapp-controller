@@ -14,10 +14,10 @@ import (
 	kcinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/install"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages"
-	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/install"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/v1alpha1"
-	packagerest "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/registry/packages"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
+	datapkginginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/install"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	packagerest "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/registry/datapackaging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -42,7 +42,7 @@ const (
 	TokenPath = "/token-dir"
 
 	apiServerEndpoint = "packages-api.kapp-controller.svc"
-	apiServiceName    = "v1alpha1.package.carvel.dev"
+	apiServiceName    = "v1alpha1.data.packaging.carvel.dev"
 )
 
 var (
@@ -52,7 +52,7 @@ var (
 
 func init() {
 	// Setup the scheme the server will use
-	pkginstall.Install(Scheme)
+	datapkginginstall.Install(Scheme)
 	kcinstall.Install(Scheme)
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Version: "v1"})
 	unversioned := schema.GroupVersion{Group: "", Version: "v1"}
@@ -95,7 +95,7 @@ func NewAPIServer(clientConfig *rest.Config) (*APIServer, error) {
 	packagesStorage := packagerest.NewPackageCRDREST(kcClient)
 	packageVersionsStorage := packagerest.NewPackageVersionCRDREST(kcClient)
 
-	pkgGroup := genericapiserver.NewDefaultAPIGroupInfo(packages.GroupName, Scheme, metav1.ParameterCodec, Codecs)
+	pkgGroup := genericapiserver.NewDefaultAPIGroupInfo(datapackaging.GroupName, Scheme, metav1.ParameterCodec, Codecs)
 	pkgv1alpha1Storage := map[string]apirest.Storage{}
 	pkgv1alpha1Storage["packages"] = packagesStorage
 	pkgv1alpha1Storage["packageversions"] = packageVersionsStorage

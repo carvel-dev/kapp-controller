@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -26,7 +26,7 @@ func Test_PackageRepoStatus_Failing(t *testing.T) {
 	kapp := Kapp{t, env.Namespace, logger}
 	name := "repo"
 
-	repoYaml := `apiVersion: install.package.carvel.dev/v1alpha1
+	repoYaml := `apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
   name: test-repo
@@ -47,6 +47,12 @@ spec:
 			UsefulErrorMessage:  "Error: Syncing directory '0': Syncing directory '.' with imgpkgBundle contents: Imgpkg: exit status 1 (stderr: Error: Checking if image is bundle: Collecting images: Working with index.docker.io/k8slt/i-dont-exist:latest: GET https://index.docker.io/v2/k8slt/i-dont-exist/manifests/latest: UNAUTHORIZED: authentication required; [map[Action:pull Class: Name:k8slt/i-dont-exist Type:repository]]\n)\n",
 		},
 	}
+
+	cleanup := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+	cleanup()
+	defer cleanup()
 
 	// deploy failing repo
 	logger.Section("deploy failing repo", func() {
@@ -79,7 +85,7 @@ func Test_PackageRepoStatus_Success(t *testing.T) {
 	name := "test-repo-status-success"
 
 	repoYml := `---
-apiVersion: install.package.carvel.dev/v1alpha1
+apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
   name: basic.test.carvel.dev
@@ -87,7 +93,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:57202d8a3e4064adff3c822a857c897526528b662da4724155db2d7b29a2f708`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:0ae0f32ef92d2362339b47055a6ea2042bc114a7dd36cf339bf05df4d1cc1b9b`
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
@@ -139,7 +145,7 @@ func Test_PackageRepoBundle_PackagesAvailable(t *testing.T) {
 	// contents of this bundle (k8slt/k8slt/kappctrl-e2e-repo-bundle)
 	// under examples/packaging-demo/repo-bundle
 	yamlRepo := `---
-apiVersion: install.package.carvel.dev/v1alpha1
+apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
   name: basic.test.carvel.dev
@@ -147,7 +153,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:57202d8a3e4064adff3c822a857c897526528b662da4724155db2d7b29a2f708`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:0ae0f32ef92d2362339b47055a6ea2042bc114a7dd36cf339bf05df4d1cc1b9b`
 
 	cleanUp := func() {
 		kubectl.RunWithOpts([]string{"delete", "pkgr/basic.test.carvel.dev"}, RunOpts{NoNamespace: true})
@@ -181,14 +187,14 @@ func Test_PackageRepoDelete(t *testing.T) {
 	kctl := Kubectl{t, env.Namespace, logger}
 
 	repoYaml := `---
-apiVersion: install.package.carvel.dev/v1alpha1
+apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
   name: basic.delete.test.carvel.dev
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:57202d8a3e4064adff3c822a857c897526528b662da4724155db2d7b29a2f708`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:0ae0f32ef92d2362339b47055a6ea2042bc114a7dd36cf339bf05df4d1cc1b9b`
 
 	packageNames := []string{"pkg.test.carvel.dev.1.0.0", "pkg.test.carvel.dev.2.0.0"}
 
@@ -257,7 +263,7 @@ func Test_PackageRepoStatus_ShowsWithKubectlGet(t *testing.T) {
 	kubectl := Kubectl{t, env.Namespace, logger}
 	name := "repo-status"
 
-	repoYaml := fmt.Sprintf(`apiVersion: install.package.carvel.dev/v1alpha1
+	repoYaml := fmt.Sprintf(`apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
   name: %s
