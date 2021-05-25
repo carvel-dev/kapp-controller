@@ -4,9 +4,10 @@
 package config
 
 import (
-	installinstpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/install"
+	internalpkging "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/internalpackaging/install"
 	installkctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/install"
-	installpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/install"
+	pkging "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/install"
+	datapackaging "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/install"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -15,7 +16,8 @@ var (
 )
 
 func init() {
-	installpkg.Install(Scheme)
+	pkging.Install(Scheme)
+	internalpkging.Install(Scheme)
 	installkctrl.Install(Scheme)
-	installinstpkg.Install(Scheme)
+	datapackaging.Install(Scheme)
 }

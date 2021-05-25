@@ -18,7 +18,7 @@ func Test_PackageIsValidated(t *testing.T) {
 	invalidPackageName := "I am invalid"
 
 	invalidPkgYML := fmt.Sprintf(`---
-apiVersion: package.carvel.dev/v1alpha1
+apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
   name: %s
@@ -40,7 +40,7 @@ spec:
 		}
 
 		if !strings.Contains(err.Error(), "is invalid: metadata.name") {
-			t.Fatalf("Expected package creation error to contain message about invalid name")
+			t.Fatalf("Expected package creation error to contain message about invalid name, got: %v", err)
 		}
 	})
 }

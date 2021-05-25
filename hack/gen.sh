@@ -12,7 +12,7 @@ chmod +x $gen_groups_path
 rm -rf pkg/client
 
 $gen_groups_path \
-	all github.com/vmware-tanzu/carvel-kapp-controller/pkg/client github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis "kappctrl:v1alpha1 installpackage:v1alpha1" \
+	all github.com/vmware-tanzu/carvel-kapp-controller/pkg/client github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis "kappctrl:v1alpha1 packaging:v1alpha1 internalpackaging:v1alpha1" \
 	--go-header-file ./hack/gen-boilerplate.txt
 
 chmod -x $gen_groups_path

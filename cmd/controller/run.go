@@ -24,12 +24,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	instpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 
-	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/v1alpha1"
+	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 )
 
@@ -163,20 +163,20 @@ func Run(opts Options, runLog logr.Logger) {
 			os.Exit(1)
 		}
 
-		err = installedPkgCtrl.Watch(&source.Kind{Type: &instpkgv1alpha1.InstalledPackage{}}, &handler.EnqueueRequestForObject{})
+		err = installedPkgCtrl.Watch(&source.Kind{Type: &pkgingv1alpha1.InstalledPackage{}}, &handler.EnqueueRequestForObject{})
 		if err != nil {
-			runLog.Error(err, "unable to watch *instpkgv1alpha1.InstalledPackage")
+			runLog.Error(err, "unable to watch *pkgingv1alpha1.InstalledPackage")
 			os.Exit(1)
 		}
 
-		err = installedPkgCtrl.Watch(&source.Kind{Type: &pkgv1alpha1.PackageVersion{}}, handlers.NewInstalledPkgVersionHandler(kcClient, runLog.WithName("handler")))
+		err = installedPkgCtrl.Watch(&source.Kind{Type: &datapkgingv1alpha1.PackageVersion{}}, handlers.NewInstalledPkgVersionHandler(kcClient, runLog.WithName("handler")))
 		if err != nil {
-			runLog.Error(err, "unable to watch *pkgv1alpha1.PackageVersion for InstalledPackage")
+			runLog.Error(err, "unable to watch *datapkgingv1alpha1.PackageVersion for InstalledPackage")
 			os.Exit(1)
 		}
 
 		err = installedPkgCtrl.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
-			OwnerType:    &instpkgv1alpha1.InstalledPackage{},
+			OwnerType:    &pkgingv1alpha1.InstalledPackage{},
 			IsController: true,
 		})
 		if err != nil {
@@ -200,14 +200,14 @@ func Run(opts Options, runLog logr.Logger) {
 			os.Exit(1)
 		}
 
-		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &instpkgv1alpha1.PackageRepository{}}, &handler.EnqueueRequestForObject{})
+		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &pkgingv1alpha1.PackageRepository{}}, &handler.EnqueueRequestForObject{})
 		if err != nil {
-			runLog.Error(err, "unable to watch *instpkgv1alpha1.PackageRepository")
+			runLog.Error(err, "unable to watch *pkgingv1alpha1.PackageRepository")
 			os.Exit(1)
 		}
 
 		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
-			OwnerType:    &instpkgv1alpha1.PackageRepository{},
+			OwnerType:    &pkgingv1alpha1.PackageRepository{},
 			IsController: true,
 		})
 		if err != nil {

@@ -4,8 +4,8 @@ package fake
 
 import (
 	clientset "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
-	packagev1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/typed/packages/v1alpha1"
-	fakepackagev1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/typed/packages/v1alpha1/fake"
+	datav1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/typed/datapackaging/v1alpha1"
+	fakedatav1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/typed/datapackaging/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -60,7 +60,7 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 
 var _ clientset.Interface = &Clientset{}
 
-// PackageV1alpha1 retrieves the PackageV1alpha1Client
-func (c *Clientset) PackageV1alpha1() packagev1alpha1.PackageV1alpha1Interface {
-	return &fakepackagev1alpha1.FakePackageV1alpha1{Fake: &c.Fake}
+// DataV1alpha1 retrieves the DataV1alpha1Client
+func (c *Clientset) DataV1alpha1() datav1alpha1.DataV1alpha1Interface {
+	return &fakedatav1alpha1.FakeDataV1alpha1{Fake: &c.Fake}
 }

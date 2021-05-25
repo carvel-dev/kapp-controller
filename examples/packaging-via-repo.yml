@@ -1,5 +1,5 @@
 ---
-apiVersion: install.package.carvel.dev/v1alpha1
+apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
   name: basic.test.carvel.dev
@@ -11,7 +11,7 @@ spec:
       ref: origin/pkg-poc
       subPath: examples/pkgrepository
 ---
-apiVersion: install.package.carvel.dev/v1alpha1
+apiVersion: packaging.carvel.dev/v1alpha1
 kind: InstalledPackage
 metadata:
   name: installed-pkg-test-in-repo
