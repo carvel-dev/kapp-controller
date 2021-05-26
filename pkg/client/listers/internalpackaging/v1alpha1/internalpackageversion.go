@@ -15,9 +15,8 @@ type InternalPackageVersionLister interface {
 	// List lists all InternalPackageVersions in the indexer.
 	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.InternalPackageVersion, err error)
-	// Get retrieves the InternalPackageVersion from the index for a given name.
-	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.InternalPackageVersion, error)
+	// InternalPackageVersions returns an object that can list and get InternalPackageVersions.
+	InternalPackageVersions(namespace string) InternalPackageVersionNamespaceLister
 	InternalPackageVersionListerExpansion
 }
 
@@ -39,9 +38,41 @@ func (s *internalPackageVersionLister) List(selector labels.Selector) (ret []*v1
 	return ret, err
 }
 
-// Get retrieves the InternalPackageVersion from the index for a given name.
-func (s *internalPackageVersionLister) Get(name string) (*v1alpha1.InternalPackageVersion, error) {
-	obj, exists, err := s.indexer.GetByKey(name)
+// InternalPackageVersions returns an object that can list and get InternalPackageVersions.
+func (s *internalPackageVersionLister) InternalPackageVersions(namespace string) InternalPackageVersionNamespaceLister {
+	return internalPackageVersionNamespaceLister{indexer: s.indexer, namespace: namespace}
+}
+
+// InternalPackageVersionNamespaceLister helps list and get InternalPackageVersions.
+// All objects returned here must be treated as read-only.
+type InternalPackageVersionNamespaceLister interface {
+	// List lists all InternalPackageVersions in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*v1alpha1.InternalPackageVersion, err error)
+	// Get retrieves the InternalPackageVersion from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
+	Get(name string) (*v1alpha1.InternalPackageVersion, error)
+	InternalPackageVersionNamespaceListerExpansion
+}
+
+// internalPackageVersionNamespaceLister implements the InternalPackageVersionNamespaceLister
+// interface.
+type internalPackageVersionNamespaceLister struct {
+	indexer   cache.Indexer
+	namespace string
+}
+
+// List lists all InternalPackageVersions in the indexer for a given namespace.
+func (s internalPackageVersionNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.InternalPackageVersion, err error) {
+	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
+		ret = append(ret, m.(*v1alpha1.InternalPackageVersion))
+	})
+	return ret, err
+}
+
+// Get retrieves the InternalPackageVersion from the indexer for a given namespace and name.
+func (s internalPackageVersionNamespaceLister) Get(name string) (*v1alpha1.InternalPackageVersion, error) {
+	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
 	if err != nil {
 		return nil, err
 	}

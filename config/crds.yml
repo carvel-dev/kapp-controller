@@ -10,7 +10,7 @@ spec:
     plural: internalpackages
     singular: internalpackage
   preserveUnknownFields: false
-  scope: Cluster
+  scope: Namespaced
   subresources:
     status: {}
   validation:
@@ -69,7 +69,7 @@ spec:
     plural: internalpackageversions
     singular: internalpackageversion
   preserveUnknownFields: false
-  scope: Cluster
+  scope: Namespaced
   subresources:
     status: {}
   validation:
@@ -988,7 +988,7 @@ spec:
     - pkgr
     singular: packagerepository
   preserveUnknownFields: false
-  scope: Cluster
+  scope: Namespaced
   subresources:
     status: {}
   validation:

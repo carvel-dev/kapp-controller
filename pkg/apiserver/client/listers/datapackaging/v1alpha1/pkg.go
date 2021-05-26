@@ -15,9 +15,8 @@ type PackageLister interface {
 	// List lists all Packages in the indexer.
 	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.Package, err error)
-	// Get retrieves the Package from the index for a given name.
-	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.Package, error)
+	// Packages returns an object that can list and get Packages.
+	Packages(namespace string) PackageNamespaceLister
 	PackageListerExpansion
 }
 
@@ -39,9 +38,41 @@ func (s *packageLister) List(selector labels.Selector) (ret []*v1alpha1.Package,
 	return ret, err
 }
 
-// Get retrieves the Package from the index for a given name.
-func (s *packageLister) Get(name string) (*v1alpha1.Package, error) {
-	obj, exists, err := s.indexer.GetByKey(name)
+// Packages returns an object that can list and get Packages.
+func (s *packageLister) Packages(namespace string) PackageNamespaceLister {
+	return packageNamespaceLister{indexer: s.indexer, namespace: namespace}
+}
+
+// PackageNamespaceLister helps list and get Packages.
+// All objects returned here must be treated as read-only.
+type PackageNamespaceLister interface {
+	// List lists all Packages in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*v1alpha1.Package, err error)
+	// Get retrieves the Package from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
+	Get(name string) (*v1alpha1.Package, error)
+	PackageNamespaceListerExpansion
+}
+
+// packageNamespaceLister implements the PackageNamespaceLister
+// interface.
+type packageNamespaceLister struct {
+	indexer   cache.Indexer
+	namespace string
+}
+
+// List lists all Packages in the indexer for a given namespace.
+func (s packageNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.Package, err error) {
+	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
+		ret = append(ret, m.(*v1alpha1.Package))
+	})
+	return ret, err
+}
+
+// Get retrieves the Package from the indexer for a given namespace and name.
+func (s packageNamespaceLister) Get(name string) (*v1alpha1.Package, error) {
+	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
 	if err != nil {
 		return nil, err
 	}

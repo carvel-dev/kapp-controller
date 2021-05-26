@@ -19,12 +19,12 @@ type InternalV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *InternalV1alpha1Client) InternalPackages() InternalPackageInterface {
-	return newInternalPackages(c)
+func (c *InternalV1alpha1Client) InternalPackages(namespace string) InternalPackageInterface {
+	return newInternalPackages(c, namespace)
 }
 
-func (c *InternalV1alpha1Client) InternalPackageVersions() InternalPackageVersionInterface {
-	return newInternalPackageVersions(c)
+func (c *InternalV1alpha1Client) InternalPackageVersions(namespace string) InternalPackageVersionInterface {
+	return newInternalPackageVersions(c, namespace)
 }
 
 // NewForConfig creates a new InternalV1alpha1Client for the given config.

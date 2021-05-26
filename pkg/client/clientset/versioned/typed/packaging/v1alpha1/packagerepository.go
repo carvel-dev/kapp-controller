@@ -17,7 +17,7 @@ import (
 // PackageRepositoriesGetter has a method to return a PackageRepositoryInterface.
 // A group's client should implement this interface.
 type PackageRepositoriesGetter interface {
-	PackageRepositories() PackageRepositoryInterface
+	PackageRepositories(namespace string) PackageRepositoryInterface
 }
 
 // PackageRepositoryInterface has methods to work with PackageRepository resources.
@@ -37,12 +37,14 @@ type PackageRepositoryInterface interface {
 // packageRepositories implements PackageRepositoryInterface
 type packageRepositories struct {
 	client rest.Interface
+	ns     string
 }
 
 // newPackageRepositories returns a PackageRepositories
-func newPackageRepositories(c *PackagingV1alpha1Client) *packageRepositories {
+func newPackageRepositories(c *PackagingV1alpha1Client, namespace string) *packageRepositories {
 	return &packageRepositories{
 		client: c.RESTClient(),
+		ns:     namespace,
 	}
 }
 
@@ -50,6 +52,7 @@ func newPackageRepositories(c *PackagingV1alpha1Client) *packageRepositories {
 func (c *packageRepositories) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.PackageRepository, err error) {
 	result = &v1alpha1.PackageRepository{}
 	err = c.client.Get().
+		Namespace(c.ns).
 		Resource("packagerepositories").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
@@ -66,6 +69,7 @@ func (c *packageRepositories) List(ctx context.Context, opts v1.ListOptions) (re
 	}
 	result = &v1alpha1.PackageRepositoryList{}
 	err = c.client.Get().
+		Namespace(c.ns).
 		Resource("packagerepositories").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -82,6 +86,7 @@ func (c *packageRepositories) Watch(ctx context.Context, opts v1.ListOptions) (w
 	}
 	opts.Watch = true
 	return c.client.Get().
+		Namespace(c.ns).
 		Resource("packagerepositories").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -92,6 +97,7 @@ func (c *packageRepositories) Watch(ctx context.Context, opts v1.ListOptions) (w
 func (c *packageRepositories) Create(ctx context.Context, packageRepository *v1alpha1.PackageRepository, opts v1.CreateOptions) (result *v1alpha1.PackageRepository, err error) {
 	result = &v1alpha1.PackageRepository{}
 	err = c.client.Post().
+		Namespace(c.ns).
 		Resource("packagerepositories").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(packageRepository).
@@ -104,6 +110,7 @@ func (c *packageRepositories) Create(ctx context.Context, packageRepository *v1a
 func (c *packageRepositories) Update(ctx context.Context, packageRepository *v1alpha1.PackageRepository, opts v1.UpdateOptions) (result *v1alpha1.PackageRepository, err error) {
 	result = &v1alpha1.PackageRepository{}
 	err = c.client.Put().
+		Namespace(c.ns).
 		Resource("packagerepositories").
 		Name(packageRepository.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
@@ -118,6 +125,7 @@ func (c *packageRepositories) Update(ctx context.Context, packageRepository *v1a
 func (c *packageRepositories) UpdateStatus(ctx context.Context, packageRepository *v1alpha1.PackageRepository, opts v1.UpdateOptions) (result *v1alpha1.PackageRepository, err error) {
 	result = &v1alpha1.PackageRepository{}
 	err = c.client.Put().
+		Namespace(c.ns).
 		Resource("packagerepositories").
 		Name(packageRepository.Name).
 		SubResource("status").
@@ -131,6 +139,7 @@ func (c *packageRepositories) UpdateStatus(ctx context.Context, packageRepositor
 // Delete takes name of the packageRepository and deletes it. Returns an error if one occurs.
 func (c *packageRepositories) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
+		Namespace(c.ns).
 		Resource("packagerepositories").
 		Name(name).
 		Body(&opts).
@@ -145,6 +154,7 @@ func (c *packageRepositories) DeleteCollection(ctx context.Context, opts v1.Dele
 		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
+		Namespace(c.ns).
 		Resource("packagerepositories").
 		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -157,6 +167,7 @@ func (c *packageRepositories) DeleteCollection(ctx context.Context, opts v1.Dele
 func (c *packageRepositories) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.PackageRepository, err error) {
 	result = &v1alpha1.PackageRepository{}
 	err = c.client.Patch(pt).
+		Namespace(c.ns).
 		Resource("packagerepositories").
 		Name(name).
 		SubResource(subresources...).
