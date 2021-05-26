@@ -13,7 +13,7 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName=ipkg
-// +kubebuilder:printcolumn:name=Package name,JSONPath=.spec.packageName,description=Package public name,type=string
+// +kubebuilder:printcolumn:name=Package name,JSONPath=.spec.packageVersionRef.packageName,description=Package public name,type=string
 // +kubebuilder:printcolumn:name=Package version,JSONPath=.status.version,description=Package version,type=string
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
