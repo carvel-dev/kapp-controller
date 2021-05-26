@@ -8,8 +8,8 @@ import (
 	time "time"
 
 	versioned "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
+	datapackaging "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/informers/externalversions/datapackaging"
 	internalinterfaces "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/informers/externalversions/internalinterfaces"
-	packages "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/informers/externalversions/packages"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -156,9 +156,9 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Package() packages.Interface
+	Data() datapackaging.Interface
 }
 
-func (f *sharedInformerFactory) Package() packages.Interface {
-	return packages.New(f, f.namespace, f.tweakListOptions)
+func (f *sharedInformerFactory) Data() datapackaging.Interface {
+	return datapackaging.New(f, f.namespace, f.tweakListOptions)
 }

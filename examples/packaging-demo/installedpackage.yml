@@ -1,5 +1,5 @@
 ---
-apiVersion: install.package.carvel.dev/v1alpha1
+apiVersion: packaging.carvel.dev/v1alpha1
 kind: InstalledPackage
 metadata:
   name: pkg-demo

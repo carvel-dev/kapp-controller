@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	instpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
+	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reconciler"
 
 	"github.com/go-logr/logr"
@@ -20,14 +20,14 @@ import (
 )
 
 type PackageRepositoryCR struct {
-	model           *instpkgv1alpha1.PackageRepository
-	unmodifiedModel *instpkgv1alpha1.PackageRepository
+	model           *pkgingv1alpha1.PackageRepository
+	unmodifiedModel *pkgingv1alpha1.PackageRepository
 
 	log    logr.Logger
 	client kcclient.Interface
 }
 
-func NewPkgRepositoryCR(model *instpkgv1alpha1.PackageRepository, log logr.Logger,
+func NewPkgRepositoryCR(model *pkgingv1alpha1.PackageRepository, log logr.Logger,
 	client kcclient.Interface) *PackageRepositoryCR {
 
 	return &PackageRepositoryCR{model: model, unmodifiedModel: model.DeepCopy(), log: log, client: client}
@@ -117,7 +117,7 @@ func (ip *PackageRepositoryCR) reconcileApp(existingApp *kcv1alpha1.App) (reconc
 
 func (ip *PackageRepositoryCR) updateStatus() error {
 	if !equality.Semantic.DeepEqual(ip.unmodifiedModel.Status, ip.model.Status) {
-		_, err := ip.client.InstallV1alpha1().PackageRepositories().UpdateStatus(context.Background(), ip.model, metav1.UpdateOptions{})
+		_, err := ip.client.PackagingV1alpha1().PackageRepositories().UpdateStatus(context.Background(), ip.model, metav1.UpdateOptions{})
 		if err != nil {
 			return fmt.Errorf("Updating package repository status: %s", err)
 		}

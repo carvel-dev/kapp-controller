@@ -1,5 +1,5 @@
 ---
-apiVersion: install.package.carvel.dev/v1alpha1
+apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
   name: simple-package-repository
@@ -12,4 +12,4 @@ spec:
       # This image was create by running `imgpkg push -b <repo> -f repo`. The resulting
       # image will contain the packages within the packages folder and, by adding this repo to the cluster,
       # those packages will also be available for installation.
-      image: index.docker.io/k8slt/demo-repo@sha256:edc1bfd1317c6f63b7816a6d02ce0bfbe75214946887783e4d0c21e360248308
+      image: index.docker.io/k8slt/demo-repo@sha256:aef6d96cde8e41fbdd67202106c89a5c55bd0cd47398de619a60a4ae06a3e388

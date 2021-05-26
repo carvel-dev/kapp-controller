@@ -8,9 +8,10 @@ import (
 	time "time"
 
 	versioned "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	installpackage "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/installpackage"
 	internalinterfaces "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/internalinterfaces"
+	internalpackaging "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/internalpackaging"
 	kappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/kappctrl"
+	packaging "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/packaging"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -157,14 +158,19 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Install() installpackage.Interface
+	Internal() internalpackaging.Interface
 	Kappctrl() kappctrl.Interface
+	Packaging() packaging.Interface
 }
 
-func (f *sharedInformerFactory) Install() installpackage.Interface {
-	return installpackage.New(f, f.namespace, f.tweakListOptions)
+func (f *sharedInformerFactory) Internal() internalpackaging.Interface {
+	return internalpackaging.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Kappctrl() kappctrl.Interface {
 	return kappctrl.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Packaging() packaging.Interface {
+	return packaging.New(f, f.namespace, f.tweakListOptions)
 }
