@@ -12,20 +12,79 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 )
 
-func Test_PackageVersionWithValuesSchema_PreservesSchemaData(t *testing.T) {
+func Test_PackageVersionIsValidated_Name(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
-	kubectl := Kubectl{t: t, namespace: env.Namespace, l: logger}
-	name := "pkg-with-schema.1.0.0"
+	appName := "invalid-pkg-version-name-test"
 
-	pkgYaml := fmt.Sprintf(`---
+	invalidPackageVersionName := "notThePackage-notTheVersion"
+
+	invalidPkgVersionYML := fmt.Sprintf(`---
 apiVersion: package.carvel.dev/v1alpha1
 kind: PackageVersion
 metadata:
   name: %s
 spec:
+  packageName: test-pkg.carvel.dev
   version: 1.0.0
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v1.0.0
+      template:
+      - ytt:
+          paths:
+          - "config.yml"
+          - "values.yml"
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
+      deploy:
+      - kapp: {}`, invalidPackageVersionName)
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", appName})
+	}
+	defer cleanUp()
+
+	logger.Section("deploy package", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName},
+			RunOpts{StdinReader: strings.NewReader(invalidPkgVersionYML), AllowError: true})
+
+		if err == nil {
+			t.Fatalf("Expected package version creation to fail")
+		}
+
+		if !strings.Contains(err.Error(), "is invalid: metadata.name") {
+			t.Fatalf("Expected package version creation error to contain message about invalid name, but got: %v", err)
+		}
+
+		if !strings.Contains(err.Error(), "must begin with <spec.packageName> + '.'") {
+			t.Fatalf("Expected error message to contain required form for package version name, got: %v", err)
+		}
+	})
+}
+
+func Test_PackageVersionWithValuesSchema_PreservesSchemaData(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+	kubectl := Kubectl{t: t, namespace: env.Namespace, l: logger}
+	appName := "test-package-version-schema"
+	packageName := "pkg.test.carvel.dev.1.0.0"
+	version := "1.0.0"
+
+	pkgYaml := fmt.Sprintf(`---
+apiVersion: package.carvel.dev/v1alpha1
+kind: PackageVersion
+metadata:
+  name: %s.%s
+spec:
+  packageName: %s
+  version: %s
   valuesSchema:
     openAPIv3:
       properties:
@@ -50,22 +109,22 @@ spec:
           - "-"
           - ".imgpkg/images.yml"
       deploy:
-      - kapp: {}`, name)
+      - kapp: {}`, packageName, version, packageName, version)
 
 	cleanUp := func() {
-		kapp.Run([]string{"delete", "-a", name})
+		kapp.Run([]string{"delete", "-a", appName})
 	}
 	cleanUp()
 	defer cleanUp()
 
-	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkgYaml)})
+	kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkgYaml)})
 
-	out := kubectl.Run([]string{"get", "packageversions/" + name, "-o=jsonpath={.spec.valuesSchema.openAPIv3}"})
+	out := kubectl.Run([]string{"get", "packageversions/" + fmt.Sprintf("%s.%s", packageName, version), "-o=jsonpath={.spec.valuesSchema.openAPIv3}"})
 	if !strings.Contains(out, "properties") && !strings.Contains(out, "hello_msg") && !strings.Contains(out, "svc_port") {
 		t.Fatalf("Could not find properties on values schema. Got:\n%s", out)
 	}
 
-	out = kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=PackageVersion"})
+	out = kapp.Run([]string{"inspect", "-a", appName, "--raw", "--tty=false", "--filter-kind=PackageVersion"})
 	var cr v1alpha1.InternalPackageVersion
 	err := yaml.Unmarshal([]byte(out), &cr)
 	if err != nil {
@@ -85,22 +144,23 @@ func Test_PackageVersion_FieldSelectors(t *testing.T) {
 	kapp := Kapp{t, env.Namespace, logger}
 	kubectl := Kubectl{t, env.Namespace, logger}
 	name := "test-package-version-field-selector"
-	packageName := "test-package.vmware.com"
-	filteredPackageName := "you-shouldnt-see-me"
+	packageName := "test-package.carvel.dev"
+	filteredPackageName := "you-shouldnt-see-me.carvel.dev"
 	packcageYamls := fmt.Sprintf(`---
 kind: Package
 apiVersion: package.carvel.dev/v1alpha1
 metadata:
-  name: %s
+  name: %[1]s
 spec:
   shortDescription: "Package for testing"
 ---
 kind: PackageVersion
 apiVersion: package.carvel.dev/v1alpha1
 metadata:
-  name: test-package.1.0.0
+  name: %[1]s.1.0.0
 spec:
-  packageName: %s
+  packageName: %[1]s
+  version: 1.0.0
   template:
     spec:
       fetch:
@@ -121,16 +181,17 @@ spec:
 kind: Package
 apiVersion: package.carvel.dev/v1alpha1
 metadata:
-  name: %s
+  name: %[2]s
 spec:
   shortDescription: "Package for testing"
 ---
 kind: PackageVersion
 apiVersion: package.carvel.dev/v1alpha1
 metadata:
-  name: %s.1.0.0
+  name: %[2]s.1.0.0
 spec:
-  packageName: %s
+  packageName: %[2]s
+  version: 1.0.0
   template:
     spec:
       fetch:
@@ -147,7 +208,7 @@ spec:
       - ytt: {}
       deploy:
       - kapp: {}
-`, packageName, packageName, filteredPackageName, filteredPackageName, filteredPackageName)
+`, packageName, filteredPackageName)
 
 	cleanup := func() {
 		kapp.Run([]string{"delete", "-a", name})

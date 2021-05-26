@@ -7,28 +7,24 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 )
 
-func Test_InstalledPackage_PausesApp(t *testing.T) {
+func Test_AppPause(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
 	kubectl := Kubectl{t, env.Namespace, logger}
-	name := "instl-pkg-pause"
+	name := "app-pause"
 
 	cleanUp := func() {
-		// Need to make sure InstalledPackage App is not paused
+		// Need to make sure App is not paused
 		// so need to create as part of deletion.
-		installPkgYaml := installedPackageYAML(name, env.Namespace, "original", false)
-		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
-		// Delete App with kubectl first since kapp
-		// deletes ServiceAccount before App
-		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, RunOpts{AllowError: true})
+		appYaml := appYAML(name, env.Namespace, "original", false)
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(appYaml)})
 		kapp.Run([]string{"delete", "-a", name})
 	}
 	cleanUp()
@@ -36,112 +32,75 @@ func Test_InstalledPackage_PausesApp(t *testing.T) {
 
 	// create originally as not paused otherwise
 	// App will not create original resources.
-	installPkgYaml := installedPackageYAML(name, env.Namespace, "original", false)
-	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+	appYaml := appYAML(name, env.Namespace, "original", false)
+	_, err := kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(appYaml)})
+	if err != nil {
+		t.Fatalf("Expected initial app dfeploy to succeed, it did not: %v", err)
+	}
 
-	retry(t, 10*time.Second, func() error {
-		_, err := kubectl.RunWithOpts([]string{"get", "apps/" + name}, RunOpts{AllowError: true})
-		if err != nil {
-			return fmt.Errorf("failed to get App for InstalledPackage %s", name)
-		}
-		return nil
-	})
-
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
-
-	// update App to be paused
-	installPkgYaml = installedPackageYAML(name, env.Namespace, "original", true)
-	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
-
-	// try to change configmap value
-	installPkgYaml = installedPackageYAML(name, env.Namespace, "change", true)
-	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+	// update app
+	appYaml = appYAML(name, env.Namespace, "change", true)
+	_, err = kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(appYaml)})
+	if err != nil {
+		t.Fatalf("Expected initial app dfeploy to succeed, it did not: %v", err)
+	}
 
 	var cr v1alpha1.App
-	retry(t, 10*time.Second, func() error {
-		out, err := kubectl.RunWithOpts([]string{"get", "apps/" + name, "-o", "yaml"}, RunOpts{AllowError: true})
-		if err != nil {
-			return fmt.Errorf("failed to get App for InstalledPackage %s", name)
-		}
+	out, err := kubectl.RunWithOpts([]string{"get", "apps/" + name, "-o", "yaml"}, RunOpts{AllowError: true})
+	if err != nil {
+		t.Fatalf("failed to get App %s: %v", name, err)
+	}
 
-		err = yaml.Unmarshal([]byte(out), &cr)
-		if err != nil {
-			return fmt.Errorf("Failed to unmarshal: %s", err)
-		}
+	err = yaml.Unmarshal([]byte(out), &cr)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal: %s", err)
+	}
 
-		if cr.Status.FriendlyDescription != "Canceled/paused" {
-			return fmt.Errorf("expected App for InstalledPackage to have status show Canceled/paused\nGot: %s", cr.Status.FriendlyDescription)
-		}
+	if cr.Status.FriendlyDescription != "Canceled/paused" {
+		t.Fatalf("expected App to have status Canceled/paused\nGot: %s", cr.Status.FriendlyDescription)
+	}
 
-		return nil
-	})
+	out, err = kubectl.RunWithOpts([]string{"get", "configmap/configmap", "-o", "yaml"}, RunOpts{AllowError: true})
+	if err != nil {
+		t.Fatalf("failed to get configmap/configmap")
+	}
 
-	retry(t, 10*time.Second, func() error {
-		out, err := kubectl.RunWithOpts([]string{"get", "configmap/configmap", "-o", "yaml"}, RunOpts{AllowError: true})
-		if err != nil {
-			return fmt.Errorf("failed to get configmap/configmap")
-		}
+	var cm corev1.ConfigMap
+	err = yaml.Unmarshal([]byte(out), &cm)
+	if err != nil {
+		t.Fatalf("failed to unmarshal: %s", err)
+	}
 
-		var cm corev1.ConfigMap
-		err = yaml.Unmarshal([]byte(out), &cm)
-		if err != nil {
-			return fmt.Errorf("failed to unmarshal: %s", err)
-		}
-
-		if cm.Data["key"] != "original" {
-			return fmt.Errorf("configmap message was updated despite App being paused\nGot: %s", cm.Data["key"])
-		}
-		return nil
-	})
+	if cm.Data["key"] != "original" {
+		t.Fatalf("configmap message was updated despite App being paused\nGot: %s", cm.Data["key"])
+	}
 }
 
-func installedPackageYAML(name, namespace, configMapValue string, paused bool) string {
+func appYAML(name, namespace, configMapValue string, paused bool) string {
 	sas := ServiceAccounts{namespace}
 	return fmt.Sprintf(`---
-apiVersion: package.carvel.dev/v1alpha1
-kind: Package
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
 metadata:
- name: pause.pkg
+  name: %s
+  namespace: %s
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
 spec:
-  longDescription: test-pause
----
-apiVersion: package.carvel.dev/v1alpha1
-kind: PackageVersion
-metadata:
-  name: pause.pkg.1.0.0
-spec:
-  packageName: pause.pkg
-  version: 1.0.0
+  serviceAccountName: kappctrl-e2e-ns-sa
+  paused: %t
+  fetch:
+  - inline:
+      paths:
+        file.yml: |
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: configmap
+          data:
+            key: %s
   template:
-    spec:
-      fetch:
-      - inline:
-          paths:
-            file.yml: |
-              apiVersion: v1
-              kind: ConfigMap
-              metadata:
-                name: configmap
-              data:
-                key: %s
-      template:
-      - ytt: {}
-      deploy:
-      - kapp: {}
----
-apiVersion: install.package.carvel.dev/v1alpha1
-kind: InstalledPackage
-metadata:
- name: %s
- namespace: %s
- annotations:
-   kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/installedpackages
-spec:
- serviceAccountName: kappctrl-e2e-ns-sa
- paused: %t
- packageVersionRef:
-   packageName: pause.pkg
-   versionSelection:
-     constraint: 1.0.0
-`, configMapValue, name, namespace, paused) + sas.ForNamespaceYAML()
+  - ytt: {}
+  deploy:
+  - kapp: {}`, name, namespace, paused, configMapValue) + sas.ForNamespaceYAML()
 }

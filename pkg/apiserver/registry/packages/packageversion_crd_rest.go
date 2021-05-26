@@ -10,6 +10,7 @@ import (
 	installv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages"
 	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/validation"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/watchers"
 	installclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -64,6 +65,12 @@ func (r *PackageVersionCRDREST) Create(ctx context.Context, obj runtime.Object, 
 	}
 
 	pkgVersion := obj.(*packages.PackageVersion)
+
+	errs := validation.ValidatePackageVersion(*pkgVersion)
+	if len(errs) != 0 {
+		return nil, errors.NewInvalid(pkgVersion.GroupVersionKind().GroupKind(), pkgVersion.Name, errs)
+	}
+
 	ipv := r.packageVersionToInternalPackageVersion(pkgVersion)
 	ipv, err := r.crdClient.InstallV1alpha1().InternalPackageVersions().Create(ctx, ipv, *options)
 	return r.internalPackageVersionToPackageVersion(ipv), err
@@ -84,20 +91,30 @@ func (r *PackageVersionCRDREST) Update(ctx context.Context, name string, objInfo
 			}
 		}
 
-		updatedIpv := r.packageVersionToInternalPackageVersion(updatedPkgVersion.(*packages.PackageVersion))
-		updatedIpv, err = r.crdClient.InstallV1alpha1().InternalPackageVersions().Update(ctx, updatedIpv, *options)
-		return r.internalPackageVersionToPackageVersion(updatedIpv), true, nil
+		obj, err := r.Create(ctx, updatedPkgVersion, createValidation, &metav1.CreateOptions{TypeMeta: options.TypeMeta, DryRun: options.DryRun, FieldManager: options.FieldManager})
+		if err != nil {
+			return nil, true, err
+		}
+
+		return obj, true, nil
 	}
 
 	if err != nil {
 		return nil, false, err
 	}
 
-	updatedPkgVersion, err := objInfo.UpdatedObject(ctx, pv)
+	updatedObj, err := objInfo.UpdatedObject(ctx, pv)
 	if err != nil {
 		return nil, false, err
 	}
-	updatedIpv := r.packageVersionToInternalPackageVersion(updatedPkgVersion.(*packages.PackageVersion))
+
+	updatedPkgVersion := updatedObj.(*packages.PackageVersion)
+	errs := validation.ValidatePackageVersion(*updatedPkgVersion)
+	if len(errs) != 0 {
+		return nil, false, errors.NewInvalid(updatedPkgVersion.GroupVersionKind().GroupKind(), updatedPkgVersion.Name, errs)
+	}
+
+	updatedIpv := r.packageVersionToInternalPackageVersion(updatedPkgVersion)
 	updatedIpv, err = r.crdClient.InstallV1alpha1().InternalPackageVersions().Update(ctx, updatedIpv, *options)
 	return r.internalPackageVersionToPackageVersion(updatedIpv), false, err
 }

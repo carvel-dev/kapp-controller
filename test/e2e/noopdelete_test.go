@@ -22,16 +22,16 @@ func Test_NoopDelete_DeletesAfterServiceAccountDeleted(t *testing.T) {
 apiVersion: package.carvel.dev/v1alpha1
 kind: Package
 metadata:
-  name: noopdelete.pkg
+  name: noopdelete.carvel.dev
 spec:
   longDescription: noopdelete-test
 ---
 apiVersion: package.carvel.dev/v1alpha1
 kind: PackageVersion
 metadata:
-  name: noopdelete.pkg.1.0.0
+  name: noopdelete.carvel.dev.1.0.0
 spec:
-  packageName: noopdelete.pkg
+  packageName: noopdelete.carvel.dev
   version: 1.0.0
   template:
     spec:
@@ -61,7 +61,7 @@ spec:
  serviceAccountName: kappctrl-e2e-ns-sa
  noopDelete: true
  packageVersionRef:
-   packageName: noopdelete.pkg
+   packageName: noopdelete.carvel.dev
    versionSelection:
      constraint: 1.0.0
 `, cfgMapName, name, env.Namespace) + sas.ForNamespaceYAML()
