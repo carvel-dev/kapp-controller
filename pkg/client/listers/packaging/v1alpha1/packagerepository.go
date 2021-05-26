@@ -15,9 +15,8 @@ type PackageRepositoryLister interface {
 	// List lists all PackageRepositories in the indexer.
 	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.PackageRepository, err error)
-	// Get retrieves the PackageRepository from the index for a given name.
-	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.PackageRepository, error)
+	// PackageRepositories returns an object that can list and get PackageRepositories.
+	PackageRepositories(namespace string) PackageRepositoryNamespaceLister
 	PackageRepositoryListerExpansion
 }
 
@@ -39,9 +38,41 @@ func (s *packageRepositoryLister) List(selector labels.Selector) (ret []*v1alpha
 	return ret, err
 }
 
-// Get retrieves the PackageRepository from the index for a given name.
-func (s *packageRepositoryLister) Get(name string) (*v1alpha1.PackageRepository, error) {
-	obj, exists, err := s.indexer.GetByKey(name)
+// PackageRepositories returns an object that can list and get PackageRepositories.
+func (s *packageRepositoryLister) PackageRepositories(namespace string) PackageRepositoryNamespaceLister {
+	return packageRepositoryNamespaceLister{indexer: s.indexer, namespace: namespace}
+}
+
+// PackageRepositoryNamespaceLister helps list and get PackageRepositories.
+// All objects returned here must be treated as read-only.
+type PackageRepositoryNamespaceLister interface {
+	// List lists all PackageRepositories in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*v1alpha1.PackageRepository, err error)
+	// Get retrieves the PackageRepository from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
+	Get(name string) (*v1alpha1.PackageRepository, error)
+	PackageRepositoryNamespaceListerExpansion
+}
+
+// packageRepositoryNamespaceLister implements the PackageRepositoryNamespaceLister
+// interface.
+type packageRepositoryNamespaceLister struct {
+	indexer   cache.Indexer
+	namespace string
+}
+
+// List lists all PackageRepositories in the indexer for a given namespace.
+func (s packageRepositoryNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.PackageRepository, err error) {
+	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
+		ret = append(ret, m.(*v1alpha1.PackageRepository))
+	})
+	return ret, err
+}
+
+// Get retrieves the PackageRepository from the indexer for a given namespace and name.
+func (s packageRepositoryNamespaceLister) Get(name string) (*v1alpha1.PackageRepository, error) {
+	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,14 @@ package v1alpha1
 // InternalPackageLister.
 type InternalPackageListerExpansion interface{}
 
+// InternalPackageNamespaceListerExpansion allows custom methods to be added to
+// InternalPackageNamespaceLister.
+type InternalPackageNamespaceListerExpansion interface{}
+
 // InternalPackageVersionListerExpansion allows custom methods to be added to
 // InternalPackageVersionLister.
 type InternalPackageVersionListerExpansion interface{}
+
+// InternalPackageVersionNamespaceListerExpansion allows custom methods to be added to
+// InternalPackageVersionNamespaceLister.
+type InternalPackageVersionNamespaceListerExpansion interface{}

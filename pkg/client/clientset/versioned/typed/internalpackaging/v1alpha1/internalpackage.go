@@ -17,7 +17,7 @@ import (
 // InternalPackagesGetter has a method to return a InternalPackageInterface.
 // A group's client should implement this interface.
 type InternalPackagesGetter interface {
-	InternalPackages() InternalPackageInterface
+	InternalPackages(namespace string) InternalPackageInterface
 }
 
 // InternalPackageInterface has methods to work with InternalPackage resources.
@@ -36,12 +36,14 @@ type InternalPackageInterface interface {
 // internalPackages implements InternalPackageInterface
 type internalPackages struct {
 	client rest.Interface
+	ns     string
 }
 
 // newInternalPackages returns a InternalPackages
-func newInternalPackages(c *InternalV1alpha1Client) *internalPackages {
+func newInternalPackages(c *InternalV1alpha1Client, namespace string) *internalPackages {
 	return &internalPackages{
 		client: c.RESTClient(),
+		ns:     namespace,
 	}
 }
 
@@ -49,6 +51,7 @@ func newInternalPackages(c *InternalV1alpha1Client) *internalPackages {
 func (c *internalPackages) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.InternalPackage, err error) {
 	result = &v1alpha1.InternalPackage{}
 	err = c.client.Get().
+		Namespace(c.ns).
 		Resource("internalpackages").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
@@ -65,6 +68,7 @@ func (c *internalPackages) List(ctx context.Context, opts v1.ListOptions) (resul
 	}
 	result = &v1alpha1.InternalPackageList{}
 	err = c.client.Get().
+		Namespace(c.ns).
 		Resource("internalpackages").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -81,6 +85,7 @@ func (c *internalPackages) Watch(ctx context.Context, opts v1.ListOptions) (watc
 	}
 	opts.Watch = true
 	return c.client.Get().
+		Namespace(c.ns).
 		Resource("internalpackages").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -91,6 +96,7 @@ func (c *internalPackages) Watch(ctx context.Context, opts v1.ListOptions) (watc
 func (c *internalPackages) Create(ctx context.Context, internalPackage *v1alpha1.InternalPackage, opts v1.CreateOptions) (result *v1alpha1.InternalPackage, err error) {
 	result = &v1alpha1.InternalPackage{}
 	err = c.client.Post().
+		Namespace(c.ns).
 		Resource("internalpackages").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(internalPackage).
@@ -103,6 +109,7 @@ func (c *internalPackages) Create(ctx context.Context, internalPackage *v1alpha1
 func (c *internalPackages) Update(ctx context.Context, internalPackage *v1alpha1.InternalPackage, opts v1.UpdateOptions) (result *v1alpha1.InternalPackage, err error) {
 	result = &v1alpha1.InternalPackage{}
 	err = c.client.Put().
+		Namespace(c.ns).
 		Resource("internalpackages").
 		Name(internalPackage.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
@@ -115,6 +122,7 @@ func (c *internalPackages) Update(ctx context.Context, internalPackage *v1alpha1
 // Delete takes name of the internalPackage and deletes it. Returns an error if one occurs.
 func (c *internalPackages) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
+		Namespace(c.ns).
 		Resource("internalpackages").
 		Name(name).
 		Body(&opts).
@@ -129,6 +137,7 @@ func (c *internalPackages) DeleteCollection(ctx context.Context, opts v1.DeleteO
 		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
+		Namespace(c.ns).
 		Resource("internalpackages").
 		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -141,6 +150,7 @@ func (c *internalPackages) DeleteCollection(ctx context.Context, opts v1.DeleteO
 func (c *internalPackages) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.InternalPackage, err error) {
 	result = &v1alpha1.InternalPackage{}
 	err = c.client.Patch(pt).
+		Namespace(c.ns).
 		Resource("internalpackages").
 		Name(name).
 		SubResource(subresources...).

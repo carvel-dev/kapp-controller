@@ -15,9 +15,8 @@ type PackageVersionLister interface {
 	// List lists all PackageVersions in the indexer.
 	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.PackageVersion, err error)
-	// Get retrieves the PackageVersion from the index for a given name.
-	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.PackageVersion, error)
+	// PackageVersions returns an object that can list and get PackageVersions.
+	PackageVersions(namespace string) PackageVersionNamespaceLister
 	PackageVersionListerExpansion
 }
 
@@ -39,9 +38,41 @@ func (s *packageVersionLister) List(selector labels.Selector) (ret []*v1alpha1.P
 	return ret, err
 }
 
-// Get retrieves the PackageVersion from the index for a given name.
-func (s *packageVersionLister) Get(name string) (*v1alpha1.PackageVersion, error) {
-	obj, exists, err := s.indexer.GetByKey(name)
+// PackageVersions returns an object that can list and get PackageVersions.
+func (s *packageVersionLister) PackageVersions(namespace string) PackageVersionNamespaceLister {
+	return packageVersionNamespaceLister{indexer: s.indexer, namespace: namespace}
+}
+
+// PackageVersionNamespaceLister helps list and get PackageVersions.
+// All objects returned here must be treated as read-only.
+type PackageVersionNamespaceLister interface {
+	// List lists all PackageVersions in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*v1alpha1.PackageVersion, err error)
+	// Get retrieves the PackageVersion from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
+	Get(name string) (*v1alpha1.PackageVersion, error)
+	PackageVersionNamespaceListerExpansion
+}
+
+// packageVersionNamespaceLister implements the PackageVersionNamespaceLister
+// interface.
+type packageVersionNamespaceLister struct {
+	indexer   cache.Indexer
+	namespace string
+}
+
+// List lists all PackageVersions in the indexer for a given namespace.
+func (s packageVersionNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.PackageVersion, err error) {
+	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
+		ret = append(ret, m.(*v1alpha1.PackageVersion))
+	})
+	return ret, err
+}
+
+// Get retrieves the PackageVersion from the indexer for a given namespace and name.
+func (s packageVersionNamespaceLister) Get(name string) (*v1alpha1.PackageVersion, error) {
+	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
 	if err != nil {
 		return nil, err
 	}

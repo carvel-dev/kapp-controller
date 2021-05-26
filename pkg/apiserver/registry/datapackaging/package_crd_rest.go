@@ -71,7 +71,7 @@ func (r *PackageCRDREST) Create(ctx context.Context, obj runtime.Object, createV
 	}
 
 	intpkg := r.packageToInternalPackage(pkg)
-	intpkg, err := r.crdClient.InternalV1alpha1().InternalPackages().Create(ctx, intpkg, *options)
+	intpkg, err := r.crdClient.InternalV1alpha1().InternalPackages("").Create(ctx, intpkg, *options)
 	return r.internalPackageToPackage(intpkg), err
 }
 
@@ -114,12 +114,12 @@ func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.U
 	}
 
 	updatedIntPkg := r.packageToInternalPackage(updatedPkg)
-	updatedIntPkg, err = r.crdClient.InternalV1alpha1().InternalPackages().Update(ctx, updatedIntPkg, *options)
+	updatedIntPkg, err = r.crdClient.InternalV1alpha1().InternalPackages("").Update(ctx, updatedIntPkg, *options)
 	return r.internalPackageToPackage(updatedIntPkg), false, err
 }
 
 func (r *PackageCRDREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	intPkg, err := r.crdClient.InternalV1alpha1().InternalPackages().Get(ctx, name, metav1.GetOptions{})
+	intPkg, err := r.crdClient.InternalV1alpha1().InternalPackages("").Get(ctx, name, metav1.GetOptions{})
 
 	if errors.IsNotFound(err) {
 		return nil, true, err
@@ -135,7 +135,7 @@ func (r *PackageCRDREST) Delete(ctx context.Context, name string, deleteValidati
 		}
 	}
 
-	err = r.crdClient.InternalV1alpha1().InternalPackages().Delete(ctx, name, *options)
+	err = r.crdClient.InternalV1alpha1().InternalPackages("").Delete(ctx, name, *options)
 	if err != nil {
 		return nil, false, err
 	}
@@ -161,12 +161,12 @@ func (r *PackageCRDREST) DeleteCollection(ctx context.Context, deleteValidation 
 }
 
 func (r *PackageCRDREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	intpkg, err := r.crdClient.InternalV1alpha1().InternalPackages().Get(ctx, name, *options)
+	intpkg, err := r.crdClient.InternalV1alpha1().InternalPackages("").Get(ctx, name, *options)
 	return r.internalPackageToPackage(intpkg), err
 }
 
 func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	list, err := r.crdClient.InternalV1alpha1().InternalPackages().List(ctx, r.internalToMetaListOpts(*options))
+	list, err := r.crdClient.InternalV1alpha1().InternalPackages("").List(ctx, r.internalToMetaListOpts(*options))
 	pkgList := datapackaging.PackageList{
 		TypeMeta: list.TypeMeta,
 		ListMeta: list.ListMeta,
@@ -183,7 +183,7 @@ func (r *PackageCRDREST) NamespaceScoped() bool {
 }
 
 func (r *PackageCRDREST) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
-	watcher, err := r.crdClient.InternalV1alpha1().InternalPackages().Watch(ctx, r.internalToMetaListOpts(*options))
+	watcher, err := r.crdClient.InternalV1alpha1().InternalPackages("").Watch(ctx, r.internalToMetaListOpts(*options))
 	return watchers.NewTranslationWatcher(r.translateFunc(), r.filterFunc(), watcher), err
 }
 
