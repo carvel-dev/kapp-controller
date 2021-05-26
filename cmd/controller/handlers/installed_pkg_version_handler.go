@@ -7,8 +7,8 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	ipkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
-	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/v1alpha1"
+	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,8 +68,8 @@ func (ipvh *InstalledPkgVersionHandler) Generic(evt event.GenericEvent, q workqu
 }
 
 func (ipvh *InstalledPkgVersionHandler) enqueueEligibleInstalledPackages(q workqueue.RateLimitingInterface, obj runtime.Object) error {
-	pv := obj.(*pkgv1alpha1.PackageVersion)
-	installedPkgList, err := ipvh.client.InstallV1alpha1().InstalledPackages("").List(context.Background(), metav1.ListOptions{})
+	pv := obj.(*datapkgingv1alpha1.PackageVersion)
+	installedPkgList, err := ipvh.client.PackagingV1alpha1().InstalledPackages("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (ipvh *InstalledPkgVersionHandler) enqueueEligibleInstalledPackages(q workq
 	return nil
 }
 
-func (ipvh *InstalledPkgVersionHandler) isEligibleForVersionUpgrade(version string, installedPkg ipkgv1alpha1.InstalledPackage) bool {
+func (ipvh *InstalledPkgVersionHandler) isEligibleForVersionUpgrade(version string, installedPkg pkgingv1alpha1.InstalledPackage) bool {
 	if installedPkg.Spec.PackageVersionRef == nil {
 		return false
 	}

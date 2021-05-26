@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-logr/logr"
 
-	instpackagev1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
-	packagev1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/v1alpha1"
+	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -25,12 +25,12 @@ import (
 func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 	q := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 
-	eligibleInstalledPkg := instpackagev1.InstalledPackage{
+	eligibleInstalledPkg := pkgingv1alpha1.InstalledPackage{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "expected-pkg",
 		},
-		Spec: instpackagev1.InstalledPackageSpec{
-			PackageVersionRef: &instpackagev1.PackageVersionRef{
+		Spec: pkgingv1alpha1.InstalledPackageSpec{
+			PackageVersionRef: &pkgingv1alpha1.PackageVersionRef{
 				PackageName: "expec-pkg",
 				VersionSelection: &v1alpha1.VersionSelectionSemver{
 					Constraints: ">=1.0.0",
@@ -39,12 +39,12 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 		},
 	}
 
-	ineligibleInstalledPkg := instpackagev1.InstalledPackage{
+	ineligibleInstalledPkg := pkgingv1alpha1.InstalledPackage{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "expected-pkg-ineligible",
 		},
-		Spec: instpackagev1.InstalledPackageSpec{
-			PackageVersionRef: &instpackagev1.PackageVersionRef{
+		Spec: pkgingv1alpha1.InstalledPackageSpec{
+			PackageVersionRef: &pkgingv1alpha1.PackageVersionRef{
 				PackageName: "expec-pkg",
 				VersionSelection: &v1alpha1.VersionSelectionSemver{
 					Constraints: "<1.0.0",
@@ -58,8 +58,8 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 	ipvh := handlers.NewInstalledPkgVersionHandler(kappcs, &EmptyLog{})
 
 	event := event.GenericEvent{
-		Object: &packagev1.PackageVersion{
-			Spec: packagev1.PackageVersionSpec{
+		Object: &datapkgingv1alpha1.PackageVersion{
+			Spec: datapkgingv1alpha1.PackageVersionSpec{
 				PackageName: "expec-pkg",
 				Version:     "1.5.0",
 			},

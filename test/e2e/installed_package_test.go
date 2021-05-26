@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
+	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 
 	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -29,7 +29,7 @@ func Test_PackageInstalled_FromInstalledPackage_Successfully(t *testing.T) {
 	// contents of this bundle (k8slt/kappctrl-e2e-repo)
 	// under examples/packaging-demo
 	installPkgYaml := fmt.Sprintf(`---
-apiVersion: install.package.carvel.dev/v1alpha1
+apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
   name: basic.test.carvel.dev
@@ -37,9 +37,9 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:57202d8a3e4064adff3c822a857c897526528b662da4724155db2d7b29a2f708
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:0ae0f32ef92d2362339b47055a6ea2042bc114a7dd36cf339bf05df4d1cc1b9b
 ---
-apiVersion: install.package.carvel.dev/v1alpha1
+apiVersion: packaging.carvel.dev/v1alpha1
 kind: InstalledPackage
 metadata:
   name: %s
@@ -154,7 +154,7 @@ func Test_InstalledPackageStatus_DisplaysUsefulErrorMessage_ForDeploymentFailure
 	name := "instl-pkg-test-fail"
 
 	installPkgYaml := fmt.Sprintf(`---
-apiVersion: package.carvel.dev/v1alpha1
+apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
   name: pkg.fail.carvel.dev
@@ -162,7 +162,7 @@ spec:
   displayName: "Test Package in repo"
   shortDescription: "Package used for testing"
 ---
-apiVersion: package.carvel.dev/v1alpha1
+apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageVersion
 metadata:
   name: pkg.fail.carvel.dev.1.0.0
@@ -188,7 +188,7 @@ spec:
           # this is done intentionally for testing
           intoNs: does-not-exist
 ---
-apiVersion: install.package.carvel.dev/v1alpha1
+apiVersion: packaging.carvel.dev/v1alpha1
 kind: InstalledPackage
 metadata:
   name: %s
@@ -229,7 +229,7 @@ stringData:
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
 	// wait for status to update for InstalledPackage
-	var cr v1alpha12.InstalledPackage
+	var cr pkgingv1alpha1.InstalledPackage
 	retry(t, 30*time.Second, func() error {
 		out := kubectl.Run([]string{"get", fmt.Sprintf("ipkg/%s", name), "-o", "yaml"})
 		err := yaml.Unmarshal([]byte(out), &cr)

@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"testing"
 
-	ipv1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/installpackage/v1alpha1"
-	packagev1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/v1alpha1"
+	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,11 +18,11 @@ import (
 // https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
 func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 	// Package with prerelease version
-	expectedPackageVersion := packagev1.PackageVersion{
+	expectedPackageVersion := datapkgingv1alpha1.PackageVersion{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "pkg.test.carvel.dev",
 		},
-		Spec: packagev1.PackageVersionSpec{
+		Spec: datapkgingv1alpha1.PackageVersionSpec{
 			PackageName: "pkg.test.carvel.dev",
 			Version:     "3.0.0-rc.1",
 		},
@@ -33,12 +33,12 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 
 	// InstalledPackage that has PackageRef with prerelease
 	ip := InstalledPackageCR{
-		model: &ipv1.InstalledPackage{
+		model: &pkgingv1alpha1.InstalledPackage{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "instl-pkg-prerelease",
 			},
-			Spec: ipv1.InstalledPackageSpec{
-				PackageVersionRef: &ipv1.PackageVersionRef{
+			Spec: pkgingv1alpha1.InstalledPackageSpec{
+				PackageVersionRef: &pkgingv1alpha1.PackageVersionRef{
 					PackageName: "pkg.test.carvel.dev",
 					VersionSelection: &versions.VersionSelectionSemver{
 						Constraints: "3.0.0-rc.1",
@@ -64,21 +64,21 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 
 func Test_PackageRefUsesName(t *testing.T) {
 	// Package with prerelease version
-	expectedPackageVersion := packagev1.PackageVersion{
+	expectedPackageVersion := datapkgingv1alpha1.PackageVersion{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "expected-pkg",
 		},
-		Spec: packagev1.PackageVersionSpec{
+		Spec: datapkgingv1alpha1.PackageVersionSpec{
 			PackageName: "expected-pkg",
 			Version:     "1.0.0",
 		},
 	}
 
-	alternatePackageVersion := packagev1.PackageVersion{
+	alternatePackageVersion := datapkgingv1alpha1.PackageVersion{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "alternate-pkg",
 		},
-		Spec: packagev1.PackageVersionSpec{
+		Spec: datapkgingv1alpha1.PackageVersionSpec{
 			PackageName: "alternate-pkg",
 			Version:     "1.0.0",
 		},
@@ -89,12 +89,12 @@ func Test_PackageRefUsesName(t *testing.T) {
 
 	// InstalledPackage that has PackageRef with prerelease
 	ip := InstalledPackageCR{
-		model: &ipv1.InstalledPackage{
+		model: &pkgingv1alpha1.InstalledPackage{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "instl-pkg",
 			},
-			Spec: ipv1.InstalledPackageSpec{
-				PackageVersionRef: &ipv1.PackageVersionRef{
+			Spec: pkgingv1alpha1.InstalledPackageSpec{
+				PackageVersionRef: &pkgingv1alpha1.PackageVersionRef{
 					PackageName: "expected-pkg",
 					VersionSelection: &versions.VersionSelectionSemver{
 						Constraints: "1.0.0",

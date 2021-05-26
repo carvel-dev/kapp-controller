@@ -4,10 +4,12 @@ package fake
 
 import (
 	clientset "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	installv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/installpackage/v1alpha1"
-	fakeinstallv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/installpackage/v1alpha1/fake"
+	internalv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/internalpackaging/v1alpha1"
+	fakeinternalv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/internalpackaging/v1alpha1/fake"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1"
 	fakekappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1/fake"
+	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/packaging/v1alpha1"
+	fakepackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/packaging/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -62,12 +64,17 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 
 var _ clientset.Interface = &Clientset{}
 
-// InstallV1alpha1 retrieves the InstallV1alpha1Client
-func (c *Clientset) InstallV1alpha1() installv1alpha1.InstallV1alpha1Interface {
-	return &fakeinstallv1alpha1.FakeInstallV1alpha1{Fake: &c.Fake}
+// InternalV1alpha1 retrieves the InternalV1alpha1Client
+func (c *Clientset) InternalV1alpha1() internalv1alpha1.InternalV1alpha1Interface {
+	return &fakeinternalv1alpha1.FakeInternalV1alpha1{Fake: &c.Fake}
 }
 
 // KappctrlV1alpha1 retrieves the KappctrlV1alpha1Client
 func (c *Clientset) KappctrlV1alpha1() kappctrlv1alpha1.KappctrlV1alpha1Interface {
 	return &fakekappctrlv1alpha1.FakeKappctrlV1alpha1{Fake: &c.Fake}
+}
+
+// PackagingV1alpha1 retrieves the PackagingV1alpha1Client
+func (c *Clientset) PackagingV1alpha1() packagingv1alpha1.PackagingV1alpha1Interface {
+	return &fakepackagingv1alpha1.FakePackagingV1alpha1{Fake: &c.Fake}
 }

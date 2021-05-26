@@ -5,8 +5,9 @@ package versioned
 import (
 	"fmt"
 
-	installv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/installpackage/v1alpha1"
+	internalv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/internalpackaging/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1"
+	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/packaging/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -14,26 +15,33 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	InstallV1alpha1() installv1alpha1.InstallV1alpha1Interface
+	InternalV1alpha1() internalv1alpha1.InternalV1alpha1Interface
 	KappctrlV1alpha1() kappctrlv1alpha1.KappctrlV1alpha1Interface
+	PackagingV1alpha1() packagingv1alpha1.PackagingV1alpha1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	installV1alpha1  *installv1alpha1.InstallV1alpha1Client
-	kappctrlV1alpha1 *kappctrlv1alpha1.KappctrlV1alpha1Client
+	internalV1alpha1  *internalv1alpha1.InternalV1alpha1Client
+	kappctrlV1alpha1  *kappctrlv1alpha1.KappctrlV1alpha1Client
+	packagingV1alpha1 *packagingv1alpha1.PackagingV1alpha1Client
 }
 
-// InstallV1alpha1 retrieves the InstallV1alpha1Client
-func (c *Clientset) InstallV1alpha1() installv1alpha1.InstallV1alpha1Interface {
-	return c.installV1alpha1
+// InternalV1alpha1 retrieves the InternalV1alpha1Client
+func (c *Clientset) InternalV1alpha1() internalv1alpha1.InternalV1alpha1Interface {
+	return c.internalV1alpha1
 }
 
 // KappctrlV1alpha1 retrieves the KappctrlV1alpha1Client
 func (c *Clientset) KappctrlV1alpha1() kappctrlv1alpha1.KappctrlV1alpha1Interface {
 	return c.kappctrlV1alpha1
+}
+
+// PackagingV1alpha1 retrieves the PackagingV1alpha1Client
+func (c *Clientset) PackagingV1alpha1() packagingv1alpha1.PackagingV1alpha1Interface {
+	return c.packagingV1alpha1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -57,11 +65,15 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	cs.installV1alpha1, err = installv1alpha1.NewForConfig(&configShallowCopy)
+	cs.internalV1alpha1, err = internalv1alpha1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
 	cs.kappctrlV1alpha1, err = kappctrlv1alpha1.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
+	cs.packagingV1alpha1, err = packagingv1alpha1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -77,8 +89,9 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.installV1alpha1 = installv1alpha1.NewForConfigOrDie(c)
+	cs.internalV1alpha1 = internalv1alpha1.NewForConfigOrDie(c)
 	cs.kappctrlV1alpha1 = kappctrlv1alpha1.NewForConfigOrDie(c)
+	cs.packagingV1alpha1 = packagingv1alpha1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -87,8 +100,9 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.installV1alpha1 = installv1alpha1.New(c)
+	cs.internalV1alpha1 = internalv1alpha1.New(c)
 	cs.kappctrlV1alpha1 = kappctrlv1alpha1.New(c)
+	cs.packagingV1alpha1 = packagingv1alpha1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

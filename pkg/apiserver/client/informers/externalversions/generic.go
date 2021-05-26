@@ -5,7 +5,7 @@ package externalversions
 import (
 	"fmt"
 
-	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/packages/v1alpha1"
+	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -36,11 +36,11 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=package.carvel.dev, Version=v1alpha1
+	// Group=data.packaging.carvel.dev, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("packageversions"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Package().V1alpha1().PackageVersions().Informer()}, nil
-	case v1alpha1.SchemeGroupVersion.WithResource("pkgs"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Package().V1alpha1().Packages().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Data().V1alpha1().PackageVersions().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("packages"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Data().V1alpha1().Packages().Informer()}, nil
 
 	}
 

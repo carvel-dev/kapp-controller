@@ -19,14 +19,14 @@ func Test_NoopDelete_DeletesAfterServiceAccountDeleted(t *testing.T) {
 	cfgMapName := "configmap"
 
 	installPkgYaml := fmt.Sprintf(`---
-apiVersion: package.carvel.dev/v1alpha1
+apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
   name: noopdelete.carvel.dev
 spec:
   longDescription: noopdelete-test
 ---
-apiVersion: package.carvel.dev/v1alpha1
+apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageVersion
 metadata:
   name: noopdelete.carvel.dev.1.0.0
@@ -50,7 +50,7 @@ spec:
       deploy:
       - kapp: {}
 ---
-apiVersion: install.package.carvel.dev/v1alpha1
+apiVersion: packaging.carvel.dev/v1alpha1
 kind: InstalledPackage
 metadata:
  name: %s

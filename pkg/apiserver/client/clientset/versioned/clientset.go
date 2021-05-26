@@ -5,7 +5,7 @@ package versioned
 import (
 	"fmt"
 
-	packagev1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/typed/packages/v1alpha1"
+	datav1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/typed/datapackaging/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -13,19 +13,19 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	PackageV1alpha1() packagev1alpha1.PackageV1alpha1Interface
+	DataV1alpha1() datav1alpha1.DataV1alpha1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	packageV1alpha1 *packagev1alpha1.PackageV1alpha1Client
+	dataV1alpha1 *datav1alpha1.DataV1alpha1Client
 }
 
-// PackageV1alpha1 retrieves the PackageV1alpha1Client
-func (c *Clientset) PackageV1alpha1() packagev1alpha1.PackageV1alpha1Interface {
-	return c.packageV1alpha1
+// DataV1alpha1 retrieves the DataV1alpha1Client
+func (c *Clientset) DataV1alpha1() datav1alpha1.DataV1alpha1Interface {
+	return c.dataV1alpha1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -49,7 +49,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	cs.packageV1alpha1, err = packagev1alpha1.NewForConfig(&configShallowCopy)
+	cs.dataV1alpha1, err = datav1alpha1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.packageV1alpha1 = packagev1alpha1.NewForConfigOrDie(c)
+	cs.dataV1alpha1 = datav1alpha1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -74,7 +74,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.packageV1alpha1 = packagev1alpha1.New(c)
+	cs.dataV1alpha1 = datav1alpha1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs
