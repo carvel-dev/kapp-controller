@@ -32,5 +32,5 @@ func (v *version) InstalledPackages() InstalledPackageInformer {
 
 // PackageRepositories returns a PackageRepositoryInformer.
 func (v *version) PackageRepositories() PackageRepositoryInformer {
-	return &packageRepositoryInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+	return &packageRepositoryInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

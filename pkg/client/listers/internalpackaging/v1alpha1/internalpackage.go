@@ -15,9 +15,8 @@ type InternalPackageLister interface {
 	// List lists all InternalPackages in the indexer.
 	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.InternalPackage, err error)
-	// Get retrieves the InternalPackage from the index for a given name.
-	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.InternalPackage, error)
+	// InternalPackages returns an object that can list and get InternalPackages.
+	InternalPackages(namespace string) InternalPackageNamespaceLister
 	InternalPackageListerExpansion
 }
 
@@ -39,9 +38,41 @@ func (s *internalPackageLister) List(selector labels.Selector) (ret []*v1alpha1.
 	return ret, err
 }
 
-// Get retrieves the InternalPackage from the index for a given name.
-func (s *internalPackageLister) Get(name string) (*v1alpha1.InternalPackage, error) {
-	obj, exists, err := s.indexer.GetByKey(name)
+// InternalPackages returns an object that can list and get InternalPackages.
+func (s *internalPackageLister) InternalPackages(namespace string) InternalPackageNamespaceLister {
+	return internalPackageNamespaceLister{indexer: s.indexer, namespace: namespace}
+}
+
+// InternalPackageNamespaceLister helps list and get InternalPackages.
+// All objects returned here must be treated as read-only.
+type InternalPackageNamespaceLister interface {
+	// List lists all InternalPackages in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*v1alpha1.InternalPackage, err error)
+	// Get retrieves the InternalPackage from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
+	Get(name string) (*v1alpha1.InternalPackage, error)
+	InternalPackageNamespaceListerExpansion
+}
+
+// internalPackageNamespaceLister implements the InternalPackageNamespaceLister
+// interface.
+type internalPackageNamespaceLister struct {
+	indexer   cache.Indexer
+	namespace string
+}
+
+// List lists all InternalPackages in the indexer for a given namespace.
+func (s internalPackageNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.InternalPackage, err error) {
+	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
+		ret = append(ret, m.(*v1alpha1.InternalPackage))
+	})
+	return ret, err
+}
+
+// Get retrieves the InternalPackage from the indexer for a given namespace and name.
+func (s internalPackageNamespaceLister) Get(name string) (*v1alpha1.InternalPackage, error) {
+	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
 	if err != nil {
 		return nil, err
 	}

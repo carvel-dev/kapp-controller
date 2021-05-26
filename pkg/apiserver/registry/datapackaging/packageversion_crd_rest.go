@@ -72,7 +72,7 @@ func (r *PackageVersionCRDREST) Create(ctx context.Context, obj runtime.Object, 
 	}
 
 	ipv := r.packageVersionToInternalPackageVersion(pkgVersion)
-	ipv, err := r.crdClient.InternalV1alpha1().InternalPackageVersions().Create(ctx, ipv, *options)
+	ipv, err := r.crdClient.InternalV1alpha1().InternalPackageVersions("").Create(ctx, ipv, *options)
 	return r.internalPackageVersionToPackageVersion(ipv), err
 }
 
@@ -115,12 +115,12 @@ func (r *PackageVersionCRDREST) Update(ctx context.Context, name string, objInfo
 	}
 
 	updatedIpv := r.packageVersionToInternalPackageVersion(updatedPkgVersion)
-	updatedIpv, err = r.crdClient.InternalV1alpha1().InternalPackageVersions().Update(ctx, updatedIpv, *options)
+	updatedIpv, err = r.crdClient.InternalV1alpha1().InternalPackageVersions("").Update(ctx, updatedIpv, *options)
 	return r.internalPackageVersionToPackageVersion(updatedIpv), false, err
 }
 
 func (r *PackageVersionCRDREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	ipv, err := r.crdClient.InternalV1alpha1().InternalPackageVersions().Get(ctx, name, metav1.GetOptions{})
+	ipv, err := r.crdClient.InternalV1alpha1().InternalPackageVersions("").Get(ctx, name, metav1.GetOptions{})
 
 	if errors.IsNotFound(err) {
 		return nil, true, err
@@ -136,7 +136,7 @@ func (r *PackageVersionCRDREST) Delete(ctx context.Context, name string, deleteV
 		}
 	}
 
-	err = r.crdClient.InternalV1alpha1().InternalPackageVersions().Delete(ctx, name, *options)
+	err = r.crdClient.InternalV1alpha1().InternalPackageVersions("").Delete(ctx, name, *options)
 	if err != nil {
 		return nil, false, err
 	}
@@ -162,7 +162,7 @@ func (r *PackageVersionCRDREST) DeleteCollection(ctx context.Context, deleteVali
 }
 
 func (r *PackageVersionCRDREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	ipv, err := r.crdClient.InternalV1alpha1().InternalPackageVersions().Get(ctx, name, *options)
+	ipv, err := r.crdClient.InternalV1alpha1().InternalPackageVersions("").Get(ctx, name, *options)
 	return r.internalPackageVersionToPackageVersion(ipv), err
 }
 
@@ -172,7 +172,7 @@ func (r *PackageVersionCRDREST) List(ctx context.Context, options *internalversi
 	options.FieldSelector = fields.Everything()
 
 	// Label selectors and other options will be applied here
-	list, err := r.crdClient.InternalV1alpha1().InternalPackageVersions().List(ctx, r.internalToMetaListOpts(*options))
+	list, err := r.crdClient.InternalV1alpha1().InternalPackageVersions("").List(ctx, r.internalToMetaListOpts(*options))
 	pkgList := datapackaging.PackageVersionList{
 		TypeMeta: list.TypeMeta,
 		ListMeta: list.ListMeta,
@@ -192,7 +192,7 @@ func (r *PackageVersionCRDREST) NamespaceScoped() bool {
 func (r *PackageVersionCRDREST) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
 	fs := options.FieldSelector
 	options.FieldSelector = fields.Everything()
-	watcher, err := r.crdClient.InternalV1alpha1().InternalPackageVersions().Watch(ctx, r.internalToMetaListOpts(*options))
+	watcher, err := r.crdClient.InternalV1alpha1().InternalPackageVersions("").Watch(ctx, r.internalToMetaListOpts(*options))
 	return watchers.NewTranslationWatcher(r.translateFunc(), r.filterFunc(fs), watcher), err
 }
 

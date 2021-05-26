@@ -16,8 +16,8 @@ func (c *FakePackagingV1alpha1) InstalledPackages(namespace string) v1alpha1.Ins
 	return &FakeInstalledPackages{c, namespace}
 }
 
-func (c *FakePackagingV1alpha1) PackageRepositories() v1alpha1.PackageRepositoryInterface {
-	return &FakePackageRepositories{c}
+func (c *FakePackagingV1alpha1) PackageRepositories(namespace string) v1alpha1.PackageRepositoryInterface {
+	return &FakePackageRepositories{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

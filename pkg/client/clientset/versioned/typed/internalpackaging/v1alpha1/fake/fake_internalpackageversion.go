@@ -17,6 +17,7 @@ import (
 // FakeInternalPackageVersions implements InternalPackageVersionInterface
 type FakeInternalPackageVersions struct {
 	Fake *FakeInternalV1alpha1
+	ns   string
 }
 
 var internalpackageversionsResource = schema.GroupVersionResource{Group: "internal.packaging.carvel.dev", Version: "v1alpha1", Resource: "internalpackageversions"}
@@ -26,7 +27,8 @@ var internalpackageversionsKind = schema.GroupVersionKind{Group: "internal.packa
 // Get takes name of the internalPackageVersion, and returns the corresponding internalPackageVersion object, and an error if there is any.
 func (c *FakeInternalPackageVersions) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.InternalPackageVersion, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(internalpackageversionsResource, name), &v1alpha1.InternalPackageVersion{})
+		Invokes(testing.NewGetAction(internalpackageversionsResource, c.ns, name), &v1alpha1.InternalPackageVersion{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -36,7 +38,8 @@ func (c *FakeInternalPackageVersions) Get(ctx context.Context, name string, opti
 // List takes label and field selectors, and returns the list of InternalPackageVersions that match those selectors.
 func (c *FakeInternalPackageVersions) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.InternalPackageVersionList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(internalpackageversionsResource, internalpackageversionsKind, opts), &v1alpha1.InternalPackageVersionList{})
+		Invokes(testing.NewListAction(internalpackageversionsResource, internalpackageversionsKind, c.ns, opts), &v1alpha1.InternalPackageVersionList{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -57,13 +60,15 @@ func (c *FakeInternalPackageVersions) List(ctx context.Context, opts v1.ListOpti
 // Watch returns a watch.Interface that watches the requested internalPackageVersions.
 func (c *FakeInternalPackageVersions) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(internalpackageversionsResource, opts))
+		InvokesWatch(testing.NewWatchAction(internalpackageversionsResource, c.ns, opts))
+
 }
 
 // Create takes the representation of a internalPackageVersion and creates it.  Returns the server's representation of the internalPackageVersion, and an error, if there is any.
 func (c *FakeInternalPackageVersions) Create(ctx context.Context, internalPackageVersion *v1alpha1.InternalPackageVersion, opts v1.CreateOptions) (result *v1alpha1.InternalPackageVersion, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(internalpackageversionsResource, internalPackageVersion), &v1alpha1.InternalPackageVersion{})
+		Invokes(testing.NewCreateAction(internalpackageversionsResource, c.ns, internalPackageVersion), &v1alpha1.InternalPackageVersion{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -73,7 +78,8 @@ func (c *FakeInternalPackageVersions) Create(ctx context.Context, internalPackag
 // Update takes the representation of a internalPackageVersion and updates it. Returns the server's representation of the internalPackageVersion, and an error, if there is any.
 func (c *FakeInternalPackageVersions) Update(ctx context.Context, internalPackageVersion *v1alpha1.InternalPackageVersion, opts v1.UpdateOptions) (result *v1alpha1.InternalPackageVersion, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(internalpackageversionsResource, internalPackageVersion), &v1alpha1.InternalPackageVersion{})
+		Invokes(testing.NewUpdateAction(internalpackageversionsResource, c.ns, internalPackageVersion), &v1alpha1.InternalPackageVersion{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -83,13 +89,14 @@ func (c *FakeInternalPackageVersions) Update(ctx context.Context, internalPackag
 // Delete takes name of the internalPackageVersion and deletes it. Returns an error if one occurs.
 func (c *FakeInternalPackageVersions) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(internalpackageversionsResource, name), &v1alpha1.InternalPackageVersion{})
+		Invokes(testing.NewDeleteAction(internalpackageversionsResource, c.ns, name), &v1alpha1.InternalPackageVersion{})
+
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeInternalPackageVersions) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(internalpackageversionsResource, listOpts)
+	action := testing.NewDeleteCollectionAction(internalpackageversionsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.InternalPackageVersionList{})
 	return err
@@ -98,7 +105,8 @@ func (c *FakeInternalPackageVersions) DeleteCollection(ctx context.Context, opts
 // Patch applies the patch and returns the patched internalPackageVersion.
 func (c *FakeInternalPackageVersions) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.InternalPackageVersion, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(internalpackageversionsResource, name, pt, data, subresources...), &v1alpha1.InternalPackageVersion{})
+		Invokes(testing.NewPatchSubresourceAction(internalpackageversionsResource, c.ns, name, pt, data, subresources...), &v1alpha1.InternalPackageVersion{})
+
 	if obj == nil {
 		return nil, err
 	}

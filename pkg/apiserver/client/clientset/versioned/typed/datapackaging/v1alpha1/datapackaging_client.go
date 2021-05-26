@@ -19,12 +19,12 @@ type DataV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *DataV1alpha1Client) PackageVersions() PackageVersionInterface {
-	return newPackageVersions(c)
+func (c *DataV1alpha1Client) PackageVersions(namespace string) PackageVersionInterface {
+	return newPackageVersions(c, namespace)
 }
 
-func (c *DataV1alpha1Client) Packages() PackageInterface {
-	return newPackages(c)
+func (c *DataV1alpha1Client) Packages(namespace string) PackageInterface {
+	return newPackages(c, namespace)
 }
 
 // NewForConfig creates a new DataV1alpha1Client for the given config.
