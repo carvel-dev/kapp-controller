@@ -170,7 +170,7 @@ func Run(opts Options, runLog logr.Logger) {
 			os.Exit(1)
 		}
 
-		err = installedPkgCtrl.Watch(&source.Kind{Type: &datapkgingv1alpha1.PackageVersion{}}, handlers.NewInstalledPkgVersionHandler(kcClient, runLog.WithName("handler")))
+		err = installedPkgCtrl.Watch(&source.Kind{Type: &datapkgingv1alpha1.PackageVersion{}}, handlers.NewInstalledPkgVersionHandler(kcClient, globalNamespace, runLog.WithName("handler")))
 		if err != nil {
 			runLog.Error(err, "unable to watch *datapkgingv1alpha1.PackageVersion for InstalledPackage")
 			os.Exit(1)

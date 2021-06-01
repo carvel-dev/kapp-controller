@@ -25,14 +25,15 @@ import (
 // packages that are eligible for upgrade based on the new
 // packages
 type InstalledPkgVersionHandler struct {
-	client kcclient.Interface
-	log    logr.Logger
+	client   kcclient.Interface
+	globalNS string
+	log      logr.Logger
 }
 
 var _ handler.EventHandler = &InstalledPkgVersionHandler{}
 
-func NewInstalledPkgVersionHandler(c kcclient.Interface, log logr.Logger) *InstalledPkgVersionHandler {
-	return &InstalledPkgVersionHandler{c, log}
+func NewInstalledPkgVersionHandler(c kcclient.Interface, globalNS string, log logr.Logger) *InstalledPkgVersionHandler {
+	return &InstalledPkgVersionHandler{c, globalNS, log}
 }
 
 func (ipvh *InstalledPkgVersionHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
@@ -69,7 +70,13 @@ func (ipvh *InstalledPkgVersionHandler) Generic(evt event.GenericEvent, q workqu
 
 func (ipvh *InstalledPkgVersionHandler) enqueueEligibleInstalledPackages(q workqueue.RateLimitingInterface, obj runtime.Object) error {
 	pv := obj.(*datapkgingv1alpha1.PackageVersion)
-	installedPkgList, err := ipvh.client.PackagingV1alpha1().InstalledPackages("").List(context.Background(), metav1.ListOptions{})
+
+	namespace := ""
+	if pv.Namespace != ipvh.globalNS {
+		namespace = pv.Namespace
+	}
+
+	installedPkgList, err := ipvh.client.PackagingV1alpha1().InstalledPackages(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
