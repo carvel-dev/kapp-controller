@@ -35,6 +35,7 @@ import (
 
 const (
 	PprofListenAddr = "0.0.0.0:6060"
+	globalNamespace = "global-packaging-kapp-controller-carvel-dev"
 )
 
 type Options struct {
@@ -95,7 +96,7 @@ func Run(opts Options, runLog logr.Logger) {
 		appClient:  kcClient,
 	}
 
-	server, err := apiserver.NewAPIServer(restConfig)
+	server, err := apiserver.NewAPIServer(restConfig, globalNamespace)
 	if err != nil {
 		runLog.Error(err, "creating server")
 		os.Exit(1)
