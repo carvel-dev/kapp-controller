@@ -135,7 +135,7 @@ func (ip *InstalledPackageCR) referencedPkgVersion() (datapkgingv1alpha1.Package
 
 	semverConfig := ip.model.Spec.PackageVersionRef.VersionSelection
 
-	pvList, err := ip.pkgclient.DataV1alpha1().PackageVersions("").List(context.Background(), metav1.ListOptions{})
+	pvList, err := ip.pkgclient.DataV1alpha1().PackageVersions(ip.model.Namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return datapkgingv1alpha1.PackageVersion{}, err
 	}
