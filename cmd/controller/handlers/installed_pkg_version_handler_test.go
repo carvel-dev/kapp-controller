@@ -55,7 +55,7 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 
 	// Load installed package into fake client
 	kappcs := fake.NewSimpleClientset(&eligibleInstalledPkg, &ineligibleInstalledPkg)
-	ipvh := handlers.NewInstalledPkgVersionHandler(kappcs, &EmptyLog{})
+	ipvh := handlers.NewInstalledPkgVersionHandler(kappcs, "", &EmptyLog{})
 
 	event := event.GenericEvent{
 		Object: &datapkgingv1alpha1.PackageVersion{
