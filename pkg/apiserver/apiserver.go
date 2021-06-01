@@ -71,7 +71,7 @@ type APIServer struct {
 	aggClient aggregatorclient.Interface
 }
 
-func NewAPIServer(clientConfig *rest.Config) (*APIServer, error) {
+func NewAPIServer(clientConfig *rest.Config, globalNamespace string) (*APIServer, error) {
 	aggClient, err := aggregatorclient.NewForConfig(clientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("building aggregation client: %v", err)
@@ -92,8 +92,8 @@ func NewAPIServer(clientConfig *rest.Config) (*APIServer, error) {
 		return nil, fmt.Errorf("Creating internal CRD client: %s", err)
 
 	}
-	packagesStorage := packagerest.NewPackageCRDREST(kcClient)
-	packageVersionsStorage := packagerest.NewPackageVersionCRDREST(kcClient)
+	packagesStorage := packagerest.NewPackageCRDREST(kcClient, globalNamespace)
+	packageVersionsStorage := packagerest.NewPackageVersionCRDREST(kcClient, globalNamespace)
 
 	pkgGroup := genericapiserver.NewDefaultAPIGroupInfo(datapackaging.GroupName, Scheme, metav1.ParameterCodec, Codecs)
 	pkgv1alpha1Storage := map[string]apirest.Storage{}
