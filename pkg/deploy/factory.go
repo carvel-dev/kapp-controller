@@ -45,3 +45,11 @@ func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
 
 	return NewKapp(opts, genericOpts, cancelCh), nil
 }
+
+func (f Factory) NewKappPrivileged(opts v1alpha1.AppDeployKapp,
+	genericOpts GenericOpts, cancelCh chan struct{}) (*Kapp, error) {
+	// Just use the default service account. Mainly
+	// used for PacakgeRepos now so users do not need
+	// to specify serviceaccount via PackageRepo CR.
+	return NewKapp(opts, genericOpts, cancelCh), nil
+}

@@ -15,8 +15,9 @@ import (
 )
 
 type PkgRepositoryReconciler struct {
-	client kcclient.Interface
-	log    logr.Logger
+	client     kcclient.Interface
+	log        logr.Logger
+	appFactory AppFactory
 }
 
 var _ reconcile.Reconciler = &PkgRepositoryReconciler{}
@@ -35,5 +36,10 @@ func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconci
 		return reconcile.Result{}, err
 	}
 
-	return pkgrepository.NewPkgRepositoryCR(existingPkgRepository, log, r.client).Reconcile()
+	app, err := pkgrepository.NewPackageRepoApp(existingPkgRepository)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	return r.appFactory.NewCRDPackageRepo(app, existingPkgRepository, log).Reconcile(false)
 }
