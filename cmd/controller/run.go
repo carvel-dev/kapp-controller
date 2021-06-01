@@ -189,10 +189,12 @@ func Run(opts Options, runLog logr.Logger) {
 	{ // add controller for pkgrepositories
 		pkgRepositoriesCtrlOpts := controller.Options{
 			Reconciler: &PkgRepositoryReconciler{
-				client: kcClient,
-				log:    runLog.WithName("prr"),
+				client:     kcClient,
+				log:        runLog.WithName("prr"),
+				appFactory: appFactory,
 			},
-			MaxConcurrentReconciles: opts.Concurrency,
+			// TODO: Consider making this configurable for multiple PackageRepo reconciles
+			MaxConcurrentReconciles: 1,
 		}
 
 		pkgRepositoryCtrl, err := controller.New("kapp-controller-package-repository", mgr, pkgRepositoriesCtrlOpts)
@@ -204,15 +206,6 @@ func Run(opts Options, runLog logr.Logger) {
 		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &pkgingv1alpha1.PackageRepository{}}, &handler.EnqueueRequestForObject{})
 		if err != nil {
 			runLog.Error(err, "unable to watch *pkgingv1alpha1.PackageRepository")
-			os.Exit(1)
-		}
-
-		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
-			OwnerType:    &pkgingv1alpha1.PackageRepository{},
-			IsController: true,
-		})
-		if err != nil {
-			runLog.Error(err, "unable to watch *kcv1alpha1.App for PackageRepository")
 			os.Exit(1)
 		}
 	}
