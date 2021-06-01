@@ -4,7 +4,6 @@
 package validation
 
 import (
-	"log"
 	"strings"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
@@ -52,7 +51,6 @@ func ValidatePackageVersionName(pvName, pkgName string, fldPath *field.Path) fie
 	allErrs := field.ErrorList{}
 
 	if !strings.HasPrefix(pvName, pkgName+".") {
-		log.Printf("PVN: %s, PN: %s", pvName, pkgName)
 		allErrs = append(allErrs,
 			field.Invalid(fldPath, pvName, "must begin with <spec.packageName> + '.'"))
 	}
