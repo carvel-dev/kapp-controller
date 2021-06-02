@@ -22,6 +22,7 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 	var err error
 
 	switch {
+	// TODO: Remove canceled?
 	case a.app.Spec.Canceled || a.app.Spec.Paused:
 		a.log.Info("App is canceled or paused, not reconciling")
 
