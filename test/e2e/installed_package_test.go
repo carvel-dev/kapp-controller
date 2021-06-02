@@ -62,8 +62,6 @@ metadata:
   name: pkg-demo-values
 stringData:
   values.yml: |
-    #@data/values
-    ---
     hello_msg: "hi"
 `, name, env.Namespace) + sas.ForNamespaceYAML()
 
@@ -211,8 +209,6 @@ metadata:
   name: pkg-demo-values
 stringData:
   values.yml: |
-    #@data/values
-    ---
     hello_msg: "hi"
 `, name, env.Namespace) + sas.ForNamespaceYAML()
 
