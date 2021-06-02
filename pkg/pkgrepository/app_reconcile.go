@@ -36,7 +36,6 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 
 		err = a.reconcileDelete()
 
-		// TODO: Move ReconcilerTimer into its own package?
 	case force || NewReconcileTimer(a.app).IsReadyAt(time.Now()):
 		a.log.Info("Started deploy")
 		defer func() { a.log.Info("Completed deploy") }()

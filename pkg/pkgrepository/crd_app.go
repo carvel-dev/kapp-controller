@@ -88,7 +88,7 @@ func (a *CRDApp) updateStatusOnce() error {
 
 	if !reflect.DeepEqual(existingApp.Status, a.app.Status()) {
 
-		existingApp.Status = pkgingv1alpha1.PackageRepositoryStatus{GenericStatus: a.app.Status().GenericStatus}
+		existingApp.Status = a.app.Status()
 		_, err = a.appClient.PackagingV1alpha1().PackageRepositories(existingApp.Namespace).UpdateStatus(context.Background(), existingApp, metav1.UpdateOptions{})
 		if err != nil {
 			return err
