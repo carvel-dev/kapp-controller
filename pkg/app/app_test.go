@@ -30,6 +30,7 @@ func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 		reftracker.NewSecretKey("s5", "default"): struct{}{},
 		reftracker.NewSecretKey("s6", "default"): struct{}{},
 		reftracker.NewSecretKey("s7", "default"): struct{}{},
+		reftracker.NewSecretKey("s8", "default"): struct{}{},
 	}
 
 	appWithRefs := v1alpha1.App{
@@ -48,7 +49,8 @@ func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 			},
 			Template: []v1alpha1.AppTemplate{
 				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{SecretRef: &v1alpha1.AppFetchInlineSourceRef{"", v1.LocalObjectReference{Name: "s6"}}}}}}},
-				v1alpha1.AppTemplate{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{ValuesFrom: []v1alpha1.AppTemplateHelmTemplateValuesSource{{SecretRef: &v1alpha1.AppTemplateHelmTemplateValuesSourceRef{v1.LocalObjectReference{Name: "s7"}}}}}},
+				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{ValuesFrom: []v1alpha1.AppTemplateValuesSource{{SecretRef: &v1alpha1.AppTemplateValuesSourceRef{v1.LocalObjectReference{Name: "s8"}}}}}},
+				v1alpha1.AppTemplate{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{ValuesFrom: []v1alpha1.AppTemplateValuesSource{{SecretRef: &v1alpha1.AppTemplateValuesSourceRef{v1.LocalObjectReference{Name: "s7"}}}}}},
 			},
 		},
 	}
@@ -99,6 +101,7 @@ func Test_ConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 		reftracker.NewConfigMapKey("c", "default"):  struct{}{},
 		reftracker.NewConfigMapKey("c1", "default"): struct{}{},
 		reftracker.NewConfigMapKey("c2", "default"): struct{}{},
+		reftracker.NewConfigMapKey("c3", "default"): struct{}{},
 	}
 
 	appWithRefs := v1alpha1.App{
@@ -112,7 +115,8 @@ func Test_ConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 			},
 			Template: []v1alpha1.AppTemplate{
 				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{ConfigMapRef: &v1alpha1.AppFetchInlineSourceRef{"", v1.LocalObjectReference{Name: "c1"}}}}}}},
-				v1alpha1.AppTemplate{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{ValuesFrom: []v1alpha1.AppTemplateHelmTemplateValuesSource{{ConfigMapRef: &v1alpha1.AppTemplateHelmTemplateValuesSourceRef{v1.LocalObjectReference{Name: "c2"}}}}}},
+				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{ValuesFrom: []v1alpha1.AppTemplateValuesSource{{ConfigMapRef: &v1alpha1.AppTemplateValuesSourceRef{v1.LocalObjectReference{Name: "c3"}}}}}},
+				v1alpha1.AppTemplate{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{ValuesFrom: []v1alpha1.AppTemplateValuesSource{{ConfigMapRef: &v1alpha1.AppTemplateValuesSourceRef{v1.LocalObjectReference{Name: "c2"}}}}}},
 			},
 		},
 	}
