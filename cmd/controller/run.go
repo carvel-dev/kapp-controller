@@ -108,11 +108,12 @@ func Run(opts Options, runLog logr.Logger) {
 		os.Exit(1)
 	}
 
-	// TODO: we may need to sleep here to give the server time to start up
+	appRefTracker := reftracker.NewAppRefTracker()
+	appUpdateStatus := reftracker.NewAppUpdateStatus()
+	sch := handlers.NewSecretHandler(runLog, appRefTracker, appUpdateStatus)
+	cfgmh := handlers.NewConfigMapHandler(runLog, appRefTracker, appUpdateStatus)
 
 	{ // add controller for apps
-		appRefTracker := reftracker.NewAppRefTracker()
-		appUpdateStatus := reftracker.NewAppUpdateStatus()
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
 				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), appFactory, appRefTracker, appUpdateStatus),
@@ -133,14 +134,12 @@ func Run(opts Options, runLog logr.Logger) {
 			os.Exit(1)
 		}
 
-		sch := handlers.NewSecretHandler(runLog, appRefTracker, appUpdateStatus)
 		err = ctrlApp.Watch(&source.Kind{Type: &v1.Secret{}}, sch)
 		if err != nil {
 			runLog.Error(err, "unable to watch Secrets")
 			os.Exit(1)
 		}
 
-		cfgmh := handlers.NewConfigMapHandler(runLog, appRefTracker, appUpdateStatus)
 		err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, cfgmh)
 		if err != nil {
 			runLog.Error(err, "unable to watch ConfigMaps")
@@ -188,11 +187,7 @@ func Run(opts Options, runLog logr.Logger) {
 
 	{ // add controller for pkgrepositories
 		pkgRepositoriesCtrlOpts := controller.Options{
-			Reconciler: &PkgRepositoryReconciler{
-				client:     kcClient,
-				log:        runLog.WithName("prr"),
-				appFactory: appFactory,
-			},
+			Reconciler: NewPkgRepositoryReconciler(kcClient, runLog.WithName("prr"), appFactory, appRefTracker, appUpdateStatus),
 			// TODO: Consider making this configurable for multiple PackageRepo reconciles
 			MaxConcurrentReconciles: 1,
 		}
@@ -206,6 +201,12 @@ func Run(opts Options, runLog logr.Logger) {
 		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &pkgingv1alpha1.PackageRepository{}}, &handler.EnqueueRequestForObject{})
 		if err != nil {
 			runLog.Error(err, "unable to watch *pkgingv1alpha1.PackageRepository")
+			os.Exit(1)
+		}
+
+		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &v1.Secret{}}, sch)
+		if err != nil {
+			runLog.Error(err, "unable to watch Secrets")
 			os.Exit(1)
 		}
 	}

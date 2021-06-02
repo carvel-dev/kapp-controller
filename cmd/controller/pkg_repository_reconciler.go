@@ -5,6 +5,8 @@ package controller
 
 import (
 	"context"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 
 	"github.com/go-logr/logr"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
@@ -15,12 +17,19 @@ import (
 )
 
 type PkgRepositoryReconciler struct {
-	client     kcclient.Interface
-	log        logr.Logger
-	appFactory AppFactory
+	client          kcclient.Interface
+	log             logr.Logger
+	appFactory      AppFactory
+	appRefTracker   *reftracker.AppRefTracker
+	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
 var _ reconcile.Reconciler = &PkgRepositoryReconciler{}
+
+func NewPkgRepositoryReconciler(appClient kcclient.Interface, log logr.Logger, appFactory AppFactory,
+	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *PkgRepositoryReconciler {
+	return &PkgRepositoryReconciler{appClient, log, appFactory, appRefTracker, appUpdateStatus}
+}
 
 func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
@@ -41,5 +50,29 @@ func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconci
 		return reconcile.Result{}, err
 	}
 
-	return r.appFactory.NewCRDPackageRepo(app, existingPkgRepository, log).Reconcile(false)
+	crdApp := r.appFactory.NewCRDPackageRepo(app, existingPkgRepository, log)
+	r.UpdateAppRefs(crdApp.ResourceRefs(), app)
+
+	force := false
+	pkgrKey := reftracker.NewPackageRepositoryKey(app.Name, app.Namespace)
+	if r.appUpdateStatus.IsUpdateNeeded(pkgrKey) {
+		r.appUpdateStatus.MarkUpdated(pkgrKey)
+		force = true
+	}
+
+	return crdApp.Reconcile(force)
+}
+
+func (r *PkgRepositoryReconciler) UpdateAppRefs(refKeys map[reftracker.RefKey]struct{}, app *v1alpha1.App) {
+	pkgRepoKey := reftracker.NewPackageRepositoryKey(app.Name, app.Namespace)
+	// If App is being deleted, remove the App
+	// from all its associated references.
+	if app.DeletionTimestamp != nil {
+		r.appRefTracker.RemoveAppFromAllRefs(pkgRepoKey)
+		return
+	}
+
+	// Add new refs for App to AppRefTracker/remove
+	// any formerly but now unused refs for App.
+	r.appRefTracker.ReconcileRefs(refKeys, pkgRepoKey)
 }
