@@ -1106,6 +1106,12 @@ spec:
                       type: object
                   type: object
               type: object
+            paused:
+              description: Paused when set to true will ignore all pending changes, once it set back to false, pending changes will be applied
+              type: boolean
+            syncPeriod:
+              description: Controls frequency of app reconciliation
+              type: string
           required:
           - fetch
           type: object
