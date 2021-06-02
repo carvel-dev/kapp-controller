@@ -34,8 +34,8 @@ func NewApp(existingApp *v1alpha1.App, installedPkg *pkgingv1alpha1.InstalledPac
 	for i, templateStep := range desiredApp.Spec.Template {
 		if templateStep.HelmTemplate != nil {
 			for _, value := range installedPkg.Spec.Values {
-				templateStep.HelmTemplate.ValuesFrom = append(templateStep.HelmTemplate.ValuesFrom, kcv1alpha1.AppTemplateHelmTemplateValuesSource{
-					SecretRef: &kcv1alpha1.AppTemplateHelmTemplateValuesSourceRef{
+				templateStep.HelmTemplate.ValuesFrom = append(templateStep.HelmTemplate.ValuesFrom, kcv1alpha1.AppTemplateValuesSource{
+					SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
 						LocalObjectReference: corev1.LocalObjectReference{Name: value.SecretRef.Name},
 					},
 				})
@@ -50,8 +50,8 @@ func NewApp(existingApp *v1alpha1.App, installedPkg *pkgingv1alpha1.InstalledPac
 			}
 
 			for _, value := range installedPkg.Spec.Values {
-				templateStep.Ytt.Inline.PathsFrom = append(templateStep.Ytt.Inline.PathsFrom, kcv1alpha1.AppFetchInlineSource{
-					SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
+				templateStep.Ytt.ValuesFrom = append(templateStep.Ytt.ValuesFrom, kcv1alpha1.AppTemplateValuesSource{
+					SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
 						LocalObjectReference: corev1.LocalObjectReference{Name: value.SecretRef.Name},
 					},
 				})
