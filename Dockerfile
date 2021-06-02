@@ -22,8 +22,8 @@ RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 WORKDIR /go/src/github.com/vmware-tanzu/carvel-kapp-controller/
 
 # carvel
-RUN wget -O- https://github.com/vmware-tanzu/carvel-ytt/releases/download/v0.31.0/ytt-linux-amd64 > /usr/local/bin/ytt && \
-  echo "32e7cdc38202b49fe673442bd22cb2b130e13f0f05ce724222a06522d7618395  /usr/local/bin/ytt" | sha256sum -c - && \
+RUN wget -O- https://github.com/vmware-tanzu/carvel-ytt/releases/download/v0.34.0/ytt-linux-amd64 > /usr/local/bin/ytt && \
+  echo "49741ac5540fc64da8566f3d1c9538f4f0fec22c62b8ba83e5e3d8efb91ee170  /usr/local/bin/ytt" | sha256sum -c - && \
   chmod +x /usr/local/bin/ytt && ytt version
 
 RUN wget -O- https://github.com/vmware-tanzu/carvel-kapp/releases/download/v0.36.0/kapp-linux-amd64 > /usr/local/bin/kapp && \
