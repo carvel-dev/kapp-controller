@@ -25,6 +25,10 @@ func NewAppKey(refName, namespace string) RefKey {
 	return NewRefKey("app", refName, namespace)
 }
 
+func NewPackageRepositoryKey(refName, namespace string) RefKey {
+	return NewRefKey("packagerepository", refName, namespace)
+}
+
 func (r RefKey) Kind() string {
 	return r.kind
 }

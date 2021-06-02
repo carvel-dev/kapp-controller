@@ -124,20 +124,6 @@ func (a *CRDApp) watchChanges(callback func(kcv1alpha1.App), cancelCh chan struc
 	return NewCRDAppWatcher(*a.appModel, a.appClient).Watch(callback, cancelCh)
 }
 
-// Get both secret refs/configmap refs
-// as single map with all ref entries.
 func (a *CRDApp) ResourceRefs() map[reftracker.RefKey]struct{} {
-	secrets := a.app.SecretRefs()
-	configmaps := a.app.ConfigMapRefs()
-	allRefs := map[reftracker.RefKey]struct{}{}
-
-	for secret := range secrets {
-		allRefs[secret] = struct{}{}
-	}
-
-	for configmap := range configmaps {
-		allRefs[configmap] = struct{}{}
-	}
-
-	return allRefs
+	return a.app.SecretRefs()
 }
