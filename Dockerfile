@@ -26,16 +26,16 @@ RUN wget -O- https://github.com/vmware-tanzu/carvel-ytt/releases/download/v0.31.
   echo "32e7cdc38202b49fe673442bd22cb2b130e13f0f05ce724222a06522d7618395  /usr/local/bin/ytt" | sha256sum -c - && \
   chmod +x /usr/local/bin/ytt && ytt version
 
-RUN wget -O- https://github.com/vmware-tanzu/carvel-kapp/releases/download/v0.36.0/kapp-linux-amd64 > /usr/local/bin/kapp && \
-  echo "22fe308f1d9ebbb829a6ea10ca80d9468ff4b9aa911b0c33788fe67d04ccb383  /usr/local/bin/kapp" | sha256sum -c - && \
+RUN wget -O- https://github.com/vmware-tanzu/carvel-kapp/releases/download/v0.37.0/kapp-linux-amd64 > /usr/local/bin/kapp && \
+  echo "f845233deb6c87feac7c82d9b3f5e03ced9a4672abb1a14d4e5b74fe53bc4538  /usr/local/bin/kapp" | sha256sum -c - && \
   chmod +x /usr/local/bin/kapp && kapp version
 
-RUN wget -O- https://github.com/vmware-tanzu/carvel-kbld/releases/download/v0.28.0/kbld-linux-amd64 > /usr/local/bin/kbld && \
-  echo "3174e5b42286aab4359d2bc12a85356ba520744fd4e26d6511fb8d705e7170c3  /usr/local/bin/kbld" | sha256sum -c - && \
+RUN wget -O- https://github.com/vmware-tanzu/carvel-kbld/releases/download/v0.30.0/kbld-linux-amd64 > /usr/local/bin/kbld && \
+  echo "76c5c572e7a9095256b4c3ae2e076c370ef70ce9ff4eb138662f56828889a00c  /usr/local/bin/kbld" | sha256sum -c - && \
   chmod +x /usr/local/bin/kbld && kbld version
 
-RUN wget -O- https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/v0.6.0/imgpkg-linux-amd64 > /usr/local/bin/imgpkg && \
-  echo "b0d29d28a28db5632ce48cd9ea414ae1d3c9da382c96c72abb9961587ffb657f  /usr/local/bin/imgpkg" | sha256sum -c - && \
+RUN wget -O- https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/v0.8.0/imgpkg-linux-amd64 > /usr/local/bin/imgpkg && \
+  echo "d998c1628c5956ffc84b36f23bec6fd0145977e76f3c02a0c28962e6f8f233c2  /usr/local/bin/imgpkg" | sha256sum -c - && \
   chmod +x /usr/local/bin/imgpkg && imgpkg version
 
 RUN wget -O- https://github.com/vmware-tanzu/carvel-vendir/releases/download/v0.19.0/vendir-linux-amd64 > /usr/local/bin/vendir && \
