@@ -4,6 +4,7 @@
 package pkgrepository
 
 import (
+	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"reflect"
 	"testing"
 
@@ -39,8 +40,9 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	fetchFac := fetch.NewFactory(k8scs, nil)
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
+	pkgr := v1alpha12.PackageRepository{}
 
-	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	if err != nil {
 		t.Fatalf("Unexpected error with reconciling: %v", err)
@@ -101,8 +103,9 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	fetchFac := fetch.NewFactory(k8scs, nil)
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
+	pkgr := v1alpha12.PackageRepository{}
 
-	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	if err != nil {
 		t.Fatalf("Unexpected error with reconciling: %v", err)
