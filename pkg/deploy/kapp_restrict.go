@@ -26,6 +26,9 @@ var (
 		"--filter-kind-ns-name",
 		"--filter-name",
 		"--filter-ns",
+
+		"--kube-api-qps",
+		"--kube-api-burst",
 	}
 
 	kappAllowedChangeOpts = []string{
