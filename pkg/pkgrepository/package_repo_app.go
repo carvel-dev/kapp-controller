@@ -13,6 +13,8 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 
 	desiredApp.Name = pkgRepository.Name
 	desiredApp.Namespace = pkgRepository.Namespace
+	desiredApp.Status = pkgRepository.Status
+	desiredApp.DeletionTimestamp = pkgRepository.DeletionTimestamp
 
 	desiredApp.Spec = kcv1alpha1.AppSpec{
 		Fetch: []kcv1alpha1.AppFetch{{

@@ -1092,11 +1092,79 @@ spec:
                 - type
                 type: object
               type: array
+            consecutiveReconcileFailures:
+              type: integer
+            consecutiveReconcileSuccesses:
+              type: integer
+            deploy:
+              properties:
+                error:
+                  type: string
+                exitCode:
+                  type: integer
+                finished:
+                  type: boolean
+                startedAt:
+                  format: date-time
+                  type: string
+                stderr:
+                  type: string
+                stdout:
+                  type: string
+                updatedAt:
+                  format: date-time
+                  type: string
+              type: object
+            fetch:
+              properties:
+                error:
+                  type: string
+                exitCode:
+                  type: integer
+                startedAt:
+                  format: date-time
+                  type: string
+                stderr:
+                  type: string
+                stdout:
+                  type: string
+                updatedAt:
+                  format: date-time
+                  type: string
+              type: object
             friendlyDescription:
+              type: string
+            inspect:
+              properties:
+                error:
+                  type: string
+                exitCode:
+                  type: integer
+                stderr:
+                  type: string
+                stdout:
+                  type: string
+                updatedAt:
+                  format: date-time
+                  type: string
+              type: object
+            managedAppName:
               type: string
             observedGeneration:
               format: int64
               type: integer
+            template:
+              properties:
+                error:
+                  type: string
+                exitCode:
+                  type: integer
+                stderr:
+                  type: string
+                updatedAt:
+                  format: date-time
+                  type: string
+              type: object
             usefulErrorMessage:
               type: string
           type: object
