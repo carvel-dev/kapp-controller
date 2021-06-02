@@ -36,8 +36,14 @@ type PackageRepositoryList struct {
 }
 
 type PackageRepositorySpec struct {
-	// TODO: Add pause?
-	// TODO: Add syncPeriod
+	// Paused when set to true will ignore all pending changes,
+	// once it set back to false, pending changes will be applied
+	// +optional
+	Paused bool `json:"paused,omitempty"`
+	// Controls frequency of app reconciliation
+	// +optional
+	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
+
 	Fetch *PackageRepositoryFetch `json:"fetch"`
 }
 

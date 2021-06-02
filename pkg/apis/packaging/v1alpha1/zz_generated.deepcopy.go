@@ -269,6 +269,11 @@ func (in *PackageRepositorySpec) DeepCopyInto(out *PackageRepositorySpec) {
 		*out = new(PackageRepositoryFetch)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.SyncPeriod != nil {
+		in, out := &in.SyncPeriod, &out.SyncPeriod
+		*out = new(v1.Duration)
+		**out = **in
+	}
 	return
 }
 
