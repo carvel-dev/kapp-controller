@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"sort"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
@@ -92,6 +93,8 @@ func (t Values) writeFromSecret(dstPath string,
 		result = append(result, path)
 	}
 
+	sort.Strings(result)
+
 	return result, nil
 }
 
@@ -113,6 +116,8 @@ func (t Values) writeFromConfigMap(dstPath string,
 		}
 		result = append(result, path)
 	}
+
+	sort.Strings(result)
 
 	return result, nil
 }
