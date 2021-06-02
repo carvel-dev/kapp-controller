@@ -19,11 +19,12 @@ type AppTemplate struct {
 
 // +k8s:openapi-gen=true
 type AppTemplateYtt struct {
-	IgnoreUnknownComments bool            `json:"ignoreUnknownComments,omitempty"`
-	Strict                bool            `json:"strict,omitempty"`
-	Inline                *AppFetchInline `json:"inline,omitempty"`
-	Paths                 []string        `json:"paths,omitempty"`
-	FileMarks             []string        `json:"fileMarks,omitempty"`
+	IgnoreUnknownComments bool                      `json:"ignoreUnknownComments,omitempty"`
+	Strict                bool                      `json:"strict,omitempty"`
+	Inline                *AppFetchInline           `json:"inline,omitempty"`
+	Paths                 []string                  `json:"paths,omitempty"`
+	FileMarks             []string                  `json:"fileMarks,omitempty"`
+	ValuesFrom            []AppTemplateValuesSource `json:"valuesFrom,omitempty"`
 }
 
 // +k8s:openapi-gen=true
@@ -33,21 +34,21 @@ type AppTemplateKbld struct {
 
 // +k8s:openapi-gen=true
 type AppTemplateHelmTemplate struct {
-	Name       string                                `json:"name,omitempty"`
-	Namespace  string                                `json:"namespace,omitempty"`
-	Path       string                                `json:"path,omitempty"`
-	ValuesFrom []AppTemplateHelmTemplateValuesSource `json:"valuesFrom,omitempty"`
+	Name       string                    `json:"name,omitempty"`
+	Namespace  string                    `json:"namespace,omitempty"`
+	Path       string                    `json:"path,omitempty"`
+	ValuesFrom []AppTemplateValuesSource `json:"valuesFrom,omitempty"`
 }
 
 // +k8s:openapi-gen=true
-type AppTemplateHelmTemplateValuesSource struct {
-	SecretRef    *AppTemplateHelmTemplateValuesSourceRef `json:"secretRef,omitempty"`
-	ConfigMapRef *AppTemplateHelmTemplateValuesSourceRef `json:"configMapRef,omitempty"`
-	Path         string                                  `json:"path,omitempty"`
+type AppTemplateValuesSource struct {
+	SecretRef    *AppTemplateValuesSourceRef `json:"secretRef,omitempty"`
+	ConfigMapRef *AppTemplateValuesSourceRef `json:"configMapRef,omitempty"`
+	Path         string                      `json:"path,omitempty"`
 }
 
 // +k8s:openapi-gen=true
-type AppTemplateHelmTemplateValuesSourceRef struct {
+type AppTemplateValuesSourceRef struct {
 	corev1.LocalObjectReference `json:",inline" protobuf:"bytes,1,opt,name=localObjectReference"`
 }
 

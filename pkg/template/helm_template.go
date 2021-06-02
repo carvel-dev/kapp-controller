@@ -5,7 +5,6 @@ package template
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -15,7 +14,6 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	kyaml "sigs.k8s.io/yaml"
 )
@@ -70,42 +68,15 @@ func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 	// Actual helm template arguments
 	args := helmCmdCtx.Args
 
-	for _, source := range t.opts.ValuesFrom {
-		var paths []string
-		var err error
+	{ // Add values files
+		vals := Values{t.opts.ValuesFrom, t.genericOpts, t.coreClient}
 
-		valuesDir := memdir.NewTmpDir("helm-template-values")
-
-		err = valuesDir.Create()
+		paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
 		if err != nil {
-			result := exec.CmdRunResult{}
-			result.AttachErrorf("Templating: %s", err)
-			return result, true
+			return exec.NewCmdRunResultWithErr(err), true
 		}
 
-		defer valuesDir.Remove()
-
-		switch {
-		case source.SecretRef != nil:
-			paths, err = t.writeFromSecret(valuesDir.Path(), *source.SecretRef)
-
-		case source.ConfigMapRef != nil:
-			paths, err = t.writeFromConfigMap(valuesDir.Path(), *source.ConfigMapRef)
-
-		case len(source.Path) > 0:
-			checkedPath, err := memdir.ScopedPath(dirPath, source.Path)
-			if err == nil {
-				paths = append(paths, checkedPath)
-			}
-
-		default:
-			err = fmt.Errorf("Expected either secretRef, configMapRef or path as a source")
-		}
-		if err != nil {
-			result := exec.CmdRunResult{}
-			result.AttachErrorf("Writing paths: %s", err)
-			return result, true
-		}
+		defer valuesCleanUpFunc()
 
 		for _, path := range paths {
 			args = append(args, []string{"--values", path}...)
@@ -131,58 +102,6 @@ func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 
 func (t *HelmTemplate) TemplateStream(_ io.Reader, _ string) exec.CmdRunResult {
 	return exec.NewCmdRunResultWithErr(fmt.Errorf("Templating data is not supported"))
-}
-
-func (t *HelmTemplate) writeFromSecret(dstPath string, secretRef v1alpha1.AppTemplateHelmTemplateValuesSourceRef) ([]string, error) {
-	secret, err := t.coreClient.CoreV1().Secrets(t.genericOpts.Namespace).Get(context.Background(), secretRef.Name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	var result []string
-
-	for name, val := range secret.Data {
-		path, err := t.writeFile(dstPath, name, val)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, path)
-	}
-
-	return result, nil
-}
-
-func (t *HelmTemplate) writeFromConfigMap(dstPath string, configMapRef v1alpha1.AppTemplateHelmTemplateValuesSourceRef) ([]string, error) {
-	configMap, err := t.coreClient.CoreV1().ConfigMaps(t.genericOpts.Namespace).Get(context.Background(), configMapRef.Name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	var result []string
-
-	for name, val := range configMap.Data {
-		path, err := t.writeFile(dstPath, name, []byte(val))
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, path)
-	}
-
-	return result, nil
-}
-
-func (t *HelmTemplate) writeFile(dstPath, subPath string, content []byte) (string, error) {
-	newPath, err := memdir.ScopedPath(dstPath, subPath)
-	if err != nil {
-		return "", err
-	}
-
-	err = ioutil.WriteFile(newPath, content, 0600)
-	if err != nil {
-		return "", fmt.Errorf("Writing file '%s': %s", newPath, err)
-	}
-
-	return newPath, nil
 }
 
 // auxiliary struct used for Chart.yaml unmarshalling

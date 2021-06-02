@@ -19,7 +19,7 @@ func NewFactory(coreClient kubernetes.Interface, fetchFactory fetch.Factory) Fac
 }
 
 func (f Factory) NewYtt(opts v1alpha1.AppTemplateYtt, genericOpts GenericOpts) *Ytt {
-	return NewYtt(opts, genericOpts, f.fetchFactory)
+	return NewYtt(opts, genericOpts, f.coreClient, f.fetchFactory)
 }
 
 func (f Factory) NewKbld(opts v1alpha1.AppTemplateKbld, genericOpts GenericOpts) *Kbld {

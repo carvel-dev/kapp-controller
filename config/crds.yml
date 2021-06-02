@@ -373,6 +373,25 @@ spec:
                                 type: array
                               strict:
                                 type: boolean
+                              valuesFrom:
+                                items:
+                                  properties:
+                                    configMapRef:
+                                      properties:
+                                        name:
+                                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                                          type: string
+                                      type: object
+                                    path:
+                                      type: string
+                                    secretRef:
+                                      properties:
+                                        name:
+                                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                                          type: string
+                                      type: object
+                                  type: object
+                                type: array
                             type: object
                         type: object
                       type: array
@@ -713,6 +732,25 @@ spec:
                         type: array
                       strict:
                         type: boolean
+                      valuesFrom:
+                        items:
+                          properties:
+                            configMapRef:
+                              properties:
+                                name:
+                                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                                  type: string
+                              type: object
+                            path:
+                              type: string
+                            secretRef:
+                              properties:
+                                name:
+                                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                                  type: string
+                              type: object
+                          type: object
+                        type: array
                     type: object
                 type: object
               type: array
