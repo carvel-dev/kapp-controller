@@ -14,6 +14,7 @@ type AppRefTracker struct {
 	appsToRefs map[RefKey]map[RefKey]struct{}
 }
 
+// TODO: Rename since this doesn't only work with Apps
 func NewAppRefTracker() *AppRefTracker {
 	return &AppRefTracker{refsToApps: map[RefKey]map[RefKey]struct{}{}, appsToRefs: map[RefKey]map[RefKey]struct{}{}}
 }

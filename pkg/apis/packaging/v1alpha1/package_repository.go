@@ -36,6 +36,8 @@ type PackageRepositoryList struct {
 }
 
 type PackageRepositorySpec struct {
+	// TODO: Add pause?
+	// TODO: Add syncPeriod
 	Fetch *PackageRepositoryFetch `json:"fetch"`
 }
 
