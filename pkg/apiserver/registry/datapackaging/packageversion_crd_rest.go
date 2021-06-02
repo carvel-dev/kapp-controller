@@ -414,7 +414,7 @@ func (r *PackageVersionCRDREST) applySelector(list datapackaging.PackageVersionL
 
 	filteredPVs := []datapackaging.PackageVersion{}
 	for _, pv := range list.Items {
-		fieldSet := fields.Set{"spec.packageName": pv.Spec.PackageName}
+		fieldSet := fields.Set{"spec.packageName": pv.Spec.PackageName, "metadata.name": pv.Name, "metadata.namespace": pv.Namespace}
 		if selector.Matches(fieldSet) {
 			filteredPVs = append(filteredPVs, pv)
 		}
