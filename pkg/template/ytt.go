@@ -13,19 +13,21 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
+	"k8s.io/client-go/kubernetes"
 )
 
 type Ytt struct {
 	opts         v1alpha1.AppTemplateYtt
 	genericOpts  GenericOpts
+	coreClient   kubernetes.Interface
 	fetchFactory fetch.Factory
 }
 
 var _ Template = &Ytt{}
 
-func NewYtt(opts v1alpha1.AppTemplateYtt,
-	genericOpts GenericOpts, fetchFactory fetch.Factory) *Ytt {
-	return &Ytt{opts, genericOpts, fetchFactory}
+func NewYtt(opts v1alpha1.AppTemplateYtt, genericOpts GenericOpts,
+	coreClient kubernetes.Interface, fetchFactory fetch.Factory) *Ytt {
+	return &Ytt{opts, genericOpts, coreClient, fetchFactory}
 }
 
 func (t *Ytt) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
@@ -53,6 +55,21 @@ func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	}
 
 	args = t.addFileMarks(args)
+
+	{ // Add values files
+		vals := Values{t.opts.ValuesFrom, t.genericOpts, t.coreClient}
+
+		paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
+		if err != nil {
+			return exec.NewCmdRunResultWithErr(err)
+		}
+
+		defer valuesCleanUpFunc()
+
+		for _, path := range paths {
+			args = append(args, []string{"--data-values-file", path}...)
+		}
+	}
 
 	var stdoutBs, stderrBs bytes.Buffer
 

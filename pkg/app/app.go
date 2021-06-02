@@ -154,10 +154,18 @@ func (a *App) SecretRefs() map[reftracker.RefKey]struct{} {
 	// Templating SecretRefs
 	for _, tpl := range a.app.Spec.Template {
 		switch {
-		case tpl.Ytt != nil && tpl.Ytt.Inline != nil:
-			for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
-				if pathsFrom.SecretRef != nil {
-					refKey := reftracker.NewSecretKey(pathsFrom.SecretRef.Name, a.app.Namespace)
+		case tpl.Ytt != nil:
+			if tpl.Ytt.Inline != nil {
+				for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
+					if pathsFrom.SecretRef != nil {
+						refKey := reftracker.NewSecretKey(pathsFrom.SecretRef.Name, a.app.Namespace)
+						secrets[refKey] = struct{}{}
+					}
+				}
+			}
+			for _, valuesFrom := range tpl.Ytt.ValuesFrom {
+				if valuesFrom.SecretRef != nil {
+					refKey := reftracker.NewSecretKey(valuesFrom.SecretRef.Name, a.app.Namespace)
 					secrets[refKey] = struct{}{}
 				}
 			}
@@ -196,10 +204,18 @@ func (a *App) ConfigMapRefs() map[reftracker.RefKey]struct{} {
 	// Templating ConfigMapRefs
 	for _, tpl := range a.app.Spec.Template {
 		switch {
-		case tpl.Ytt != nil && tpl.Ytt.Inline != nil:
-			for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
-				if pathsFrom.ConfigMapRef != nil {
-					refKey := reftracker.NewConfigMapKey(pathsFrom.ConfigMapRef.Name, a.app.Namespace)
+		case tpl.Ytt != nil:
+			if tpl.Ytt.Inline != nil {
+				for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
+					if pathsFrom.ConfigMapRef != nil {
+						refKey := reftracker.NewConfigMapKey(pathsFrom.ConfigMapRef.Name, a.app.Namespace)
+						configMaps[refKey] = struct{}{}
+					}
+				}
+			}
+			for _, valuesFrom := range tpl.Ytt.ValuesFrom {
+				if valuesFrom.ConfigMapRef != nil {
+					refKey := reftracker.NewConfigMapKey(valuesFrom.ConfigMapRef.Name, a.app.Namespace)
 					configMaps[refKey] = struct{}{}
 				}
 			}
