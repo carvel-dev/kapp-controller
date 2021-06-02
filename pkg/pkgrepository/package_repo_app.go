@@ -32,6 +32,8 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 		Deploy: []kcv1alpha1.AppDeploy{{
 			Kapp: &kcv1alpha1.AppDeployKapp{},
 		}},
+		SyncPeriod: pkgRepository.Spec.SyncPeriod,
+		Paused:     pkgRepository.Spec.Paused,
 	}
 
 	if desiredApp.Spec.Fetch[0].ImgpkgBundle != nil {
