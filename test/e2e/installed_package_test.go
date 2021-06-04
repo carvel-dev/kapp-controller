@@ -26,24 +26,56 @@ func Test_PackageInstalled_FromInstalledPackage_Successfully(t *testing.T) {
 	sas := ServiceAccounts{env.Namespace}
 	name := "instl-pkg-test"
 
-	// contents of this bundle (k8slt/kappctrl-e2e-repo)
-	// under examples/packaging-demo
 	installPkgYaml := fmt.Sprintf(`---
-apiVersion: packaging.carvel.dev/v1alpha1
-kind: PackageRepository
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
 metadata:
-  name: basic.test.carvel.dev
-  # cluster scoped
+  name: pkg.test.carvel.dev
+  namespace: %[1]s
 spec:
-  fetch:
-    imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:0ae0f32ef92d2362339b47055a6ea2042bc114a7dd36cf339bf05df4d1cc1b9b
+  # This is the name we want to reference in resources such as InstalledPackage.
+  displayName: "Test Package in repo"
+  shortDescription: "Package used for testing"
+  longDescription: "A longer, more detailed description of what the package contains and what it is for"
+  providerName: Carvel
+  maintainers:
+  - name: carvel
+  categories:
+  - testing
+  supportDescription: "Description of support provided for the package"
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageVersion
+metadata:
+  name: pkg.test.carvel.dev.1.0.0
+  namespace: %[1]s
+spec:
+  packageName: pkg.test.carvel.dev
+  version: 1.0.0
+  licenses:
+  - Apache 2.0
+  capactiyRequirementsDescription: "cpu: 1,RAM: 2, Disk: 3"
+  releaseNotes: |
+    - Introduce simple-app package
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v1.0.0
+      template:
+      - ytt: {}
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
+      deploy:
+      - kapp: {}
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
 kind: InstalledPackage
 metadata:
-  name: %s
-  namespace: %s
+  name: %[2]s
+  namespace: %[1]s
   annotations:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/installedpackages
 spec:
@@ -63,7 +95,7 @@ metadata:
 stringData:
   values.yml: |
     hello_msg: "hi"
-`, name, env.Namespace) + sas.ForNamespaceYAML()
+`, env.Namespace, name) + sas.ForNamespaceYAML()
 
 	cleanUp := func() {
 		// Delete App with kubectl first since kapp
