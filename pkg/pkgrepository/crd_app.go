@@ -6,11 +6,9 @@ package pkgrepository
 import (
 	"context"
 	"fmt"
-	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	"reflect"
-
 	"github.com/go-logr/logr"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
@@ -38,7 +36,6 @@ func NewCRDApp(appModel *kcv1alpha1.App, packageRepo *pkgingv1alpha1.PackageRepo
 		BlockDeletion:   crdApp.blockDeletion,
 		UnblockDeletion: crdApp.unblockDeletion,
 		UpdateStatus:    crdApp.updateStatus,
-		WatchChanges:    crdApp.watchChanges,
 	}, fetchFactory, templateFactory, deployFactory, log)
 
 	return crdApp
@@ -81,18 +78,23 @@ func (a *CRDApp) updateStatus(desc string) error {
 }
 
 func (a *CRDApp) updateStatusOnce() error {
-	existingApp, err := a.appClient.PackagingV1alpha1().PackageRepositories(a.pkgrModel.Namespace).Get(context.Background(), a.pkgrModel.Name, metav1.GetOptions{})
+	existingRepo, err := a.appClient.PackagingV1alpha1().PackageRepositories(a.pkgrModel.Namespace).Get(context.Background(), a.pkgrModel.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("Fetching app: %s", err)
 	}
 
-	if !reflect.DeepEqual(existingApp.Status, a.app.Status()) {
+	existingRepo.Status = pkgingv1alpha1.PackageRepositoryStatus{
+		Fetch:                         a.app.Status().Fetch,
+		Template:                      a.app.Status().Template,
+		Deploy:                        a.app.Status().Deploy,
+		GenericStatus:                 a.app.Status().GenericStatus,
+		ConsecutiveReconcileSuccesses: a.app.Status().ConsecutiveReconcileSuccesses,
+		ConsecutiveReconcileFailures:  a.app.Status().ConsecutiveReconcileFailures,
+	}
 
-		existingApp.Status = a.app.Status()
-		_, err = a.appClient.PackagingV1alpha1().PackageRepositories(existingApp.Namespace).UpdateStatus(context.Background(), existingApp, metav1.UpdateOptions{})
-		if err != nil {
-			return err
-		}
+	_, err = a.appClient.PackagingV1alpha1().PackageRepositories(existingRepo.Namespace).UpdateStatus(context.Background(), existingRepo, metav1.UpdateOptions{})
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -118,10 +120,6 @@ func (a *CRDApp) updateApp(updateFunc func(*pkgingv1alpha1.PackageRepository)) e
 
 func (a *CRDApp) Reconcile(force bool) (reconcile.Result, error) {
 	return a.app.Reconcile(force)
-}
-
-func (a *CRDApp) watchChanges(callback func(kcv1alpha1.App), cancelCh chan struct{}) error {
-	return NewCRDAppWatcher(*a.appModel, a.appClient).Watch(callback, cancelCh)
 }
 
 func (a *CRDApp) ResourceRefs() map[reftracker.RefKey]struct{} {
