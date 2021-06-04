@@ -108,12 +108,11 @@ func Run(opts Options, runLog logr.Logger) {
 		os.Exit(1)
 	}
 
-	appRefTracker := reftracker.NewAppRefTracker()
-	appUpdateStatus := reftracker.NewAppUpdateStatus()
-	sch := handlers.NewSecretHandler(runLog, appRefTracker, appUpdateStatus)
-	cfgmh := handlers.NewConfigMapHandler(runLog, appRefTracker, appUpdateStatus)
-
 	{ // add controller for apps
+		appRefTracker := reftracker.NewAppRefTracker()
+		appUpdateStatus := reftracker.NewAppUpdateStatus()
+		schApp := handlers.NewSecretHandler(runLog, appRefTracker, appUpdateStatus)
+		cfgmhApp := handlers.NewConfigMapHandler(runLog, appRefTracker, appUpdateStatus)
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
 				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), appFactory, appRefTracker, appUpdateStatus),
@@ -134,13 +133,13 @@ func Run(opts Options, runLog logr.Logger) {
 			os.Exit(1)
 		}
 
-		err = ctrlApp.Watch(&source.Kind{Type: &v1.Secret{}}, sch)
+		err = ctrlApp.Watch(&source.Kind{Type: &v1.Secret{}}, schApp)
 		if err != nil {
 			runLog.Error(err, "unable to watch Secrets")
 			os.Exit(1)
 		}
 
-		err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, cfgmh)
+		err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, cfgmhApp)
 		if err != nil {
 			runLog.Error(err, "unable to watch ConfigMaps")
 			os.Exit(1)
@@ -186,8 +185,12 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	{ // add controller for pkgrepositories
+		pkgrRefTracker := reftracker.NewAppRefTracker()
+		pkgrUpdateStatus := reftracker.NewAppUpdateStatus()
+		schRepo := handlers.NewSecretHandler(runLog, pkgrRefTracker, pkgrUpdateStatus)
+
 		pkgRepositoriesCtrlOpts := controller.Options{
-			Reconciler: NewPkgRepositoryReconciler(kcClient, runLog.WithName("prr"), appFactory, appRefTracker, appUpdateStatus),
+			Reconciler: NewPkgRepositoryReconciler(kcClient, runLog.WithName("prr"), appFactory, pkgrRefTracker, pkgrUpdateStatus),
 			// TODO: Consider making this configurable for multiple PackageRepo reconciles
 			MaxConcurrentReconciles: 1,
 		}
@@ -204,7 +207,7 @@ func Run(opts Options, runLog logr.Logger) {
 			os.Exit(1)
 		}
 
-		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &v1.Secret{}}, sch)
+		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &v1.Secret{}}, schRepo)
 		if err != nil {
 			runLog.Error(err, "unable to watch Secrets")
 			os.Exit(1)
