@@ -22,7 +22,7 @@ type PackageRepository struct {
 
 	Spec PackageRepositorySpec `json:"spec"`
 	// +optional
-	Status v1alpha1.AppStatus `json:"status,omitempty"`
+	Status PackageRepositoryStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -56,4 +56,19 @@ type PackageRepositoryFetch struct {
 	Git *v1alpha1.AppFetchGit `json:"git,omitempty"`
 	// +optional
 	ImgpkgBundle *v1alpha1.AppFetchImgpkgBundle `json:"imgpkgBundle,omitempty"`
+}
+
+type PackageRepositoryStatus struct {
+	// +optional
+	Fetch *v1alpha1.AppStatusFetch `json:"fetch,omitempty"`
+	// +optional
+	Template *v1alpha1.AppStatusTemplate `json:"template,omitempty"`
+	// +optional
+	Deploy *v1alpha1.AppStatusDeploy `json:"deploy,omitempty"`
+	// +optional
+	ConsecutiveReconcileSuccesses int `json:"consecutiveReconcileSuccesses,omitempty"`
+	// +optional
+	ConsecutiveReconcileFailures int `json:"consecutiveReconcileFailures,omitempty"`
+	// +optional
+	v1alpha1.GenericStatus `json:",inline"`
 }

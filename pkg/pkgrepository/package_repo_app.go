@@ -6,6 +6,8 @@ package pkgrepository
 import (
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 )
 
 func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1alpha1.App, error) {
@@ -13,7 +15,6 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 
 	desiredApp.Name = pkgRepository.Name
 	desiredApp.Namespace = pkgRepository.Namespace
-	desiredApp.Status = pkgRepository.Status
 	desiredApp.DeletionTimestamp = pkgRepository.DeletionTimestamp
 
 	desiredApp.Spec = kcv1alpha1.AppSpec{
@@ -32,13 +33,25 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 		Deploy: []kcv1alpha1.AppDeploy{{
 			Kapp: &kcv1alpha1.AppDeployKapp{},
 		}},
-		SyncPeriod: pkgRepository.Spec.SyncPeriod,
-		Paused:     pkgRepository.Spec.Paused,
+		Paused: pkgRepository.Spec.Paused,
+	}
+
+	if pkgRepository.Spec.SyncPeriod == nil {
+		desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: time.Minute * 5}
 	}
 
 	if desiredApp.Spec.Fetch[0].ImgpkgBundle != nil {
 		desiredApp.Spec.Template = append(desiredApp.Spec.Template,
 			kcv1alpha1.AppTemplate{Kbld: &kcv1alpha1.AppTemplateKbld{Paths: []string{"-", ".imgpkg/images.yml"}}})
+	}
+
+	desiredApp.Status = kcv1alpha1.AppStatus{
+		Fetch:                         pkgRepository.Status.Fetch,
+		Template:                      pkgRepository.Status.Template,
+		Deploy:                        pkgRepository.Status.Deploy,
+		GenericStatus:                 pkgRepository.Status.GenericStatus,
+		ConsecutiveReconcileSuccesses: pkgRepository.Status.ConsecutiveReconcileSuccesses,
+		ConsecutiveReconcileFailures:  pkgRepository.Status.ConsecutiveReconcileFailures,
 	}
 
 	return desiredApp, nil
