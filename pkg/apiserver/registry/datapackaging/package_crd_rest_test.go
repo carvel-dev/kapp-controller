@@ -1,3 +1,6 @@
+// Copyright 2021 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package datapackaging_test
 
 import (
@@ -376,7 +379,7 @@ type UpdatePackageTestImpl struct {
 	updateFn func(pkg *datapackaging.Package) *datapackaging.Package
 }
 
-func (_ UpdatePackageTestImpl) Preconditions() *metav1.Preconditions {
+func (UpdatePackageTestImpl) Preconditions() *metav1.Preconditions {
 	return nil
 }
 
