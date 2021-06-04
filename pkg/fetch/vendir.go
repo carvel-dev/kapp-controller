@@ -154,7 +154,7 @@ func (v *Vendir) inlineSourceRefConf(ref *v1alpha1.AppFetchInlineSourceRef) *ven
 
 	return &vendirconf.DirectoryContentsInlineSourceRef{
 		DirectoryPath:             ref.DirectoryPath,
-		DirectoryContentsLocalRef: vendirconf.DirectoryContentsLocalRef{Name: ref.LocalObjectReference.Name},
+		DirectoryContentsLocalRef: vendirconf.DirectoryContentsLocalRef{Name: ref.Name},
 	}
 }
 
@@ -175,7 +175,7 @@ func (v *Vendir) localRefConf(ref *v1alpha1.AppFetchLocalRef) *vendirconf.Direct
 	}
 
 	return &vendirconf.DirectoryContentsLocalRef{
-		Name: ref.LocalObjectReference.Name,
+		Name: ref.Name,
 	}
 }
 

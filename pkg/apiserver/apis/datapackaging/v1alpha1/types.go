@@ -16,9 +16,9 @@ type Package struct {
 
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
 	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Spec PackageSpec `json:"spec"`
+	Spec PackageSpec `json:"spec" protobuf:"bytes,2,opt,name=spec"`
 }
 
 // +genclient
@@ -28,9 +28,9 @@ type PackageVersion struct {
 
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
 	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Spec PackageVersionSpec `json:"spec"`
+	Spec PackageVersionSpec `json:"spec" protobuf:"bytes,2,opt,name=spec"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -40,9 +40,9 @@ type PackageVersionList struct {
 	// Standard list metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
 	// +optional
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Items []PackageVersion `json:"items"`
+	Items []PackageVersion `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -52,50 +52,50 @@ type PackageList struct {
 	// Standard list metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
 	// +optional
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Items []Package `json:"items"`
+	Items []Package `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
 type PackageVersionSpec struct {
-	PackageName                     string   `json:"packageName,omitempty"`
-	Version                         string   `json:"version,omitempty"`
-	Licenses                        []string `json:"licenses,omitempty"`
-	ReleasedAt                      string   `json:"releasedAt,omitempty"`
-	CapactiyRequirementsDescription string   `json:"capacityRequirementsDescription,omitempty"`
-	ReleaseNotes                    string   `json:"releaseNotes,omitempty"`
+	PackageName                     string   `json:"packageName,omitempty" protobuf:"bytes,1,opt,name=packageName"`
+	Version                         string   `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
+	Licenses                        []string `json:"licenses,omitempty" protobuf:"bytes,3,rep,name=licenses"`
+	ReleasedAt                      string   `json:"releasedAt,omitempty" protobuf:"bytes,4,opt,name=releasedAt"`
+	CapactiyRequirementsDescription string   `json:"capacityRequirementsDescription,omitempty" protobuf:"bytes,5,opt,name=capacityRequirementsDescription"`
+	ReleaseNotes                    string   `json:"releaseNotes,omitempty" protobuf:"bytes,6,opt,name=releaseNotes"`
 
-	Template AppTemplateSpec `json:"template,omitempty"`
+	Template AppTemplateSpec `json:"template,omitempty" protobuf:"bytes,7,opt,name=template"`
 
 	// valuesSchema can be used to show template values that
 	// can be configured by users when a PackageVersion is installed
 	// in an OpenAPI schema format.
 	// +optional
-	ValuesSchema ValuesSchema `json:"valuesSchema,omitempty"`
+	ValuesSchema ValuesSchema `json:"valuesSchema,omitempty" protobuf:"bytes,8,opt,name=valuesSchema"`
 }
 
 type PackageSpec struct {
-	DisplayName        string       `json:"displayName,omitempty"`
-	LongDescription    string       `json:"longDescription,omitempty"`
-	ShortDescription   string       `json:"shortDescription,omitempty"`
-	IconSVGBase64      string       `json:"iconSVGBase64,omitempty"`
-	ProviderName       string       `json:"providerName,omitempty"`
-	Maintainers        []Maintainer `json:"maintainers,omitempty"`
-	Categories         []string     `json:"categories,omitempty"`
-	SupportDescription string       `json:"supportDescription,omitempty"`
+	DisplayName        string       `json:"displayName,omitempty" protobuf:"bytes,1,opt,name=displayName"`
+	LongDescription    string       `json:"longDescription,omitempty" protobuf:"bytes,2,opt,name=longDescription"`
+	ShortDescription   string       `json:"shortDescription,omitempty" protobuf:"bytes,3,opt,name=shortDescription"`
+	IconSVGBase64      string       `json:"iconSVGBase64,omitempty" protobuf:"bytes,4,opt,name=iconSVGBase64"`
+	ProviderName       string       `json:"providerName,omitempty" protobuf:"bytes,5,opt,name=providerName"`
+	Maintainers        []Maintainer `json:"maintainers,omitempty" protobuf:"bytes,6,rep,name=maintainers"`
+	Categories         []string     `json:"categories,omitempty" protobuf:"bytes,7,rep,name=categories"`
+	SupportDescription string       `json:"supportDescription,omitempty" protobuf:"bytes,8,opt,name=supportDescription"`
 }
 
 type Maintainer struct {
-	Name string `json:"name,omitempty"`
+	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
 }
 
 type AppTemplateSpec struct {
-	Spec *kcv1alpha1.AppSpec `json:"spec"`
+	Spec *kcv1alpha1.AppSpec `json:"spec" protobuf:"bytes,1,opt,name=spec"`
 }
 
 type ValuesSchema struct {
 	// +optional
 	// +nullable
 	// +kubebuilder:pruning:PreserveUnknownFields
-	OpenAPIv3 runtime.RawExtension `json:"openAPIv3,omitempty"`
+	OpenAPIv3 runtime.RawExtension `json:"openAPIv3,omitempty" protobuf:"bytes,1,opt,name=openAPIv3"`
 }

@@ -849,9 +849,8 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchInlineSourceRef(ref common.Refere
 					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-							Type:        []string{"string"},
-							Format:      "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
@@ -868,7 +867,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchLocalRef(ref common.ReferenceCall
 				Properties: map[string]spec.Schema{
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+							Description: "Object is expected to be within same namespace",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1207,9 +1206,8 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesSourceRef(ref common.Ref
 				Properties: map[string]spec.Schema{
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-							Type:        []string{"string"},
-							Format:      "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
