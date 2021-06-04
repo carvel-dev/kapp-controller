@@ -17,19 +17,18 @@ import (
 
 // Reconcile is not expected to be called concurrently
 func (a *App) Reconcile(force bool) (reconcile.Result, error) {
-	defer a.flushUpdateStatus("app reconciled")
+	defer a.flushUpdateStatus("packagerepository reconciled")
 
 	var err error
 
 	switch {
-	// TODO: Remove canceled?
-	case a.app.Spec.Canceled || a.app.Spec.Paused:
-		a.log.Info("App is canceled or paused, not reconciling")
+	case a.app.Spec.Paused:
+		a.log.Info("PackageRepository is paused, not reconciling")
 
 		a.markObservedLatest()
-		a.app.Status.FriendlyDescription = "Canceled/paused"
+		a.app.Status.FriendlyDescription = "Paused"
 
-		err = a.updateStatus("app canceled/paused")
+		err = a.updateStatus("PackageRepository paused")
 
 	case a.app.DeletionTimestamp != nil:
 		a.log.Info("Started delete")
