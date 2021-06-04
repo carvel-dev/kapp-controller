@@ -108,14 +108,15 @@ func Run(opts Options, runLog logr.Logger) {
 		os.Exit(1)
 	}
 
+	refTracker := reftracker.NewAppRefTracker()
+	updateStatusTracker := reftracker.NewAppUpdateStatus()
+
 	{ // add controller for apps
-		appRefTracker := reftracker.NewAppRefTracker()
-		appUpdateStatus := reftracker.NewAppUpdateStatus()
-		schApp := handlers.NewSecretHandler(runLog, appRefTracker, appUpdateStatus)
-		cfgmhApp := handlers.NewConfigMapHandler(runLog, appRefTracker, appUpdateStatus)
+		schApp := handlers.NewSecretHandler(runLog, refTracker, updateStatusTracker)
+		cfgmhApp := handlers.NewConfigMapHandler(runLog, refTracker, updateStatusTracker)
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
-				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), appFactory, appRefTracker, appUpdateStatus),
+				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), appFactory, refTracker, updateStatusTracker),
 				log:      runLog.WithName("pr"),
 			}),
 			MaxConcurrentReconciles: opts.Concurrency,
@@ -185,12 +186,10 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	{ // add controller for pkgrepositories
-		pkgrRefTracker := reftracker.NewAppRefTracker()
-		pkgrUpdateStatus := reftracker.NewAppUpdateStatus()
-		schRepo := handlers.NewSecretHandler(runLog, pkgrRefTracker, pkgrUpdateStatus)
+		schRepo := handlers.NewSecretHandler(runLog, refTracker, updateStatusTracker)
 
 		pkgRepositoriesCtrlOpts := controller.Options{
-			Reconciler: NewPkgRepositoryReconciler(kcClient, runLog.WithName("prr"), appFactory, pkgrRefTracker, pkgrUpdateStatus),
+			Reconciler: NewPkgRepositoryReconciler(kcClient, runLog.WithName("prr"), appFactory, refTracker, updateStatusTracker),
 			// TODO: Consider making this configurable for multiple PackageRepo reconciles
 			MaxConcurrentReconciles: 1,
 		}
