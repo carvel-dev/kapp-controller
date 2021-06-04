@@ -81,12 +81,6 @@ func (a *App) reconcileDeploy() error {
 	result := a.reconcileFetchTemplateDeploy()
 	a.setReconcileCompleted(result)
 
-	// Reconcile inspect regardless of deploy success
-	// but don't inspect if deploy never attempted
-	if a.app.Status.Deploy != nil {
-		_ = a.reconcileInspect()
-	}
-
 	return a.updateStatus("marking reconcile completed")
 }
 
@@ -147,7 +141,11 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 
 	a.resetLastDeployStartedAt()
 
-	return a.updateLastDeploy(a.deploy(tplResult.Stdout, a.updateLastDeployNoReturn))
+	// Deployment should not take long time, so no
+	// need to regularly update status. Passing in
+	// empty func for a.deploy so only updateLastDeploy
+	// sets status for Deploy portion of status.
+	return a.updateLastDeploy(a.deploy(tplResult.Stdout, func(result exec.CmdRunResult) {}))
 }
 
 func (a *App) updateLastDeploy(result exec.CmdRunResult) exec.CmdRunResult {
@@ -184,20 +182,6 @@ func (a *App) resetLastDeployStartedAt() {
 		a.app.Status.Deploy = &v1alpha1.AppStatusDeploy{}
 	}
 	a.app.Status.Deploy.StartedAt = metav1.NewTime(time.Now().UTC())
-}
-
-func (a *App) reconcileInspect() error {
-	inspectResult := a.inspect().WithFriendlyYAMLStrings()
-
-	a.app.Status.Inspect = &v1alpha1.AppStatusInspect{
-		Stdout:    inspectResult.Stdout,
-		Stderr:    inspectResult.Stderr,
-		ExitCode:  inspectResult.ExitCode,
-		Error:     inspectResult.ErrorStr(),
-		UpdatedAt: metav1.NewTime(time.Now().UTC()),
-	}
-
-	return a.updateStatus("marking inspect completed")
 }
 
 func (a *App) markObservedLatest() {

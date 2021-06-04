@@ -1140,22 +1140,6 @@ spec:
               type: object
             friendlyDescription:
               type: string
-            inspect:
-              properties:
-                error:
-                  type: string
-                exitCode:
-                  type: integer
-                stderr:
-                  type: string
-                stdout:
-                  type: string
-                updatedAt:
-                  format: date-time
-                  type: string
-              type: object
-            managedAppName:
-              type: string
             observedGeneration:
               format: int64
               type: integer
