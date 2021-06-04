@@ -6,6 +6,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v0.4.0
 	github.com/go-openapi/spec v0.19.3
+	github.com/gogo/protobuf v1.3.1
 	github.com/google/go-containerregistry v0.1.2
 	github.com/vmware-tanzu/carvel-vendir v0.19.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9

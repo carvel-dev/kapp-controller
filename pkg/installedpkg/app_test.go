@@ -12,7 +12,6 @@ import (
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/installedpkg"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -61,22 +60,22 @@ func TestAppExtYttPathsFromSecretNameAnn(t *testing.T) {
 						PathsFrom: []kcv1alpha1.AppFetchInlineSource{
 							kcv1alpha1.AppFetchInlineSource{
 								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									LocalObjectReference: corev1.LocalObjectReference{Name: "no-suffix"},
+									Name: "no-suffix",
 								},
 							},
 							kcv1alpha1.AppFetchInlineSource{
 								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									LocalObjectReference: corev1.LocalObjectReference{Name: "suffix-2"},
+									Name: "suffix-2",
 								},
 							},
 							kcv1alpha1.AppFetchInlineSource{
 								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									LocalObjectReference: corev1.LocalObjectReference{Name: "suffix-4"},
+									Name: "suffix-4",
 								},
 							},
 							kcv1alpha1.AppFetchInlineSource{
 								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									LocalObjectReference: corev1.LocalObjectReference{Name: "suffix-text"},
+									Name: "suffix-text",
 								},
 							},
 						},
@@ -142,12 +141,12 @@ func TestAppExtYttDataValuesOverlaysAnn(t *testing.T) {
 						PathsFrom: []kcv1alpha1.AppFetchInlineSource{
 							kcv1alpha1.AppFetchInlineSource{
 								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									LocalObjectReference: corev1.LocalObjectReference{Name: "values1"},
+									Name: "values1",
 								},
 							},
 							kcv1alpha1.AppFetchInlineSource{
 								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									LocalObjectReference: corev1.LocalObjectReference{Name: "values2"},
+									Name: "values2",
 								},
 							},
 						},
@@ -210,12 +209,12 @@ func TestAppYttValues(t *testing.T) {
 					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
 						kcv1alpha1.AppTemplateValuesSource{
 							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								LocalObjectReference: corev1.LocalObjectReference{Name: "values1"},
+								Name: "values1",
 							},
 						},
 						kcv1alpha1.AppTemplateValuesSource{
 							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								LocalObjectReference: corev1.LocalObjectReference{Name: "values2"},
+								Name: "values2",
 							},
 						},
 					},
@@ -278,12 +277,12 @@ func TestAppHelmTemplateValues(t *testing.T) {
 					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
 						kcv1alpha1.AppTemplateValuesSource{
 							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								LocalObjectReference: corev1.LocalObjectReference{Name: "values1"},
+								Name: "values1",
 							},
 						},
 						kcv1alpha1.AppTemplateValuesSource{
 							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								LocalObjectReference: corev1.LocalObjectReference{Name: "values2"},
+								Name: "values2",
 							},
 						},
 					},

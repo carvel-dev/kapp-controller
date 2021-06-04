@@ -13,6 +13,7 @@ import (
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
 // +kubebuilder:printcolumn:name=Since-Deploy,JSONPath=.status.deploy.startedAt,description=Last time app started being deployed. Does not mean anything was changed.,type=date
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
+// +protobuf=false
 type App struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
@@ -25,6 +26,7 @@ type App struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +protobuf=false
 type AppList struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard list metadata.
@@ -38,47 +40,48 @@ type AppList struct {
 // +k8s:openapi-gen=true
 type AppSpec struct {
 	// +optional
-	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+	ServiceAccountName string `json:"serviceAccountName,omitempty" protobuf:"bytes,1,opt,name=serviceAccountName"`
 	// +optional
-	Cluster *AppCluster `json:"cluster,omitempty"`
+	Cluster *AppCluster `json:"cluster,omitempty" protobuf:"bytes,2,opt,name=cluster"`
 	// +optional
-	Fetch []AppFetch `json:"fetch,omitempty"`
+	Fetch []AppFetch `json:"fetch,omitempty" protobuf:"bytes,3,rep,name=fetch"`
 	// +optional
-	Template []AppTemplate `json:"template,omitempty"`
+	Template []AppTemplate `json:"template,omitempty" protobuf:"bytes,4,rep,name=template"`
 	// +optional
-	Deploy []AppDeploy `json:"deploy,omitempty"`
+	Deploy []AppDeploy `json:"deploy,omitempty" protobuf:"bytes,5,rep,name=deploy"`
 	// Paused when set to true will ignore all pending changes,
 	// once it set back to false, pending changes will be applied
 	// +optional
-	Paused bool `json:"paused,omitempty"`
+	Paused bool `json:"paused,omitempty" protobuf:"varint,6,opt,name=paused"`
 	// Canceled when set to true will stop all active changes
 	// +optional
-	Canceled bool `json:"canceled,omitempty"`
+	Canceled bool `json:"canceled,omitempty" protobuf:"varint,7,opt,name=canceled"`
 	// Controls frequency of app reconciliation
 	// +optional
-	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
+	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty" protobuf:"bytes,8,opt,name=syncPeriod"`
 	// When NoopDeletion set to true, App deletion should
 	// delete App CR but preserve App's associated resources
 	// +optional
-	NoopDelete bool `json:"noopDelete,omitempty"`
+	NoopDelete bool `json:"noopDelete,omitempty" protobuf:"varint,9,opt,name=noopDelete"`
 }
 
 // +k8s:openapi-gen=true
 type AppCluster struct {
 	// +optional
-	Namespace string `json:"namespace,omitempty"`
+	Namespace string `json:"namespace,omitempty" protobuf:"bytes,1,opt,name=namespace"`
 	// +optional
-	KubeconfigSecretRef *AppClusterKubeconfigSecretRef `json:"kubeconfigSecretRef,omitempty"`
+	KubeconfigSecretRef *AppClusterKubeconfigSecretRef `json:"kubeconfigSecretRef,omitempty" protobuf:"bytes,2,opt,name=kubeconfigSecretRef"`
 }
 
 // +k8s:openapi-gen=true
 type AppClusterKubeconfigSecretRef struct {
 	// +optional
-	Name string `json:"name,omitempty"`
+	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
 	// +optional
-	Key string `json:"key,omitempty"`
+	Key string `json:"key,omitempty" protobuf:"bytes,2,opt,name=key"`
 }
 
+// +protobuf=false
 type AppStatus struct {
 	// +optional
 	ManagedAppName string `json:"managedAppName,omitempty"`
@@ -98,6 +101,7 @@ type AppStatus struct {
 	GenericStatus `json:",inline"`
 }
 
+// +protobuf=false
 type AppStatusFetch struct {
 	// +optional
 	Stderr string `json:"stderr,omitempty"`
@@ -113,6 +117,7 @@ type AppStatusFetch struct {
 	UpdatedAt metav1.Time `json:"updatedAt,omitempty"`
 }
 
+// +protobuf=false
 type AppStatusTemplate struct {
 	// +optional
 	Stderr string `json:"stderr,omitempty"`
@@ -124,6 +129,7 @@ type AppStatusTemplate struct {
 	UpdatedAt metav1.Time `json:"updatedAt,omitempty"`
 }
 
+// +protobuf=false
 type AppStatusDeploy struct {
 	// +optional
 	Stdout string `json:"stdout,omitempty"`
@@ -141,6 +147,7 @@ type AppStatusDeploy struct {
 	UpdatedAt metav1.Time `json:"updatedAt,omitempty"`
 }
 
+// +protobuf=false
 type AppStatusInspect struct {
 	// +optional
 	Stdout string `json:"stdout,omitempty"`
