@@ -160,7 +160,7 @@ spec:
                                 description: 'Secret may include one or more keys: ssh-privatekey, ssh-knownhosts'
                                 properties:
                                   name:
-                                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                                    description: Object is expected to be within same namespace
                                     type: string
                                 type: object
                               subPath:
@@ -178,7 +178,7 @@ spec:
                                   secretRef:
                                     properties:
                                       name:
-                                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                                        description: Object is expected to be within same namespace
                                         type: string
                                     type: object
                                   url:
@@ -193,7 +193,7 @@ spec:
                                 description: 'Secret may include one or more keys: username, password'
                                 properties:
                                   name:
-                                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                                    description: Object is expected to be within same namespace
                                     type: string
                                 type: object
                               sha256:
@@ -210,7 +210,7 @@ spec:
                                 description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication. TODO support docker config formated secret'
                                 properties:
                                   name:
-                                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                                    description: Object is expected to be within same namespace
                                     type: string
                                 type: object
                               subPath:
@@ -227,7 +227,7 @@ spec:
                                 description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication. TODO support docker config formated secret'
                                 properties:
                                   name:
-                                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                                    description: Object is expected to be within same namespace
                                     type: string
                                 type: object
                             type: object
@@ -245,7 +245,6 @@ spec:
                                         directoryPath:
                                           type: string
                                         name:
-                                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                           type: string
                                       type: object
                                     secretRef:
@@ -253,7 +252,6 @@ spec:
                                         directoryPath:
                                           type: string
                                         name:
-                                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                           type: string
                                       type: object
                                   type: object
@@ -289,7 +287,6 @@ spec:
                                     configMapRef:
                                       properties:
                                         name:
-                                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                           type: string
                                       type: object
                                     path:
@@ -297,7 +294,6 @@ spec:
                                     secretRef:
                                       properties:
                                         name:
-                                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                           type: string
                                       type: object
                                   type: object
@@ -353,7 +349,6 @@ spec:
                                             directoryPath:
                                               type: string
                                             name:
-                                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                               type: string
                                           type: object
                                         secretRef:
@@ -361,7 +356,6 @@ spec:
                                             directoryPath:
                                               type: string
                                             name:
-                                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                               type: string
                                           type: object
                                       type: object
@@ -500,7 +494,7 @@ spec:
                         description: 'Secret may include one or more keys: ssh-privatekey, ssh-knownhosts'
                         properties:
                           name:
-                            description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                            description: Object is expected to be within same namespace
                             type: string
                         type: object
                       subPath:
@@ -518,7 +512,7 @@ spec:
                           secretRef:
                             properties:
                               name:
-                                description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                                description: Object is expected to be within same namespace
                                 type: string
                             type: object
                           url:
@@ -533,7 +527,7 @@ spec:
                         description: 'Secret may include one or more keys: username, password'
                         properties:
                           name:
-                            description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                            description: Object is expected to be within same namespace
                             type: string
                         type: object
                       sha256:
@@ -550,7 +544,7 @@ spec:
                         description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication. TODO support docker config formated secret'
                         properties:
                           name:
-                            description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                            description: Object is expected to be within same namespace
                             type: string
                         type: object
                       subPath:
@@ -567,7 +561,7 @@ spec:
                         description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication. TODO support docker config formated secret'
                         properties:
                           name:
-                            description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                            description: Object is expected to be within same namespace
                             type: string
                         type: object
                     type: object
@@ -585,7 +579,6 @@ spec:
                                 directoryPath:
                                   type: string
                                 name:
-                                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                   type: string
                               type: object
                             secretRef:
@@ -593,7 +586,6 @@ spec:
                                 directoryPath:
                                   type: string
                                 name:
-                                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                   type: string
                               type: object
                           type: object
@@ -629,7 +621,6 @@ spec:
                             configMapRef:
                               properties:
                                 name:
-                                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                   type: string
                               type: object
                             path:
@@ -637,7 +628,6 @@ spec:
                             secretRef:
                               properties:
                                 name:
-                                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                   type: string
                               type: object
                           type: object
@@ -693,7 +683,6 @@ spec:
                                     directoryPath:
                                       type: string
                                     name:
-                                      description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                       type: string
                                   type: object
                                 secretRef:
@@ -701,7 +690,6 @@ spec:
                                     directoryPath:
                                       type: string
                                     name:
-                                      description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                       type: string
                                   type: object
                               type: object
@@ -1015,7 +1003,7 @@ spec:
                       description: 'Secret may include one or more keys: ssh-privatekey, ssh-knownhosts'
                       properties:
                         name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                          description: Object is expected to be within same namespace
                           type: string
                       type: object
                     subPath:
@@ -1029,7 +1017,7 @@ spec:
                       description: 'Secret may include one or more keys: username, password'
                       properties:
                         name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                          description: Object is expected to be within same namespace
                           type: string
                       type: object
                     sha256:
@@ -1046,7 +1034,7 @@ spec:
                       description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication. TODO support docker config formated secret'
                       properties:
                         name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                          description: Object is expected to be within same namespace
                           type: string
                       type: object
                     subPath:
@@ -1063,7 +1051,7 @@ spec:
                       description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication. TODO support docker config formated secret'
                       properties:
                         name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                          description: Object is expected to be within same namespace
                           type: string
                       type: object
                   type: object
