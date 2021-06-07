@@ -39,7 +39,7 @@ func TestPackageListIncludesGlobalAndNamespaced(t *testing.T) {
 	expectedPkgs := []datapackaging.Package{
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "global.packaging.kapp-controller.carvel.dev",
+				Namespace: "some.other.ns.carvel.dev",
 				Name:      "global-package.carvel.dev",
 			},
 		},
@@ -103,7 +103,7 @@ func TestPackageGetNotPresentInNS(t *testing.T) {
 		t.Fatalf("Expected get operation to return Package, but got: %v", reflect.TypeOf(pkg))
 	}
 
-	if pkg.Name != name || pkg.Namespace != globalNamespace {
+	if pkg.Name != name || pkg.Spec.DisplayName != "GLOBAL" {
 		t.Fatalf("Expected returned package to have name %s and namespace %s, got %s and %s", name, globalNamespace, pkg.Name, pkg.Namespace)
 	}
 }
@@ -126,7 +126,7 @@ func TestPackageGetPresentInOnlyNS(t *testing.T) {
 		t.Fatalf("Expected get operation to return Package, but got: %v", reflect.TypeOf(pkg))
 	}
 
-	if pkg.Name != name || pkg.Namespace != nonGlobalNamespace {
+	if pkg.Name != name || pkg.Spec.DisplayName != "NAMESPACED" {
 		t.Fatalf("Expected returned package to have name %s and namespace %s, got %s and %s", name, nonGlobalNamespace, pkg.Name, pkg.Namespace)
 	}
 }
@@ -168,7 +168,7 @@ func TestPackageGetPreferNS(t *testing.T) {
 		t.Fatalf("Expected get operation to return Package, but got: %v", reflect.TypeOf(pkg))
 	}
 
-	if pkg.Name != name || pkg.Namespace != nonGlobalNamespace {
+	if pkg.Name != name || pkg.Spec.DisplayName != "OVERRIDE" {
 		t.Fatalf("Expected returned package to have name %s and namespace %s, got %s and %s", name, nonGlobalNamespace, pkg.Name, pkg.Namespace)
 	}
 }
@@ -335,6 +335,9 @@ func globalIntPackage() *v1alpha1.InternalPackage {
 			Namespace: globalNamespace,
 			Name:      "global-package.carvel.dev",
 		},
+		Spec: datapackaging.PackageSpec{
+			DisplayName: "GLOBAL",
+		},
 	}
 }
 
@@ -343,6 +346,9 @@ func namespacedIntPackage() *v1alpha1.InternalPackage {
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: nonGlobalNamespace,
 			Name:      "namespaced-package.carvel.dev",
+		},
+		Spec: datapackaging.PackageSpec{
+			DisplayName: "NAMESPACED",
 		},
 	}
 }
@@ -353,6 +359,9 @@ func overrideIntPackage() *v1alpha1.InternalPackage {
 			Namespace: nonGlobalNamespace,
 			Name:      "global-package.carvel.dev",
 		},
+		Spec: datapackaging.PackageSpec{
+			DisplayName: "OVERRIDE",
+		},
 	}
 }
 
@@ -361,6 +370,9 @@ func excludedNonGlobalIntPackage() *v1alpha1.InternalPackage {
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: excludedNonGlobalNamespace,
 			Name:      "excluded-package",
+		},
+		Spec: datapackaging.PackageSpec{
+			DisplayName: "EXCLUDED",
 		},
 	}
 }

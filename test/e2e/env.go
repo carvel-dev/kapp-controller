@@ -10,13 +10,21 @@ import (
 )
 
 type Env struct {
-	Namespace string
+	Namespace         string
+	PackagingGlobalNS string
 }
 
 func BuildEnv(t *testing.T) Env {
 	env := Env{
 		Namespace: os.Getenv("KAPPCTRL_E2E_NAMESPACE"),
 	}
+
+	if pkgNS := os.Getenv("KAPPCTRL_E2E_PACKAGING_NAMESPACE"); pkgNS != "" {
+		env.PackagingGlobalNS = pkgNS
+	} else {
+		env.PackagingGlobalNS = "kapp-controller-packaging-global"
+	}
+
 	env.Validate(t)
 	return env
 }

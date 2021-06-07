@@ -42,7 +42,7 @@ func TestPackageVersionListIncludesGlobalAndNamespaced(t *testing.T) {
 	expectedpkgvs := []datapackaging.PackageVersion{
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "global.packaging.kapp-controller.carvel.dev",
+				Namespace: "some.other.ns.carvel.dev",
 				Name:      "global-package-version.carvel.dev.1.0.0",
 			},
 		},
@@ -91,6 +91,7 @@ func TestPackageVersionListPrefersNamespacedOverGlobal(t *testing.T) {
 func TestPackageVersionGetNotPresentInNS(t *testing.T) {
 	globalPackageVersion := globalIntPackageVersion()
 	name := globalPackageVersion.Name
+	releaseNotes := globalPackageVersion.Spec.ReleaseNotes
 
 	internalClient := fake.NewSimpleClientset(globalPackageVersion)
 
@@ -106,7 +107,7 @@ func TestPackageVersionGetNotPresentInNS(t *testing.T) {
 		t.Fatalf("Expected get operation to return PackageVersion, but got: %v", reflect.TypeOf(pkgv))
 	}
 
-	if pkgv.Name != name || pkgv.Namespace != globalNamespace {
+	if pkgv.Name != name || pkgv.Spec.ReleaseNotes != releaseNotes {
 		t.Fatalf("Expected returned package to have name %s and namespace %s, got %s and %s", name, globalNamespace, pkgv.Name, pkgv.Namespace)
 	}
 }
@@ -114,6 +115,7 @@ func TestPackageVersionGetNotPresentInNS(t *testing.T) {
 func TestPackageVersionGetPresentInOnlyNS(t *testing.T) {
 	namespacedPackageVersion := namespacedIntPackageVersion()
 	name := namespacedPackageVersion.Name
+	releaseNotes := namespacedPackageVersion.Spec.ReleaseNotes
 
 	internalClient := fake.NewSimpleClientset(namespacedPackageVersion)
 
@@ -129,7 +131,7 @@ func TestPackageVersionGetPresentInOnlyNS(t *testing.T) {
 		t.Fatalf("Expected get operation to return PackageVersion, but got: %v", reflect.TypeOf(pkgv))
 	}
 
-	if pkgv.Name != name || pkgv.Namespace != nonGlobalNamespace {
+	if pkgv.Name != name || pkgv.Spec.ReleaseNotes != releaseNotes {
 		t.Fatalf("Expected returned package to have name %s and namespace %s, got %s and %s", name, nonGlobalNamespace, pkgv.Name, pkgv.Namespace)
 	}
 }
@@ -156,6 +158,7 @@ func TestPackageVersionGetNotFound(t *testing.T) {
 func TestPackageVersionGetPreferNS(t *testing.T) {
 	overridePackageVersion := overrideIntPackageVersion()
 	name := overridePackageVersion.Name
+	releaseNotes := overridePackageVersion.Spec.ReleaseNotes
 
 	internalClient := fake.NewSimpleClientset(overridePackageVersion, globalIntPackageVersion())
 
@@ -171,7 +174,7 @@ func TestPackageVersionGetPreferNS(t *testing.T) {
 		t.Fatalf("Expected get operation to return PackageVersion, but got: %v", reflect.TypeOf(pkgv))
 	}
 
-	if pkgv.Name != name || pkgv.Namespace != nonGlobalNamespace {
+	if pkgv.Name != name || pkgv.Spec.ReleaseNotes != releaseNotes {
 		t.Fatalf("Expected returned package to have name %s and namespace %s, got %s and %s", name, nonGlobalNamespace, pkgv.Name, pkgv.Namespace)
 	}
 }
@@ -339,8 +342,9 @@ func globalIntPackageVersion() *v1alpha1.InternalPackageVersion {
 			Name:      "global-package-version.carvel.dev.1.0.0",
 		},
 		Spec: datapackaging.PackageVersionSpec{
-			Version:     "1.0.0",
-			PackageName: "global-package-version.carvel.dev",
+			Version:      "1.0.0",
+			PackageName:  "global-package-version.carvel.dev",
+			ReleaseNotes: "GLOBAL",
 		},
 	}
 }
@@ -352,8 +356,9 @@ func namespacedIntPackageVersion() *v1alpha1.InternalPackageVersion {
 			Name:      "namespaced-package-version.carvel.dev.1.0.0",
 		},
 		Spec: datapackaging.PackageVersionSpec{
-			Version:     "1.0.0",
-			PackageName: "namespaced-package-version.carvel.dev",
+			Version:      "1.0.0",
+			PackageName:  "namespaced-package-version.carvel.dev",
+			ReleaseNotes: "NAMESPACED",
 		},
 	}
 }
@@ -366,8 +371,9 @@ func overrideIntPackageVersion() *v1alpha1.InternalPackageVersion {
 			Name:      "global-package-version.carvel.dev.mismatch",
 		},
 		Spec: datapackaging.PackageVersionSpec{
-			Version:     "1.0.0",
-			PackageName: "global-package-version.carvel.dev",
+			Version:      "1.0.0",
+			PackageName:  "global-package-version.carvel.dev",
+			ReleaseNotes: "OVERRIDE",
 		},
 	}
 }
@@ -379,8 +385,9 @@ func excludedNonGlobalIntPackageVersion() *v1alpha1.InternalPackageVersion {
 			Name:      "excluded-package-version.carvel.dev.1.0.0",
 		},
 		Spec: datapackaging.PackageVersionSpec{
-			Version:     "1.0.0",
-			PackageName: "excluded-package-version.carvel.dev",
+			Version:      "1.0.0",
+			PackageName:  "excluded-package-version.carvel.dev",
+			ReleaseNotes: "EXCLUDED",
 		},
 	}
 }
