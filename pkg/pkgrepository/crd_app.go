@@ -49,7 +49,7 @@ func (a *CRDApp) blockDeletion() error {
 
 	a.log.Info("Blocking deletion")
 
-	return a.updateApp(func(app *pkgingv1alpha1.PackageRepository) {
+	return a.updatePackageRepository(func(app *pkgingv1alpha1.PackageRepository) {
 		if !containsString(app.ObjectMeta.Finalizers, deleteFinalizerName) {
 			app.ObjectMeta.Finalizers = append(app.ObjectMeta.Finalizers, deleteFinalizerName)
 		}
@@ -58,7 +58,7 @@ func (a *CRDApp) blockDeletion() error {
 
 func (a *CRDApp) unblockDeletion() error {
 	a.log.Info("Unblocking deletion")
-	return a.updateApp(func(app *pkgingv1alpha1.PackageRepository) {
+	return a.updatePackageRepository(func(app *pkgingv1alpha1.PackageRepository) {
 		app.ObjectMeta.Finalizers = removeString(app.ObjectMeta.Finalizers, deleteFinalizerName)
 	})
 }
@@ -80,7 +80,7 @@ func (a *CRDApp) updateStatus(desc string) error {
 func (a *CRDApp) updateStatusOnce() error {
 	existingRepo, err := a.appClient.PackagingV1alpha1().PackageRepositories(a.pkgrModel.Namespace).Get(context.Background(), a.pkgrModel.Name, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("Fetching app: %s", err)
+		return fmt.Errorf("Fetching PackageRepository: %s", err)
 	}
 
 	existingRepo.Status = pkgingv1alpha1.PackageRepositoryStatus{
@@ -100,19 +100,19 @@ func (a *CRDApp) updateStatusOnce() error {
 	return nil
 }
 
-func (a *CRDApp) updateApp(updateFunc func(*pkgingv1alpha1.PackageRepository)) error {
-	a.log.Info("Updating app")
+func (a *CRDApp) updatePackageRepository(updateFunc func(*pkgingv1alpha1.PackageRepository)) error {
+	a.log.Info("Updating PackageRepository")
 
-	existingApp, err := a.appClient.PackagingV1alpha1().PackageRepositories(a.pkgrModel.Namespace).Get(context.Background(), a.pkgrModel.Name, metav1.GetOptions{})
+	existingRepo, err := a.appClient.PackagingV1alpha1().PackageRepositories(a.pkgrModel.Namespace).Get(context.Background(), a.pkgrModel.Name, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("Updating app: %s", err)
+		return fmt.Errorf("Updating PackageRepository: %s", err)
 	}
 
-	updateFunc(existingApp)
+	updateFunc(existingRepo)
 
-	_, err = a.appClient.PackagingV1alpha1().PackageRepositories(existingApp.Namespace).Update(context.Background(), existingApp, metav1.UpdateOptions{})
+	_, err = a.appClient.PackagingV1alpha1().PackageRepositories(existingRepo.Namespace).Update(context.Background(), existingRepo, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("Updating app: %s", err)
+		return fmt.Errorf("Updating PackageRepository: %s", err)
 	}
 
 	return nil
