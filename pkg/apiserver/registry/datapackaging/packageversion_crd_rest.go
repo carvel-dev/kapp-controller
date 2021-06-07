@@ -80,7 +80,7 @@ func (r *PackageVersionCRDREST) Create(ctx context.Context, obj runtime.Object, 
 
 	ipv := r.packageVersionToInternalPackageVersion(pkgVersion)
 	ipv, err := r.crdClient.InternalV1alpha1().InternalPackageVersions(namespace).Create(ctx, ipv, *options)
-	return r.internalPackageVersionToPackageVersion(ipv), err
+	return r.internalPackageVersionToPackageVersion(ipv, namespace), err
 }
 
 func (r *PackageVersionCRDREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -89,7 +89,7 @@ func (r *PackageVersionCRDREST) Get(ctx context.Context, name string, options *m
 	if errors.IsNotFound(err) && namespace != r.globalNamespace && namespace != "" {
 		pkgv, err = r.namespacedGet(ctx, r.globalNamespace, name, options)
 	}
-	return pkgv, err
+	return r.internalPackageVersionToPackageVersion(pkgv, namespace), err
 }
 
 func (r *PackageVersionCRDREST) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
@@ -105,7 +105,7 @@ func (r *PackageVersionCRDREST) List(ctx context.Context, options *internalversi
 	}
 
 	itemList := namespacedPVList.Items
-	var globalPVList *datapackaging.PackageVersionList
+	var globalPVList *internalpkgingv1alpha1.InternalPackageVersionList
 	if namespace != "" && namespace != r.globalNamespace {
 		globalPVList, err = r.namespacedList(ctx, r.globalNamespace, options)
 		if err != nil {
@@ -126,7 +126,7 @@ func (r *PackageVersionCRDREST) List(ctx context.Context, options *internalversi
 		// all namespaced pkgs come first in the list, so if we have seen one don't append
 		identifier := pv.Spec.PackageName + "/" + pv.Spec.Version
 		if _, seen := packageVersionIdentifiers[identifier]; !seen {
-			pvList.Items = append(pvList.Items, pv)
+			pvList.Items = append(pvList.Items, *r.internalPackageVersionToPackageVersion(&pv, namespace))
 			packageVersionIdentifiers[identifier] = struct{}{}
 		}
 	}
@@ -163,7 +163,7 @@ func (r *PackageVersionCRDREST) Update(ctx context.Context, name string, objInfo
 		return nil, false, err
 	}
 
-	updatedObj, err := objInfo.UpdatedObject(ctx, pv)
+	updatedObj, err := objInfo.UpdatedObject(ctx, r.internalPackageVersionToPackageVersion(pv, pv.Namespace))
 	if err != nil {
 		return nil, false, err
 	}
@@ -176,7 +176,7 @@ func (r *PackageVersionCRDREST) Update(ctx context.Context, name string, objInfo
 
 	updatedIpv := r.packageVersionToInternalPackageVersion(updatedPkgVersion)
 	updatedIpv, err = r.crdClient.InternalV1alpha1().InternalPackageVersions(namespace).Update(ctx, updatedIpv, *options)
-	return r.internalPackageVersionToPackageVersion(updatedIpv), false, err
+	return r.internalPackageVersionToPackageVersion(updatedIpv, namespace), false, err
 }
 
 func (r *PackageVersionCRDREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
@@ -202,7 +202,7 @@ func (r *PackageVersionCRDREST) Delete(ctx context.Context, name string, deleteV
 		return nil, false, err
 	}
 
-	return nil, true, nil
+	return r.internalPackageVersionToPackageVersion(pv, namespace), true, nil
 }
 
 func (r *PackageVersionCRDREST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
@@ -220,12 +220,14 @@ func (r *PackageVersionCRDREST) DeleteCollection(ctx context.Context, deleteVali
 		}
 		// Although intPkgV => PkgV can return nil when intpkg is nil, intpkgv here will
 		// never be nil, thanks to the type system, so we are ok to deref directly
-		deletedPackages = append(deletedPackages, pv)
+		deletedPackages = append(deletedPackages, *r.internalPackageVersionToPackageVersion(&pv, namespace))
 	}
 	return &datapackaging.PackageVersionList{Items: deletedPackages}, err
 }
 
 func (r *PackageVersionCRDREST) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+	fs := options.FieldSelector
+	options.FieldSelector = fields.Everything()
 	namespace := request.NamespaceValue(ctx)
 
 	watcher, err := r.namespacedWatch(ctx, namespace, options)
@@ -233,7 +235,11 @@ func (r *PackageVersionCRDREST) Watch(ctx context.Context, options *internalvers
 		watcher, err = r.namespacedWatch(ctx, r.globalNamespace, options)
 	}
 
-	return watcher, err
+	if err != nil {
+		return nil, err
+	}
+
+	return watchers.NewTranslationWatcher(r.translateFunc(namespace), r.filterFunc(fs), watcher), nil
 }
 
 func (r *PackageVersionCRDREST) ConvertToTable(ctx context.Context, obj runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -242,7 +248,7 @@ func (r *PackageVersionCRDREST) ConvertToTable(ctx context.Context, obj runtime.
 		pkgVersion := obj.(*datapackaging.PackageVersion)
 		table.Rows = append(table.Rows, metav1.TableRow{
 			Cells: []interface{}{
-				pkgVersion.Name, pkgVersion.Spec.PackageName, pkgVersion.Namespace == r.globalNamespace,
+				pkgVersion.Name, pkgVersion.Spec.PackageName,
 				pkgVersion.Spec.Version, time.Since(pkgVersion.ObjectMeta.CreationTimestamp.Time).Round(1 * time.Second).String(),
 			},
 			Object: runtime.RawExtension{Object: obj},
@@ -274,7 +280,6 @@ func (r *PackageVersionCRDREST) ConvertToTable(ctx context.Context, obj runtime.
 		table.ColumnDefinitions = []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name", Description: "Package Version resource name"},
 			{Name: "Package Name", Type: "string", Format: "name", Description: "Associated Package name"},
-			{Name: "Global", Type: "boolean", Description: "If package version is global"},
 			{Name: "Version", Type: "string", Description: "Version"},
 			{Name: "Age", Type: "date", Description: "Time since resource creation"},
 		}
@@ -282,26 +287,16 @@ func (r *PackageVersionCRDREST) ConvertToTable(ctx context.Context, obj runtime.
 	return &table, nil
 }
 
-func (r *PackageVersionCRDREST) namespacedList(ctx context.Context, namespace string, options *internalversion.ListOptions) (*datapackaging.PackageVersionList, error) {
-	list, err := r.crdClient.InternalV1alpha1().InternalPackageVersions(namespace).List(ctx, r.internalToMetaListOpts(*options))
-	return r.internalPackageVersionListToPackageVersionList(list), err
+func (r *PackageVersionCRDREST) namespacedList(ctx context.Context, namespace string, options *internalversion.ListOptions) (*internalpkgingv1alpha1.InternalPackageVersionList, error) {
+	return r.crdClient.InternalV1alpha1().InternalPackageVersions(namespace).List(ctx, r.internalToMetaListOpts(*options))
 }
 
-func (r *PackageVersionCRDREST) namespacedGet(ctx context.Context, namespace, name string, options *metav1.GetOptions) (*datapackaging.PackageVersion, error) {
-	ipv, err := r.crdClient.InternalV1alpha1().InternalPackageVersions(namespace).Get(ctx, name, *options)
-	return r.internalPackageVersionToPackageVersion(ipv), err
+func (r *PackageVersionCRDREST) namespacedGet(ctx context.Context, namespace, name string, options *metav1.GetOptions) (*internalpkgingv1alpha1.InternalPackageVersion, error) {
+	return r.crdClient.InternalV1alpha1().InternalPackageVersions(namespace).Get(ctx, name, *options)
 }
 
 func (r *PackageVersionCRDREST) namespacedWatch(ctx context.Context, namespace string, options *internalversion.ListOptions) (watch.Interface, error) {
-	fs := options.FieldSelector
-	options.FieldSelector = fields.Everything()
-
-	internalWatcher, err := r.crdClient.InternalV1alpha1().InternalPackageVersions(namespace).Watch(ctx, r.internalToMetaListOpts(*options))
-	if err != nil {
-		return nil, err
-	}
-
-	return watchers.NewTranslationWatcher(r.translateFunc(), r.filterFunc(fs), internalWatcher), nil
+	return r.crdClient.InternalV1alpha1().InternalPackageVersions(namespace).Watch(ctx, r.internalToMetaListOpts(*options))
 }
 
 func (r *PackageVersionCRDREST) internalToMetaListOpts(options internalversion.ListOptions) metav1.ListOptions {
@@ -326,7 +321,7 @@ func (r *PackageVersionCRDREST) internalToMetaListOpts(options internalversion.L
 	return lo
 }
 
-func (r *PackageVersionCRDREST) internalPackageVersionToPackageVersion(ipv *internalpkgingv1alpha1.InternalPackageVersion) *datapackaging.PackageVersion {
+func (r *PackageVersionCRDREST) internalPackageVersionToPackageVersion(ipv *internalpkgingv1alpha1.InternalPackageVersion, namespace string) *datapackaging.PackageVersion {
 	if ipv == nil {
 		return nil
 	}
@@ -339,6 +334,11 @@ func (r *PackageVersionCRDREST) internalPackageVersionToPackageVersion(ipv *inte
 	}
 	pv.TypeMeta.Kind = packageVersionName
 	pv.TypeMeta.APIVersion = datapkgingv1alpha1.SchemeGroupVersion.Identifier()
+
+	if namespace != "" {
+		pv.Namespace = namespace
+	}
+
 	return pv
 }
 
@@ -358,7 +358,7 @@ func (r *PackageVersionCRDREST) packageVersionToInternalPackageVersion(pv *datap
 	return ipv
 }
 
-func (r *PackageVersionCRDREST) internalPackageVersionListToPackageVersionList(list *internalpkgingv1alpha1.InternalPackageVersionList) *datapackaging.PackageVersionList {
+func (r *PackageVersionCRDREST) internalPackageVersionListToPackageVersionList(list *internalpkgingv1alpha1.InternalPackageVersionList, namespace string) *datapackaging.PackageVersionList {
 	if list == nil {
 		return nil
 	}
@@ -369,16 +369,16 @@ func (r *PackageVersionCRDREST) internalPackageVersionListToPackageVersionList(l
 	}
 
 	for _, item := range list.Items {
-		pvList.Items = append(pvList.Items, *r.internalPackageVersionToPackageVersion(&item))
+		pvList.Items = append(pvList.Items, *r.internalPackageVersionToPackageVersion(&item, namespace))
 	}
 
 	return &pvList
 }
 
-func (r *PackageVersionCRDREST) translateFunc() func(watch.Event) watch.Event {
+func (r *PackageVersionCRDREST) translateFunc(namespace string) func(watch.Event) watch.Event {
 	return func(evt watch.Event) watch.Event {
 		if pv, ok := evt.Object.(*internalpkgingv1alpha1.InternalPackageVersion); ok {
-			evt.Object = r.internalPackageVersionToPackageVersion(pv)
+			evt.Object = r.internalPackageVersionToPackageVersion(pv, namespace)
 		}
 		return evt
 	}
