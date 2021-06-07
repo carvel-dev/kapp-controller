@@ -38,11 +38,11 @@ func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconci
 	existingPkgRepository, err := r.client.PackagingV1alpha1().PackageRepositories(request.Namespace).Get(ctx, request.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Info("Could not find PkgRepository", "name", request.Name)
+			log.Info("Could not find PackageRepository", "name", request.Name)
 			return reconcile.Result{}, nil // No requeue
 		}
 
-		log.Error(err, "Could not fetch PkgRepository")
+		log.Error(err, "Could not fetch PackageRepository")
 		return reconcile.Result{}, err
 	}
 
@@ -52,7 +52,7 @@ func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconci
 	}
 
 	crdApp := r.appFactory.NewCRDPackageRepo(app, existingPkgRepository, log)
-	r.UpdateAppRefs(crdApp.ResourceRefs(), app)
+	r.UpdatePackageRepoRefs(crdApp.ResourceRefs(), app)
 
 	force := false
 	pkgrKey := reftracker.NewPackageRepositoryKey(app.Name, app.Namespace)
@@ -64,16 +64,16 @@ func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconci
 	return crdApp.Reconcile(force)
 }
 
-func (r *PkgRepositoryReconciler) UpdateAppRefs(refKeys map[reftracker.RefKey]struct{}, app *v1alpha1.App) {
+func (r *PkgRepositoryReconciler) UpdatePackageRepoRefs(refKeys map[reftracker.RefKey]struct{}, app *v1alpha1.App) {
 	pkgRepoKey := reftracker.NewPackageRepositoryKey(app.Name, app.Namespace)
-	// If App is being deleted, remove the App
+	// If PackageRepo is being deleted, remove
 	// from all its associated references.
 	if app.DeletionTimestamp != nil {
 		r.appRefTracker.RemoveAppFromAllRefs(pkgRepoKey)
 		return
 	}
 
-	// Add new refs for App to AppRefTracker/remove
-	// any formerly but now unused refs for App.
+	// Add new refs for PackageRepo to AppRefTracker/remove
+	// any formerly but now unused refs for PackageRepo.
 	r.appRefTracker.ReconcileRefs(refKeys, pkgRepoKey)
 }

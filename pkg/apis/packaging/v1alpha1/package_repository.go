@@ -40,7 +40,7 @@ type PackageRepositorySpec struct {
 	// once it set back to false, pending changes will be applied
 	// +optional
 	Paused bool `json:"paused,omitempty"`
-	// Controls frequency of app reconciliation
+	// Controls frequency of PackageRepository reconciliation
 	// +optional
 	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
 
