@@ -244,3 +244,70 @@ stringData:
 		return err
 	})
 }
+
+func Test_PackageInstalled_FromInstalledPackage_DeletionFailureBlocks(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+	sas := ServiceAccounts{env.Namespace}
+	name := "instl-pkg-failure-block-test"
+
+	// contents of this bundle (k8slt/kappctrl-e2e-repo)
+	// under examples/packaging-demo
+	installPkgYaml := fmt.Sprintf(`---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: basic.test.carvel.dev
+  # cluster scoped
+spec:
+  fetch:
+    imgpkgBundle:
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:0ae0f32ef92d2362339b47055a6ea2042bc114a7dd36cf339bf05df4d1cc1b9b
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: InstalledPackage
+metadata:
+  name: %s
+  namespace: %s
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/installedpackages
+spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
+  packageVersionRef:
+    packageName: pkg.test.carvel.dev
+    versionSelection:
+      constraints: 1.0.0
+`, name, env.Namespace) + sas.ForNamespaceYAML()
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("Install package", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
+			RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+
+		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "ipkg/" + name, "--timeout", "1m"})
+	})
+
+	logger.Section("Delete service account so that InstalledPackage deletion would fail", func() {
+		kubectl.Run([]string{"delete", "serviceaccount", "kappctrl-e2e-ns-sa"})	
+	})
+
+	logger.Section("Check that deletion of InstalledPackage results in failure conditions", func() {
+		// No waiting for deletion since it's blocked
+		kubectl.Run([]string{"delete", "ipkg", name, "--wait=false"})
+		kubectl.Run([]string{"wait", "--for=condition=DeleteFailed", "ipkg", name, "--timeout", "1m"})
+	})
+
+	logger.Section("Bring back service account and see that kubectl delete succeeds", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-", "--filter-kind", "ServiceAccount"},
+			RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+
+		kubectl.Run([]string{"delete", "ipkg", name, "--wait=true"})
+	})
+}
