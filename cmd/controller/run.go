@@ -35,7 +35,6 @@ import (
 
 const (
 	PprofListenAddr = "0.0.0.0:6060"
-	globalNamespace = "global-packaging-kapp-controller-carvel-dev"
 )
 
 type Options struct {
@@ -43,6 +42,7 @@ type Options struct {
 	Namespace         string
 	EnablePprof       bool
 	APIRequestTimeout time.Duration
+	PackagingGloablNS string
 }
 
 // Based on https://github.com/kubernetes-sigs/controller-runtime/blob/8f633b179e1c704a6e40440b528252f147a3362a/examples/builtins/main.go
@@ -96,7 +96,7 @@ func Run(opts Options, runLog logr.Logger) {
 		appClient:  kcClient,
 	}
 
-	server, err := apiserver.NewAPIServer(restConfig, globalNamespace)
+	server, err := apiserver.NewAPIServer(restConfig, opts.PackagingGloablNS)
 	if err != nil {
 		runLog.Error(err, "creating server")
 		os.Exit(1)
@@ -169,7 +169,7 @@ func Run(opts Options, runLog logr.Logger) {
 			os.Exit(1)
 		}
 
-		err = installedPkgCtrl.Watch(&source.Kind{Type: &datapkgingv1alpha1.PackageVersion{}}, handlers.NewInstalledPkgVersionHandler(kcClient, globalNamespace, runLog.WithName("handler")))
+		err = installedPkgCtrl.Watch(&source.Kind{Type: &datapkgingv1alpha1.PackageVersion{}}, handlers.NewInstalledPkgVersionHandler(kcClient, opts.PackagingGloablNS, runLog.WithName("handler")))
 		if err != nil {
 			runLog.Error(err, "unable to watch *datapkgingv1alpha1.PackageVersion for InstalledPackage")
 			os.Exit(1)
