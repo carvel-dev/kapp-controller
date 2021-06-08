@@ -41,19 +41,24 @@ func NewInstalledPkgCR(model *pkgingv1alpha1.InstalledPackage, log logr.Logger,
 func (ip *InstalledPackageCR) Reconcile() (reconcile.Result, error) {
 	ip.log.Info(fmt.Sprintf("Reconciling InstalledPackage '%s/%s'", ip.model.Namespace, ip.model.Name))
 
-	// TODO deleting conditions
-	if ip.model.DeletionTimestamp != nil {
-		return reconcile.Result{}, nil // Nothing to do
-	}
-
 	status := &reconciler.Status{
 		ip.model.Status.GenericStatus,
 		func(st kcv1alpha1.GenericStatus) { ip.model.Status.GenericStatus = st },
 	}
 
-	result, err := ip.reconcile(status)
-	if err != nil {
-		status.SetReconcileCompleted(err)
+	var result reconcile.Result
+	var err error
+
+	if ip.model.DeletionTimestamp != nil {
+		result, err = ip.reconcileDelete(status)
+		if err != nil {
+			status.SetDeleteCompleted(err)
+		}
+	} else {
+		result, err = ip.reconcile(status)
+		if err != nil {
+			status.SetReconcileCompleted(err)
+		}
 	}
 
 	// Always update status
@@ -66,6 +71,11 @@ func (ip *InstalledPackageCR) Reconcile() (reconcile.Result, error) {
 }
 
 func (ip *InstalledPackageCR) reconcile(modelStatus *reconciler.Status) (reconcile.Result, error) {
+	err := ip.blockDeletion()
+	if err != nil {
+		return reconcile.Result{Requeue: true}, err
+	}
+
 	modelStatus.SetReconciling(ip.model.ObjectMeta)
 
 	pv, err := ip.referencedPkgVersion()
@@ -165,6 +175,35 @@ func (ip *InstalledPackageCR) referencedPkgVersion() (datapkgingv1alpha1.Package
 		ip.model.Spec.PackageVersionRef.PackageName, selectedVersion)
 }
 
+func (ip *InstalledPackageCR) reconcileDelete(modelStatus *reconciler.Status) (reconcile.Result, error) {
+	existingApp, err := ip.kcclient.KappctrlV1alpha1().Apps(ip.model.Namespace).Get(
+		context.Background(), ip.model.Name, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return reconcile.Result{}, ip.unblockDeletion()
+		}
+		return reconcile.Result{Requeue: true}, err
+	}
+
+	if existingApp.DeletionTimestamp == nil {
+		err := ip.kcclient.KappctrlV1alpha1().Apps(ip.model.Namespace).Delete(
+			context.Background(), ip.model.Name, metav1.DeleteOptions{})
+		return reconcile.Result{}, err
+	}
+
+	appStatus := reconciler.Status{S: existingApp.Status.GenericStatus}
+	ip.log.Info(fmt.Sprintf("Reconciling deletion of InstalledPackage '%s/%s'", ip.model.Namespace, ip.model.Name))
+	switch {
+	case appStatus.IsDeleting():
+		modelStatus.SetDeleting(ip.model.ObjectMeta)
+	case appStatus.IsDeleteFailed():
+		modelStatus.SetUsefulErrorMessage(existingApp.Status.UsefulErrorMessage)
+		modelStatus.SetDeleteCompleted(fmt.Errorf("Error (see .status.usefulErrorMessage for details)"))
+	}
+
+	return reconcile.Result{}, nil // Nothing to do
+}
+
 func (ip *InstalledPackageCR) updateStatus() error {
 	if !equality.Semantic.DeepEqual(ip.unmodifiedModel.Status, ip.model.Status) {
 		_, err := ip.kcclient.PackagingV1alpha1().InstalledPackages(ip.model.Namespace).UpdateStatus(context.Background(), ip.model, metav1.UpdateOptions{})
@@ -172,5 +211,46 @@ func (ip *InstalledPackageCR) updateStatus() error {
 			return fmt.Errorf("Updating installed package status: %s", err)
 		}
 	}
+	return nil
+}
+
+func (ip *InstalledPackageCR) blockDeletion() error {
+	// Avoid doing unnecessary processing
+	if containsString(ip.unmodifiedModel.Finalizers, deleteFinalizerName) {
+		return nil
+	}
+
+	ip.log.Info("Blocking deletion")
+
+	return ip.update(func(ipkg *pkgingv1alpha1.InstalledPackage) {
+		if !containsString(ipkg.ObjectMeta.Finalizers, deleteFinalizerName) {
+			ipkg.ObjectMeta.Finalizers = append(ipkg.ObjectMeta.Finalizers, deleteFinalizerName)
+		}
+	})
+}
+
+func (ip *InstalledPackageCR) unblockDeletion() error {
+	ip.log.Info("Unblocking deletion")
+	return ip.update(func(ipkg *pkgingv1alpha1.InstalledPackage) {
+		ipkg.ObjectMeta.Finalizers = removeString(ipkg.ObjectMeta.Finalizers, deleteFinalizerName)
+	})
+}
+
+func (ip *InstalledPackageCR) update(updateFunc func(*pkgingv1alpha1.InstalledPackage)) error {
+	ip.log.Info("Updating installed package")
+
+	modelForUpdate := ip.model.DeepCopy()
+	updateFunc(modelForUpdate)
+
+	var err error
+
+	ip.model, err = ip.kcclient.PackagingV1alpha1().InstalledPackages(modelForUpdate.Namespace).Update(
+		context.Background(), modelForUpdate, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("Updating installed package: %s", err)
+	}
+
+	ip.unmodifiedModel = ip.model.DeepCopy()
+
 	return nil
 }
