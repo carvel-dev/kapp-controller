@@ -8,11 +8,8 @@ import (
 	"strings"
 	"time"
 
-	internalpkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/internalpackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
-	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/validation"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/watchers"
 	installclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -38,11 +35,6 @@ var (
 	_ rest.ShortNamesProvider = &PackageCRDREST{}
 )
 
-const (
-	packageName         = "Package"
-	internalPackageName = "InternalPackage"
-)
-
 func NewPackageCRDREST(crdClient installclient.Interface, globalNS string) *PackageCRDREST {
 	return &PackageCRDREST{crdClient, globalNS}
 }
@@ -65,6 +57,9 @@ func (r *PackageCRDREST) NamespaceScoped() bool {
 
 func (r *PackageCRDREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
+	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+
+	// Run Validations
 	if createValidation != nil {
 		if err := createValidation(ctx, obj); err != nil {
 			return nil, err
@@ -77,71 +72,112 @@ func (r *PackageCRDREST) Create(ctx context.Context, obj runtime.Object, createV
 		return nil, errors.NewInvalid(pkg.GroupVersionKind().GroupKind(), pkg.Name, errs)
 	}
 
-	intpkg := r.packageToInternalPackage(pkg)
-	intpkg, err := r.crdClient.InternalV1alpha1().InternalPackages(namespace).Create(ctx, intpkg, *options)
-	return r.internalPackageToPackage(intpkg, namespace), err
+	// Update the data store
+	return client.Create(ctx, namespace, pkg, *options)
+}
+
+func (r *PackageCRDREST) shouldFetchGlobal(namespace string) bool {
+	return namespace != r.globalNamespace && namespace != ""
 }
 
 func (r *PackageCRDREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
-	pkg, err := r.namespacedGet(ctx, namespace, name, options)
-	if errors.IsNotFound(err) && namespace != r.globalNamespace && namespace != "" {
-		pkg, err = r.namespacedGet(ctx, r.globalNamespace, name, options)
+	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+
+	// Check targeted namespace
+	pkg, err := client.Get(ctx, namespace, name, *options)
+
+	if errors.IsNotFound(err) && r.shouldFetchGlobal(namespace) {
+		// check global namespace
+		pkg, err = client.Get(ctx, r.globalNamespace, name, *options)
 	}
-	return r.internalPackageToPackage(pkg, namespace), err
+	return pkg, err
 }
 
 func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
+	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
 
-	namespacedPackagesList, err := r.namespacedList(ctx, namespace, options)
+	// fetch list of namespaced packages (ns could be "")
+	namespacedPackagesList, err := client.List(ctx, namespace, r.internalToMetaListOpts(*options))
 	if err != nil {
 		return nil, err
 	}
+	namespacedPackages := namespacedPackagesList.Items
 
-	itemList := namespacedPackagesList.Items
-	var globalPackagesList *internalpkgingv1alpha1.InternalPackageList
-	if namespace != "" && namespace != r.globalNamespace {
-		globalPackagesList, err = r.namespacedList(ctx, r.globalNamespace, options)
+	var globalPackages []datapackaging.Package
+	if r.shouldFetchGlobal(namespace) {
+		globalPackagesList, err := client.List(ctx, r.globalNamespace, r.internalToMetaListOpts(*options))
 		if err != nil {
 			return nil, err
 		}
-
-		itemList = append(itemList, globalPackagesList.Items...)
+		globalPackages = globalPackagesList.Items
 	}
 
-	pkgList := datapackaging.PackageList{
+	packagesMap := make(map[string]datapackaging.Package)
+	for _, pkg := range globalPackages {
+		// identifier for package will be namespace/name
+		identifier := pkg.Namespace + "/" + pkg.Name
+		packagesMap[identifier] = pkg
+	}
+
+	for _, pkg := range namespacedPackages {
+		// identifier for package will be namespace/name
+		identifier := pkg.Namespace + "/" + pkg.Name
+		packagesMap[identifier] = pkg
+	}
+
+	packageList := &datapackaging.PackageList{
 		TypeMeta: namespacedPackagesList.TypeMeta,
 		ListMeta: namespacedPackagesList.ListMeta,
 	}
 
-	// dedup so that namespace packages take precedence over global
-	packageNames := make(map[string]struct{})
-	for _, pkg := range itemList {
-		// all namespaced pkgs come first in the list, so if we have seen one don't append
-		if _, seen := packageNames[pkg.Name]; !seen {
-			pkgList.Items = append(pkgList.Items, *r.internalPackageToPackage(&pkg, namespace))
-			packageNames[pkg.Name] = struct{}{}
-		}
+	for _, v := range packagesMap {
+		packageList.Items = append(packageList.Items, v)
 	}
 
-	return &pkgList, err
+	return packageList, err
 }
 
 func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
-	pkg, err := r.namespacedGet(ctx, namespace, name, &metav1.GetOptions{})
+	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
 
+	pkg, err := client.Get(ctx, namespace, name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
-		updatedPkg, err := objInfo.UpdatedObject(ctx, &datapackaging.Package{})
+		// Because kubetl does a get before sending an update, the presence
+		// of a global package may cause it to send a patch request, even though
+		// the package doesn't exist in the namespace. To service this, we must check
+		// if the package exists globally and then patch that instead of patching an empty
+		// package. If we try patching an empty obj the patch UpdatedObjectInfo will blow up.
+		patchingGlobal := true
+		pkg, err := client.Get(ctx, r.globalNamespace, name, metav1.GetOptions{})
+		if errors.IsNotFound(err) {
+			pkg = &datapackaging.Package{}
+			patchingGlobal = false
+		}
+
+		updatedObj, err := objInfo.UpdatedObject(ctx, pkg)
 		if err != nil {
 			return nil, false, err
 		}
 
 		if createValidation != nil {
-			if err := createValidation(ctx, updatedPkg); err != nil {
+			if err := createValidation(ctx, updatedObj); err != nil {
 				return nil, false, err
 			}
+		}
+
+		updatedPkg := updatedObj.(*datapackaging.Package)
+		if patchingGlobal {
+			// we have to do this in case we are "patching" a global package
+			annotations := updatedPkg.ObjectMeta.Annotations
+			labels := updatedPkg.ObjectMeta.Labels
+			updatedPkg.ObjectMeta = metav1.ObjectMeta{}
+			updatedPkg.ObjectMeta.Name = name
+			updatedPkg.ObjectMeta.Namespace = namespace
+			updatedPkg.ObjectMeta.Annotations = annotations
+			updatedPkg.ObjectMeta.Labels = labels
 		}
 
 		obj, err := r.Create(ctx, updatedPkg, createValidation, &metav1.CreateOptions{TypeMeta: options.TypeMeta, DryRun: options.DryRun, FieldManager: options.FieldManager})
@@ -156,7 +192,7 @@ func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.U
 		return nil, false, err
 	}
 
-	updatedObj, err := objInfo.UpdatedObject(ctx, r.internalPackageToPackage(pkg, pkg.Namespace))
+	updatedObj, err := objInfo.UpdatedObject(ctx, pkg)
 	if err != nil {
 		return nil, false, err
 	}
@@ -167,15 +203,15 @@ func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.U
 		return nil, false, errors.NewInvalid(updatedPkg.GroupVersionKind().GroupKind(), updatedPkg.Name, errList)
 	}
 
-	updatedIntPkg := r.packageToInternalPackage(updatedPkg)
-	updatedIntPkg, err = r.crdClient.InternalV1alpha1().InternalPackages(namespace).Update(ctx, updatedIntPkg, *options)
-	return r.internalPackageToPackage(updatedIntPkg, namespace), false, err
+	updatedPkg, err = client.Update(ctx, namespace, updatedPkg, *options)
+	return updatedPkg, false, err
 }
 
 func (r *PackageCRDREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
-	pkg, err := r.namespacedGet(ctx, namespace, name, &metav1.GetOptions{})
+	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
 
+	pkg, err := client.Get(ctx, namespace, name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		return nil, true, err
 	}
@@ -190,46 +226,45 @@ func (r *PackageCRDREST) Delete(ctx context.Context, name string, deleteValidati
 		}
 	}
 
-	err = r.crdClient.InternalV1alpha1().InternalPackages(namespace).Delete(ctx, name, *options)
+	err = client.Delete(ctx, namespace, name, *options)
 	if err != nil {
 		return nil, false, err
 	}
 
-	return r.internalPackageToPackage(pkg, namespace), true, nil
+	return pkg, true, nil
 }
 
 func (r *PackageCRDREST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
-	list, err := r.namespacedList(ctx, namespace, listOptions)
+	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+
+	list, err := client.List(ctx, namespace, r.internalToMetaListOpts(*listOptions))
 	if err != nil {
 		return nil, err
 	}
 
 	var deletedPackages []datapackaging.Package
 	for _, pkg := range list.Items {
+		// use crd delete for validations
 		_, _, err := r.Delete(ctx, pkg.Name, deleteValidation, options)
 		if err != nil {
 			break
 		}
-		// Although intPkg => Pkg can return nil when intpkg is nil, intpkg here will
-		// never be nil, thanks to the type system, so we are ok to deref directly
-		deletedPackages = append(deletedPackages, *r.internalPackageToPackage(&pkg, namespace))
+		deletedPackages = append(deletedPackages, pkg)
 	}
 	return &datapackaging.PackageList{Items: deletedPackages}, err
 }
 
 func (r *PackageCRDREST) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
 	namespace := request.NamespaceValue(ctx)
-	watcher, err := r.namespacedWatch(ctx, namespace, options)
-	if errors.IsNotFound(err) && namespace != r.globalNamespace {
-		watcher, err = r.namespacedWatch(ctx, r.globalNamespace, options)
+	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+
+	watcher, err := client.Watch(ctx, namespace, r.internalToMetaListOpts(*options))
+	if errors.IsNotFound(err) && r.shouldFetchGlobal(namespace) {
+		watcher, err = client.Watch(ctx, r.globalNamespace, r.internalToMetaListOpts(*options))
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
-	return watchers.NewTranslationWatcher(r.translateFunc(namespace), r.filterFunc(), watcher), nil
+	return watcher, err
 }
 
 func (r *PackageCRDREST) ConvertToTable(ctx context.Context, obj runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -280,18 +315,6 @@ func (r *PackageCRDREST) ConvertToTable(ctx context.Context, obj runtime.Object,
 	return &table, nil
 }
 
-func (r *PackageCRDREST) namespacedList(ctx context.Context, namespace string, options *internalversion.ListOptions) (*internalpkgingv1alpha1.InternalPackageList, error) {
-	return r.crdClient.InternalV1alpha1().InternalPackages(namespace).List(ctx, r.internalToMetaListOpts(*options))
-}
-
-func (r *PackageCRDREST) namespacedGet(ctx context.Context, namespace, name string, options *metav1.GetOptions) (*internalpkgingv1alpha1.InternalPackage, error) {
-	return r.crdClient.InternalV1alpha1().InternalPackages(namespace).Get(ctx, name, *options)
-}
-
-func (r *PackageCRDREST) namespacedWatch(ctx context.Context, namespace string, options *internalversion.ListOptions) (watch.Interface, error) {
-	return r.crdClient.InternalV1alpha1().InternalPackages(namespace).Watch(ctx, r.internalToMetaListOpts(*options))
-}
-
 func (r *PackageCRDREST) internalToMetaListOpts(options internalversion.ListOptions) metav1.ListOptions {
 	lo := metav1.ListOptions{
 		TypeMeta:             options.TypeMeta,
@@ -312,74 +335,6 @@ func (r *PackageCRDREST) internalToMetaListOpts(options internalversion.ListOpti
 		lo.FieldSelector = options.FieldSelector.String()
 	}
 	return lo
-}
-
-func (r *PackageCRDREST) internalPackageToPackage(intpkg *internalpkgingv1alpha1.InternalPackage, namespace string) *datapackaging.Package {
-	if intpkg == nil {
-		return nil
-	}
-
-	pkg := (*datapackaging.Package)(intpkg)
-	for i := range pkg.ManagedFields {
-		if pkg.ManagedFields[i].APIVersion == internalpkgingv1alpha1.SchemeGroupVersion.Identifier() {
-			pkg.ManagedFields[i].APIVersion = datapkgingv1alpha1.SchemeGroupVersion.Identifier()
-		}
-	}
-	pkg.TypeMeta.Kind = packageName
-	pkg.TypeMeta.APIVersion = datapkgingv1alpha1.SchemeGroupVersion.Identifier()
-	if namespace != "" {
-		pkg.Namespace = namespace
-	}
-
-	return pkg
-}
-
-func (r *PackageCRDREST) packageToInternalPackage(pkg *datapackaging.Package) *internalpkgingv1alpha1.InternalPackage {
-	if pkg == nil {
-		return nil
-	}
-
-	intpkg := (*internalpkgingv1alpha1.InternalPackage)(pkg)
-	for i := range intpkg.ManagedFields {
-		if intpkg.ManagedFields[i].APIVersion == datapkgingv1alpha1.SchemeGroupVersion.Identifier() {
-			intpkg.ManagedFields[i].APIVersion = internalpkgingv1alpha1.SchemeGroupVersion.Identifier()
-		}
-	}
-	pkg.TypeMeta.Kind = internalPackageName
-	pkg.TypeMeta.APIVersion = internalpkgingv1alpha1.SchemeGroupVersion.Identifier()
-	return intpkg
-}
-
-func (r *PackageCRDREST) internalPackageListToPackageList(list *internalpkgingv1alpha1.InternalPackageList, namespace string) *datapackaging.PackageList {
-	if list == nil {
-		return nil
-	}
-
-	pList := datapackaging.PackageList{
-		TypeMeta: list.TypeMeta,
-		ListMeta: list.ListMeta,
-	}
-
-	for _, item := range list.Items {
-		pList.Items = append(pList.Items, *r.internalPackageToPackage(&item, namespace))
-	}
-
-	return &pList
-}
-
-func (r *PackageCRDREST) translateFunc(namespace string) func(evt watch.Event) watch.Event {
-	return func(evt watch.Event) watch.Event {
-		if intpkg, ok := evt.Object.(*internalpkgingv1alpha1.InternalPackage); ok {
-			evt.Object = r.internalPackageToPackage(intpkg, namespace)
-		}
-		return evt
-	}
-}
-
-func (r *PackageCRDREST) filterFunc() func(evt watch.Event) bool {
-	return func(evt watch.Event) bool {
-		return true
-	}
 }
 
 func (r *PackageCRDREST) format(in string) string {
