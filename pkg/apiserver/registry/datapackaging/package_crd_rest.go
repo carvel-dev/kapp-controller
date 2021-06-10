@@ -375,6 +375,11 @@ func (r *PackageCRDREST) deleteGlobalPackagesFromNS(ctx context.Context, ns stri
 	if err != nil {
 		return err
 	}
+
+	if namespace.ObjectMeta.Annotations == nil {
+		namespace.ObjectMeta.Annotations = make(map[string]string)
+	}
+
 	namespace.ObjectMeta.Annotations[excludeGlobalPackagesAnn] = ""
 	_, err = r.nsClient.CoreV1().Namespaces().Update(ctx, namespace, metav1.UpdateOptions{})
 	return err
