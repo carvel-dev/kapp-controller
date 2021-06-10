@@ -173,3 +173,60 @@ spec:
 		}
 	})
 }
+
+func TestOverridePackageCreate(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	k := Kubectl{t, env.Namespace, logger}
+
+	localNS := "test-ns"
+	globalNS := env.PackagingGlobalNS
+
+	packagesYaml := fmt.Sprintf(`---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: %[1]s
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg1.test.carvel.dev
+  namespace: %[2]s
+spec:
+  displayName: "Global Package"
+  shortDescription: "Package which is globally available"`, localNS, globalNS)
+
+	updatePackagesYaml := fmt.Sprintf(`---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg1.test.carvel.dev
+  namespace: %[1]s
+spec:
+  displayName: "Override Package"
+  shortDescription: "Package which overrides global package"`, localNS)
+
+	cleanup := func() {
+		k.RunWithOpts([]string{"delete", "packages/pkg1.test.carvel.dev", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
+		k.RunWithOpts([]string{"delete", "packages/pkg1.test.carvel.dev", "-n", localNS}, RunOpts{NoNamespace: true, AllowError: true})
+		k.RunWithOpts([]string{"delete", fmt.Sprintf("namespaces/%s", localNS)}, RunOpts{NoNamespace: true, AllowError: true})
+	}
+	defer logger.Section("post test cleanup", cleanup)
+
+	logger.Section("pre test cleanup", cleanup)
+
+	logger.Section("deploy packages and namespace", func() {
+		_, err := k.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(packagesYaml), NoNamespace: true})
+		if err != nil {
+			t.Fatalf("Expected package application to succeed, but got: %v", err)
+		}
+	})
+
+	logger.Section("attempt to create an override package", func() {
+		_, err := k.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(updatePackagesYaml), NoNamespace: true})
+		if err != nil {
+			t.Fatalf("Expected creation of local package to succeed, but got: %v", err)
+		}
+	})
+}
