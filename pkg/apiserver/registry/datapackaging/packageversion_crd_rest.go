@@ -247,8 +247,6 @@ func (r *PackageVersionCRDREST) DeleteCollection(ctx context.Context, deleteVali
 		return nil, err
 	}
 
-	// check to see if we are deleting all the global packages. This isnt a great way to do this
-	// but I am not sure how else
 	deleteAllGlobal := false
 	{
 		filteredList, err := client.List(ctx, r.globalNamespace, r.internalToMetaListOpts(*listOptions))
@@ -366,6 +364,11 @@ func (r *PackageVersionCRDREST) deleteGlobalPackagesFromNS(ctx context.Context, 
 	if err != nil {
 		return err
 	}
+
+	if namespace.ObjectMeta.Annotations == nil {
+		namespace.ObjectMeta.Annotations = make(map[string]string)
+	}
+
 	namespace.ObjectMeta.Annotations[excludeGlobalPackagesAnn] = ""
 	_, err = r.nsClient.CoreV1().Namespaces().Update(ctx, namespace, metav1.UpdateOptions{})
 	return err
