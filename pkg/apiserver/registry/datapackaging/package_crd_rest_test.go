@@ -12,19 +12,22 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
 	datapkgreg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/registry/datapackaging"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	k8sfake "k8s.io/client-go/kubernetes/fake"
 	cgtesting "k8s.io/client-go/testing"
 )
 
 // listing
 func TestPackageListIncludesGlobalAndNamespaced(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalIntPackage(), namespacedIntPackage(), excludedNonGlobalIntPackage())
+	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	pkgList, err := pkgCRDREST.List(namespacedCtx(nonGlobalNamespace), &internalversion.ListOptions{})
 	if err != nil {
@@ -57,8 +60,9 @@ func TestPackageListIncludesGlobalAndNamespaced(t *testing.T) {
 func TestPackageListPrefersNamespacedOverGlobal(t *testing.T) {
 	// seed client with resources
 	internalClient := fake.NewSimpleClientset(globalIntPackage(), overrideIntPackage())
+	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	// list package versions and verify all of them are there
 	pkgList, err := pkgCRDREST.List(namespacedCtx(nonGlobalNamespace), &internalversion.ListOptions{})
@@ -90,8 +94,9 @@ func TestPackageGetNotPresentInNS(t *testing.T) {
 	name := globalPackage.Name
 
 	internalClient := fake.NewSimpleClientset(globalPackage)
+	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, err := pkgCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err != nil {
@@ -113,8 +118,9 @@ func TestPackageGetPresentInOnlyNS(t *testing.T) {
 	name := namespacedPackage.Name
 
 	internalClient := fake.NewSimpleClientset(namespacedPackage)
+	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, err := pkgCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err != nil {
@@ -136,8 +142,9 @@ func TestPackageGetNotFound(t *testing.T) {
 	name := namespacedPackage.Name
 
 	internalClient := fake.NewSimpleClientset(namespacedPackage)
+	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	_, err := pkgCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err == nil {
@@ -155,8 +162,9 @@ func TestPackageGetPreferNS(t *testing.T) {
 	name := overridePackage.Name
 
 	internalClient := fake.NewSimpleClientset(overridePackage, globalIntPackage())
+	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, err := pkgCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err != nil {
@@ -182,8 +190,9 @@ func TestPackageUpdateDoesntUpdateGlobal(t *testing.T) {
 	newDisplayName := "im-new"
 
 	internalClient := fake.NewSimpleClientset(globalPackage, namespacedPackage)
+	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, created, err := pkgCRDREST.Update(namespacedCtx(nonGlobalNamespace), name, UpdatePackageTestImpl{updateDisplayNameFn(newDisplayName, name)}, nil, nil, false, &metav1.UpdateOptions{})
 	if err != nil {
@@ -220,8 +229,9 @@ func TestPackageUpdateCreatesInNS(t *testing.T) {
 	newDisplayName := "im-new"
 
 	internalClient := fake.NewSimpleClientset(globalPackage)
+	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, created, err := pkgCRDREST.Update(namespacedCtx(nonGlobalNamespace), name, UpdatePackageTestImpl{updateDisplayNameFn(newDisplayName, name)}, nil, nil, false, &metav1.UpdateOptions{})
 	if err != nil {
@@ -253,8 +263,9 @@ func TestPackageDeleteExistsInNS(t *testing.T) {
 	name := namespacedPackage.Name
 
 	internalClient := fake.NewSimpleClientset(namespacedPackage)
+	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	_, _, err := pkgCRDREST.Delete(namespacedCtx(nonGlobalNamespace), name, nil, &metav1.DeleteOptions{})
 	if err != nil {
@@ -284,8 +295,9 @@ func TestPackageDeleteExistsGlobalNotInNS(t *testing.T) {
 	name := globalPackage.Name
 
 	internalClient := fake.NewSimpleClientset(globalPackage)
+	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	_, _, err := pkgCRDREST.Delete(namespacedCtx(nonGlobalNamespace), name, nil, &metav1.DeleteOptions{})
 	if !errors.IsNotFound(err) {
@@ -373,6 +385,15 @@ func excludedNonGlobalIntPackage() *v1alpha1.InternalPackage {
 		},
 		Spec: datapackaging.PackageSpec{
 			DisplayName: "EXCLUDED",
+		},
+	}
+}
+
+func namespace() *corev1.Namespace {
+	return &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        nonGlobalNamespace,
+			Annotations: make(map[string]string),
 		},
 	}
 }
