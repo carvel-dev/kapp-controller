@@ -242,10 +242,16 @@ func (r *PackageVersionCRDREST) DeleteCollection(ctx context.Context, deleteVali
 	namespace := request.NamespaceValue(ctx)
 	client := NewPackageVersionStorageClient(r.crdClient, NewPackageVersionTranslator(namespace))
 
+	// clear unsupported field selectors
+	fs := listOptions.FieldSelector
+	listOptions.FieldSelector = fields.Everything()
+
 	list, err := client.List(ctx, namespace, r.internalToMetaListOpts(*listOptions))
 	if err != nil {
 		return nil, err
 	}
+
+	list = r.applySelector(list, fs)
 
 	deleteAllGlobal := false
 	{
@@ -264,7 +270,7 @@ func (r *PackageVersionCRDREST) DeleteCollection(ctx context.Context, deleteVali
 	if deleteAllGlobal {
 		err := r.deleteGlobalPackagesFromNS(ctx, namespace)
 		if err != nil {
-			return nil, errors.NewInternalError(fmt.Errorf("Removing global packages: %v", err))
+			return nil, errors.NewInternalError(fmt.Errorf("Removing global packages from ns '%s': %v", namespace, err))
 		}
 	}
 
