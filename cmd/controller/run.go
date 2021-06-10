@@ -96,7 +96,7 @@ func Run(opts Options, runLog logr.Logger) {
 		appClient:  kcClient,
 	}
 
-	server, err := apiserver.NewAPIServer(restConfig, opts.PackagingGloablNS)
+	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, opts.PackagingGloablNS)
 	if err != nil {
 		runLog.Error(err, "creating server")
 		os.Exit(1)

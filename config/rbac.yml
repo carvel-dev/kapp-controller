@@ -50,7 +50,7 @@ rules:
   verbs: ["update", "get"]
 - apiGroups: [""]
   resources: ["namespaces"]
-  verbs: ["list", "watch"]
+  verbs: ["list", "watch", "get", "update"]
 - apiGroups: ["admissionregistration.k8s.io"]
   resources: ["mutatingwebhookconfigurations"]
   verbs: ["list", "watch"]

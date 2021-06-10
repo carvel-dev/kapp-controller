@@ -5,6 +5,7 @@ package datapackaging
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -20,13 +21,17 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/kubernetes"
 )
+
+const excludeGlobalPackagesAnn = "kapp-controller.carvel.dev/exclude-global-packages"
 
 // PackageCRDREST is a rest implementation that proxies the rest endpoints provided by
 // CRDs. This will allow us to introduce the api server without the
 // complexities associated with custom storage options for now.
 type PackageCRDREST struct {
 	crdClient       installclient.Interface
+	nsClient        kubernetes.Interface
 	globalNamespace string
 }
 
@@ -35,8 +40,8 @@ var (
 	_ rest.ShortNamesProvider = &PackageCRDREST{}
 )
 
-func NewPackageCRDREST(crdClient installclient.Interface, globalNS string) *PackageCRDREST {
-	return &PackageCRDREST{crdClient, globalNS}
+func NewPackageCRDREST(crdClient installclient.Interface, nsClient kubernetes.Interface, globalNS string) *PackageCRDREST {
+	return &PackageCRDREST{crdClient, nsClient, globalNS}
 }
 
 func (r *PackageCRDREST) ShortNames() []string {
@@ -76,8 +81,13 @@ func (r *PackageCRDREST) Create(ctx context.Context, obj runtime.Object, createV
 	return client.Create(ctx, namespace, pkg, *options)
 }
 
-func (r *PackageCRDREST) shouldFetchGlobal(namespace string) bool {
-	return namespace != r.globalNamespace && namespace != ""
+func (r *PackageCRDREST) shouldFetchGlobal(ctx context.Context, namespace string) bool {
+	ns, err := r.nsClient.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+	if err != nil {
+		return false
+	}
+	_, exclude := ns.ObjectMeta.Annotations[excludeGlobalPackagesAnn]
+	return namespace != r.globalNamespace && namespace != "" && !exclude
 }
 
 func (r *PackageCRDREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -87,7 +97,7 @@ func (r *PackageCRDREST) Get(ctx context.Context, name string, options *metav1.G
 	// Check targeted namespace
 	pkg, err := client.Get(ctx, namespace, name, *options)
 
-	if errors.IsNotFound(err) && r.shouldFetchGlobal(namespace) {
+	if errors.IsNotFound(err) && r.shouldFetchGlobal(ctx, namespace) {
 		// check global namespace
 		pkg, err = client.Get(ctx, r.globalNamespace, name, *options)
 	}
@@ -106,7 +116,7 @@ func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.List
 	namespacedPackages := namespacedPackagesList.Items
 
 	var globalPackages []datapackaging.Package
-	if r.shouldFetchGlobal(namespace) {
+	if r.shouldFetchGlobal(ctx, namespace) {
 		globalPackagesList, err := client.List(ctx, r.globalNamespace, r.internalToMetaListOpts(*options))
 		if err != nil {
 			return nil, err
@@ -243,15 +253,38 @@ func (r *PackageCRDREST) DeleteCollection(ctx context.Context, deleteValidation 
 		return nil, err
 	}
 
+	// check to see if we are deleting all the global packages. This isnt a great way to do this
+	deleteAllGlobal := false
+	{
+		filteredList, err := client.List(ctx, r.globalNamespace, r.internalToMetaListOpts(*listOptions))
+		if err != nil {
+			return nil, err
+		}
+
+		regularList, err := client.List(ctx, r.globalNamespace, metav1.ListOptions{})
+		if err != nil {
+			return nil, err
+		}
+		deleteAllGlobal = len(regularList.Items) == len(filteredList.Items)
+	}
+
+	if deleteAllGlobal {
+		err := r.deleteGlobalPackagesFromNS(ctx, namespace)
+		if err != nil {
+			return nil, errors.NewInternalError(fmt.Errorf("Removing global packages: %v", err))
+		}
+	}
+
 	var deletedPackages []datapackaging.Package
 	for _, pkg := range list.Items {
 		// use crd delete for validations
 		_, _, err := r.Delete(ctx, pkg.Name, deleteValidation, options)
-		if err != nil {
+		if err != nil && !errors.IsNotFound(err) {
 			break
 		}
 		deletedPackages = append(deletedPackages, pkg)
 	}
+
 	return &datapackaging.PackageList{Items: deletedPackages}, err
 }
 
@@ -260,7 +293,7 @@ func (r *PackageCRDREST) Watch(ctx context.Context, options *internalversion.Lis
 	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
 
 	watcher, err := client.Watch(ctx, namespace, r.internalToMetaListOpts(*options))
-	if errors.IsNotFound(err) && r.shouldFetchGlobal(namespace) {
+	if errors.IsNotFound(err) && r.shouldFetchGlobal(ctx, namespace) {
 		watcher, err = client.Watch(ctx, r.globalNamespace, r.internalToMetaListOpts(*options))
 	}
 
@@ -335,6 +368,16 @@ func (r *PackageCRDREST) internalToMetaListOpts(options internalversion.ListOpti
 		lo.FieldSelector = options.FieldSelector.String()
 	}
 	return lo
+}
+
+func (r *PackageCRDREST) deleteGlobalPackagesFromNS(ctx context.Context, ns string) error {
+	namespace, err := r.nsClient.CoreV1().Namespaces().Get(ctx, ns, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	namespace.ObjectMeta.Annotations[excludeGlobalPackagesAnn] = ""
+	_, err = r.nsClient.CoreV1().Namespaces().Update(ctx, namespace, metav1.UpdateOptions{})
+	return err
 }
 
 func (r *PackageCRDREST) format(in string) string {

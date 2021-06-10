@@ -26,6 +26,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/dynamiccertificates"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	genericopenapi "k8s.io/apiserver/pkg/endpoints/openapi"
@@ -71,7 +72,7 @@ type APIServer struct {
 	aggClient aggregatorclient.Interface
 }
 
-func NewAPIServer(clientConfig *rest.Config, globalNamespace string) (*APIServer, error) {
+func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, globalNamespace string) (*APIServer, error) {
 	aggClient, err := aggregatorclient.NewForConfig(clientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("building aggregation client: %v", err)
@@ -87,13 +88,8 @@ func NewAPIServer(clientConfig *rest.Config, globalNamespace string) (*APIServer
 		return nil, err
 	}
 
-	kcClient, err := kcclient.NewForConfig(clientConfig)
-	if err != nil {
-		return nil, fmt.Errorf("Creating internal CRD client: %s", err)
-
-	}
-	packagesStorage := packagerest.NewPackageCRDREST(kcClient, globalNamespace)
-	packageVersionsStorage := packagerest.NewPackageVersionCRDREST(kcClient, globalNamespace)
+	packagesStorage := packagerest.NewPackageCRDREST(kcClient, coreClient, globalNamespace)
+	packageVersionsStorage := packagerest.NewPackageVersionCRDREST(kcClient, coreClient, globalNamespace)
 
 	pkgGroup := genericapiserver.NewDefaultAPIGroupInfo(datapackaging.GroupName, Scheme, metav1.ParameterCodec, Codecs)
 	pkgv1alpha1Storage := map[string]apirest.Storage{}
