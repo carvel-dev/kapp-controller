@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -283,13 +284,9 @@ spec:
 
 	logger.Section("attempt to delete the local package", func() {
 		timeout := 30 * time.Second
-		cancelCh := make(chan struct{})
-		go func() {
-			time.Sleep(timeout)
-			close(cancelCh)
-		}()
+		ctx, _ := context.WithTimeout(context.Background(), timeout)
 
-		_, err := k.RunWithOpts([]string{"delete", "packageversions/pkg1.test.carvel.dev.1.0.0", "-n", localNS}, RunOpts{CancelCh: cancelCh, NoNamespace: true, AllowError: true})
+		_, err := k.RunWithOpts([]string{"delete", "packageversions/pkg1.test.carvel.dev.1.0.0", "-n", localNS}, RunOpts{Ctx: ctx, NoNamespace: true, AllowError: true})
 		if err != nil {
 			t.Fatalf("Expected delete of local package version to succeed in %v, but got: %v", timeout, err)
 		}
@@ -350,13 +347,9 @@ spec:
 
 	logger.Section("attempt to delete the local namespace", func() {
 		timeout := 30 * time.Second
-		cancelCh := make(chan struct{})
-		go func() {
-			time.Sleep(timeout)
-			close(cancelCh)
-		}()
+		ctx, _ := context.WithTimeout(context.Background(), timeout)
 
-		_, err := k.RunWithOpts([]string{"delete", fmt.Sprintf("namespaces/%s", localNS)}, RunOpts{CancelCh: cancelCh, NoNamespace: true, AllowError: true})
+		_, err := k.RunWithOpts([]string{"delete", fmt.Sprintf("namespaces/%s", localNS)}, RunOpts{Ctx: ctx, NoNamespace: true, AllowError: true})
 		if err != nil {
 			if strings.Contains(err.Error(), "signal: interrupt") {
 				t.Fatalf("Timed out waiting for delete of namespace '%s'", localNS)
