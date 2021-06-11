@@ -82,7 +82,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: kapp-controller-sa
-  namespace: kapp-controller
+  namespace: #@ data.values.namespace
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -96,4 +96,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: kapp-controller-sa
-  namespace: kapp-controller
+  namespace: #@ data.values.namespace

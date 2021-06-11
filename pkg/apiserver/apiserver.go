@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"time"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/openapi"
@@ -42,8 +43,8 @@ const (
 	bindPort  = 10349
 	TokenPath = "/token-dir"
 
-	apiServerEndpoint = "packages-api.kapp-controller.svc"
-	apiServiceName    = "v1alpha1.data.packaging.carvel.dev"
+	kappctrlNSEnvKey = "KAPPCTRL_SYSTEM_NAMESPACE"
+	apiServiceName   = "v1alpha1.data.packaging.carvel.dev"
 )
 
 var (
@@ -154,7 +155,7 @@ func newServerConfig(aggClient aggregatorclient.Interface) (*genericapiserver.Re
 	recommendedOptions.SecureServing.ServerCert.PairName = "kapp-controller"
 	recommendedOptions.SecureServing.BindPort = bindPort
 
-	if err := recommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts("kapp-controller", []string{apiServerEndpoint}, []net.IP{net.ParseIP("127.0.0.1")}); err != nil {
+	if err := recommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts("kapp-controller", []string{apiServiceEndoint()}, []net.IP{net.ParseIP("127.0.0.1")}); err != nil {
 		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
 	}
 
@@ -190,4 +191,14 @@ func updateAPIService(client aggregatorclient.Interface, caProvider dynamiccerti
 		return fmt.Errorf("error updating kapp-controller CA cert of APIService %s: %v", apiServiceName, err)
 	}
 	return nil
+}
+
+func apiServiceEndoint() string {
+	const apiServiceName = "packages-api"
+	ns := os.Getenv(kappctrlNSEnvKey)
+	if ns == "" {
+		panic("Cannot get api service endpoint, Kapp-controller namespace is empty")
+	}
+
+	return fmt.Sprintf("%s.%s.svc", apiServiceName, ns)
 }

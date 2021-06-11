@@ -11,7 +11,7 @@ spec:
   versionPriority: 100
   service:
     name: packages-api
-    namespace: kapp-controller
+    namespace: #@ data.values.namespace
 ---
 apiVersion: v1
 kind: Service
