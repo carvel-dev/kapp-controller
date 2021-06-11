@@ -7,7 +7,7 @@ metadata:
   name: simple-app.corp.com
   # cluster scoped
 spec:
-  # This is the name we want to reference in resources such as InstalledPackage.
+  # This is the name we want to reference in resources such as PackageInstall.
   displayName: "simple-app"
   shortDescription: "Simple app consisting of a k8s deployment and service"
   longDescription: "A longer, more detailed description of what the package contains and what it is for"

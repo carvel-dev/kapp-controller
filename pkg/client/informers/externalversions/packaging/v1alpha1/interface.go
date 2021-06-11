@@ -8,8 +8,8 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
-	// InstalledPackages returns a InstalledPackageInformer.
-	InstalledPackages() InstalledPackageInformer
+	// PackageInstalls returns a PackageInstallInformer.
+	PackageInstalls() PackageInstallInformer
 	// PackageRepositories returns a PackageRepositoryInformer.
 	PackageRepositories() PackageRepositoryInformer
 }
@@ -25,9 +25,9 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// InstalledPackages returns a InstalledPackageInformer.
-func (v *version) InstalledPackages() InstalledPackageInformer {
-	return &installedPackageInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+// PackageInstalls returns a PackageInstallInformer.
+func (v *version) PackageInstalls() PackageInstallInformer {
+	return &packageInstallInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // PackageRepositories returns a PackageRepositoryInformer.

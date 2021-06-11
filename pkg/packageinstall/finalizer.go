@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package installedpkg
+package packageinstall
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	deleteFinalizerName = "finalizers.installedpackage.packaging.carvel.dev/delete"
+	deleteFinalizerName = "finalizers.packageinstall.packaging.carvel.dev/delete"
 )
 
 func init() {

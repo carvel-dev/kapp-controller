@@ -109,10 +109,7 @@ spec:
 			cr.Status.Fetch.Stdout = ""
 
 			// inspect
-			if !strings.Contains(cr.Status.Inspect.Stdout, "5 resources\nSucceeded") {
-				t.Fatalf("Expected to find 5 resources created but got:\n%s", cr.Status.Inspect.Stdout)
-			}
-			if !strings.Contains(cr.Status.Inspect.Stdout, "simple-app") {
+			if !strings.Contains(cr.Status.Inspect.Stdout, "simple-app") && !strings.Contains(cr.Status.Inspect.Stdout, "Succeeded") {
 				t.Fatalf("Expected to find simple-app resources created but got:\n%s", cr.Status.Inspect.Stdout)
 			}
 			cr.Status.Inspect.UpdatedAt = metav1.Time{}

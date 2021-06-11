@@ -24,51 +24,51 @@ import (
 // the workqueue, but in the future, we will only enqueue the
 // packages that are eligible for upgrade based on the new
 // packages
-type InstalledPkgVersionHandler struct {
+type PackageInstallVersionHandler struct {
 	client   kcclient.Interface
 	globalNS string
 	log      logr.Logger
 }
 
-var _ handler.EventHandler = &InstalledPkgVersionHandler{}
+var _ handler.EventHandler = &PackageInstallVersionHandler{}
 
-func NewInstalledPkgVersionHandler(c kcclient.Interface, globalNS string, log logr.Logger) *InstalledPkgVersionHandler {
-	return &InstalledPkgVersionHandler{c, globalNS, log}
+func NewPackageInstallVersionHandler(c kcclient.Interface, globalNS string, log logr.Logger) *PackageInstallVersionHandler {
+	return &PackageInstallVersionHandler{c, globalNS, log}
 }
 
-func (ipvh *InstalledPkgVersionHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
-	ipvh.log.Info("enqueueing installedPkgList")
-	err := ipvh.enqueueEligibleInstalledPackages(q, evt.Object)
+func (ipvh *PackageInstallVersionHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
+	ipvh.log.Info("enqueueing PackageInstallList")
+	err := ipvh.enqueueEligiblePackageInstalls(q, evt.Object)
 	if err != nil {
-		ipvh.log.Error(err, "enqueueing all installed pakcages")
+		ipvh.log.Error(err, "enqueueing all PackageInstalls")
 	}
 }
 
-func (ipvh *InstalledPkgVersionHandler) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
-	ipvh.log.Info("enqueueing installedPkgList")
-	err := ipvh.enqueueEligibleInstalledPackages(q, evt.ObjectNew)
+func (ipvh *PackageInstallVersionHandler) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
+	ipvh.log.Info("enqueueing PackageInstallList")
+	err := ipvh.enqueueEligiblePackageInstalls(q, evt.ObjectNew)
 	if err != nil {
-		ipvh.log.Error(err, "enqueueing all installed pakcages")
+		ipvh.log.Error(err, "enqueueing all PackageInstalls")
 	}
 }
 
-func (ipvh *InstalledPkgVersionHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
-	ipvh.log.Info("enqueueing installedPkgList")
-	err := ipvh.enqueueEligibleInstalledPackages(q, evt.Object)
+func (ipvh *PackageInstallVersionHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
+	ipvh.log.Info("enqueueing PackageInstallList")
+	err := ipvh.enqueueEligiblePackageInstalls(q, evt.Object)
 	if err != nil {
-		ipvh.log.Error(err, "enqueueing all installed pakcages")
+		ipvh.log.Error(err, "enqueueing all PackageInstalls")
 	}
 }
 
-func (ipvh *InstalledPkgVersionHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {
+func (ipvh *PackageInstallVersionHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {
 	ipvh.log.Info("enqueueing installedPkgList")
-	err := ipvh.enqueueEligibleInstalledPackages(q, evt.Object)
+	err := ipvh.enqueueEligiblePackageInstalls(q, evt.Object)
 	if err != nil {
-		ipvh.log.Error(err, "enqueueing all installed pakcages")
+		ipvh.log.Error(err, "enqueueing all PackageInstalls")
 	}
 }
 
-func (ipvh *InstalledPkgVersionHandler) enqueueEligibleInstalledPackages(q workqueue.RateLimitingInterface, obj runtime.Object) error {
+func (ipvh *PackageInstallVersionHandler) enqueueEligiblePackageInstalls(q workqueue.RateLimitingInterface, obj runtime.Object) error {
 	pv := obj.(*datapkgingv1alpha1.PackageVersion)
 
 	namespace := ""
@@ -76,7 +76,7 @@ func (ipvh *InstalledPkgVersionHandler) enqueueEligibleInstalledPackages(q workq
 		namespace = pv.Namespace
 	}
 
-	installedPkgList, err := ipvh.client.PackagingV1alpha1().InstalledPackages(namespace).List(context.Background(), metav1.ListOptions{})
+	installedPkgList, err := ipvh.client.PackagingV1alpha1().PackageInstalls(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func (ipvh *InstalledPkgVersionHandler) enqueueEligibleInstalledPackages(q workq
 	return nil
 }
 
-func (ipvh *InstalledPkgVersionHandler) isEligibleForVersionUpgrade(version string, installedPkg pkgingv1alpha1.InstalledPackage) bool {
+func (ipvh *PackageInstallVersionHandler) isEligibleForVersionUpgrade(version string, installedPkg pkgingv1alpha1.PackageInstall) bool {
 	if installedPkg.Spec.PackageVersionRef == nil {
 		return false
 	}

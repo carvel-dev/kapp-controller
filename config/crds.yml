@@ -373,7 +373,6 @@ spec:
                                     configMapRef:
                                       properties:
                                         name:
-                                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                           type: string
                                       type: object
                                     path:
@@ -381,7 +380,6 @@ spec:
                                     secretRef:
                                       properties:
                                         name:
-                                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                           type: string
                                       type: object
                                   type: object
@@ -726,7 +724,6 @@ spec:
                             configMapRef:
                               properties:
                                 name:
-                                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                   type: string
                               type: object
                             path:
@@ -734,7 +731,6 @@ spec:
                             secretRef:
                               properties:
                                 name:
-                                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                                   type: string
                               type: object
                           type: object
@@ -852,7 +848,7 @@ spec:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: installedpackages.packaging.carvel.dev
+  name: packageinstalls.packaging.carvel.dev
 spec:
   additionalPrinterColumns:
   - JSONPath: .spec.packageVersionRef.packageName
@@ -873,12 +869,12 @@ spec:
     type: date
   group: packaging.carvel.dev
   names:
-    kind: InstalledPackage
-    listKind: InstalledPackageList
-    plural: installedpackages
+    kind: PackageInstall
+    listKind: PackageInstallList
+    plural: packageinstalls
     shortNames:
-    - ipkg
-    singular: installedpackage
+    - pkgi
+    singular: packageinstall
   preserveUnknownFields: false
   scope: Namespaced
   subresources:
@@ -910,7 +906,7 @@ spec:
                   type: string
               type: object
             noopDelete:
-              description: When NoopDelete set to true, InstalledPackage deletion should delete InstalledPackage/App CR but preserve App's associated resources.
+              description: When NoopDelete set to true, PackageInstall deletion should delete PackageInstall/App CR but preserve App's associated resources.
               type: boolean
             packageVersionRef:
               properties:

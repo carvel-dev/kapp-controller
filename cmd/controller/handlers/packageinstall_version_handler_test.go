@@ -8,15 +8,13 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr"
-
+	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-
-	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -25,11 +23,11 @@ import (
 func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 	q := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 
-	eligibleInstalledPkg := pkgingv1alpha1.InstalledPackage{
+	eligibleInstalledPkg := pkgingv1alpha1.PackageInstall{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "expected-pkg",
 		},
-		Spec: pkgingv1alpha1.InstalledPackageSpec{
+		Spec: pkgingv1alpha1.PackageInstallSpec{
 			PackageVersionRef: &pkgingv1alpha1.PackageVersionRef{
 				PackageName: "expec-pkg",
 				VersionSelection: &v1alpha1.VersionSelectionSemver{
@@ -39,11 +37,11 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 		},
 	}
 
-	ineligibleInstalledPkg := pkgingv1alpha1.InstalledPackage{
+	ineligibleInstalledPkg := pkgingv1alpha1.PackageInstall{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "expected-pkg-ineligible",
 		},
-		Spec: pkgingv1alpha1.InstalledPackageSpec{
+		Spec: pkgingv1alpha1.PackageInstallSpec{
 			PackageVersionRef: &pkgingv1alpha1.PackageVersionRef{
 				PackageName: "expec-pkg",
 				VersionSelection: &v1alpha1.VersionSelectionSemver{
@@ -55,7 +53,7 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 
 	// Load installed package into fake client
 	kappcs := fake.NewSimpleClientset(&eligibleInstalledPkg, &ineligibleInstalledPkg)
-	ipvh := handlers.NewInstalledPkgVersionHandler(kappcs, "", &EmptyLog{})
+	ipvh := handlers.NewPackageInstallVersionHandler(kappcs, "", &EmptyLog{})
 
 	event := event.GenericEvent{
 		Object: &datapkgingv1alpha1.PackageVersion{

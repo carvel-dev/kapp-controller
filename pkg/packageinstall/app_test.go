@@ -1,7 +1,7 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package installedpkg_test
+package packageinstall_test
 
 import (
 	"reflect"
@@ -11,12 +11,12 @@ import (
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/installedpkg"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestAppExtYttPathsFromSecretNameAnn(t *testing.T) {
-	ipkg := &pkgingv1alpha1.InstalledPackage{
+	ipkg := &pkgingv1alpha1.PackageInstall{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "app",
 			Namespace: "default",
@@ -45,7 +45,7 @@ func TestAppExtYttPathsFromSecretNameAnn(t *testing.T) {
 		},
 	}
 
-	app, err := installedpkg.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -97,7 +97,7 @@ func TestAppExtYttPathsFromSecretNameAnn(t *testing.T) {
 }
 
 func TestAppExtYttDataValuesOverlaysAnn(t *testing.T) {
-	ipkg := &pkgingv1alpha1.InstalledPackage{
+	ipkg := &pkgingv1alpha1.PackageInstall{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "app",
 			Namespace: "default",
@@ -105,10 +105,10 @@ func TestAppExtYttDataValuesOverlaysAnn(t *testing.T) {
 				"ext.packaging.carvel.dev/ytt-data-values-overlays": "",
 			},
 		},
-		Spec: pkgingv1alpha1.InstalledPackageSpec{
-			Values: []pkgingv1alpha1.InstalledPackageValues{
-				{SecretRef: &pkgingv1alpha1.InstalledPackageValuesSecretRef{Name: "values1"}},
-				{SecretRef: &pkgingv1alpha1.InstalledPackageValuesSecretRef{Name: "values2"}},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			Values: []pkgingv1alpha1.PackageInstallValues{
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values1"}},
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values2"}},
 			},
 		},
 	}
@@ -128,7 +128,7 @@ func TestAppExtYttDataValuesOverlaysAnn(t *testing.T) {
 		},
 	}
 
-	app, err := installedpkg.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -168,15 +168,15 @@ func TestAppExtYttDataValuesOverlaysAnn(t *testing.T) {
 }
 
 func TestAppYttValues(t *testing.T) {
-	ipkg := &pkgingv1alpha1.InstalledPackage{
+	ipkg := &pkgingv1alpha1.PackageInstall{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "app",
 			Namespace: "default",
 		},
-		Spec: pkgingv1alpha1.InstalledPackageSpec{
-			Values: []pkgingv1alpha1.InstalledPackageValues{
-				{SecretRef: &pkgingv1alpha1.InstalledPackageValuesSecretRef{Name: "values1"}},
-				{SecretRef: &pkgingv1alpha1.InstalledPackageValuesSecretRef{Name: "values2"}},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			Values: []pkgingv1alpha1.PackageInstallValues{
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values1"}},
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values2"}},
 			},
 		},
 	}
@@ -197,7 +197,7 @@ func TestAppYttValues(t *testing.T) {
 		},
 	}
 
-	app, err := installedpkg.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -236,15 +236,15 @@ func TestAppYttValues(t *testing.T) {
 }
 
 func TestAppHelmTemplateValues(t *testing.T) {
-	ipkg := &pkgingv1alpha1.InstalledPackage{
+	ipkg := &pkgingv1alpha1.PackageInstall{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "app",
 			Namespace: "default",
 		},
-		Spec: pkgingv1alpha1.InstalledPackageSpec{
-			Values: []pkgingv1alpha1.InstalledPackageValues{
-				{SecretRef: &pkgingv1alpha1.InstalledPackageValuesSecretRef{Name: "values1"}},
-				{SecretRef: &pkgingv1alpha1.InstalledPackageValuesSecretRef{Name: "values2"}},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			Values: []pkgingv1alpha1.PackageInstallValues{
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values1"}},
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values2"}},
 			},
 		},
 	}
@@ -265,7 +265,7 @@ func TestAppHelmTemplateValues(t *testing.T) {
 		},
 	}
 
-	app, err := installedpkg.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -315,15 +315,15 @@ func TestAppManuallyControlled(t *testing.T) {
 		},
 	}
 
-	ipkg := &pkgingv1alpha1.InstalledPackage{
+	ipkg := &pkgingv1alpha1.PackageInstall{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "app",
 			Namespace: "default",
 		},
-		Spec: pkgingv1alpha1.InstalledPackageSpec{
-			Values: []pkgingv1alpha1.InstalledPackageValues{
-				{SecretRef: &pkgingv1alpha1.InstalledPackageValuesSecretRef{Name: "values1"}},
-				{SecretRef: &pkgingv1alpha1.InstalledPackageValuesSecretRef{Name: "values2"}},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			Values: []pkgingv1alpha1.PackageInstallValues{
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values1"}},
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values2"}},
 			},
 		},
 	}
@@ -344,7 +344,7 @@ func TestAppManuallyControlled(t *testing.T) {
 		},
 	}
 
-	app, err := installedpkg.NewApp(existingApp, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(existingApp, ipkg, pkgVersion)
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}

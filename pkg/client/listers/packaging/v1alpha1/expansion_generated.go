@@ -2,13 +2,13 @@
 
 package v1alpha1
 
-// InstalledPackageListerExpansion allows custom methods to be added to
-// InstalledPackageLister.
-type InstalledPackageListerExpansion interface{}
+// PackageInstallListerExpansion allows custom methods to be added to
+// PackageInstallLister.
+type PackageInstallListerExpansion interface{}
 
-// InstalledPackageNamespaceListerExpansion allows custom methods to be added to
-// InstalledPackageNamespaceLister.
-type InstalledPackageNamespaceListerExpansion interface{}
+// PackageInstallNamespaceListerExpansion allows custom methods to be added to
+// PackageInstallNamespaceLister.
+type PackageInstallNamespaceListerExpansion interface{}
 
 // PackageRepositoryListerExpansion allows custom methods to be added to
 // PackageRepositoryLister.

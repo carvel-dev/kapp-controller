@@ -7,7 +7,7 @@ metadata:
 spec:
   packageName: pkg.test.carvel.dev
   # This is a pre-release, which kapp-contorller will not automatically bump
-  # InstalledPackages to unless it explicitly allowed within the InstalledPackage
+  # PackageInstalls to unless it explicitly allowed within the PackageInstall
   # version selection.
   version: 3.0.0-rc.1
   licenses:

@@ -12,7 +12,7 @@ spec:
       subPath: examples/pkgrepository
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
-kind: InstalledPackage
+kind: PackageInstall
 metadata:
   name: installed-pkg-test-in-repo
   namespace: default

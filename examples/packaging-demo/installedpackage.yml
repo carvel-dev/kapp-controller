@@ -1,6 +1,6 @@
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
-kind: InstalledPackage
+kind: PackageInstall
 metadata:
   name: pkg-demo
   namespace: default
@@ -10,7 +10,7 @@ spec:
     publicName: simple-app.corp.com
     # This will pin the version of the package we are installing to
     # 1.0.0. You can also use version constraints to allow kapp-controller
-    # to automatically bump versions for you. This can be seen in installedpackage-floating.yml
+    # to automatically bump versions for you. This can be seen in PackageInstall-floating.yml
     version: 1.0.0
   values:
   - secretRef:

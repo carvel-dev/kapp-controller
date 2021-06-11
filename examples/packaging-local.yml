@@ -30,7 +30,7 @@ spec:
       - kapp: {}
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
-kind: InstalledPackage
+kind: PackageInstall
 metadata:
   name: installed-pkg-test
   namespace: default
