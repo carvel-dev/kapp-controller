@@ -10,13 +10,13 @@ spec:
   version: v1alpha1
   versionPriority: 100
   service:
-    name: packages-api
+    name: packaging-api
     namespace: #@ data.values.namespace
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: packages-api
+  name: packaging-api
   namespace: #@ data.values.namespace
 spec:
   ports:
