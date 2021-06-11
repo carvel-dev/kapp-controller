@@ -147,9 +147,9 @@ func Run(opts Options, runLog logr.Logger) {
 		}
 	}
 
-	{ // add controller for installedPkgs
-		installedPkgsCtrlOpts := controller.Options{
-			Reconciler: &InstalledPkgReconciler{
+	{ // add controller for PackageInstall
+		pkgInstallCtrlOpts := controller.Options{
+			Reconciler: &PackageInstallReconciler{
 				kcClient:  kcClient,
 				pkgClient: pkgClient,
 				log:       runLog.WithName("ipr"),
@@ -157,30 +157,30 @@ func Run(opts Options, runLog logr.Logger) {
 			MaxConcurrentReconciles: opts.Concurrency,
 		}
 
-		installedPkgCtrl, err := controller.New("kapp-controller-installed-package", mgr, installedPkgsCtrlOpts)
+		pkgInstallCtrl, err := controller.New("kapp-controller-packageinstall", mgr, pkgInstallCtrlOpts)
 		if err != nil {
-			runLog.Error(err, "unable to set up kapp-controller-installed-package")
+			runLog.Error(err, "unable to set up kapp-controller-packageinstall")
 			os.Exit(1)
 		}
 
-		err = installedPkgCtrl.Watch(&source.Kind{Type: &pkgingv1alpha1.InstalledPackage{}}, &handler.EnqueueRequestForObject{})
+		err = pkgInstallCtrl.Watch(&source.Kind{Type: &pkgingv1alpha1.PackageInstall{}}, &handler.EnqueueRequestForObject{})
 		if err != nil {
-			runLog.Error(err, "unable to watch *pkgingv1alpha1.InstalledPackage")
+			runLog.Error(err, "unable to watch *pkgingv1alpha1.PackageInstall")
 			os.Exit(1)
 		}
 
-		err = installedPkgCtrl.Watch(&source.Kind{Type: &datapkgingv1alpha1.PackageVersion{}}, handlers.NewInstalledPkgVersionHandler(kcClient, opts.PackagingGloablNS, runLog.WithName("handler")))
+		err = pkgInstallCtrl.Watch(&source.Kind{Type: &datapkgingv1alpha1.PackageVersion{}}, handlers.NewPackageInstallVersionHandler(kcClient, opts.PackagingGloablNS, runLog.WithName("handler")))
 		if err != nil {
-			runLog.Error(err, "unable to watch *datapkgingv1alpha1.PackageVersion for InstalledPackage")
+			runLog.Error(err, "unable to watch *datapkgingv1alpha1.PackageVersion for PackageInstall")
 			os.Exit(1)
 		}
 
-		err = installedPkgCtrl.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
-			OwnerType:    &pkgingv1alpha1.InstalledPackage{},
+		err = pkgInstallCtrl.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
+			OwnerType:    &pkgingv1alpha1.PackageInstall{},
 			IsController: true,
 		})
 		if err != nil {
-			runLog.Error(err, "unable to watch *kcv1alpha1.App for InstalledPackage")
+			runLog.Error(err, "unable to watch *kcv1alpha1.App for PackageInstall")
 			os.Exit(1)
 		}
 	}

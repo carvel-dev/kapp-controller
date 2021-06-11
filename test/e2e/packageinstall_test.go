@@ -10,15 +10,14 @@ import (
 	"testing"
 	"time"
 
-	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-
 	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func Test_PackageInstalled_FromInstalledPackage_Successfully(t *testing.T) {
+func Test_PackageInstalled_FromPackageInstall_Successfully(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
@@ -33,7 +32,7 @@ metadata:
   name: pkg.test.carvel.dev
   namespace: %[1]s
 spec:
-  # This is the name we want to reference in resources such as InstalledPackage.
+  # This is the name we want to reference in resources such as PackageInstall.
   displayName: "Test Package in repo"
   shortDescription: "Package used for testing"
   longDescription: "A longer, more detailed description of what the package contains and what it is for"
@@ -72,12 +71,12 @@ spec:
       - kapp: {}
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
-kind: InstalledPackage
+kind: PackageInstall
 metadata:
   name: %[2]s
   namespace: %[1]s
   annotations:
-    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/installedpackages
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/packageinstalls
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   packageVersionRef:
@@ -106,10 +105,10 @@ stringData:
 	cleanUp()
 	defer cleanUp()
 
-	// Create Repo, InstalledPackage, and App from YAML
+	// Create Repo, PackageInstall, and App from YAML
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "ipkg/" + name, "--timeout", "1m"})
+	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
 	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
 	out := kubectl.Run([]string{"get", fmt.Sprintf("apps/%s", name), "-o", "yaml"})
 
@@ -155,11 +154,7 @@ stringData:
 		cr.Status.Fetch.UpdatedAt = metav1.Time{}
 		cr.Status.Fetch.Stdout = ""
 
-		// inspect
-		if !strings.Contains(cr.Status.Inspect.Stdout, "5 resources\nSucceeded") {
-			t.Fatalf("Expected to find 5 resources created but got:\n%s", cr.Status.Inspect.Stdout)
-		}
-		if !strings.Contains(cr.Status.Inspect.Stdout, "simple-app") {
+		if !strings.Contains(cr.Status.Inspect.Stdout, "simple-app") && !strings.Contains(cr.Status.Inspect.Stdout, "Succeeded") {
 			t.Fatalf("Expected to find simple-app resources created but got:\n%s", cr.Status.Inspect.Stdout)
 		}
 		cr.Status.Inspect.UpdatedAt = metav1.Time{}
@@ -175,7 +170,7 @@ stringData:
 	}
 }
 
-func Test_InstalledPackageStatus_DisplaysUsefulErrorMessage_ForDeploymentFailure(t *testing.T) {
+func Test_PackageInstallStatus_DisplaysUsefulErrorMessage_ForDeploymentFailure(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
@@ -219,12 +214,12 @@ spec:
           intoNs: does-not-exist
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
-kind: InstalledPackage
+kind: PackageInstall
 metadata:
   name: %s
   namespace: %s
   annotations:
-    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/installedpackages
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/packageinstalls
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   packageVersionRef:
@@ -253,13 +248,13 @@ stringData:
 	cleanUp()
 	defer cleanUp()
 
-	// Create Repo, InstalledPackage, and App from YAML
+	// Create Repo, PackageInstall, and App from YAML
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
-	// wait for status to update for InstalledPackage
-	var cr pkgingv1alpha1.InstalledPackage
+	// wait for status to update for PackageInstall
+	var cr pkgingv1alpha1.PackageInstall
 	retry(t, 30*time.Second, func() error {
-		out := kubectl.Run([]string{"get", fmt.Sprintf("ipkg/%s", name), "-o", "yaml"})
+		out := kubectl.Run([]string{"get", fmt.Sprintf("pkgi/%s", name), "-o", "yaml"})
 		err := yaml.Unmarshal([]byte(out), &cr)
 		if err != nil {
 			return fmt.Errorf("Failed to unmarshal: %s", err)
@@ -277,7 +272,7 @@ stringData:
 	})
 }
 
-func Test_PackageInstalled_FromInstalledPackage_DeletionFailureBlocks(t *testing.T) {
+func Test_PackageInstalled_FromPackageInstall_DeletionFailureBlocks(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
@@ -299,12 +294,12 @@ spec:
       image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:0ae0f32ef92d2362339b47055a6ea2042bc114a7dd36cf339bf05df4d1cc1b9b
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
-kind: InstalledPackage
+kind: PackageInstall
 metadata:
   name: %s
   namespace: %s
   annotations:
-    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/installedpackages
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/packageinstalls
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   packageVersionRef:
@@ -323,23 +318,23 @@ spec:
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
 			RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "ipkg/" + name, "--timeout", "1m"})
+		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
 	})
 
-	logger.Section("Delete service account so that InstalledPackage deletion would fail", func() {
-		kubectl.Run([]string{"delete", "serviceaccount", "kappctrl-e2e-ns-sa"})	
+	logger.Section("Delete service account so that PackageInstall deletion would fail", func() {
+		kubectl.Run([]string{"delete", "serviceaccount", "kappctrl-e2e-ns-sa"})
 	})
 
-	logger.Section("Check that deletion of InstalledPackage results in failure conditions", func() {
+	logger.Section("Check that deletion of PackageInstall results in failure conditions", func() {
 		// No waiting for deletion since it's blocked
-		kubectl.Run([]string{"delete", "ipkg", name, "--wait=false"})
-		kubectl.Run([]string{"wait", "--for=condition=DeleteFailed", "ipkg", name, "--timeout", "1m"})
+		kubectl.Run([]string{"delete", "pkgi", name, "--wait=false"})
+		kubectl.Run([]string{"wait", "--for=condition=DeleteFailed", "pkgi", name, "--timeout", "1m"})
 	})
 
 	logger.Section("Bring back service account and see that kubectl delete succeeds", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-", "--filter-kind", "ServiceAccount"},
 			RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
-		kubectl.Run([]string{"delete", "ipkg", name, "--wait=true"})
+		kubectl.Run([]string{"delete", "pkgi", name, "--wait=true"})
 	})
 }

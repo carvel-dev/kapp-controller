@@ -12,8 +12,8 @@ type FakePackagingV1alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakePackagingV1alpha1) InstalledPackages(namespace string) v1alpha1.InstalledPackageInterface {
-	return &FakeInstalledPackages{c, namespace}
+func (c *FakePackagingV1alpha1) PackageInstalls(namespace string) v1alpha1.PackageInstallInterface {
+	return &FakePackageInstalls{c, namespace}
 }
 
 func (c *FakePackagingV1alpha1) PackageRepositories(namespace string) v1alpha1.PackageRepositoryInterface {

@@ -1,7 +1,7 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package installedpkg
+package packageinstall
 
 import (
 	"reflect"
@@ -31,13 +31,13 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 	// Load package into fake client
 	fakePkgClient := fake.NewSimpleClientset(&expectedPackageVersion)
 
-	// InstalledPackage that has PackageRef with prerelease
-	ip := InstalledPackageCR{
-		model: &pkgingv1alpha1.InstalledPackage{
+	// PackageInstall that has PackageRef with prerelease
+	ip := PackageInstallCR{
+		model: &pkgingv1alpha1.PackageInstall{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "instl-pkg-prerelease",
 			},
-			Spec: pkgingv1alpha1.InstalledPackageSpec{
+			Spec: pkgingv1alpha1.PackageInstallSpec{
 				PackageVersionRef: &pkgingv1alpha1.PackageVersionRef{
 					PackageName: "pkg.test.carvel.dev",
 					VersionSelection: &versions.VersionSelectionSemver{
@@ -87,13 +87,13 @@ func Test_PackageRefUsesName(t *testing.T) {
 	// Load package into fake client
 	fakePkgClient := fake.NewSimpleClientset(&expectedPackageVersion, &alternatePackageVersion)
 
-	// InstalledPackage that has PackageRef with prerelease
-	ip := InstalledPackageCR{
-		model: &pkgingv1alpha1.InstalledPackage{
+	// PackageInstall that has PackageRef with prerelease
+	ip := PackageInstallCR{
+		model: &pkgingv1alpha1.PackageInstall{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "instl-pkg",
 			},
-			Spec: pkgingv1alpha1.InstalledPackageSpec{
+			Spec: pkgingv1alpha1.PackageInstallSpec{
 				PackageVersionRef: &pkgingv1alpha1.PackageVersionRef{
 					PackageName: "expected-pkg",
 					VersionSelection: &versions.VersionSelectionSemver{

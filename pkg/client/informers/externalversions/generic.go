@@ -49,8 +49,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Kappctrl().V1alpha1().Apps().Informer()}, nil
 
 		// Group=packaging.carvel.dev, Version=v1alpha1
-	case packagingv1alpha1.SchemeGroupVersion.WithResource("installedpackages"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Packaging().V1alpha1().InstalledPackages().Informer()}, nil
+	case packagingv1alpha1.SchemeGroupVersion.WithResource("packageinstalls"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Packaging().V1alpha1().PackageInstalls().Informer()}, nil
 	case packagingv1alpha1.SchemeGroupVersion.WithResource("packagerepositories"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Packaging().V1alpha1().PackageRepositories().Informer()}, nil
 

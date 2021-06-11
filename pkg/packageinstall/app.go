@@ -1,7 +1,7 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package installedpkg
+package packageinstall
 
 import (
 	"sort"
@@ -25,7 +25,7 @@ const (
 	ExtYttDataValuesOverlaysAnnKey = "ext.packaging.carvel.dev/ytt-data-values-overlays"
 )
 
-func NewApp(existingApp *v1alpha1.App, installedPkg *pkgingv1alpha1.InstalledPackage, pkgVersion datapkgingv1alpha1.PackageVersion) (*v1alpha1.App, error) {
+func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall, pkgVersion datapkgingv1alpha1.PackageVersion) (*v1alpha1.App, error) {
 	desiredApp := existingApp.DeepCopy()
 
 	if _, found := existingApp.Annotations[ManuallyControlledAnnKey]; found {
@@ -33,17 +33,17 @@ func NewApp(existingApp *v1alpha1.App, installedPkg *pkgingv1alpha1.InstalledPac
 		return desiredApp, nil
 	}
 
-	desiredApp.Name = installedPkg.Name
-	desiredApp.Namespace = installedPkg.Namespace
+	desiredApp.Name = pkgInstall.Name
+	desiredApp.Namespace = pkgInstall.Namespace
 	desiredApp.Spec = *pkgVersion.Spec.Template.Spec
-	desiredApp.Spec.ServiceAccountName = installedPkg.Spec.ServiceAccountName
-	desiredApp.Spec.SyncPeriod = installedPkg.Spec.SyncPeriod
-	desiredApp.Spec.NoopDelete = installedPkg.Spec.NoopDelete
-	desiredApp.Spec.Paused = installedPkg.Spec.Paused
-	desiredApp.Spec.Canceled = installedPkg.Spec.Canceled
-	desiredApp.Spec.Cluster = installedPkg.Spec.Cluster
+	desiredApp.Spec.ServiceAccountName = pkgInstall.Spec.ServiceAccountName
+	desiredApp.Spec.SyncPeriod = pkgInstall.Spec.SyncPeriod
+	desiredApp.Spec.NoopDelete = pkgInstall.Spec.NoopDelete
+	desiredApp.Spec.Paused = pkgInstall.Spec.Paused
+	desiredApp.Spec.Canceled = pkgInstall.Spec.Canceled
+	desiredApp.Spec.Cluster = pkgInstall.Spec.Cluster
 
-	err := controllerutil.SetControllerReference(installedPkg, desiredApp, scheme.Scheme)
+	err := controllerutil.SetControllerReference(pkgInstall, desiredApp, scheme.Scheme)
 	if err != nil {
 		return &v1alpha1.App{}, err
 	}
@@ -56,7 +56,7 @@ func NewApp(existingApp *v1alpha1.App, installedPkg *pkgingv1alpha1.InstalledPac
 			if !valuesApplied {
 				valuesApplied = true
 
-				for _, value := range installedPkg.Spec.Values {
+				for _, value := range pkgInstall.Spec.Values {
 					templateStep.HelmTemplate.ValuesFrom = append(templateStep.HelmTemplate.ValuesFrom, kcv1alpha1.AppTemplateValuesSource{
 						SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
 							Name: value.SecretRef.Name,
@@ -70,7 +70,7 @@ func NewApp(existingApp *v1alpha1.App, installedPkg *pkgingv1alpha1.InstalledPac
 			if !yttPathsApplied {
 				yttPathsApplied = true
 
-				for _, secretName := range secretNamesFromAnn(installedPkg) {
+				for _, secretName := range secretNamesFromAnn(pkgInstall) {
 					if templateStep.Ytt.Inline == nil {
 						templateStep.Ytt.Inline = &kcv1alpha1.AppFetchInline{}
 					}
@@ -85,11 +85,11 @@ func NewApp(existingApp *v1alpha1.App, installedPkg *pkgingv1alpha1.InstalledPac
 			if !valuesApplied {
 				valuesApplied = true
 
-				if _, found := installedPkg.Annotations[ExtYttDataValuesOverlaysAnnKey]; found {
+				if _, found := pkgInstall.Annotations[ExtYttDataValuesOverlaysAnnKey]; found {
 					if templateStep.Ytt.Inline == nil {
 						templateStep.Ytt.Inline = &kcv1alpha1.AppFetchInline{}
 					}
-					for _, value := range installedPkg.Spec.Values {
+					for _, value := range pkgInstall.Spec.Values {
 						templateStep.Ytt.Inline.PathsFrom = append(templateStep.Ytt.Inline.PathsFrom, kcv1alpha1.AppFetchInlineSource{
 							SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
 								Name: value.SecretRef.Name,
@@ -97,7 +97,7 @@ func NewApp(existingApp *v1alpha1.App, installedPkg *pkgingv1alpha1.InstalledPac
 						})
 					}
 				} else {
-					for _, value := range installedPkg.Spec.Values {
+					for _, value := range pkgInstall.Spec.Values {
 						templateStep.Ytt.ValuesFrom = append(templateStep.Ytt.ValuesFrom, kcv1alpha1.AppTemplateValuesSource{
 							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
 								Name: value.SecretRef.Name,
@@ -114,7 +114,7 @@ func NewApp(existingApp *v1alpha1.App, installedPkg *pkgingv1alpha1.InstalledPac
 	return desiredApp, nil
 }
 
-func secretNamesFromAnn(installedPkg *pkgingv1alpha1.InstalledPackage) []string {
+func secretNamesFromAnn(installedPkg *pkgingv1alpha1.PackageInstall) []string {
 	var suffixes []string
 	suffixToSecretName := map[string]string{}
 

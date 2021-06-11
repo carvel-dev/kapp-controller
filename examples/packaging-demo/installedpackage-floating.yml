@@ -1,6 +1,6 @@
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
-kind: InstalledPackage
+kind: PackageInstall
 metadata:
   name: package-demo
   namespace: default

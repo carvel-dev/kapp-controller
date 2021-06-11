@@ -22,7 +22,7 @@ rules:
   resources: ["apps", "apps/status"]
   verbs: ["*"]
 - apiGroups: ["packaging.carvel.dev"]
-  resources: ["installedpackages", "installedpackages/status"]
+  resources: ["packageinstalls", "packageinstalls/status"]
   verbs: ["*"]
 - apiGroups: ["packaging.carvel.dev"]
   resources: ["packagerepositories", "packagerepositories/status"]
