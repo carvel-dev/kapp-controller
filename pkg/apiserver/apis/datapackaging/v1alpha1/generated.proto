@@ -41,28 +41,6 @@ message PackageList {
   repeated Package items = 2;
 }
 
-message PackageSpec {
-  optional string packageName = 1;
-
-  optional string version = 2;
-
-  repeated string licenses = 3;
-
-  optional string releasedAt = 4;
-
-  optional string capacityRequirementsDescription = 5;
-
-  optional string releaseNotes = 6;
-
-  optional AppTemplateSpec template = 7;
-
-  // valuesSchema can be used to show template values that
-  // can be configured by users when a Package is installed
-  // in an OpenAPI schema format.
-  // +optional
-  optional ValuesSchema valuesSchema = 8;
-}
-
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 message PackageMetadata {
@@ -99,6 +77,28 @@ message PackageMetadataSpec {
   repeated string categories = 7;
 
   optional string supportDescription = 8;
+}
+
+message PackageSpec {
+  optional string refName = 1;
+
+  optional string version = 2;
+
+  repeated string licenses = 3;
+
+  optional string releasedAt = 4;
+
+  optional string capacityRequirementsDescription = 5;
+
+  optional string releaseNotes = 6;
+
+  optional AppTemplateSpec template = 7;
+
+  // valuesSchema can be used to show template values that
+  // can be configured by users when a Package is installed
+  // in an OpenAPI schema format.
+  // +optional
+  optional ValuesSchema valuesSchema = 8;
 }
 
 message ValuesSchema {
