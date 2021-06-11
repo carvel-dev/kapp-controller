@@ -28,7 +28,7 @@ kind: Package
 metadata:
   name: %s
 spec:
-  packageMetadataName: test-pkg.carvel.dev
+  refName: test-pkg.carvel.dev
   version: 1.0.0
   template:
     spec:
@@ -85,7 +85,7 @@ kind: Package
 metadata:
   name: %s.%s
 spec:
-  packageMetadataName: %s
+  refName: %s
   version: %s
   valuesSchema:
     openAPIv3:
@@ -161,7 +161,7 @@ apiVersion: data.packaging.carvel.dev/v1alpha1
 metadata:
   name: %[1]s.1.0.0
 spec:
-  packageMetadataName: %[1]s
+  refName: %[1]s
   version: 1.0.0
   template:
     spec:
@@ -192,7 +192,7 @@ apiVersion: data.packaging.carvel.dev/v1alpha1
 metadata:
   name: %[2]s.1.0.0
 spec:
-  packageMetadataName: %[2]s
+  refName: %[2]s
   version: 1.0.0
   template:
     spec:
@@ -224,7 +224,7 @@ spec:
 
 	logger.Section("check field selector", func() {
 		out, err := kubectl.RunWithOpts([]string{"get", "pkg",
-			"--field-selector", fmt.Sprintf("spec.packageMetadataName=%s", packageName)}, RunOpts{AllowError: true})
+			"--field-selector", fmt.Sprintf("spec.refName=%s", packageName)}, RunOpts{AllowError: true})
 
 		if err != nil {
 			t.Fatalf("Expected field selector to successfully return a package but got error: %v", err)
@@ -251,7 +251,7 @@ metadata:
   name: pkg1.test.carvel.dev.1.0.0-global
   namespace: %s
 spec:
-  packageMetadataName: pkg1.test.carvel.dev
+  refName: pkg1.test.carvel.dev
   version: 1.0.0
   template:
     spec: {}
@@ -262,7 +262,7 @@ metadata:
   name: pkg1.test.carvel.dev.1.0.0
   namespace: %s
 spec:
-  packageMetadataName: pkg1.test.carvel.dev
+  refName: pkg1.test.carvel.dev
   version: 1.0.0
   template:
     spec: {}`, globalNS, localNS)
@@ -313,7 +313,7 @@ metadata:
   name: pkg1.test.carvel.dev.1.0.0
   namespace: %[1]s
 spec:
-  packageMetadataName: pkg1.test.carvel.dev
+  refName: pkg1.test.carvel.dev
   version: 1.0.0
   template:
     spec: {}
@@ -324,7 +324,7 @@ metadata:
   name: pkg1.test.carvel.dev.1.0.0-global
   namespace: %[2]s
 spec:
-  packageMetadataName: pkg1.test.carvel.dev
+  refName: pkg1.test.carvel.dev
   version: 1.0.0
   template:
     spec: {}`, localNS, globalNS)

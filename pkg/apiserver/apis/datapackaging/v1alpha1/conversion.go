@@ -13,7 +13,7 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Package"),
 		func(label, value string) (string, string, error) {
 			switch label {
-			case "spec.packageMetadataName", "metadata.name", "metadata.namespace":
+			case "spec.refName", "metadata.name", "metadata.namespace":
 				return label, value, nil
 			default:
 				return "", "", fmt.Errorf("field label %q not supported for Package", label)

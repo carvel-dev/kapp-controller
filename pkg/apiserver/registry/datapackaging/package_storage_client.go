@@ -100,7 +100,7 @@ func (t PackageTranslator) ToExternalWatcher(intObjWatcher watch.Interface, fiel
 		}
 
 		if pv, ok := evt.Object.(*datapackaging.Package); ok {
-			fieldSet := fields.Set{"spec.packageMetadataName": pv.Spec.PackageMetadataName}
+			fieldSet := fields.Set{"spec.refName": pv.Spec.RefName}
 			if fieldSelector.Matches(fieldSet) {
 				return true
 			}

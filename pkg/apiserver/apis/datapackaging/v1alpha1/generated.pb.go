@@ -585,9 +585,9 @@ func (m *PackageSpec) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i = encodeVarintGenerated(dAtA, i, uint64(len(m.Version)))
 	i--
 	dAtA[i] = 0x12
-	i -= len(m.PackageMetadataName)
-	copy(dAtA[i:], m.PackageMetadataName)
-	i = encodeVarintGenerated(dAtA, i, uint64(len(m.PackageMetadataName)))
+	i -= len(m.RefName)
+	copy(dAtA[i:], m.RefName)
+	i = encodeVarintGenerated(dAtA, i, uint64(len(m.RefName)))
 	i--
 	dAtA[i] = 0xa
 	return len(dAtA) - i, nil
@@ -863,7 +863,7 @@ func (m *PackageSpec) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.PackageMetadataName)
+	l = len(m.RefName)
 	n += 1 + l + sovGenerated(uint64(l))
 	l = len(m.Version)
 	n += 1 + l + sovGenerated(uint64(l))
@@ -1018,7 +1018,7 @@ func (this *PackageSpec) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&PackageSpec{`,
-		`PackageMetadataName:` + fmt.Sprintf("%v", this.PackageMetadataName) + `,`,
+		`RefName:` + fmt.Sprintf("%v", this.RefName) + `,`,
 		`Version:` + fmt.Sprintf("%v", this.Version) + `,`,
 		`Licenses:` + fmt.Sprintf("%v", this.Licenses) + `,`,
 		`ReleasedAt:` + fmt.Sprintf("%v", this.ReleasedAt) + `,`,
@@ -1541,7 +1541,7 @@ func (m *PackageSpec) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PackageMetadataName", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field RefName", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1569,7 +1569,7 @@ func (m *PackageSpec) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PackageMetadataName = string(dAtA[iNdEx:postIndex])
+			m.RefName = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {

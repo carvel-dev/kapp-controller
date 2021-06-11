@@ -49,7 +49,7 @@ metadata:
   name: pkg.test.carvel.dev.1.0.0
   namespace: %[1]s
 spec:
-  packageMetadataName: pkg.test.carvel.dev
+  refName: pkg.test.carvel.dev
   version: 1.0.0
   licenses:
   - Apache 2.0
@@ -80,7 +80,7 @@ metadata:
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   packageRef:
-    packageMetadataName: pkg.test.carvel.dev
+    refName: pkg.test.carvel.dev
     versionSelection:
       constraints: 1.0.0
   values:
@@ -192,7 +192,7 @@ kind: Package
 metadata:
   name: pkg.fail.carvel.dev.1.0.0
 spec:
-  packageMetadataName: pkg.fail.carvel.dev
+  refName: pkg.fail.carvel.dev
   version: 1.0.0
   template:
     spec:
@@ -223,7 +223,7 @@ metadata:
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   packageRef:
-    packageMetadataName: pkg.fail.carvel.dev
+    refName: pkg.fail.carvel.dev
     versionSelection:
       constraints: 1.0.0
   values:
@@ -291,7 +291,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:f13b454eba5ee3d1f31f6d924cf2f3b2cba1fb3a89d4485f1d227a020e962991
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:62d187c044fd6a5c57ac870733fe4413ebf7e2909d8b6267707c5dd2080821e6
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageInstall
@@ -303,7 +303,7 @@ metadata:
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   packageRef:
-    packageMetadataName: pkg.test.carvel.dev
+    refName: pkg.test.carvel.dev
     versionSelection:
       constraints: 1.0.0
 `, name, env.Namespace) + sas.ForNamespaceYAML()

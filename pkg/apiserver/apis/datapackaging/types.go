@@ -58,7 +58,7 @@ type PackageMetadataList struct {
 }
 
 type PackageSpec struct {
-	PackageMetadataName             string   `json:"packageMetadataName,omitempty"`
+	RefName                         string   `json:"refName,omitempty"`
 	Version                         string   `json:"version,omitempty"`
 	Licenses                        []string `json:"licenses,omitempty"`
 	ReleasedAt                      string   `json:"releasedAt,omitempty"`

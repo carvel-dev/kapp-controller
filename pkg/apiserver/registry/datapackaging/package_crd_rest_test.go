@@ -191,7 +191,7 @@ func TestPackageVersionUpdateDoesntUpdateGlobal(t *testing.T) {
 	globalPackageVersion := globalIntPackageVersion()
 	namespacedPackageVersion := namespacedIntPackageVersion()
 	name := globalPackageVersion.Name
-	packageName := globalPackageVersion.Spec.PackageMetadataName
+	packageName := globalPackageVersion.Spec.RefName
 	version := globalPackageVersion.Spec.Version
 	originalReleaseNotes := globalPackageVersion.Spec.ReleaseNotes
 	newReleaseNotes := "im-new"
@@ -232,7 +232,7 @@ func TestPackageVersionUpdateDoesntUpdateGlobal(t *testing.T) {
 func TestPackageVersionUpdateCreatesInNS(t *testing.T) {
 	globalPackageVersion := globalIntPackageVersion()
 	name := globalPackageVersion.Name
-	packageName := globalPackageVersion.Spec.PackageMetadataName
+	packageName := globalPackageVersion.Spec.RefName
 	version := globalPackageVersion.Spec.Version
 	originalReleaseNotes := globalPackageVersion.Spec.ReleaseNotes
 	newReleaseNotes := "im-new"
@@ -353,9 +353,9 @@ func globalIntPackageVersion() *v1alpha1.InternalPackage {
 			Name:      "global-package-version.carvel.dev.1.0.0",
 		},
 		Spec: datapackaging.PackageSpec{
-			Version:             "1.0.0",
-			PackageMetadataName: "global-package-version.carvel.dev",
-			ReleaseNotes:        "GLOBAL",
+			Version:      "1.0.0",
+			RefName:      "global-package-version.carvel.dev",
+			ReleaseNotes: "GLOBAL",
 		},
 	}
 }
@@ -367,9 +367,9 @@ func namespacedIntPackageVersion() *v1alpha1.InternalPackage {
 			Name:      "namespaced-package-version.carvel.dev.1.0.0",
 		},
 		Spec: datapackaging.PackageSpec{
-			Version:             "1.0.0",
-			PackageMetadataName: "namespaced-package-version.carvel.dev",
-			ReleaseNotes:        "NAMESPACED",
+			Version:      "1.0.0",
+			RefName:      "namespaced-package-version.carvel.dev",
+			ReleaseNotes: "NAMESPACED",
 		},
 	}
 }
@@ -382,9 +382,9 @@ func overrideIntPackageVersion() *v1alpha1.InternalPackage {
 			Name:      "global-package-version.carvel.dev.mismatch",
 		},
 		Spec: datapackaging.PackageSpec{
-			Version:             "1.0.0",
-			PackageMetadataName: "global-package-version.carvel.dev",
-			ReleaseNotes:        "OVERRIDE",
+			Version:      "1.0.0",
+			RefName:      "global-package-version.carvel.dev",
+			ReleaseNotes: "OVERRIDE",
 		},
 	}
 }
@@ -396,9 +396,9 @@ func excludedNonGlobalIntPackageVersion() *v1alpha1.InternalPackage {
 			Name:      "excluded-package-version.carvel.dev.1.0.0",
 		},
 		Spec: datapackaging.PackageSpec{
-			Version:             "1.0.0",
-			PackageMetadataName: "excluded-package-version.carvel.dev",
-			ReleaseNotes:        "EXCLUDED",
+			Version:      "1.0.0",
+			RefName:      "excluded-package-version.carvel.dev",
+			ReleaseNotes: "EXCLUDED",
 		},
 	}
 }
@@ -409,8 +409,8 @@ func updateReleaseNotesFn(newNote, resourceName, packageName, version string) fu
 		if pkgv.Name == "" {
 			pkgv.Name = resourceName
 		}
-		if pkgv.Spec.PackageMetadataName == "" {
-			pkgv.Spec.PackageMetadataName = packageName
+		if pkgv.Spec.RefName == "" {
+			pkgv.Spec.RefName = packageName
 		}
 		if pkgv.Spec.Version == "" {
 			pkgv.Spec.Version = version

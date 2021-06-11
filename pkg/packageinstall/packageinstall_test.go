@@ -23,8 +23,8 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 			Name: "pkg.test.carvel.dev",
 		},
 		Spec: datapkgingv1alpha1.PackageSpec{
-			PackageMetadataName: "pkg.test.carvel.dev",
-			Version:             "3.0.0-rc.1",
+			RefName: "pkg.test.carvel.dev",
+			Version: "3.0.0-rc.1",
 		},
 	}
 
@@ -39,7 +39,7 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 			},
 			Spec: pkgingv1alpha1.PackageInstallSpec{
 				PackageRef: &pkgingv1alpha1.PackageRef{
-					PackageMetadataName: "pkg.test.carvel.dev",
+					RefName: "pkg.test.carvel.dev",
 					VersionSelection: &versions.VersionSelectionSemver{
 						Constraints: "3.0.0-rc.1",
 						Prereleases: &versions.VersionSelectionSemverPrereleases{
@@ -69,8 +69,8 @@ func Test_PackageRefUsesName(t *testing.T) {
 			Name: "expected-pkg",
 		},
 		Spec: datapkgingv1alpha1.PackageSpec{
-			PackageMetadataName: "expected-pkg",
-			Version:             "1.0.0",
+			RefName: "expected-pkg",
+			Version: "1.0.0",
 		},
 	}
 
@@ -79,8 +79,8 @@ func Test_PackageRefUsesName(t *testing.T) {
 			Name: "alternate-pkg",
 		},
 		Spec: datapkgingv1alpha1.PackageSpec{
-			PackageMetadataName: "alternate-pkg",
-			Version:             "1.0.0",
+			RefName: "alternate-pkg",
+			Version: "1.0.0",
 		},
 	}
 
@@ -95,7 +95,7 @@ func Test_PackageRefUsesName(t *testing.T) {
 			},
 			Spec: pkgingv1alpha1.PackageInstallSpec{
 				PackageRef: &pkgingv1alpha1.PackageRef{
-					PackageMetadataName: "expected-pkg",
+					RefName: "expected-pkg",
 					VersionSelection: &versions.VersionSelectionSemver{
 						Constraints: "1.0.0",
 					},

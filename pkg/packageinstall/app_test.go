@@ -31,8 +31,8 @@ func TestAppExtYttPathsFromSecretNameAnn(t *testing.T) {
 
 	pkgVersion := datapkgingv1alpha1.Package{
 		Spec: datapkgingv1alpha1.PackageSpec{
-			PackageMetadataName: "expec-pkg",
-			Version:             "1.5.0",
+			RefName: "expec-pkg",
+			Version: "1.5.0",
 			Template: datapkgingv1alpha1.AppTemplateSpec{
 				Spec: &kcv1alpha1.AppSpec{
 					Template: []kcv1alpha1.AppTemplate{
@@ -115,8 +115,8 @@ func TestAppExtYttDataValuesOverlaysAnn(t *testing.T) {
 
 	pkgVersion := datapkgingv1alpha1.Package{
 		Spec: datapkgingv1alpha1.PackageSpec{
-			PackageMetadataName: "expec-pkg",
-			Version:             "1.5.0",
+			RefName: "expec-pkg",
+			Version: "1.5.0",
 			Template: datapkgingv1alpha1.AppTemplateSpec{
 				Spec: &kcv1alpha1.AppSpec{
 					Template: []kcv1alpha1.AppTemplate{
@@ -183,8 +183,8 @@ func TestAppYttValues(t *testing.T) {
 
 	pkgVersion := datapkgingv1alpha1.Package{
 		Spec: datapkgingv1alpha1.PackageSpec{
-			PackageMetadataName: "expec-pkg",
-			Version:             "1.5.0",
+			RefName: "expec-pkg",
+			Version: "1.5.0",
 			Template: datapkgingv1alpha1.AppTemplateSpec{
 				Spec: &kcv1alpha1.AppSpec{
 					Template: []kcv1alpha1.AppTemplate{
@@ -251,8 +251,8 @@ func TestAppHelmTemplateValues(t *testing.T) {
 
 	pkgVersion := datapkgingv1alpha1.Package{
 		Spec: datapkgingv1alpha1.PackageSpec{
-			PackageMetadataName: "expec-pkg",
-			Version:             "1.5.0",
+			RefName: "expec-pkg",
+			Version: "1.5.0",
 			Template: datapkgingv1alpha1.AppTemplateSpec{
 				Spec: &kcv1alpha1.AppSpec{
 					Template: []kcv1alpha1.AppTemplate{
@@ -330,8 +330,8 @@ func TestAppManuallyControlled(t *testing.T) {
 
 	pkgVersion := datapkgingv1alpha1.Package{
 		Spec: datapkgingv1alpha1.PackageSpec{
-			PackageMetadataName: "expec-pkg",
-			Version:             "1.5.0",
+			RefName: "expec-pkg",
+			Version: "1.5.0",
 			Template: datapkgingv1alpha1.AppTemplateSpec{
 				Spec: &kcv1alpha1.AppSpec{
 					Template: []kcv1alpha1.AppTemplate{
