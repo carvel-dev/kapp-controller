@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 	goexec "os/exec"
 	"path/filepath"
 
@@ -86,6 +87,8 @@ func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 	var stdoutBs, stderrBs bytes.Buffer
 
 	cmd := goexec.Command(helmCmdCtx.BinaryName, args...)
+	// "Reset" kubernetes vars just in case, even though helm template should not reach out to cluster
+	cmd.Env = append(os.Environ(), "KUBERNETES_SERVICE_HOST=not-real", "KUBERNETES_SERVICE_PORT=not-real")
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 

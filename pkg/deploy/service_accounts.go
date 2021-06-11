@@ -21,26 +21,34 @@ func NewServiceAccounts(coreClient kubernetes.Interface) *ServiceAccounts {
 	return &ServiceAccounts{coreClient}
 }
 
-func (s *ServiceAccounts) Find(genericOpts GenericOpts, saName string) (GenericOpts, error) {
-	if len(saName) == 0 {
-		return genericOpts, nil
-	}
-
+func (s *ServiceAccounts) Find(genericOpts GenericOpts, saName string) (ProcessedGenericOpts, error) {
 	kubeconfigYAML, err := s.fetchServiceAccount(genericOpts.Namespace, saName)
 	if err != nil {
-		return genericOpts, err
+		return ProcessedGenericOpts{}, err
 	}
 
-	genericOptsForSA := GenericOpts{
-		Name:           genericOpts.Name,
-		Namespace:      "", // Assume kubeconfig contains preferred namespace
-		KubeconfigYAML: kubeconfigYAML,
+	kubeconfigRestricted, err := NewKubeconfigRestricted(kubeconfigYAML)
+	if err != nil {
+		return ProcessedGenericOpts{}, err
 	}
 
-	return genericOptsForSA, nil
+	pgoForSA := ProcessedGenericOpts{
+		Name:       genericOpts.Name,
+		Namespace:  "", // Assume kubeconfig contains preferred namespace from SA
+		Kubeconfig: kubeconfigRestricted,
+	}
+
+	return pgoForSA, nil
 }
 
 func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (string, error) {
+	if len(nsName) == 0 {
+		return "", fmt.Errorf("Internal inconsistency: Expected namespace name to not be empty")
+	}
+	if len(saName) == 0 {
+		return "", fmt.Errorf("Internal inconsistency: Expected service account name to not be empty")
+	}
+
 	sa, err := s.coreClient.CoreV1().ServiceAccounts(nsName).Get(context.Background(), saName, metav1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("Getting service account: %s", err)
@@ -89,7 +97,6 @@ clusters:
 users:
 - name: dst-user
   user:
-    as-user-extra: {}
     token: "%s"
 contexts:
 - name: dst-ctx
