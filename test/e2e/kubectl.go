@@ -5,8 +5,8 @@ package e2e
 
 import (
 	"bytes"
+	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -27,23 +27,18 @@ func (k Kubectl) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	if !opts.NoNamespace {
 		args = append(args, []string{"-n", k.namespace}...)
 	}
+	ctx := opts.Ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	k.l.Debugf("Running '%s'...\n", k.cmdDesc(args))
 
 	var stderr bytes.Buffer
 	var stdout bytes.Buffer
 
-	cmd := exec.Command("kubectl", args...)
+	cmd := exec.CommandContext(ctx, "kubectl", args...)
 	cmd.Stderr = &stderr
-
-	if opts.CancelCh != nil {
-		go func() {
-			select {
-			case <-opts.CancelCh:
-				cmd.Process.Signal(os.Interrupt)
-			}
-		}()
-	}
 
 	if opts.StdoutWriter != nil {
 		cmd.Stdout = opts.StdoutWriter

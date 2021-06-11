@@ -9,10 +9,9 @@ import (
 )
 
 // +genclient
-// +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:shortName=pkgr,scope=Cluster
+// +kubebuilder:resource:shortName=pkgr
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
 type PackageRepository struct {
@@ -37,6 +36,14 @@ type PackageRepositoryList struct {
 }
 
 type PackageRepositorySpec struct {
+	// Paused when set to true will ignore all pending changes,
+	// once it set back to false, pending changes will be applied
+	// +optional
+	Paused bool `json:"paused,omitempty"`
+	// Controls frequency of PackageRepository reconciliation
+	// +optional
+	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
+
 	Fetch *PackageRepositoryFetch `json:"fetch"`
 }
 
@@ -52,6 +59,16 @@ type PackageRepositoryFetch struct {
 }
 
 type PackageRepositoryStatus struct {
+	// +optional
+	Fetch *v1alpha1.AppStatusFetch `json:"fetch,omitempty"`
+	// +optional
+	Template *v1alpha1.AppStatusTemplate `json:"template,omitempty"`
+	// +optional
+	Deploy *v1alpha1.AppStatusDeploy `json:"deploy,omitempty"`
+	// +optional
+	ConsecutiveReconcileSuccesses int `json:"consecutiveReconcileSuccesses,omitempty"`
+	// +optional
+	ConsecutiveReconcileFailures int `json:"consecutiveReconcileFailures,omitempty"`
 	// +optional
 	v1alpha1.GenericStatus `json:",inline"`
 }

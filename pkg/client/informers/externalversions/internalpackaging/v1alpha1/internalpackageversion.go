@@ -26,32 +26,33 @@ type InternalPackageVersionInformer interface {
 type internalPackageVersionInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
+	namespace        string
 }
 
 // NewInternalPackageVersionInformer constructs a new informer for InternalPackageVersion type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewInternalPackageVersionInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredInternalPackageVersionInformer(client, resyncPeriod, indexers, nil)
+func NewInternalPackageVersionInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredInternalPackageVersionInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
 // NewFilteredInternalPackageVersionInformer constructs a new informer for InternalPackageVersion type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredInternalPackageVersionInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredInternalPackageVersionInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.InternalV1alpha1().InternalPackageVersions().List(context.TODO(), options)
+				return client.InternalV1alpha1().InternalPackageVersions(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.InternalV1alpha1().InternalPackageVersions().Watch(context.TODO(), options)
+				return client.InternalV1alpha1().InternalPackageVersions(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&internalpackagingv1alpha1.InternalPackageVersion{},
@@ -61,7 +62,7 @@ func NewFilteredInternalPackageVersionInformer(client versioned.Interface, resyn
 }
 
 func (f *internalPackageVersionInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredInternalPackageVersionInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewFilteredInternalPackageVersionInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
 func (f *internalPackageVersionInformer) Informer() cache.SharedIndexInformer {

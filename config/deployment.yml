@@ -21,6 +21,7 @@ spec:
       - name: kapp-controller
         image: kapp-controller
         args:
+        - #@ "-packaging-global-namespace={}".format(data.values.packaging_global_namespace)
         #@ if/end data.values.dangerous_enable_pprof:
         - -dangerous-enable-pprof=true
         env:

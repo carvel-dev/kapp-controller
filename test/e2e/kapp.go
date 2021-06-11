@@ -5,9 +5,9 @@ package e2e
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -26,7 +26,7 @@ type RunOpts struct {
 	StderrWriter io.Writer
 	StdoutWriter io.Writer
 	StdinReader  io.Reader
-	CancelCh     chan struct{}
+	Ctx          context.Context
 	Redact       bool
 	Interactive  bool
 }
@@ -46,11 +46,15 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	if !opts.Interactive {
 		args = append(args, "--yes")
 	}
+	ctx := opts.Ctx
+	if ctx == nil {
+		ctx = context.TODO()
+	}
 
 	k.l.Debugf("Running '%s'...\n", k.cmdDesc(args, opts))
 
 	cmdName := "kapp"
-	cmd := exec.Command(cmdName, args...)
+	cmd := exec.CommandContext(ctx, cmdName, args...)
 	cmd.Stdin = opts.StdinReader
 
 	var stderr, stdout bytes.Buffer
@@ -65,15 +69,6 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 		cmd.Stdout = opts.StdoutWriter
 	} else {
 		cmd.Stdout = &stdout
-	}
-
-	if opts.CancelCh != nil {
-		go func() {
-			select {
-			case <-opts.CancelCh:
-				cmd.Process.Signal(os.Interrupt)
-			}
-		}()
 	}
 
 	err := cmd.Run()

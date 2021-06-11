@@ -17,7 +17,7 @@ import (
 // PackagesGetter has a method to return a PackageInterface.
 // A group's client should implement this interface.
 type PackagesGetter interface {
-	Packages() PackageInterface
+	Packages(namespace string) PackageInterface
 }
 
 // PackageInterface has methods to work with Package resources.
@@ -36,12 +36,14 @@ type PackageInterface interface {
 // packages implements PackageInterface
 type packages struct {
 	client rest.Interface
+	ns     string
 }
 
 // newPackages returns a Packages
-func newPackages(c *DataV1alpha1Client) *packages {
+func newPackages(c *DataV1alpha1Client, namespace string) *packages {
 	return &packages{
 		client: c.RESTClient(),
+		ns:     namespace,
 	}
 }
 
@@ -49,6 +51,7 @@ func newPackages(c *DataV1alpha1Client) *packages {
 func (c *packages) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.Package, err error) {
 	result = &v1alpha1.Package{}
 	err = c.client.Get().
+		Namespace(c.ns).
 		Resource("packages").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
@@ -65,6 +68,7 @@ func (c *packages) List(ctx context.Context, opts v1.ListOptions) (result *v1alp
 	}
 	result = &v1alpha1.PackageList{}
 	err = c.client.Get().
+		Namespace(c.ns).
 		Resource("packages").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -81,6 +85,7 @@ func (c *packages) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interf
 	}
 	opts.Watch = true
 	return c.client.Get().
+		Namespace(c.ns).
 		Resource("packages").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -91,6 +96,7 @@ func (c *packages) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interf
 func (c *packages) Create(ctx context.Context, pkg *v1alpha1.Package, opts v1.CreateOptions) (result *v1alpha1.Package, err error) {
 	result = &v1alpha1.Package{}
 	err = c.client.Post().
+		Namespace(c.ns).
 		Resource("packages").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(pkg).
@@ -103,6 +109,7 @@ func (c *packages) Create(ctx context.Context, pkg *v1alpha1.Package, opts v1.Cr
 func (c *packages) Update(ctx context.Context, pkg *v1alpha1.Package, opts v1.UpdateOptions) (result *v1alpha1.Package, err error) {
 	result = &v1alpha1.Package{}
 	err = c.client.Put().
+		Namespace(c.ns).
 		Resource("packages").
 		Name(pkg.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
@@ -115,6 +122,7 @@ func (c *packages) Update(ctx context.Context, pkg *v1alpha1.Package, opts v1.Up
 // Delete takes name of the package and deletes it. Returns an error if one occurs.
 func (c *packages) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
+		Namespace(c.ns).
 		Resource("packages").
 		Name(name).
 		Body(&opts).
@@ -129,6 +137,7 @@ func (c *packages) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, 
 		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
+		Namespace(c.ns).
 		Resource("packages").
 		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -141,6 +150,7 @@ func (c *packages) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, 
 func (c *packages) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.Package, err error) {
 	result = &v1alpha1.Package{}
 	err = c.client.Patch(pt).
+		Namespace(c.ns).
 		Resource("packages").
 		Name(name).
 		SubResource(subresources...).

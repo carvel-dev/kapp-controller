@@ -9,13 +9,13 @@ import (
 
 type GenericStatus struct {
 	// +optional
-	ObservedGeneration int64 `json:"observedGeneration"`
+	ObservedGeneration int64 `json:"observedGeneration" protobuf:"varint,1,opt,name=observedGeneration"`
 	// +optional
-	Conditions []AppCondition `json:"conditions"`
+	Conditions []AppCondition `json:"conditions" protobuf:"bytes,2,rep,name=conditions"`
 	// +optional
-	FriendlyDescription string `json:"friendlyDescription"`
+	FriendlyDescription string `json:"friendlyDescription" protobuf:"bytes,3,opt,name=friendlyDescription"`
 	// +optional
-	UsefulErrorMessage string `json:"usefulErrorMessage,omitempty"`
+	UsefulErrorMessage string `json:"usefulErrorMessage,omitempty" protobuf:"bytes,4,opt,name=usefulErrorMessage"`
 }
 
 type AppConditionType string
@@ -32,14 +32,14 @@ const (
 // TODO rename to Condition
 // +k8s:openapi-gen=true
 type AppCondition struct {
-	Type   AppConditionType       `json:"type"`
-	Status corev1.ConditionStatus `json:"status"`
+	Type   AppConditionType       `json:"type" protobuf:"bytes,1,opt,name=type,casttype=AppConditionType"`
+	Status corev1.ConditionStatus `json:"status" protobuf:"bytes,2,opt,name=status,casttype=k8s.io/api/core/v1.ConditionStatus"`
 	// Unique, this should be a short, machine understandable string that gives the reason
 	// for condition's last transition. If it reports "ResizeStarted" that means the underlying
 	// persistent volume is being resized.
 	// +optional
-	Reason string `json:"reason,omitempty"`
+	Reason string `json:"reason,omitempty" protobuf:"bytes,3,opt,name=reason"`
 	// Human-readable message indicating details about last transition.
 	// +optional
-	Message string `json:"message,omitempty"`
+	Message string `json:"message,omitempty" protobuf:"bytes,4,opt,name=message"`
 }

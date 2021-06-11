@@ -12,7 +12,6 @@ import (
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
-	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -60,7 +59,7 @@ func NewApp(existingApp *v1alpha1.App, installedPkg *pkgingv1alpha1.InstalledPac
 				for _, value := range installedPkg.Spec.Values {
 					templateStep.HelmTemplate.ValuesFrom = append(templateStep.HelmTemplate.ValuesFrom, kcv1alpha1.AppTemplateValuesSource{
 						SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-							LocalObjectReference: corev1.LocalObjectReference{Name: value.SecretRef.Name},
+							Name: value.SecretRef.Name,
 						},
 					})
 				}
@@ -77,7 +76,7 @@ func NewApp(existingApp *v1alpha1.App, installedPkg *pkgingv1alpha1.InstalledPac
 					}
 					templateStep.Ytt.Inline.PathsFrom = append(templateStep.Ytt.Inline.PathsFrom, kcv1alpha1.AppFetchInlineSource{
 						SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-							LocalObjectReference: corev1.LocalObjectReference{Name: secretName},
+							Name: secretName,
 						},
 					})
 				}
@@ -93,7 +92,7 @@ func NewApp(existingApp *v1alpha1.App, installedPkg *pkgingv1alpha1.InstalledPac
 					for _, value := range installedPkg.Spec.Values {
 						templateStep.Ytt.Inline.PathsFrom = append(templateStep.Ytt.Inline.PathsFrom, kcv1alpha1.AppFetchInlineSource{
 							SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-								LocalObjectReference: corev1.LocalObjectReference{Name: value.SecretRef.Name},
+								Name: value.SecretRef.Name,
 							},
 						})
 					}
@@ -101,7 +100,7 @@ func NewApp(existingApp *v1alpha1.App, installedPkg *pkgingv1alpha1.InstalledPac
 					for _, value := range installedPkg.Spec.Values {
 						templateStep.Ytt.ValuesFrom = append(templateStep.Ytt.ValuesFrom, kcv1alpha1.AppTemplateValuesSource{
 							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								LocalObjectReference: corev1.LocalObjectReference{Name: value.SecretRef.Name},
+								Name: value.SecretRef.Name,
 							},
 						})
 					}

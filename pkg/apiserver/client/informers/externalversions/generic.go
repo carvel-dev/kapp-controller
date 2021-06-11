@@ -39,7 +39,7 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	// Group=data.packaging.carvel.dev, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("packageversions"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Data().V1alpha1().PackageVersions().Informer()}, nil
-	case v1alpha1.SchemeGroupVersion.WithResource("packages"):
+	case v1alpha1.SchemeGroupVersion.WithResource("pkgs"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Data().V1alpha1().Packages().Informer()}, nil
 
 	}
