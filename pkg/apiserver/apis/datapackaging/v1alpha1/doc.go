@@ -7,5 +7,5 @@
 // +k8s:defaulter-gen=TypeMeta
 // +groupName=data.packaging.carvel.dev
 
-// Package v1alpha1 is the v1alpha1 version of the Package API.
+// PackageMetadata v1alpha1 is the v1alpha1 version of the PackageMetadata API.
 package v1alpha1

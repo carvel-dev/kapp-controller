@@ -2,6 +2,6 @@
 
 package v1alpha1
 
-type InternalPackageExpansion interface{}
+type InternalPackageMetadataExpansion interface{}
 
 type InternalPackageVersionExpansion interface{}
