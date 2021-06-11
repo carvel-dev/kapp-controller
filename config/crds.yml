@@ -852,12 +852,12 @@ metadata:
 spec:
   additionalPrinterColumns:
   - JSONPath: .spec.packageRef.refName
-    description: PackageMetadata public name
-    name: PackageMetadata name
+    description: PackageMetadata name
+    name: Package name
     type: string
   - JSONPath: .status.version
     description: PackageMetadata version
-    name: PackageMetadata version
+    name: Package version
     type: string
   - JSONPath: .status.friendlyDescription
     description: Friendly description
