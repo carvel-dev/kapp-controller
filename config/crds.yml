@@ -89,7 +89,7 @@ spec:
               items:
                 type: string
               type: array
-            packageMetadataName:
+            refName:
               type: string
             releaseNotes:
               type: string
@@ -851,7 +851,7 @@ metadata:
   name: packageinstalls.packaging.carvel.dev
 spec:
   additionalPrinterColumns:
-  - JSONPath: .spec.packageVersionRef.packageMetadataName
+  - JSONPath: .spec.packageRef.refName
     description: PackageMetadata public name
     name: PackageMetadata name
     type: string
@@ -910,7 +910,7 @@ spec:
               type: boolean
             packageRef:
               properties:
-                packageMetadataName:
+                refName:
                   type: string
                 versionSelection:
                   properties:

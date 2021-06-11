@@ -122,12 +122,12 @@ func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.List
 
 	packageVersionsMap := make(map[string]datapackaging.Package)
 	for _, pkgVersion := range globalPkgVersions {
-		identifier := pkgVersion.Namespace + "/" + pkgVersion.Spec.PackageMetadataName + "." + pkgVersion.Spec.Version
+		identifier := pkgVersion.Namespace + "/" + pkgVersion.Spec.RefName + "." + pkgVersion.Spec.Version
 		packageVersionsMap[identifier] = pkgVersion
 	}
 
 	for _, pkgVersion := range namespacedPkgVersions {
-		identifier := pkgVersion.Namespace + "/" + pkgVersion.Spec.PackageMetadataName + "." + pkgVersion.Spec.Version
+		identifier := pkgVersion.Namespace + "/" + pkgVersion.Spec.RefName + "." + pkgVersion.Spec.Version
 		packageVersionsMap[identifier] = pkgVersion
 	}
 
@@ -304,7 +304,7 @@ func (r *PackageCRDREST) ConvertToTable(ctx context.Context, obj runtime.Object,
 		pkgVersion := obj.(*datapackaging.Package)
 		table.Rows = append(table.Rows, metav1.TableRow{
 			Cells: []interface{}{
-				pkgVersion.Name, pkgVersion.Spec.PackageMetadataName,
+				pkgVersion.Name, pkgVersion.Spec.RefName,
 				pkgVersion.Spec.Version, time.Since(pkgVersion.ObjectMeta.CreationTimestamp.Time).Round(1 * time.Second).String(),
 			},
 			Object: runtime.RawExtension{Object: obj},
@@ -387,7 +387,7 @@ func (r *PackageCRDREST) applySelector(list *datapackaging.PackageList, selector
 
 	filteredPVs := []datapackaging.Package{}
 	for _, pv := range list.Items {
-		fieldSet := fields.Set{"spec.packageMetadataName": pv.Spec.PackageMetadataName, "metadata.name": pv.Name, "metadata.namespace": pv.Namespace}
+		fieldSet := fields.Set{"spec.refName": pv.Spec.RefName, "metadata.name": pv.Name, "metadata.namespace": pv.Namespace}
 		if selector.Matches(fieldSet) {
 			filteredPVs = append(filteredPVs, pv)
 		}
