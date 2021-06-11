@@ -58,7 +58,7 @@ type PackageMetadataList struct {
 }
 
 type PackageSpec struct {
-	PackageMetadataName             string   `json:"packageMetadataName,omitempty" protobuf:"bytes,1,opt,name=packageName"`
+	RefName                         string   `json:"refName,omitempty" protobuf:"bytes,1,opt,name=packageName"`
 	Version                         string   `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
 	Licenses                        []string `json:"licenses,omitempty" protobuf:"bytes,3,rep,name=licenses"`
 	ReleasedAt                      string   `json:"releasedAt,omitempty" protobuf:"bytes,4,opt,name=releasedAt"`

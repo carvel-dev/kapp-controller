@@ -86,7 +86,7 @@ func (ipvh *PackageInstallVersionHandler) enqueueEligiblePackageInstalls(q workq
 			continue
 		}
 
-		if ip.Spec.PackageRef.PackageMetadataName == pv.Spec.PackageMetadataName && ipvh.isEligibleForVersionUpgrade(pv.Spec.Version, ip) {
+		if ip.Spec.PackageRef.RefName == pv.Spec.RefName && ipvh.isEligibleForVersionUpgrade(pv.Spec.Version, ip) {
 			q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
 				Name:      ip.Name,
 				Namespace: ip.Namespace,

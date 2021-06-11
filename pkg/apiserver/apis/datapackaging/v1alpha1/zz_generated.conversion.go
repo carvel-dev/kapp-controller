@@ -284,7 +284,7 @@ func Convert_datapackaging_PackageVersionList_To_v1alpha1_PackageVersionList(in 
 }
 
 func autoConvert_v1alpha1_PackageVersionSpec_To_datapackaging_PackageVersionSpec(in *PackageSpec, out *datapackaging.PackageSpec, s conversion.Scope) error {
-	out.PackageMetadataName = in.PackageMetadataName
+	out.RefName = in.RefName
 	out.Version = in.Version
 	out.Licenses = *(*[]string)(unsafe.Pointer(&in.Licenses))
 	out.ReleasedAt = in.ReleasedAt
@@ -305,7 +305,7 @@ func Convert_v1alpha1_PackageVersionSpec_To_datapackaging_PackageVersionSpec(in 
 }
 
 func autoConvert_datapackaging_PackageVersionSpec_To_v1alpha1_PackageVersionSpec(in *datapackaging.PackageSpec, out *PackageSpec, s conversion.Scope) error {
-	out.PackageMetadataName = in.PackageMetadataName
+	out.RefName = in.RefName
 	out.Version = in.Version
 	out.Licenses = *(*[]string)(unsafe.Pointer(&in.Licenses))
 	out.ReleasedAt = in.ReleasedAt

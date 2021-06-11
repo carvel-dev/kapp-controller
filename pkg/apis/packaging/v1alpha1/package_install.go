@@ -13,7 +13,7 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName=pkgi
-// +kubebuilder:printcolumn:name=PackageMetadata name,JSONPath=.spec.packageVersionRef.packageMetadataName,description=PackageMetadata public name,type=string
+// +kubebuilder:printcolumn:name=PackageMetadata name,JSONPath=.spec.packageRef.refName,description=PackageMetadata public name,type=string
 // +kubebuilder:printcolumn:name=PackageMetadata version,JSONPath=.status.version,description=PackageMetadata version,type=string
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
@@ -70,7 +70,7 @@ type PackageInstallSpec struct {
 
 type PackageRef struct {
 	// +optional
-	PackageMetadataName string `json:"packageMetadataName,omitempty"`
+	RefName string `json:"refName,omitempty"`
 	// +optional
 	VersionSelection *versions.VersionSelectionSemver `json:"versionSelection,omitempty"`
 }

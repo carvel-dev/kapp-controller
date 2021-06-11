@@ -36,17 +36,17 @@ func ValidatePackageVersion(pv datapackaging.Package) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs,
-		ValidatePackageSpecPackageName(pv.Spec.PackageMetadataName, field.NewPath("spec", "packageName"))...)
+		ValidatePackageSpecPackageName(pv.Spec.RefName, field.NewPath("spec", "packageName"))...)
 
 	allErrs = append(allErrs, ValidatePackageSpecVersion(pv.Spec.Version, field.NewPath("spec", "version"))...)
 
 	allErrs = append(allErrs,
-		ValidatePackageName(pv.ObjectMeta.Name, pv.Spec.PackageMetadataName, field.NewPath("metadata").Child("name"))...)
+		ValidatePackageName(pv.ObjectMeta.Name, pv.Spec.RefName, field.NewPath("metadata").Child("name"))...)
 
 	return allErrs
 }
 
-// validate metdata.name = spec.PackageMetadataName + spec.Version
+// validate metdata.name = spec.RefName + spec.Version
 func ValidatePackageName(pvName, pkgmName string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -70,7 +70,7 @@ func ValidatePackageSpecVersion(version string, fldPath *field.Path) field.Error
 	return allErrs
 }
 
-// validate spec.PackageMetadataName isnt empty
+// validate spec.RefName isnt empty
 func ValidatePackageSpecPackageName(name string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
