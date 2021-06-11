@@ -154,7 +154,7 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.PackageVe
 	versionToPkg := map[string]datapkgingv1alpha1.PackageVersion{}
 
 	for _, pv := range pvList.Items {
-		if pv.Spec.PackageName == pi.model.Spec.PackageVersionRef.PackageName {
+		if pv.Spec.PackageMetadataName == pi.model.Spec.PackageVersionRef.PackageMetadataName {
 			versionStrs = append(versionStrs, pv.Spec.Version)
 			versionToPkg[pv.Spec.Version] = pv
 		}
@@ -172,7 +172,7 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.PackageVe
 	}
 
 	return datapkgingv1alpha1.PackageVersion{}, fmt.Errorf("Could not find package with name '%s' and version '%s'",
-		pi.model.Spec.PackageVersionRef.PackageName, selectedVersion)
+		pi.model.Spec.PackageVersionRef.PackageMetadataName, selectedVersion)
 }
 
 func (pi *PackageInstallCR) reconcileDelete(modelStatus *reconciler.Status) (reconcile.Result, error) {

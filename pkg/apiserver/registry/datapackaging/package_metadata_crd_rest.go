@@ -26,43 +26,43 @@ import (
 
 const excludeGlobalPackagesAnn = "kapp-controller.carvel.dev/exclude-global-packages"
 
-// PackageCRDREST is a rest implementation that proxies the rest endpoints provided by
+// PackageMetadataCRDREST is a rest implementation that proxies the rest endpoints provided by
 // CRDs. This will allow us to introduce the api server without the
 // complexities associated with custom storage options for now.
-type PackageCRDREST struct {
+type PackageMetadataCRDREST struct {
 	crdClient       installclient.Interface
 	nsClient        kubernetes.Interface
 	globalNamespace string
 }
 
 var (
-	_ rest.StandardStorage    = &PackageCRDREST{}
-	_ rest.ShortNamesProvider = &PackageCRDREST{}
+	_ rest.StandardStorage    = &PackageMetadataCRDREST{}
+	_ rest.ShortNamesProvider = &PackageMetadataCRDREST{}
 )
 
-func NewPackageCRDREST(crdClient installclient.Interface, nsClient kubernetes.Interface, globalNS string) *PackageCRDREST {
-	return &PackageCRDREST{crdClient, nsClient, globalNS}
+func NewPackageMetadataCRDREST(crdClient installclient.Interface, nsClient kubernetes.Interface, globalNS string) *PackageMetadataCRDREST {
+	return &PackageMetadataCRDREST{crdClient, nsClient, globalNS}
 }
 
-func (r *PackageCRDREST) ShortNames() []string {
-	return []string{"pkg"}
+func (r *PackageMetadataCRDREST) ShortNames() []string {
+	return []string{"pkgm"}
 }
 
-func (r *PackageCRDREST) New() runtime.Object {
-	return &datapackaging.Package{}
+func (r *PackageMetadataCRDREST) New() runtime.Object {
+	return &datapackaging.PackageMetadata{}
 }
 
-func (r *PackageCRDREST) NewList() runtime.Object {
-	return &datapackaging.PackageList{}
+func (r *PackageMetadataCRDREST) NewList() runtime.Object {
+	return &datapackaging.PackageMetadataList{}
 }
 
-func (r *PackageCRDREST) NamespaceScoped() bool {
+func (r *PackageMetadataCRDREST) NamespaceScoped() bool {
 	return true
 }
 
-func (r *PackageCRDREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (r *PackageMetadataCRDREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
-	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+	client := NewPackageMetadataStorageClient(r.crdClient, NewPackageMetadataTranslator(namespace))
 
 	// Run Validations
 	if createValidation != nil {
@@ -71,8 +71,8 @@ func (r *PackageCRDREST) Create(ctx context.Context, obj runtime.Object, createV
 		}
 	}
 
-	pkg := obj.(*datapackaging.Package)
-	errs := validation.ValidatePackage(*pkg)
+	pkg := obj.(*datapackaging.PackageMetadata)
+	errs := validation.ValidatePackageMetadata(*pkg)
 	if len(errs) != 0 {
 		return nil, errors.NewInvalid(pkg.GroupVersionKind().GroupKind(), pkg.Name, errs)
 	}
@@ -81,7 +81,7 @@ func (r *PackageCRDREST) Create(ctx context.Context, obj runtime.Object, createV
 	return client.Create(ctx, namespace, pkg, *options)
 }
 
-func (r *PackageCRDREST) shouldFetchGlobal(ctx context.Context, namespace string) bool {
+func (r *PackageMetadataCRDREST) shouldFetchGlobal(ctx context.Context, namespace string) bool {
 	ns, err := r.nsClient.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 	if err != nil {
 		return false
@@ -90,9 +90,9 @@ func (r *PackageCRDREST) shouldFetchGlobal(ctx context.Context, namespace string
 	return namespace != r.globalNamespace && namespace != "" && !exclude
 }
 
-func (r *PackageCRDREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (r *PackageMetadataCRDREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
-	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+	client := NewPackageMetadataStorageClient(r.crdClient, NewPackageMetadataTranslator(namespace))
 
 	// Check targeted namespace
 	pkg, err := client.Get(ctx, namespace, name, *options)
@@ -104,9 +104,9 @@ func (r *PackageCRDREST) Get(ctx context.Context, name string, options *metav1.G
 	return pkg, err
 }
 
-func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (r *PackageMetadataCRDREST) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
-	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+	client := NewPackageMetadataStorageClient(r.crdClient, NewPackageMetadataTranslator(namespace))
 
 	// fetch list of namespaced packages (ns could be "")
 	namespacedPackagesList, err := client.List(ctx, namespace, r.internalToMetaListOpts(*options))
@@ -115,7 +115,7 @@ func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.List
 	}
 	namespacedPackages := namespacedPackagesList.Items
 
-	var globalPackages []datapackaging.Package
+	var globalPackages []datapackaging.PackageMetadata
 	if r.shouldFetchGlobal(ctx, namespace) {
 		globalPackagesList, err := client.List(ctx, r.globalNamespace, r.internalToMetaListOpts(*options))
 		if err != nil {
@@ -124,7 +124,7 @@ func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.List
 		globalPackages = globalPackagesList.Items
 	}
 
-	packagesMap := make(map[string]datapackaging.Package)
+	packagesMap := make(map[string]datapackaging.PackageMetadata)
 	for _, pkg := range globalPackages {
 		// identifier for package will be namespace/name
 		identifier := pkg.Namespace + "/" + pkg.Name
@@ -137,7 +137,7 @@ func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.List
 		packagesMap[identifier] = pkg
 	}
 
-	packageList := &datapackaging.PackageList{
+	packageList := &datapackaging.PackageMetadataList{
 		TypeMeta: namespacedPackagesList.TypeMeta,
 		ListMeta: namespacedPackagesList.ListMeta,
 	}
@@ -149,9 +149,9 @@ func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.List
 	return packageList, err
 }
 
-func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+func (r *PackageMetadataCRDREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
-	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+	client := NewPackageMetadataStorageClient(r.crdClient, NewPackageMetadataTranslator(namespace))
 
 	pkg, err := client.Get(ctx, namespace, name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
@@ -163,7 +163,7 @@ func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.U
 		patchingGlobal := true
 		pkg, err := client.Get(ctx, r.globalNamespace, name, metav1.GetOptions{})
 		if errors.IsNotFound(err) {
-			pkg = &datapackaging.Package{}
+			pkg = &datapackaging.PackageMetadata{}
 			patchingGlobal = false
 		}
 
@@ -178,7 +178,7 @@ func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.U
 			}
 		}
 
-		updatedPkg := updatedObj.(*datapackaging.Package)
+		updatedPkg := updatedObj.(*datapackaging.PackageMetadata)
 		if patchingGlobal {
 			// we have to do this in case we are "patching" a global package
 			annotations := updatedPkg.ObjectMeta.Annotations
@@ -207,8 +207,8 @@ func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.U
 		return nil, false, err
 	}
 
-	updatedPkg := updatedObj.(*datapackaging.Package)
-	errList := validation.ValidatePackage(*updatedPkg)
+	updatedPkg := updatedObj.(*datapackaging.PackageMetadata)
+	errList := validation.ValidatePackageMetadata(*updatedPkg)
 	if len(errList) != 0 {
 		return nil, false, errors.NewInvalid(updatedPkg.GroupVersionKind().GroupKind(), updatedPkg.Name, errList)
 	}
@@ -217,9 +217,9 @@ func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.U
 	return updatedPkg, false, err
 }
 
-func (r *PackageCRDREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (r *PackageMetadataCRDREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
-	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+	client := NewPackageMetadataStorageClient(r.crdClient, NewPackageMetadataTranslator(namespace))
 
 	pkg, err := client.Get(ctx, namespace, name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
@@ -244,9 +244,9 @@ func (r *PackageCRDREST) Delete(ctx context.Context, name string, deleteValidati
 	return pkg, true, nil
 }
 
-func (r *PackageCRDREST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+func (r *PackageMetadataCRDREST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
-	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+	client := NewPackageMetadataStorageClient(r.crdClient, NewPackageMetadataTranslator(namespace))
 
 	list, err := client.List(ctx, namespace, r.internalToMetaListOpts(*listOptions))
 	if err != nil {
@@ -275,7 +275,7 @@ func (r *PackageCRDREST) DeleteCollection(ctx context.Context, deleteValidation 
 		}
 	}
 
-	var deletedPackages []datapackaging.Package
+	var deletedPackages []datapackaging.PackageMetadata
 	for _, pkg := range list.Items {
 		// use crd delete for validations
 		_, _, err := r.Delete(ctx, pkg.Name, deleteValidation, options)
@@ -285,12 +285,12 @@ func (r *PackageCRDREST) DeleteCollection(ctx context.Context, deleteValidation 
 		deletedPackages = append(deletedPackages, pkg)
 	}
 
-	return &datapackaging.PackageList{Items: deletedPackages}, err
+	return &datapackaging.PackageMetadataList{Items: deletedPackages}, err
 }
 
-func (r *PackageCRDREST) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+func (r *PackageMetadataCRDREST) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
 	namespace := request.NamespaceValue(ctx)
-	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+	client := NewPackageMetadataStorageClient(r.crdClient, NewPackageMetadataTranslator(namespace))
 
 	watcher, err := client.Watch(ctx, namespace, r.internalToMetaListOpts(*options))
 	if errors.IsNotFound(err) && r.shouldFetchGlobal(ctx, namespace) {
@@ -300,10 +300,10 @@ func (r *PackageCRDREST) Watch(ctx context.Context, options *internalversion.Lis
 	return watcher, err
 }
 
-func (r *PackageCRDREST) ConvertToTable(ctx context.Context, obj runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+func (r *PackageMetadataCRDREST) ConvertToTable(ctx context.Context, obj runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	var table metav1.Table
 	fn := func(obj runtime.Object) error {
-		pkg := obj.(*datapackaging.Package)
+		pkg := obj.(*datapackaging.PackageMetadata)
 		table.Rows = append(table.Rows, metav1.TableRow{
 			Cells: []interface{}{
 				pkg.Name, pkg.Spec.DisplayName,
@@ -338,17 +338,17 @@ func (r *PackageCRDREST) ConvertToTable(ctx context.Context, obj runtime.Object,
 	}
 	if opt, ok := tableOptions.(*metav1.TableOptions); !ok || !opt.NoHeaders {
 		table.ColumnDefinitions = []metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name", Description: "Package resource name"},
+			{Name: "Name", Type: "string", Format: "name", Description: "PackageMetadata resource name"},
 			{Name: "Display Name", Type: "string", Description: "User facing package name"},
-			{Name: "Categories", Type: "string", Description: "Package description"},
-			{Name: "Short Description", Type: "array", Description: "Package categories"},
+			{Name: "Categories", Type: "string", Description: "PackageMetadata description"},
+			{Name: "Short Description", Type: "array", Description: "PackageMetadata categories"},
 			{Name: "Age", Type: "date", Description: "Time since resource creation"},
 		}
 	}
 	return &table, nil
 }
 
-func (r *PackageCRDREST) internalToMetaListOpts(options internalversion.ListOptions) metav1.ListOptions {
+func (r *PackageMetadataCRDREST) internalToMetaListOpts(options internalversion.ListOptions) metav1.ListOptions {
 	lo := metav1.ListOptions{
 		TypeMeta:             options.TypeMeta,
 		Watch:                options.Watch,
@@ -370,7 +370,7 @@ func (r *PackageCRDREST) internalToMetaListOpts(options internalversion.ListOpti
 	return lo
 }
 
-func (r *PackageCRDREST) deleteGlobalPackagesFromNS(ctx context.Context, ns string) error {
+func (r *PackageMetadataCRDREST) deleteGlobalPackagesFromNS(ctx context.Context, ns string) error {
 	namespace, err := r.nsClient.CoreV1().Namespaces().Get(ctx, ns, metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -385,7 +385,7 @@ func (r *PackageCRDREST) deleteGlobalPackagesFromNS(ctx context.Context, ns stri
 	return err
 }
 
-func (r *PackageCRDREST) format(in string) string {
+func (r *PackageMetadataCRDREST) format(in string) string {
 	if len(in) > 50 {
 		return in[:47] + "..."
 	}

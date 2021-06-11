@@ -27,14 +27,14 @@ func Test_PackageInstalled_FromPackageInstall_Successfully(t *testing.T) {
 
 	installPkgYaml := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
+kind: PackageMetadata
 metadata:
   name: pkg.test.carvel.dev
   namespace: %[1]s
 spec:
   # This is the name we want to reference in resources such as PackageInstall.
-  displayName: "Test Package in repo"
-  shortDescription: "Package used for testing"
+  displayName: "Test PackageMetadata in repo"
+  shortDescription: "PackageMetadata used for testing"
   longDescription: "A longer, more detailed description of what the package contains and what it is for"
   providerName: Carvel
   maintainers:
@@ -49,7 +49,7 @@ metadata:
   name: pkg.test.carvel.dev.1.0.0
   namespace: %[1]s
 spec:
-  packageName: pkg.test.carvel.dev
+  packageMetadataName: pkg.test.carvel.dev
   version: 1.0.0
   licenses:
   - Apache 2.0
@@ -80,7 +80,7 @@ metadata:
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   packageVersionRef:
-    packageName: pkg.test.carvel.dev
+    packageMetadataName: pkg.test.carvel.dev
     versionSelection:
       constraints: 1.0.0
   values:
@@ -180,19 +180,19 @@ func Test_PackageInstallStatus_DisplaysUsefulErrorMessage_ForDeploymentFailure(t
 
 	installPkgYaml := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
+kind: PackageMetadata
 metadata:
   name: pkg.fail.carvel.dev
 spec:
-  displayName: "Test Package in repo"
-  shortDescription: "Package used for testing"
+  displayName: "Test PackageMetadata in repo"
+  shortDescription: "PackageMetadata used for testing"
 ---
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageVersion
 metadata:
   name: pkg.fail.carvel.dev.1.0.0
 spec:
-  packageName: pkg.fail.carvel.dev
+  packageMetadataName: pkg.fail.carvel.dev
   version: 1.0.0
   template:
     spec:
@@ -223,7 +223,7 @@ metadata:
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   packageVersionRef:
-    packageName: pkg.fail.carvel.dev
+    packageMetadataName: pkg.fail.carvel.dev
     versionSelection:
       constraints: 1.0.0
   values:
@@ -291,7 +291,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:0ae0f32ef92d2362339b47055a6ea2042bc114a7dd36cf339bf05df4d1cc1b9b
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:4d78baa768d0e676e57a8736d0a8229de1f8081c57fcb99bad7421fc5b7d493e
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageInstall
@@ -303,7 +303,7 @@ metadata:
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   packageVersionRef:
-    packageName: pkg.test.carvel.dev
+    packageMetadataName: pkg.test.carvel.dev
     versionSelection:
       constraints: 1.0.0
 `, name, env.Namespace) + sas.ForNamespaceYAML()

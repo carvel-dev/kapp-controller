@@ -29,7 +29,7 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 		},
 		Spec: pkgingv1alpha1.PackageInstallSpec{
 			PackageVersionRef: &pkgingv1alpha1.PackageVersionRef{
-				PackageName: "expec-pkg",
+				PackageMetadataName: "expec-pkg",
 				VersionSelection: &v1alpha1.VersionSelectionSemver{
 					Constraints: ">=1.0.0",
 				},
@@ -43,7 +43,7 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 		},
 		Spec: pkgingv1alpha1.PackageInstallSpec{
 			PackageVersionRef: &pkgingv1alpha1.PackageVersionRef{
-				PackageName: "expec-pkg",
+				PackageMetadataName: "expec-pkg",
 				VersionSelection: &v1alpha1.VersionSelectionSemver{
 					Constraints: "<1.0.0",
 				},
@@ -58,8 +58,8 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 	event := event.GenericEvent{
 		Object: &datapkgingv1alpha1.PackageVersion{
 			Spec: datapkgingv1alpha1.PackageVersionSpec{
-				PackageName: "expec-pkg",
-				Version:     "1.5.0",
+				PackageMetadataName: "expec-pkg",
+				Version:             "1.5.0",
 			},
 		},
 	}

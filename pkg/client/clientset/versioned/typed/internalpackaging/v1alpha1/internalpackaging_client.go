@@ -10,7 +10,7 @@ import (
 
 type InternalV1alpha1Interface interface {
 	RESTClient() rest.Interface
-	InternalPackagesGetter
+	InternalPackageMetadatasGetter
 	InternalPackageVersionsGetter
 }
 
@@ -19,8 +19,8 @@ type InternalV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *InternalV1alpha1Client) InternalPackages(namespace string) InternalPackageInterface {
-	return newInternalPackages(c, namespace)
+func (c *InternalV1alpha1Client) InternalPackageMetadatas(namespace string) InternalPackageMetadataInterface {
+	return newInternalPackageMetadatas(c, namespace)
 }
 
 func (c *InternalV1alpha1Client) InternalPackageVersions(namespace string) InternalPackageVersionInterface {

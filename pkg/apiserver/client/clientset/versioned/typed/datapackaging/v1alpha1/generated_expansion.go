@@ -2,6 +2,6 @@
 
 package v1alpha1
 
-type PackageVersionExpansion interface{}
+type PackageMetadataExpansion interface{}
 
-type PackageExpansion interface{}
+type PackageVersionExpansion interface{}

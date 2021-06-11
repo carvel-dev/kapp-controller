@@ -88,12 +88,12 @@ func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kc
 		return nil, err
 	}
 
-	packagesStorage := packagerest.NewPackageCRDREST(kcClient, coreClient, globalNamespace)
+	packageMetadatasStorage := packagerest.NewPackageMetadataCRDREST(kcClient, coreClient, globalNamespace)
 	packageVersionsStorage := packagerest.NewPackageVersionCRDREST(kcClient, coreClient, globalNamespace)
 
 	pkgGroup := genericapiserver.NewDefaultAPIGroupInfo(datapackaging.GroupName, Scheme, metav1.ParameterCodec, Codecs)
 	pkgv1alpha1Storage := map[string]apirest.Storage{}
-	pkgv1alpha1Storage["packages"] = packagesStorage
+	pkgv1alpha1Storage["packagemetadatas"] = packageMetadatasStorage
 	pkgv1alpha1Storage["packageversions"] = packageVersionsStorage
 	pkgGroup.VersionedResourcesStorageMap["v1alpha1"] = pkgv1alpha1Storage
 

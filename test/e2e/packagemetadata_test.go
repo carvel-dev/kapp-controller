@@ -21,7 +21,7 @@ func Test_PackageIsValidated(t *testing.T) {
 
 	invalidPkgYML := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
+kind: PackageMetadata
 metadata:
   name: %s
 spec:
@@ -57,7 +57,7 @@ func TestOverridePackageDelete(t *testing.T) {
 
 	packagesYaml := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
+kind: PackageMetadata
 metadata:
   name: pkg1.test.carvel.dev
   namespace: %s
@@ -66,7 +66,7 @@ spec:
   shortDescription: "Package which is globally available"
 ---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
+kind: PackageMetadata
 metadata:
   name: pkg1.test.carvel.dev
   namespace: %s
@@ -75,8 +75,8 @@ spec:
   shortDescription: "Package which overrides global package"`, globalNS, localNS)
 
 	cleanup := func() {
-		k.RunWithOpts([]string{"delete", "packages/pkg1.test.carvel.dev", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
-		k.RunWithOpts([]string{"delete", "packages/pkg1.test.carvel.dev", "-n", localNS}, RunOpts{NoNamespace: true, AllowError: true})
+		k.RunWithOpts([]string{"delete", "pkgm/pkg1.test.carvel.dev", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
+		k.RunWithOpts([]string{"delete", "pkgm/pkg1.test.carvel.dev", "-n", localNS}, RunOpts{NoNamespace: true, AllowError: true})
 	}
 	defer cleanup()
 
@@ -93,7 +93,7 @@ spec:
 		timeout := 30 * time.Second
 
 		ctx, _ := context.WithTimeout(context.Background(), timeout)
-		_, err := k.RunWithOpts([]string{"delete", "packages/pkg1.test.carvel.dev", "-n", localNS}, RunOpts{Ctx: ctx, NoNamespace: true, AllowError: true})
+		_, err := k.RunWithOpts([]string{"delete", "pkgm/pkg1.test.carvel.dev", "-n", localNS}, RunOpts{Ctx: ctx, NoNamespace: true, AllowError: true})
 		if err != nil {
 			t.Fatalf("Expected delete of local package to succeed in %v, but got: %v", timeout, err)
 		}
@@ -115,7 +115,7 @@ metadata:
   name: %[1]s
 ---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
+kind: PackageMetadata
 metadata:
   name: pkg1.test.carvel.dev
   namespace: %[1]s
@@ -124,7 +124,7 @@ spec:
   shortDescription: "Package which overrides global package"
 ---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
+kind: PackageMetadata
 metadata:
   name: pkg1.test.carvel.dev
   namespace: %[2]s
@@ -133,8 +133,8 @@ spec:
   shortDescription: "Package which is globally available"`, localNS, globalNS)
 
 	cleanup := func() {
-		k.RunWithOpts([]string{"delete", "packages/pkg1.test.carvel.dev", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
-		k.RunWithOpts([]string{"delete", "packages/pkg1.test.carvel.dev", "-n", localNS}, RunOpts{NoNamespace: true, AllowError: true})
+		k.RunWithOpts([]string{"delete", "pkgm/pkg1.test.carvel.dev", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
+		k.RunWithOpts([]string{"delete", "pkgm/pkg1.test.carvel.dev", "-n", localNS}, RunOpts{NoNamespace: true, AllowError: true})
 		k.RunWithOpts([]string{"delete", fmt.Sprintf("namespaces/%s", localNS)}, RunOpts{NoNamespace: true, AllowError: true})
 	}
 	defer logger.Section("post test cleanup", cleanup)
@@ -182,7 +182,7 @@ metadata:
   name: %[1]s
 ---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
+kind: PackageMetadata
 metadata:
   name: pkg1.test.carvel.dev
   namespace: %[2]s
@@ -192,7 +192,7 @@ spec:
 
 	updatePackagesYaml := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
+kind: PackageMetadata
 metadata:
   name: pkg1.test.carvel.dev
   namespace: %[1]s
@@ -201,8 +201,8 @@ spec:
   shortDescription: "Package which overrides global package"`, localNS)
 
 	cleanup := func() {
-		k.RunWithOpts([]string{"delete", "packages/pkg1.test.carvel.dev", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
-		k.RunWithOpts([]string{"delete", "packages/pkg1.test.carvel.dev", "-n", localNS}, RunOpts{NoNamespace: true, AllowError: true})
+		k.RunWithOpts([]string{"delete", "pkgm/pkg1.test.carvel.dev", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
+		k.RunWithOpts([]string{"delete", "pkgm/pkg1.test.carvel.dev", "-n", localNS}, RunOpts{NoNamespace: true, AllowError: true})
 		k.RunWithOpts([]string{"delete", fmt.Sprintf("namespaces/%s", localNS)}, RunOpts{NoNamespace: true, AllowError: true})
 	}
 	defer logger.Section("post test cleanup", cleanup)

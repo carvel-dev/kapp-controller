@@ -10,8 +10,8 @@ import (
 
 type DataV1alpha1Interface interface {
 	RESTClient() rest.Interface
+	PackageMetadatasGetter
 	PackageVersionsGetter
-	PackagesGetter
 }
 
 // DataV1alpha1Client is used to interact with features provided by the data.packaging.carvel.dev group.
@@ -19,12 +19,12 @@ type DataV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *DataV1alpha1Client) PackageVersions(namespace string) PackageVersionInterface {
-	return newPackageVersions(c, namespace)
+func (c *DataV1alpha1Client) PackageMetadatas(namespace string) PackageMetadataInterface {
+	return newPackageMetadatas(c, namespace)
 }
 
-func (c *DataV1alpha1Client) Packages(namespace string) PackageInterface {
-	return newPackages(c, namespace)
+func (c *DataV1alpha1Client) PackageVersions(namespace string) PackageVersionInterface {
+	return newPackageVersions(c, namespace)
 }
 
 // NewForConfig creates a new DataV1alpha1Client for the given config.

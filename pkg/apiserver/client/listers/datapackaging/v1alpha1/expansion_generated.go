@@ -2,6 +2,14 @@
 
 package v1alpha1
 
+// PackageMetadataListerExpansion allows custom methods to be added to
+// PackageMetadataLister.
+type PackageMetadataListerExpansion interface{}
+
+// PackageMetadataNamespaceListerExpansion allows custom methods to be added to
+// PackageMetadataNamespaceLister.
+type PackageMetadataNamespaceListerExpansion interface{}
+
 // PackageVersionListerExpansion allows custom methods to be added to
 // PackageVersionLister.
 type PackageVersionListerExpansion interface{}
@@ -9,11 +17,3 @@ type PackageVersionListerExpansion interface{}
 // PackageVersionNamespaceListerExpansion allows custom methods to be added to
 // PackageVersionNamespaceLister.
 type PackageVersionNamespaceListerExpansion interface{}
-
-// PackageListerExpansion allows custom methods to be added to
-// PackageLister.
-type PackageListerExpansion interface{}
-
-// PackageNamespaceListerExpansion allows custom methods to be added to
-// PackageNamespaceLister.
-type PackageNamespaceListerExpansion interface{}

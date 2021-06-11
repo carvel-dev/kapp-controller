@@ -11,14 +11,14 @@ import (
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type Package struct {
+type PackageMetadata struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec PackageSpec `json:"spec"`
+	Spec PackageMetadataSpec `json:"spec"`
 }
 
 // +genclient
@@ -46,7 +46,7 @@ type PackageVersionList struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type PackageList struct {
+type PackageMetadataList struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// Standard list metadata.
@@ -54,11 +54,11 @@ type PackageList struct {
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []Package `json:"items"`
+	Items []PackageMetadata `json:"items"`
 }
 
 type PackageVersionSpec struct {
-	PackageName                     string   `json:"packageName,omitempty"`
+	PackageMetadataName             string   `json:"packageMetadataName,omitempty"`
 	Version                         string   `json:"version,omitempty"`
 	Licenses                        []string `json:"licenses,omitempty"`
 	ReleasedAt                      string   `json:"releasedAt,omitempty"`
@@ -74,7 +74,7 @@ type PackageVersionSpec struct {
 	ValuesSchema ValuesSchema `json:"valuesSchema,omitempty"`
 }
 
-type PackageSpec struct {
+type PackageMetadataSpec struct {
 	DisplayName        string       `json:"displayName,omitempty"`
 	LongDescription    string       `json:"longDescription,omitempty"`
 	ShortDescription   string       `json:"shortDescription,omitempty"`

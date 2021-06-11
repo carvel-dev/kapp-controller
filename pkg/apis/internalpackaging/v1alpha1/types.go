@@ -11,17 +11,17 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:subresource:status
-type InternalPackage struct {
+type InternalPackageMetadata struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec datapackaging.PackageSpec `json:"spec"`
+	Spec datapackaging.PackageMetadataSpec `json:"spec"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type InternalPackageList struct {
+type InternalPackageMetadataList struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// Standard list metadata.
@@ -29,7 +29,7 @@ type InternalPackageList struct {
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []InternalPackage `json:"items"`
+	Items []InternalPackageMetadata `json:"items"`
 }
 
 // +genclient
