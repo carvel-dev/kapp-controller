@@ -5,7 +5,9 @@ package datapackaging_test
 
 import (
 	"context"
+	"encoding/base32"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/internalpackaging/v1alpha1"
@@ -93,7 +95,7 @@ func TestPackageVersionListPrefersNamespacedOverGlobal(t *testing.T) {
 
 func TestPackageVersionGetNotPresentInNS(t *testing.T) {
 	globalPackageVersion := globalIntPackageVersion()
-	name := globalPackageVersion.Name
+	name := globalPackageName
 	releaseNotes := globalPackageVersion.Spec.ReleaseNotes
 
 	internalClient := fake.NewSimpleClientset(globalPackageVersion)
@@ -118,7 +120,7 @@ func TestPackageVersionGetNotPresentInNS(t *testing.T) {
 
 func TestPackageVersionGetPresentInOnlyNS(t *testing.T) {
 	namespacedPackageVersion := namespacedIntPackageVersion()
-	name := namespacedPackageVersion.Name
+	name := namespacedPackageName
 	releaseNotes := namespacedPackageVersion.Spec.ReleaseNotes
 
 	internalClient := fake.NewSimpleClientset(namespacedPackageVersion)
@@ -143,7 +145,7 @@ func TestPackageVersionGetPresentInOnlyNS(t *testing.T) {
 
 func TestPackageVersionGetNotFound(t *testing.T) {
 	namespacedPackageVersion := excludedNonGlobalIntPackageVersion()
-	name := namespacedPackageVersion.Name
+	name := namespacedPackageName
 
 	internalClient := fake.NewSimpleClientset(namespacedPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
@@ -163,7 +165,7 @@ func TestPackageVersionGetNotFound(t *testing.T) {
 
 func TestPackageVersionGetPreferNS(t *testing.T) {
 	overridePackageVersion := overrideIntPackageVersion()
-	name := overridePackageVersion.Name
+	name := overridePackageName
 	releaseNotes := overridePackageVersion.Spec.ReleaseNotes
 
 	internalClient := fake.NewSimpleClientset(overridePackageVersion, globalIntPackageVersion())
@@ -190,7 +192,7 @@ func TestPackageVersionGetPreferNS(t *testing.T) {
 func TestPackageVersionUpdateDoesntUpdateGlobal(t *testing.T) {
 	globalPackageVersion := globalIntPackageVersion()
 	namespacedPackageVersion := namespacedIntPackageVersion()
-	name := globalPackageVersion.Name
+	name := globalPackageName
 	packageName := globalPackageVersion.Spec.RefName
 	version := globalPackageVersion.Spec.Version
 	originalReleaseNotes := globalPackageVersion.Spec.ReleaseNotes
@@ -231,7 +233,7 @@ func TestPackageVersionUpdateDoesntUpdateGlobal(t *testing.T) {
 // scoped to ns, so if can't find create in ns
 func TestPackageVersionUpdateCreatesInNS(t *testing.T) {
 	globalPackageVersion := globalIntPackageVersion()
-	name := globalPackageVersion.Name
+	name := globalPackageName
 	packageName := globalPackageVersion.Spec.RefName
 	version := globalPackageVersion.Spec.Version
 	originalReleaseNotes := globalPackageVersion.Spec.ReleaseNotes
@@ -269,7 +271,7 @@ func TestPackageVersionUpdateCreatesInNS(t *testing.T) {
 // scoped to ns, so if cant find in ns, don't do anything
 func TestPackageVersionDeleteExistsInNS(t *testing.T) {
 	namespacedPackageVersion := namespacedIntPackageVersion()
-	name := namespacedPackageVersion.Name
+	name := namespacedPackageName
 
 	internalClient := fake.NewSimpleClientset(namespacedPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
@@ -289,7 +291,7 @@ func TestPackageVersionDeleteExistsInNS(t *testing.T) {
 
 	for _, action := range actions {
 		if deleteAction, ok := action.(cgtesting.DeleteActionImpl); ok {
-			if deleteAction.GetNamespace() == nonGlobalNamespace && deleteAction.GetName() == name {
+			if deleteAction.GetNamespace() == nonGlobalNamespace && deleteAction.GetName() == encodeName(name) {
 				return
 			}
 			t.Fatalf("Unexpected delete action: %#v", deleteAction)
@@ -301,7 +303,7 @@ func TestPackageVersionDeleteExistsInNS(t *testing.T) {
 
 func TestPackageVersionDeleteExistsGlobalNotInNS(t *testing.T) {
 	globalPackageVersion := globalIntPackageVersion()
-	name := globalPackageVersion.Name
+	name := globalPackageName
 
 	internalClient := fake.NewSimpleClientset(globalPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
@@ -346,11 +348,17 @@ func assertPVListUnorderedEquals(actual, expected []datapackaging.Package, t *te
 	}
 }
 
+const (
+	globalPackageName     = "global-package-version.carvel.dev.1.0.0"
+	namespacedPackageName = "namespaced-package-version.carvel.dev.1.0.0"
+	overridePackageName   = "global-package-version.carvel.dev.mismatch"
+)
+
 func globalIntPackageVersion() *v1alpha1.InternalPackage {
 	return &v1alpha1.InternalPackage{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: globalNamespace,
-			Name:      "global-package-version.carvel.dev.1.0.0",
+			Name:      encodeName("global-package-version.carvel.dev.1.0.0"),
 		},
 		Spec: datapackaging.PackageSpec{
 			Version:      "1.0.0",
@@ -364,7 +372,7 @@ func namespacedIntPackageVersion() *v1alpha1.InternalPackage {
 	return &v1alpha1.InternalPackage{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: nonGlobalNamespace,
-			Name:      "namespaced-package-version.carvel.dev.1.0.0",
+			Name:      encodeName("namespaced-package-version.carvel.dev.1.0.0"),
 		},
 		Spec: datapackaging.PackageSpec{
 			Version:      "1.0.0",
@@ -379,7 +387,7 @@ func overrideIntPackageVersion() *v1alpha1.InternalPackage {
 	return &v1alpha1.InternalPackage{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: nonGlobalNamespace,
-			Name:      "global-package-version.carvel.dev.mismatch",
+			Name:      encodeName("global-package-version.carvel.dev.mismatch"),
 		},
 		Spec: datapackaging.PackageSpec{
 			Version:      "1.0.0",
@@ -393,7 +401,7 @@ func excludedNonGlobalIntPackageVersion() *v1alpha1.InternalPackage {
 	return &v1alpha1.InternalPackage{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: excludedNonGlobalNamespace,
-			Name:      "excluded-package-version.carvel.dev.1.0.0",
+			Name:      encodeName("excluded-package-version.carvel.dev.1.0.0"),
 		},
 		Spec: datapackaging.PackageSpec{
 			Version:      "1.0.0",
@@ -401,6 +409,10 @@ func excludedNonGlobalIntPackageVersion() *v1alpha1.InternalPackage {
 			ReleaseNotes: "EXCLUDED",
 		},
 	}
+}
+
+func encodeName(name string) string {
+	return strings.ToLower(base32.HexEncoding.WithPadding(base32.NoPadding).EncodeToString([]byte(name)))
 }
 
 func updateReleaseNotesFn(newNote, resourceName, packageName, version string) func(pkgv *datapackaging.Package) *datapackaging.Package {
