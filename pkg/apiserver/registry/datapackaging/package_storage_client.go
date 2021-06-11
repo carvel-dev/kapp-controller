@@ -5,12 +5,16 @@ package datapackaging
 
 import (
 	"context"
+	"encoding/base32"
+	"fmt"
+	"strings"
 
 	internalpkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/internalpackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/watchers"
 	internalclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
@@ -29,9 +33,19 @@ func NewPackageTranslator(namespace string) PackageTranslator {
 	return PackageTranslator{namespace}
 }
 
-func (t PackageTranslator) ToExternalObj(intObj *internalpkgingv1alpha1.InternalPackage) *datapackaging.Package {
+func (t PackageTranslator) ToInternalName(name string) string {
+	return strings.ToLower(base32.HexEncoding.WithPadding(base32.NoPadding).EncodeToString([]byte(name)))
+
+}
+
+func (t PackageTranslator) ToExternalName(name string) (string, error) {
+	decodedBytes, err := base32.HexEncoding.WithPadding(base32.NoPadding).DecodeString(strings.ToUpper(name))
+	return string(decodedBytes), err
+}
+
+func (t PackageTranslator) ToExternalObj(intObj *internalpkgingv1alpha1.InternalPackage) (*datapackaging.Package, error) {
 	if intObj == nil {
-		return nil
+		return nil, nil
 	}
 
 	obj := (*datapackaging.Package)(intObj)
@@ -47,9 +61,16 @@ func (t PackageTranslator) ToExternalObj(intObj *internalpkgingv1alpha1.Internal
 		obj.Namespace = t.namespace
 	}
 
+	// base64 deccode the name to recover the original name
+	var err error
+	obj.Name, err = t.ToExternalName(intObj.Name)
+	if err != nil {
+		return nil, errors.NewInternalError(fmt.Errorf("decoding internal obj name '%s': %v", intObj.Name, err))
+	}
+
 	// Self link is deprecated and planned for removal, so we don't translate it
 
-	return obj
+	return obj, nil
 }
 
 func (t PackageTranslator) ToInternalObj(extObj *datapackaging.Package) *internalpkgingv1alpha1.InternalPackage {
@@ -66,12 +87,16 @@ func (t PackageTranslator) ToInternalObj(extObj *datapackaging.Package) *interna
 	intObj.TypeMeta.Kind = internalPackageName
 	intObj.TypeMeta.APIVersion = internalpkgingv1alpha1.SchemeGroupVersion.Identifier()
 
+	// base64 encode the name since it will be packageName.version and version
+	// could potentially include invalid characters
+	intObj.Name = t.ToInternalName(extObj.Name)
+
 	return intObj
 }
 
-func (t PackageTranslator) ToExternalList(intObjList *internalpkgingv1alpha1.InternalPackageList) *datapackaging.PackageList {
+func (t PackageTranslator) ToExternalList(intObjList *internalpkgingv1alpha1.InternalPackageList) (*datapackaging.PackageList, error) {
 	if intObjList == nil {
-		return nil
+		return nil, nil
 	}
 
 	externalObjList := datapackaging.PackageList{
@@ -80,16 +105,30 @@ func (t PackageTranslator) ToExternalList(intObjList *internalpkgingv1alpha1.Int
 	}
 
 	for _, item := range intObjList.Items {
-		externalObjList.Items = append(externalObjList.Items, *t.ToExternalObj(&item))
+		extObj, err := t.ToExternalObj(&item)
+		if err != nil {
+			return nil, err
+		}
+		externalObjList.Items = append(externalObjList.Items, *extObj)
 	}
 
-	return &externalObjList
+	return &externalObjList, nil
 }
 
 func (t PackageTranslator) ToExternalWatcher(intObjWatcher watch.Interface, fieldSelector fields.Selector) watch.Interface {
 	watchTranslation := func(evt watch.Event) watch.Event {
 		if intpkg, ok := evt.Object.(*internalpkgingv1alpha1.InternalPackage); ok {
-			evt.Object = t.ToExternalObj(intpkg)
+			var err error
+			evt.Object, err = t.ToExternalObj(intpkg)
+			if err != nil {
+				var status metav1.Status
+				if statusErr, ok := err.(*errors.StatusError); ok {
+					status = statusErr.Status()
+				} else {
+					status = errors.NewInternalError(err).Status()
+				}
+				return watch.Event{Type: watch.Error, Object: &status}
+			}
 		}
 		return evt
 	}
@@ -131,31 +170,47 @@ func NewPackageStorageClient(crdClient internalclient.Interface, translator Pack
 }
 
 func (psc PackageStorageClient) Create(ctx context.Context, namespace string, obj *datapackaging.Package, opts metav1.CreateOptions) (*datapackaging.Package, error) {
-	internalObj := psc.translator.ToInternalObj(obj)
+	intObj := psc.translator.ToInternalObj(obj)
 
-	internalObj, err := psc.crdClient.InternalV1alpha1().InternalPackages(namespace).Create(ctx, internalObj, opts)
+	intObj, err := psc.crdClient.InternalV1alpha1().InternalPackages(namespace).Create(ctx, intObj, opts)
+	if err != nil {
+		return nil, psc.translator.ToExternalError(err)
+	}
 
-	return psc.translator.ToExternalObj(internalObj), psc.translator.ToExternalError(err)
+	return psc.translator.ToExternalObj(intObj)
 }
 
 func (psc PackageStorageClient) Get(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*datapackaging.Package, error) {
+	name = psc.translator.ToInternalName(name)
 	intObj, err := psc.crdClient.InternalV1alpha1().InternalPackages(namespace).Get(ctx, name, opts)
-	return psc.translator.ToExternalObj(intObj), psc.translator.ToExternalError(err)
+	if err != nil {
+		return nil, psc.translator.ToExternalError(err)
+	}
+
+	return psc.translator.ToExternalObj(intObj)
 }
 
 func (psc PackageStorageClient) List(ctx context.Context, namespace string, opts metav1.ListOptions) (*datapackaging.PackageList, error) {
 	intObjList, err := psc.crdClient.InternalV1alpha1().InternalPackages(namespace).List(ctx, opts)
-	return psc.translator.ToExternalList(intObjList), psc.translator.ToExternalError(err)
+	if err != nil {
+		return nil, psc.translator.ToExternalError(err)
+	}
+	return psc.translator.ToExternalList(intObjList)
 }
 
 func (psc PackageStorageClient) Update(ctx context.Context, namespace string, updatedObj *datapackaging.Package, opts metav1.UpdateOptions) (*datapackaging.Package, error) {
 	intUpdatedObj := psc.translator.ToInternalObj(updatedObj)
 
 	intUpdatedObj, err := psc.crdClient.InternalV1alpha1().InternalPackages(namespace).Update(ctx, intUpdatedObj, opts)
-	return psc.translator.ToExternalObj(intUpdatedObj), psc.translator.ToExternalError(err)
+	if err != nil {
+		return nil, psc.translator.ToExternalError(err)
+	}
+
+	return psc.translator.ToExternalObj(intUpdatedObj)
 }
 
 func (psc PackageStorageClient) Delete(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
+	name = psc.translator.ToInternalName(name)
 	err := psc.crdClient.InternalV1alpha1().InternalPackages(namespace).Delete(ctx, name, opts)
 	return psc.translator.ToExternalError(err)
 }

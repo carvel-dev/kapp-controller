@@ -218,13 +218,11 @@ spec:
     imgpkgBundle:
       image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:62d187c044fd6a5c57ac870733fe4413ebf7e2909d8b6267707c5dd2080821e6`
 
-	packageNames := []string{"pkg.test.carvel.dev.1.0.0", "pkg.test.carvel.dev.2.0.0"}
-
 	cleanUp := func() {
+		kctl.RunWithOpts([]string{"delete", "package/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
+		kctl.RunWithOpts([]string{"delete", "package/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
+		kctl.RunWithOpts([]string{"delete", "packagemetadata/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
 		kctl.RunWithOpts([]string{"delete", "pkgr/basic.test.carvel.dev"}, RunOpts{AllowError: true})
-		for _, name := range packageNames {
-			kctl.RunWithOpts([]string{"delete", fmt.Sprintf("pkgm/%s", name)}, RunOpts{AllowError: true})
-		}
 	}
 	defer cleanUp()
 
@@ -264,14 +262,22 @@ spec:
 				return fmt.Errorf("Expected not to find pkgm pkg.test.carvel.dev, but did: %v", err)
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
-			if err == nil || !strings.Contains(err.Error(), "\"pkg.test.carvel.dev.1.0.0\" not found") {
+			_, err = kctl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
+			if err == nil {
 				return fmt.Errorf("Expected not to find package pkg.test.carvel.dev.1.0.0, but did")
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
-			if err == nil || !strings.Contains(err.Error(), "\"pkg.test.carvel.dev.2.0.0\" not found") {
+			if !strings.Contains(err.Error(), "Error from server (NotFound)") {
+				return fmt.Errorf("Expected not found error for pkg.test.carvel.dev.1.0.0, but got: %v", err)
+			}
+
+			_, err = kctl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
+			if err == nil {
 				return fmt.Errorf("Expected no to find package pkg.test.carvel.dev.2.0.0, but did")
+			}
+
+			if !strings.Contains(err.Error(), "Error from server (NotFound)") {
+				return fmt.Errorf("Expected not found error for pkg.test.carvel.dev.2.0.0, but got: %v", err)
 			}
 			return nil
 		})
