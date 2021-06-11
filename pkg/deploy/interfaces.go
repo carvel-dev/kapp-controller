@@ -18,7 +18,14 @@ type Deploy interface {
 }
 
 type GenericOpts struct {
-	Name           string
-	Namespace      string
-	KubeconfigYAML string
+	Name      string
+	Namespace string
+}
+
+type ProcessedGenericOpts struct {
+	Name      string
+	Namespace string
+
+	Kubeconfig                    *KubeconfigRestricted
+	DangerousUsePodServiceAccount bool
 }

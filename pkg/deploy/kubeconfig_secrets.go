@@ -21,33 +21,47 @@ func NewKubeconfigSecrets(coreClient kubernetes.Interface) *KubeconfigSecrets {
 	return &KubeconfigSecrets{coreClient}
 }
 
-func (s *KubeconfigSecrets) Find(genericOpts GenericOpts, clusterOpts *v1alpha1.AppCluster) (GenericOpts, error) {
+func (s *KubeconfigSecrets) Find(genericOpts GenericOpts,
+	clusterOpts *v1alpha1.AppCluster) (ProcessedGenericOpts, error) {
+
 	if clusterOpts == nil {
-		return genericOpts, nil
+		return ProcessedGenericOpts{}, fmt.Errorf("Internal inconsistency: Expected cluster to not be nil")
 	}
 
 	if clusterOpts.KubeconfigSecretRef == nil {
-		return genericOpts, fmt.Errorf("Expected kubeconfig secret reference to be specified")
+		return ProcessedGenericOpts{}, fmt.Errorf("Expected kubeconfig secret reference to be specified")
 	}
 
 	kubeconfigYAML, err := s.fetchKubeconfigYAML(genericOpts.Namespace, clusterOpts.KubeconfigSecretRef)
 	if err != nil {
-		return genericOpts, err
+		return ProcessedGenericOpts{}, err
 	}
 
-	genericOptsForCluster := GenericOpts{
+	kubeconfigRestricted, err := NewKubeconfigRestricted(kubeconfigYAML)
+	if err != nil {
+		return ProcessedGenericOpts{}, err
+	}
+
+	pgoForCluster := ProcessedGenericOpts{
 		Name: genericOpts.Name,
 		// Override destination namespace; if it's empty
 		// assume kubeconfig contains preferred namespace
-		Namespace:      clusterOpts.Namespace,
-		KubeconfigYAML: kubeconfigYAML,
+		Namespace:  clusterOpts.Namespace,
+		Kubeconfig: kubeconfigRestricted,
 	}
 
-	return genericOptsForCluster, nil
+	return pgoForCluster, nil
 }
 
 func (s *KubeconfigSecrets) fetchKubeconfigYAML(nsName string,
 	secretRef *v1alpha1.AppClusterKubeconfigSecretRef) (string, error) {
+
+	if len(nsName) == 0 {
+		return "", fmt.Errorf("Internal inconsistency: Expected namespace name to not be empty")
+	}
+	if len(secretRef.Name) == 0 {
+		return "", fmt.Errorf("Internal inconsistency: Expected service name to not be empty")
+	}
 
 	secret, err := s.coreClient.CoreV1().Secrets(nsName).Get(
 		context.Background(), secretRef.Name, metav1.GetOptions{})

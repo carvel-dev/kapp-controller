@@ -25,16 +25,17 @@ func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
 	clusterOpts *v1alpha1.AppCluster, genericOpts GenericOpts, cancelCh chan struct{}) (*Kapp, error) {
 
 	var err error
+	var processedGenericOpts ProcessedGenericOpts
 
 	switch {
 	case len(saName) > 0:
-		genericOpts, err = f.serviceAccounts.Find(genericOpts, saName)
+		processedGenericOpts, err = f.serviceAccounts.Find(genericOpts, saName)
 		if err != nil {
 			return nil, err
 		}
 
 	case clusterOpts != nil:
-		genericOpts, err = f.kubeconfigSecrets.Find(genericOpts, clusterOpts)
+		processedGenericOpts, err = f.kubeconfigSecrets.Find(genericOpts, clusterOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -43,13 +44,21 @@ func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
 		return nil, fmt.Errorf("Expected service account or cluster specified")
 	}
 
-	return NewKapp(opts, genericOpts, cancelCh), nil
+	return NewKapp(opts, processedGenericOpts, cancelCh), nil
 }
 
 func (f Factory) NewKappPrivileged(opts v1alpha1.AppDeployKapp,
 	genericOpts GenericOpts, cancelCh chan struct{}) (*Kapp, error) {
-	// Just use the default service account. Mainly
-	// used for PacakgeRepos now so users do not need
-	// to specify serviceaccount via PackageRepo CR.
-	return NewKapp(opts, genericOpts, cancelCh), nil
+
+	pgo := ProcessedGenericOpts{
+		Name:      genericOpts.Name,
+		Namespace: genericOpts.Namespace,
+		// Just use the default service account. Mainly
+		// used for PacakgeRepos now so users do not need
+		// to specify serviceaccount via PackageRepo CR.
+		Kubeconfig:                    nil,
+		DangerousUsePodServiceAccount: true,
+	}
+
+	return NewKapp(opts, pgo, cancelCh), nil
 }
