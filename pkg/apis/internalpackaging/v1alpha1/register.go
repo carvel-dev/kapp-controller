@@ -20,7 +20,7 @@ var (
 func init() {
 	localSchemeBuilder.Register(func(scheme *runtime.Scheme) error {
 		scheme.AddKnownTypes(SchemeGroupVersion, &InternalPackageMetadata{}, &InternalPackageMetadataList{})
-		scheme.AddKnownTypes(SchemeGroupVersion, &InternalPackageVersion{}, &InternalPackageVersionList{})
+		scheme.AddKnownTypes(SchemeGroupVersion, &InternalPackage{}, &InternalPackageList{})
 		scheme.AddKnownTypes(SchemeGroupVersion, &metav1.Status{})
 		metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 		return nil

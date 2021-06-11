@@ -29,19 +29,19 @@ func TestPackageVersionListIncludesGlobalAndNamespaced(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalIntPackageVersion(), namespacedIntPackageVersion(), excludedNonGlobalIntPackageVersion())
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageVersionCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	pkgvList, err := pkgvCRDREST.List(namespacedCtx(nonGlobalNamespace), &internalversion.ListOptions{})
 	if err != nil {
 		t.Fatalf("Expected list operation to succeed, got: %v", err)
 	}
 
-	packageVersionList, ok := pkgvList.(*datapackaging.PackageVersionList)
+	packageVersionList, ok := pkgvList.(*datapackaging.PackageList)
 	if !ok {
-		t.Fatalf("Expected list operation to return PackageVersionList, but got: %v", reflect.TypeOf(pkgvList))
+		t.Fatalf("Expected list operation to return PackageList, but got: %v", reflect.TypeOf(pkgvList))
 	}
 
-	expectedpkgvs := []datapackaging.PackageVersion{
+	expectedpkgvs := []datapackaging.Package{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "some.other.ns.carvel.dev",
@@ -64,7 +64,7 @@ func TestPackageVersionListPrefersNamespacedOverGlobal(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalIntPackageVersion(), overrideIntPackageVersion())
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageVersionCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	// list package versions and verify all of them are there
 	pkgvList, err := pkgvCRDREST.List(namespacedCtx(nonGlobalNamespace), &internalversion.ListOptions{})
@@ -72,12 +72,12 @@ func TestPackageVersionListPrefersNamespacedOverGlobal(t *testing.T) {
 		t.Fatalf("Expected list operation to succeed, got: %v", err)
 	}
 
-	packageVersionList, ok := pkgvList.(*datapackaging.PackageVersionList)
+	packageVersionList, ok := pkgvList.(*datapackaging.PackageList)
 	if !ok {
-		t.Fatalf("Expected list operation to return PackageVersionList, but got: %v", reflect.TypeOf(pkgvList))
+		t.Fatalf("Expected list operation to return PackageList, but got: %v", reflect.TypeOf(pkgvList))
 	}
 
-	expectedpkgvs := []datapackaging.PackageVersion{
+	expectedpkgvs := []datapackaging.Package{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: nonGlobalNamespace,
@@ -99,16 +99,16 @@ func TestPackageVersionGetNotPresentInNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageVersionCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, err := pkgvCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("Expected get operation to succeed, got: %v", err)
 	}
 
-	pkgv, ok := obj.(*datapackaging.PackageVersion)
+	pkgv, ok := obj.(*datapackaging.Package)
 	if !ok {
-		t.Fatalf("Expected get operation to return PackageVersion, but got: %v", reflect.TypeOf(pkgv))
+		t.Fatalf("Expected get operation to return Package, but got: %v", reflect.TypeOf(pkgv))
 	}
 
 	if pkgv.Name != name || pkgv.Spec.ReleaseNotes != releaseNotes {
@@ -124,16 +124,16 @@ func TestPackageVersionGetPresentInOnlyNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(namespacedPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageVersionCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, err := pkgvCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("Expected get operation to succeed, got: %v", err)
 	}
 
-	pkgv, ok := obj.(*datapackaging.PackageVersion)
+	pkgv, ok := obj.(*datapackaging.Package)
 	if !ok {
-		t.Fatalf("Expected get operation to return PackageVersion, but got: %v", reflect.TypeOf(pkgv))
+		t.Fatalf("Expected get operation to return Package, but got: %v", reflect.TypeOf(pkgv))
 	}
 
 	if pkgv.Name != name || pkgv.Spec.ReleaseNotes != releaseNotes {
@@ -148,7 +148,7 @@ func TestPackageVersionGetNotFound(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(namespacedPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageVersionCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	_, err := pkgvCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err == nil {
@@ -169,16 +169,16 @@ func TestPackageVersionGetPreferNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(overridePackageVersion, globalIntPackageVersion())
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageVersionCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, err := pkgvCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("Expected get operation to succeed, got: %v", err)
 	}
 
-	pkgv, ok := obj.(*datapackaging.PackageVersion)
+	pkgv, ok := obj.(*datapackaging.Package)
 	if !ok {
-		t.Fatalf("Expected get operation to return PackageVersion, but got: %v", reflect.TypeOf(pkgv))
+		t.Fatalf("Expected get operation to return Package, but got: %v", reflect.TypeOf(pkgv))
 	}
 
 	if pkgv.Name != name || pkgv.Spec.ReleaseNotes != releaseNotes {
@@ -199,7 +199,7 @@ func TestPackageVersionUpdateDoesntUpdateGlobal(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalPackageVersion, namespacedPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageVersionCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, created, err := pkgvCRDREST.Update(namespacedCtx(nonGlobalNamespace), name, UpdatePackageVersionTestImpl{updateReleaseNotesFn(newReleaseNotes, name, packageName, version)}, nil, nil, false, &metav1.UpdateOptions{})
 	if err != nil {
@@ -210,9 +210,9 @@ func TestPackageVersionUpdateDoesntUpdateGlobal(t *testing.T) {
 		t.Fatalf("Expected object to be created")
 	}
 
-	pkgv, ok := obj.(*datapackaging.PackageVersion)
+	pkgv, ok := obj.(*datapackaging.Package)
 	if !ok {
-		t.Fatalf("Expected get operation to return PackageVersion, but got: %v", reflect.TypeOf(pkgv))
+		t.Fatalf("Expected get operation to return Package, but got: %v", reflect.TypeOf(pkgv))
 	}
 
 	if pkgv.Name != name || pkgv.Namespace != nonGlobalNamespace {
@@ -240,7 +240,7 @@ func TestPackageVersionUpdateCreatesInNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageVersionCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, created, err := pkgvCRDREST.Update(namespacedCtx(nonGlobalNamespace), name, UpdatePackageVersionTestImpl{updateReleaseNotesFn(newReleaseNotes, name, packageName, version)}, nil, nil, false, &metav1.UpdateOptions{})
 	if err != nil {
@@ -251,9 +251,9 @@ func TestPackageVersionUpdateCreatesInNS(t *testing.T) {
 		t.Fatalf("Expected object to be created")
 	}
 
-	pkgv, ok := obj.(*datapackaging.PackageVersion)
+	pkgv, ok := obj.(*datapackaging.Package)
 	if !ok {
-		t.Fatalf("Expected get operation to return PackageVersion, but got: %v", reflect.TypeOf(pkgv))
+		t.Fatalf("Expected get operation to return Package, but got: %v", reflect.TypeOf(pkgv))
 	}
 
 	if pkgv.Name != name || pkgv.Namespace != nonGlobalNamespace {
@@ -274,7 +274,7 @@ func TestPackageVersionDeleteExistsInNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(namespacedPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageVersionCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	_, _, err := pkgvCRDREST.Delete(namespacedCtx(nonGlobalNamespace), name, nil, &metav1.DeleteOptions{})
 	if err != nil {
@@ -306,7 +306,7 @@ func TestPackageVersionDeleteExistsGlobalNotInNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageVersionCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	_, _, err := pkgvCRDREST.Delete(namespacedCtx(nonGlobalNamespace), name, nil, &metav1.DeleteOptions{})
 	if !errors.IsNotFound(err) {
@@ -328,7 +328,7 @@ func TestPackageVersionDeleteExistsGlobalNotInNS(t *testing.T) {
 }
 
 // Helpers
-func assertPVListUnorderedEquals(actual, expected []datapackaging.PackageVersion, t *testing.T) {
+func assertPVListUnorderedEquals(actual, expected []datapackaging.Package, t *testing.T) {
 	if len(actual) != len(expected) {
 		t.Fatalf("arrays had different length:\n actual: \n%#v\n\n expected: \n%#v", actual, expected)
 	}
@@ -346,13 +346,13 @@ func assertPVListUnorderedEquals(actual, expected []datapackaging.PackageVersion
 	}
 }
 
-func globalIntPackageVersion() *v1alpha1.InternalPackageVersion {
-	return &v1alpha1.InternalPackageVersion{
+func globalIntPackageVersion() *v1alpha1.InternalPackage {
+	return &v1alpha1.InternalPackage{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: globalNamespace,
 			Name:      "global-package-version.carvel.dev.1.0.0",
 		},
-		Spec: datapackaging.PackageVersionSpec{
+		Spec: datapackaging.PackageSpec{
 			Version:             "1.0.0",
 			PackageMetadataName: "global-package-version.carvel.dev",
 			ReleaseNotes:        "GLOBAL",
@@ -360,13 +360,13 @@ func globalIntPackageVersion() *v1alpha1.InternalPackageVersion {
 	}
 }
 
-func namespacedIntPackageVersion() *v1alpha1.InternalPackageVersion {
-	return &v1alpha1.InternalPackageVersion{
+func namespacedIntPackageVersion() *v1alpha1.InternalPackage {
+	return &v1alpha1.InternalPackage{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: nonGlobalNamespace,
 			Name:      "namespaced-package-version.carvel.dev.1.0.0",
 		},
-		Spec: datapackaging.PackageVersionSpec{
+		Spec: datapackaging.PackageSpec{
 			Version:             "1.0.0",
 			PackageMetadataName: "namespaced-package-version.carvel.dev",
 			ReleaseNotes:        "NAMESPACED",
@@ -375,13 +375,13 @@ func namespacedIntPackageVersion() *v1alpha1.InternalPackageVersion {
 }
 
 // Override is determined by packageMetadataName and version instead of just name
-func overrideIntPackageVersion() *v1alpha1.InternalPackageVersion {
-	return &v1alpha1.InternalPackageVersion{
+func overrideIntPackageVersion() *v1alpha1.InternalPackage {
+	return &v1alpha1.InternalPackage{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: nonGlobalNamespace,
 			Name:      "global-package-version.carvel.dev.mismatch",
 		},
-		Spec: datapackaging.PackageVersionSpec{
+		Spec: datapackaging.PackageSpec{
 			Version:             "1.0.0",
 			PackageMetadataName: "global-package-version.carvel.dev",
 			ReleaseNotes:        "OVERRIDE",
@@ -389,13 +389,13 @@ func overrideIntPackageVersion() *v1alpha1.InternalPackageVersion {
 	}
 }
 
-func excludedNonGlobalIntPackageVersion() *v1alpha1.InternalPackageVersion {
-	return &v1alpha1.InternalPackageVersion{
+func excludedNonGlobalIntPackageVersion() *v1alpha1.InternalPackage {
+	return &v1alpha1.InternalPackage{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: excludedNonGlobalNamespace,
 			Name:      "excluded-package-version.carvel.dev.1.0.0",
 		},
-		Spec: datapackaging.PackageVersionSpec{
+		Spec: datapackaging.PackageSpec{
 			Version:             "1.0.0",
 			PackageMetadataName: "excluded-package-version.carvel.dev",
 			ReleaseNotes:        "EXCLUDED",
@@ -403,8 +403,8 @@ func excludedNonGlobalIntPackageVersion() *v1alpha1.InternalPackageVersion {
 	}
 }
 
-func updateReleaseNotesFn(newNote, resourceName, packageName, version string) func(pkgv *datapackaging.PackageVersion) *datapackaging.PackageVersion {
-	return func(pkgv *datapackaging.PackageVersion) *datapackaging.PackageVersion {
+func updateReleaseNotesFn(newNote, resourceName, packageName, version string) func(pkgv *datapackaging.Package) *datapackaging.Package {
+	return func(pkgv *datapackaging.Package) *datapackaging.Package {
 		pkgv.Spec.ReleaseNotes = newNote
 		if pkgv.Name == "" {
 			pkgv.Name = resourceName
@@ -420,7 +420,7 @@ func updateReleaseNotesFn(newNote, resourceName, packageName, version string) fu
 }
 
 type UpdatePackageVersionTestImpl struct {
-	updateFn func(pkgv *datapackaging.PackageVersion) *datapackaging.PackageVersion
+	updateFn func(pkgv *datapackaging.Package) *datapackaging.Package
 }
 
 func (UpdatePackageVersionTestImpl) Preconditions() *metav1.Preconditions {
@@ -428,6 +428,6 @@ func (UpdatePackageVersionTestImpl) Preconditions() *metav1.Preconditions {
 }
 
 func (u UpdatePackageVersionTestImpl) UpdatedObject(ctx context.Context, oldObj runtime.Object) (runtime.Object, error) {
-	pkgv := oldObj.(*datapackaging.PackageVersion)
+	pkgv := oldObj.(*datapackaging.Package)
 	return u.updateFn(pkgv), nil
 }

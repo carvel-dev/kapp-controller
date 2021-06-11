@@ -24,7 +24,7 @@ func Test_PackageVersionIsValidated_Name(t *testing.T) {
 
 	invalidPkgVersionYML := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageVersion
+kind: Package
 metadata:
   name: %s
 spec:
@@ -57,7 +57,7 @@ spec:
 			RunOpts{StdinReader: strings.NewReader(invalidPkgVersionYML), AllowError: true})
 
 		if err == nil {
-			t.Fatalf("Expected package version creation to fail")
+			t.Fatalf("Expected package creation to fail")
 		}
 
 		if !strings.Contains(err.Error(), "is invalid: metadata.name") {
@@ -81,7 +81,7 @@ func Test_PackageVersionWithValuesSchema_PreservesSchemaData(t *testing.T) {
 
 	pkgYaml := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageVersion
+kind: Package
 metadata:
   name: %s.%s
 spec:
@@ -121,13 +121,13 @@ spec:
 
 	kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkgYaml)})
 
-	out := kubectl.Run([]string{"get", "packageversions/" + fmt.Sprintf("%s.%s", packageName, version), "-o=jsonpath={.spec.valuesSchema.openAPIv3}"})
+	out := kubectl.Run([]string{"get", "pkg/" + fmt.Sprintf("%s.%s", packageName, version), "-o=jsonpath={.spec.valuesSchema.openAPIv3}"})
 	if !strings.Contains(out, "properties") && !strings.Contains(out, "hello_msg") && !strings.Contains(out, "svc_port") {
 		t.Fatalf("Could not find properties on values schema. Got:\n%s", out)
 	}
 
-	out = kapp.Run([]string{"inspect", "-a", appName, "--raw", "--tty=false", "--filter-kind=PackageVersion"})
-	var cr v1alpha1.PackageVersion
+	out = kapp.Run([]string{"inspect", "-a", appName, "--raw", "--tty=false", "--filter-kind=Package"})
+	var cr v1alpha1.Package
 	err := yaml.Unmarshal([]byte(out), &cr)
 	if err != nil {
 		t.Fatalf("failed to unmarshal: %s", err)
@@ -156,7 +156,7 @@ metadata:
 spec:
   shortDescription: "PackageMetadata for testing"
 ---
-kind: PackageVersion
+kind: Package
 apiVersion: data.packaging.carvel.dev/v1alpha1
 metadata:
   name: %[1]s.1.0.0
@@ -187,7 +187,7 @@ metadata:
 spec:
   shortDescription: "PackageMetadata for testing"
 ---
-kind: PackageVersion
+kind: Package
 apiVersion: data.packaging.carvel.dev/v1alpha1
 metadata:
   name: %[2]s.1.0.0
@@ -223,11 +223,11 @@ spec:
 	})
 
 	logger.Section("check field selector", func() {
-		out, err := kubectl.RunWithOpts([]string{"get", "packageversions",
+		out, err := kubectl.RunWithOpts([]string{"get", "pkg",
 			"--field-selector", fmt.Sprintf("spec.packageMetadataName=%s", packageName)}, RunOpts{AllowError: true})
 
 		if err != nil {
-			t.Fatalf("Expected field selector to successfully return a package version but got error: %v", err)
+			t.Fatalf("Expected field selector to successfully return a package but got error: %v", err)
 		}
 
 		if strings.Contains(out, filteredPackageName) {
@@ -246,7 +246,7 @@ func TestOverridePackageVersionDelete(t *testing.T) {
 
 	packagesYaml := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageVersion
+kind: Package
 metadata:
   name: pkg1.test.carvel.dev.1.0.0-global
   namespace: %s
@@ -257,7 +257,7 @@ spec:
     spec: {}
 ---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageVersion
+kind: Package
 metadata:
   name: pkg1.test.carvel.dev.1.0.0
   namespace: %s
@@ -268,8 +268,8 @@ spec:
     spec: {}`, globalNS, localNS)
 
 	cleanup := func() {
-		k.RunWithOpts([]string{"delete", "packageversions/pkg1.test.carvel.dev.1.0.0-global", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
-		k.RunWithOpts([]string{"delete", "packageversions/pkg1.test.carvel.dev.1.0.0", "-n", localNS}, RunOpts{NoNamespace: true, AllowError: true})
+		k.RunWithOpts([]string{"delete", "pkg/pkg1.test.carvel.dev.1.0.0-global", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
+		k.RunWithOpts([]string{"delete", "pkg/pkg1.test.carvel.dev.1.0.0", "-n", localNS}, RunOpts{NoNamespace: true, AllowError: true})
 	}
 	defer cleanup()
 
@@ -286,9 +286,9 @@ spec:
 		timeout := 30 * time.Second
 		ctx, _ := context.WithTimeout(context.Background(), timeout)
 
-		_, err := k.RunWithOpts([]string{"delete", "packageversions/pkg1.test.carvel.dev.1.0.0", "-n", localNS}, RunOpts{Ctx: ctx, NoNamespace: true, AllowError: true})
+		_, err := k.RunWithOpts([]string{"delete", "pkg/pkg1.test.carvel.dev.1.0.0", "-n", localNS}, RunOpts{Ctx: ctx, NoNamespace: true, AllowError: true})
 		if err != nil {
-			t.Fatalf("Expected delete of local package version to succeed in %v, but got: %v", timeout, err)
+			t.Fatalf("Expected delete of local package to succeed in %v, but got: %v", timeout, err)
 		}
 	})
 }
@@ -308,7 +308,7 @@ metadata:
   name: %[1]s
 ---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageVersion
+kind: Package
 metadata:
   name: pkg1.test.carvel.dev.1.0.0
   namespace: %[1]s
@@ -319,7 +319,7 @@ spec:
     spec: {}
 ---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageVersion
+kind: Package
 metadata:
   name: pkg1.test.carvel.dev.1.0.0-global
   namespace: %[2]s
@@ -330,8 +330,8 @@ spec:
     spec: {}`, localNS, globalNS)
 
 	cleanup := func() {
-		k.RunWithOpts([]string{"delete", "packageversions/pkg1.test.carvel.dev.1.0.0-global", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
-		k.RunWithOpts([]string{"delete", "packageversions/pkg1.test.carvel.dev.1.0.0", "-n", localNS}, RunOpts{NoNamespace: true, AllowError: true})
+		k.RunWithOpts([]string{"delete", "pkg/pkg1.test.carvel.dev.1.0.0-global", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
+		k.RunWithOpts([]string{"delete", "pkg/pkg1.test.carvel.dev.1.0.0", "-n", localNS}, RunOpts{NoNamespace: true, AllowError: true})
 		k.RunWithOpts([]string{"delete", fmt.Sprintf("namespaces/%s", localNS)}, RunOpts{NoNamespace: true, AllowError: true})
 	}
 	defer logger.Section("post test cleanup", cleanup)

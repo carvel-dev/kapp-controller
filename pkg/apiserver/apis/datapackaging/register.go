@@ -33,8 +33,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&PackageMetadata{},
 		&PackageMetadataList{},
-		&PackageVersion{},
-		&PackageVersionList{},
+		&Package{},
+		&PackageList{},
 	)
 	return nil
 }

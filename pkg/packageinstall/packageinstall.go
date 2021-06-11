@@ -108,7 +108,7 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 	return pi.reconcileAppWithPackage(existingApp, pv)
 }
 
-func (pi *PackageInstallCR) createAppFromPackage(pv datapkgingv1alpha1.PackageVersion) (reconcile.Result, error) {
+func (pi *PackageInstallCR) createAppFromPackage(pv datapkgingv1alpha1.Package) (reconcile.Result, error) {
 	desiredApp, err := NewApp(&v1alpha1.App{}, pi.model, pv)
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
@@ -122,7 +122,7 @@ func (pi *PackageInstallCR) createAppFromPackage(pv datapkgingv1alpha1.PackageVe
 	return reconcile.Result{}, nil
 }
 
-func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App, pv datapkgingv1alpha1.PackageVersion) (reconcile.Result, error) {
+func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App, pv datapkgingv1alpha1.Package) (reconcile.Result, error) {
 	desiredApp, err := NewApp(existingApp, pi.model, pv)
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
@@ -138,23 +138,23 @@ func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App,
 	return reconcile.Result{}, nil
 }
 
-func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.PackageVersion, error) {
-	if pi.model.Spec.PackageVersionRef == nil {
-		return datapkgingv1alpha1.PackageVersion{}, fmt.Errorf("Expected non nil PackageVersionRef")
+func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, error) {
+	if pi.model.Spec.PackageRef == nil {
+		return datapkgingv1alpha1.Package{}, fmt.Errorf("Expected non nil PackageRef")
 	}
 
-	semverConfig := pi.model.Spec.PackageVersionRef.VersionSelection
+	semverConfig := pi.model.Spec.PackageRef.VersionSelection
 
-	pvList, err := pi.pkgclient.DataV1alpha1().PackageVersions(pi.model.Namespace).List(context.Background(), metav1.ListOptions{})
+	pvList, err := pi.pkgclient.DataV1alpha1().Packages(pi.model.Namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		return datapkgingv1alpha1.PackageVersion{}, err
+		return datapkgingv1alpha1.Package{}, err
 	}
 
 	var versionStrs []string
-	versionToPkg := map[string]datapkgingv1alpha1.PackageVersion{}
+	versionToPkg := map[string]datapkgingv1alpha1.Package{}
 
 	for _, pv := range pvList.Items {
-		if pv.Spec.PackageMetadataName == pi.model.Spec.PackageVersionRef.PackageMetadataName {
+		if pv.Spec.PackageMetadataName == pi.model.Spec.PackageRef.PackageMetadataName {
 			versionStrs = append(versionStrs, pv.Spec.Version)
 			versionToPkg[pv.Spec.Version] = pv
 		}
@@ -164,15 +164,15 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.PackageVe
 
 	selectedVersion, err := versions.HighestConstrainedVersion(versionStrs, verConfig)
 	if err != nil {
-		return datapkgingv1alpha1.PackageVersion{}, err
+		return datapkgingv1alpha1.Package{}, err
 	}
 
 	if pkg, found := versionToPkg[selectedVersion]; found {
 		return pkg, nil
 	}
 
-	return datapkgingv1alpha1.PackageVersion{}, fmt.Errorf("Could not find package with name '%s' and version '%s'",
-		pi.model.Spec.PackageVersionRef.PackageMetadataName, selectedVersion)
+	return datapkgingv1alpha1.Package{}, fmt.Errorf("Could not find package with name '%s' and version '%s'",
+		pi.model.Spec.PackageRef.PackageMetadataName, selectedVersion)
 }
 
 func (pi *PackageInstallCR) reconcileDelete(modelStatus *reconciler.Status) (reconcile.Result, error) {

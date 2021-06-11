@@ -44,7 +44,7 @@ spec:
   supportDescription: "Description of support provided for the package"
 ---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageVersion
+kind: Package
 metadata:
   name: pkg.test.carvel.dev.1.0.0
   namespace: %[1]s
@@ -79,7 +79,7 @@ metadata:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/packageinstalls
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
-  packageVersionRef:
+  packageRef:
     packageMetadataName: pkg.test.carvel.dev
     versionSelection:
       constraints: 1.0.0
@@ -188,7 +188,7 @@ spec:
   shortDescription: "PackageMetadata used for testing"
 ---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageVersion
+kind: Package
 metadata:
   name: pkg.fail.carvel.dev.1.0.0
 spec:
@@ -222,7 +222,7 @@ metadata:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/packageinstalls
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
-  packageVersionRef:
+  packageRef:
     packageMetadataName: pkg.fail.carvel.dev
     versionSelection:
       constraints: 1.0.0
@@ -291,7 +291,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:4d78baa768d0e676e57a8736d0a8229de1f8081c57fcb99bad7421fc5b7d493e
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:f13b454eba5ee3d1f31f6d924cf2f3b2cba1fb3a89d4485f1d227a020e962991
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageInstall
@@ -302,7 +302,7 @@ metadata:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/packageinstalls
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
-  packageVersionRef:
+  packageRef:
     packageMetadataName: pkg.test.carvel.dev
     versionSelection:
       constraints: 1.0.0

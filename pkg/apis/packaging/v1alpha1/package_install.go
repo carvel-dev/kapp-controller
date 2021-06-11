@@ -46,7 +46,7 @@ type PackageInstallSpec struct {
 	// +optional
 	Cluster *v1alpha1.AppCluster `json:"cluster,omitempty"`
 	// +optional
-	PackageVersionRef *PackageVersionRef `json:"packageVersionRef,omitempty"`
+	PackageRef *PackageRef `json:"packageRef,omitempty"`
 	// +optional
 	Values []PackageInstallValues `json:"values,omitempty"`
 	// Paused when set to true will ignore all pending changes,
@@ -68,7 +68,7 @@ type PackageInstallSpec struct {
 	NoopDelete bool `json:"noopDelete,omitempty"`
 }
 
-type PackageVersionRef struct {
+type PackageRef struct {
 	// +optional
 	PackageMetadataName string `json:"packageMetadataName,omitempty"`
 	// +optional

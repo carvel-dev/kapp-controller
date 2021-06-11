@@ -25,7 +25,7 @@ const (
 	ExtYttDataValuesOverlaysAnnKey = "ext.packaging.carvel.dev/ytt-data-values-overlays"
 )
 
-func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall, pkgVersion datapkgingv1alpha1.PackageVersion) (*v1alpha1.App, error) {
+func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall, pkgVersion datapkgingv1alpha1.Package) (*v1alpha1.App, error) {
 	desiredApp := existingApp.DeepCopy()
 
 	if _, found := existingApp.Annotations[ManuallyControlledAnnKey]; found {

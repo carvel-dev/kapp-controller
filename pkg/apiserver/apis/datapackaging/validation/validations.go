@@ -32,22 +32,22 @@ func ValidatePackageMetadataName(pkgmName string, fldPath *field.Path) field.Err
 
 // package version validations
 
-func ValidatePackageVersion(pv datapackaging.PackageVersion) field.ErrorList {
+func ValidatePackageVersion(pv datapackaging.Package) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs,
-		ValidatePackageVersionSpecPackageName(pv.Spec.PackageMetadataName, field.NewPath("spec", "packageName"))...)
+		ValidatePackageSpecPackageName(pv.Spec.PackageMetadataName, field.NewPath("spec", "packageName"))...)
 
-	allErrs = append(allErrs, ValidatePackageVersionSpecVersion(pv.Spec.Version, field.NewPath("spec", "version"))...)
+	allErrs = append(allErrs, ValidatePackageSpecVersion(pv.Spec.Version, field.NewPath("spec", "version"))...)
 
 	allErrs = append(allErrs,
-		ValidatePackageVersionName(pv.ObjectMeta.Name, pv.Spec.PackageMetadataName, field.NewPath("metadata").Child("name"))...)
+		ValidatePackageName(pv.ObjectMeta.Name, pv.Spec.PackageMetadataName, field.NewPath("metadata").Child("name"))...)
 
 	return allErrs
 }
 
 // validate metdata.name = spec.PackageMetadataName + spec.Version
-func ValidatePackageVersionName(pvName, pkgmName string, fldPath *field.Path) field.ErrorList {
+func ValidatePackageName(pvName, pkgmName string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if !strings.HasPrefix(pvName, pkgmName+".") {
@@ -59,7 +59,7 @@ func ValidatePackageVersionName(pvName, pkgmName string, fldPath *field.Path) fi
 }
 
 // validate spec.version is not empty
-func ValidatePackageVersionSpecVersion(version string, fldPath *field.Path) field.ErrorList {
+func ValidatePackageSpecVersion(version string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if version == "" {
@@ -71,7 +71,7 @@ func ValidatePackageVersionSpecVersion(version string, fldPath *field.Path) fiel
 }
 
 // validate spec.PackageMetadataName isnt empty
-func ValidatePackageVersionSpecPackageName(name string, fldPath *field.Path) field.ErrorList {
+func ValidatePackageSpecPackageName(name string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if name == "" {

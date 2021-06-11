@@ -10,8 +10,8 @@ import (
 
 type InternalV1alpha1Interface interface {
 	RESTClient() rest.Interface
+	InternalPackagesGetter
 	InternalPackageMetadatasGetter
-	InternalPackageVersionsGetter
 }
 
 // InternalV1alpha1Client is used to interact with features provided by the internal.packaging.carvel.dev group.
@@ -19,12 +19,12 @@ type InternalV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *InternalV1alpha1Client) InternalPackageMetadatas(namespace string) InternalPackageMetadataInterface {
-	return newInternalPackageMetadatas(c, namespace)
+func (c *InternalV1alpha1Client) InternalPackages(namespace string) InternalPackageInterface {
+	return newInternalPackages(c, namespace)
 }
 
-func (c *InternalV1alpha1Client) InternalPackageVersions(namespace string) InternalPackageVersionInterface {
-	return newInternalPackageVersions(c, namespace)
+func (c *InternalV1alpha1Client) InternalPackageMetadatas(namespace string) InternalPackageMetadataInterface {
+	return newInternalPackageMetadatas(c, namespace)
 }
 
 // NewForConfig creates a new InternalV1alpha1Client for the given config.

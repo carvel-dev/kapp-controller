@@ -23,18 +23,18 @@ type PackageMetadata struct {
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type PackageVersion struct {
+type Package struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Spec PackageVersionSpec `json:"spec" protobuf:"bytes,2,opt,name=spec"`
+	Spec PackageSpec `json:"spec" protobuf:"bytes,2,opt,name=spec"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type PackageVersionList struct {
+type PackageList struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// Standard list metadata.
@@ -42,7 +42,7 @@ type PackageVersionList struct {
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Items []PackageVersion `json:"items" protobuf:"bytes,2,rep,name=items"`
+	Items []Package `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -57,7 +57,7 @@ type PackageMetadataList struct {
 	Items []PackageMetadata `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
-type PackageVersionSpec struct {
+type PackageSpec struct {
 	PackageMetadataName             string   `json:"packageMetadataName,omitempty" protobuf:"bytes,1,opt,name=packageName"`
 	Version                         string   `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
 	Licenses                        []string `json:"licenses,omitempty" protobuf:"bytes,3,rep,name=licenses"`
@@ -68,7 +68,7 @@ type PackageVersionSpec struct {
 	Template AppTemplateSpec `json:"template,omitempty" protobuf:"bytes,7,opt,name=template"`
 
 	// valuesSchema can be used to show template values that
-	// can be configured by users when a PackageVersion is installed
+	// can be configured by users when a Package is installed
 	// in an OpenAPI schema format.
 	// +optional
 	ValuesSchema ValuesSchema `json:"valuesSchema,omitempty" protobuf:"bytes,8,opt,name=valuesSchema"`

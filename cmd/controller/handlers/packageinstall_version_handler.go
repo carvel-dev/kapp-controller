@@ -69,7 +69,7 @@ func (ipvh *PackageInstallVersionHandler) Generic(evt event.GenericEvent, q work
 }
 
 func (ipvh *PackageInstallVersionHandler) enqueueEligiblePackageInstalls(q workqueue.RateLimitingInterface, obj runtime.Object) error {
-	pv := obj.(*datapkgingv1alpha1.PackageVersion)
+	pv := obj.(*datapkgingv1alpha1.Package)
 
 	namespace := ""
 	if pv.Namespace != ipvh.globalNS {
@@ -82,11 +82,11 @@ func (ipvh *PackageInstallVersionHandler) enqueueEligiblePackageInstalls(q workq
 	}
 
 	for _, ip := range installedPkgList.Items {
-		if ip.Spec.PackageVersionRef == nil {
+		if ip.Spec.PackageRef == nil {
 			continue
 		}
 
-		if ip.Spec.PackageVersionRef.PackageMetadataName == pv.Spec.PackageMetadataName && ipvh.isEligibleForVersionUpgrade(pv.Spec.Version, ip) {
+		if ip.Spec.PackageRef.PackageMetadataName == pv.Spec.PackageMetadataName && ipvh.isEligibleForVersionUpgrade(pv.Spec.Version, ip) {
 			q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
 				Name:      ip.Name,
 				Namespace: ip.Namespace,
@@ -98,11 +98,11 @@ func (ipvh *PackageInstallVersionHandler) enqueueEligiblePackageInstalls(q workq
 }
 
 func (ipvh *PackageInstallVersionHandler) isEligibleForVersionUpgrade(version string, installedPkg pkgingv1alpha1.PackageInstall) bool {
-	if installedPkg.Spec.PackageVersionRef == nil {
+	if installedPkg.Spec.PackageRef == nil {
 		return false
 	}
 
-	semverConfig := installedPkg.Spec.PackageVersionRef.VersionSelection
+	semverConfig := installedPkg.Spec.PackageRef.VersionSelection
 
 	selectedVersion, err := versions.HighestConstrainedVersion([]string{version}, versions.VersionSelection{Semver: semverConfig})
 	if selectedVersion == "" || err != nil {

@@ -101,7 +101,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:4d78baa768d0e676e57a8736d0a8229de1f8081c57fcb99bad7421fc5b7d493e`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:f13b454eba5ee3d1f31f6d924cf2f3b2cba1fb3a89d4485f1d227a020e962991`
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
@@ -175,7 +175,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:4d78baa768d0e676e57a8736d0a8229de1f8081c57fcb99bad7421fc5b7d493e`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:f13b454eba5ee3d1f31f6d924cf2f3b2cba1fb3a89d4485f1d227a020e962991`
 
 	cleanUp := func() {
 		kubectl.Run([]string{"delete", "pkgr/basic.test.carvel.dev"})
@@ -187,16 +187,16 @@ spec:
 	retry(t, 10*time.Second, func() error {
 		_, err := kubectl.RunWithOpts([]string{"get", "pkgm/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
 		if err != nil {
-			return fmt.Errorf("Expected to find pkg pkg.test.carvel.dev, but couldn't: %v", err)
+			return fmt.Errorf("Expected to find pkgm pkg.test.carvel.dev, but couldn't: %v", err)
 		}
 
-		_, err = kubectl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
+		_, err = kubectl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
 		if err != nil {
-			return fmt.Errorf("Expected to find pkg versions (pkg.test.carvel.dev.1.0.0, pkg.test.carvel.dev.2.0.0) but couldn't: %v", err)
+			return fmt.Errorf("Expected to find pkg (pkg.test.carvel.dev.1.0.0, pkg.test.carvel.dev.2.0.0) but couldn't: %v", err)
 		}
-		_, err = kubectl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
+		_, err = kubectl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
 		if err != nil {
-			return fmt.Errorf("Expected to find pkg versions (pkg.test.carvel.dev.1.0.0, pkg.test.carvel.dev.2.0.0) but couldn't: %v", err)
+			return fmt.Errorf("Expected to find pkg (pkg.test.carvel.dev.1.0.0, pkg.test.carvel.dev.2.0.0) but couldn't: %v", err)
 		}
 		return nil
 	})
@@ -216,7 +216,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:4d78baa768d0e676e57a8736d0a8229de1f8081c57fcb99bad7421fc5b7d493e`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:f13b454eba5ee3d1f31f6d924cf2f3b2cba1fb3a89d4485f1d227a020e962991`
 
 	packageNames := []string{"pkg.test.carvel.dev.1.0.0", "pkg.test.carvel.dev.2.0.0"}
 
@@ -237,15 +237,15 @@ spec:
 		retry(t, 20*time.Second, func() error {
 			_, err := kctl.RunWithOpts([]string{"get", "pkgm/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
 			if err != nil {
-				return fmt.Errorf("Expected to find pkg pkg.test.carvel.dev, but couldn't: %v", err)
+				return fmt.Errorf("Expected to find pkgm pkg.test.carvel.dev, but couldn't: %v", err)
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
+			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
 			if err != nil {
 				return fmt.Errorf("Expected to find package pkg.test.carvel.dev.1.0.0: %v", err)
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
+			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
 			if err != nil {
 				return fmt.Errorf("Expected to find package pkg.test.carvel.dev.2.0.0: %v", err)
 			}
@@ -261,15 +261,15 @@ spec:
 		retry(t, 10*time.Second, func() error {
 			_, err := kctl.RunWithOpts([]string{"get", "pkgm/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
 			if err == nil || !strings.Contains(err.Error(), "\"pkg.test.carvel.dev\" not found") {
-				return fmt.Errorf("Expected not to find pkg pkg.test.carvel.dev, but did: %v", err)
+				return fmt.Errorf("Expected not to find pkgm pkg.test.carvel.dev, but did: %v", err)
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
+			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
 			if err == nil || !strings.Contains(err.Error(), "\"pkg.test.carvel.dev.1.0.0\" not found") {
 				return fmt.Errorf("Expected not to find package pkg.test.carvel.dev.1.0.0, but did")
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
+			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
 			if err == nil || !strings.Contains(err.Error(), "\"pkg.test.carvel.dev.2.0.0\" not found") {
 				return fmt.Errorf("Expected no to find package pkg.test.carvel.dev.2.0.0, but did")
 			}
