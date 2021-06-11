@@ -34,10 +34,10 @@ rules:
   resources: ["packagemetadatas", "packagemetadatas/status"]
   verbs: ["*"]
 - apiGroups: ["internal.packaging.carvel.dev"]
-  resources: ["internalpackageversions"]
+  resources: ["internalpackages"]
   verbs: ["*"]
 - apiGroups: ["data.packaging.carvel.dev"]
-  resources: ["packageversions", "packageversions/status"]
+  resources: ["packages", "packages/status"]
   verbs: ["*"]
 #! TODO Needed for kapp-controller when deploying
 #! repository App CR (temporarily needed only for POC)

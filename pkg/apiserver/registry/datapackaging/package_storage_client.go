@@ -17,31 +17,31 @@ import (
 )
 
 const (
-	packageVersionName         = "PackageVersion"
-	internalPackageVersionName = "InternalPackageVersion"
+	packageName         = "Package"
+	internalPackageName = "InternalPackage"
 )
 
-type PackageVersionTranslator struct {
+type PackageTranslator struct {
 	namespace string
 }
 
-func NewPackageVersionTranslator(namespace string) PackageVersionTranslator {
-	return PackageVersionTranslator{namespace}
+func NewPackageTranslator(namespace string) PackageTranslator {
+	return PackageTranslator{namespace}
 }
 
-func (t PackageVersionTranslator) ToExternalObj(intObj *internalpkgingv1alpha1.InternalPackageVersion) *datapackaging.PackageVersion {
+func (t PackageTranslator) ToExternalObj(intObj *internalpkgingv1alpha1.InternalPackage) *datapackaging.Package {
 	if intObj == nil {
 		return nil
 	}
 
-	obj := (*datapackaging.PackageVersion)(intObj)
+	obj := (*datapackaging.Package)(intObj)
 	for i := range obj.ManagedFields {
 		if obj.ManagedFields[i].APIVersion == internalpkgingv1alpha1.SchemeGroupVersion.Identifier() {
 			obj.ManagedFields[i].APIVersion = datapkgingv1alpha1.SchemeGroupVersion.Identifier()
 		}
 	}
 
-	obj.TypeMeta.Kind = packageVersionName
+	obj.TypeMeta.Kind = packageName
 	obj.TypeMeta.APIVersion = datapkgingv1alpha1.SchemeGroupVersion.Identifier()
 	if t.namespace != "" {
 		obj.Namespace = t.namespace
@@ -52,29 +52,29 @@ func (t PackageVersionTranslator) ToExternalObj(intObj *internalpkgingv1alpha1.I
 	return obj
 }
 
-func (t PackageVersionTranslator) ToInternalObj(extObj *datapackaging.PackageVersion) *internalpkgingv1alpha1.InternalPackageVersion {
+func (t PackageTranslator) ToInternalObj(extObj *datapackaging.Package) *internalpkgingv1alpha1.InternalPackage {
 	if extObj == nil {
 		return nil
 	}
 
-	intObj := (*internalpkgingv1alpha1.InternalPackageVersion)(extObj)
+	intObj := (*internalpkgingv1alpha1.InternalPackage)(extObj)
 	for i := range intObj.ManagedFields {
 		if intObj.ManagedFields[i].APIVersion == datapkgingv1alpha1.SchemeGroupVersion.Identifier() {
 			intObj.ManagedFields[i].APIVersion = internalpkgingv1alpha1.SchemeGroupVersion.Identifier()
 		}
 	}
-	intObj.TypeMeta.Kind = internalPackageVersionName
+	intObj.TypeMeta.Kind = internalPackageName
 	intObj.TypeMeta.APIVersion = internalpkgingv1alpha1.SchemeGroupVersion.Identifier()
 
 	return intObj
 }
 
-func (t PackageVersionTranslator) ToExternalList(intObjList *internalpkgingv1alpha1.InternalPackageVersionList) *datapackaging.PackageVersionList {
+func (t PackageTranslator) ToExternalList(intObjList *internalpkgingv1alpha1.InternalPackageList) *datapackaging.PackageList {
 	if intObjList == nil {
 		return nil
 	}
 
-	externalObjList := datapackaging.PackageVersionList{
+	externalObjList := datapackaging.PackageList{
 		TypeMeta: intObjList.TypeMeta,
 		ListMeta: intObjList.ListMeta,
 	}
@@ -86,9 +86,9 @@ func (t PackageVersionTranslator) ToExternalList(intObjList *internalpkgingv1alp
 	return &externalObjList
 }
 
-func (t PackageVersionTranslator) ToExternalWatcher(intObjWatcher watch.Interface, fieldSelector fields.Selector) watch.Interface {
+func (t PackageTranslator) ToExternalWatcher(intObjWatcher watch.Interface, fieldSelector fields.Selector) watch.Interface {
 	watchTranslation := func(evt watch.Event) watch.Event {
-		if intpkg, ok := evt.Object.(*internalpkgingv1alpha1.InternalPackageVersion); ok {
+		if intpkg, ok := evt.Object.(*internalpkgingv1alpha1.InternalPackage); ok {
 			evt.Object = t.ToExternalObj(intpkg)
 		}
 		return evt
@@ -99,7 +99,7 @@ func (t PackageVersionTranslator) ToExternalWatcher(intObjWatcher watch.Interfac
 			return true
 		}
 
-		if pv, ok := evt.Object.(*datapackaging.PackageVersion); ok {
+		if pv, ok := evt.Object.(*datapackaging.Package); ok {
 			fieldSet := fields.Set{"spec.packageMetadataName": pv.Spec.PackageMetadataName}
 			if fieldSelector.Matches(fieldSet) {
 				return true
@@ -112,7 +112,7 @@ func (t PackageVersionTranslator) ToExternalWatcher(intObjWatcher watch.Interfac
 	return watchers.NewTranslationWatcher(watchTranslation, watchFilter, intObjWatcher)
 }
 
-func (t PackageVersionTranslator) ToExternalError(err error) error {
+func (t PackageTranslator) ToExternalError(err error) error {
 	// TODO: implement
 	return err
 }
@@ -121,46 +121,46 @@ func (t PackageVersionTranslator) ToExternalError(err error) error {
 //==================Client================//
 ////////////////////////////////////////////
 
-type PackageVersionStorageClient struct {
+type PackageStorageClient struct {
 	crdClient  internalclient.Interface
-	translator PackageVersionTranslator
+	translator PackageTranslator
 }
 
-func NewPackageVersionStorageClient(crdClient internalclient.Interface, translator PackageVersionTranslator) *PackageVersionStorageClient {
-	return &PackageVersionStorageClient{crdClient, translator}
+func NewPackageStorageClient(crdClient internalclient.Interface, translator PackageTranslator) *PackageStorageClient {
+	return &PackageStorageClient{crdClient, translator}
 }
 
-func (psc PackageVersionStorageClient) Create(ctx context.Context, namespace string, obj *datapackaging.PackageVersion, opts metav1.CreateOptions) (*datapackaging.PackageVersion, error) {
+func (psc PackageStorageClient) Create(ctx context.Context, namespace string, obj *datapackaging.Package, opts metav1.CreateOptions) (*datapackaging.Package, error) {
 	internalObj := psc.translator.ToInternalObj(obj)
 
-	internalObj, err := psc.crdClient.InternalV1alpha1().InternalPackageVersions(namespace).Create(ctx, internalObj, opts)
+	internalObj, err := psc.crdClient.InternalV1alpha1().InternalPackages(namespace).Create(ctx, internalObj, opts)
 
 	return psc.translator.ToExternalObj(internalObj), psc.translator.ToExternalError(err)
 }
 
-func (psc PackageVersionStorageClient) Get(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*datapackaging.PackageVersion, error) {
-	intObj, err := psc.crdClient.InternalV1alpha1().InternalPackageVersions(namespace).Get(ctx, name, opts)
+func (psc PackageStorageClient) Get(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*datapackaging.Package, error) {
+	intObj, err := psc.crdClient.InternalV1alpha1().InternalPackages(namespace).Get(ctx, name, opts)
 	return psc.translator.ToExternalObj(intObj), psc.translator.ToExternalError(err)
 }
 
-func (psc PackageVersionStorageClient) List(ctx context.Context, namespace string, opts metav1.ListOptions) (*datapackaging.PackageVersionList, error) {
-	intObjList, err := psc.crdClient.InternalV1alpha1().InternalPackageVersions(namespace).List(ctx, opts)
+func (psc PackageStorageClient) List(ctx context.Context, namespace string, opts metav1.ListOptions) (*datapackaging.PackageList, error) {
+	intObjList, err := psc.crdClient.InternalV1alpha1().InternalPackages(namespace).List(ctx, opts)
 	return psc.translator.ToExternalList(intObjList), psc.translator.ToExternalError(err)
 }
 
-func (psc PackageVersionStorageClient) Update(ctx context.Context, namespace string, updatedObj *datapackaging.PackageVersion, opts metav1.UpdateOptions) (*datapackaging.PackageVersion, error) {
+func (psc PackageStorageClient) Update(ctx context.Context, namespace string, updatedObj *datapackaging.Package, opts metav1.UpdateOptions) (*datapackaging.Package, error) {
 	intUpdatedObj := psc.translator.ToInternalObj(updatedObj)
 
-	intUpdatedObj, err := psc.crdClient.InternalV1alpha1().InternalPackageVersions(namespace).Update(ctx, intUpdatedObj, opts)
+	intUpdatedObj, err := psc.crdClient.InternalV1alpha1().InternalPackages(namespace).Update(ctx, intUpdatedObj, opts)
 	return psc.translator.ToExternalObj(intUpdatedObj), psc.translator.ToExternalError(err)
 }
 
-func (psc PackageVersionStorageClient) Delete(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
-	err := psc.crdClient.InternalV1alpha1().InternalPackageVersions(namespace).Delete(ctx, name, opts)
+func (psc PackageStorageClient) Delete(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
+	err := psc.crdClient.InternalV1alpha1().InternalPackages(namespace).Delete(ctx, name, opts)
 	return psc.translator.ToExternalError(err)
 }
 
-func (psc PackageVersionStorageClient) Watch(ctx context.Context, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+func (psc PackageStorageClient) Watch(ctx context.Context, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
 	fieldSelector, err := fields.ParseSelector(opts.FieldSelector)
 	if err != nil {
 		return nil, err
@@ -168,6 +168,6 @@ func (psc PackageVersionStorageClient) Watch(ctx context.Context, namespace stri
 	// clear this because internal package versions dont support field selectors
 	opts.FieldSelector = fields.Everything().String()
 
-	watcher, err := psc.crdClient.InternalV1alpha1().InternalPackageVersions(namespace).Watch(ctx, opts)
+	watcher, err := psc.crdClient.InternalV1alpha1().InternalPackages(namespace).Watch(ctx, opts)
 	return psc.translator.ToExternalWatcher(watcher, fieldSelector), psc.translator.ToExternalError(err)
 }

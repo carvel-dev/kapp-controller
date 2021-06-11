@@ -60,14 +60,14 @@ spec:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: internalpackageversions.internal.packaging.carvel.dev
+  name: internalpackages.internal.packaging.carvel.dev
 spec:
   group: internal.packaging.carvel.dev
   names:
-    kind: InternalPackageVersion
-    listKind: InternalPackageVersionList
-    plural: internalpackageversions
-    singular: internalpackageversion
+    kind: InternalPackage
+    listKind: InternalPackageList
+    plural: internalpackages
+    singular: internalpackage
   preserveUnknownFields: false
   scope: Namespaced
   subresources:
@@ -392,7 +392,7 @@ spec:
               - spec
               type: object
             valuesSchema:
-              description: valuesSchema can be used to show template values that can be configured by users when a PackageVersion is installed in an OpenAPI schema format.
+              description: valuesSchema can be used to show template values that can be configured by users when a Package is installed in an OpenAPI schema format.
               properties:
                 openAPIv3:
                   nullable: true
@@ -908,7 +908,7 @@ spec:
             noopDelete:
               description: When NoopDelete set to true, PackageInstall deletion should delete PackageInstall/App CR but preserve App's associated resources.
               type: boolean
-            packageVersionRef:
+            packageRef:
               properties:
                 packageMetadataName:
                   type: string

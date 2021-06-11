@@ -28,7 +28,7 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 			Name: "expected-pkg",
 		},
 		Spec: pkgingv1alpha1.PackageInstallSpec{
-			PackageVersionRef: &pkgingv1alpha1.PackageVersionRef{
+			PackageRef: &pkgingv1alpha1.PackageRef{
 				PackageMetadataName: "expec-pkg",
 				VersionSelection: &v1alpha1.VersionSelectionSemver{
 					Constraints: ">=1.0.0",
@@ -42,7 +42,7 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 			Name: "expected-pkg-ineligible",
 		},
 		Spec: pkgingv1alpha1.PackageInstallSpec{
-			PackageVersionRef: &pkgingv1alpha1.PackageVersionRef{
+			PackageRef: &pkgingv1alpha1.PackageRef{
 				PackageMetadataName: "expec-pkg",
 				VersionSelection: &v1alpha1.VersionSelectionSemver{
 					Constraints: "<1.0.0",
@@ -56,8 +56,8 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 	ipvh := handlers.NewPackageInstallVersionHandler(kappcs, "", &EmptyLog{})
 
 	event := event.GenericEvent{
-		Object: &datapkgingv1alpha1.PackageVersion{
-			Spec: datapkgingv1alpha1.PackageVersionSpec{
+		Object: &datapkgingv1alpha1.Package{
+			Spec: datapkgingv1alpha1.PackageSpec{
 				PackageMetadataName: "expec-pkg",
 				Version:             "1.5.0",
 			},
