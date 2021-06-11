@@ -26,32 +26,33 @@ type PackageVersionInformer interface {
 type packageVersionInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
+	namespace        string
 }
 
 // NewPackageVersionInformer constructs a new informer for PackageVersion type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewPackageVersionInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredPackageVersionInformer(client, resyncPeriod, indexers, nil)
+func NewPackageVersionInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredPackageVersionInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
 // NewFilteredPackageVersionInformer constructs a new informer for PackageVersion type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredPackageVersionInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredPackageVersionInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.DataV1alpha1().PackageVersions().List(context.TODO(), options)
+				return client.DataV1alpha1().PackageVersions(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.DataV1alpha1().PackageVersions().Watch(context.TODO(), options)
+				return client.DataV1alpha1().PackageVersions(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&datapackagingv1alpha1.PackageVersion{},
@@ -61,7 +62,7 @@ func NewFilteredPackageVersionInformer(client versioned.Interface, resyncPeriod 
 }
 
 func (f *packageVersionInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredPackageVersionInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewFilteredPackageVersionInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
 func (f *packageVersionInformer) Informer() cache.SharedIndexInformer {

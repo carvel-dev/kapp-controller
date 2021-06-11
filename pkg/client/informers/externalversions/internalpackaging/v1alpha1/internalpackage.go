@@ -26,32 +26,33 @@ type InternalPackageInformer interface {
 type internalPackageInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
+	namespace        string
 }
 
 // NewInternalPackageInformer constructs a new informer for InternalPackage type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewInternalPackageInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredInternalPackageInformer(client, resyncPeriod, indexers, nil)
+func NewInternalPackageInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredInternalPackageInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
 // NewFilteredInternalPackageInformer constructs a new informer for InternalPackage type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredInternalPackageInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredInternalPackageInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.InternalV1alpha1().InternalPackages().List(context.TODO(), options)
+				return client.InternalV1alpha1().InternalPackages(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.InternalV1alpha1().InternalPackages().Watch(context.TODO(), options)
+				return client.InternalV1alpha1().InternalPackages(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&internalpackagingv1alpha1.InternalPackage{},
@@ -61,7 +62,7 @@ func NewFilteredInternalPackageInformer(client versioned.Interface, resyncPeriod
 }
 
 func (f *internalPackageInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredInternalPackageInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewFilteredInternalPackageInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
 func (f *internalPackageInformer) Informer() cache.SharedIndexInformer {

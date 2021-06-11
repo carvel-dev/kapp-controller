@@ -27,10 +27,10 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 
 // InternalPackages returns a InternalPackageInformer.
 func (v *version) InternalPackages() InternalPackageInformer {
-	return &internalPackageInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+	return &internalPackageInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // InternalPackageVersions returns a InternalPackageVersionInformer.
 func (v *version) InternalPackageVersions() InternalPackageVersionInformer {
-	return &internalPackageVersionInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+	return &internalPackageVersionInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

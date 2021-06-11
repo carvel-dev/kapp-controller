@@ -55,3 +55,9 @@ $GOPATH/bin/openapi-gen  \
   --output-package "${KC_PKG}/pkg/apiserver/openapi" \
   -O zz_generated.openapi \
   --go-header-file hack/gen-boilerplate.txt
+
+$GOPATH/bin/go-to-protobuf \
+  --proto-import vendor \
+  --packages "${KC_PKG}/pkg/apiserver/apis/datapackaging/v1alpha1,${KC_PKG}/pkg/apis/kappctrl/v1alpha1" \
+  --go-header-file hack/gen-boilerplate.txt
+

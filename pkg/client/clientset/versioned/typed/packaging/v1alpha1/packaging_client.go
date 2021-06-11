@@ -23,8 +23,8 @@ func (c *PackagingV1alpha1Client) InstalledPackages(namespace string) InstalledP
 	return newInstalledPackages(c, namespace)
 }
 
-func (c *PackagingV1alpha1Client) PackageRepositories() PackageRepositoryInterface {
-	return newPackageRepositories(c)
+func (c *PackagingV1alpha1Client) PackageRepositories(namespace string) PackageRepositoryInterface {
+	return newPackageRepositories(c, namespace)
 }
 
 // NewForConfig creates a new PackagingV1alpha1Client for the given config.

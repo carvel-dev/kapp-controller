@@ -13,3 +13,7 @@ type InstalledPackageNamespaceListerExpansion interface{}
 // PackageRepositoryListerExpansion allows custom methods to be added to
 // PackageRepositoryLister.
 type PackageRepositoryListerExpansion interface{}
+
+// PackageRepositoryNamespaceListerExpansion allows custom methods to be added to
+// PackageRepositoryNamespaceLister.
+type PackageRepositoryNamespaceListerExpansion interface{}

@@ -17,6 +17,7 @@ import (
 // FakePackageVersions implements PackageVersionInterface
 type FakePackageVersions struct {
 	Fake *FakeDataV1alpha1
+	ns   string
 }
 
 var packageversionsResource = schema.GroupVersionResource{Group: "data.packaging.carvel.dev", Version: "v1alpha1", Resource: "packageversions"}
@@ -26,7 +27,8 @@ var packageversionsKind = schema.GroupVersionKind{Group: "data.packaging.carvel.
 // Get takes name of the packageVersion, and returns the corresponding packageVersion object, and an error if there is any.
 func (c *FakePackageVersions) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.PackageVersion, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(packageversionsResource, name), &v1alpha1.PackageVersion{})
+		Invokes(testing.NewGetAction(packageversionsResource, c.ns, name), &v1alpha1.PackageVersion{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -36,7 +38,8 @@ func (c *FakePackageVersions) Get(ctx context.Context, name string, options v1.G
 // List takes label and field selectors, and returns the list of PackageVersions that match those selectors.
 func (c *FakePackageVersions) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.PackageVersionList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(packageversionsResource, packageversionsKind, opts), &v1alpha1.PackageVersionList{})
+		Invokes(testing.NewListAction(packageversionsResource, packageversionsKind, c.ns, opts), &v1alpha1.PackageVersionList{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -57,13 +60,15 @@ func (c *FakePackageVersions) List(ctx context.Context, opts v1.ListOptions) (re
 // Watch returns a watch.Interface that watches the requested packageVersions.
 func (c *FakePackageVersions) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(packageversionsResource, opts))
+		InvokesWatch(testing.NewWatchAction(packageversionsResource, c.ns, opts))
+
 }
 
 // Create takes the representation of a packageVersion and creates it.  Returns the server's representation of the packageVersion, and an error, if there is any.
 func (c *FakePackageVersions) Create(ctx context.Context, packageVersion *v1alpha1.PackageVersion, opts v1.CreateOptions) (result *v1alpha1.PackageVersion, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(packageversionsResource, packageVersion), &v1alpha1.PackageVersion{})
+		Invokes(testing.NewCreateAction(packageversionsResource, c.ns, packageVersion), &v1alpha1.PackageVersion{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -73,7 +78,8 @@ func (c *FakePackageVersions) Create(ctx context.Context, packageVersion *v1alph
 // Update takes the representation of a packageVersion and updates it. Returns the server's representation of the packageVersion, and an error, if there is any.
 func (c *FakePackageVersions) Update(ctx context.Context, packageVersion *v1alpha1.PackageVersion, opts v1.UpdateOptions) (result *v1alpha1.PackageVersion, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(packageversionsResource, packageVersion), &v1alpha1.PackageVersion{})
+		Invokes(testing.NewUpdateAction(packageversionsResource, c.ns, packageVersion), &v1alpha1.PackageVersion{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -83,13 +89,14 @@ func (c *FakePackageVersions) Update(ctx context.Context, packageVersion *v1alph
 // Delete takes name of the packageVersion and deletes it. Returns an error if one occurs.
 func (c *FakePackageVersions) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(packageversionsResource, name), &v1alpha1.PackageVersion{})
+		Invokes(testing.NewDeleteAction(packageversionsResource, c.ns, name), &v1alpha1.PackageVersion{})
+
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakePackageVersions) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(packageversionsResource, listOpts)
+	action := testing.NewDeleteCollectionAction(packageversionsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.PackageVersionList{})
 	return err
@@ -98,7 +105,8 @@ func (c *FakePackageVersions) DeleteCollection(ctx context.Context, opts v1.Dele
 // Patch applies the patch and returns the patched packageVersion.
 func (c *FakePackageVersions) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.PackageVersion, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(packageversionsResource, name, pt, data, subresources...), &v1alpha1.PackageVersion{})
+		Invokes(testing.NewPatchSubresourceAction(packageversionsResource, c.ns, name, pt, data, subresources...), &v1alpha1.PackageVersion{})
+
 	if obj == nil {
 		return nil, err
 	}

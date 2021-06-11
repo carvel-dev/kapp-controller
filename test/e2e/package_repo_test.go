@@ -14,6 +14,7 @@ import (
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // TODO: Right now the implementation of the package repo reconciler needs improvement
@@ -36,16 +37,21 @@ spec:
       image: k8slt/i-dont-exist`
 
 	expectedStatus := v1alpha1.PackageRepositoryStatus{
+		Fetch: &kcv1alpha1.AppStatusFetch{
+			ExitCode: 1,
+			Error:    "Fetching resources: Error (see .status.usefulErrorMessage for details)",
+		},
 		GenericStatus: kcv1alpha1.GenericStatus{
 			Conditions: []kcv1alpha1.AppCondition{{
 				Type:    kcv1alpha1.ReconcileFailed,
 				Status:  corev1.ConditionTrue,
-				Message: "Syncing packages: (see .status.usefulErrorMessage for details)",
+				Message: "Fetching resources: Error (see .status.usefulErrorMessage for details)",
 			}},
 			ObservedGeneration:  1,
-			FriendlyDescription: "Reconcile failed: Syncing packages: (see .status.usefulErrorMessage for details)",
+			FriendlyDescription: "Reconcile failed: Fetching resources: Error (see .status.usefulErrorMessage for details)",
 			UsefulErrorMessage:  "Error: Syncing directory '0': Syncing directory '.' with imgpkgBundle contents: Imgpkg: exit status 1 (stderr: Error: Checking if image is bundle: Collecting images: Working with index.docker.io/k8slt/i-dont-exist:latest: GET https://index.docker.io/v2/k8slt/i-dont-exist/manifests/latest: UNAUTHORIZED: authentication required; [map[Action:pull Class: Name:k8slt/i-dont-exist Type:repository]]\n)\n",
 		},
+		ConsecutiveReconcileFailures: 4,
 	}
 
 	cleanup := func() {
@@ -69,6 +75,8 @@ spec:
 		if err != nil {
 			return fmt.Errorf("failed to unmarshal: %s", err)
 		}
+
+		cleanupStatusForAssertion(&cr)
 
 		// assert on expectedStatus
 		if !reflect.DeepEqual(expectedStatus, cr.Status) {
@@ -108,6 +116,18 @@ spec:
 	})
 
 	expectedStatus := v1alpha1.PackageRepositoryStatus{
+		Fetch: &kcv1alpha1.AppStatusFetch{
+			ExitCode: 0,
+		},
+		Template: &kcv1alpha1.AppStatusTemplate{
+			ExitCode: 0,
+		},
+		Deploy: &kcv1alpha1.AppStatusDeploy{
+			ExitCode: 0,
+			Finished: true,
+		},
+		ConsecutiveReconcileSuccesses: 1,
+		ConsecutiveReconcileFailures:  0,
 		GenericStatus: kcv1alpha1.GenericStatus{
 			Conditions: []kcv1alpha1.AppCondition{{
 				Type:    kcv1alpha1.ReconcileSucceeded,
@@ -129,6 +149,8 @@ spec:
 		if err != nil {
 			return fmt.Errorf("failed to unmarshal: %s", err)
 		}
+
+		cleanupStatusForAssertion(&cr)
 
 		// assert on expectedStatus
 		if !reflect.DeepEqual(expectedStatus, cr.Status) {
@@ -156,23 +178,23 @@ spec:
       image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:0ae0f32ef92d2362339b47055a6ea2042bc114a7dd36cf339bf05df4d1cc1b9b`
 
 	cleanUp := func() {
-		kubectl.RunWithOpts([]string{"delete", "pkgr/basic.test.carvel.dev"}, RunOpts{NoNamespace: true})
+		kubectl.Run([]string{"delete", "pkgr/basic.test.carvel.dev"})
 	}
 	defer cleanUp()
 
 	kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(yamlRepo)})
 
 	retry(t, 10*time.Second, func() error {
-		_, err := kubectl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev"}, RunOpts{NoNamespace: true, AllowError: true})
+		_, err := kubectl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
 		if err != nil {
 			return fmt.Errorf("Expected to find pkg pkg.test.carvel.dev, but couldn't: %v", err)
 		}
 
-		_, err = kubectl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.1.0.0"}, RunOpts{NoNamespace: true, AllowError: true})
+		_, err = kubectl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
 		if err != nil {
 			return fmt.Errorf("Expected to find pkg versions (pkg.test.carvel.dev.1.0.0, pkg.test.carvel.dev.2.0.0) but couldn't: %v", err)
 		}
-		_, err = kubectl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.2.0.0"}, RunOpts{NoNamespace: true, AllowError: true})
+		_, err = kubectl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
 		if err != nil {
 			return fmt.Errorf("Expected to find pkg versions (pkg.test.carvel.dev.1.0.0, pkg.test.carvel.dev.2.0.0) but couldn't: %v", err)
 		}
@@ -199,9 +221,9 @@ spec:
 	packageNames := []string{"pkg.test.carvel.dev.1.0.0", "pkg.test.carvel.dev.2.0.0"}
 
 	cleanUp := func() {
-		kctl.RunWithOpts([]string{"delete", "pkgr/basic.test.carvel.dev"}, RunOpts{NoNamespace: true, AllowError: true})
+		kctl.RunWithOpts([]string{"delete", "pkgr/basic.test.carvel.dev"}, RunOpts{AllowError: true})
 		for _, name := range packageNames {
-			kctl.RunWithOpts([]string{"delete", fmt.Sprintf("package/%s", name)}, RunOpts{NoNamespace: true, AllowError: true})
+			kctl.RunWithOpts([]string{"delete", fmt.Sprintf("package/%s", name)}, RunOpts{AllowError: true})
 		}
 	}
 	defer cleanUp()
@@ -213,17 +235,17 @@ spec:
 
 	logger.Section("check packages exist", func() {
 		retry(t, 20*time.Second, func() error {
-			_, err := kctl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev"}, RunOpts{NoNamespace: true, AllowError: true})
+			_, err := kctl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
 			if err != nil {
 				return fmt.Errorf("Expected to find pkg pkg.test.carvel.dev, but couldn't: %v", err)
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
+			_, err = kctl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
 			if err != nil {
 				return fmt.Errorf("Expected to find package pkg.test.carvel.dev.1.0.0: %v", err)
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
+			_, err = kctl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
 			if err != nil {
 				return fmt.Errorf("Expected to find package pkg.test.carvel.dev.2.0.0: %v", err)
 			}
@@ -237,17 +259,17 @@ spec:
 
 	logger.Section("check packages are deleted too", func() {
 		retry(t, 10*time.Second, func() error {
-			_, err := kctl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev"}, RunOpts{NoNamespace: true, AllowError: true})
+			_, err := kctl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
 			if err == nil || !strings.Contains(err.Error(), "\"pkg.test.carvel.dev\" not found") {
 				return fmt.Errorf("Expected not to find pkg pkg.test.carvel.dev, but did: %v", err)
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
+			_, err = kctl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
 			if err == nil || !strings.Contains(err.Error(), "\"pkg.test.carvel.dev.1.0.0\" not found") {
 				return fmt.Errorf("Expected not to find package pkg.test.carvel.dev.1.0.0, but did")
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true, NoNamespace: true})
+			_, err = kctl.RunWithOpts([]string{"get", "packageversion/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
 			if err == nil || !strings.Contains(err.Error(), "\"pkg.test.carvel.dev.2.0.0\" not found") {
 				return fmt.Errorf("Expected no to find package pkg.test.carvel.dev.2.0.0, but did")
 			}
@@ -285,7 +307,7 @@ spec:
 			RunOpts{StdinReader: strings.NewReader(repoYaml)})
 	})
 
-	out, err := kubectl.RunWithOpts([]string{"get", "pkgr/" + name}, RunOpts{NoNamespace: true, AllowError: true})
+	out, err := kubectl.RunWithOpts([]string{"get", "pkgr/" + name}, RunOpts{AllowError: true})
 	if err != nil {
 		t.Fatalf("encountered unknown error from kubectl get pkgr: %v", err)
 	}
@@ -307,5 +329,29 @@ func retry(t *testing.T, timeout time.Duration, f func() error) {
 			t.Fatalf("retry timed out after %s: %v", timeout.String(), err)
 		}
 		time.Sleep(1 * time.Second)
+	}
+}
+
+func cleanupStatusForAssertion(pkgr *v1alpha1.PackageRepository) {
+	// fetch
+	if pkgr.Status.Fetch != nil {
+		pkgr.Status.Fetch.StartedAt = metav1.Time{}
+		pkgr.Status.Fetch.UpdatedAt = metav1.Time{}
+		pkgr.Status.Fetch.Stdout = ""
+		pkgr.Status.Fetch.Stderr = ""
+	}
+
+	// template
+	if pkgr.Status.Template != nil {
+		pkgr.Status.Template.UpdatedAt = metav1.Time{}
+		pkgr.Status.Template.Stderr = ""
+	}
+
+	// deploy
+	if pkgr.Status.Deploy != nil {
+		pkgr.Status.Deploy.StartedAt = metav1.Time{}
+		pkgr.Status.Deploy.UpdatedAt = metav1.Time{}
+		pkgr.Status.Deploy.Stdout = ""
+		pkgr.Status.Deploy.Stderr = ""
 	}
 }

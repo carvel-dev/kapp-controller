@@ -42,6 +42,7 @@ type Options struct {
 	Namespace         string
 	EnablePprof       bool
 	APIRequestTimeout time.Duration
+	PackagingGloablNS string
 }
 
 // Based on https://github.com/kubernetes-sigs/controller-runtime/blob/8f633b179e1c704a6e40440b528252f147a3362a/examples/builtins/main.go
@@ -95,7 +96,7 @@ func Run(opts Options, runLog logr.Logger) {
 		appClient:  kcClient,
 	}
 
-	server, err := apiserver.NewAPIServer(restConfig)
+	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, opts.PackagingGloablNS)
 	if err != nil {
 		runLog.Error(err, "creating server")
 		os.Exit(1)
@@ -107,14 +108,15 @@ func Run(opts Options, runLog logr.Logger) {
 		os.Exit(1)
 	}
 
-	// TODO: we may need to sleep here to give the server time to start up
+	refTracker := reftracker.NewAppRefTracker()
+	updateStatusTracker := reftracker.NewAppUpdateStatus()
 
 	{ // add controller for apps
-		appRefTracker := reftracker.NewAppRefTracker()
-		appUpdateStatus := reftracker.NewAppUpdateStatus()
+		schApp := handlers.NewSecretHandler(runLog, refTracker, updateStatusTracker)
+		cfgmhApp := handlers.NewConfigMapHandler(runLog, refTracker, updateStatusTracker)
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
-				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), appFactory, appRefTracker, appUpdateStatus),
+				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), appFactory, refTracker, updateStatusTracker),
 				log:      runLog.WithName("pr"),
 			}),
 			MaxConcurrentReconciles: opts.Concurrency,
@@ -132,15 +134,13 @@ func Run(opts Options, runLog logr.Logger) {
 			os.Exit(1)
 		}
 
-		sch := handlers.NewSecretHandler(runLog, appRefTracker, appUpdateStatus)
-		err = ctrlApp.Watch(&source.Kind{Type: &v1.Secret{}}, sch)
+		err = ctrlApp.Watch(&source.Kind{Type: &v1.Secret{}}, schApp)
 		if err != nil {
 			runLog.Error(err, "unable to watch Secrets")
 			os.Exit(1)
 		}
 
-		cfgmh := handlers.NewConfigMapHandler(runLog, appRefTracker, appUpdateStatus)
-		err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, cfgmh)
+		err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, cfgmhApp)
 		if err != nil {
 			runLog.Error(err, "unable to watch ConfigMaps")
 			os.Exit(1)
@@ -169,7 +169,7 @@ func Run(opts Options, runLog logr.Logger) {
 			os.Exit(1)
 		}
 
-		err = installedPkgCtrl.Watch(&source.Kind{Type: &datapkgingv1alpha1.PackageVersion{}}, handlers.NewInstalledPkgVersionHandler(kcClient, runLog.WithName("handler")))
+		err = installedPkgCtrl.Watch(&source.Kind{Type: &datapkgingv1alpha1.PackageVersion{}}, handlers.NewInstalledPkgVersionHandler(kcClient, opts.PackagingGloablNS, runLog.WithName("handler")))
 		if err != nil {
 			runLog.Error(err, "unable to watch *datapkgingv1alpha1.PackageVersion for InstalledPackage")
 			os.Exit(1)
@@ -186,12 +186,12 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	{ // add controller for pkgrepositories
+		schRepo := handlers.NewSecretHandler(runLog, refTracker, updateStatusTracker)
+
 		pkgRepositoriesCtrlOpts := controller.Options{
-			Reconciler: &PkgRepositoryReconciler{
-				client: kcClient,
-				log:    runLog.WithName("prr"),
-			},
-			MaxConcurrentReconciles: opts.Concurrency,
+			Reconciler: NewPkgRepositoryReconciler(kcClient, runLog.WithName("prr"), appFactory, refTracker, updateStatusTracker),
+			// TODO: Consider making this configurable for multiple PackageRepo reconciles
+			MaxConcurrentReconciles: 1,
 		}
 
 		pkgRepositoryCtrl, err := controller.New("kapp-controller-package-repository", mgr, pkgRepositoriesCtrlOpts)
@@ -206,12 +206,9 @@ func Run(opts Options, runLog logr.Logger) {
 			os.Exit(1)
 		}
 
-		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
-			OwnerType:    &pkgingv1alpha1.PackageRepository{},
-			IsController: true,
-		})
+		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &v1.Secret{}}, schRepo)
 		if err != nil {
-			runLog.Error(err, "unable to watch *kcv1alpha1.App for PackageRepository")
+			runLog.Error(err, "unable to watch Secrets")
 			os.Exit(1)
 		}
 	}

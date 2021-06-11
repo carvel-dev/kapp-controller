@@ -17,7 +17,7 @@ import (
 // InternalPackageVersionsGetter has a method to return a InternalPackageVersionInterface.
 // A group's client should implement this interface.
 type InternalPackageVersionsGetter interface {
-	InternalPackageVersions() InternalPackageVersionInterface
+	InternalPackageVersions(namespace string) InternalPackageVersionInterface
 }
 
 // InternalPackageVersionInterface has methods to work with InternalPackageVersion resources.
@@ -36,12 +36,14 @@ type InternalPackageVersionInterface interface {
 // internalPackageVersions implements InternalPackageVersionInterface
 type internalPackageVersions struct {
 	client rest.Interface
+	ns     string
 }
 
 // newInternalPackageVersions returns a InternalPackageVersions
-func newInternalPackageVersions(c *InternalV1alpha1Client) *internalPackageVersions {
+func newInternalPackageVersions(c *InternalV1alpha1Client, namespace string) *internalPackageVersions {
 	return &internalPackageVersions{
 		client: c.RESTClient(),
+		ns:     namespace,
 	}
 }
 
@@ -49,6 +51,7 @@ func newInternalPackageVersions(c *InternalV1alpha1Client) *internalPackageVersi
 func (c *internalPackageVersions) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.InternalPackageVersion, err error) {
 	result = &v1alpha1.InternalPackageVersion{}
 	err = c.client.Get().
+		Namespace(c.ns).
 		Resource("internalpackageversions").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
@@ -65,6 +68,7 @@ func (c *internalPackageVersions) List(ctx context.Context, opts v1.ListOptions)
 	}
 	result = &v1alpha1.InternalPackageVersionList{}
 	err = c.client.Get().
+		Namespace(c.ns).
 		Resource("internalpackageversions").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -81,6 +85,7 @@ func (c *internalPackageVersions) Watch(ctx context.Context, opts v1.ListOptions
 	}
 	opts.Watch = true
 	return c.client.Get().
+		Namespace(c.ns).
 		Resource("internalpackageversions").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -91,6 +96,7 @@ func (c *internalPackageVersions) Watch(ctx context.Context, opts v1.ListOptions
 func (c *internalPackageVersions) Create(ctx context.Context, internalPackageVersion *v1alpha1.InternalPackageVersion, opts v1.CreateOptions) (result *v1alpha1.InternalPackageVersion, err error) {
 	result = &v1alpha1.InternalPackageVersion{}
 	err = c.client.Post().
+		Namespace(c.ns).
 		Resource("internalpackageversions").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(internalPackageVersion).
@@ -103,6 +109,7 @@ func (c *internalPackageVersions) Create(ctx context.Context, internalPackageVer
 func (c *internalPackageVersions) Update(ctx context.Context, internalPackageVersion *v1alpha1.InternalPackageVersion, opts v1.UpdateOptions) (result *v1alpha1.InternalPackageVersion, err error) {
 	result = &v1alpha1.InternalPackageVersion{}
 	err = c.client.Put().
+		Namespace(c.ns).
 		Resource("internalpackageversions").
 		Name(internalPackageVersion.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
@@ -115,6 +122,7 @@ func (c *internalPackageVersions) Update(ctx context.Context, internalPackageVer
 // Delete takes name of the internalPackageVersion and deletes it. Returns an error if one occurs.
 func (c *internalPackageVersions) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
+		Namespace(c.ns).
 		Resource("internalpackageversions").
 		Name(name).
 		Body(&opts).
@@ -129,6 +137,7 @@ func (c *internalPackageVersions) DeleteCollection(ctx context.Context, opts v1.
 		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
+		Namespace(c.ns).
 		Resource("internalpackageversions").
 		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -141,6 +150,7 @@ func (c *internalPackageVersions) DeleteCollection(ctx context.Context, opts v1.
 func (c *internalPackageVersions) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.InternalPackageVersion, err error) {
 	result = &v1alpha1.InternalPackageVersion{}
 	err = c.client.Patch(pt).
+		Namespace(c.ns).
 		Resource("internalpackageversions").
 		Name(name).
 		SubResource(subresources...).

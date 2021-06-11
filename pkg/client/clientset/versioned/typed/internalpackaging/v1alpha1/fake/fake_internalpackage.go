@@ -17,6 +17,7 @@ import (
 // FakeInternalPackages implements InternalPackageInterface
 type FakeInternalPackages struct {
 	Fake *FakeInternalV1alpha1
+	ns   string
 }
 
 var internalpackagesResource = schema.GroupVersionResource{Group: "internal.packaging.carvel.dev", Version: "v1alpha1", Resource: "internalpackages"}
@@ -26,7 +27,8 @@ var internalpackagesKind = schema.GroupVersionKind{Group: "internal.packaging.ca
 // Get takes name of the internalPackage, and returns the corresponding internalPackage object, and an error if there is any.
 func (c *FakeInternalPackages) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.InternalPackage, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(internalpackagesResource, name), &v1alpha1.InternalPackage{})
+		Invokes(testing.NewGetAction(internalpackagesResource, c.ns, name), &v1alpha1.InternalPackage{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -36,7 +38,8 @@ func (c *FakeInternalPackages) Get(ctx context.Context, name string, options v1.
 // List takes label and field selectors, and returns the list of InternalPackages that match those selectors.
 func (c *FakeInternalPackages) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.InternalPackageList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(internalpackagesResource, internalpackagesKind, opts), &v1alpha1.InternalPackageList{})
+		Invokes(testing.NewListAction(internalpackagesResource, internalpackagesKind, c.ns, opts), &v1alpha1.InternalPackageList{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -57,13 +60,15 @@ func (c *FakeInternalPackages) List(ctx context.Context, opts v1.ListOptions) (r
 // Watch returns a watch.Interface that watches the requested internalPackages.
 func (c *FakeInternalPackages) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(internalpackagesResource, opts))
+		InvokesWatch(testing.NewWatchAction(internalpackagesResource, c.ns, opts))
+
 }
 
 // Create takes the representation of a internalPackage and creates it.  Returns the server's representation of the internalPackage, and an error, if there is any.
 func (c *FakeInternalPackages) Create(ctx context.Context, internalPackage *v1alpha1.InternalPackage, opts v1.CreateOptions) (result *v1alpha1.InternalPackage, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(internalpackagesResource, internalPackage), &v1alpha1.InternalPackage{})
+		Invokes(testing.NewCreateAction(internalpackagesResource, c.ns, internalPackage), &v1alpha1.InternalPackage{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -73,7 +78,8 @@ func (c *FakeInternalPackages) Create(ctx context.Context, internalPackage *v1al
 // Update takes the representation of a internalPackage and updates it. Returns the server's representation of the internalPackage, and an error, if there is any.
 func (c *FakeInternalPackages) Update(ctx context.Context, internalPackage *v1alpha1.InternalPackage, opts v1.UpdateOptions) (result *v1alpha1.InternalPackage, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(internalpackagesResource, internalPackage), &v1alpha1.InternalPackage{})
+		Invokes(testing.NewUpdateAction(internalpackagesResource, c.ns, internalPackage), &v1alpha1.InternalPackage{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -83,13 +89,14 @@ func (c *FakeInternalPackages) Update(ctx context.Context, internalPackage *v1al
 // Delete takes name of the internalPackage and deletes it. Returns an error if one occurs.
 func (c *FakeInternalPackages) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(internalpackagesResource, name), &v1alpha1.InternalPackage{})
+		Invokes(testing.NewDeleteAction(internalpackagesResource, c.ns, name), &v1alpha1.InternalPackage{})
+
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeInternalPackages) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(internalpackagesResource, listOpts)
+	action := testing.NewDeleteCollectionAction(internalpackagesResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.InternalPackageList{})
 	return err
@@ -98,7 +105,8 @@ func (c *FakeInternalPackages) DeleteCollection(ctx context.Context, opts v1.Del
 // Patch applies the patch and returns the patched internalPackage.
 func (c *FakeInternalPackages) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.InternalPackage, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(internalpackagesResource, name, pt, data, subresources...), &v1alpha1.InternalPackage{})
+		Invokes(testing.NewPatchSubresourceAction(internalpackagesResource, c.ns, name, pt, data, subresources...), &v1alpha1.InternalPackage{})
+
 	if obj == nil {
 		return nil, err
 	}
