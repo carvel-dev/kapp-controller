@@ -14,13 +14,13 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 )
 
-func Test_PackageVersionNameCharacters(t *testing.T) {
+func Test_PackageNameCharacters(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
 	appName := "test-package-name-characters"
 
-	packageVersionName := "test-pkg.carvel.dev.1.0.0+alpha.1"
+	packageName := "test-pkg.carvel.dev.1.0.0+alpha.1"
 
 	invalidPkgVersionYML := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
@@ -45,7 +45,7 @@ spec:
           - "-"
           - ".imgpkg/images.yml"
       deploy:
-      - kapp: {}`, packageVersionName)
+      - kapp: {}`, packageName)
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", appName})
@@ -62,13 +62,13 @@ spec:
 	})
 }
 
-func Test_PackageVersionIsValidated_Name(t *testing.T) {
+func Test_PackageIsValidated_Name(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
 	appName := "invalid-pkg-version-name-test"
 
-	invalidPackageVersionName := "notThePackage-notTheVersion"
+	invalidPackageName := "notThePackage-notTheVersion"
 
 	invalidPkgVersionYML := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
@@ -93,7 +93,7 @@ spec:
           - "-"
           - ".imgpkg/images.yml"
       deploy:
-      - kapp: {}`, invalidPackageVersionName)
+      - kapp: {}`, invalidPackageName)
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", appName})
@@ -118,7 +118,7 @@ spec:
 	})
 }
 
-func Test_PackageVersionWithValuesSchema_PreservesSchemaData(t *testing.T) {
+func Test_PackageWithValuesSchema_PreservesSchemaData(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
@@ -188,7 +188,7 @@ spec:
 	}
 }
 
-func Test_PackageVersion_FieldSelectors(t *testing.T) {
+func Test_Package_FieldSelectors(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
@@ -284,7 +284,7 @@ spec:
 	})
 }
 
-func TestOverridePackageVersionDelete(t *testing.T) {
+func TestOverridePackageDelete(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	k := Kubectl{t, env.Namespace, logger}
@@ -341,7 +341,7 @@ spec:
 	})
 }
 
-func TestOverridePackageVersionNamespaceDelete(t *testing.T) {
+func TestOverridePackageNamespaceDelete(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	k := Kubectl{t, env.Namespace, logger}

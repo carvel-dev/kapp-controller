@@ -32,27 +32,27 @@ func ValidatePackageMetadataName(pkgmName string, fldPath *field.Path) field.Err
 
 // package version validations
 
-func ValidatePackageVersion(pv datapackaging.Package) field.ErrorList {
+func ValidatePackage(pkg datapackaging.Package) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs,
-		ValidatePackageSpecPackageName(pv.Spec.RefName, field.NewPath("spec", "refName"))...)
+		ValidatePackageSpecPackageName(pkg.Spec.RefName, field.NewPath("spec", "refName"))...)
 
-	allErrs = append(allErrs, ValidatePackageSpecVersion(pv.Spec.Version, field.NewPath("spec", "version"))...)
+	allErrs = append(allErrs, ValidatePackageSpecVersion(pkg.Spec.Version, field.NewPath("spec", "version"))...)
 
 	allErrs = append(allErrs,
-		ValidatePackageName(pv.ObjectMeta.Name, pv.Spec.RefName, pv.Spec.Version, field.NewPath("metadata").Child("name"))...)
+		ValidatePackageName(pkg.ObjectMeta.Name, pkg.Spec.RefName, pkg.Spec.Version, field.NewPath("metadata").Child("name"))...)
 
 	return allErrs
 }
 
 // validate metdata.name = spec.RefName + spec.Version
-func ValidatePackageName(pvName, pkgmName, pkgVersion string, fldPath *field.Path) field.ErrorList {
+func ValidatePackageName(pkgName, pkgmName, pkgVersion string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if !(pvName == pkgmName+"."+pkgVersion) {
+	if !(pkgName == pkgmName+"."+pkgVersion) {
 		allErrs = append(allErrs,
-			field.Invalid(fldPath, pvName, "must be <spec.refName> + '.' + <spec.version>"))
+			field.Invalid(fldPath, pkgName, "must be <spec.refName> + '.' + <spec.version>"))
 	}
 
 	return allErrs
