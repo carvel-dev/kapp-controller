@@ -68,13 +68,13 @@ func (r *PackageCRDREST) Create(ctx context.Context, obj runtime.Object, createV
 		}
 	}
 
-	pkgVersion := obj.(*datapackaging.Package)
-	errs := validation.ValidatePackageVersion(*pkgVersion)
+	pkg := obj.(*datapackaging.Package)
+	errs := validation.ValidatePackage(*pkg)
 	if len(errs) != 0 {
-		return nil, errors.NewInvalid(pkgVersion.GroupVersionKind().GroupKind(), pkgVersion.Name, errs)
+		return nil, errors.NewInvalid(pkg.GroupVersionKind().GroupKind(), pkg.Name, errs)
 	}
 
-	return client.Create(ctx, namespace, pkgVersion, *options)
+	return client.Create(ctx, namespace, pkg, *options)
 }
 
 func (r *PackageCRDREST) shouldFetchGlobal(ctx context.Context, namespace string) bool {
@@ -90,11 +90,11 @@ func (r *PackageCRDREST) Get(ctx context.Context, name string, options *metav1.G
 	namespace := request.NamespaceValue(ctx)
 	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
 
-	pkgVersion, err := client.Get(ctx, namespace, name, *options)
+	pkg, err := client.Get(ctx, namespace, name, *options)
 	if errors.IsNotFound(err) && r.shouldFetchGlobal(ctx, namespace) {
-		pkgVersion, err = client.Get(ctx, r.globalNamespace, name, *options)
+		pkg, err = client.Get(ctx, r.globalNamespace, name, *options)
 	}
-	return pkgVersion, err
+	return pkg, err
 }
 
 func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
@@ -105,49 +105,49 @@ func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.List
 	fs := options.FieldSelector
 	options.FieldSelector = fields.Everything()
 
-	namespacedPkgVersionList, err := client.List(ctx, namespace, r.internalToMetaListOpts(*options))
+	namespacedPkgList, err := client.List(ctx, namespace, r.internalToMetaListOpts(*options))
 	if err != nil {
 		return nil, err
 	}
-	namespacedPkgVersions := namespacedPkgVersionList.Items
+	namespacedPkgs := namespacedPkgList.Items
 
-	var globalPkgVersions []datapackaging.Package
+	var globalPkgs []datapackaging.Package
 	if r.shouldFetchGlobal(ctx, namespace) {
-		globalPkgVersionList, err := client.List(ctx, r.globalNamespace, r.internalToMetaListOpts(*options))
+		globalPkgList, err := client.List(ctx, r.globalNamespace, r.internalToMetaListOpts(*options))
 		if err != nil {
 			return nil, err
 		}
-		globalPkgVersions = globalPkgVersionList.Items
+		globalPkgs = globalPkgList.Items
 	}
 
 	packageVersionsMap := make(map[string]datapackaging.Package)
-	for _, pkgVersion := range globalPkgVersions {
-		identifier := pkgVersion.Namespace + "/" + pkgVersion.Spec.RefName + "." + pkgVersion.Spec.Version
-		packageVersionsMap[identifier] = pkgVersion
+	for _, pkg := range globalPkgs {
+		identifier := pkg.Namespace + "/" + pkg.Spec.RefName + "." + pkg.Spec.Version
+		packageVersionsMap[identifier] = pkg
 	}
 
-	for _, pkgVersion := range namespacedPkgVersions {
-		identifier := pkgVersion.Namespace + "/" + pkgVersion.Spec.RefName + "." + pkgVersion.Spec.Version
-		packageVersionsMap[identifier] = pkgVersion
+	for _, pkg := range namespacedPkgs {
+		identifier := pkg.Namespace + "/" + pkg.Spec.RefName + "." + pkg.Spec.Version
+		packageVersionsMap[identifier] = pkg
 	}
 
-	pkgVersionList := &datapackaging.PackageList{
-		TypeMeta: namespacedPkgVersionList.TypeMeta,
-		ListMeta: namespacedPkgVersionList.ListMeta,
+	pkgList := &datapackaging.PackageList{
+		TypeMeta: namespacedPkgList.TypeMeta,
+		ListMeta: namespacedPkgList.ListMeta,
 	}
 
 	for _, v := range packageVersionsMap {
-		pkgVersionList.Items = append(pkgVersionList.Items, v)
+		pkgList.Items = append(pkgList.Items, v)
 	}
 
-	return r.applySelector(pkgVersionList, fs), err
+	return r.applySelector(pkgList, fs), err
 }
 
 func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
 	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
 
-	pkgVersion, err := client.Get(ctx, namespace, name, metav1.GetOptions{})
+	pkg, err := client.Get(ctx, namespace, name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		// Because kubetl does a get before sending an update, the presence
 		// of a global package may cause it to send a patch request, even though
@@ -155,13 +155,13 @@ func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.U
 		// if the package exists globally and then patch that instead of patching an empty
 		// package. If we try patching an empty obj the patch UpdatedObjectInfo will blow up.
 		patchingGlobal := true
-		pkgVersion, err := client.Get(ctx, r.globalNamespace, name, metav1.GetOptions{})
+		pkg, err := client.Get(ctx, r.globalNamespace, name, metav1.GetOptions{})
 		if errors.IsNotFound(err) {
-			pkgVersion = &datapackaging.Package{}
+			pkg = &datapackaging.Package{}
 			patchingGlobal = false
 		}
 
-		updatedObj, err := objInfo.UpdatedObject(ctx, pkgVersion)
+		updatedObj, err := objInfo.UpdatedObject(ctx, pkg)
 		if err != nil {
 			return nil, false, err
 		}
@@ -172,19 +172,19 @@ func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.U
 			}
 		}
 
-		updatedPkgVersion := updatedObj.(*datapackaging.Package)
+		updatedPkg := updatedObj.(*datapackaging.Package)
 		if patchingGlobal {
 			// we have to do this in case we are "patching" a global package
-			annotations := updatedPkgVersion.ObjectMeta.Annotations
-			labels := updatedPkgVersion.ObjectMeta.Labels
-			updatedPkgVersion.ObjectMeta = metav1.ObjectMeta{}
-			updatedPkgVersion.ObjectMeta.Name = name
-			updatedPkgVersion.ObjectMeta.Namespace = namespace
-			updatedPkgVersion.ObjectMeta.Annotations = annotations
-			updatedPkgVersion.ObjectMeta.Labels = labels
+			annotations := updatedPkg.ObjectMeta.Annotations
+			labels := updatedPkg.ObjectMeta.Labels
+			updatedPkg.ObjectMeta = metav1.ObjectMeta{}
+			updatedPkg.ObjectMeta.Name = name
+			updatedPkg.ObjectMeta.Namespace = namespace
+			updatedPkg.ObjectMeta.Annotations = annotations
+			updatedPkg.ObjectMeta.Labels = labels
 		}
 
-		obj, err := r.Create(ctx, updatedPkgVersion, createValidation, &metav1.CreateOptions{TypeMeta: options.TypeMeta, DryRun: options.DryRun, FieldManager: options.FieldManager})
+		obj, err := r.Create(ctx, updatedPkg, createValidation, &metav1.CreateOptions{TypeMeta: options.TypeMeta, DryRun: options.DryRun, FieldManager: options.FieldManager})
 		if err != nil {
 			return nil, true, err
 		}
@@ -196,26 +196,26 @@ func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.U
 		return nil, false, err
 	}
 
-	updatedObj, err := objInfo.UpdatedObject(ctx, pkgVersion)
+	updatedObj, err := objInfo.UpdatedObject(ctx, pkg)
 	if err != nil {
 		return nil, false, err
 	}
 
-	updatedPkgVersion := updatedObj.(*datapackaging.Package)
-	errs := validation.ValidatePackageVersion(*updatedPkgVersion)
+	updatedPkg := updatedObj.(*datapackaging.Package)
+	errs := validation.ValidatePackage(*updatedPkg)
 	if len(errs) != 0 {
-		return nil, false, errors.NewInvalid(updatedPkgVersion.GroupVersionKind().GroupKind(), updatedPkgVersion.Name, errs)
+		return nil, false, errors.NewInvalid(updatedPkg.GroupVersionKind().GroupKind(), updatedPkg.Name, errs)
 	}
 
-	updatedPkgVersion, err = client.Update(ctx, namespace, updatedPkgVersion, *options)
-	return updatedPkgVersion, false, err
+	updatedPkg, err = client.Update(ctx, namespace, updatedPkg, *options)
+	return updatedPkg, false, err
 }
 
 func (r *PackageCRDREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
 	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
 
-	pkgVersion, err := client.Get(ctx, namespace, name, metav1.GetOptions{})
+	pkg, err := client.Get(ctx, namespace, name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		return nil, true, err
 	}
@@ -225,17 +225,17 @@ func (r *PackageCRDREST) Delete(ctx context.Context, name string, deleteValidati
 	}
 
 	if deleteValidation != nil {
-		if err := deleteValidation(ctx, pkgVersion); err != nil {
+		if err := deleteValidation(ctx, pkg); err != nil {
 			return nil, true, err
 		}
 	}
 
-	err = client.Delete(ctx, namespace, pkgVersion.Name, *options)
+	err = client.Delete(ctx, namespace, pkg.Name, *options)
 	if err != nil {
 		return nil, false, err
 	}
 
-	return pkgVersion, true, nil
+	return pkg, true, nil
 }
 
 func (r *PackageCRDREST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
@@ -301,11 +301,11 @@ func (r *PackageCRDREST) Watch(ctx context.Context, options *internalversion.Lis
 func (r *PackageCRDREST) ConvertToTable(ctx context.Context, obj runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	var table metav1.Table
 	fn := func(obj runtime.Object) error {
-		pkgVersion := obj.(*datapackaging.Package)
+		pkg := obj.(*datapackaging.Package)
 		table.Rows = append(table.Rows, metav1.TableRow{
 			Cells: []interface{}{
-				pkgVersion.Name, pkgVersion.Spec.RefName,
-				pkgVersion.Spec.Version, time.Since(pkgVersion.ObjectMeta.CreationTimestamp.Time).Round(1 * time.Second).String(),
+				pkg.Name, pkg.Spec.RefName,
+				pkg.Spec.Version, time.Since(pkg.ObjectMeta.CreationTimestamp.Time).Round(1 * time.Second).String(),
 			},
 			Object: runtime.RawExtension{Object: obj},
 		})

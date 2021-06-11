@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-func TestValidatePackageNameInvalid(t *testing.T) {
+func TestValidatePackageMetadataNameInvalid(t *testing.T) {
 	invalidName := "bummer-boy"
 	// Name could be invalid for many reasons so just assert we have
 	// an error relating to name and not specific error string
@@ -30,7 +30,7 @@ func TestValidatePackageNameInvalid(t *testing.T) {
 	}
 }
 
-func TestValidatePackageNameValid(t *testing.T) {
+func TestValidatePackageMetadataNameValid(t *testing.T) {
 	validName := "package.carvel.dev"
 
 	errList := validation.ValidatePackageMetadataName(validName, field.NewPath("metadata").Child("name"))

@@ -11,13 +11,13 @@ import (
 	"time"
 )
 
-func Test_PackageIsValidated(t *testing.T) {
+func Test_PackageMetadataIsValidated(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
 	appName := "invalid-pkg-name-test"
 
-	invalidPackageName := "I am invalid"
+	invalidPackageMetadataName := "I am invalid"
 
 	invalidPkgYML := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
@@ -26,28 +26,28 @@ metadata:
   name: %s
 spec:
   shortDescription: I am invalid
-`, invalidPackageName)
+`, invalidPackageMetadataName)
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", appName})
 	}
 	defer cleanUp()
 
-	logger.Section("deploy package", func() {
+	logger.Section("deploy package metadata", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName},
 			RunOpts{StdinReader: strings.NewReader(invalidPkgYML), AllowError: true})
 
 		if err == nil {
-			t.Fatalf("Expected package creation to fail")
+			t.Fatalf("Expected package metadata creation to fail")
 		}
 
 		if !strings.Contains(err.Error(), "is invalid: metadata.name") {
-			t.Fatalf("Expected package creation error to contain message about invalid name, got: %v", err)
+			t.Fatalf("Expected package metadata creation error to contain message about invalid name, got: %v", err)
 		}
 	})
 }
 
-func TestOverridePackageDelete(t *testing.T) {
+func TestOverridePackageMetadataDelete(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	k := Kubectl{t, env.Namespace, logger}
@@ -55,7 +55,7 @@ func TestOverridePackageDelete(t *testing.T) {
 	localNS := env.Namespace
 	globalNS := env.PackagingGlobalNS
 
-	packagesYaml := fmt.Sprintf(`---
+	packageMetadataYaml := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
 metadata:
@@ -82,25 +82,25 @@ spec:
 
 	logger.Section("cleanup", cleanup)
 
-	logger.Section("deploy packages", func() {
-		_, err := k.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(packagesYaml), NoNamespace: true})
+	logger.Section("deploy package metadata", func() {
+		_, err := k.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(packageMetadataYaml), NoNamespace: true})
 		if err != nil {
-			t.Fatalf("Expected package application to succeed, but got: %v", err)
+			t.Fatalf("Expected package metadata application to succeed, but got: %v", err)
 		}
 	})
 
-	logger.Section("attempt to delete the local package", func() {
+	logger.Section("attempt to delete the local package metadata", func() {
 		timeout := 30 * time.Second
 
 		ctx, _ := context.WithTimeout(context.Background(), timeout)
 		_, err := k.RunWithOpts([]string{"delete", "pkgm/pkg1.test.carvel.dev", "-n", localNS}, RunOpts{Ctx: ctx, NoNamespace: true, AllowError: true})
 		if err != nil {
-			t.Fatalf("Expected delete of local package to succeed in %v, but got: %v", timeout, err)
+			t.Fatalf("Expected delete of local package metadata to succeed in %v, but got: %v", timeout, err)
 		}
 	})
 }
 
-func TestOverridePackageNamespaceDelete(t *testing.T) {
+func TestOverridePackageMetadataNamespaceDelete(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	k := Kubectl{t, env.Namespace, logger}
@@ -108,7 +108,7 @@ func TestOverridePackageNamespaceDelete(t *testing.T) {
 	localNS := "test-ns"
 	globalNS := env.PackagingGlobalNS
 
-	packagesYaml := fmt.Sprintf(`---
+	packageMetadataYaml := fmt.Sprintf(`---
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -141,10 +141,10 @@ spec:
 
 	logger.Section("pre test cleanup", cleanup)
 
-	logger.Section("deploy packages and namespace", func() {
-		_, err := k.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(packagesYaml), NoNamespace: true})
+	logger.Section("deploy package metadata and namespace", func() {
+		_, err := k.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(packageMetadataYaml), NoNamespace: true})
 		if err != nil {
-			t.Fatalf("Expected package application to succeed, but got: %v", err)
+			t.Fatalf("Expected package metadata application to succeed, but got: %v", err)
 		}
 	})
 
@@ -167,7 +167,7 @@ spec:
 	})
 }
 
-func TestOverridePackageCreate(t *testing.T) {
+func TestOverridePackageMetadataCreate(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	k := Kubectl{t, env.Namespace, logger}
@@ -175,7 +175,7 @@ func TestOverridePackageCreate(t *testing.T) {
 	localNS := "test-ns"
 	globalNS := env.PackagingGlobalNS
 
-	packagesYaml := fmt.Sprintf(`---
+	packageMetadataYaml := fmt.Sprintf(`---
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -190,7 +190,7 @@ spec:
   displayName: "Global Package"
   shortDescription: "Package which is globally available"`, localNS, globalNS)
 
-	updatePackagesYaml := fmt.Sprintf(`---
+	updatePackageMetadataYaml := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
 metadata:
@@ -209,17 +209,17 @@ spec:
 
 	logger.Section("pre test cleanup", cleanup)
 
-	logger.Section("deploy packages and namespace", func() {
-		_, err := k.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(packagesYaml), NoNamespace: true})
+	logger.Section("deploy package metadata and namespace", func() {
+		_, err := k.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(packageMetadataYaml), NoNamespace: true})
 		if err != nil {
-			t.Fatalf("Expected package application to succeed, but got: %v", err)
+			t.Fatalf("Expected package metadata application to succeed, but got: %v", err)
 		}
 	})
 
-	logger.Section("attempt to create an override package", func() {
-		_, err := k.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(updatePackagesYaml), NoNamespace: true})
+	logger.Section("attempt to create an override package metadata", func() {
+		_, err := k.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(updatePackageMetadataYaml), NoNamespace: true})
 		if err != nil {
-			t.Fatalf("Expected creation of local package to succeed, but got: %v", err)
+			t.Fatalf("Expected creation of local package metadata to succeed, but got: %v", err)
 		}
 	})
 }
