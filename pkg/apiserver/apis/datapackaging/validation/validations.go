@@ -36,7 +36,7 @@ func ValidatePackageVersion(pv datapackaging.Package) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs,
-		ValidatePackageSpecPackageName(pv.Spec.RefName, field.NewPath("spec", "packageName"))...)
+		ValidatePackageSpecPackageName(pv.Spec.RefName, field.NewPath("spec", "refName"))...)
 
 	allErrs = append(allErrs, ValidatePackageSpecVersion(pv.Spec.Version, field.NewPath("spec", "version"))...)
 
@@ -52,7 +52,7 @@ func ValidatePackageName(pvName, pkgmName string, fldPath *field.Path) field.Err
 
 	if !strings.HasPrefix(pvName, pkgmName+".") {
 		allErrs = append(allErrs,
-			field.Invalid(fldPath, pvName, "must begin with <spec.packageName> + '.'"))
+			field.Invalid(fldPath, pvName, "must begin with <spec.refName> + '.'"))
 	}
 
 	return allErrs
