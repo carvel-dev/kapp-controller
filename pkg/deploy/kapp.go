@@ -23,13 +23,13 @@ const (
 
 type Kapp struct {
 	opts        v1alpha1.AppDeployKapp
-	genericOpts GenericOpts
+	genericOpts ProcessedGenericOpts
 	cancelCh    chan struct{}
 }
 
 var _ Deploy = &Kapp{}
 
-func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts GenericOpts, cancelCh chan struct{}) *Kapp {
+func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts ProcessedGenericOpts, cancelCh chan struct{}) *Kapp {
 	return &Kapp{opts, genericOpts, cancelCh}
 }
 
@@ -196,8 +196,14 @@ func (a *Kapp) addGenericArgs(args []string) ([]string, []string) {
 		args = append(args, []string{"--namespace", a.genericOpts.Namespace}...)
 	}
 
-	if len(a.genericOpts.KubeconfigYAML) > 0 {
-		env = append(env, "KAPP_KUBECONFIG_YAML="+a.genericOpts.KubeconfigYAML)
+	switch {
+	case a.genericOpts.Kubeconfig != nil:
+		env = append(env, "KAPP_KUBECONFIG_YAML="+a.genericOpts.Kubeconfig.AsYAML())
+		args = append(args, "--kubeconfig=/dev/null") // not used due to above env var
+	case a.genericOpts.DangerousUsePodServiceAccount:
+		// do nothing
+	default:
+		panic("Internal inconsistency: Unknown kapp service account configuration")
 	}
 
 	args = append(args, "--yes")
