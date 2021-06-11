@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	packageMetadataName = "PackageMetadata"
-	internalPackageName = "InternalPackageMetadata"
+	packageMetadataName         = "PackageMetadata"
+	internalPackageMetadataName = "InternalPackageMetadata"
 )
 
 type PackageMetadataTranslator struct {
@@ -62,7 +62,7 @@ func (t PackageMetadataTranslator) ToInternalObj(extObj *datapackaging.PackageMe
 			intObj.ManagedFields[i].APIVersion = internalpkgingv1alpha1.SchemeGroupVersion.Identifier()
 		}
 	}
-	intObj.TypeMeta.Kind = internalPackageName
+	intObj.TypeMeta.Kind = internalPackageMetadataName
 	intObj.TypeMeta.APIVersion = internalpkgingv1alpha1.SchemeGroupVersion.Identifier()
 
 	return intObj

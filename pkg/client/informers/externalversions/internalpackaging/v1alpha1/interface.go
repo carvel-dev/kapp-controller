@@ -8,10 +8,10 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
+	// InternalPackages returns a InternalPackageInformer.
+	InternalPackages() InternalPackageInformer
 	// InternalPackageMetadatas returns a InternalPackageMetadataInformer.
 	InternalPackageMetadatas() InternalPackageMetadataInformer
-	// InternalPackageVersions returns a InternalPackageVersionInformer.
-	InternalPackageVersions() InternalPackageVersionInformer
 }
 
 type version struct {
@@ -25,12 +25,12 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
+// InternalPackages returns a InternalPackageInformer.
+func (v *version) InternalPackages() InternalPackageInformer {
+	return &internalPackageInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
 // InternalPackageMetadatas returns a InternalPackageMetadataInformer.
 func (v *version) InternalPackageMetadatas() InternalPackageMetadataInformer {
 	return &internalPackageMetadataInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
-}
-
-// InternalPackageVersions returns a InternalPackageVersionInformer.
-func (v *version) InternalPackageVersions() InternalPackageVersionInformer {
-	return &internalPackageVersionInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

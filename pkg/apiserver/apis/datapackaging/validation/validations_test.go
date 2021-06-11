@@ -48,7 +48,7 @@ func TestValidatePackageVersionNameInvalid(t *testing.T) {
 		Field: "metadata.name",
 	}
 
-	errList := validation.ValidatePackageVersionName(invalidName, pkgName, field.NewPath("metadata", "name"))
+	errList := validation.ValidatePackageName(invalidName, pkgName, field.NewPath("metadata", "name"))
 
 	if len(errList) == 0 {
 		t.Fatalf("Expected error when PackageVersion name is invalid")
@@ -63,7 +63,7 @@ func TestValidatePackageVersionNameValid(t *testing.T) {
 	validName := "pkg.2.0"
 	pkgName := "pkg"
 
-	errList := validation.ValidatePackageVersionName(validName, pkgName, field.NewPath("metadata", "name"))
+	errList := validation.ValidatePackageName(validName, pkgName, field.NewPath("metadata", "name"))
 
 	if len(errList) != 0 {
 		t.Fatalf("Expected no error when PackageVersion name is valid, but got: %v", errList.ToAggregate())
@@ -77,7 +77,7 @@ func TestValidatePackageVersionSpecPackageVersionInvalid(t *testing.T) {
 		Field: "spec.version",
 	}
 
-	errList := validation.ValidatePackageVersionSpecVersion(invalidVersion, field.NewPath("spec", "version"))
+	errList := validation.ValidatePackageSpecVersion(invalidVersion, field.NewPath("spec", "version"))
 
 	if len(errList) == 0 {
 		t.Fatalf("Expected error when spec.version is invalid")
@@ -91,7 +91,7 @@ func TestValidatePackageVersionSpecPackageVersionInvalid(t *testing.T) {
 func TestValidatePackageVersionSpecPackageVersionValid(t *testing.T) {
 	validVersion := "1.0.0"
 
-	errList := validation.ValidatePackageVersionSpecVersion(validVersion, field.NewPath("spec", "version"))
+	errList := validation.ValidatePackageSpecVersion(validVersion, field.NewPath("spec", "version"))
 
 	if len(errList) != 0 {
 		t.Fatalf("Expected no error when spec.version is valid")
@@ -105,7 +105,7 @@ func TestValidatePackageVersionSpecPackageNameInvalid(t *testing.T) {
 		Field: "spec.packageName",
 	}
 
-	errList := validation.ValidatePackageVersionSpecPackageName(invalidName, field.NewPath("spec", "packageName"))
+	errList := validation.ValidatePackageSpecPackageName(invalidName, field.NewPath("spec", "packageName"))
 
 	if len(errList) == 0 {
 		t.Fatalf("Expected error when spec.packageName is invalid")
@@ -119,7 +119,7 @@ func TestValidatePackageVersionSpecPackageNameInvalid(t *testing.T) {
 func TestValidatePackageVersionSpecPackageNameValid(t *testing.T) {
 	validName := "package.carvel.dev"
 
-	errList := validation.ValidatePackageVersionSpecPackageName(validName, field.NewPath("spec", "packageName"))
+	errList := validation.ValidatePackageSpecPackageName(validName, field.NewPath("spec", "packageName"))
 
 	if len(errList) != 0 {
 		t.Fatalf("Expected no error when spec.packageName is valid")

@@ -12,12 +12,12 @@ type FakeInternalV1alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakeInternalV1alpha1) InternalPackageMetadatas(namespace string) v1alpha1.InternalPackageMetadataInterface {
-	return &FakeInternalPackageMetadatas{c, namespace}
+func (c *FakeInternalV1alpha1) InternalPackages(namespace string) v1alpha1.InternalPackageInterface {
+	return &FakeInternalPackages{c, namespace}
 }
 
-func (c *FakeInternalV1alpha1) InternalPackageVersions(namespace string) v1alpha1.InternalPackageVersionInterface {
-	return &FakeInternalPackageVersions{c, namespace}
+func (c *FakeInternalV1alpha1) InternalPackageMetadatas(namespace string) v1alpha1.InternalPackageMetadataInterface {
+	return &FakeInternalPackageMetadatas{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

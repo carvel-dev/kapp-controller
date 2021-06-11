@@ -23,6 +23,48 @@ message Maintainer {
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+message Package {
+  // Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  optional PackageSpec spec = 2;
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+message PackageList {
+  // Standard list metadata.
+  // More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  repeated Package items = 2;
+}
+
+message PackageSpec {
+  optional string packageName = 1;
+
+  optional string version = 2;
+
+  repeated string licenses = 3;
+
+  optional string releasedAt = 4;
+
+  optional string capacityRequirementsDescription = 5;
+
+  optional string releaseNotes = 6;
+
+  optional AppTemplateSpec template = 7;
+
+  // valuesSchema can be used to show template values that
+  // can be configured by users when a Package is installed
+  // in an OpenAPI schema format.
+  // +optional
+  optional ValuesSchema valuesSchema = 8;
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 message PackageMetadata {
   // Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
   // +optional
@@ -57,48 +99,6 @@ message PackageMetadataSpec {
   repeated string categories = 7;
 
   optional string supportDescription = 8;
-}
-
-// +genclient
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-message PackageVersion {
-  // Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
-
-  optional PackageVersionSpec spec = 2;
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-message PackageVersionList {
-  // Standard list metadata.
-  // More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
-
-  repeated PackageVersion items = 2;
-}
-
-message PackageVersionSpec {
-  optional string packageName = 1;
-
-  optional string version = 2;
-
-  repeated string licenses = 3;
-
-  optional string releasedAt = 4;
-
-  optional string capacityRequirementsDescription = 5;
-
-  optional string releaseNotes = 6;
-
-  optional AppTemplateSpec template = 7;
-
-  // valuesSchema can be used to show template values that
-  // can be configured by users when a PackageVersion is installed
-  // in an OpenAPI schema format.
-  // +optional
-  optional ValuesSchema valuesSchema = 8;
 }
 
 message ValuesSchema {
