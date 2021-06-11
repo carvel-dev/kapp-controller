@@ -7,7 +7,7 @@ metadata:
   name: pkg.test.carvel.dev
   # cluster scoped
 spec:
-  # This is the name we want to reference in resources such as InstalledPackage.
+  # This is the name we want to reference in resources such as PackageInstall.
   displayName: "Test Package in repo"
   shortDescription: "Package used for testing"
   longDescription: "A longer, more detailed description of what the package contains and what it is for"

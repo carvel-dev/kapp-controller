@@ -10,7 +10,7 @@ import (
 
 type PackagingV1alpha1Interface interface {
 	RESTClient() rest.Interface
-	InstalledPackagesGetter
+	PackageInstallsGetter
 	PackageRepositoriesGetter
 }
 
@@ -19,8 +19,8 @@ type PackagingV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *PackagingV1alpha1Client) InstalledPackages(namespace string) InstalledPackageInterface {
-	return newInstalledPackages(c, namespace)
+func (c *PackagingV1alpha1Client) PackageInstalls(namespace string) PackageInstallInterface {
+	return newPackageInstalls(c, namespace)
 }
 
 func (c *PackagingV1alpha1Client) PackageRepositories(namespace string) PackageRepositoryInterface {

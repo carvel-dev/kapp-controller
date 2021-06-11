@@ -12,24 +12,24 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:shortName=ipkg
+// +kubebuilder:resource:shortName=pkgi
 // +kubebuilder:printcolumn:name=Package name,JSONPath=.spec.packageVersionRef.packageName,description=Package public name,type=string
 // +kubebuilder:printcolumn:name=Package version,JSONPath=.status.version,description=Package version,type=string
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
-type InstalledPackage struct {
+type PackageInstall struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec InstalledPackageSpec `json:"spec"`
+	Spec PackageInstallSpec `json:"spec"`
 	// +optional
-	Status InstalledPackageStatus `json:"status,omitempty"`
+	Status PackageInstallStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type InstalledPackageList struct {
+type PackageInstallList struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// Standard list metadata.
@@ -37,10 +37,10 @@ type InstalledPackageList struct {
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []InstalledPackage `json:"items"`
+	Items []PackageInstall `json:"items"`
 }
 
-type InstalledPackageSpec struct {
+type PackageInstallSpec struct {
 	// +optional
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 	// +optional
@@ -48,7 +48,7 @@ type InstalledPackageSpec struct {
 	// +optional
 	PackageVersionRef *PackageVersionRef `json:"packageVersionRef,omitempty"`
 	// +optional
-	Values []InstalledPackageValues `json:"values,omitempty"`
+	Values []PackageInstallValues `json:"values,omitempty"`
 	// Paused when set to true will ignore all pending changes,
 	// once it set back to false, pending changes will be applied
 	// +optional
@@ -61,8 +61,8 @@ type InstalledPackageSpec struct {
 	// 30s will be used.
 	// +optional
 	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
-	// When NoopDelete set to true, InstalledPackage deletion
-	// should delete InstalledPackage/App CR but preserve App's
+	// When NoopDelete set to true, PackageInstall deletion
+	// should delete PackageInstall/App CR but preserve App's
 	// associated resources.
 	// +optional
 	NoopDelete bool `json:"noopDelete,omitempty"`
@@ -75,19 +75,19 @@ type PackageVersionRef struct {
 	VersionSelection *versions.VersionSelectionSemver `json:"versionSelection,omitempty"`
 }
 
-type InstalledPackageValues struct {
+type PackageInstallValues struct {
 	// +optional
-	SecretRef *InstalledPackageValuesSecretRef `json:"secretRef,omitempty"`
+	SecretRef *PackageInstallValuesSecretRef `json:"secretRef,omitempty"`
 }
 
-type InstalledPackageValuesSecretRef struct {
+type PackageInstallValuesSecretRef struct {
 	// +optional
 	Name string `json:"name,omitempty"`
 	// +optional
 	Key string `json:"key,omitempty"`
 }
 
-type InstalledPackageStatus struct {
+type PackageInstallStatus struct {
 	// +optional
 	v1alpha1.GenericStatus `json:",inline"`
 	// TODO this is desired resolved version (not actually deployed)

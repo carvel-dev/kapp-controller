@@ -7,7 +7,7 @@ metadata:
   name: simple-app.corp.com.1.0.0
   # cluster scoped
 spec:
-  # This is the name we want to reference in resources such as InstalledPackage.
+  # This is the name we want to reference in resources such as PackageInstall.
   packageName: simple-app.corp.com
   version: 1.0.0
   licenses:
@@ -17,7 +17,7 @@ spec:
     - Introduce simple-app package
   template:
     # This is just an app template that will be combined with any values given in the
-    # InstalledPackage and turned in to an App CR in the cluster. kapp-controller will then
+    # PackageInstall and turned in to an App CR in the cluster. kapp-controller will then
     # reconcile the resulting App CR just like any other, resulting in the installation of
     # our simple app.
     spec:
