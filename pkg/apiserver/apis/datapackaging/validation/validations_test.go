@@ -19,7 +19,7 @@ func TestValidatePackageNameInvalid(t *testing.T) {
 		Field: "metadata.name",
 	}
 
-	errList := validation.ValidatePackageName(invalidName, field.NewPath("metadata").Child("name"))
+	errList := validation.ValidatePackageMetadataName(invalidName, field.NewPath("metadata").Child("name"))
 
 	if len(errList) == 0 {
 		t.Fatalf("Expected validation to error when given invalid name")
@@ -33,7 +33,7 @@ func TestValidatePackageNameInvalid(t *testing.T) {
 func TestValidatePackageNameValid(t *testing.T) {
 	validName := "package.carvel.dev"
 
-	errList := validation.ValidatePackageName(validName, field.NewPath("metadata").Child("name"))
+	errList := validation.ValidatePackageMetadataName(validName, field.NewPath("metadata").Child("name"))
 
 	if len(errList) != 0 {
 		t.Fatalf("Expected no error for valid name, but got: %v", errList.ToAggregate())

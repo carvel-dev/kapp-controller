@@ -2,13 +2,13 @@
 
 package v1alpha1
 
-// InternalPackageListerExpansion allows custom methods to be added to
-// InternalPackageLister.
-type InternalPackageListerExpansion interface{}
+// InternalPackageMetadataListerExpansion allows custom methods to be added to
+// InternalPackageMetadataLister.
+type InternalPackageMetadataListerExpansion interface{}
 
-// InternalPackageNamespaceListerExpansion allows custom methods to be added to
-// InternalPackageNamespaceLister.
-type InternalPackageNamespaceListerExpansion interface{}
+// InternalPackageMetadataNamespaceListerExpansion allows custom methods to be added to
+// InternalPackageMetadataNamespaceLister.
+type InternalPackageMetadataNamespaceListerExpansion interface{}
 
 // InternalPackageVersionListerExpansion allows custom methods to be added to
 // InternalPackageVersionLister.

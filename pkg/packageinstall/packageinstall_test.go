@@ -17,14 +17,14 @@ import (
 // This test was developed for issue:
 // https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
 func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
-	// Package with prerelease version
+	// PackageMetadata with prerelease version
 	expectedPackageVersion := datapkgingv1alpha1.PackageVersion{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "pkg.test.carvel.dev",
 		},
 		Spec: datapkgingv1alpha1.PackageVersionSpec{
-			PackageName: "pkg.test.carvel.dev",
-			Version:     "3.0.0-rc.1",
+			PackageMetadataName: "pkg.test.carvel.dev",
+			Version:             "3.0.0-rc.1",
 		},
 	}
 
@@ -39,7 +39,7 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 			},
 			Spec: pkgingv1alpha1.PackageInstallSpec{
 				PackageVersionRef: &pkgingv1alpha1.PackageVersionRef{
-					PackageName: "pkg.test.carvel.dev",
+					PackageMetadataName: "pkg.test.carvel.dev",
 					VersionSelection: &versions.VersionSelectionSemver{
 						Constraints: "3.0.0-rc.1",
 						Prereleases: &versions.VersionSelectionSemverPrereleases{
@@ -63,14 +63,14 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 }
 
 func Test_PackageRefUsesName(t *testing.T) {
-	// Package with prerelease version
+	// PackageMetadata with prerelease version
 	expectedPackageVersion := datapkgingv1alpha1.PackageVersion{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "expected-pkg",
 		},
 		Spec: datapkgingv1alpha1.PackageVersionSpec{
-			PackageName: "expected-pkg",
-			Version:     "1.0.0",
+			PackageMetadataName: "expected-pkg",
+			Version:             "1.0.0",
 		},
 	}
 
@@ -79,8 +79,8 @@ func Test_PackageRefUsesName(t *testing.T) {
 			Name: "alternate-pkg",
 		},
 		Spec: datapkgingv1alpha1.PackageVersionSpec{
-			PackageName: "alternate-pkg",
-			Version:     "1.0.0",
+			PackageMetadataName: "alternate-pkg",
+			Version:             "1.0.0",
 		},
 	}
 
@@ -95,7 +95,7 @@ func Test_PackageRefUsesName(t *testing.T) {
 			},
 			Spec: pkgingv1alpha1.PackageInstallSpec{
 				PackageVersionRef: &pkgingv1alpha1.PackageVersionRef{
-					PackageName: "expected-pkg",
+					PackageMetadataName: "expected-pkg",
 					VersionSelection: &versions.VersionSelectionSemver{
 						Constraints: "1.0.0",
 					},

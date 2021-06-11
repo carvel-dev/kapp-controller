@@ -122,12 +122,12 @@ func (r *PackageVersionCRDREST) List(ctx context.Context, options *internalversi
 
 	packageVersionsMap := make(map[string]datapackaging.PackageVersion)
 	for _, pkgVersion := range globalPkgVersions {
-		identifier := pkgVersion.Namespace + "/" + pkgVersion.Spec.PackageName + "." + pkgVersion.Spec.Version
+		identifier := pkgVersion.Namespace + "/" + pkgVersion.Spec.PackageMetadataName + "." + pkgVersion.Spec.Version
 		packageVersionsMap[identifier] = pkgVersion
 	}
 
 	for _, pkgVersion := range namespacedPkgVersions {
-		identifier := pkgVersion.Namespace + "/" + pkgVersion.Spec.PackageName + "." + pkgVersion.Spec.Version
+		identifier := pkgVersion.Namespace + "/" + pkgVersion.Spec.PackageMetadataName + "." + pkgVersion.Spec.Version
 		packageVersionsMap[identifier] = pkgVersion
 	}
 
@@ -304,7 +304,7 @@ func (r *PackageVersionCRDREST) ConvertToTable(ctx context.Context, obj runtime.
 		pkgVersion := obj.(*datapackaging.PackageVersion)
 		table.Rows = append(table.Rows, metav1.TableRow{
 			Cells: []interface{}{
-				pkgVersion.Name, pkgVersion.Spec.PackageName,
+				pkgVersion.Name, pkgVersion.Spec.PackageMetadataName,
 				pkgVersion.Spec.Version, time.Since(pkgVersion.ObjectMeta.CreationTimestamp.Time).Round(1 * time.Second).String(),
 			},
 			Object: runtime.RawExtension{Object: obj},
@@ -334,8 +334,8 @@ func (r *PackageVersionCRDREST) ConvertToTable(ctx context.Context, obj runtime.
 	}
 	if opt, ok := tableOptions.(*metav1.TableOptions); !ok || !opt.NoHeaders {
 		table.ColumnDefinitions = []metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name", Description: "Package Version resource name"},
-			{Name: "Package Name", Type: "string", Format: "name", Description: "Associated Package name"},
+			{Name: "Name", Type: "string", Format: "name", Description: "PackageMetadata Version resource name"},
+			{Name: "PackageMetadata Name", Type: "string", Format: "name", Description: "Associated PackageMetadata name"},
 			{Name: "Version", Type: "string", Description: "Version"},
 			{Name: "Age", Type: "date", Description: "Time since resource creation"},
 		}
@@ -387,7 +387,7 @@ func (r *PackageVersionCRDREST) applySelector(list *datapackaging.PackageVersion
 
 	filteredPVs := []datapackaging.PackageVersion{}
 	for _, pv := range list.Items {
-		fieldSet := fields.Set{"spec.packageName": pv.Spec.PackageName, "metadata.name": pv.Name, "metadata.namespace": pv.Namespace}
+		fieldSet := fields.Set{"spec.packageMetadataName": pv.Spec.PackageMetadataName, "metadata.name": pv.Name, "metadata.namespace": pv.Namespace}
 		if selector.Matches(fieldSet) {
 			filteredPVs = append(filteredPVs, pv)
 		}

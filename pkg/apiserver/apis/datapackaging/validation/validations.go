@@ -12,20 +12,20 @@ import (
 )
 
 // package validations
-func ValidatePackage(pkg datapackaging.Package) field.ErrorList {
+func ValidatePackageMetadata(pkgm datapackaging.PackageMetadata) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	allErrs = append(allErrs, ValidatePackageName(pkg.ObjectMeta.Name, field.NewPath("metadata").Child("name"))...)
+	allErrs = append(allErrs, ValidatePackageMetadataName(pkgm.ObjectMeta.Name, field.NewPath("metadata").Child("name"))...)
 
 	return allErrs
 }
 
 // validate name
-func ValidatePackageName(pkgName string, fldPath *field.Path) field.ErrorList {
+func ValidatePackageMetadataName(pkgmName string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs,
-		validation.IsFullyQualifiedName(fldPath, pkgName)...)
+		validation.IsFullyQualifiedName(fldPath, pkgmName)...)
 
 	return allErrs
 }
@@ -36,21 +36,21 @@ func ValidatePackageVersion(pv datapackaging.PackageVersion) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs,
-		ValidatePackageVersionSpecPackageName(pv.Spec.PackageName, field.NewPath("spec", "packageName"))...)
+		ValidatePackageVersionSpecPackageName(pv.Spec.PackageMetadataName, field.NewPath("spec", "packageName"))...)
 
 	allErrs = append(allErrs, ValidatePackageVersionSpecVersion(pv.Spec.Version, field.NewPath("spec", "version"))...)
 
 	allErrs = append(allErrs,
-		ValidatePackageVersionName(pv.ObjectMeta.Name, pv.Spec.PackageName, field.NewPath("metadata").Child("name"))...)
+		ValidatePackageVersionName(pv.ObjectMeta.Name, pv.Spec.PackageMetadataName, field.NewPath("metadata").Child("name"))...)
 
 	return allErrs
 }
 
-// validate metdata.name = spec.PackageName + spec.Version
-func ValidatePackageVersionName(pvName, pkgName string, fldPath *field.Path) field.ErrorList {
+// validate metdata.name = spec.PackageMetadataName + spec.Version
+func ValidatePackageVersionName(pvName, pkgmName string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if !strings.HasPrefix(pvName, pkgName+".") {
+	if !strings.HasPrefix(pvName, pkgmName+".") {
 		allErrs = append(allErrs,
 			field.Invalid(fldPath, pvName, "must begin with <spec.packageName> + '.'"))
 	}
@@ -70,7 +70,7 @@ func ValidatePackageVersionSpecVersion(version string, fldPath *field.Path) fiel
 	return allErrs
 }
 
-// validate spec.PackageName isnt empty
+// validate spec.PackageMetadataName isnt empty
 func ValidatePackageVersionSpecPackageName(name string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -78,7 +78,7 @@ func ValidatePackageVersionSpecPackageName(name string, fldPath *field.Path) fie
 		allErrs = append(allErrs, field.Required(fldPath, "can not be empty"))
 	}
 
-	allErrs = append(allErrs, ValidatePackageName(name, fldPath)...)
+	allErrs = append(allErrs, ValidatePackageMetadataName(name, fldPath)...)
 	return allErrs
 }
 

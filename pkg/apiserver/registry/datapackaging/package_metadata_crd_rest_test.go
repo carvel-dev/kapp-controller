@@ -27,19 +27,19 @@ func TestPackageListIncludesGlobalAndNamespaced(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalIntPackage(), namespacedIntPackage(), excludedNonGlobalIntPackage())
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageMetadataCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	pkgList, err := pkgCRDREST.List(namespacedCtx(nonGlobalNamespace), &internalversion.ListOptions{})
 	if err != nil {
 		t.Fatalf("Expected list operation to succeed, got: %v", err)
 	}
 
-	packageList, ok := pkgList.(*datapackaging.PackageList)
+	packageList, ok := pkgList.(*datapackaging.PackageMetadataList)
 	if !ok {
-		t.Fatalf("Expected list operation to return PackageList, but got: %v", reflect.TypeOf(pkgList))
+		t.Fatalf("Expected list operation to return PackageMetadataList, but got: %v", reflect.TypeOf(pkgList))
 	}
 
-	expectedPkgs := []datapackaging.Package{
+	expectedPkgs := []datapackaging.PackageMetadata{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "some.other.ns.carvel.dev",
@@ -62,7 +62,7 @@ func TestPackageListPrefersNamespacedOverGlobal(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalIntPackage(), overrideIntPackage())
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageMetadataCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	// list package versions and verify all of them are there
 	pkgList, err := pkgCRDREST.List(namespacedCtx(nonGlobalNamespace), &internalversion.ListOptions{})
@@ -70,12 +70,12 @@ func TestPackageListPrefersNamespacedOverGlobal(t *testing.T) {
 		t.Fatalf("Expected list operation to succeed, got: %v", err)
 	}
 
-	packageList, ok := pkgList.(*datapackaging.PackageList)
+	packageList, ok := pkgList.(*datapackaging.PackageMetadataList)
 	if !ok {
-		t.Fatalf("Expected list operation to return PackageList, but got: %v", reflect.TypeOf(pkgList))
+		t.Fatalf("Expected list operation to return PackageMetadataList, but got: %v", reflect.TypeOf(pkgList))
 	}
 
-	expectedPkgs := []datapackaging.Package{
+	expectedPkgs := []datapackaging.PackageMetadata{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: nonGlobalNamespace,
@@ -96,16 +96,16 @@ func TestPackageGetNotPresentInNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalPackage)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageMetadataCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, err := pkgCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("Expected get operation to succeed, got: %v", err)
 	}
 
-	pkg, ok := obj.(*datapackaging.Package)
+	pkg, ok := obj.(*datapackaging.PackageMetadata)
 	if !ok {
-		t.Fatalf("Expected get operation to return Package, but got: %v", reflect.TypeOf(pkg))
+		t.Fatalf("Expected get operation to return PackageMetadata, but got: %v", reflect.TypeOf(pkg))
 	}
 
 	if pkg.Name != name || pkg.Spec.DisplayName != "GLOBAL" {
@@ -120,16 +120,16 @@ func TestPackageGetPresentInOnlyNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(namespacedPackage)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageMetadataCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, err := pkgCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("Expected get operation to succeed, got: %v", err)
 	}
 
-	pkg, ok := obj.(*datapackaging.Package)
+	pkg, ok := obj.(*datapackaging.PackageMetadata)
 	if !ok {
-		t.Fatalf("Expected get operation to return Package, but got: %v", reflect.TypeOf(pkg))
+		t.Fatalf("Expected get operation to return PackageMetadata, but got: %v", reflect.TypeOf(pkg))
 	}
 
 	if pkg.Name != name || pkg.Spec.DisplayName != "NAMESPACED" {
@@ -144,7 +144,7 @@ func TestPackageGetNotFound(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(namespacedPackage)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageMetadataCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	_, err := pkgCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err == nil {
@@ -164,16 +164,16 @@ func TestPackageGetPreferNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(overridePackage, globalIntPackage())
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageMetadataCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, err := pkgCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("Expected get operation to succeed, got: %v", err)
 	}
 
-	pkg, ok := obj.(*datapackaging.Package)
+	pkg, ok := obj.(*datapackaging.PackageMetadata)
 	if !ok {
-		t.Fatalf("Expected get operation to return Package, but got: %v", reflect.TypeOf(pkg))
+		t.Fatalf("Expected get operation to return PackageMetadata, but got: %v", reflect.TypeOf(pkg))
 	}
 
 	if pkg.Name != name || pkg.Spec.DisplayName != "OVERRIDE" {
@@ -192,7 +192,7 @@ func TestPackageUpdateDoesntUpdateGlobal(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalPackage, namespacedPackage)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageMetadataCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, created, err := pkgCRDREST.Update(namespacedCtx(nonGlobalNamespace), name, UpdatePackageTestImpl{updateDisplayNameFn(newDisplayName, name)}, nil, nil, false, &metav1.UpdateOptions{})
 	if err != nil {
@@ -203,9 +203,9 @@ func TestPackageUpdateDoesntUpdateGlobal(t *testing.T) {
 		t.Fatalf("Expected object to be created")
 	}
 
-	pkg, ok := obj.(*datapackaging.Package)
+	pkg, ok := obj.(*datapackaging.PackageMetadata)
 	if !ok {
-		t.Fatalf("Expected get operation to return Package, but got: %v", reflect.TypeOf(pkg))
+		t.Fatalf("Expected get operation to return PackageMetadata, but got: %v", reflect.TypeOf(pkg))
 	}
 
 	if pkg.Name != name || pkg.Namespace != nonGlobalNamespace {
@@ -231,7 +231,7 @@ func TestPackageUpdateCreatesInNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalPackage)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageMetadataCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	obj, created, err := pkgCRDREST.Update(namespacedCtx(nonGlobalNamespace), name, UpdatePackageTestImpl{updateDisplayNameFn(newDisplayName, name)}, nil, nil, false, &metav1.UpdateOptions{})
 	if err != nil {
@@ -242,9 +242,9 @@ func TestPackageUpdateCreatesInNS(t *testing.T) {
 		t.Fatalf("Expected object to be created")
 	}
 
-	pkg, ok := obj.(*datapackaging.Package)
+	pkg, ok := obj.(*datapackaging.PackageMetadata)
 	if !ok {
-		t.Fatalf("Expected get operation to return Package, but got: %v", reflect.TypeOf(pkg))
+		t.Fatalf("Expected get operation to return PackageMetadata, but got: %v", reflect.TypeOf(pkg))
 	}
 
 	if pkg.Name != name || pkg.Namespace != nonGlobalNamespace {
@@ -265,7 +265,7 @@ func TestPackageDeleteExistsInNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(namespacedPackage)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageMetadataCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	_, _, err := pkgCRDREST.Delete(namespacedCtx(nonGlobalNamespace), name, nil, &metav1.DeleteOptions{})
 	if err != nil {
@@ -297,7 +297,7 @@ func TestPackageDeleteExistsGlobalNotInNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalPackage)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgCRDREST := datapkgreg.NewPackageMetadataCRDREST(internalClient, fakeCoreClient, globalNamespace)
 
 	_, _, err := pkgCRDREST.Delete(namespacedCtx(nonGlobalNamespace), name, nil, &metav1.DeleteOptions{})
 	if !errors.IsNotFound(err) {
@@ -323,7 +323,7 @@ func namespacedCtx(ns string) context.Context {
 	return request.WithNamespace(request.NewContext(), ns)
 }
 
-func assertPackageListUnorderedEquals(actual, expected []datapackaging.Package, t *testing.T) {
+func assertPackageListUnorderedEquals(actual, expected []datapackaging.PackageMetadata, t *testing.T) {
 	if len(actual) != len(expected) {
 		t.Fatalf("arrays had different length:\n actual: \n%#v\n\n expected: \n%#v", actual, expected)
 	}
@@ -341,49 +341,49 @@ func assertPackageListUnorderedEquals(actual, expected []datapackaging.Package, 
 	}
 }
 
-func globalIntPackage() *v1alpha1.InternalPackage {
-	return &v1alpha1.InternalPackage{
+func globalIntPackage() *v1alpha1.InternalPackageMetadata {
+	return &v1alpha1.InternalPackageMetadata{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: globalNamespace,
 			Name:      "global-package.carvel.dev",
 		},
-		Spec: datapackaging.PackageSpec{
+		Spec: datapackaging.PackageMetadataSpec{
 			DisplayName: "GLOBAL",
 		},
 	}
 }
 
-func namespacedIntPackage() *v1alpha1.InternalPackage {
-	return &v1alpha1.InternalPackage{
+func namespacedIntPackage() *v1alpha1.InternalPackageMetadata {
+	return &v1alpha1.InternalPackageMetadata{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: nonGlobalNamespace,
 			Name:      "namespaced-package.carvel.dev",
 		},
-		Spec: datapackaging.PackageSpec{
+		Spec: datapackaging.PackageMetadataSpec{
 			DisplayName: "NAMESPACED",
 		},
 	}
 }
 
-func overrideIntPackage() *v1alpha1.InternalPackage {
-	return &v1alpha1.InternalPackage{
+func overrideIntPackage() *v1alpha1.InternalPackageMetadata {
+	return &v1alpha1.InternalPackageMetadata{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: nonGlobalNamespace,
 			Name:      "global-package.carvel.dev",
 		},
-		Spec: datapackaging.PackageSpec{
+		Spec: datapackaging.PackageMetadataSpec{
 			DisplayName: "OVERRIDE",
 		},
 	}
 }
 
-func excludedNonGlobalIntPackage() *v1alpha1.InternalPackage {
-	return &v1alpha1.InternalPackage{
+func excludedNonGlobalIntPackage() *v1alpha1.InternalPackageMetadata {
+	return &v1alpha1.InternalPackageMetadata{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: excludedNonGlobalNamespace,
 			Name:      "excluded-package",
 		},
-		Spec: datapackaging.PackageSpec{
+		Spec: datapackaging.PackageMetadataSpec{
 			DisplayName: "EXCLUDED",
 		},
 	}
@@ -398,8 +398,8 @@ func namespace() *corev1.Namespace {
 	}
 }
 
-func updateDisplayNameFn(newDisplayName, resourceName string) func(pkg *datapackaging.Package) *datapackaging.Package {
-	return func(pkg *datapackaging.Package) *datapackaging.Package {
+func updateDisplayNameFn(newDisplayName, resourceName string) func(pkg *datapackaging.PackageMetadata) *datapackaging.PackageMetadata {
+	return func(pkg *datapackaging.PackageMetadata) *datapackaging.PackageMetadata {
 		pkg.Spec.DisplayName = newDisplayName
 		if pkg.Name == "" {
 			pkg.Name = resourceName
@@ -409,7 +409,7 @@ func updateDisplayNameFn(newDisplayName, resourceName string) func(pkg *datapack
 }
 
 type UpdatePackageTestImpl struct {
-	updateFn func(pkg *datapackaging.Package) *datapackaging.Package
+	updateFn func(pkg *datapackaging.PackageMetadata) *datapackaging.PackageMetadata
 }
 
 func (UpdatePackageTestImpl) Preconditions() *metav1.Preconditions {
@@ -417,6 +417,6 @@ func (UpdatePackageTestImpl) Preconditions() *metav1.Preconditions {
 }
 
 func (u UpdatePackageTestImpl) UpdatedObject(ctx context.Context, oldObj runtime.Object) (runtime.Object, error) {
-	pkg := oldObj.(*datapackaging.Package)
+	pkg := oldObj.(*datapackaging.PackageMetadata)
 	return u.updateFn(pkg), nil
 }

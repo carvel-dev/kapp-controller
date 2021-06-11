@@ -101,7 +101,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:0ae0f32ef92d2362339b47055a6ea2042bc114a7dd36cf339bf05df4d1cc1b9b`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:4d78baa768d0e676e57a8736d0a8229de1f8081c57fcb99bad7421fc5b7d493e`
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
@@ -175,7 +175,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:0ae0f32ef92d2362339b47055a6ea2042bc114a7dd36cf339bf05df4d1cc1b9b`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:4d78baa768d0e676e57a8736d0a8229de1f8081c57fcb99bad7421fc5b7d493e`
 
 	cleanUp := func() {
 		kubectl.Run([]string{"delete", "pkgr/basic.test.carvel.dev"})
@@ -185,7 +185,7 @@ spec:
 	kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(yamlRepo)})
 
 	retry(t, 10*time.Second, func() error {
-		_, err := kubectl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
+		_, err := kubectl.RunWithOpts([]string{"get", "pkgm/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
 		if err != nil {
 			return fmt.Errorf("Expected to find pkg pkg.test.carvel.dev, but couldn't: %v", err)
 		}
@@ -216,14 +216,14 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:0ae0f32ef92d2362339b47055a6ea2042bc114a7dd36cf339bf05df4d1cc1b9b`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:4d78baa768d0e676e57a8736d0a8229de1f8081c57fcb99bad7421fc5b7d493e`
 
 	packageNames := []string{"pkg.test.carvel.dev.1.0.0", "pkg.test.carvel.dev.2.0.0"}
 
 	cleanUp := func() {
 		kctl.RunWithOpts([]string{"delete", "pkgr/basic.test.carvel.dev"}, RunOpts{AllowError: true})
 		for _, name := range packageNames {
-			kctl.RunWithOpts([]string{"delete", fmt.Sprintf("package/%s", name)}, RunOpts{AllowError: true})
+			kctl.RunWithOpts([]string{"delete", fmt.Sprintf("pkgm/%s", name)}, RunOpts{AllowError: true})
 		}
 	}
 	defer cleanUp()
@@ -235,7 +235,7 @@ spec:
 
 	logger.Section("check packages exist", func() {
 		retry(t, 20*time.Second, func() error {
-			_, err := kctl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
+			_, err := kctl.RunWithOpts([]string{"get", "pkgm/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
 			if err != nil {
 				return fmt.Errorf("Expected to find pkg pkg.test.carvel.dev, but couldn't: %v", err)
 			}
@@ -259,7 +259,7 @@ spec:
 
 	logger.Section("check packages are deleted too", func() {
 		retry(t, 10*time.Second, func() error {
-			_, err := kctl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
+			_, err := kctl.RunWithOpts([]string{"get", "pkgm/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
 			if err == nil || !strings.Contains(err.Error(), "\"pkg.test.carvel.dev\" not found") {
 				return fmt.Errorf("Expected not to find pkg pkg.test.carvel.dev, but did: %v", err)
 			}

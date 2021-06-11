@@ -11,14 +11,14 @@ import (
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type Package struct {
+type PackageMetadata struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Spec PackageSpec `json:"spec" protobuf:"bytes,2,opt,name=spec"`
+	Spec PackageMetadataSpec `json:"spec" protobuf:"bytes,2,opt,name=spec"`
 }
 
 // +genclient
@@ -46,7 +46,7 @@ type PackageVersionList struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type PackageList struct {
+type PackageMetadataList struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// Standard list metadata.
@@ -54,11 +54,11 @@ type PackageList struct {
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Items []Package `json:"items" protobuf:"bytes,2,rep,name=items"`
+	Items []PackageMetadata `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
 type PackageVersionSpec struct {
-	PackageName                     string   `json:"packageName,omitempty" protobuf:"bytes,1,opt,name=packageName"`
+	PackageMetadataName             string   `json:"packageMetadataName,omitempty" protobuf:"bytes,1,opt,name=packageName"`
 	Version                         string   `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
 	Licenses                        []string `json:"licenses,omitempty" protobuf:"bytes,3,rep,name=licenses"`
 	ReleasedAt                      string   `json:"releasedAt,omitempty" protobuf:"bytes,4,opt,name=releasedAt"`
@@ -74,7 +74,7 @@ type PackageVersionSpec struct {
 	ValuesSchema ValuesSchema `json:"valuesSchema,omitempty" protobuf:"bytes,8,opt,name=valuesSchema"`
 }
 
-type PackageSpec struct {
+type PackageMetadataSpec struct {
 	DisplayName        string       `json:"displayName,omitempty" protobuf:"bytes,1,opt,name=displayName"`
 	LongDescription    string       `json:"longDescription,omitempty" protobuf:"bytes,2,opt,name=longDescription"`
 	ShortDescription   string       `json:"shortDescription,omitempty" protobuf:"bytes,3,opt,name=shortDescription"`
