@@ -28,8 +28,32 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 		}},
 		Template: []kcv1alpha1.AppTemplate{{
 			Ytt: &kcv1alpha1.AppTemplateYtt{
+				// TODO do not want to interpret packages/**/* as templates
+				// but we cannot apply file mark to both .yml and .yaml without
+				// one of them possibly being 0 (that results in ytt error currently)
 				IgnoreUnknownComments: true,
 				Paths:                 []string{"packages"},
+
+				Inline: &kcv1alpha1.AppFetchInline{
+					Paths: map[string]string{
+						// Remove all resources that are not known to this kapp-controller.
+						// It's worth just removing instead of erroring,
+						// since future repo bundles may introduce new kinds.
+						"kapp-controller-clean-up.yml": `
+#@ load("@ytt:overlay", "overlay")
+
+#@ pkg = overlay.subset({"apiVersion":"data.packaging.carvel.dev/v1alpha1", "kind": "Package"})
+#@ pkgm = overlay.subset({"apiVersion":"data.packaging.carvel.dev/v1alpha1", "kind": "PackageMetadata"})
+
+#! TODO remove me
+#@ pkgv = overlay.subset({"apiVersion":"data.packaging.carvel.dev/v1alpha1", "kind": "PackageVersion"})
+
+#@overlay/match by=overlay.not_op(overlay.or_op(pkg, pkgm, pkgv)),expects="0+"
+#@overlay/remove
+---
+`,
+					},
+				},
 			},
 		}},
 		Deploy: []kcv1alpha1.AppDeploy{{
