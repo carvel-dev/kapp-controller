@@ -64,8 +64,8 @@ spec:
 			t.Fatalf("Expected package version creation error to contain message about invalid name, but got: %v", err)
 		}
 
-		if !strings.Contains(err.Error(), "must begin with <spec.packageName> + '.'") {
-			t.Fatalf("Expected error message to contain required form for package version name, got: %v", err)
+		if !strings.Contains(err.Error(), "must begin with <spec.refName> + '.'") {
+			t.Fatalf("Expected error message to contain required form for package name, got: %v", err)
 		}
 	})
 }
