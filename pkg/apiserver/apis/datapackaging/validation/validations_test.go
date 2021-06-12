@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-func TestValidatePackageNameInvalid(t *testing.T) {
+func TestValidatePackageMetadataNameInvalid(t *testing.T) {
 	invalidName := "bummer-boy"
 	// Name could be invalid for many reasons so just assert we have
 	// an error relating to name and not specific error string
@@ -30,7 +30,7 @@ func TestValidatePackageNameInvalid(t *testing.T) {
 	}
 }
 
-func TestValidatePackageNameValid(t *testing.T) {
+func TestValidatePackageMetadataNameValid(t *testing.T) {
 	validName := "package.carvel.dev"
 
 	errList := validation.ValidatePackageMetadataName(validName, field.NewPath("metadata").Child("name"))
@@ -41,14 +41,15 @@ func TestValidatePackageNameValid(t *testing.T) {
 }
 
 func TestValidatePackageVersionNameInvalid(t *testing.T) {
-	invalidName := "abcd"
+	invalidName := "pkg.3.0"
 	pkgName := "pkg"
+	pkgVersion := "2.0"
 	expectedErr := field.Error{
 		Type:  field.ErrorTypeInvalid,
 		Field: "metadata.name",
 	}
 
-	errList := validation.ValidatePackageName(invalidName, pkgName, field.NewPath("metadata", "name"))
+	errList := validation.ValidatePackageName(invalidName, pkgName, pkgVersion, field.NewPath("metadata", "name"))
 
 	if len(errList) == 0 {
 		t.Fatalf("Expected error when PackageVersion name is invalid")
@@ -62,8 +63,9 @@ func TestValidatePackageVersionNameInvalid(t *testing.T) {
 func TestValidatePackageVersionNameValid(t *testing.T) {
 	validName := "pkg.2.0"
 	pkgName := "pkg"
+	pkgVersion := "2.0"
 
-	errList := validation.ValidatePackageName(validName, pkgName, field.NewPath("metadata", "name"))
+	errList := validation.ValidatePackageName(validName, pkgName, pkgVersion, field.NewPath("metadata", "name"))
 
 	if len(errList) != 0 {
 		t.Fatalf("Expected no error when PackageVersion name is valid, but got: %v", errList.ToAggregate())

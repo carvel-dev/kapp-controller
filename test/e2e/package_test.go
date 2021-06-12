@@ -14,13 +14,61 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 )
 
-func Test_PackageVersionIsValidated_Name(t *testing.T) {
+func Test_PackageNameCharacters(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+	appName := "test-package-name-characters"
+
+	packageName := "test-pkg.carvel.dev.1.0.0+alpha.1"
+
+	invalidPkgVersionYML := fmt.Sprintf(`---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: %s
+spec:
+  refName: test-pkg.carvel.dev
+  version: 1.0.0+alpha.1
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v1.0.0
+      template:
+      - ytt:
+          paths:
+          - "config.yml"
+          - "values.yml"
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
+      deploy:
+      - kapp: {}`, packageName)
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", appName})
+	}
+	defer cleanUp()
+
+	logger.Section("deploy package", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName},
+			RunOpts{StdinReader: strings.NewReader(invalidPkgVersionYML), AllowError: true})
+
+		if err != nil {
+			t.Fatalf("Expected package creation to succeed, but failed with: %v", err)
+		}
+	})
+}
+
+func Test_PackageIsValidated_Name(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
 	appName := "invalid-pkg-version-name-test"
 
-	invalidPackageVersionName := "notThePackage-notTheVersion"
+	invalidPackageName := "notThePackage-notTheVersion"
 
 	invalidPkgVersionYML := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
@@ -45,7 +93,7 @@ spec:
           - "-"
           - ".imgpkg/images.yml"
       deploy:
-      - kapp: {}`, invalidPackageVersionName)
+      - kapp: {}`, invalidPackageName)
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", appName})
@@ -64,19 +112,19 @@ spec:
 			t.Fatalf("Expected package version creation error to contain message about invalid name, but got: %v", err)
 		}
 
-		if !strings.Contains(err.Error(), "must begin with <spec.refName> + '.'") {
+		if !strings.Contains(err.Error(), "must be <spec.refName> + '.' + <spec.version>") {
 			t.Fatalf("Expected error message to contain required form for package name, got: %v", err)
 		}
 	})
 }
 
-func Test_PackageVersionWithValuesSchema_PreservesSchemaData(t *testing.T) {
+func Test_PackageWithValuesSchema_PreservesSchemaData(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
 	kubectl := Kubectl{t: t, namespace: env.Namespace, l: logger}
 	appName := "test-package-version-schema"
-	packageName := "pkg.test.carvel.dev.1.0.0"
+	packageName := "pkg.test.carvel.dev"
 	version := "1.0.0"
 
 	pkgYaml := fmt.Sprintf(`---
@@ -140,7 +188,7 @@ spec:
 	}
 }
 
-func Test_PackageVersion_FieldSelectors(t *testing.T) {
+func Test_Package_FieldSelectors(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, logger}
@@ -236,7 +284,7 @@ spec:
 	})
 }
 
-func TestOverridePackageVersionDelete(t *testing.T) {
+func TestOverridePackageDelete(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	k := Kubectl{t, env.Namespace, logger}
@@ -248,7 +296,7 @@ func TestOverridePackageVersionDelete(t *testing.T) {
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
-  name: pkg1.test.carvel.dev.1.0.0-global
+  name: pkg1.test.carvel.dev.1.0.0
   namespace: %s
 spec:
   refName: pkg1.test.carvel.dev
@@ -268,7 +316,7 @@ spec:
     spec: {}`, globalNS, localNS)
 
 	cleanup := func() {
-		k.RunWithOpts([]string{"delete", "pkg/pkg1.test.carvel.dev.1.0.0-global", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
+		k.RunWithOpts([]string{"delete", "pkg/pkg1.test.carvel.dev.1.0.0", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
 		k.RunWithOpts([]string{"delete", "pkg/pkg1.test.carvel.dev.1.0.0", "-n", localNS}, RunOpts{NoNamespace: true, AllowError: true})
 	}
 	defer cleanup()
@@ -293,7 +341,7 @@ spec:
 	})
 }
 
-func TestOverridePackageVersionNamespaceDelete(t *testing.T) {
+func TestOverridePackageNamespaceDelete(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	k := Kubectl{t, env.Namespace, logger}
@@ -321,7 +369,7 @@ spec:
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
-  name: pkg1.test.carvel.dev.1.0.0-global
+  name: pkg1.test.carvel.dev.1.0.0
   namespace: %[2]s
 spec:
   refName: pkg1.test.carvel.dev
@@ -330,7 +378,7 @@ spec:
     spec: {}`, localNS, globalNS)
 
 	cleanup := func() {
-		k.RunWithOpts([]string{"delete", "pkg/pkg1.test.carvel.dev.1.0.0-global", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
+		k.RunWithOpts([]string{"delete", "pkg/pkg1.test.carvel.dev.1.0.0", "-n", globalNS}, RunOpts{NoNamespace: true, AllowError: true})
 		k.RunWithOpts([]string{"delete", "pkg/pkg1.test.carvel.dev.1.0.0", "-n", localNS}, RunOpts{NoNamespace: true, AllowError: true})
 		k.RunWithOpts([]string{"delete", fmt.Sprintf("namespaces/%s", localNS)}, RunOpts{NoNamespace: true, AllowError: true})
 	}
