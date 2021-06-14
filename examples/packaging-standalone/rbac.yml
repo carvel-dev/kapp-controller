@@ -1,0 +1,30 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pkg-standalone-sa
+  namespace: pkg-standalone
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pkg-standalone-role
+  namespace: pkg-standalone
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pkg-standalone-role-binding
+  namespace: pkg-standalone
+subjects:
+- kind: ServiceAccount
+  name: pkg-standalone-sa
+  namespace: pkg-standalone
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pkg-standalone-role

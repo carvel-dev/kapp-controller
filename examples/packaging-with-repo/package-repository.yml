@@ -1,0 +1,13 @@
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: e2e-repo.test.carvel.dev
+  # Adds it to global namespace (as defined by kapp-controller)
+  # which makes packages available in all namespaces
+  namespace: kapp-controller-packaging-global
+spec:
+  fetch:
+    imgpkgBundle:
+      # Created via `imgpkg push -b ... -f ./test/e2e/assets/kc-e2e-test-repo`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:62d187c044fd6a5c57ac870733fe4413ebf7e2909d8b6267707c5dd2080821e6
