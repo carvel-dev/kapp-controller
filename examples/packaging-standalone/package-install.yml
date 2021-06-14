@@ -1,0 +1,24 @@
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: pkg-standalone-demo
+  namespace: pkg-standalone
+spec:
+  serviceAccountName: pkg-standalone-sa
+  packageRef:
+    refName: pkg-standalone.test.carvel.dev
+    versionSelection:
+      constraints: 2.0.0
+  values:
+  - secretRef:
+      name: pkg-standalone-demo-values
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pkg-standalone-demo-values
+  namespace: pkg-standalone
+stringData:
+  values.yml: |
+    hello_msg: "hi"
