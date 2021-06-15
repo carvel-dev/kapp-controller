@@ -11,8 +11,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
 
-// TODO: Remove changedFunc logic
-func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
+func (a *App) deploy(tplOutput string) exec.CmdRunResult {
 	err := a.blockDeletion()
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Blocking for deploy: %s", err))
@@ -22,9 +21,32 @@ func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Expected exactly one deploy option"))
 	}
 
+	dep := a.app.Spec.Deploy[0]
+
+	switch {
+	case dep.Kapp != nil:
+		kapp, err := a.newKapp(*dep.Kapp, make(chan struct{}))
+		if err != nil {
+			return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
+		}
+
+		return kapp.Deploy(tplOutput, a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
+
+	default:
+		return exec.NewCmdRunResultWithErr(fmt.Errorf("Unsupported way to deploy"))
+	}
+}
+
+func (a *App) delete() exec.CmdRunResult {
+	if len(a.app.Spec.Deploy) != 1 {
+		return exec.NewCmdRunResultWithErr(fmt.Errorf("Expected exactly one deploy option"))
+	}
+
 	var result exec.CmdRunResult
 
-	for _, dep := range a.app.Spec.Deploy {
+	if !a.app.Spec.NoopDelete {
+		dep := a.app.Spec.Deploy[0]
+
 		switch {
 		case dep.Kapp != nil:
 			kapp, err := a.newKapp(*dep.Kapp, make(chan struct{}))
@@ -32,44 +54,10 @@ func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec
 				return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 			}
 
-			result = kapp.Deploy(tplOutput, a.startFlushingAllStatusUpdates, changedFunc)
+			result = kapp.Delete(a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
 
 		default:
-			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to deploy"))
-		}
-
-		if result.Error != nil {
-			break
-		}
-	}
-
-	return result
-}
-
-func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
-	if len(a.app.Spec.Deploy) != 1 {
-		return exec.NewCmdRunResultWithErr(fmt.Errorf("Expected exactly one deploy option"))
-	}
-
-	var result exec.CmdRunResult
-	if !a.app.Spec.NoopDelete {
-		for _, dep := range a.app.Spec.Deploy {
-			switch {
-			case dep.Kapp != nil:
-				kapp, err := a.newKapp(*dep.Kapp, make(chan struct{}))
-				if err != nil {
-					return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
-				}
-
-				result = kapp.Delete(a.startFlushingAllStatusUpdates, changedFunc)
-
-			default:
-				result.AttachErrorf("%s", fmt.Errorf("Unsupported way to delete"))
-			}
-
-			if result.Error != nil {
-				break
-			}
+			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to delete"))
 		}
 	}
 

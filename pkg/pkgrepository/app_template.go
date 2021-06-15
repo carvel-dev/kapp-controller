@@ -29,13 +29,8 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 			template = a.templateFactory.NewYtt(*tpl.Ytt, genericOpts)
 		case tpl.Kbld != nil:
 			template = a.templateFactory.NewKbld(*tpl.Kbld, genericOpts)
-		case tpl.HelmTemplate != nil:
-			template = a.templateFactory.NewHelmTemplate(*tpl.HelmTemplate, genericOpts)
-		case tpl.Sops != nil:
-			template = a.templateFactory.NewSops(*tpl.Sops, genericOpts)
 		default:
-			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to template"))
-			return result
+			return exec.NewCmdRunResultWithErr(fmt.Errorf("Unsupported way to template"))
 		}
 
 		if isStream {
