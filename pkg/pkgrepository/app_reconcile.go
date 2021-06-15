@@ -60,7 +60,7 @@ func (a *App) reconcileDelete() error {
 
 	a.resetLastDeployStartedAt()
 
-	result := a.delete(a.updateLastDeployNoReturn)
+	result := a.delete()
 	a.setDeleteCompleted(result)
 
 	// Resource is gone so this will error, ignore it
@@ -140,11 +140,7 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 
 	a.resetLastDeployStartedAt()
 
-	// Deployment should not take long time, so no
-	// need to regularly update status. Passing in
-	// empty func for a.deploy so only updateLastDeploy
-	// sets status for Deploy portion of status.
-	return a.updateLastDeploy(a.deploy(tplResult.Stdout, func(result exec.CmdRunResult) {}))
+	return a.updateLastDeploy(a.deploy(tplResult.Stdout))
 }
 
 func (a *App) updateLastDeploy(result exec.CmdRunResult) exec.CmdRunResult {
@@ -163,10 +159,6 @@ func (a *App) updateLastDeploy(result exec.CmdRunResult) exec.CmdRunResult {
 	a.updateStatus("marking last deploy")
 
 	return result
-}
-
-func (a *App) updateLastDeployNoReturn(result exec.CmdRunResult) {
-	a.updateLastDeploy(result)
 }
 
 func (a *App) resetLastFetchStartedAt() {
