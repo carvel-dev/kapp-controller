@@ -19,7 +19,7 @@ spec:
 #@overlay/match missing_ok=True
 status:
 
-#@overlay/match by=overlay.subset({"metadata":{"name":"internalpackagemetadata.internal.packaging.carvel.dev"}}), expects="0+"
+#@overlay/match by=overlay.subset({"metadata":{"name":"internalpackagemetadata.internal.packaging.carvel.dev"}})
 ---
 metadata:
   name: internalpackagemetadatas.internal.packaging.carvel.dev

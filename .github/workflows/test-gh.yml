@@ -43,6 +43,8 @@ jobs:
         mkdir /tmp/bin
         export PATH=/tmp/bin:$PATH
 
+        ./hack/verify-no-dirty-files.sh
+
         wget -O- https://github.com/kubernetes/minikube/releases/download/v1.10.0/minikube-linux-amd64 > /tmp/bin/minikube
         echo "9d34cb50bc39f80d39f92d1fb7cb23a271504b519f5e805574894d395ce3e7b3  /tmp/bin/minikube" | sha256sum -c -
         chmod +x /tmp/bin/minikube
