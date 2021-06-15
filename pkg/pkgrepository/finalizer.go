@@ -10,12 +10,16 @@ import (
 )
 
 const (
-	deleteFinalizerName = "finalizers.packaging.carvel.dev/delete"
+	deleteFinalizerName     = "finalizers.packagerepository.packaging.carvel.dev/delete"
+	deletePrevFinalizerName = "finalizers.packaging.carvel.dev/delete"
 )
 
 func init() {
 	if errs := validation.IsQualifiedName(deleteFinalizerName); len(errs) > 0 {
 		panic(fmt.Sprintf("Expected '%s' to be a valid finalizer name: %#v", deleteFinalizerName, errs))
+	}
+	if errs := validation.IsQualifiedName(deletePrevFinalizerName); len(errs) > 0 {
+		panic(fmt.Sprintf("Expected '%s' to be a valid finalizer name: %#v", deletePrevFinalizerName, errs))
 	}
 }
 
