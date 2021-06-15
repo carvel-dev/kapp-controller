@@ -4,7 +4,6 @@
 package pkgrepository
 
 import (
-	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
@@ -47,10 +46,6 @@ func (a *App) Name() string      { return a.app.Name }
 func (a *App) Namespace() string { return a.app.Namespace }
 
 func (a *App) Status() v1alpha1.AppStatus { return a.app.Status }
-
-func (a *App) StatusAsYAMLBytes() ([]byte, error) {
-	return yaml.Marshal(a.Status())
-}
 
 func (a *App) blockDeletion() error   { return a.hooks.BlockDeletion() }
 func (a *App) unblockDeletion() error { return a.hooks.UnblockDeletion() }
