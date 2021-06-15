@@ -61,6 +61,8 @@ func (a *CRDApp) unblockDeletion() error {
 	a.log.Info("Unblocking deletion")
 	return a.updatePackageRepository(func(app *pkgingv1alpha1.PackageRepository) {
 		app.ObjectMeta.Finalizers = removeString(app.ObjectMeta.Finalizers, deleteFinalizerName)
+		// Need to remove old finalizer that might have been added by previous versions of kapp-controller
+		app.ObjectMeta.Finalizers = removeString(app.ObjectMeta.Finalizers, deletePrevFinalizerName)
 	})
 }
 
