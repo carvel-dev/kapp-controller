@@ -25,10 +25,7 @@ func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 		reftracker.NewSecretKey("s1", "default"): struct{}{},
 		reftracker.NewSecretKey("s2", "default"): struct{}{},
 		reftracker.NewSecretKey("s3", "default"): struct{}{},
-		reftracker.NewSecretKey("s4", "default"): struct{}{},
 		reftracker.NewSecretKey("s5", "default"): struct{}{},
-		reftracker.NewSecretKey("s6", "default"): struct{}{},
-		reftracker.NewSecretKey("s7", "default"): struct{}{},
 	}
 
 	appWithRefs := v1alpha1.App{
@@ -42,12 +39,8 @@ func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 				v1alpha1.AppFetch{Image: &v1alpha1.AppFetchImage{SecretRef: &v1alpha1.AppFetchLocalRef{"s1"}}},
 				v1alpha1.AppFetch{HTTP: &v1alpha1.AppFetchHTTP{SecretRef: &v1alpha1.AppFetchLocalRef{"s2"}}},
 				v1alpha1.AppFetch{Git: &v1alpha1.AppFetchGit{SecretRef: &v1alpha1.AppFetchLocalRef{"s3"}}},
-				v1alpha1.AppFetch{HelmChart: &v1alpha1.AppFetchHelmChart{Repository: &v1alpha1.AppFetchHelmChartRepo{SecretRef: &v1alpha1.AppFetchLocalRef{"s4"}}}},
 				v1alpha1.AppFetch{ImgpkgBundle: &v1alpha1.AppFetchImgpkgBundle{SecretRef: &v1alpha1.AppFetchLocalRef{"s5"}}},
 			},
-			Template: []v1alpha1.AppTemplate{
-				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{SecretRef: &v1alpha1.AppFetchInlineSourceRef{"", "s6"}}}}}},
-				v1alpha1.AppTemplate{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{ValuesFrom: []v1alpha1.AppTemplateValuesSource{{SecretRef: &v1alpha1.AppTemplateValuesSourceRef{"s7"}}}}}},
 		},
 	}
 
