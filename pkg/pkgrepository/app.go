@@ -78,20 +78,12 @@ func (a *App) flushUpdateStatus(desc string) error {
 	return nil
 }
 
-// Get all SecretRefs from App spec
 func (a *App) SecretRefs() map[reftracker.RefKey]struct{} {
 	secrets := map[reftracker.RefKey]struct{}{}
 
 	// Fetch SecretRefs
 	for _, fetch := range a.app.Spec.Fetch {
 		switch {
-		case fetch.Inline != nil && fetch.Inline.PathsFrom != nil:
-			for _, pathsFrom := range fetch.Inline.PathsFrom {
-				if pathsFrom.SecretRef != nil {
-					refKey := reftracker.NewSecretKey(pathsFrom.SecretRef.Name, a.app.Namespace)
-					secrets[refKey] = struct{}{}
-				}
-			}
 		case fetch.Image != nil && fetch.Image.SecretRef != nil:
 			refKey := reftracker.NewSecretKey(fetch.Image.SecretRef.Name, a.app.Namespace)
 			secrets[refKey] = struct{}{}
@@ -104,33 +96,6 @@ func (a *App) SecretRefs() map[reftracker.RefKey]struct{} {
 		case fetch.Git != nil && fetch.Git.SecretRef != nil:
 			refKey := reftracker.NewSecretKey(fetch.Git.SecretRef.Name, a.app.Namespace)
 			secrets[refKey] = struct{}{}
-		case fetch.HelmChart != nil && fetch.HelmChart.Repository != nil:
-			if fetch.HelmChart.Repository.SecretRef != nil {
-				refKey := reftracker.NewSecretKey(fetch.HelmChart.Repository.SecretRef.Name, a.app.Namespace)
-				secrets[refKey] = struct{}{}
-			}
-		default:
-		}
-	}
-
-	// Templating SecretRefs
-	for _, tpl := range a.app.Spec.Template {
-		switch {
-		case tpl.Ytt != nil && tpl.Ytt.Inline != nil:
-			for _, pathsFrom := range tpl.Ytt.Inline.PathsFrom {
-				if pathsFrom.SecretRef != nil {
-					refKey := reftracker.NewSecretKey(pathsFrom.SecretRef.Name, a.app.Namespace)
-					secrets[refKey] = struct{}{}
-				}
-			}
-		case tpl.HelmTemplate != nil && tpl.HelmTemplate.ValuesFrom != nil:
-			for _, valsFrom := range tpl.HelmTemplate.ValuesFrom {
-				if valsFrom.SecretRef != nil {
-					refKey := reftracker.NewSecretKey(valsFrom.SecretRef.Name, a.app.Namespace)
-					secrets[refKey] = struct{}{}
-				}
-			}
-		default:
 		}
 	}
 
