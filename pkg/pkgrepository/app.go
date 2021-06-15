@@ -4,8 +4,6 @@
 package pkgrepository
 
 import (
-	"sync"
-
 	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -19,7 +17,6 @@ type Hooks struct {
 	BlockDeletion   func() error
 	UnblockDeletion func() error
 	UpdateStatus    func(string) error
-	WatchChanges    func(func(v1alpha1.App), chan struct{}) error
 }
 
 type App struct {
@@ -84,36 +81,6 @@ func (a *App) flushUpdateStatus(desc string) error {
 		return a.hooks.UpdateStatus("flushing: " + desc)
 	}
 	return nil
-}
-
-func (a *App) newCancelCh() (chan struct{}, func()) {
-	var cancelOnce sync.Once
-	cancelCh := make(chan struct{})
-
-	// Ends watching for app changes
-	cancelFunc := func() {
-		cancelOnce.Do(func() { close(cancelCh) })
-	}
-
-	cancelFuncOnApp := func(app v1alpha1.App) {
-		if app.Spec.Canceled {
-			cancelFunc()
-		}
-	}
-
-	go func() {
-		if a.hooks.WatchChanges == nil {
-			// do nothing when cannot watch for changes
-			return
-		}
-
-		err := a.hooks.WatchChanges(cancelFuncOnApp, cancelCh)
-		if err != nil {
-			a.log.Error(err, "Watching changes") // TODO remove
-		}
-	}()
-
-	return cancelCh, cancelFunc
 }
 
 // Get all SecretRefs from App spec
