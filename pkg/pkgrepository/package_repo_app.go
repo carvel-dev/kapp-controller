@@ -57,7 +57,12 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 			},
 		}},
 		Deploy: []kcv1alpha1.AppDeploy{{
-			Kapp: &kcv1alpha1.AppDeployKapp{},
+			Kapp: &kcv1alpha1.AppDeployKapp{
+				RawOptions: []string{"--wait-timeout=30s", "--kube-api-qps=20", "--kube-api-burst=30"},
+				Delete: &kcv1alpha1.AppDeployKappDelete{
+					RawOptions: []string{"--wait-timeout=30s", "--kube-api-qps=20", "--kube-api-burst=30"},
+				},
+			},
 		}},
 		Paused: pkgRepository.Spec.Paused,
 	}
