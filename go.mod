@@ -8,7 +8,7 @@ require (
 	github.com/go-openapi/spec v0.19.3
 	github.com/gogo/protobuf v1.3.1
 	github.com/google/go-containerregistry v0.1.2
-	github.com/vmware-tanzu/carvel-vendir v0.19.0
+	github.com/vmware-tanzu/carvel-vendir v0.19.1-0.20210617093106-563040514381
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	k8s.io/api v0.19.2
 	k8s.io/apimachinery v0.19.2
