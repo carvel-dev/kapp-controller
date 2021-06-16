@@ -51,6 +51,15 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 #@overlay/match by=overlay.not_op(overlay.or_op(pkg, pkgm, pkgv)),expects="0+"
 #@overlay/remove
 ---
+
+#! Ensure that all resources do not set some random namespace
+#! so that all resource end in the PackageRepository's namespace
+#@overlay/match by=overlay.all,expects="0+"
+---
+metadata:
+  #@overlay/match missing_ok=True
+  #@overlay/remove
+  namespace:
 `,
 					},
 				},
