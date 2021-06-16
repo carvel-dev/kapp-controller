@@ -338,3 +338,134 @@ spec:
 		kubectl.Run([]string{"delete", "pkgi", name, "--wait=true"})
 	})
 }
+
+func Test_PackageInstall_UsesExistingAppWithSameName(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+	sas := ServiceAccounts{env.Namespace}
+	name := "pkg-instl-uses-app"
+
+	appYaml := fmt.Sprintf(`
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: %s
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
+spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
+  fetch:
+    - inline:
+        paths:
+          file.yml: |
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: configmap
+  template:
+  - ytt: {}
+  deploy:
+    - kapp: {}
+`, name) + sas.ForNamespaceYAML()
+
+	pkginstallYaml := fmt.Sprintf(`---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: pkg.test.carvel.dev
+  namespace: %[1]s
+spec:
+  displayName: "Test PackageMetadata"
+  shortDescription: "PackageMetadata used for testing"
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg.test.carvel.dev.1.0.0
+  namespace: %[1]s
+spec:
+  refName: pkg.test.carvel.dev
+  version: 1.0.0
+  template:
+    spec:
+      fetch:
+      - inline:
+          paths:
+            file.yml: |
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: configmap
+      template:
+      - ytt: 
+          paths:
+          - file.yml
+      deploy:
+      - kapp: {}
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: %[2]s
+  namespace: %[1]s
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/packageinstalls
+spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
+  packageRef:
+    refName: pkg.test.carvel.dev
+    versionSelection:
+      constraints: 1.0.0
+`, env.Namespace, name) + sas.ForNamespaceYAML()
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("Create App CR", func() {
+		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(appYaml)})
+	})
+
+	logger.Section("Create PackageInstall with same name as App CR", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkginstallYaml)})
+		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
+	})
+
+	logger.Section("Assert that App spec is different from PackageInstall take over", func() {
+		out := kubectl.Run([]string{"get", fmt.Sprintf("apps/%s", name), "-o", "yaml"})
+		var cr v1alpha1.App
+		err := yaml.Unmarshal([]byte(out), &cr)
+		if err != nil {
+			t.Fatalf("failed to unmarshal: %s", err)
+		}
+
+		tmpl := cr.Spec.Template[0]
+		if tmpl.Ytt != nil && len(tmpl.Ytt.Paths) != 0 {
+			if tmpl.Ytt.Paths[0] != "file.yml" {
+				t.Fatalf("\nExpected App spec.template.ytt.paths to contain file.yml\nGot: %s", tmpl.Ytt.Paths[0])
+			}
+		} else {
+			t.Fatalf("\nExpected App spec.template.ytt.paths to contain file.yml\nGot: %s", tmpl)
+		}
+	})
+
+	logger.Section("Delete PackageInstall and expect App with same name to be deleted", func() {
+		cleanUp()
+		// Since the App was created first without the PackageInstall, the result of the
+		// PackageInstall using the existing App should be that it will be deleted when
+		// PackageInstall gets deleted.
+		out, err := kubectl.RunWithOpts([]string{"get", fmt.Sprintf("apps/%s", name)}, RunOpts{AllowError: true})
+		if err == nil {
+			t.Fatalf("Expected no App to be found after PackageInstall is deleted\nGot: %s", out)
+		}
+
+		if !strings.Contains(err.Error(), "NotFound") {
+			t.Fatalf("Expected error from kubectl get app to show App not found.\nGot: %s", err.Error())
+		}
+	})
+}
