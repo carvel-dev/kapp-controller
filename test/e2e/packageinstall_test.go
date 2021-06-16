@@ -288,7 +288,6 @@ apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
   name: basic.test.carvel.dev
-  # cluster scoped
 spec:
   fetch:
     imgpkgBundle:
