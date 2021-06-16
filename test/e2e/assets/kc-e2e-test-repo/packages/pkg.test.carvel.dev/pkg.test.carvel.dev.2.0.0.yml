@@ -3,7 +3,6 @@ apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
   name: pkg.test.carvel.dev.2.0.0
-  # cluster scoped
 spec:
   refName: pkg.test.carvel.dev
   # In this new version of the package, we are including some overlays
