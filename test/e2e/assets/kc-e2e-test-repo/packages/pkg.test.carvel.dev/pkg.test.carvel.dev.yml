@@ -2,20 +2,14 @@
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
 metadata:
-  # This is just the resource name and shouldn't be used to reference this package
-  # in other resources
   name: pkg.test.carvel.dev
-  # cluster scoped
 spec:
-  # This is the name we want to reference in resources such as PackageInstall.
   displayName: "Test Package in repo"
   shortDescription: "Package used for testing"
   longDescription: "A longer, more detailed description of what the package contains and what it is for"
   providerName: Carvel
   maintainers:
-  - name: carvel
+  - name: Carvel Team
   categories:
   - testing
   supportDescription: "Description of support provided for the package"
-
-

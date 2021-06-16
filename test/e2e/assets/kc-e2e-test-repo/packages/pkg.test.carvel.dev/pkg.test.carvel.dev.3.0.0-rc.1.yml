@@ -3,7 +3,6 @@ apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
   name: pkg.test.carvel.dev.3.0.0-rc.1
-  # cluster scoped
 spec:
   refName: pkg.test.carvel.dev
   # This is a pre-release, which kapp-contorller will not automatically bump
