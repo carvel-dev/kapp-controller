@@ -4,9 +4,11 @@
 package validation
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
+	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -58,13 +60,18 @@ func ValidatePackageName(pkgName, pkgmName, pkgVersion string, fldPath *field.Pa
 	return allErrs
 }
 
-// validate spec.version is not empty
+// validate spec.version is not empty and is a valid semver
 func ValidatePackageSpecVersion(version string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if version == "" {
 		allErrs = append(allErrs,
 			field.Invalid(fldPath, version, "cannot be empty"))
+	}
+
+	if _, err := versions.NewSemver(version); err != nil {
+		allErrs = append(allErrs,
+			field.Invalid(fldPath, version, fmt.Sprintf("must be valid semver: %v", err)))
 	}
 
 	return allErrs
