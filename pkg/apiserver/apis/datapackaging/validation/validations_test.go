@@ -40,7 +40,7 @@ func TestValidatePackageMetadataNameValid(t *testing.T) {
 	}
 }
 
-func TestValidatePackageVersionNameInvalid(t *testing.T) {
+func TestValidatePackageNameInvalid(t *testing.T) {
 	invalidName := "pkg.3.0"
 	pkgName := "pkg"
 	pkgVersion := "2.0"
@@ -60,7 +60,7 @@ func TestValidatePackageVersionNameInvalid(t *testing.T) {
 	}
 }
 
-func TestValidatePackageVersionNameValid(t *testing.T) {
+func TestValidatePackageNameValid(t *testing.T) {
 	validName := "pkg.2.0"
 	pkgName := "pkg"
 	pkgVersion := "2.0"
@@ -72,7 +72,7 @@ func TestValidatePackageVersionNameValid(t *testing.T) {
 	}
 }
 
-func TestValidatePackageVersionSpecPackageVersionInvalid(t *testing.T) {
+func TestValidatePackageSpecPackageVersionInvalidEmpty(t *testing.T) {
 	invalidVersion := ""
 	expectedErr := field.Error{
 		Type:  field.ErrorTypeInvalid,
@@ -90,17 +90,35 @@ func TestValidatePackageVersionSpecPackageVersionInvalid(t *testing.T) {
 	}
 }
 
-func TestValidatePackageVersionSpecPackageVersionValid(t *testing.T) {
+func TestValidatePackageSpecPackageVersionInvalidNonSemver(t *testing.T) {
+	invalidVersion := "invalid.1.0"
+	expectedErr := field.Error{
+		Type:  field.ErrorTypeInvalid,
+		Field: "spec.version",
+	}
+
+	errList := validation.ValidatePackageSpecVersion(invalidVersion, field.NewPath("spec", "version"))
+
+	if len(errList) == 0 {
+		t.Fatalf("Expected error when spec.version is invalid")
+	}
+
+	if !contains(errList, expectedErr) {
+		t.Fatalf("Expected invalid field error for spec.version, but got: %v", errList.ToAggregate())
+	}
+}
+
+func TestValidatePackageSpecPackageVersionValid(t *testing.T) {
 	validVersion := "1.0.0"
 
 	errList := validation.ValidatePackageSpecVersion(validVersion, field.NewPath("spec", "version"))
 
 	if len(errList) != 0 {
-		t.Fatalf("Expected no error when spec.version is valid")
+		t.Fatalf("Expected no error when spec.version is valid, but got %v", errList.ToAggregate().Error())
 	}
 }
 
-func TestValidatePackageVersionSpecPackageNameInvalid(t *testing.T) {
+func TestValidatePackageSpecPackageNameInvalid(t *testing.T) {
 	invalidName := ""
 	expectedErr := field.Error{
 		Type:  field.ErrorTypeRequired,
@@ -118,7 +136,7 @@ func TestValidatePackageVersionSpecPackageNameInvalid(t *testing.T) {
 	}
 }
 
-func TestValidatePackageVersionSpecPackageNameValid(t *testing.T) {
+func TestValidatePackageSpecPackageNameValid(t *testing.T) {
 	validName := "package.carvel.dev"
 
 	errList := validation.ValidatePackageSpecPackageName(validName, field.NewPath("spec", "packageName"))
