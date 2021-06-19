@@ -18,3 +18,11 @@ spec:
 #@overlay/remove
 #@overlay/match missing_ok=True
 status:
+
+#@overlay/match by=overlay.subset({"metadata":{"name":"internalpackagemetadata.internal.packaging.carvel.dev"}})
+---
+metadata:
+  name: internalpackagemetadatas.internal.packaging.carvel.dev
+spec:
+  names:
+    plural: internalpackagemetadatas

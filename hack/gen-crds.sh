@@ -11,6 +11,6 @@ go run ./vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go \
   output:dir=./tmp/crds \
   paths=./pkg/apis/...
 
-ytt -f tmp/crds -f config/crd-overlay.yml > config/crds.yml
+ytt -f tmp/crds -f ./hack/crd-overlay.yml > config/crds.yml
 
 rm -rf tmp/crds

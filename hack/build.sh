@@ -13,6 +13,7 @@ go mod tidy
 go build $repro_flags -mod=vendor -o controller ./cmd/main.go
 ls -la ./controller
 
+./hack/gen-crds.sh
 ytt -f config/ >/dev/null
 
 echo SUCCESS
