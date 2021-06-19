@@ -105,39 +105,41 @@ func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.List
 	fs := options.FieldSelector
 	options.FieldSelector = fields.Everything()
 
+	var pkgs []datapackaging.Package
+	if r.shouldFetchGlobal(ctx, namespace) {
+		globalPkgList, err := client.List(ctx, r.globalNamespace, r.internalToMetaListOpts(*options))
+		if err != nil {
+			return nil, err
+		}
+		pkgs = globalPkgList.Items
+	}
+
 	namespacedPkgList, err := client.List(ctx, namespace, r.internalToMetaListOpts(*options))
 	if err != nil {
 		return nil, err
 	}
 	namespacedPkgs := namespacedPkgList.Items
 
-	var globalPkgs []datapackaging.Package
-	if r.shouldFetchGlobal(ctx, namespace) {
-		globalPkgList, err := client.List(ctx, r.globalNamespace, r.internalToMetaListOpts(*options))
-		if err != nil {
-			return nil, err
-		}
-		globalPkgs = globalPkgList.Items
-	}
-
-	packageVersionsMap := make(map[string]datapackaging.Package)
-	for _, pkg := range globalPkgs {
+	pkgIndex := make(map[string]int)
+	for i, pkg := range pkgs {
 		identifier := pkg.Namespace + "/" + pkg.Spec.RefName + "." + pkg.Spec.Version
-		packageVersionsMap[identifier] = pkg
+		pkgIndex[identifier] = i
 	}
 
+	// if exists as global, overwrite, else append
 	for _, pkg := range namespacedPkgs {
 		identifier := pkg.Namespace + "/" + pkg.Spec.RefName + "." + pkg.Spec.Version
-		packageVersionsMap[identifier] = pkg
+		if index, found := pkgIndex[identifier]; found {
+			pkgs[index] = pkg
+		} else {
+			pkgs = append(pkgs, pkg)
+		}
 	}
 
 	pkgList := &datapackaging.PackageList{
 		TypeMeta: namespacedPkgList.TypeMeta,
 		ListMeta: namespacedPkgList.ListMeta,
-	}
-
-	for _, v := range packageVersionsMap {
-		pkgList.Items = append(pkgList.Items, v)
+		Items:    pkgs,
 	}
 
 	return r.applySelector(pkgList, fs), err

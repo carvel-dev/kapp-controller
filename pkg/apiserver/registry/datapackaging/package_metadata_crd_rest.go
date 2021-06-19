@@ -108,42 +108,43 @@ func (r *PackageMetadataCRDREST) List(ctx context.Context, options *internalvers
 	namespace := request.NamespaceValue(ctx)
 	client := NewPackageMetadataStorageClient(r.crdClient, NewPackageMetadataTranslator(namespace))
 
-	// fetch list of namespaced packages (ns could be "")
-	namespacedPackagesList, err := client.List(ctx, namespace, r.internalToMetaListOpts(*options))
-	if err != nil {
-		return nil, err
-	}
-	namespacedPackages := namespacedPackagesList.Items
-
-	var globalPackages []datapackaging.PackageMetadata
+	var pkgMetas []datapackaging.PackageMetadata
 	if r.shouldFetchGlobal(ctx, namespace) {
 		globalPackagesList, err := client.List(ctx, r.globalNamespace, r.internalToMetaListOpts(*options))
 		if err != nil {
 			return nil, err
 		}
-		globalPackages = globalPackagesList.Items
+		pkgMetas = globalPackagesList.Items
 	}
 
-	packagesMap := make(map[string]datapackaging.PackageMetadata)
-	for _, pkg := range globalPackages {
+	// fetch list of namespaced packages (ns could be "")
+	namespacedPackageMetaList, err := client.List(ctx, namespace, r.internalToMetaListOpts(*options))
+	if err != nil {
+		return nil, err
+	}
+	namespacedPackageMetas := namespacedPackageMetaList.Items
+
+	pkgMetaIndex := make(map[string]int)
+	for i, pkgMeta := range pkgMetas {
 		// identifier for package will be namespace/name
-		identifier := pkg.Namespace + "/" + pkg.Name
-		packagesMap[identifier] = pkg
+		identifier := pkgMeta.Namespace + "/" + pkgMeta.Name
+		pkgMetaIndex[identifier] = i
 	}
 
-	for _, pkg := range namespacedPackages {
+	for _, pkgMeta := range namespacedPackageMetas {
 		// identifier for package will be namespace/name
-		identifier := pkg.Namespace + "/" + pkg.Name
-		packagesMap[identifier] = pkg
+		identifier := pkgMeta.Namespace + "/" + pkgMeta.Name
+		if index, found := pkgMetaIndex[identifier]; found {
+			pkgMetas[index] = pkgMeta
+		} else {
+			pkgMetas = append(pkgMetas, pkgMeta)
+		}
 	}
 
 	packageList := &datapackaging.PackageMetadataList{
-		TypeMeta: namespacedPackagesList.TypeMeta,
-		ListMeta: namespacedPackagesList.ListMeta,
-	}
-
-	for _, v := range packagesMap {
-		packageList.Items = append(packageList.Items, v)
+		TypeMeta: namespacedPackageMetaList.TypeMeta,
+		ListMeta: namespacedPackageMetaList.ListMeta,
+		Items:    pkgMetas,
 	}
 
 	return packageList, err
