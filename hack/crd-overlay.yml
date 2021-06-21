@@ -8,13 +8,6 @@ metadata:
   #@overlay/remove
   #@overlay/match missing_ok=True
   annotations:
-spec:
-  validation:
-    openAPIV3Schema:
-      properties:
-        #@overlay/remove
-        #@overlay/match missing_ok=True
-        metadata:
 #@overlay/remove
 #@overlay/match missing_ok=True
 status:
