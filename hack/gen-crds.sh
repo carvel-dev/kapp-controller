@@ -7,7 +7,7 @@ set -o pipefail
 rm -rf tmp/crds
 
 go run ./vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go \
-  crd:preserveUnknownFields=false \
+  crd \
   output:dir=./tmp/crds \
   paths=./pkg/apis/...
 
