@@ -95,6 +95,8 @@ spec:
               releaseNotes:
                 type: string
               releasedAt:
+                format: date-time
+                nullable: true
                 type: string
               template:
                 properties:

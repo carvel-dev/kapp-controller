@@ -16,6 +16,7 @@ metadata:
 spec:
   refName: pkg-standalone.test.carvel.dev
   version: 2.0.0
+  releasedAt: 2021-05-05T18:57:06Z
   template: # type of App CR
     spec:
       fetch:
