@@ -19,7 +19,7 @@ func NewAppRefTracker() *AppRefTracker {
 	return &AppRefTracker{refsToApps: map[RefKey]map[RefKey]struct{}{}, appsToRefs: map[RefKey]map[RefKey]struct{}{}}
 }
 
-func (a AppRefTracker) AppsForRef(refKey RefKey) (map[RefKey]struct{}, error) {
+func (a *AppRefTracker) AppsForRef(refKey RefKey) (map[RefKey]struct{}, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
@@ -31,7 +31,7 @@ func (a AppRefTracker) AppsForRef(refKey RefKey) (map[RefKey]struct{}, error) {
 	return apps, nil
 }
 
-func (a AppRefTracker) RefsForApp(appKey RefKey) (map[RefKey]struct{}, error) {
+func (a *AppRefTracker) RefsForApp(appKey RefKey) (map[RefKey]struct{}, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
@@ -42,14 +42,14 @@ func (a AppRefTracker) RefsForApp(appKey RefKey) (map[RefKey]struct{}, error) {
 	return a.appsToRefs[appKey], nil
 }
 
-func (a AppRefTracker) RemoveRef(refKey RefKey) {
+func (a *AppRefTracker) RemoveRef(refKey RefKey) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
 	delete(a.refsToApps, refKey)
 }
 
-func (a AppRefTracker) RemoveAppFromAllRefs(appKey RefKey) {
+func (a *AppRefTracker) RemoveAppFromAllRefs(appKey RefKey) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
@@ -67,7 +67,7 @@ func (a AppRefTracker) RemoveAppFromAllRefs(appKey RefKey) {
 	delete(a.appsToRefs, appKey)
 }
 
-func (a AppRefTracker) ReconcileRefs(currentRefs map[RefKey]struct{}, appKey RefKey) {
+func (a *AppRefTracker) ReconcileRefs(currentRefs map[RefKey]struct{}, appKey RefKey) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
