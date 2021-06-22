@@ -16,8 +16,6 @@ limitations under the License.
 
 package schema
 
-import "reflect"
-
 // Equals returns true iff the two Schemas are equal.
 func (a *Schema) Equals(b *Schema) bool {
 	if a == nil || b == nil {
@@ -168,9 +166,6 @@ func (a *StructField) Equals(b *StructField) bool {
 		return a == nil && b == nil
 	}
 	if a.Name != b.Name {
-		return false
-	}
-	if !reflect.DeepEqual(a.Default, b.Default) {
 		return false
 	}
 	return a.Type.Equals(&b.Type)

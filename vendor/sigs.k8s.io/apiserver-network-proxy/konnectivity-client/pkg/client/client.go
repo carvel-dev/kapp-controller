@@ -51,12 +51,6 @@ type grpcTunnel struct {
 	connsLock       sync.RWMutex
 }
 
-type clientConn interface {
-	Close() error
-}
-
-var _ clientConn = &grpc.ClientConn{}
-
 // CreateSingleUseGrpcTunnel creates a Tunnel to dial to a remote server through a
 // gRPC based proxy service.
 // Currently, a single tunnel supports a single connection, and the tunnel is closed when the connection is terminated
@@ -85,7 +79,7 @@ func CreateSingleUseGrpcTunnel(address string, opts ...grpc.DialOption) (Tunnel,
 	return tunnel, nil
 }
 
-func (t *grpcTunnel) serve(c clientConn) {
+func (t *grpcTunnel) serve(c *grpc.ClientConn) {
 	defer c.Close()
 
 	for {
@@ -94,11 +88,11 @@ func (t *grpcTunnel) serve(c clientConn) {
 			return
 		}
 		if err != nil || pkt == nil {
-			klog.ErrorS(err, "stream read failure")
+			klog.Warningf("stream read error: %v", err)
 			return
 		}
 
-		klog.V(5).InfoS("[tracing] recv packet", "type", pkt.Type)
+		klog.V(6).Infof("[tracing] recv packet, type: %s", pkt.Type)
 
 		switch pkt.Type {
 		case client.PacketType_DIAL_RSP:
@@ -108,7 +102,7 @@ func (t *grpcTunnel) serve(c clientConn) {
 			t.pendingDialLock.RUnlock()
 
 			if !ok {
-				klog.V(1).Infoln("DialResp not recognized; dropped")
+				klog.Warning("DialResp not recognized; dropped")
 			} else {
 				ch <- dialResult{
 					err:    resp.Error,
@@ -125,7 +119,7 @@ func (t *grpcTunnel) serve(c clientConn) {
 			if ok {
 				conn.readCh <- resp.Data
 			} else {
-				klog.V(1).InfoS("connection not recognized", "connectionID", resp.ConnectID)
+				klog.Warningf("connection id %d not recognized", resp.ConnectID)
 			}
 		case client.PacketType_CLOSE_RSP:
 			resp := pkt.GetCloseResponse()
@@ -142,7 +136,7 @@ func (t *grpcTunnel) serve(c clientConn) {
 				t.connsLock.Unlock()
 				return
 			}
-			klog.V(1).InfoS("connection not recognized", "connectionID", resp.ConnectID)
+			klog.Warningf("connection id %d not recognized", resp.ConnectID)
 		}
 	}
 }
@@ -175,14 +169,14 @@ func (t *grpcTunnel) Dial(protocol, address string) (net.Conn, error) {
 			},
 		},
 	}
-	klog.V(5).InfoS("[tracing] send packet", "type", req.Type)
+	klog.V(6).Infof("[tracing] send packet, type: %s", req.Type)
 
 	err := t.stream.Send(req)
 	if err != nil {
 		return nil, err
 	}
 
-	klog.V(5).Infoln("DIAL_REQ sent to proxy server")
+	klog.Info("DIAL_REQ sent to proxy server")
 
 	c := &conn{stream: t.stream}
 
