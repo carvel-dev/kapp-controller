@@ -57,10 +57,6 @@ rules:
 - apiGroups: ["admissionregistration.k8s.io"]
   resources: ["validatingwebhookconfigurations"]
   verbs: ["list", "watch"]
-#! Added as part of client-go update to v0.20.2
-- apiGroups: ["flowcontrol.apiserver.k8s.io"]
-  resources: ["prioritylevelconfigurations", "flowschemas"]
-  verbs: ["list", "watch"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
