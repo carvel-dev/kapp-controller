@@ -56,6 +56,7 @@ spec:
   capactiyRequirementsDescription: "cpu: 1,RAM: 2, Disk: 3"
   releaseNotes: |
     - Introduce simple-app package
+  releasedAt: 2021-05-05T18:57:06Z
   template:
     spec:
       fetch:
