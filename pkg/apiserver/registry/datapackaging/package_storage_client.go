@@ -48,7 +48,7 @@ func (t PackageTranslator) ToExternalObj(intObj *internalpkgingv1alpha1.Internal
 		return nil, nil
 	}
 
-	obj := (*datapackaging.Package)(intObj)
+	obj := (*datapackaging.Package)(intObj.DeepCopy())
 	for i := range obj.ManagedFields {
 		if obj.ManagedFields[i].APIVersion == internalpkgingv1alpha1.SchemeGroupVersion.Identifier() {
 			obj.ManagedFields[i].APIVersion = datapkgingv1alpha1.SchemeGroupVersion.Identifier()
@@ -78,7 +78,7 @@ func (t PackageTranslator) ToInternalObj(extObj *datapackaging.Package) *interna
 		return nil
 	}
 
-	intObj := (*internalpkgingv1alpha1.InternalPackage)(extObj)
+	intObj := (*internalpkgingv1alpha1.InternalPackage)(extObj.DeepCopy())
 	for i := range intObj.ManagedFields {
 		if intObj.ManagedFields[i].APIVersion == datapkgingv1alpha1.SchemeGroupVersion.Identifier() {
 			intObj.ManagedFields[i].APIVersion = internalpkgingv1alpha1.SchemeGroupVersion.Identifier()
