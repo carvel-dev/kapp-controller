@@ -1,6 +1,6 @@
 ---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
+kind: PackageMetadata
 metadata:
   # This is just the resource name and shouldn't be used to reference this package
   # in other resources

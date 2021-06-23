@@ -1,6 +1,6 @@
 ---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageVersion
+kind: Package
 metadata:
   # This is just the resource name and shouldn't be used to reference this package
   # in other resources
@@ -8,7 +8,7 @@ metadata:
   # cluster scoped
 spec:
   # This is the name we want to reference in resources such as PackageInstall.
-  packageName: pkg.test.carvel.dev
+  refName: pkg.test.carvel.dev
   version: 1.0.0
   licenses:
   - Apache 2.0
