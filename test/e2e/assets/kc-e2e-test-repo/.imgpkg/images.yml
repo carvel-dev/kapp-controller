@@ -1,3 +1,10 @@
 ---
 apiVersion: imgpkg.carvel.dev/v1alpha1
+images:
+- annotations:
+    kbld.carvel.dev/id: k8slt/kctrl-example-pkg:v1.0.0
+  image: index.docker.io/k8slt/kctrl-example-pkg@sha256:95241524c255f8d811152e09a3ec3de71cb00385c6c463228fb448ccffdf1628
+- annotations:
+    kbld.carvel.dev/id: k8slt/kctrl-example-pkg:v2.0.0
+  image: index.docker.io/k8slt/kctrl-example-pkg@sha256:73713d922b5f561c0db2a7ea5f4f6384f7d2d6289886f8400a8aaf5e8fdf134a
 kind: ImagesLock
