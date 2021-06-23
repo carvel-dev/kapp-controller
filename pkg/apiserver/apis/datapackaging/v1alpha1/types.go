@@ -58,12 +58,14 @@ type PackageMetadataList struct {
 }
 
 type PackageSpec struct {
-	RefName                         string   `json:"refName,omitempty" protobuf:"bytes,1,opt,name=refName"`
-	Version                         string   `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
-	Licenses                        []string `json:"licenses,omitempty" protobuf:"bytes,3,rep,name=licenses"`
-	ReleasedAt                      string   `json:"releasedAt,omitempty" protobuf:"bytes,4,opt,name=releasedAt"`
-	CapactiyRequirementsDescription string   `json:"capacityRequirementsDescription,omitempty" protobuf:"bytes,5,opt,name=capacityRequirementsDescription"`
-	ReleaseNotes                    string   `json:"releaseNotes,omitempty" protobuf:"bytes,6,opt,name=releaseNotes"`
+	RefName  string   `json:"refName,omitempty" protobuf:"bytes,1,opt,name=refName"`
+	Version  string   `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
+	Licenses []string `json:"licenses,omitempty" protobuf:"bytes,3,rep,name=licenses"`
+	// +optional
+	// +nullable
+	ReleasedAt                      metav1.Time `json:"releasedAt,omitempty" protobuf:"bytes,4,opt,name=releasedAt"`
+	CapactiyRequirementsDescription string      `json:"capacityRequirementsDescription,omitempty" protobuf:"bytes,5,opt,name=capacityRequirementsDescription"`
+	ReleaseNotes                    string      `json:"releaseNotes,omitempty" protobuf:"bytes,6,opt,name=releaseNotes"`
 
 	Template AppTemplateSpec `json:"template,omitempty" protobuf:"bytes,7,opt,name=template"`
 

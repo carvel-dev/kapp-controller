@@ -58,12 +58,14 @@ type PackageMetadataList struct {
 }
 
 type PackageSpec struct {
-	RefName                         string   `json:"refName,omitempty"`
-	Version                         string   `json:"version,omitempty"`
-	Licenses                        []string `json:"licenses,omitempty"`
-	ReleasedAt                      string   `json:"releasedAt,omitempty"`
-	CapactiyRequirementsDescription string   `json:"capacityRequirementsDescription,omitempty"`
-	ReleaseNotes                    string   `json:"releaseNotes,omitempty"`
+	RefName  string   `json:"refName,omitempty"`
+	Version  string   `json:"version,omitempty"`
+	Licenses []string `json:"licenses,omitempty"`
+	// +optional
+	// +nullable
+	ReleasedAt                      metav1.Time `json:"releasedAt,omitempty"`
+	CapactiyRequirementsDescription string      `json:"capacityRequirementsDescription,omitempty"`
+	ReleaseNotes                    string      `json:"releaseNotes,omitempty"`
 
 	Template AppTemplateSpec `json:"template,omitempty"`
 
