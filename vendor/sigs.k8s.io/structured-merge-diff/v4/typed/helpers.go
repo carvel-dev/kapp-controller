@@ -180,23 +180,11 @@ func mapValue(a value.Allocator, val value.Value) (value.Map, error) {
 	return val.AsMapUsing(a), nil
 }
 
-func getAssociativeKeyDefault(s *schema.Schema, list *schema.List, fieldName string) (interface{}, error) {
-	atom, ok := s.Resolve(list.ElementType)
-	if !ok {
-		return nil, errors.New("invalid elementType for list")
-	}
-	if atom.Map == nil {
-		return nil, errors.New("associative list may not have non-map types")
-	}
-	// If the field is not found, we can assume there is no default.
-	field, _ := atom.Map.FindField(fieldName)
-	return field.Default, nil
-}
-
-func keyedAssociativeListItemToPathElement(a value.Allocator, s *schema.Schema, list *schema.List, index int, child value.Value) (fieldpath.PathElement, error) {
+func keyedAssociativeListItemToPathElement(a value.Allocator, list *schema.List, index int, child value.Value) (fieldpath.PathElement, error) {
 	pe := fieldpath.PathElement{}
 	if child.IsNull() {
-		// null entries are illegal.
+		// For now, the keys are required which means that null entries
+		// are illegal.
 		return pe, errors.New("associative list with keys may not have a null element")
 	}
 	if !child.IsMap() {
@@ -208,12 +196,8 @@ func keyedAssociativeListItemToPathElement(a value.Allocator, s *schema.Schema, 
 	for _, fieldName := range list.Keys {
 		if val, ok := m.Get(fieldName); ok {
 			keyMap = append(keyMap, value.Field{Name: fieldName, Value: val})
-		} else if def, err := getAssociativeKeyDefault(s, list, fieldName); err != nil {
-			return pe, fmt.Errorf("couldn't find default value for %v: %v", fieldName, err)
-		} else if def != nil {
-			keyMap = append(keyMap, value.Field{Name: fieldName, Value: value.NewValueInterface(def)})
 		} else {
-			return pe, fmt.Errorf("associative list with keys has an element that omits key field %q (and doesn't have default value)", fieldName)
+			return pe, fmt.Errorf("associative list with keys has an element that omits key field %q", fieldName)
 		}
 	}
 	keyMap.Sort()
@@ -241,10 +225,10 @@ func setItemToPathElement(list *schema.List, index int, child value.Value) (fiel
 	}
 }
 
-func listItemToPathElement(a value.Allocator, s *schema.Schema, list *schema.List, index int, child value.Value) (fieldpath.PathElement, error) {
+func listItemToPathElement(a value.Allocator, list *schema.List, index int, child value.Value) (fieldpath.PathElement, error) {
 	if list.ElementRelationship == schema.Associative {
 		if len(list.Keys) > 0 {
-			return keyedAssociativeListItemToPathElement(a, s, list, index, child)
+			return keyedAssociativeListItemToPathElement(a, list, index, child)
 		}
 
 		// If there's no keys, then we must be a set of primitives.

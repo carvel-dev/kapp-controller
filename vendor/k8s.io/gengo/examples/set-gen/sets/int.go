@@ -28,7 +28,7 @@ type Int map[int]Empty
 
 // NewInt creates a Int from a list of values.
 func NewInt(items ...int) Int {
-	ss := make(Int, len(items))
+	ss := Int{}
 	ss.Insert(items...)
 	return ss
 }

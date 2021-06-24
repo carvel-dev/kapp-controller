@@ -80,5 +80,9 @@ type probabilisticGoawayDecider struct {
 
 // Goaway implement GoawayDecider
 func (p *probabilisticGoawayDecider) Goaway(r *http.Request) bool {
-	return p.next() < p.chance
+	if p.next() < p.chance {
+		return true
+	}
+
+	return false
 }

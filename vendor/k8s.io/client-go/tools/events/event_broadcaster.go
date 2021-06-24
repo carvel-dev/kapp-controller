@@ -307,7 +307,14 @@ func (e *eventBroadcasterImpl) StartEventWatcher(eventHandler func(event runtime
 	return watcher.Stop
 }
 
-func (e *eventBroadcasterImpl) startRecordingEvents(stopCh <-chan struct{}) {
+// StartRecordingToSink starts sending events received from the specified eventBroadcaster to the given sink.
+func (e *eventBroadcasterImpl) StartRecordingToSink(stopCh <-chan struct{}) {
+	go wait.Until(func() {
+		e.refreshExistingEventSeries()
+	}, refreshTime, stopCh)
+	go wait.Until(func() {
+		e.finishSeries()
+	}, finishTime, stopCh)
 	eventHandler := func(obj runtime.Object) {
 		event, ok := obj.(*eventsv1.Event)
 		if !ok {
@@ -321,13 +328,6 @@ func (e *eventBroadcasterImpl) startRecordingEvents(stopCh <-chan struct{}) {
 		<-stopCh
 		stopWatcher()
 	}()
-}
-
-// StartRecordingToSink starts sending events received from the specified eventBroadcaster to the given sink.
-func (e *eventBroadcasterImpl) StartRecordingToSink(stopCh <-chan struct{}) {
-	go wait.Until(e.refreshExistingEventSeries, refreshTime, stopCh)
-	go wait.Until(e.finishSeries, finishTime, stopCh)
-	e.startRecordingEvents(stopCh)
 }
 
 type eventBroadcasterAdapterImpl struct {

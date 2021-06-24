@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -30,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
-	"k8s.io/apiserver/pkg/storage/etcd3/metrics"
 	"k8s.io/apiserver/pkg/storage/value"
 
 	"go.etcd.io/etcd/clientv3"
@@ -70,8 +68,6 @@ func TestOnlySetFatalOnDecodeError(b bool) {
 type watcher struct {
 	client      *clientv3.Client
 	codec       runtime.Codec
-	newFunc     func() runtime.Object
-	objectType  string
 	versioner   storage.Versioner
 	transformer value.Transformer
 }
@@ -82,7 +78,6 @@ type watchChan struct {
 	key               string
 	initialRev        int64
 	recursive         bool
-	progressNotify    bool
 	internalPred      storage.SelectionPredicate
 	ctx               context.Context
 	cancel            context.CancelFunc
@@ -91,20 +86,13 @@ type watchChan struct {
 	errChan           chan error
 }
 
-func newWatcher(client *clientv3.Client, codec runtime.Codec, newFunc func() runtime.Object, versioner storage.Versioner, transformer value.Transformer) *watcher {
-	res := &watcher{
+func newWatcher(client *clientv3.Client, codec runtime.Codec, versioner storage.Versioner, transformer value.Transformer) *watcher {
+	return &watcher{
 		client:      client,
 		codec:       codec,
-		newFunc:     newFunc,
 		versioner:   versioner,
 		transformer: transformer,
 	}
-	if newFunc == nil {
-		res.objectType = "<unknown>"
-	} else {
-		res.objectType = reflect.TypeOf(newFunc()).String()
-	}
-	return res
 }
 
 // Watch watches on a key and returns a watch.Interface that transfers relevant notifications.
@@ -114,22 +102,21 @@ func newWatcher(client *clientv3.Client, codec runtime.Codec, newFunc func() run
 // If recursive is false, it watches on given key.
 // If recursive is true, it watches any children and directories under the key, excluding the root key itself.
 // pred must be non-nil. Only if pred matches the change, it will be returned.
-func (w *watcher) Watch(ctx context.Context, key string, rev int64, recursive, progressNotify bool, pred storage.SelectionPredicate) (watch.Interface, error) {
+func (w *watcher) Watch(ctx context.Context, key string, rev int64, recursive bool, pred storage.SelectionPredicate) (watch.Interface, error) {
 	if recursive && !strings.HasSuffix(key, "/") {
 		key += "/"
 	}
-	wc := w.createWatchChan(ctx, key, rev, recursive, progressNotify, pred)
+	wc := w.createWatchChan(ctx, key, rev, recursive, pred)
 	go wc.run()
 	return wc, nil
 }
 
-func (w *watcher) createWatchChan(ctx context.Context, key string, rev int64, recursive, progressNotify bool, pred storage.SelectionPredicate) *watchChan {
+func (w *watcher) createWatchChan(ctx context.Context, key string, rev int64, recursive bool, pred storage.SelectionPredicate) *watchChan {
 	wc := &watchChan{
 		watcher:           w,
 		key:               key,
 		initialRev:        rev,
 		recursive:         recursive,
-		progressNotify:    progressNotify,
 		internalPred:      pred,
 		incomingEventChan: make(chan *event, incomingBufSize),
 		resultChan:        make(chan watch.Event, outgoingBufSize),
@@ -236,9 +223,6 @@ func (wc *watchChan) startWatching(watchClosedCh chan struct{}) {
 	if wc.recursive {
 		opts = append(opts, clientv3.WithPrefix())
 	}
-	if wc.progressNotify {
-		opts = append(opts, clientv3.WithProgressNotify())
-	}
 	wch := wc.watcher.client.Watch(wc.ctx, wc.key, opts...)
 	for wres := range wch {
 		if wres.Err() != nil {
@@ -248,12 +232,6 @@ func (wc *watchChan) startWatching(watchClosedCh chan struct{}) {
 			wc.sendError(err)
 			return
 		}
-		if wres.IsProgressNotify() {
-			wc.sendEvent(progressNotifyEvent(wres.Header.GetRevision()))
-			metrics.RecordEtcdBookmark(wc.watcher.objectType)
-			continue
-		}
-
 		for _, e := range wres.Events {
 			parsedEvent, err := parseEvent(e)
 			if err != nil {
@@ -321,19 +299,6 @@ func (wc *watchChan) transform(e *event) (res *watch.Event) {
 	}
 
 	switch {
-	case e.isProgressNotify:
-		if wc.watcher.newFunc == nil {
-			return nil
-		}
-		object := wc.watcher.newFunc()
-		if err := wc.watcher.versioner.UpdateObject(object, uint64(e.rev)); err != nil {
-			klog.Errorf("failed to propagate object version: %v", err)
-			return nil
-		}
-		res = &watch.Event{
-			Type:   watch.Bookmark,
-			Object: object,
-		}
 	case e.isDeleted:
 		if !wc.filter(oldObj) {
 			return nil
@@ -411,11 +376,6 @@ func (wc *watchChan) sendEvent(e *event) {
 }
 
 func (wc *watchChan) prepareObjs(e *event) (curObj runtime.Object, oldObj runtime.Object, err error) {
-	if e.isProgressNotify {
-		// progressNotify events doesn't contain neither current nor previous object version,
-		return nil, nil, nil
-	}
-
 	if !e.isDeleted {
 		data, _, err := wc.watcher.transformer.TransformFromStorage(e.value, authenticatedDataString(e.key))
 		if err != nil {

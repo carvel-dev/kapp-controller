@@ -8,6 +8,16 @@ metadata:
   #@overlay/remove
   #@overlay/match missing_ok=True
   annotations:
+spec:
+  versions:
+  #@overlay/match by=overlay.all, expects="0+"
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          metadata:
+            #@overlay/remove
+            description:
 #@overlay/remove
 #@overlay/match missing_ok=True
 status:

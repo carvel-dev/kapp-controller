@@ -25,13 +25,14 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/handlers/fieldmanager/internal"
 	"sigs.k8s.io/structured-merge-diff/v4/fieldpath"
 	"sigs.k8s.io/structured-merge-diff/v4/merge"
 )
 
 type lastAppliedManager struct {
 	fieldManager    Manager
-	typeConverter   TypeConverter
+	typeConverter   internal.TypeConverter
 	objectConverter runtime.ObjectConvertor
 	groupVersion    schema.GroupVersion
 }
@@ -40,7 +41,7 @@ var _ Manager = &lastAppliedManager{}
 
 // NewLastAppliedManager converts the client-side apply annotation to
 // server-side apply managed fields
-func NewLastAppliedManager(fieldManager Manager, typeConverter TypeConverter, objectConverter runtime.ObjectConvertor, groupVersion schema.GroupVersion) Manager {
+func NewLastAppliedManager(fieldManager Manager, typeConverter internal.TypeConverter, objectConverter runtime.ObjectConvertor, groupVersion schema.GroupVersion) Manager {
 	return &lastAppliedManager{
 		fieldManager:    fieldManager,
 		typeConverter:   typeConverter,

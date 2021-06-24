@@ -96,11 +96,9 @@ func SerializeObject(mediaType string, encoder runtime.Encoder, hw http.Response
 	err := encoder.Encode(object, w)
 	if err == nil {
 		err = w.Close()
-		if err != nil {
-			// we cannot write an error to the writer anymore as the Encode call was successful.
-			utilruntime.HandleError(fmt.Errorf("apiserver was unable to close cleanly the response writer: %v", err))
+		if err == nil {
+			return
 		}
-		return
 	}
 
 	// make a best effort to write the object if a failure is detected

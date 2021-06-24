@@ -171,15 +171,7 @@ func autoConvert_v1_AuthInfo_To_api_AuthInfo(in *AuthInfo, out *api.AuthInfo, s 
 	out.Username = in.Username
 	out.Password = in.Password
 	out.AuthProvider = (*api.AuthProviderConfig)(unsafe.Pointer(in.AuthProvider))
-	if in.Exec != nil {
-		in, out := &in.Exec, &out.Exec
-		*out = new(api.ExecConfig)
-		if err := Convert_v1_ExecConfig_To_api_ExecConfig(*in, *out, s); err != nil {
-			return err
-		}
-	} else {
-		out.Exec = nil
-	}
+	out.Exec = (*api.ExecConfig)(unsafe.Pointer(in.Exec))
 	if err := Convert_Slice_v1_NamedExtension_To_Map_string_To_runtime_Object(&in.Extensions, &out.Extensions, s); err != nil {
 		return err
 	}
@@ -205,15 +197,7 @@ func autoConvert_api_AuthInfo_To_v1_AuthInfo(in *api.AuthInfo, out *AuthInfo, s 
 	out.Username = in.Username
 	out.Password = in.Password
 	out.AuthProvider = (*AuthProviderConfig)(unsafe.Pointer(in.AuthProvider))
-	if in.Exec != nil {
-		in, out := &in.Exec, &out.Exec
-		*out = new(ExecConfig)
-		if err := Convert_api_ExecConfig_To_v1_ExecConfig(*in, *out, s); err != nil {
-			return err
-		}
-	} else {
-		out.Exec = nil
-	}
+	out.Exec = (*ExecConfig)(unsafe.Pointer(in.Exec))
 	if err := Convert_Map_string_To_runtime_Object_To_Slice_v1_NamedExtension(&in.Extensions, &out.Extensions, s); err != nil {
 		return err
 	}
@@ -375,7 +359,6 @@ func autoConvert_v1_ExecConfig_To_api_ExecConfig(in *ExecConfig, out *api.ExecCo
 	out.Env = *(*[]api.ExecEnvVar)(unsafe.Pointer(&in.Env))
 	out.APIVersion = in.APIVersion
 	out.InstallHint = in.InstallHint
-	out.ProvideClusterInfo = in.ProvideClusterInfo
 	return nil
 }
 
@@ -390,8 +373,6 @@ func autoConvert_api_ExecConfig_To_v1_ExecConfig(in *api.ExecConfig, out *ExecCo
 	out.Env = *(*[]ExecEnvVar)(unsafe.Pointer(&in.Env))
 	out.APIVersion = in.APIVersion
 	out.InstallHint = in.InstallHint
-	out.ProvideClusterInfo = in.ProvideClusterInfo
-	// INFO: in.Config opted out of conversion generation
 	return nil
 }
 
