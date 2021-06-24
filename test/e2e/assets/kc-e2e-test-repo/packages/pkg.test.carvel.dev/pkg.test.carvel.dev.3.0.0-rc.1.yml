@@ -12,7 +12,7 @@ spec:
   version: 3.0.0-rc.1
   licenses:
   - Apache 2.0
-  capactiyRequirementsDescription: "cpu: 1,RAM: 2, Disk: 3"
+  capacityRequirementsDescription: "cpu: 1,RAM: 2, Disk: 3"
   releaseNotes: |
     - remove overlays introduced in v2
     - revert back to v1
