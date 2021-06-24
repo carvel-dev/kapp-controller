@@ -57,7 +57,7 @@ const (
 	MutationAuditAnnotationPrefix = "mutation.webhook.admission.k8s.io/"
 )
 
-var encodingjson = json.CaseSensitiveJSONIterator()
+var encodingjson = json.CaseSensitiveJsonIterator()
 
 type mutatingDispatcher struct {
 	cm     *webhookutil.ClientManager

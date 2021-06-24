@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"sync/atomic"
 
-	flowcontrol "k8s.io/api/flowcontrol/v1beta1"
+	fcv1a1 "k8s.io/api/flowcontrol/v1alpha1"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	epmetrics "k8s.io/apiserver/pkg/endpoints/metrics"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
@@ -34,6 +34,11 @@ import (
 type priorityAndFairnessKeyType int
 
 const priorityAndFairnessKey priorityAndFairnessKeyType = iota
+
+const (
+	responseHeaderMatchedPriorityLevelConfigurationUID = "X-Kubernetes-PF-PriorityLevel-UID"
+	responseHeaderMatchedFlowSchemaUID                 = "X-Kubernetes-PF-FlowSchema-UID"
+)
 
 // PriorityAndFairnessClassification identifies the results of
 // classification for API Priority and Fairness
@@ -71,6 +76,10 @@ func WithPriorityAndFairness(
 		klog.Warningf("priority and fairness support not found, skipping")
 		return handler
 	}
+	startOnce.Do(func() {
+		startRecordingUsage(watermark)
+		startRecordingUsage(waitingMark)
+	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		requestInfo, ok := apirequest.RequestInfoFrom(ctx)
@@ -92,7 +101,7 @@ func WithPriorityAndFairness(
 		}
 
 		var classification *PriorityAndFairnessClassification
-		note := func(fs *flowcontrol.FlowSchema, pl *flowcontrol.PriorityLevelConfiguration) {
+		note := func(fs *fcv1a1.FlowSchema, pl *fcv1a1.PriorityLevelConfiguration) {
 			classification = &PriorityAndFairnessClassification{
 				FlowSchemaName:    fs.Name,
 				FlowSchemaUID:     fs.UID,
@@ -122,11 +131,11 @@ func WithPriorityAndFairness(
 			served = true
 			innerCtx := context.WithValue(ctx, priorityAndFairnessKey, classification)
 			innerReq := r.Clone(innerCtx)
-			w.Header().Set(flowcontrol.ResponseHeaderMatchedPriorityLevelConfigurationUID, string(classification.PriorityLevelUID))
-			w.Header().Set(flowcontrol.ResponseHeaderMatchedFlowSchemaUID, string(classification.FlowSchemaUID))
+			w.Header().Set(responseHeaderMatchedPriorityLevelConfigurationUID, string(classification.PriorityLevelUID))
+			w.Header().Set(responseHeaderMatchedFlowSchemaUID, string(classification.FlowSchemaUID))
 			handler.ServeHTTP(w, innerReq)
 		}
-		digest := utilflowcontrol.RequestDigest{RequestInfo: requestInfo, User: user}
+		digest := utilflowcontrol.RequestDigest{requestInfo, user}
 		fcIfc.Handle(ctx, digest, note, func(inQueue bool) {
 			if inQueue {
 				noteWaitingDelta(1)
@@ -135,21 +144,9 @@ func WithPriorityAndFairness(
 			}
 		}, execute)
 		if !served {
-			if isMutatingRequest {
-				epmetrics.DroppedRequests.WithLabelValues(epmetrics.MutatingKind).Inc()
-			} else {
-				epmetrics.DroppedRequests.WithLabelValues(epmetrics.ReadOnlyKind).Inc()
-			}
 			epmetrics.RecordRequestTermination(r, requestInfo, epmetrics.APIServerComponent, http.StatusTooManyRequests)
 			tooManyRequests(r, w)
 		}
 
 	})
-}
-
-// StartPriorityAndFairnessWatermarkMaintenance starts the goroutines to observe and maintain watermarks for
-// priority-and-fairness requests.
-func StartPriorityAndFairnessWatermarkMaintenance(stopCh <-chan struct{}) {
-	startWatermarkMaintenance(watermark, stopCh)
-	startWatermarkMaintenance(waitingMark, stopCh)
 }

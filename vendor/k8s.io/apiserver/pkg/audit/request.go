@@ -43,9 +43,9 @@ const (
 	userAgentTruncateSuffix = "...TRUNCATED"
 )
 
-func NewEventFromRequest(req *http.Request, requestReceivedTimestamp time.Time, level auditinternal.Level, attribs authorizer.Attributes) (*auditinternal.Event, error) {
+func NewEventFromRequest(req *http.Request, level auditinternal.Level, attribs authorizer.Attributes) (*auditinternal.Event, error) {
 	ev := &auditinternal.Event{
-		RequestReceivedTimestamp: metav1.NewMicroTime(requestReceivedTimestamp),
+		RequestReceivedTimestamp: metav1.NewMicroTime(time.Now()),
 		Verb:                     attribs.GetVerb(),
 		RequestURI:               req.URL.RequestURI(),
 		UserAgent:                maybeTruncateUserAgent(req),

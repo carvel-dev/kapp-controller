@@ -55,7 +55,7 @@ func NewDefaultAuthenticationInfoResolverWrapper(
 				}
 
 				if egressSelector != nil {
-					networkContext := egressselector.ControlPlane.AsNetworkContext()
+					networkContext := egressselector.Master.AsNetworkContext()
 					var egressDialer utilnet.DialFunc
 					egressDialer, err = egressSelector.Lookup(networkContext)
 

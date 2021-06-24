@@ -196,8 +196,6 @@ type StructField struct {
 	Name string `yaml:"name,omitempty"`
 	// Type is the field type.
 	Type TypeRef `yaml:"type,omitempty"`
-	// Default value for the field, nil if not present.
-	Default interface{} `yaml:"default,omitempty"`
 }
 
 // List represents a type which contains a zero or more elements, all of the

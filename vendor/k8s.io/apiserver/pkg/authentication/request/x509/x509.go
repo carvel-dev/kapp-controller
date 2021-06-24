@@ -19,10 +19,8 @@ package x509
 import (
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/hex"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -84,27 +82,6 @@ func (f UserConversionFunc) User(chain []*x509.Certificate) (*authenticator.Resp
 	return f(chain)
 }
 
-func columnSeparatedHex(d []byte) string {
-	h := strings.ToUpper(hex.EncodeToString(d))
-	var sb strings.Builder
-	for i, r := range h {
-		sb.WriteRune(r)
-		if i%2 == 1 && i != len(h)-1 {
-			sb.WriteRune(':')
-		}
-	}
-	return sb.String()
-}
-
-func certificateIdentifier(c *x509.Certificate) string {
-	return fmt.Sprintf(
-		"SN=%d, SKID=%s, AKID=%s",
-		c.SerialNumber,
-		columnSeparatedHex(c.SubjectKeyId),
-		columnSeparatedHex(c.AuthorityKeyId),
-	)
-}
-
 // VerifyOptionFunc is function which provides a shallow copy of the VerifyOptions to the authenticator.  This allows
 // for cases where the options (particularly the CAs) can change.  If the bool is false, then the returned VerifyOptions
 // are ignored and the authenticator will express "no opinion".  This allows a clear signal for cases where a CertPool
@@ -152,11 +129,7 @@ func (a *Authenticator) AuthenticateRequest(req *http.Request) (*authenticator.R
 	clientCertificateExpirationHistogram.Observe(remaining.Seconds())
 	chains, err := req.TLS.PeerCertificates[0].Verify(optsCopy)
 	if err != nil {
-		return nil, false, fmt.Errorf(
-			"verifying certificate %s failed: %w",
-			certificateIdentifier(req.TLS.PeerCertificates[0]),
-			err,
-		)
+		return nil, false, err
 	}
 
 	var errlist []error

@@ -9,17 +9,17 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/google/go-containerregistry v0.1.2
 	github.com/vmware-tanzu/carvel-vendir v0.19.1-0.20210617093106-563040514381
-	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
-	k8s.io/api v0.20.2
-	k8s.io/apimachinery v0.20.2
-	k8s.io/apiserver v0.20.2
-	k8s.io/client-go v0.20.2
-	k8s.io/code-generator v0.20.2
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	k8s.io/api v0.19.2
+	k8s.io/apimachinery v0.19.2
+	k8s.io/apiserver v0.19.2
+	k8s.io/client-go v0.19.2
+	k8s.io/code-generator v0.19.2
 	k8s.io/klog v1.0.0
 	k8s.io/kube-aggregator v0.19.2
-	k8s.io/kube-openapi v0.0.0-20201113171705-d219536bb9fd
+	k8s.io/kube-openapi v0.0.0-20200805222855-6aeccd4b50c6
 	sigs.k8s.io/controller-runtime v0.7.0
-	sigs.k8s.io/controller-tools v0.5.0
+	sigs.k8s.io/controller-tools v0.4.1
 	sigs.k8s.io/yaml v1.2.0
 )
 
