@@ -30,10 +30,10 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         only: ytt, kapp, kbld, imgpkg, vendir
-        ytt: v0.31.0
+        ytt: v0.34.0
         kapp: v0.37.0
         kbld: v0.30.0
-        imgpkg: v0.8.0
+        imgpkg: v0.12.0
         vendir: v0.19.0
     - name: Run Tests
       run: |
