@@ -182,7 +182,7 @@ spec:
 
 	kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(yamlRepo)})
 
-	retry(t, 10*time.Second, func() error {
+	retry(t, 30*time.Second, func() error {
 		_, err := kubectl.RunWithOpts([]string{"get", "pkgm/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
 		if err != nil {
 			return fmt.Errorf("Expected to find pkgm pkg.test.carvel.dev, but couldn't: %v", err)
