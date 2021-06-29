@@ -52,6 +52,14 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 #@overlay/remove
 ---
 
+#@overlay/match by=overlay.or_op(pkg, pkgm, pkgv),expects="0+"
+---
+metadata:
+  #@overlay/match missing_ok=True
+  annotations:
+    kapp.k14s.io/disable-original: ""
+    kapp.k14s.io/disable-wait: ""
+
 #! Ensure that all resources do not set some random namespace
 #! so that all resource end in the PackageRepository's namespace
 #@overlay/match by=overlay.all,expects="0+"
