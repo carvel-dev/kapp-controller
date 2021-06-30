@@ -469,3 +469,170 @@ spec:
 		}
 	})
 }
+
+func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+	name := "instl-pkg-upgrade-test"
+
+	cleanUp := func() {
+		// Delete App with kubectl first since kapp
+		// deletes ServiceAccount before App
+		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", name})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("Create PackageInstall using version Package version 1.0.0", func() {
+		pkgInstallYaml := packageInstallVersionInYAML(name, env.Namespace, "1.0.0")
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkgInstallYaml)})
+
+		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
+		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
+	})
+
+	logger.Section("Check PackageInstall with version 1.0.0 success", func() {
+		out := kubectl.Run([]string{"get", fmt.Sprintf("pkgi/%s", name), "-o", "yaml"})
+
+		var cr pkgingv1alpha1.PackageInstall
+		err := yaml.Unmarshal([]byte(out), &cr)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal: %s", err)
+		}
+
+		expectedStatus := packageInstallExpectedStatus(v1alpha1.ReconcileSucceeded, corev1.ConditionTrue, 1, "Reconcile succeeded", "1.0.0")
+
+		if !reflect.DeepEqual(expectedStatus, cr.Status) {
+			t.Fatalf("\nStatus is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, cr.Status)
+		}
+	})
+
+	logger.Section("Create PackageInstall using version Package version 2.0.0", func() {
+		pkgInstallYaml := packageInstallVersionInYAML(name, env.Namespace, "2.0.0")
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkgInstallYaml)})
+
+		kubectl.Run([]string{"wait", "--for=condition=Reconciling", "pkgi/" + name, "--timeout", "1m"})
+		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
+		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
+	})
+
+	logger.Section("Check PackageInstall with version 2.0.0 success", func() {
+		outPkgi := kubectl.Run([]string{"get", fmt.Sprintf("pkgi/%s", name), "-o", "yaml"})
+
+		var crPkgi pkgingv1alpha1.PackageInstall
+		err := yaml.Unmarshal([]byte(outPkgi), &crPkgi)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal: %s", err)
+		}
+
+		expectedStatus := packageInstallExpectedStatus(v1alpha1.ReconcileSucceeded, corev1.ConditionTrue, 2, "Reconcile succeeded", "2.0.0")
+
+		if !reflect.DeepEqual(expectedStatus, crPkgi.Status) {
+			t.Fatalf("\nStatus is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, crPkgi.Status)
+		}
+
+		outCm := kubectl.Run([]string{"get", "configmap/configmap-version", "-o", "yaml"})
+		var cm corev1.ConfigMap
+		err = yaml.Unmarshal([]byte(outCm), &cm)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal: %s", err)
+		}
+
+		if cm.Data["version"] != "2.0.0" {
+			t.Fatalf("Expected Package ConfigMap data to use version 2.0.0.\nGot:\n%s", cm.Data["version"])
+		}
+	})
+}
+
+func packageInstallVersionInYAML(name, namespace, version string) string {
+	sas := ServiceAccounts{namespace}
+
+	return fmt.Sprintf(`---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+ name: pkg.carvel.dev
+spec:
+ displayName: "Test PackageMetadata"
+ shortDescription: "PackageMetadata used for testing"
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+ name: pkg.carvel.dev.1.0.0
+spec:
+ refName: pkg.carvel.dev
+ version: 1.0.0
+ template:
+   spec:
+     fetch:
+     - inline:
+         paths:
+           file.yml: |
+             apiVersion: v1
+             kind: ConfigMap
+             metadata:
+               name: configmap-version
+             data:
+               version: 1.0.0
+     template:
+     - ytt: {}
+     deploy:
+     - kapp: {}
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+ name: pkg.carvel.dev.2.0.0
+spec:
+ refName: pkg.carvel.dev
+ version: 2.0.0
+ template:
+   spec:
+     fetch:
+     - inline:
+         paths:
+           file.yml: |
+             apiVersion: v1
+             kind: ConfigMap
+             metadata:
+               name: configmap-version
+             data:
+               version: 2.0.0
+     template:
+     - ytt: {}
+     deploy:
+     - kapp: {}
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+ name: %[1]s
+ annotations:
+   kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/packageinstalls
+spec:
+ serviceAccountName: kappctrl-e2e-ns-sa
+ packageRef:
+   refName: pkg.carvel.dev
+   versionSelection:
+     constraints: %[2]s
+`, name, version) + sas.ForNamespaceYAML()
+}
+
+func packageInstallExpectedStatus(condType v1alpha1.AppConditionType, condStatus corev1.ConditionStatus,
+	observedGen int64, desc, version string) pkgingv1alpha1.PackageInstallStatus {
+	return  pkgingv1alpha1.PackageInstallStatus{
+		GenericStatus: v1alpha1.GenericStatus{
+			Conditions: []v1alpha1.AppCondition{{
+				Type:   condType,
+				Status: condStatus,
+			}},
+			ObservedGeneration:  observedGen,
+			FriendlyDescription: desc,
+		},
+		Version: version,
+	}
+}
