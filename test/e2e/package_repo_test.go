@@ -221,6 +221,8 @@ spec:
 		kctl.RunWithOpts([]string{"delete", "package/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
 		kctl.RunWithOpts([]string{"delete", "packagemetadata/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
 		kctl.RunWithOpts([]string{"delete", "pkgr/basic.test.carvel.dev"}, RunOpts{AllowError: true})
+		// kapp delete still needed in event checking if packages existing fails
+		kapp.Run([]string{"delete", "-a","repo"})
 	}
 	defer cleanUp()
 
@@ -230,7 +232,7 @@ spec:
 	})
 
 	logger.Section("check packages exist", func() {
-		retry(t, 20*time.Second, func() error {
+		retry(t, 30*time.Second, func() error {
 			_, err := kctl.RunWithOpts([]string{"get", "pkgm/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
 			if err != nil {
 				return fmt.Errorf("Expected to find pkgm pkg.test.carvel.dev, but couldn't: %v", err)
