@@ -59,7 +59,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 			}},
 			ObservedGeneration:  0,
 			FriendlyDescription: "Reconcile failed: Fetching resources: Error (see .status.usefulErrorMessage for details)",
-			UsefulErrorMessage:  "Error: Syncing directory '0': Syncing directory '.' with HTTP contents: Downloading URL: Initiating URL download: Get i-dont-exist: unsupported protocol scheme \"\"\n",
+			UsefulErrorMessage:  "Error: Syncing directory '0': Syncing directory '.' with HTTP contents: Downloading URL: Initiating URL download: Get \"i-dont-exist\": unsupported protocol scheme \"\"\n",
 		},
 		Fetch: &v1alpha1.AppStatusFetch{
 			Error:    "Fetching resources: Error (see .status.usefulErrorMessage for details)",
