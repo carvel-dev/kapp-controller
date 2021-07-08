@@ -203,8 +203,7 @@ spec:
       template:
       - ytt:
           paths:
-          - "config.yml"
-          - "values.yml"
+          - config/
       - kbld:
           paths:
           - "-"
@@ -291,7 +290,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:0a1188ca009df9b449ddc19f38e9707521f2415335fcd17b253608869dd870fd
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:c827fa462ae7fdb9670fb6719c189cb2e8e11f62822e2a13e8eaeaf42ec72c93
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageInstall
