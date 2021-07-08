@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/openapi"
@@ -40,7 +41,6 @@ const (
 	// selfSignedCertDir is the dir kapp-controller self signed certificates are created in.
 	selfSignedCertDir = "/home/kapp-controller/kc-agg-api-selfsigned-certs"
 
-	bindPort  = 10349
 	TokenPath = "/token-dir"
 
 	kappctrlNSEnvKey = "KAPPCTRL_SYSTEM_NAMESPACE"
@@ -48,8 +48,9 @@ const (
 )
 
 var (
-	Scheme = runtime.NewScheme()
-	Codecs = serializer.NewCodecFactory(Scheme)
+	Scheme   = runtime.NewScheme()
+	Codecs   = serializer.NewCodecFactory(Scheme)
+	bindPort = 10349
 )
 
 func init() {
@@ -65,6 +66,14 @@ func init() {
 		&metav1.APIGroup{},
 		&metav1.APIResourceList{},
 	)
+
+	// assign bindPort to env var API_PORT if available
+	if apiPort, ok := os.LookupEnv("API_PORT"); ok {
+		var err error
+		if bindPort, err = strconv.Atoi(apiPort); err != nil {
+			panic("API_PORT environment variable must be an integer")
+		}
+	}
 }
 
 type APIServer struct {
