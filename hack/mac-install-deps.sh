@@ -1,6 +1,6 @@
 #! /bin/bash
 # to recreate this file run :
-#  cat Dockerfile | grep wget | grep tanzu | sed "s/linux/darwin/" | sed 's/RUN //' > mac-install-deps.sh
+#  cat ../Dockerfile | grep wget | grep tanzu | sed "s/linux/darwin/" | sed 's/RUN //' > mac-install-deps.sh
 # and then remove the final `&& \` manually or write one more sed with an end-of-file matcher whatever 
 
 wget -O- https://github.com/vmware-tanzu/carvel-ytt/releases/download/v0.34.0/ytt-darwin-amd64 > /usr/local/bin/ytt && \
