@@ -22,7 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// nolint: golint
+// nolint: revive
 type PackageInstallCR struct {
 	model           *pkgingv1alpha1.PackageInstall
 	unmodifiedModel *pkgingv1alpha1.PackageInstall
