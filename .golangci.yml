@@ -18,4 +18,4 @@ issues:
   max-issues-per-linter: 0
   max-same-issues: 0
   exclude-use-default: false
-  new-from-rev: 7c1bfe00fd9aa229c0356d2ac030709813e759df # only enforce for commits after Jul 6 2021, allows us to phase-in godoc compliance
+  new-from-rev: a2236fb3c56c014a8ca10ce422208e45d21229e1 # only enforce for commits after Jul 6 2021, allows us to phase-in godoc compliance
