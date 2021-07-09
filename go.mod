@@ -7,9 +7,10 @@ require (
 	github.com/go-logr/logr v0.4.0
 	github.com/go-openapi/spec v0.19.3
 	github.com/gogo/protobuf v1.3.1
+	github.com/golangci/golangci-lint v1.41.1 // indirect
 	github.com/google/go-containerregistry v0.1.2
 	github.com/vmware-tanzu/carvel-vendir v0.21.1
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	k8s.io/api v0.19.2
 	k8s.io/apimachinery v0.19.2
 	k8s.io/apiserver v0.19.2
