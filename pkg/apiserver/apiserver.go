@@ -43,8 +43,9 @@ const (
 
 	TokenPath = "/token-dir"
 
-	kappctrlNSEnvKey = "KAPPCTRL_SYSTEM_NAMESPACE"
-	apiServiceName   = "v1alpha1.data.packaging.carvel.dev"
+	kappctrlNSEnvKey      = "KAPPCTRL_SYSTEM_NAMESPACE"
+	kappctrlAPIPORTEnvKey = "KAPPCTRL_API_PORT"
+	apiServiceName        = "v1alpha1.data.packaging.carvel.dev"
 )
 
 var (
@@ -67,11 +68,11 @@ func init() {
 		&metav1.APIResourceList{},
 	)
 
-	// assign bindPort to env var API_PORT if available
-	if apiPort, ok := os.LookupEnv("API_PORT"); ok {
+	// assign bindPort to env var KAPPCTRL_API_PORT if available
+	if apiPort, ok := os.LookupEnv(kappctrlAPIPORTEnvKey); ok {
 		var err error
 		if bindPort, err = strconv.Atoi(apiPort); err != nil {
-			panic("API_PORT environment variable must be an integer")
+			panic(fmt.Sprintf("%s environment variable must be an integer", kappctrlAPIPORTEnvKey))
 		}
 	}
 }
