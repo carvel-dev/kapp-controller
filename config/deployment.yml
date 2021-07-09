@@ -31,7 +31,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        - name: API_PORT
+        - name: KAPPCTRL_API_PORT
           value: #@ str(data.values.api_port)
         resources:
           requests:
