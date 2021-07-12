@@ -22,8 +22,8 @@ RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 WORKDIR /go/src/github.com/vmware-tanzu/carvel-kapp-controller/
 
 # carvel
-RUN wget -O- https://github.com/vmware-tanzu/carvel-ytt/releases/download/v0.34.0/ytt-linux-amd64 > /usr/local/bin/ytt && \
-  echo "49741ac5540fc64da8566f3d1c9538f4f0fec22c62b8ba83e5e3d8efb91ee170  /usr/local/bin/ytt" | sha256sum -c - && \
+RUN wget -O- https://github.com/vmware-tanzu/carvel-ytt/releases/download/v0.35.1/ytt-linux-amd64 > /usr/local/bin/ytt && \
+  echo "0aa78f7b5f5a0a4c39bddfed915172880344270809c26b9844e9d0cbf6437030  /usr/local/bin/ytt" | sha256sum -c - && \
   chmod +x /usr/local/bin/ytt && ytt version
 
 RUN wget -O- https://github.com/vmware-tanzu/carvel-kapp/releases/download/v0.37.0/kapp-linux-amd64 > /usr/local/bin/kapp && \
@@ -34,8 +34,8 @@ RUN wget -O- https://github.com/vmware-tanzu/carvel-kbld/releases/download/v0.30
   echo "76c5c572e7a9095256b4c3ae2e076c370ef70ce9ff4eb138662f56828889a00c  /usr/local/bin/kbld" | sha256sum -c - && \
   chmod +x /usr/local/bin/kbld && kbld version
 
-RUN wget -O- https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/v0.12.0/imgpkg-linux-amd64 > /usr/local/bin/imgpkg && \
-  echo "725ea938c22559efe84523e35246f206830451b37d931a0ad9c76258f22744fd  /usr/local/bin/imgpkg" | sha256sum -c - && \
+RUN wget -O- https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/v0.14.0/imgpkg-linux-amd64 > /usr/local/bin/imgpkg && \
+  echo "bd53355fc3a05666681ddf2ba1dfae2da894bc1c74d86cdc545d772749abc887  /usr/local/bin/imgpkg" | sha256sum -c - && \
   chmod +x /usr/local/bin/imgpkg && imgpkg version
 
 RUN wget -O- https://github.com/vmware-tanzu/carvel-vendir/releases/download/v0.21.1/vendir-linux-amd64 > /usr/local/bin/vendir && \
