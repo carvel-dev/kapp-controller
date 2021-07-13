@@ -31,6 +31,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+        - name: KAPPCTRL_API_PORT
+          value: #@ str(data.values.api_port)
         resources:
           requests:
             cpu: 120m
@@ -42,7 +44,7 @@ spec:
           runAsUser: 1000
           runAsGroup: 2000
         ports:
-        - containerPort: 10349
+        - containerPort: #@ data.values.api_port
           name: api
           protocol: TCP
       securityContext:
