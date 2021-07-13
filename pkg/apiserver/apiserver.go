@@ -67,23 +67,6 @@ func init() {
 	)
 }
 
-type UnusedUndocumentedExported struct {
-	Evil                    string
-	thePrivateRootOfAllEvil string
-	ShouldLie               bool
-}
-
-func (uue *UnusedUndocumentedExported) LieToMe(override bool, factor int) {
-	fmt.Println("the object is evil, ", uue.ShouldLie && override, "times ", factor)
-}
-
-// LieMore is a wrapper providing unhelpful default values for uue.LieToMe().
-// Note: LieMore has the idempotent side effecting of setting ShouldLie to true
-func (uue *UnusedUndocumentedExported) LieMore() {
-	uue.ShouldLie = true
-	uue.LieToMe(false, 256)
-}
-
 type APIServer struct {
 	server    *genericapiserver.GenericAPIServer
 	stopCh    chan struct{}
