@@ -51,7 +51,7 @@ const (
 var (
 	Scheme   = runtime.NewScheme()
 	Codecs   = serializer.NewCodecFactory(Scheme)
-	bindPort = 10349
+	bindPort int
 )
 
 func init() {
@@ -74,6 +74,8 @@ func init() {
 		if bindPort, err = strconv.Atoi(apiPort); err != nil {
 			panic(fmt.Sprintf("%s environment variable must be an integer", kappctrlAPIPORTEnvKey))
 		}
+	} else {
+		panic(fmt.Sprintf("%s environment variable must be provided", kappctrlAPIPORTEnvKey))
 	}
 }
 
