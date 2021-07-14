@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/openapi"
@@ -43,15 +42,13 @@ const (
 
 	TokenPath = "/token-dir"
 
-	kappctrlNSEnvKey      = "KAPPCTRL_SYSTEM_NAMESPACE"
-	kappctrlAPIPORTEnvKey = "KAPPCTRL_API_PORT"
-	apiServiceName        = "v1alpha1.data.packaging.carvel.dev"
+	kappctrlNSEnvKey = "KAPPCTRL_SYSTEM_NAMESPACE"
+	apiServiceName   = "v1alpha1.data.packaging.carvel.dev"
 )
 
 var (
-	Scheme   = runtime.NewScheme()
-	Codecs   = serializer.NewCodecFactory(Scheme)
-	bindPort int
+	Scheme = runtime.NewScheme()
+	Codecs = serializer.NewCodecFactory(Scheme)
 )
 
 func init() {
@@ -67,16 +64,6 @@ func init() {
 		&metav1.APIGroup{},
 		&metav1.APIResourceList{},
 	)
-
-	// assign bindPort to env var KAPPCTRL_API_PORT if available
-	if apiPort, ok := os.LookupEnv(kappctrlAPIPORTEnvKey); ok {
-		var err error
-		if bindPort, err = strconv.Atoi(apiPort); err != nil {
-			panic(fmt.Sprintf("%s environment variable must be an integer", kappctrlAPIPORTEnvKey))
-		}
-	} else {
-		panic(fmt.Sprintf("%s environment variable must be provided", kappctrlAPIPORTEnvKey))
-	}
 }
 
 type APIServer struct {
@@ -85,13 +72,13 @@ type APIServer struct {
 	aggClient aggregatorclient.Interface
 }
 
-func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, globalNamespace string) (*APIServer, error) {
+func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, globalNamespace string, bindPort int) (*APIServer, error) {
 	aggClient, err := aggregatorclient.NewForConfig(clientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("building aggregation client: %v", err)
 	}
 
-	config, err := newServerConfig(aggClient)
+	config, err := newServerConfig(aggClient, bindPort)
 	if err != nil {
 		return nil, err
 	}
@@ -158,13 +145,18 @@ func (as *APIServer) isReady() (bool, error) {
 	return false, nil
 }
 
-func newServerConfig(aggClient aggregatorclient.Interface) (*genericapiserver.RecommendedConfig, error) {
+func newServerConfig(aggClient aggregatorclient.Interface, bindPort int) (*genericapiserver.RecommendedConfig, error) {
 	recommendedOptions := genericoptions.NewRecommendedOptions("", Codecs.LegacyCodec(v1alpha1.SchemeGroupVersion))
 	recommendedOptions.Etcd = nil
 
 	// Set the PairName and CertDirectory to generate the certificate files.
 	recommendedOptions.SecureServing.ServerCert.CertDirectory = selfSignedCertDir
 	recommendedOptions.SecureServing.ServerCert.PairName = "kapp-controller"
+
+	// ports below 1024 are probably the wrong port, see https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Well-known_ports
+	if bindPort < 1024 {
+		return nil, fmt.Errorf("error initializing API Port to %v - try passing a port above 1023", bindPort)
+	}
 	recommendedOptions.SecureServing.BindPort = bindPort
 
 	if err := recommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts("kapp-controller", []string{apiServiceEndoint()}, []net.IP{net.ParseIP("127.0.0.1")}); err != nil {
