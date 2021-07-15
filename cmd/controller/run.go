@@ -8,6 +8,7 @@ import (
 	"net/http"         // Pprof related
 	_ "net/http/pprof" // Pprof related
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -34,7 +35,8 @@ import (
 )
 
 const (
-	PprofListenAddr = "0.0.0.0:6060"
+	PprofListenAddr       = "0.0.0.0:6060"
+	kappctrlAPIPORTEnvKey = "KAPPCTRL_API_PORT"
 )
 
 type Options struct {
@@ -90,13 +92,19 @@ func Run(opts Options, runLog logr.Logger) {
 		os.Exit(1)
 	}
 
-	appFactory := AppFactory{
-		coreClient: coreClient,
-		kcConfig:   kcConfig,
-		appClient:  kcClient,
+	// assign bindPort to env var KAPPCTRL_API_PORT if available
+	var bindPort int
+	if apiPort, ok := os.LookupEnv(kappctrlAPIPORTEnvKey); ok {
+		var err error
+		if bindPort, err = strconv.Atoi(apiPort); err != nil {
+			runLog.Error(fmt.Errorf("%s environment variable must be an integer", kappctrlAPIPORTEnvKey), "reading server port")
+			os.Exit(1)
+		}
+	} else {
+		runLog.Error(fmt.Errorf("os call failed to read env var %s", kappctrlAPIPORTEnvKey), "reading server port")
+		os.Exit(1)
 	}
-
-	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, opts.PackagingGloablNS)
+	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, opts.PackagingGloablNS, bindPort)
 	if err != nil {
 		runLog.Error(err, "creating server")
 		os.Exit(1)
@@ -110,6 +118,12 @@ func Run(opts Options, runLog logr.Logger) {
 
 	refTracker := reftracker.NewAppRefTracker()
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
+
+	appFactory := AppFactory{
+		coreClient: coreClient,
+		kcConfig:   kcConfig,
+		appClient:  kcClient,
+	}
 
 	{ // add controller for apps
 		schApp := handlers.NewSecretHandler(runLog, refTracker, updateStatusTracker)

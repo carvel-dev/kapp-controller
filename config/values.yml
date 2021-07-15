@@ -11,4 +11,4 @@ push_images: false
 image_cache: true
 image_repo: docker.io/k14stest/kapp-controller-test
 
-api_port: 10349
+api_port: 10350
