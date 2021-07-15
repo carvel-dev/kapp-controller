@@ -99,9 +99,6 @@ func Run(opts Options, runLog logr.Logger) {
 		if bindPort, err = strconv.Atoi(apiPort); err != nil {
 			runLog.Error(fmt.Errorf("%s environment variable must be an integer", kappctrlAPIPORTEnvKey), "reading server port")
 			os.Exit(1)
-		} else {
-			runLog.Error(err, "reading server port")
-			os.Exit(1)
 		}
 	} else {
 		runLog.Error(fmt.Errorf("os call failed to read env var %s", kappctrlAPIPORTEnvKey), "reading server port")
