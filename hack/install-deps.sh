@@ -18,7 +18,12 @@ install() {
     dl_bin="curl -s -L"
   fi
 
-  shasum -v 1>/dev/null 2>&1 || (echo "Missing shasum binary" && exit 1)
+  if which sha256sum; then
+	echo "found sha256sum"
+  else
+	echo "Missing sha256sum binary"
+	exit 1
+  fi
 
   ytt_version=v0.35.1
   kbld_version=v0.30.0
@@ -48,35 +53,35 @@ install() {
 
   echo "Installing ytt..."
   $dl_bin https://github.com/vmware-tanzu/carvel-ytt/releases/download/${ytt_version}/ytt-${binary_type} > /tmp/ytt
-  echo "${ytt_checksum}  /tmp/ytt" | shasum -c -
+  echo "${ytt_checksum}  /tmp/ytt" | sha256sum -c -
   mv /tmp/ytt ${dst_dir}/ytt
   chmod +x ${dst_dir}/ytt
   echo "Installed ${dst_dir}/ytt ${ytt_version}"
 
   echo "Installing kbld..."
   $dl_bin https://github.com/vmware-tanzu/carvel-kbld/releases/download/${kbld_version}/kbld-${binary_type} > /tmp/kbld
-  echo "${kbld_checksum}  /tmp/kbld" | shasum -c -
+  echo "${kbld_checksum}  /tmp/kbld" | sha256sum -c -
   mv /tmp/kbld ${dst_dir}/kbld
   chmod +x ${dst_dir}/kbld
   echo "Installed ${dst_dir}/kbld ${kbld_version}"
 
   echo "Installing kapp..."
   $dl_bin https://github.com/vmware-tanzu/carvel-kapp/releases/download/${kapp_version}/kapp-${binary_type} > /tmp/kapp
-  echo "${kapp_checksum}  /tmp/kapp" | shasum -c -
+  echo "${kapp_checksum}  /tmp/kapp" | sha256sum -c -
   mv /tmp/kapp ${dst_dir}/kapp
   chmod +x ${dst_dir}/kapp
   echo "Installed ${dst_dir}/kapp ${kapp_version}"
 
   echo "Installing imgpkg..."
   $dl_bin https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/${imgpkg_version}/imgpkg-${binary_type} > /tmp/imgpkg
-  echo "${imgpkg_checksum}  /tmp/imgpkg" | shasum -c -
+  echo "${imgpkg_checksum}  /tmp/imgpkg" | sha256sum -c -
   mv /tmp/imgpkg ${dst_dir}/imgpkg
   chmod +x ${dst_dir}/imgpkg
   echo "Installed ${dst_dir}/imgpkg ${imgpkg_version}"
 
   echo "Installing vendir..."
   $dl_bin https://github.com/vmware-tanzu/carvel-vendir/releases/download/${vendir_version}/vendir-${binary_type} > /tmp/vendir
-  echo "${vendir_checksum}  /tmp/vendir" | shasum -c -
+  echo "${vendir_checksum}  /tmp/vendir" | sha256sum -c -
   mv /tmp/vendir ${dst_dir}/vendir
   chmod +x ${dst_dir}/vendir
   echo "Installed ${dst_dir}/vendir ${vendir_version}"
