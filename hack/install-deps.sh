@@ -10,7 +10,7 @@ fi
 install() {
   set -euo pipefail
 
-  dst_dir="${K14SIO_INSTALL_BIN_DIR:-/usr/local/bin}"
+  dst_dir="${CARVEL_INSTALL_BIN_DIR:-${K14SIO_INSTALL_BIN_DIR:-/usr/local/bin}}"
 
   if [ -x "$(command -v wget)" ]; then
     dl_bin="wget -nv -O-"
