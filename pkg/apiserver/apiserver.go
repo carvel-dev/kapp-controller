@@ -105,7 +105,7 @@ func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kc
 	return &APIServer{server, make(chan struct{}), aggClient}, nil
 }
 
-// Spawns go routine that exits when apiserver is stopped
+// Run spawns a go routine that exits when apiserver is stopped.
 func (as *APIServer) Run() error {
 	const (
 		retries = 30
