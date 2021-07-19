@@ -29,3 +29,18 @@ spec:
           - ".imgpkg/images.yml"
       deploy:
       - kapp: {}
+  valuesSchema:
+    openAPIv3:
+      properties:
+        svc_port:
+          type: integer
+          description: Service port
+          default: 80
+        app_port:
+          type: integer
+          description: App port
+          default: 80
+        hello_msg:
+          type: string
+          description: Hello msg for the app
+          default: "stranger"
