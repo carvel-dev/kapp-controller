@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -109,8 +108,6 @@ stringData:
 	// Create Repo, PackageInstall, and App from YAML
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
-	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
 	out := kubectl.Run([]string{"get", fmt.Sprintf("apps/%s", name), "-o", "yaml"})
 
 	var cr v1alpha1.App
@@ -184,6 +181,8 @@ apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
 metadata:
   name: pkg.fail.carvel.dev
+  annotations:
+    kapp.k14s.io/change-group: "package"
 spec:
   displayName: "Test PackageMetadata in repo"
   shortDescription: "PackageMetadata used for testing"
@@ -192,6 +191,8 @@ apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
   name: pkg.fail.carvel.dev.1.0.0
+  annotations:
+    kapp.k14s.io/change-group: "package"
 spec:
   refName: pkg.fail.carvel.dev
   version: 1.0.0
@@ -220,6 +221,7 @@ metadata:
   namespace: %s
   annotations:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/packageinstalls
+    kapp.k14s.io/change-rule: "upsert after upserting package"
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   packageRef:
@@ -249,27 +251,22 @@ stringData:
 	defer cleanUp()
 
 	// Create Repo, PackageInstall, and App from YAML
-	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml), AllowError: true})
 
-	// wait for status to update for PackageInstall
 	var cr pkgingv1alpha1.PackageInstall
-	retry(t, 30*time.Second, func() error {
-		out := kubectl.Run([]string{"get", fmt.Sprintf("pkgi/%s", name), "-o", "yaml"})
-		err := yaml.Unmarshal([]byte(out), &cr)
-		if err != nil {
-			return fmt.Errorf("Failed to unmarshal: %s", err)
-		}
+	out := kubectl.Run([]string{"get", fmt.Sprintf("pkgi/%s", name), "-o", "yaml"})
+	err := yaml.Unmarshal([]byte(out), &cr)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal: %s", err)
+	}
 
-		if !strings.Contains(cr.Status.UsefulErrorMessage, "kapp: Error") {
-			return fmt.Errorf("\nExpected useful error message to contain deploy error\nGot:\n%s", cr.Status.UsefulErrorMessage)
-		}
+	if !strings.Contains(cr.Status.UsefulErrorMessage, "kapp: Error") {
+		t.Fatalf("\nExpected useful error message to contain deploy error\nGot:\n%s", cr.Status.UsefulErrorMessage)
+	}
 
-		if !strings.Contains(cr.Status.FriendlyDescription, "Error (see .status.usefulErrorMessage for details)") {
-			return fmt.Errorf("\nExpected friendly description to contain error\nGot:\n%s", cr.Status.FriendlyDescription)
-		}
-
-		return err
-	})
+	if !strings.Contains(cr.Status.FriendlyDescription, "Error (see .status.usefulErrorMessage for details)") {
+		t.Fatalf("\nExpected friendly description to contain error\nGot:\n%s", cr.Status.FriendlyDescription)
+	}
 }
 
 func Test_PackageInstalled_FromPackageInstall_DeletionFailureBlocks(t *testing.T) {
@@ -287,6 +284,8 @@ apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
   name: basic.test.carvel.dev
+  annotations:
+    kapp.k14s.io/change-group: "packagerepo"
 spec:
   fetch:
     imgpkgBundle:
@@ -299,6 +298,7 @@ metadata:
   namespace: %s
   annotations:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/packageinstalls
+    kapp.k14s.io/change-rule: "upsert after upserting packagerepo"
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   packageRef:
@@ -313,11 +313,9 @@ spec:
 	cleanUp()
 	defer cleanUp()
 
-	logger.Section("Install package", func() {
+	logger.Section("Create PackageRepository and PackageInstall", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
 			RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
-
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
 	})
 
 	logger.Section("Delete service account so that PackageInstall deletion would fail", func() {
@@ -432,7 +430,6 @@ spec:
 
 	logger.Section("Create PackageInstall with same name as App CR", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkginstallYaml)})
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
 	})
 
 	logger.Section("Assert that App spec is different from PackageInstall take over", func() {
@@ -488,9 +485,6 @@ func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
 	logger.Section("Create PackageInstall using version Package version 1.0.0", func() {
 		pkgInstallYaml := packageInstallVersionInYAML(name, env.Namespace, "1.0.0")
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkgInstallYaml)})
-
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
 	})
 
 	logger.Section("Check PackageInstall with version 1.0.0 success", func() {
@@ -512,10 +506,6 @@ func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
 	logger.Section("Create PackageInstall using version Package version 2.0.0", func() {
 		pkgInstallYaml := packageInstallVersionInYAML(name, env.Namespace, "2.0.0")
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkgInstallYaml)})
-
-		kubectl.Run([]string{"wait", "--for=condition=Reconciling", "pkgi/" + name, "--timeout", "1m"})
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
 	})
 
 	logger.Section("Check PackageInstall with version 2.0.0 success", func() {
@@ -623,7 +613,7 @@ spec:
 
 func packageInstallExpectedStatus(condType v1alpha1.AppConditionType, condStatus corev1.ConditionStatus,
 	observedGen int64, desc, version string) pkgingv1alpha1.PackageInstallStatus {
-	return  pkgingv1alpha1.PackageInstallStatus{
+	return pkgingv1alpha1.PackageInstallStatus{
 		GenericStatus: v1alpha1.GenericStatus{
 			Conditions: []v1alpha1.AppCondition{{
 				Type:   condType,
