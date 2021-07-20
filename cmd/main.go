@@ -15,7 +15,7 @@ import (
 )
 
 const (
-        // Version is the version of kapp-controller
+	// Version is the version of kapp-controller
 	Version = "0.21.0"
 )
 
