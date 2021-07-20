@@ -3,7 +3,7 @@ run:
 linters:
   enable:
     - goheader
-    - golint
+    - revive
     - deadcode
     - unused
   disable-all: true
@@ -17,3 +17,5 @@ linters-settings:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
+  exclude-use-default: false
+  new-from-rev: a95f826ff25ddb5968e0dd4e53818a9a35baf016 # only enforce for commits after Jul 15 2021, allows us to phase-in godoc compliance
