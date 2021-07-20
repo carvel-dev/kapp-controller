@@ -143,7 +143,7 @@ func (t *Sops) decryptSopsFile(path, newPath string, args, env []string) error {
 
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("Running sops: %s", err)
+		return fmt.Errorf("Running sops: %s, %v", stderrBs.String(), err)
 	}
 
 	err = os.Remove(path)
