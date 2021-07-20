@@ -208,3 +208,18 @@ data:
 		})
 	})
 }
+
+func retry(t *testing.T, timeout time.Duration, f func() error) {
+	var err error
+	stopTime := time.Now().Add(timeout)
+	for {
+		err = f()
+		if err == nil {
+			return
+		}
+		if time.Now().After(stopTime) {
+			t.Fatalf("retry timed out after %s: %v", timeout.String(), err)
+		}
+		time.Sleep(1 * time.Second)
+	}
+}
