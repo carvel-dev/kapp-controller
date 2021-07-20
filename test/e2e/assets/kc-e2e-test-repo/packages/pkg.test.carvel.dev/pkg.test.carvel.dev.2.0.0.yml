@@ -8,8 +8,9 @@ spec:
   # In this new version of the package, we are including some overlays
   # which will increase the pod count for the simple app.
   version: 2.0.0
+  releasedAt: 2021-05-05T18:57:06Z
   licenses:
-  - Apache 2.0
+  - VMware's End User License Agreement [hyperlink: https://www.vmware.com/content/dam/digitalmarketing/vmware/en/pdf/downloads/eula/universal_eula.pdf] (underlying OSS license: Apache License 2.0 [hyperlink: https://www.apache.org/licenses/LICENSE-2.0.txt])
   capacityRequirementsDescription: "cpu: 1,RAM: 2, Disk: 3"
   releaseNotes: |
     - add overlays to scale
