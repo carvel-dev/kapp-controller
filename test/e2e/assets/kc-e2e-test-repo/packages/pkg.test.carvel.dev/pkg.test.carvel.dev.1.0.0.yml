@@ -10,8 +10,9 @@ spec:
   # This is the name we want to reference in resources such as PackageInstall.
   refName: pkg.test.carvel.dev
   version: 1.0.0
+  releasedAt: 2021-05-05T18:57:06Z
   licenses:
-  - Apache 2.0
+  - VMware's End User License Agreement [hyperlink: https://www.vmware.com/content/dam/digitalmarketing/vmware/en/pdf/downloads/eula/universal_eula.pdf] (underlying OSS license: Apache License 2.0 [hyperlink: https://www.apache.org/licenses/LICENSE-2.0.txt])  
   capacityRequirementsDescription: "cpu: 1,RAM: 2, Disk: 3"
   releaseNotes: |
     - Introduce simple-app package
