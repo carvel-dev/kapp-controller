@@ -12,3 +12,5 @@ image_cache: true
 image_repo: docker.io/k14stest/kapp-controller-test
 
 api_port: 10350
+
+kapp_controller_version: "0.21.1"
