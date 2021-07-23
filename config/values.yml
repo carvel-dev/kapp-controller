@@ -15,6 +15,4 @@ image_cache: true
 image_repo: docker.io/k14stest/kapp-controller-test
 
 api_port: 10350
-
-#@ cmd_contents = data.read("main.go")
-kapp_controller_version: #@ regexp.replace("(?s).*Version = \"([0-9]+\.[0-9]+\.[0-9]).*", cmd_contents, "$1")
+kapp_controller_version: "develop"
