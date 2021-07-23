@@ -14,10 +14,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
-const (
-	// Version is the version of kapp-controller
-	Version = "0.22.0"
-)
+// Version of kapp-controller is set via ldflags at build-time from the most recent git tag; see hack/build.sh
+var Version = "develop"
 
 func main() {
 	ctrlOpts := controller.Options{}

@@ -1,7 +1,6 @@
 #@data/values
 
 #@ load("@ytt:data", "data")
-#@ load("@ytt:regexp", "regexp")
 ---
 namespace: kapp-controller
 packaging_global_namespace: kapp-controller-packaging-global
