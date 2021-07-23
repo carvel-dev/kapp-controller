@@ -2,4 +2,4 @@
 
 set -e
 
-./hack/build.sh && ytt -f config/ | kbld -f- | kapp deploy -a kc -f- -c -y
+./hack/build.sh && ytt -f config/ -f cmd/main.go | kbld -f- | kapp deploy -a kc -f- -c -y

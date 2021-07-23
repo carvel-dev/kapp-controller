@@ -14,6 +14,6 @@ go build $repro_flags -mod=vendor -o controller ./cmd/main.go
 ls -la ./controller
 
 ./hack/gen-crds.sh
-ytt -f config/ >/dev/null
+ytt -f config/ -f cmd/main.go >/dev/null
 
 echo SUCCESS

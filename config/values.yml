@@ -1,4 +1,7 @@
 #@data/values
+
+#@ load("@ytt:data", "data")
+#@ load("@ytt:regexp", "regexp")
 ---
 namespace: kapp-controller
 packaging_global_namespace: kapp-controller-packaging-global
@@ -13,4 +16,5 @@ image_repo: docker.io/k14stest/kapp-controller-test
 
 api_port: 10350
 
-kapp_controller_version: "0.21.1"
+#@ cmd_contents = data.read("main.go")
+kapp_controller_version: #@ regexp.replace("(?s).*Version = \"([0-9]+\.[0-9]+\.[0-9]).*", cmd_contents, "$1")
