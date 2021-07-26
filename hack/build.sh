@@ -9,17 +9,12 @@ go fmt ./cmd/... ./pkg/...
 go mod vendor
 go mod tidy
 
-# pull in function to get the version for use below
-source $(dirname "$0")/version-me.sh
-
-# helpful ldflags reference: https://www.digitalocean.com/community/tutorials/using-ldflags-to-set-version-information-for-go-applications
 # we set empty buildid and pass -trimpath for reproducible builds; see https://github.com/golang/go/issues/34186
-ldflags="-X 'main.Version=$(get_kappctrl_ver)' -buildid="
-go build -ldflags="${ldflags}" -trimpath -mod=vendor -o controller ./cmd/main.go
+go build -ldflags="-buildid=" -trimpath -mod=vendor -o controller ./cmd/main.go
 
 ls -la ./controller
 
 ./hack/gen-crds.sh
-./hack/ytt-me.sh >/dev/null
+ytt -f config/ >/dev/null
 
 echo SUCCESS

@@ -6,7 +6,7 @@ metadata:
   name: kapp-controller
   namespace: #@ data.values.namespace
   annotations:
-    kapp_controller_version: #@ data.values.kapp_controller_version
+    kapp_controller.carvel.dev/version: #@ data.values.kapp_controller_version
 spec:
   selector:
     matchLabels:
