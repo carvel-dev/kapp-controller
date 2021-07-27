@@ -222,7 +222,7 @@ spec:
 		kctl.RunWithOpts([]string{"delete", "packagemetadata/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
 		kctl.RunWithOpts([]string{"delete", "pkgr/basic.test.carvel.dev"}, RunOpts{AllowError: true})
 		// kapp delete still needed in event checking if packages existing fails
-		kapp.Run([]string{"delete", "-a","repo"})
+		kapp.Run([]string{"delete", "-a", "repo"})
 	}
 	defer cleanUp()
 

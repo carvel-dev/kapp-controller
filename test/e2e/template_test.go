@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	corev1 "k8s.io/api/core/v1"
 	"github.com/ghodss/yaml"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func Test_YttTemplate_UsesFileMarks(t *testing.T) {
@@ -150,7 +150,7 @@ data:
 
 		err := yaml.Unmarshal([]byte(out), &cm)
 		if err != nil {
-			t.Fatalf("Unmarshaling result config map: %s", err)	
+			t.Fatalf("Unmarshaling result config map: %s", err)
 		}
 
 		expectedOut := `from_secret: true

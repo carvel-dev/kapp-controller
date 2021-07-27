@@ -127,6 +127,8 @@ github.com/munnerz/goautoneg
 ## explicit
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
 # github.com/prometheus/client_golang v1.7.1
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
@@ -151,6 +153,7 @@ github.com/spf13/cobra
 github.com/spf13/pflag
 # github.com/stretchr/testify v1.7.0
 ## explicit
+github.com/stretchr/testify/assert
 # github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966
 ## explicit
 # github.com/vmware-tanzu/carvel-vendir v0.21.1
