@@ -5,6 +5,7 @@ package config
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"strings"
@@ -17,7 +18,7 @@ import (
 )
 
 const (
-	configMapName = "kapp-controller-config"
+	kcConfigName = "kapp-controller-config"
 
 	caCertsKey      = "caCerts"
 	systemCertsFile = "/etc/pki/tls/certs/ca-bundle.crt"
@@ -44,7 +45,12 @@ func GetConfig(client kubernetes.Interface) (*Config, error) {
 		return nil, fmt.Errorf("Getting namespace: %s", err)
 	}
 
-	configMap, err := client.CoreV1().ConfigMaps(namespace).Get(context.Background(), configMapName, metav1.GetOptions{})
+	secret, err := client.CoreV1().Secrets(namespace).Get(context.Background(), kcConfigName, metav1.GetOptions{})
+
+	configMap := &v1.ConfigMap{}
+	if secret == nil {
+		configMap, err = client.CoreV1().ConfigMaps(namespace).Get(context.Background(), kcConfigName, metav1.GetOptions{})
+	}
 
 	if errors.IsNotFound(err) {
 		return &Config{}, nil
@@ -52,6 +58,11 @@ func GetConfig(client kubernetes.Interface) (*Config, error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	if secret != nil {
+		// TODO: Check error
+		addSecretDataToConfigMap(configMap, secret)
 	}
 
 	return &Config{configMap}, nil
@@ -128,4 +139,18 @@ func (gc *Config) configureProxies(httpProxy, httpsProxy, noProxy string) {
 		os.Setenv(noProxyEnvVar, noProxy)
 		os.Setenv(strings.ToUpper(noProxyEnvVar), noProxy)
 	}
+}
+
+// TODO: Need to decode base64 value of secret
+func addSecretDataToConfigMap(configMap *v1.ConfigMap, secret *v1.Secret) error {
+	// TODO: Loop over all keys
+	configMap.Data = map[string]string{}
+	if httpProxy, valueExists := secret.Data[httpProxyKey]; valueExists {
+		httpProxyData, err := base64.StdEncoding.DecodeString(string(httpProxy))
+		if err != nil {
+			return err
+		}
+		configMap.Data[httpProxyKey] = string(httpProxyData)
+	}
+	return nil
 }

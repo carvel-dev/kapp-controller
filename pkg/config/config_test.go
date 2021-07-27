@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"encoding/base64"
 	"os"
 	"testing"
 
@@ -22,13 +23,14 @@ func Test_GetConfig_ReturnsSecret_WhenBothConfigMapAndSecretExist(t *testing.T) 
 		},
 	}
 
+	base64Str := base64.StdEncoding.EncodeToString([]byte("proxy-svc.proxy-server.svc.cluster.local:80"))
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kapp-controller-config",
 			Namespace: "default",
 		},
 		Data: map[string][]byte{
-			"httpProxy": []byte("proxy-svc.proxy-server.svc.cluster.local:80"),
+			"httpProxy": []byte(base64Str),
 		},
 	}
 
