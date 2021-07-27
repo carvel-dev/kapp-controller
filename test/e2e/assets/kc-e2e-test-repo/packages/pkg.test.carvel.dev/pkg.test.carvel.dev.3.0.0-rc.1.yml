@@ -45,3 +45,5 @@ spec:
           type: string
           description: Hello msg for the app
           default: "stranger"
+  # Test that unknown key is ignored
+  unknownKey_DO_NOT_COPY: true
