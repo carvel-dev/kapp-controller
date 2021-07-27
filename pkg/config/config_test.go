@@ -48,3 +48,56 @@ func Test_GetConfig_ReturnsSecret_WhenBothConfigMapAndSecretExist(t *testing.T) 
 
 	assert.Equal(t, expected, httpProxyActual)
 }
+
+func Test_GetConfig_ReturnsConfigMap_WhenOnlyConfigMapExists(t *testing.T) {
+	configMap := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kapp-controller-config",
+			Namespace: "default",
+		},
+		Data: map[string]string{
+			"httpProxy": "proxy-svc.proxy-server.svc.cluster.local:80",
+		},
+	}
+
+	defer os.Unsetenv("http_proxy")
+
+	k8scs := k8sfake.NewSimpleClientset(configMap)
+
+	config, err := kcconfig.GetConfig(k8scs)
+	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
+
+	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
+
+	expected := "proxy-svc.proxy-server.svc.cluster.local:80"
+	httpProxyActual := os.Getenv("http_proxy")
+
+	assert.Equal(t, expected, httpProxyActual)
+}
+
+func Test_GetConfig_ReturnsSecret_WhenOnlySecretExists(t *testing.T) {
+	base64Str := base64.StdEncoding.EncodeToString([]byte("proxy-svc.proxy-server.svc.cluster.local:80"))
+	secret := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kapp-controller-config",
+			Namespace: "default",
+		},
+		Data: map[string][]byte{
+			"httpProxy": []byte(base64Str),
+		},
+	}
+
+	defer os.Unsetenv("http_proxy")
+
+	k8scs := k8sfake.NewSimpleClientset(secret)
+
+	config, err := kcconfig.GetConfig(k8scs)
+	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
+
+	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
+
+	expected := "proxy-svc.proxy-server.svc.cluster.local:80"
+	httpProxyActual := os.Getenv("http_proxy")
+
+	assert.Equal(t, expected, httpProxyActual)
+}
