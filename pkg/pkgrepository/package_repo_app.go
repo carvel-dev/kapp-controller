@@ -57,7 +57,9 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 metadata:
   #@overlay/match missing_ok=True
   annotations:
+    #@overlay/match missing_ok=True
     kapp.k14s.io/disable-original: ""
+    #@overlay/match missing_ok=True
     kapp.k14s.io/disable-wait: ""
 
 #! Ensure that all resources do not set some random namespace
