@@ -100,7 +100,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:1ff03133ff04bb13058cf12b411386b05810a0c583a322be37496a6626d45fd4`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c`
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
@@ -173,7 +173,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:1ff03133ff04bb13058cf12b411386b05810a0c583a322be37496a6626d45fd4`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c`
 
 	cleanUp := func() {
 		kubectl.Run([]string{"delete", "pkgr/basic.test.carvel.dev"})
@@ -214,7 +214,7 @@ metadata:
 spec:
   fetch:
     imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:1ff03133ff04bb13058cf12b411386b05810a0c583a322be37496a6626d45fd4`
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c`
 
 	cleanUp := func() {
 		kctl.RunWithOpts([]string{"delete", "package/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
