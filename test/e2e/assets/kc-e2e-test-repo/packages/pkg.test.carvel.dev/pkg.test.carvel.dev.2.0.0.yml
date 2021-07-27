@@ -4,8 +4,10 @@ kind: Package
 metadata:
   name: pkg.test.carvel.dev.2.0.0
   annotations:
+    # Test that arbitrary annotation can be added
     pkg.test.carvel.dev/test-ann: ""
   labels:
+    # Test that arbitrary label can be added
     pkg.test.carvel.dev/test-label: ""
 spec:
   refName: pkg.test.carvel.dev

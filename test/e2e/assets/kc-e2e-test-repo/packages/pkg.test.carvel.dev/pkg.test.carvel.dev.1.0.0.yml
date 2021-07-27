@@ -5,7 +5,7 @@ metadata:
   # This is just the resource name and shouldn't be used to reference this package
   # in other resources
   name: pkg.test.carvel.dev.1.0.0
-  # cluster scoped
+  # Test that no annotations/labels are needed
 spec:
   # This is the name we want to reference in resources such as PackageInstall.
   refName: pkg.test.carvel.dev

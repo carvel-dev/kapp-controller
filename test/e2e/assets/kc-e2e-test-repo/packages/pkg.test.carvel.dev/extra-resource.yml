@@ -1,0 +1,9 @@
+# Test that unknown/extra resource does not fail installation of the bundle
+# (This resource will be ignored at the package repository installation.)
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageExtra
+metadata:
+  name: pkg.test.carvel.dev.1.0.0
+spec:
+  refName: pkg.test.carvel.dev
