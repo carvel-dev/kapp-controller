@@ -61,8 +61,10 @@ func GetConfig(client kubernetes.Interface) (*Config, error) {
 	}
 
 	if secret != nil {
-		// TODO: Check error
-		addSecretDataToConfigMap(configMap, secret)
+		err := addSecretDataToConfigMap(configMap, secret)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &Config{configMap}, nil
@@ -141,16 +143,18 @@ func (gc *Config) configureProxies(httpProxy, httpsProxy, noProxy string) {
 	}
 }
 
-// TODO: Need to decode base64 value of secret
 func addSecretDataToConfigMap(configMap *v1.ConfigMap, secret *v1.Secret) error {
-	// TODO: Loop over all keys
+	keys := []string{caCertsKey, httpProxyKey, httpsProxyKey, noProxyKey, skipTLSVerifyKey}
 	configMap.Data = map[string]string{}
-	if httpProxy, valueExists := secret.Data[httpProxyKey]; valueExists {
-		httpProxyData, err := base64.StdEncoding.DecodeString(string(httpProxy))
-		if err != nil {
-			return err
+	for _, key := range keys {
+		if value, valueExists := secret.Data[key]; valueExists {
+			decodedValue, err := base64.StdEncoding.DecodeString(string(value))
+			if err != nil {
+				return err
+			}
+			configMap.Data[key] = string(decodedValue)
 		}
-		configMap.Data[httpProxyKey] = string(httpProxyData)
 	}
+
 	return nil
 }
