@@ -4,9 +4,11 @@
 package app
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
@@ -42,9 +44,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 
 	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
-	if err != nil {
-		t.Fatalf("Unexpected error with reconciling: %v", err)
-	}
+	assert.Nil(t, err, "unexpected error with reconciling", err)
 
 	// Expected app status has no inspect on status
 	// since the app deployment was not attempted
@@ -71,9 +71,9 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	// No need to assert on stderr as its captured elsewhere
 	crdApp.app.Status().Fetch.Stderr = ""
 
-	if !reflect.DeepEqual(expectedStatus, crdApp.app.Status()) {
-		t.Fatalf("\nStatus is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, crdApp.app.Status())
-	}
+	assert.True(t,
+		reflect.DeepEqual(expectedStatus, crdApp.app.Status()),
+		fmt.Sprintf("Status is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, crdApp.app.Status()))
 }
 
 func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.T) {
@@ -104,9 +104,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 
 	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
-	if err != nil {
-		t.Fatalf("Unexpected error with reconciling: %v", err)
-	}
+	assert.Nil(t, err, "Unexpected error with reconciling", err)
 
 	// Expected app status has no inspect on status
 	// since the app deployment was not attempted
@@ -140,7 +138,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	// No need to assert on stderr as its captured elsewhere
 	crdApp.app.Status().Template.Stderr = ""
 
-	if !reflect.DeepEqual(expectedStatus, crdApp.app.Status()) {
-		t.Fatalf("\nStatus is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, crdApp.app.Status())
-	}
+	assert.True(t,
+		reflect.DeepEqual(expectedStatus, crdApp.app.Status()),
+		fmt.Sprintf("Status is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, crdApp.app.Status()))
 }
