@@ -7,11 +7,11 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"os"
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -33,6 +33,7 @@ const (
 	skipTLSVerifyKey = "dangerousSkipTLSVerify"
 )
 
+// TODO: Use struct for keys
 type Config struct {
 	configMap *v1.ConfigMap
 }
@@ -45,18 +46,17 @@ func GetConfig(client kubernetes.Interface) (*Config, error) {
 		return nil, fmt.Errorf("Getting namespace: %s", err)
 	}
 
-	secret, err := client.CoreV1().Secrets(namespace).Get(context.Background(), kcConfigName, metav1.GetOptions{})
-
+	// TODO: Try to simplify nesting
 	configMap := &v1.ConfigMap{}
-	if secret == nil {
-		configMap, err = client.CoreV1().ConfigMaps(namespace).Get(context.Background(), kcConfigName, metav1.GetOptions{})
-	}
-
-	if errors.IsNotFound(err) {
-		return &Config{}, nil
-	}
-
+	secret, err := client.CoreV1().Secrets(namespace).Get(context.Background(), kcConfigName, metav1.GetOptions{})
 	if err != nil {
+		if errors.IsNotFound(err) {
+			configMap, err = client.CoreV1().ConfigMaps(namespace).Get(context.Background(), kcConfigName, metav1.GetOptions{})
+			if errors.IsNotFound(err) {
+				return &Config{}, nil
+			}
+			return &Config{}, nil
+		}
 		return nil, err
 	}
 
@@ -143,6 +143,7 @@ func (gc *Config) configureProxies(httpProxy, httpsProxy, noProxy string) {
 	}
 }
 
+// TODO: No base64 decoding needed
 func addSecretDataToConfigMap(configMap *v1.ConfigMap, secret *v1.Secret) error {
 	keys := []string{caCertsKey, httpProxyKey, httpsProxyKey, noProxyKey, skipTLSVerifyKey}
 	configMap.Data = map[string]string{}

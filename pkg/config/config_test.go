@@ -12,6 +12,8 @@ import (
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 )
 
+// TODO: Remove all base64 encoding
+
 func Test_GetConfig_ReturnsSecret_WhenBothConfigMapAndSecretExist(t *testing.T) {
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{

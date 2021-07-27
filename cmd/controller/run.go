@@ -80,6 +80,7 @@ func Run(opts Options, runLog logr.Logger) {
 		os.Exit(1)
 	}
 
+	// TODO: Figure out how this is used?
 	kcConfig, err := kcconfig.GetConfig(coreClient)
 	if err != nil {
 		runLog.Error(err, "getting kapp-controller config")
