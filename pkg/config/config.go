@@ -183,20 +183,10 @@ func (gc *Config) addConfigMapDataToConfig(configMap *v1.ConfigMap) {
 }
 
 func (gc *Config) addDataToConfig(data map[string]string) {
-	if val, exists := data[caCertsKey]; exists {
-		gc.caCerts = val
-	}
-	if val, exists := data[httpProxyKey]; exists {
-		gc.httpProxy = val
-	}
-	if val, exists := data[httpsProxyKey]; exists {
-		gc.httpsProxy = val
-	}
-	if val, exists := data[noProxyKey]; exists {
-		gc.noProxy = val
-	}
-	if val, exists := data[skipTLSVerifyKey]; exists {
-		gc.skipTLSVerify = val
-	}
+	gc.caCerts = data[caCertsKey]
+	gc.httpProxy = data[httpProxyKey]
+	gc.httpsProxy = data[httpsProxyKey]
+	gc.noProxy = data[noProxyKey]
+	gc.skipTLSVerify = data[skipTLSVerifyKey]
 	gc.populated = true
 }
