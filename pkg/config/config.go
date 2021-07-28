@@ -86,9 +86,9 @@ func GetConfig(client kubernetes.Interface) (*Config, error) {
 	config := &Config{}
 
 	if secret != nil {
-		addSecretDataToConfig(config, secret)
+		config.addSecretDataToConfig(secret)
 	} else if configMap != nil {
-		addConfigMapDataToConfig(config, configMap)
+		config.addConfigMapDataToConfig(configMap)
 	}
 
 	return config, nil
@@ -166,7 +166,7 @@ func (gc *Config) configureProxies(httpProxy, httpsProxy, noProxy string) {
 	}
 }
 
-func addSecretDataToConfig(config *Config, secret *v1.Secret) {
+func (gc *Config) addSecretDataToConfig(secret *v1.Secret) {
 	extractedValues := map[string]string{}
 	keys := []string{caCertsKey, httpProxyKey, httpsProxyKey, noProxyKey, skipTLSVerifyKey}
 	for _, key := range keys {
@@ -175,28 +175,28 @@ func addSecretDataToConfig(config *Config, secret *v1.Secret) {
 		}
 	}
 
-	addDataToConfig(config, extractedValues)
+	gc.addDataToConfig(extractedValues)
 }
 
-func addConfigMapDataToConfig(config *Config, configMap *v1.ConfigMap) {
-	addDataToConfig(config, configMap.Data)
+func (gc *Config) addConfigMapDataToConfig(configMap *v1.ConfigMap) {
+	gc.addDataToConfig(configMap.Data)
 }
 
-func addDataToConfig(config *Config, data map[string]string) {
+func (gc *Config) addDataToConfig(data map[string]string) {
 	if val, exists := data[caCertsKey]; exists {
-		config.caCerts = val
+		gc.caCerts = val
 	}
 	if val, exists := data[httpProxyKey]; exists {
-		config.httpProxy = val
+		gc.httpProxy = val
 	}
 	if val, exists := data[httpsProxyKey]; exists {
-		config.httpsProxy = val
+		gc.httpsProxy = val
 	}
 	if val, exists := data[noProxyKey]; exists {
-		config.noProxy = val
+		gc.noProxy = val
 	}
 	if val, exists := data[skipTLSVerifyKey]; exists {
-		config.skipTLSVerify = val
+		gc.skipTLSVerify = val
 	}
-	config.populated = true
+	gc.populated = true
 }
