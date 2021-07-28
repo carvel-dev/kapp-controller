@@ -168,11 +168,8 @@ func (gc *Config) configureProxies(httpProxy, httpsProxy, noProxy string) {
 
 func (gc *Config) addSecretDataToConfig(secret *v1.Secret) {
 	extractedValues := map[string]string{}
-	keys := []string{caCertsKey, httpProxyKey, httpsProxyKey, noProxyKey, skipTLSVerifyKey}
-	for _, key := range keys {
-		if value, valueExists := secret.Data[key]; valueExists {
-			extractedValues[key] = string(value)
-		}
+	for key, value := range secret.Data {
+		extractedValues[key] = string(value)
 	}
 
 	gc.addDataToConfig(extractedValues)
