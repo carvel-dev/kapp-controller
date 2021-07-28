@@ -16,7 +16,7 @@ import (
 
 const (
 	// Version is the version of kapp-controller
-	Version = "0.21.0"
+	Version = "0.22.0"
 )
 
 func main() {
