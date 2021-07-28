@@ -166,9 +166,6 @@ func (gc *Config) configureProxies(httpProxy, httpsProxy, noProxy string) {
 	}
 }
 
-// TODO / Note:   the only difference between secrets and configMaps is that secret.Data is map[string][]byte, whereas configMap.Data is map[string]string
-//                so i wish there were a way to fully collapse these functions but I'm not seeing the interface-juggling that would make it work at the moment.
-
 func addSecretDataToConfig(config *Config, secret *v1.Secret) {
 	extractedValues := map[string]string{}
 	keys := []string{caCertsKey, httpProxyKey, httpsProxyKey, noProxyKey, skipTLSVerifyKey}
