@@ -47,24 +47,25 @@ type Config struct {
 // findExternalConfig will populate exactly one of its return values and the others will be nil.
 // we prefer to populate secret, fall back to configMap, and return unrecoverable errors if they occur.
 func findExternalConfig(namespace string, client kubernetes.Interface) (*v1.Secret, *v1.ConfigMap, error) {
-	configMap := &v1.ConfigMap{}
-	secret := &v1.Secret{}
 	secret, err := client.CoreV1().Secrets(namespace).Get(context.Background(), kcConfigName, metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			configMap, err = client.CoreV1().ConfigMaps(namespace).Get(context.Background(), kcConfigName, metav1.GetOptions{})
-			if err != nil {
-				if errors.IsNotFound(err) {
-					return secret, nil, nil // nothing found, but nothing else went wrong - just return an empty secret.
-				} else {
-					return nil, nil, err // secret wasn't found and configMap lookup failed
-				}
-			}
-			return nil, configMap, nil // secret wasn't found but we got the configMap no problem.
-		}
-		return nil, nil, err // secret lookup completely failed
+	// NOTE: to avoid nested ifs we are checking err == nil,  instead of != nil.
+	if err == nil { // happy path return
+		return secret, nil, nil
 	}
-	return secret, nil, nil // we found the secret and will ignore the configMap
+	if !errors.IsNotFound(err) { // other error than NotFound so we're not gonna look for configMap
+		return nil, nil, err
+	}
+
+	configMap, err := client.CoreV1().ConfigMaps(namespace).Get(context.Background(), kcConfigName, metav1.GetOptions{})
+	if err == nil { // second happiest path return
+		return nil, configMap, nil
+	}
+	if !errors.IsNotFound(err) { // other error than NotFound
+		return nil, nil, err
+	}
+
+	// nothing found, no errors, return triple-nil
+	return nil, nil, nil
 }
 
 // GetConfig populates the Config struct from k8s resources.
