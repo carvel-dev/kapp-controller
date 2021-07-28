@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"encoding/base64"
 	"os"
 	"testing"
 
@@ -11,8 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 )
-
-// TODO: Remove all base64 encoding
 
 func Test_GetConfig_ReturnsSecret_WhenBothConfigMapAndSecretExist(t *testing.T) {
 	configMap := &v1.ConfigMap{
@@ -25,14 +22,13 @@ func Test_GetConfig_ReturnsSecret_WhenBothConfigMapAndSecretExist(t *testing.T) 
 		},
 	}
 
-	base64Str := base64.StdEncoding.EncodeToString([]byte("proxy-svc.proxy-server.svc.cluster.local:80"))
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kapp-controller-config",
 			Namespace: "default",
 		},
 		Data: map[string][]byte{
-			"httpProxy": []byte(base64Str),
+			"httpProxy": []byte("proxy-svc.proxy-server.svc.cluster.local:80"),
 		},
 	}
 
@@ -78,14 +74,13 @@ func Test_GetConfig_ReturnsConfigMap_WhenOnlyConfigMapExists(t *testing.T) {
 }
 
 func Test_GetConfig_ReturnsSecret_WhenOnlySecretExists(t *testing.T) {
-	base64Str := base64.StdEncoding.EncodeToString([]byte("proxy-svc.proxy-server.svc.cluster.local:80"))
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kapp-controller-config",
 			Namespace: "default",
 		},
 		Data: map[string][]byte{
-			"httpProxy": []byte(base64Str),
+			"httpProxy": []byte("proxy-svc.proxy-server.svc.cluster.local:80"),
 		},
 	}
 
