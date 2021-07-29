@@ -1,7 +1,6 @@
 FROM photon:3.0
 
 ARG KCTRL_VER=development
-LABEL kapp_controller_version=$KCTRL_VER
 
 RUN tdnf install -y tar wget gzip
 

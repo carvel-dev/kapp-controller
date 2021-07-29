@@ -5,7 +5,6 @@ kind: Sources
 sources:
 - image: kapp-controller
   path: .
-  #@ def docker_rawOpts(): return ["--build-arg", "KCTRL_VER="+data.values.kapp_controller_version]
   #@ if/end not data.values.image_cache:
   docker:
     build:
@@ -13,7 +12,7 @@ sources:
       pull: true
       noCache: true
       #! pass kapp_controller_version into Dockerfile.
-      rawOptions: #@ docker_rawOpts()
+      rawOptions: #@ ["--build-arg", "KCTRL_VER="+data.values.kapp_controller_version]
 
 #@ if/end data.values.push_images:
 ---

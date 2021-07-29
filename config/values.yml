@@ -1,5 +1,4 @@
 #@data/values
-
 ---
 namespace: kapp-controller
 packaging_global_namespace: kapp-controller-packaging-global
