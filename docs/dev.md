@@ -14,9 +14,11 @@ export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
 
 ### Release
 
+Release versions are scraped from git tags in the same style as the goreleaser
+tool.
+
 ```
-# Bump version in cmd/controller/main.go
-# Commit
+# create and push the release tag (see `git tag --list` for examples)
 ./hack/build-release.sh
 ```
 

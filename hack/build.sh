@@ -2,15 +2,16 @@
 
 set -e -x -u
 
-# makes builds reproducible
+# explicitly set CGO_ENABLED to help with reproducible builds see https://github.com/golang/go/issues/36230#issuecomment-567964458
 export CGO_ENABLED=0
-repro_flags="-ldflags=-buildid= -trimpath"
 
 go fmt ./cmd/... ./pkg/...
 go mod vendor
 go mod tidy
 
-go build $repro_flags -mod=vendor -o controller ./cmd/main.go
+# we set empty buildid and pass -trimpath for reproducible builds; see https://github.com/golang/go/issues/34186
+go build -ldflags="-buildid=" -trimpath -mod=vendor -o controller ./cmd/main.go
+
 ls -la ./controller
 
 ./hack/gen-crds.sh
