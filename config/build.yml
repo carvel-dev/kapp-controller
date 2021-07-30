@@ -11,6 +11,8 @@ sources:
       #! Always rebuild image
       pull: true
       noCache: true
+      #! pass kapp_controller_version into Dockerfile.
+      rawOptions: #@ ["--build-arg", "KCTRL_VER="+data.values.kapp_controller_version]
 
 #@ if/end data.values.push_images:
 ---

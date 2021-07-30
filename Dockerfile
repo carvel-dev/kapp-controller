@@ -1,5 +1,7 @@
 FROM photon:3.0
 
+ARG KCTRL_VER=development
+
 RUN tdnf install -y tar wget gzip
 
 # adapted from golang docker image
@@ -42,7 +44,8 @@ RUN wget -O- https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.
 
 # kapp-controller
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -ldflags=-buildid= -trimpath -o controller ./cmd/main.go
+# helpful ldflags reference: https://www.digitalocean.com/community/tutorials/using-ldflags-to-set-version-information-for-go-applications
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -ldflags="-X 'main.Version=$KCTRL_VER' -buildid=" -trimpath -o controller ./cmd/main.go
 
 # --- run image ---
 FROM photon:3.0
