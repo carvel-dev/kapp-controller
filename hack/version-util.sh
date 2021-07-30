@@ -1,5 +1,5 @@
 # source this file:
-# use this via `source ./hack/version-me.sh` because `./hack/version-me.sh` won't make the functions available to other scripts
+# use this via `source ./hack/version-util.sh` because `./hack/version-me.sh` won't make the functions available to other scripts
 
 # We extract version information from git tags
 # the implicit contract is that our git tags will be in ~semver (three-part) format and prefaced with the letter 'v'.
