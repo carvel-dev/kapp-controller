@@ -203,7 +203,7 @@ func updateAPIService(client aggregatorclient.Interface, caProvider dynamiccerti
 }
 
 func apiServiceEndoint() string {
-	const apiServiceName = getEnvVal(kappctrlSVCEnvKey, "packaging-api")
+	var apiServiceName = getEnvVal(kappctrlSVCEnvKey, "packaging-api")
 	ns := os.Getenv(kappctrlNSEnvKey)
 	if ns == "" {
 		panic("Cannot get api service endpoint, Kapp-controller namespace is empty")
