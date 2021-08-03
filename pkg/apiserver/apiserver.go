@@ -44,7 +44,6 @@ const (
 
 	kappctrlNSEnvKey  = "KAPPCTRL_SYSTEM_NAMESPACE"
 	kappctrlSVCEnvKey = "KAPPCTRL_SYSTEM_SERVICE"
-	kappctrlAPIEnvKey = "KAPPCTRL_SYSTEM_API"
 
 	apiServiceName = "v1alpha1.data.packaging.carvel.dev"
 )
