@@ -46,7 +46,7 @@ const (
 	kappctrlSVCEnvKey = "KAPPCTRL_SYSTEM_SERVICE"
 	kappctrlAPIEnvKey = "KAPPCTRL_SYSTEM_API"
 
-	defaultApiServiceName = "v1alpha1.data.packaging.carvel.dev"
+	apiServiceName = "v1alpha1.data.packaging.carvel.dev"
 )
 
 var (
@@ -134,7 +134,6 @@ func (as *APIServer) Stop() {
 }
 
 func (as *APIServer) isReady() (bool, error) {
-	apiServiceName := getEnvVal(kappctrlAPIEnvKey, defaultApiServiceName)
 	apiService, err := as.aggClient.ApiregistrationV1().APIServices().Get(context.TODO(), apiServiceName, metav1.GetOptions{})
 	if err != nil {
 		return false, fmt.Errorf("error getting APIService %s: %v", apiServiceName, err)
@@ -190,7 +189,6 @@ func newServerConfig(aggClient aggregatorclient.Interface, bindPort int) (*gener
 
 func updateAPIService(client aggregatorclient.Interface, caProvider dynamiccertificates.CAContentProvider) error {
 	klog.Info("Syncing CA certificate with APIServices")
-	apiServiceName := getEnvVal(kappctrlAPIEnvKey, defaultApiServiceName)
 	apiService, err := client.ApiregistrationV1().APIServices().Get(context.TODO(), apiServiceName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("error getting APIService %s: %v", apiServiceName, err)
