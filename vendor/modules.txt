@@ -154,6 +154,7 @@ github.com/spf13/pflag
 # github.com/stretchr/testify v1.7.0
 ## explicit
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
 # github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966
 ## explicit
 # github.com/vmware-tanzu/carvel-vendir v0.21.1
