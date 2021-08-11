@@ -1,7 +1,7 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package e2e
+package kappcontroller
 
 import (
 	"fmt"
@@ -13,6 +13,7 @@ import (
 	"github.com/ghodss/yaml"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -22,9 +23,9 @@ import (
 // falkeyness
 
 func Test_PackageRepoStatus_Failing(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
 	name := "repo"
 
 	repoYaml := `apiVersion: packaging.carvel.dev/v1alpha1
@@ -63,7 +64,7 @@ spec:
 	// deploy failing repo
 	logger.Section("deploy failing repo", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{StdinReader: strings.NewReader(repoYaml)})
+			e2e.RunOpts{StdinReader: strings.NewReader(repoYaml)})
 	})
 
 	retry(t, 30*time.Second, func() error {
@@ -87,9 +88,9 @@ spec:
 }
 
 func Test_PackageRepoStatus_Success(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
 	name := "test-repo-status-success"
 
 	repoYml := `---
@@ -111,7 +112,7 @@ spec:
 
 	logger.Section("deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{StdinReader: strings.NewReader(repoYml)})
+			e2e.RunOpts{StdinReader: strings.NewReader(repoYml)})
 	})
 
 	expectedStatus := v1alpha1.PackageRepositoryStatus{
@@ -160,9 +161,9 @@ spec:
 }
 
 func Test_PackageRepoBundle_PackagesAvailable(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kubectl := Kubectl{t, env.Namespace, logger}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
 	// contents of this bundle (k8slt/k8slt/kappctrl-e2e-repo-bundle)
 	// under examples/packaging-demo/repo-bundle
 	yamlRepo := `---
@@ -180,19 +181,19 @@ spec:
 	}
 	defer cleanUp()
 
-	kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(yamlRepo)})
+	kubectl.RunWithOpts([]string{"apply", "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(yamlRepo)})
 
 	retry(t, 30*time.Second, func() error {
-		_, err := kubectl.RunWithOpts([]string{"get", "pkgm/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
+		_, err := kubectl.RunWithOpts([]string{"get", "pkgm/pkg.test.carvel.dev"}, e2e.RunOpts{AllowError: true})
 		if err != nil {
 			return fmt.Errorf("Expected to find pkgm pkg.test.carvel.dev, but couldn't: %v", err)
 		}
 
-		_, err = kubectl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
+		_, err = kubectl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"}, e2e.RunOpts{AllowError: true})
 		if err != nil {
 			return fmt.Errorf("Expected to find pkg (pkg.test.carvel.dev.1.0.0, pkg.test.carvel.dev.2.0.0) but couldn't: %v", err)
 		}
-		_, err = kubectl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
+		_, err = kubectl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"}, e2e.RunOpts{AllowError: true})
 		if err != nil {
 			return fmt.Errorf("Expected to find pkg (pkg.test.carvel.dev.1.0.0, pkg.test.carvel.dev.2.0.0) but couldn't: %v", err)
 		}
@@ -201,10 +202,10 @@ spec:
 }
 
 func Test_PackageRepoDelete(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	kctl := Kubectl{t, env.Namespace, logger}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kctl := e2e.Kubectl{t, env.Namespace, logger}
 
 	repoYaml := `---
 apiVersion: packaging.carvel.dev/v1alpha1
@@ -217,10 +218,10 @@ spec:
       image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c`
 
 	cleanUp := func() {
-		kctl.RunWithOpts([]string{"delete", "package/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
-		kctl.RunWithOpts([]string{"delete", "package/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
-		kctl.RunWithOpts([]string{"delete", "packagemetadata/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
-		kctl.RunWithOpts([]string{"delete", "pkgr/basic.test.carvel.dev"}, RunOpts{AllowError: true})
+		kctl.RunWithOpts([]string{"delete", "package/pkg.test.carvel.dev.1.0.0"}, e2e.RunOpts{AllowError: true})
+		kctl.RunWithOpts([]string{"delete", "package/pkg.test.carvel.dev.2.0.0"}, e2e.RunOpts{AllowError: true})
+		kctl.RunWithOpts([]string{"delete", "packagemetadata/pkg.test.carvel.dev"}, e2e.RunOpts{AllowError: true})
+		kctl.RunWithOpts([]string{"delete", "pkgr/basic.test.carvel.dev"}, e2e.RunOpts{AllowError: true})
 		// kapp delete still needed in event checking if packages existing fails
 		kapp.Run([]string{"delete", "-a", "repo"})
 	}
@@ -228,22 +229,22 @@ spec:
 
 	logger.Section("deploy repo", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", "repo"},
-			RunOpts{StdinReader: strings.NewReader(repoYaml)})
+			e2e.RunOpts{StdinReader: strings.NewReader(repoYaml)})
 	})
 
 	logger.Section("check packages exist", func() {
 		retry(t, 30*time.Second, func() error {
-			_, err := kctl.RunWithOpts([]string{"get", "pkgm/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
+			_, err := kctl.RunWithOpts([]string{"get", "pkgm/pkg.test.carvel.dev"}, e2e.RunOpts{AllowError: true})
 			if err != nil {
 				return fmt.Errorf("Expected to find pkgm pkg.test.carvel.dev, but couldn't: %v", err)
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
+			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"}, e2e.RunOpts{AllowError: true})
 			if err != nil {
 				return fmt.Errorf("Expected to find package pkg.test.carvel.dev.1.0.0: %v", err)
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
+			_, err = kctl.RunWithOpts([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"}, e2e.RunOpts{AllowError: true})
 			if err != nil {
 				return fmt.Errorf("Expected to find package pkg.test.carvel.dev.2.0.0: %v", err)
 			}
@@ -257,12 +258,12 @@ spec:
 
 	logger.Section("check packages are deleted too", func() {
 		retry(t, 10*time.Second, func() error {
-			_, err := kctl.RunWithOpts([]string{"get", "pkgm/pkg.test.carvel.dev"}, RunOpts{AllowError: true})
+			_, err := kctl.RunWithOpts([]string{"get", "pkgm/pkg.test.carvel.dev"}, e2e.RunOpts{AllowError: true})
 			if err == nil || !strings.Contains(err.Error(), "\"pkg.test.carvel.dev\" not found") {
 				return fmt.Errorf("Expected not to find pkgm pkg.test.carvel.dev, but did: %v", err)
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev.1.0.0"}, RunOpts{AllowError: true})
+			_, err = kctl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev.1.0.0"}, e2e.RunOpts{AllowError: true})
 			if err == nil {
 				return fmt.Errorf("Expected not to find package pkg.test.carvel.dev.1.0.0, but did")
 			}
@@ -271,7 +272,7 @@ spec:
 				return fmt.Errorf("Expected not found error for pkg.test.carvel.dev.1.0.0, but got: %v", err)
 			}
 
-			_, err = kctl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev.2.0.0"}, RunOpts{AllowError: true})
+			_, err = kctl.RunWithOpts([]string{"get", "package/pkg.test.carvel.dev.2.0.0"}, e2e.RunOpts{AllowError: true})
 			if err == nil {
 				return fmt.Errorf("Expected no to find package pkg.test.carvel.dev.2.0.0, but did")
 			}
@@ -285,10 +286,10 @@ spec:
 }
 
 func Test_PackageRepoStatus_ShowsWithKubectlGet(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
 	name := "repo-status"
 
 	repoYaml := fmt.Sprintf(`apiVersion: packaging.carvel.dev/v1alpha1
@@ -310,10 +311,10 @@ spec:
 	// deploy failing repo
 	logger.Section("deploy failing repo", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{StdinReader: strings.NewReader(repoYaml)})
+			e2e.RunOpts{StdinReader: strings.NewReader(repoYaml)})
 	})
 
-	out, err := kubectl.RunWithOpts([]string{"get", "pkgr/" + name}, RunOpts{AllowError: true})
+	out, err := kubectl.RunWithOpts([]string{"get", "pkgr/" + name}, e2e.RunOpts{AllowError: true})
 	if err != nil {
 		t.Fatalf("encountered unknown error from kubectl get pkgr: %v", err)
 	}

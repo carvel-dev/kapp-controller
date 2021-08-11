@@ -14,9 +14,9 @@ import (
 )
 
 type Kapp struct {
-	t         *testing.T
-	namespace string
-	l         Logger
+	T         *testing.T
+	Namespace string
+	L         Logger
 }
 
 type RunOpts struct {
@@ -38,10 +38,10 @@ func (k Kapp) Run(args []string) string {
 
 func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	if !opts.NoNamespace {
-		args = append(args, []string{"-n", k.namespace}...)
+		args = append(args, []string{"-n", k.Namespace}...)
 	}
 	if opts.IntoNs {
-		args = append(args, []string{"--into-ns", k.namespace}...)
+		args = append(args, []string{"--into-ns", k.Namespace}...)
 	}
 	if !opts.Interactive {
 		args = append(args, "--yes")
@@ -51,7 +51,7 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 		ctx = context.TODO()
 	}
 
-	k.l.Debugf("Running '%s'...\n", k.cmdDesc(args, opts))
+	k.L.Debugf("Running '%s'...\n", k.cmdDesc(args, opts))
 
 	cmdName := "kapp"
 	cmd := exec.CommandContext(ctx, cmdName, args...)
@@ -78,7 +78,7 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 		err = fmt.Errorf("Execution error: stdout: '%s' stderr: '%s' error: '%s'", stdoutStr, stderr.String(), err)
 
 		if !opts.AllowError {
-			k.t.Fatalf("Failed to successfully execute '%s': %v", k.cmdDesc(args, opts), err)
+			k.T.Fatalf("Failed to successfully execute '%s': %v", k.cmdDesc(args, opts), err)
 		}
 	}
 
