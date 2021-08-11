@@ -108,7 +108,7 @@ func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kc
 // Run spawns a go routine that exits when apiserver is stopped.
 func (as *APIServer) Run() error {
 	const (
-		retries = 30
+		retries = 60
 	)
 	go as.server.PrepareRun().Run(as.stopCh)
 
