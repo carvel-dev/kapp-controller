@@ -12,13 +12,20 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type PackageInstallReconciler struct {
-	kcClient  kcclient.Interface
-	pkgClient pkgclient.Interface
-	log       logr.Logger
+	kcClient   kcclient.Interface
+	pkgClient  pkgclient.Interface
+	coreClient kubernetes.Interface
+	log        logr.Logger
+}
+
+// NewPackageInstallReconciler is the constructor for the PackageInstallReconciler struct
+func NewPackageInstallReconciler(kcClient kcclient.Interface, pkgClient pkgclient.Interface, coreClient kubernetes.Interface, log logr.Logger) *PackageInstallReconciler {
+	return &PackageInstallReconciler{kcClient: kcClient, pkgClient: pkgClient, coreClient: coreClient, log: log}
 }
 
 var _ reconcile.Reconciler = &PackageInstallReconciler{}
@@ -37,5 +44,5 @@ func (r *PackageInstallReconciler) Reconcile(ctx context.Context, request reconc
 		return reconcile.Result{}, err
 	}
 
-	return packageinstall.NewPackageInstallCR(existingPkgInstall, log, r.kcClient, r.pkgClient).Reconcile()
+	return packageinstall.NewPackageInstallCR(existingPkgInstall, log, r.kcClient, r.pkgClient, r.coreClient).Reconcile()
 }

@@ -163,11 +163,7 @@ func Run(opts Options, runLog logr.Logger) {
 
 	{ // add controller for PackageInstall
 		pkgInstallCtrlOpts := controller.Options{
-			Reconciler: &PackageInstallReconciler{
-				kcClient:  kcClient,
-				pkgClient: pkgClient,
-				log:       runLog.WithName("ipr"),
-			},
+			Reconciler:              NewPackageInstallReconciler(kcClient, pkgClient, coreClient, runLog.WithName("ipr")),
 			MaxConcurrentReconciles: opts.Concurrency,
 		}
 

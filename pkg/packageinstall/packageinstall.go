@@ -6,6 +6,7 @@ package packageinstall
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -16,9 +17,11 @@ import (
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reconciler"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -27,16 +30,16 @@ type PackageInstallCR struct {
 	model           *pkgingv1alpha1.PackageInstall
 	unmodifiedModel *pkgingv1alpha1.PackageInstall
 
-	log       logr.Logger
-	kcclient  kcclient.Interface
-	pkgclient pkgclient.Interface
+	log        logr.Logger
+	kcclient   kcclient.Interface
+	pkgclient  pkgclient.Interface
+	coreClient kubernetes.Interface
 }
 
 func NewPackageInstallCR(model *pkgingv1alpha1.PackageInstall, log logr.Logger,
-	kcclient kcclient.Interface, pkgclient pkgclient.Interface) *PackageInstallCR {
+	kcclient kcclient.Interface, pkgclient pkgclient.Interface, coreClient kubernetes.Interface) *PackageInstallCR {
 
-	return &PackageInstallCR{model: model, unmodifiedModel: model.DeepCopy(),
-		log: log, kcclient: kcclient, pkgclient: pkgclient}
+	return &PackageInstallCR{model: model, unmodifiedModel: model.DeepCopy(), log: log, kcclient: kcclient, pkgclient: pkgclient, coreClient: coreClient}
 }
 
 func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
@@ -89,6 +92,10 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 	existingApp, err := pi.kcclient.KappctrlV1alpha1().Apps(pi.model.Namespace).Get(context.Background(), pi.model.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
+			err := pi.createPlaceHolderSecrets(&pv)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
 			return pi.createAppFromPackage(pv)
 		}
 		return reconcile.Result{Requeue: true}, err
@@ -122,6 +129,7 @@ func (pi *PackageInstallCR) createAppFromPackage(pv datapkgingv1alpha1.Package) 
 	return reconcile.Result{}, nil
 }
 
+// TODO: How to handle placeholder secrets for updates
 func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App, pv datapkgingv1alpha1.Package) (reconcile.Result, error) {
 	desiredApp, err := NewApp(existingApp, pi.model, pv)
 	if err != nil {
@@ -265,4 +273,54 @@ func (pi *PackageInstallCR) update(updateFunc func(*pkgingv1alpha1.PackageInstal
 	}
 
 	return fmt.Errorf("Updating package install: %s", lastErr)
+}
+
+func (pi *PackageInstallCR) createPlaceHolderSecrets(pv *datapkgingv1alpha1.Package) error {
+	for i, fetch := range pv.Spec.Template.Spec.Fetch {
+		if fetch.ImgpkgBundle != nil && fetch.ImgpkgBundle.SecretRef == nil {
+			secretName, err := pi.createSecretForSecretgenController(i)
+			if err != nil {
+				return err
+			}
+			pv.Spec.Template.Spec.Fetch[i].ImgpkgBundle.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
+		}
+
+		if fetch.Image != nil && fetch.Image.SecretRef == nil {
+			secretName, err := pi.createSecretForSecretgenController(i)
+			if err != nil {
+				return err
+			}
+			pv.Spec.Template.Spec.Fetch[i].Image.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
+		}
+	}
+	return nil
+}
+
+func (pi PackageInstallCR) createSecretForSecretgenController(iteration int) (string, error) {
+	secretName := fmt.Sprintf("%s-%s", pi.model.Name, "fetch"+strconv.Itoa(iteration))
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: pi.model.Namespace,
+			Annotations: map[string]string{
+				"secretgen.carvel.dev/image-pull-secret": "",
+			},
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: "packaging.carvel.dev/v1alpha1",
+					Kind:       "PackageInstall",
+					Name:       pi.model.Name,
+					UID:        pi.model.UID,
+				},
+			},
+		},
+	}
+
+	_, err := pi.coreClient.CoreV1().Secrets(pi.model.Namespace).Create(context.Background(), secret, metav1.CreateOptions{})
+	if err != nil {
+		if !errors.IsAlreadyExists(err) {
+			return "", err
+		}
+	}
+	return secretName, nil
 }
