@@ -51,6 +51,7 @@ jobs:
         minikube start --driver=docker
         eval $(minikube docker-env --shell=bash)
 
+        export KAPPCTRL_E2E_SECRETGEN_CONTROLLER=true
         ./hack/deploy-test.sh
 
         export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
