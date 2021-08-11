@@ -1,7 +1,7 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package e2e
+package kappcontroller
 
 import (
 	"fmt"
@@ -9,15 +9,16 @@ import (
 	"testing"
 
 	"github.com/ghodss/yaml"
+	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
 )
 
 func Test_YttTemplate_UsesFileMarks(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 
 	name := "configmap-with-non-yml-ext-file"
 	// This App's ConfigMap is in a non yaml file
@@ -62,7 +63,7 @@ spec:
 	defer cleanUp()
 
 	logger.Section("deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(appYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
 	})
 
 	logger.Section("check ConfigMap exists", func() {
@@ -71,11 +72,11 @@ spec:
 }
 
 func Test_YttTemplate_ValuesFrom(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 
 	name := "ytt-values-from"
 	appYaml := fmt.Sprintf(`
@@ -140,7 +141,7 @@ data:
 	defer cleanUp()
 
 	logger.Section("deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(appYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
 	})
 
 	logger.Section("check ConfigMap exists", func() {

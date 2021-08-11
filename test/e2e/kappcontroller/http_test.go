@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package e2e
+package kappcontroller
 
 import (
 	"fmt"
@@ -11,31 +11,30 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestGitHttpsPublic(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+func TestHTTP(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 
 	yaml1 := fmt.Sprintf(`
----
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
-  name: test-git-https-public
+  name: test-http
   annotations:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
-  - git:
-      url: https://github.com/k14s/kapp
-      ref: origin/develop
-      subPath: examples/gitops/guestbook
+  - http:
+      url: https://raw.githubusercontent.com/k14s/kapp/db2cc63e12e988235eb8815af8edc0ca0cfaa79c/examples/simple-app-example/config-1.yml
+      sha256: 71b0a2dceb6bb6e7a519d0587abd9400a265cabbe2c084f783df94a92db6d980
   template:
   - ytt: {}
   deploy:
@@ -43,7 +42,7 @@ spec:
       intoNs: %s
 `, env.Namespace) + sas.ForNamespaceYAML()
 
-	name := "test-git-https-public"
+	name := "test-http"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
 	}
@@ -53,7 +52,7 @@ spec:
 
 	logger.Section("deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+			e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
 		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
 
@@ -92,7 +91,7 @@ spec:
 		{
 			// deploy
 			if !strings.Contains(cr.Status.Deploy.Stdout, "Wait to:") {
-				t.Fatalf("Expected non-empty deploy output")
+				t.Fatalf("Expected non-empty deploy output: '%s'", cr.Status.Deploy.Stdout)
 			}
 			cr.Status.Deploy.StartedAt = metav1.Time{}
 			cr.Status.Deploy.UpdatedAt = metav1.Time{}
@@ -107,8 +106,8 @@ spec:
 			cr.Status.Fetch.Stdout = ""
 
 			// inspect
-			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-git-https-public-ctrl'") {
-				t.Fatalf("Expected non-empty inspect output")
+			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-http-ctrl'") {
+				t.Fatalf("Expected non-empty inspect output: '%s'", cr.Status.Inspect.Stdout)
 			}
 			cr.Status.Inspect.UpdatedAt = metav1.Time{}
 			cr.Status.Inspect.Stdout = ""
@@ -124,52 +123,52 @@ spec:
 	})
 }
 
-func TestGitSshPrivate(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+func TestHTTPSSelfSignedCerts(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 
-	yaml1 := fmt.Sprintf(`
----
+	// When updating, certs and keys must be regenerated for server and added to server.go and config-test/config-map.yml
+	serverNamespace := "https-server"
+
+	yaml1 := fmt.Sprintf(`---
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
-  name: test-git-ssh-private
+  name: test-https
   annotations:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
-  - git:
-      url: git@git-server.%s.svc.cluster.local:/git-server/repos/myrepo.git
-      ref: origin/master
-      secretRef:
-        name: git-private-key
+  - http:
+      url: https://https-svc.%s.svc.cluster.local:443/deployment.yml
   template:
   - ytt: {}
   deploy:
   - kapp:
       intoNs: %s
-`, env.Namespace, env.Namespace) + sas.ForNamespaceYAML()
+`, serverNamespace, env.Namespace) + sas.ForNamespaceYAML()
 
-	name := "test-git-ssh-private"
-	gitServerName := "test-git-server"
+	name := "test-https"
+	httpsServerName := "test-https-server"
+
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
-		kapp.Run([]string{"delete", "-a", gitServerName})
+		kapp.Run([]string{"delete", "-a", httpsServerName, "-n", serverNamespace})
 	}
 
 	cleanUp()
 	defer cleanUp()
 
-	logger.Section("deploy git server", func() {
-		kapp.Run([]string{"deploy", "-f", "assets/git-server.yml", "-a", gitServerName})
+	logger.Section("deploy https server with self signed certs", func() {
+		kapp.Run([]string{"deploy", "-f", "../assets/https-server/server.yml", "-f", "../assets/https-server/certs-for-custom-ca.yml", "-a", httpsServerName})
 	})
 
 	logger.Section("deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+			e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
 		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
 
@@ -208,7 +207,7 @@ spec:
 		{
 			// deploy
 			if !strings.Contains(cr.Status.Deploy.Stdout, "Wait to:") {
-				t.Fatalf("Expected non-empty deploy output")
+				t.Fatalf("Expected non-empty deploy output: '%s'", cr.Status.Deploy.Stdout)
 			}
 			cr.Status.Deploy.StartedAt = metav1.Time{}
 			cr.Status.Deploy.UpdatedAt = metav1.Time{}
@@ -223,8 +222,8 @@ spec:
 			cr.Status.Fetch.Stdout = ""
 
 			// inspect
-			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-git-ssh-private-ctrl'") {
-				t.Fatalf("Expected non-empty inspect output")
+			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-https-ctrl'") {
+				t.Fatalf("Expected non-empty inspect output: '%s'", cr.Status.Inspect.Stdout)
 			}
 			cr.Status.Inspect.UpdatedAt = metav1.Time{}
 			cr.Status.Inspect.Stdout = ""
@@ -238,4 +237,5 @@ spec:
 			t.Fatalf("Status is not same: %#v vs %#v", expectedStatus, cr.Status)
 		}
 	})
+
 }

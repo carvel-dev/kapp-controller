@@ -1,20 +1,22 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package e2e
+package kappcontroller
 
 import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 )
 
 func Test_NoopDelete_DeletesAfterServiceAccountDeleted(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 	name := "instl-pkg-noop-delete"
 	cfgMapName := "configmap"
 
@@ -53,7 +55,7 @@ spec:
 	defer cleanUpConfigMap()
 
 	logger.Section("deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(appYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
 	})
 
 	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})

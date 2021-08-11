@@ -1,7 +1,7 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package e2e
+package kappcontroller
 
 import (
 	"fmt"
@@ -13,16 +13,17 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Test_PackageInstalled_FromPackageInstall_Successfully(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 	name := "instl-pkg-test"
 
 	installPkgYaml := fmt.Sprintf(`---
@@ -100,14 +101,14 @@ stringData:
 	cleanUp := func() {
 		// Delete App with kubectl first since kapp
 		// deletes ServiceAccount before App
-		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, RunOpts{AllowError: true})
+		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, e2e.RunOpts{AllowError: true})
 		kapp.Run([]string{"delete", "-a", name})
 	}
 	cleanUp()
 	defer cleanUp()
 
 	// Create Repo, PackageInstall, and App from YAML
-	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
 	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
 	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
@@ -172,11 +173,11 @@ stringData:
 }
 
 func Test_PackageInstallStatus_DisplaysUsefulErrorMessage_ForDeploymentFailure(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 	name := "instl-pkg-test-fail"
 
 	installPkgYaml := fmt.Sprintf(`---
@@ -242,14 +243,14 @@ stringData:
 	cleanUp := func() {
 		// Delete App with kubectl first since kapp
 		// deletes ServiceAccount before App
-		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, RunOpts{AllowError: true})
+		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, e2e.RunOpts{AllowError: true})
 		kapp.Run([]string{"delete", "-a", name})
 	}
 	cleanUp()
 	defer cleanUp()
 
 	// Create Repo, PackageInstall, and App from YAML
-	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
 	// wait for status to update for PackageInstall
 	var cr pkgingv1alpha1.PackageInstall
@@ -273,11 +274,11 @@ stringData:
 }
 
 func Test_PackageInstalled_FromPackageInstall_DeletionFailureBlocks(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 	name := "instl-pkg-failure-block-test"
 
 	// contents of this bundle (k8slt/kappctrl-e2e-repo)
@@ -315,7 +316,7 @@ spec:
 
 	logger.Section("Install package", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
-			RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+			e2e.RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
 	})
@@ -332,18 +333,18 @@ spec:
 
 	logger.Section("Bring back service account and see that kubectl delete succeeds", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-", "--filter-kind", "ServiceAccount"},
-			RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+			e2e.RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 
 		kubectl.Run([]string{"delete", "pkgi", name, "--wait=true"})
 	})
 }
 
 func Test_PackageInstall_UsesExistingAppWithSameName(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 	name := "pkg-instl-uses-app"
 
 	appYaml := fmt.Sprintf(`
@@ -427,11 +428,11 @@ spec:
 	defer cleanUp()
 
 	logger.Section("Create App CR", func() {
-		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(appYaml)})
+		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
 	})
 
 	logger.Section("Create PackageInstall with same name as App CR", func() {
-		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkginstallYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(pkginstallYaml)})
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
 	})
 
@@ -458,7 +459,7 @@ spec:
 		// Since the App was created first without the PackageInstall, the result of the
 		// PackageInstall using the existing App should be that it will be deleted when
 		// PackageInstall gets deleted.
-		out, err := kubectl.RunWithOpts([]string{"get", fmt.Sprintf("apps/%s", name)}, RunOpts{AllowError: true})
+		out, err := kubectl.RunWithOpts([]string{"get", fmt.Sprintf("apps/%s", name)}, e2e.RunOpts{AllowError: true})
 		if err == nil {
 			t.Fatalf("Expected no App to be found after PackageInstall is deleted\nGot: %s", out)
 		}
@@ -470,16 +471,16 @@ spec:
 }
 
 func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
 	name := "instl-pkg-upgrade-test"
 
 	cleanUp := func() {
 		// Delete App with kubectl first since kapp
 		// deletes ServiceAccount before App
-		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, RunOpts{AllowError: true})
+		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, e2e.RunOpts{AllowError: true})
 		kapp.Run([]string{"delete", "-a", name})
 	}
 	cleanUp()
@@ -487,7 +488,7 @@ func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
 
 	logger.Section("Create PackageInstall using version Package version 1.0.0", func() {
 		pkgInstallYaml := packageInstallVersionInYAML(name, env.Namespace, "1.0.0")
-		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkgInstallYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(pkgInstallYaml)})
 
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
@@ -511,7 +512,7 @@ func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
 
 	logger.Section("Create PackageInstall using version Package version 2.0.0", func() {
 		pkgInstallYaml := packageInstallVersionInYAML(name, env.Namespace, "2.0.0")
-		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(pkgInstallYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(pkgInstallYaml)})
 
 		kubectl.Run([]string{"wait", "--for=condition=Reconciling", "pkgi/" + name, "--timeout", "1m"})
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
@@ -547,7 +548,7 @@ func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
 }
 
 func packageInstallVersionInYAML(name, namespace, version string) string {
-	sas := ServiceAccounts{namespace}
+	sas := e2e.ServiceAccounts{namespace}
 
 	return fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1

@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package e2e
+package kappcontroller
 
 import (
 	"reflect"
@@ -11,14 +11,15 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestCancel(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 
 	yaml1 := `
 ---
@@ -111,14 +112,14 @@ data: {}
 
 	logger.Section("begin deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--wait=false"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+			e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
 		waitForDeployToStart(name, kapp, t)
 	})
 
 	logger.Section("cancel deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--wait=false"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+			e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 		waitForReconcileFailed(name, kapp, t)
 	})
@@ -128,11 +129,11 @@ data: {}
 	logger.Section("initiate delete", func() {
 		// kick off deletion but dont wait; do this
 		// before un-canceling as otherwise deploy will kick off again
-		kapp.RunWithOpts([]string{"delete", "-a", name, "--wait=false", "--filter-kind", "App"}, RunOpts{})
+		kapp.RunWithOpts([]string{"delete", "-a", name, "--wait=false", "--filter-kind", "App"}, e2e.RunOpts{})
 
 		// un-cancel now
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--wait=false"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+			e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 	})
 
 	logger.Section("verify canceled status", func() {
@@ -162,7 +163,7 @@ data: {}
 	})
 }
 
-func obtainApp(name string, kapp Kapp, t *testing.T) v1alpha1.App {
+func obtainApp(name string, kapp e2e.Kapp, t *testing.T) v1alpha1.App {
 	out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind", "App"})
 
 	var app v1alpha1.App
@@ -175,7 +176,7 @@ func obtainApp(name string, kapp Kapp, t *testing.T) v1alpha1.App {
 	return app
 }
 
-func waitForReconcileFailed(name string, kapp Kapp, t *testing.T) {
+func waitForReconcileFailed(name string, kapp e2e.Kapp, t *testing.T) {
 	count := 0
 	for {
 		app := obtainApp(name, kapp, t)
@@ -195,7 +196,7 @@ func waitForReconcileFailed(name string, kapp Kapp, t *testing.T) {
 	}
 }
 
-func waitForDeployToStart(name string, kapp Kapp, t *testing.T) {
+func waitForDeployToStart(name string, kapp e2e.Kapp, t *testing.T) {
 	count := 0
 	for {
 		app := obtainApp(name, kapp, t)

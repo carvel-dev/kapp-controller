@@ -5,8 +5,16 @@ Install ytt, kbld, kapp beforehand (https://k14s.io).
 ```
 ./hack/build.sh # to build locally
 
+# deploys secretgen-controller with kapp-controller
+# and also runs tests where kapp-controller integrates 
+# with secretgen-controller
+export KAPPCTRL_E2E_SECRETGEN_CONTROLLER=true
+
 # add `-v image_repo=docker.io/username/kapp-controller` with your registry to ytt invocation inside
 ./hack/deploy.sh # to deploy
+
+# deploys test assets in addition to kapp-controller for e2e tests
+./hack/deploy-test.sh
 
 export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
 ./hack/test-all.sh
