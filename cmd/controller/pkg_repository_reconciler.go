@@ -35,6 +35,8 @@ func NewPkgRepositoryReconciler(appClient kcclient.Interface, log logr.Logger, a
 func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
+	log.Info("Reconciling")
+
 	existingPkgRepository, err := r.client.PackagingV1alpha1().PackageRepositories(request.Namespace).Get(ctx, request.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {

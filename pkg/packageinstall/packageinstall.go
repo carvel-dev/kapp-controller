@@ -35,12 +35,11 @@ type PackageInstallCR struct {
 func NewPackageInstallCR(model *pkgingv1alpha1.PackageInstall, log logr.Logger,
 	kcclient kcclient.Interface, pkgclient pkgclient.Interface) *PackageInstallCR {
 
-	return &PackageInstallCR{model: model, unmodifiedModel: model.DeepCopy(), log: log, kcclient: kcclient, pkgclient: pkgclient}
+	return &PackageInstallCR{model: model, unmodifiedModel: model.DeepCopy(),
+		log: log, kcclient: kcclient, pkgclient: pkgclient}
 }
 
 func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
-	pi.log.Info(fmt.Sprintf("Reconciling PackageInstall '%s/%s'", pi.model.Namespace, pi.model.Name))
-
 	status := &reconciler.Status{
 		pi.model.Status.GenericStatus,
 		func(st kcv1alpha1.GenericStatus) { pi.model.Status.GenericStatus = st },
@@ -71,6 +70,8 @@ func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
 }
 
 func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile.Result, error) {
+	pi.log.Info("Reconciling")
+
 	err := pi.blockDeletion()
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
@@ -94,7 +95,6 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 	}
 
 	appStatus := reconciler.Status{S: existingApp.Status.GenericStatus}
-	pi.log.Info(fmt.Sprintf("Reconciling PackageInstall '%s/%s'", pi.model.Namespace, pi.model.Name))
 	switch {
 	case appStatus.IsReconciling():
 		modelStatus.SetReconciling(pi.model.ObjectMeta)
@@ -176,6 +176,8 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 }
 
 func (pi *PackageInstallCR) reconcileDelete(modelStatus *reconciler.Status) (reconcile.Result, error) {
+	pi.log.Info("Reconciling deletion")
+
 	existingApp, err := pi.kcclient.KappctrlV1alpha1().Apps(pi.model.Namespace).Get(
 		context.Background(), pi.model.Name, metav1.GetOptions{})
 	if err != nil {
@@ -192,7 +194,6 @@ func (pi *PackageInstallCR) reconcileDelete(modelStatus *reconciler.Status) (rec
 	}
 
 	appStatus := reconciler.Status{S: existingApp.Status.GenericStatus}
-	pi.log.Info(fmt.Sprintf("Reconciling deletion of PackageInstall '%s/%s'", pi.model.Namespace, pi.model.Name))
 	switch {
 	case appStatus.IsDeleting():
 		modelStatus.SetDeleting(pi.model.ObjectMeta)
