@@ -1,7 +1,7 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package e2e
+package kappcontroller
 
 import (
 	"fmt"
@@ -10,15 +10,16 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
+	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
 )
 
 func Test_AppReconcileOccurs_WhenSecretUpdated(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 
 	name := "configmap-with-secret"
 	// syncPeriod set to 1 hour so that test
@@ -73,7 +74,7 @@ stringData:
 	defer cleanUp()
 
 	logger.Section("deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(appYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
 	})
 
 	logger.Section("update secret", func() {
@@ -90,7 +91,7 @@ stringData:
     hello_msg: updated`
 
 		// Update secret
-		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(updatedSecret)})
+		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(updatedSecret)})
 	})
 
 	logger.Section("check App uses new secret", func() {
@@ -112,11 +113,11 @@ stringData:
 }
 
 func Test_AppReconcileOccurs_WhenConfigMapUpdated(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 
 	name := "configmap-with-configmap"
 	// syncPeriod set to 1 hour so that test
@@ -171,7 +172,7 @@ data:
 	defer cleanUp()
 
 	logger.Section("deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(appYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
 	})
 
 	logger.Section("update configmap", func() {
@@ -188,7 +189,7 @@ data:
     hello_msg: updated`
 
 		// Update configmap
-		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(updatedConfigMap)})
+		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(updatedConfigMap)})
 	})
 
 	logger.Section("check App uses new configmap", func() {

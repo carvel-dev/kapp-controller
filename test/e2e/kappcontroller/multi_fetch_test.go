@@ -1,21 +1,22 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package e2e
+package kappcontroller
 
 import (
 	"strings"
 	"testing"
 
 	"github.com/ghodss/yaml"
+	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
 )
 
 func TestMultiFetch(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 
 	yaml1 := `
 apiVersion: kappctrl.k14s.io/v1alpha1
@@ -61,7 +62,7 @@ spec:
 
 	logger.Section("deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+			e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 	})
 
 	logger.Section("verify", func() {

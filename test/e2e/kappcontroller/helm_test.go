@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package e2e
+package kappcontroller
 
 import (
 	"fmt"
@@ -11,15 +11,16 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestHelm(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 
 	expectedStatus := &v1alpha1.AppStatus{
 		GenericStatus: v1alpha1.GenericStatus{
@@ -146,7 +147,7 @@ stringData:
 
 			logger.Section("deploy", func() {
 				kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", tc.appCRName},
-					RunOpts{IntoNs: true, StdinReader: strings.NewReader(tc.deploymentYAML)})
+					e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(tc.deploymentYAML)})
 
 				out := kapp.Run([]string{"inspect", "-a", tc.appCRName, "--raw", "--tty=false", "--filter-kind=App"})
 

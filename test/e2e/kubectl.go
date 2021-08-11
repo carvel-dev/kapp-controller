@@ -13,9 +13,9 @@ import (
 )
 
 type Kubectl struct {
-	t         *testing.T
-	namespace string
-	l         Logger
+	T         *testing.T
+	Namespace string
+	L         Logger
 }
 
 func (k Kubectl) Run(args []string) string {
@@ -25,14 +25,14 @@ func (k Kubectl) Run(args []string) string {
 
 func (k Kubectl) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	if !opts.NoNamespace {
-		args = append(args, []string{"-n", k.namespace}...)
+		args = append(args, []string{"-n", k.Namespace}...)
 	}
 	ctx := opts.Ctx
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	k.l.Debugf("Running '%s'...\n", k.cmdDesc(args))
+	k.L.Debugf("Running '%s'...\n", k.cmdDesc(args))
 
 	var stderr bytes.Buffer
 	var stdout bytes.Buffer
@@ -53,7 +53,7 @@ func (k Kubectl) RunWithOpts(args []string, opts RunOpts) (string, error) {
 		err = fmt.Errorf("Execution error: stderr: '%s' error: '%s'", stderr.String(), err)
 
 		if !opts.AllowError {
-			k.t.Fatalf("Failed to successfully execute '%s': %v", k.cmdDesc(args), err)
+			k.T.Fatalf("Failed to successfully execute '%s': %v", k.cmdDesc(args), err)
 		}
 	}
 

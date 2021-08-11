@@ -1,7 +1,7 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package e2e
+package kappcontroller
 
 import (
 	"fmt"
@@ -10,21 +10,22 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
 )
 
 func Test_AppPause(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
 	name := "app-pause"
 
 	cleanUp := func() {
 		// Need to make sure App is not paused
 		// so need to create as part of deletion.
 		appYaml := appYAML(name, env.Namespace, "original", false)
-		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(appYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
 		kapp.Run([]string{"delete", "-a", name})
 	}
 	cleanUp()
@@ -33,20 +34,20 @@ func Test_AppPause(t *testing.T) {
 	// create originally as not paused otherwise
 	// App will not create original resources.
 	appYaml := appYAML(name, env.Namespace, "original", false)
-	_, err := kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(appYaml)})
+	_, err := kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
 	if err != nil {
 		t.Fatalf("Expected initial app dfeploy to succeed, it did not: %v", err)
 	}
 
 	// update app
 	appYaml = appYAML(name, env.Namespace, "change", true)
-	_, err = kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(appYaml)})
+	_, err = kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
 	if err != nil {
 		t.Fatalf("Expected initial app dfeploy to succeed, it did not: %v", err)
 	}
 
 	var cr v1alpha1.App
-	out, err := kubectl.RunWithOpts([]string{"get", "apps/" + name, "-o", "yaml"}, RunOpts{AllowError: true})
+	out, err := kubectl.RunWithOpts([]string{"get", "apps/" + name, "-o", "yaml"}, e2e.RunOpts{AllowError: true})
 	if err != nil {
 		t.Fatalf("failed to get App %s: %v", name, err)
 	}
@@ -60,7 +61,7 @@ func Test_AppPause(t *testing.T) {
 		t.Fatalf("expected App to have status Canceled/paused\nGot: %s", cr.Status.FriendlyDescription)
 	}
 
-	out, err = kubectl.RunWithOpts([]string{"get", "configmap/configmap", "-o", "yaml"}, RunOpts{AllowError: true})
+	out, err = kubectl.RunWithOpts([]string{"get", "configmap/configmap", "-o", "yaml"}, e2e.RunOpts{AllowError: true})
 	if err != nil {
 		t.Fatalf("failed to get configmap/configmap")
 	}
@@ -77,7 +78,7 @@ func Test_AppPause(t *testing.T) {
 }
 
 func appYAML(name, namespace, configMapValue string, paused bool) string {
-	sas := ServiceAccounts{namespace}
+	sas := e2e.ServiceAccounts{namespace}
 	return fmt.Sprintf(`---
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
