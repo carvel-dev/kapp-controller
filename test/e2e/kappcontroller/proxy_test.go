@@ -1,17 +1,19 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package e2e
+package kappcontroller
 
 import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 )
 
 func TestHTTPProxy(t *testing.T) {
-	logger := Logger{}
-	kubectl := Kubectl{t, "kapp-controller", logger}
+	logger := e2e.Logger{}
+	kubectl := e2e.Kubectl{t, "kapp-controller", logger}
 
 	// These two variables must match their respective values in config-test/confi-map.yml
 	proxyURL := "proxy-svc.proxy-server.svc.cluster.local:80"

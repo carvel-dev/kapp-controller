@@ -1,7 +1,7 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package e2e
+package kappcontroller
 
 import (
 	"fmt"
@@ -11,15 +11,16 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Test_FetchAndDeployImgpkgBundle_Successfully(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 
 	// contents for kappctrl-e2e-bundle
 	// available in test/e2e/assets/kappctrl-e2e-bundle
@@ -56,7 +57,7 @@ spec:
 
 	logger.Section("deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(appYaml)})
+			e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(appYaml)})
 
 		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
 
@@ -127,10 +128,10 @@ spec:
 }
 
 func TestImgpkgBundleSkipTLSVerify(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
-	sas := ServiceAccounts{env.Namespace}
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
 
 	// If this changes, the skip-tls-verify domain must be updated to match
 	registryNamespace := "registry"
@@ -165,12 +166,12 @@ spec:
 	defer cleanUp()
 
 	logger.Section("deploy registry with self signed certs", func() {
-		kapp.Run([]string{"deploy", "-f", "assets/registry/registry.yml", "-f", "assets/registry/certs-for-skip-tls.yml", "-a", registryName})
+		kapp.Run([]string{"deploy", "-f", "../assets/registry/registry.yml", "-f", "../assets/registry/certs-for-skip-tls.yml", "-a", registryName})
 	})
 
 	logger.Section("deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+			e2e.RunOpts{AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
 		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
 

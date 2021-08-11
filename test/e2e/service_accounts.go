@@ -8,7 +8,7 @@ import (
 )
 
 type ServiceAccounts struct {
-	namespace string
+	Namespace string
 }
 
 func (sa ServiceAccounts) ForNamespaceYAML() string {
@@ -49,5 +49,5 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: kappctrl-e2e-ns-role
-`, sa.namespace)
+`, sa.Namespace)
 }
