@@ -5,6 +5,7 @@ package kappcontroller
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"strings"
 	"testing"
@@ -126,7 +127,7 @@ stringData:
 				Type:   v1alpha1.ReconcileSucceeded,
 				Status: corev1.ConditionTrue,
 			}},
-			ObservedGeneration:  1,
+			ObservedGeneration:  2,
 			FriendlyDescription: "Reconcile succeeded",
 		},
 		Deploy: &v1alpha1.AppStatusDeploy{
@@ -142,7 +143,7 @@ stringData:
 		Template: &v1alpha1.AppStatusTemplate{
 			ExitCode: 0,
 		},
-		ConsecutiveReconcileSuccesses: 1,
+		ConsecutiveReconcileSuccesses: 2,
 	}
 
 	{
@@ -167,9 +168,7 @@ stringData:
 		cr.Status.Template.Stderr = ""
 	}
 
-	if !reflect.DeepEqual(expectedStatus, cr.Status) {
-		t.Fatalf("\nStatus is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, cr.Status)
-	}
+	assert.Equal(t, expectedStatus, cr.Status)
 }
 
 func Test_PackageInstallStatus_DisplaysUsefulErrorMessage_ForDeploymentFailure(t *testing.T) {
