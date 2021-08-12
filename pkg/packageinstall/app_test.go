@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/ghodss/yaml"
+	"github.com/stretchr/testify/require"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -363,4 +364,84 @@ func TestAppManuallyControlled(t *testing.T) {
 		bs, _ := yaml.Marshal(app)
 		t.Fatalf("App does not match expected app: (actual)\n%s", bs)
 	}
+}
+
+func TestAppCustomFetchSecretNames(t *testing.T) {
+	ipkg := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "app",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"ext.packaging.carvel.dev/fetch-0-secret-name": "secret0-name",
+				"ext.packaging.carvel.dev/fetch-1-secret-name": "secret1-name",
+				// no secret for fetch 2
+				"ext.packaging.carvel.dev/fetch-3-secret-name": "secret3-name",
+				"ext.packaging.carvel.dev/fetch-4-secret-name": "secret4-name",
+				"ext.packaging.carvel.dev/fetch-5-secret-name": "secret5-name",
+				"ext.packaging.carvel.dev/fetch-6-secret-name": "secret6-name",
+			},
+		},
+	}
+
+	pkgVersion := datapkgingv1alpha1.Package{
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "expec-pkg",
+			Version: "1.5.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &kcv1alpha1.AppSpec{
+					Fetch: []kcv1alpha1.AppFetch{
+						{HelmChart: &kcv1alpha1.AppFetchHelmChart{}},       // 0
+						{ImgpkgBundle: &kcv1alpha1.AppFetchImgpkgBundle{}}, // 1
+						{Image: &kcv1alpha1.AppFetchImage{}},               // 2
+						{Git: &kcv1alpha1.AppFetchGit{}},                   // 3
+						{HTTP: &kcv1alpha1.AppFetchHTTP{ // 4
+							SecretRef: &kcv1alpha1.AppFetchLocalRef{Name: "existing-secret-name"},
+						}},
+						{HelmChart: &kcv1alpha1.AppFetchHelmChart{ // 5
+							Repository: &kcv1alpha1.AppFetchHelmChartRepo{},
+						}},
+						{Image: &kcv1alpha1.AppFetchImage{}}, // 6
+					},
+				},
+			},
+		},
+	}
+
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	require.NoError(t, err)
+
+	expectedApp := &kcv1alpha1.App{
+		Spec: kcv1alpha1.AppSpec{
+			Fetch: []kcv1alpha1.AppFetch{
+				{HelmChart: &kcv1alpha1.AppFetchHelmChart{ // 0
+					// no repository specified, so no secret set
+				}},
+				{ImgpkgBundle: &kcv1alpha1.AppFetchImgpkgBundle{ // 1
+					SecretRef: &kcv1alpha1.AppFetchLocalRef{Name: "secret1-name"},
+				}},
+				{Image: &kcv1alpha1.AppFetchImage{ // 2
+					// no annotation specified, no secret set
+				}},
+				{Git: &kcv1alpha1.AppFetchGit{ // 3
+					SecretRef: &kcv1alpha1.AppFetchLocalRef{Name: "secret3-name"},
+				}},
+				{HTTP: &kcv1alpha1.AppFetchHTTP{ // 4
+					SecretRef: &kcv1alpha1.AppFetchLocalRef{Name: "secret4-name"},
+				}},
+				{HelmChart: &kcv1alpha1.AppFetchHelmChart{ // 5
+					Repository: &kcv1alpha1.AppFetchHelmChartRepo{
+						SecretRef: &kcv1alpha1.AppFetchLocalRef{Name: "secret5-name"},
+					},
+				}},
+				{Image: &kcv1alpha1.AppFetchImage{ // 6
+					SecretRef: &kcv1alpha1.AppFetchLocalRef{Name: "secret6-name"},
+				}},
+			},
+		},
+	}
+
+	// Not interesting in metadata in this test
+	app.ObjectMeta = metav1.ObjectMeta{}
+
+	require.Equal(t, expectedApp, app, "App does not match expected app")
 }
