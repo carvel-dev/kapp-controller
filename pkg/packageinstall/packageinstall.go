@@ -241,17 +241,28 @@ func (pi *PackageInstallCR) update(updateFunc func(*pkgingv1alpha1.PackageInstal
 	pi.log.Info("Updating installed package")
 
 	modelForUpdate := pi.model.DeepCopy()
-	updateFunc(modelForUpdate)
 
-	var err error
+	var lastErr error
+	for i := 0; i < 5; i++ {
+		updateFunc(modelForUpdate)
 
-	pi.model, err = pi.kcclient.PackagingV1alpha1().PackageInstalls(modelForUpdate.Namespace).Update(
-		context.Background(), modelForUpdate, metav1.UpdateOptions{})
-	if err != nil {
-		return fmt.Errorf("Updating installed package: %s", err)
+		updatedModel, err := pi.kcclient.PackagingV1alpha1().PackageInstalls(modelForUpdate.Namespace).Update(
+			context.Background(), modelForUpdate, metav1.UpdateOptions{})
+		if err == nil {
+			pi.model = updatedModel
+			pi.unmodifiedModel = updatedModel.DeepCopy()
+			return nil
+		}
+
+		lastErr = err
+
+		// if we errored, refresh the model we have
+		modelForUpdate, err = pi.kcclient.PackagingV1alpha1().PackageInstalls(modelForUpdate.Namespace).Get(
+			context.Background(), modelForUpdate.Name, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("Getting package install model: %s", err)
+		}
 	}
 
-	pi.unmodifiedModel = pi.model.DeepCopy()
-
-	return nil
+	return fmt.Errorf("Updating package install: %s", lastErr)
 }
