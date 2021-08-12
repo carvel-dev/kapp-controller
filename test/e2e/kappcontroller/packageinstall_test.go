@@ -5,13 +5,13 @@ package kappcontroller
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/ghodss/yaml"
+	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
@@ -127,7 +127,7 @@ stringData:
 				Type:   v1alpha1.ReconcileSucceeded,
 				Status: corev1.ConditionTrue,
 			}},
-			ObservedGeneration:  2,
+			ObservedGeneration:  1,
 			FriendlyDescription: "Reconcile succeeded",
 		},
 		Deploy: &v1alpha1.AppStatusDeploy{
@@ -143,7 +143,7 @@ stringData:
 		Template: &v1alpha1.AppStatusTemplate{
 			ExitCode: 0,
 		},
-		ConsecutiveReconcileSuccesses: 2,
+		ConsecutiveReconcileSuccesses: 1,
 	}
 
 	{
