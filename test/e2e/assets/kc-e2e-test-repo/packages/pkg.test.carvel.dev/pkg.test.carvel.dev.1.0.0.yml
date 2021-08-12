@@ -15,6 +15,7 @@ spec:
   capacityRequirementsDescription: "cpu: 1,RAM: 2, Disk: 3"
   releaseNotes: |
     - Introduce simple-app package
+  releasedAt: 2021-05-05T18:57:06Z
   template:
     # This is just an app template that will be combined with any values given in the
     # PackageInstall and turned in to an App CR in the cluster. kapp-controller will then
