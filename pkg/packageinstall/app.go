@@ -4,6 +4,7 @@
 package packageinstall
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -23,6 +24,8 @@ const (
 	ExtYttPathsFromSecretNameAnnKeyPrefix = ExtYttPathsFromSecretNameAnnKey + "."
 
 	ExtYttDataValuesOverlaysAnnKey = "ext.packaging.carvel.dev/ytt-data-values-overlays"
+
+	ExtFetchSecretNameAnnKeyFmt = "ext.packaging.carvel.dev/fetch-%d-secret-name"
 )
 
 func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall, pkgVersion datapkgingv1alpha1.Package) (*v1alpha1.App, error) {
@@ -46,6 +49,35 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 	err := controllerutil.SetControllerReference(pkgInstall, desiredApp, scheme.Scheme)
 	if err != nil {
 		return &v1alpha1.App{}, err
+	}
+
+	for i, fetchStep := range desiredApp.Spec.Fetch {
+		annKey := fmt.Sprintf(ExtFetchSecretNameAnnKeyFmt, i)
+
+		secretName, found := pkgInstall.Annotations[annKey]
+		if !found {
+			continue
+		}
+
+		secretRef := &kcv1alpha1.AppFetchLocalRef{Name: secretName}
+		switch {
+		case fetchStep.Inline != nil:
+			// do nothing
+		case fetchStep.Image != nil:
+			desiredApp.Spec.Fetch[i].Image.SecretRef = secretRef
+		case fetchStep.HTTP != nil:
+			desiredApp.Spec.Fetch[i].HTTP.SecretRef = secretRef
+		case fetchStep.Git != nil:
+			desiredApp.Spec.Fetch[i].Git.SecretRef = secretRef
+		case fetchStep.HelmChart != nil:
+			if desiredApp.Spec.Fetch[i].HelmChart.Repository != nil {
+				desiredApp.Spec.Fetch[i].HelmChart.Repository.SecretRef = secretRef
+			}
+		case fetchStep.ImgpkgBundle != nil:
+			desiredApp.Spec.Fetch[i].ImgpkgBundle.SecretRef = secretRef
+		default:
+			// do nothing
+		}
 	}
 
 	valuesApplied := false
