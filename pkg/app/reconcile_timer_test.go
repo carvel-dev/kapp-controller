@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -192,4 +193,32 @@ func TestFailedIsReadyAt(t *testing.T) {
 	if isReady {
 		t.Fatalf("Expected app to not be ready under syncPeriod of 2s")
 	}
+}
+
+func TestIsReadyAtWithStaleDeployTime(t *testing.T) {
+	syncPeriod := 2 * time.Second
+	timeNow := time.Now()
+	timeOfReady := timeNow.Add(syncPeriod)
+
+	app := v1alpha1.App{
+		Spec: v1alpha1.AppSpec{
+			SyncPeriod: &metav1.Duration{Duration: syncPeriod},
+		},
+		Status: v1alpha1.AppStatus{
+			Fetch: &v1alpha1.AppStatusFetch{
+				UpdatedAt: metav1.Time{Time: timeOfReady},
+				Error:     "I've failed you",
+			},
+			Deploy: &v1alpha1.AppStatusDeploy{
+				UpdatedAt: metav1.Time{Time: timeNow},
+			},
+			ConsecutiveReconcileFailures: 1,
+			GenericStatus: v1alpha1.GenericStatus{
+				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+			},
+		},
+	}
+
+	isReady := NewReconcileTimer(app).IsReadyAt(timeOfReady.Add(1 * time.Second))
+	require.False(t, isReady, "Expected app not to be ready, because deploy time is stale")
 }

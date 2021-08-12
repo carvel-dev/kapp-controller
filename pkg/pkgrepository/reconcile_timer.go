@@ -4,10 +4,12 @@
 package pkgrepository
 
 import (
+	"fmt"
 	"math"
 	"time"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -39,19 +41,9 @@ func (rt ReconcileTimer) IsReadyAt(timeAt time.Time) bool {
 		return false
 	}
 
-	var lastReconcileTime time.Time
-
-	// Use latest deploy time if available, otherwise fallback to fetch
-	// If no timestamp is available, enqueue immediately
-	lastDeploy := rt.app.Status.Deploy
-	lastFetch := rt.app.Status.Fetch
-	if lastDeploy != nil && !lastDeploy.UpdatedAt.Time.IsZero() {
-		lastReconcileTime = rt.app.Status.Deploy.UpdatedAt.Time
-	} else {
-		if lastFetch == nil {
-			return true
-		}
-		lastReconcileTime = lastFetch.UpdatedAt.Time
+	lastReconcileTime, err := rt.lastReconcileTime()
+	if err != nil {
+		return true
 	}
 
 	if rt.hasReconcileStatus(v1alpha1.ReconcileFailed) {
@@ -103,4 +95,34 @@ func (rt ReconcileTimer) hasReconcileStatus(c v1alpha1.AppConditionType) bool {
 func (rt ReconcileTimer) applyJitter(t time.Duration) time.Duration {
 	const appJitter time.Duration = 5 * time.Second
 	return t - appJitter + wait.Jitter(appJitter, 1.0)
+}
+
+func (rt ReconcileTimer) lastReconcileTime() (time.Time, error) {
+	// Determine latest time from status and use that as the
+	// last reconcile time
+	lastReconcileTime := metav1.Time{}
+	times := []metav1.Time{}
+	if rt.app.Status.Fetch != nil {
+		times = append(times, rt.app.Status.Fetch.UpdatedAt)
+	}
+
+	if rt.app.Status.Template != nil {
+		times = append(times, rt.app.Status.Template.UpdatedAt)
+	}
+
+	if rt.app.Status.Deploy != nil {
+		times = append(times, rt.app.Status.Deploy.UpdatedAt)
+	}
+
+	for _, time := range times {
+		if lastReconcileTime.Before(&time) {
+			lastReconcileTime = time
+		}
+	}
+
+	if lastReconcileTime.IsZero() {
+		return time.Time{}, fmt.Errorf("could not determine time of last reconcile")
+	}
+
+	return lastReconcileTime.Time, nil
 }
