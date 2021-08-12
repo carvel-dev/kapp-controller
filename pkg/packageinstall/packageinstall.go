@@ -129,8 +129,12 @@ func (pi *PackageInstallCR) createAppFromPackage(pv datapkgingv1alpha1.Package) 
 	return reconcile.Result{}, nil
 }
 
-// TODO: How to handle placeholder secrets for updates
 func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App, pv datapkgingv1alpha1.Package) (reconcile.Result, error) {
+	err := pi.createPlaceHolderSecrets(&pv)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	desiredApp, err := NewApp(existingApp, pi.model, pv)
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
