@@ -127,6 +127,10 @@ func Test_PackageInstall_CanAuthenticateToPrivateRepository_UsingPlaceholderSecr
 	name := "placeholder-private-auth"
 	sas := e2e.ServiceAccounts{env.Namespace}
 
+	// If this changes, the skip-tls-verify domain must be updated to match
+	registryNamespace := "registry"
+	registryName := "test-registry"
+
 	pkgiYaml := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
@@ -157,7 +161,7 @@ spec:
     spec:
       fetch:
       - imgpkgBundle:
-          image: 172.19.0.2:5000/kc-private-test
+          image: registry-svc.%[3]s.svc.cluster.local:443/my-repo/image
       template:
       - ytt: {}
       - kbld:
@@ -181,7 +185,7 @@ spec:
     refName: pkg.test.carvel.dev
     versionSelection:
       constraints: 1.0.0
-`, env.Namespace, name) + sas.ForNamespaceYAML()
+`, env.Namespace, name, registryNamespace) + sas.ForNamespaceYAML()
 
 	secretYaml := fmt.Sprintf(`
 ---
@@ -194,7 +198,7 @@ stringData:
   .dockerconfigjson: |
     {
       "auths": {
-        "https://172.19.0.2:5000": {
+        "registry-svc.%s.svc.cluster.local": {
           "username": "testuser",
           "password": "testpassword",
           "auth": ""
@@ -209,18 +213,23 @@ metadata:
 spec:
   toNamespaces:
   - %s
-`, env.Namespace)
+`, registryNamespace, env.Namespace)
 
 	cleanUp := func() {
 		// Delete App with kubectl first since kapp
 		// deletes ServiceAccount before App
 		kubectl.RunWithOpts([]string{"delete", "secret", name + "-fetch0"}, e2e.RunOpts{AllowError: true})
 		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, e2e.RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", registryName, "-n", registryNamespace})
 		kapp.Run([]string{"delete", "-a", name})
 		kapp.Run([]string{"delete", "-a", "secret-export"})
 	}
 	cleanUp()
 	defer cleanUp()
+
+	logger.Section("deploy registry with self signed certs", func() {
+		kapp.Run([]string{"deploy", "-f", "../assets/registry/registry2.yml", "-f", "../assets/registry/certs-for-skip-tls.yml", "-f", "../assets/registry/htpasswd-auth", "-a", registryName})
+	})
 
 	logger.Section("Create Docker Registry Secret", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", "secret-export", "-f", "-"},
@@ -230,12 +239,12 @@ spec:
 	logger.Section("Create PackageInstall", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
 			e2e.RunOpts{StdinReader: strings.NewReader(pkgiYaml)})
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
+		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "10m"})
 	})
 
 	logger.Section("Check PackageInstall/App succeed", func() {
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "app/" + name, "--timeout", "1m"})
+		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "5m"})
+		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "app/" + name, "--timeout", "5m"})
 		kubectl.Run([]string{"get", "configmap", "simple-app-values"})
 	})
 }
