@@ -318,6 +318,10 @@ func (pi PackageInstallCR) createSecretForSecretgenController(iteration int) (st
 				},
 			},
 		},
+		Data: map[string][]byte{
+			corev1.DockerConfigJsonKey: []byte(`{"auths":{}}`),
+		},
+		Type: corev1.SecretTypeDockerConfigJson,
 	}
 
 	_, err := pi.coreClient.CoreV1().Secrets(pi.model.Namespace).Create(context.Background(), secret, metav1.CreateOptions{})
@@ -325,6 +329,7 @@ func (pi PackageInstallCR) createSecretForSecretgenController(iteration int) (st
 		if !errors.IsAlreadyExists(err) {
 			return "", err
 		}
+		// TODO: Update with coreClient here?
 	}
 	return secretName, nil
 }
