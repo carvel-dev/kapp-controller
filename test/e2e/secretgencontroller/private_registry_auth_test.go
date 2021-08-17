@@ -201,7 +201,7 @@ stringData:
   .dockerconfigjson: |
     {
       "auths": {
-        "registry-svc.%s.svc.cluster.local": {
+        "registry-svc.%s.svc.cluster.local:443": {
           "username": "testuser",
           "password": "testpassword",
           "auth": ""
@@ -221,7 +221,6 @@ spec:
 	cleanUp := func() {
 		// Delete App with kubectl first since kapp
 		// deletes ServiceAccount before App
-		kubectl.RunWithOpts([]string{"delete", "secret", name + "-fetch0"}, e2e.RunOpts{AllowError: true})
 		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, e2e.RunOpts{AllowError: true})
 		kapp.Run([]string{"delete", "-a", registryName, "-n", registryNamespace})
 		kapp.Run([]string{"delete", "-a", name})
@@ -254,8 +253,8 @@ spec:
 	})
 
 	logger.Section("Check PackageInstall/App succeed", func() {
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "5m"})
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "app/" + name, "--timeout", "5m"})
+		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
+		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "app/" + name, "--timeout", "1m"})
 		kubectl.Run([]string{"get", "configmap", "e2e-test-map"})
 	})
 }
