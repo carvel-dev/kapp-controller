@@ -8,7 +8,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 )
 
@@ -239,7 +242,15 @@ spec:
 	logger.Section("Create PackageInstall", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
 			e2e.RunOpts{StdinReader: strings.NewReader(pkgiYaml)})
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "10m"})
+		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=PackageInstall"})
+
+		var cr v1alpha12.PackageInstall
+		err := yaml.Unmarshal([]byte(out), &cr)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal: %s", err)
+		}
+
+		require.Equal(t, "", cr.Status.UsefulErrorMessage)
 	})
 
 	logger.Section("Check PackageInstall/App succeed", func() {
