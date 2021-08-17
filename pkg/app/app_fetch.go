@@ -43,6 +43,13 @@ func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
 	}
 
 	result = a.runVendir(confReader, dstPath)
+	// always retry if error occurs before reporting
+	// failure. This is mainly done to support private
+	// registry authentication for images/bundles since
+	// placeholder secrets may not be populated in time.
+	if result.Error != nil && a.HasImageOrImgpkgBundle() {
+		result = a.runVendir(confReader, dstPath)
+	}
 
 	// if only one fetch, update dstPath for backwards compatibility
 	if len(a.app.Spec.Fetch) == 1 {
