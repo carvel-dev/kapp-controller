@@ -45,6 +45,8 @@ spec:
           value: /etc/htpasswd/auth
         - name: REGISTRY_AUTH_HTPASSWD_REALM
           value: registry-realm
+        - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
+          value: /var/lib/tmp/registry
         ports:
         - containerPort: 443
         volumeMounts:
@@ -54,6 +56,17 @@ spec:
         - mountPath: /etc/htpasswd
           readOnly: true
           name: htpasswd-auth
+        - mountPath: /var/lib
+          name: registry-sync
+      initContainers:
+      - name: registry-contents-populator
+        image: registry
+        command: ["/bin/sh","-c", "tar -xf /tmp/tmp-registry -C /var/lib"]
+        volumeMounts:
+          - mountPath: /tmp
+            name: registry-contents
+          - mountPath: /var/lib
+            name: registry-sync
       volumes:
       - name: registry-certs
         secret:
@@ -61,3 +74,8 @@ spec:
       - name: htpasswd-auth
         secret:
           secretName: htpasswd-auth
+      - name: registry-contents
+        configMap:
+          name: registry-contents
+      - name: registry-sync
+        emptyDir: {}

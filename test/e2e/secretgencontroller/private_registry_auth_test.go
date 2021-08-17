@@ -161,7 +161,7 @@ spec:
     spec:
       fetch:
       - imgpkgBundle:
-          image: registry-svc.%[3]s.svc.cluster.local:443/my-repo/image
+          image: registry-svc.%[3]s.svc.cluster.local:443/secret-test/test-bundle
       template:
       - ytt: {}
       - kbld:
@@ -228,7 +228,7 @@ spec:
 	defer cleanUp()
 
 	logger.Section("deploy registry with self signed certs", func() {
-		kapp.Run([]string{"deploy", "-f", "../assets/registry/registry2.yml", "-f", "../assets/registry/certs-for-skip-tls.yml", "-f", "../assets/registry/htpasswd-auth", "-a", registryName})
+		kapp.Run([]string{"deploy", "-f", "../assets/registry/registry2.yml", "-f", "../assets/registry/certs-for-skip-tls.yml", "-f", "../assets/registry/htpasswd-auth", "-f", "../assets/registry/registry-contents.yml", "-a", registryName})
 	})
 
 	logger.Section("Create Docker Registry Secret", func() {
@@ -245,6 +245,6 @@ spec:
 	logger.Section("Check PackageInstall/App succeed", func() {
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "5m"})
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "app/" + name, "--timeout", "5m"})
-		kubectl.Run([]string{"get", "configmap", "simple-app-values"})
+		kubectl.Run([]string{"get", "configmap", "e2e-test-map"})
 	})
 }
