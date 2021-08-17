@@ -326,10 +326,14 @@ func (pi PackageInstallCR) createSecretForSecretgenController(iteration int) (st
 
 	_, err := pi.coreClient.CoreV1().Secrets(pi.model.Namespace).Create(context.Background(), secret, metav1.CreateOptions{})
 	if err != nil {
-		if !errors.IsAlreadyExists(err) {
+		if errors.IsAlreadyExists(err) {
+			_, err = pi.coreClient.CoreV1().Secrets(pi.model.Namespace).Update(context.Background(), secret, metav1.UpdateOptions{})
+			if err != nil {
+				return "", err
+			}
+		} else {
 			return "", err
 		}
-		// TODO: Update with coreClient here?
 	}
 	return secretName, nil
 }
