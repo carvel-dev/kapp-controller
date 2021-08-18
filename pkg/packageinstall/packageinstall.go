@@ -85,21 +85,21 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 
 	modelStatus.SetReconciling(pi.model.ObjectMeta)
 
-	pv, err := pi.referencedPkgVersion()
+	pkg, err := pi.referencedPkgVersion()
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
 	}
 
-	pi.model.Status.Version = pv.Spec.Version
+	pi.model.Status.Version = pkg.Spec.Version
 
 	existingApp, err := pi.kcclient.KappctrlV1alpha1().Apps(pi.model.Namespace).Get(context.Background(), pi.model.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			pvWithPlaceholderSecrets, err := pi.reconcileFetchPlaceholderSecrets(pv)
+			pkgWithPlaceholderSecrets, err := pi.reconcileFetchPlaceholderSecrets(pkg)
 			if err != nil {
 				return reconcile.Result{}, err
 			}
-			return pi.createAppFromPackage(pvWithPlaceholderSecrets)
+			return pi.createAppFromPackage(pkgWithPlaceholderSecrets)
 		}
 		return reconcile.Result{Requeue: true}, err
 	}
@@ -115,11 +115,11 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 		modelStatus.SetReconcileCompleted(fmt.Errorf("Error (see .status.usefulErrorMessage for details)"))
 	}
 
-	return pi.reconcileAppWithPackage(existingApp, pv)
+	return pi.reconcileAppWithPackage(existingApp, pkg)
 }
 
-func (pi *PackageInstallCR) createAppFromPackage(pv datapkgingv1alpha1.Package) (reconcile.Result, error) {
-	desiredApp, err := NewApp(&v1alpha1.App{}, pi.model, pv)
+func (pi *PackageInstallCR) createAppFromPackage(pkg datapkgingv1alpha1.Package) (reconcile.Result, error) {
+	desiredApp, err := NewApp(&v1alpha1.App{}, pi.model, pkg)
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
 	}
@@ -132,13 +132,13 @@ func (pi *PackageInstallCR) createAppFromPackage(pv datapkgingv1alpha1.Package) 
 	return reconcile.Result{}, nil
 }
 
-func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App, pv datapkgingv1alpha1.Package) (reconcile.Result, error) {
-	pvWithPlaceholderSecrets, err := pi.reconcileFetchPlaceholderSecrets(pv)
+func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App, pkg datapkgingv1alpha1.Package) (reconcile.Result, error) {
+	pkgWithPlaceholderSecrets, err := pi.reconcileFetchPlaceholderSecrets(pkg)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	desiredApp, err := NewApp(existingApp, pi.model, pvWithPlaceholderSecrets)
+	desiredApp, err := NewApp(existingApp, pi.model, pkgWithPlaceholderSecrets)
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
 	}
@@ -160,7 +160,7 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 
 	semverConfig := pi.model.Spec.PackageRef.VersionSelection
 
-	pvList, err := pi.pkgclient.DataV1alpha1().Packages(pi.model.Namespace).List(context.Background(), metav1.ListOptions{})
+	pkgList, err := pi.pkgclient.DataV1alpha1().Packages(pi.model.Namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return datapkgingv1alpha1.Package{}, err
 	}
@@ -168,10 +168,10 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 	var versionStrs []string
 	versionToPkg := map[string]datapkgingv1alpha1.Package{}
 
-	for _, pv := range pvList.Items {
-		if pv.Spec.RefName == pi.model.Spec.PackageRef.RefName {
-			versionStrs = append(versionStrs, pv.Spec.Version)
-			versionToPkg[pv.Spec.Version] = pv
+	for _, pkg := range pkgList.Items {
+		if pkg.Spec.RefName == pi.model.Spec.PackageRef.RefName {
+			versionStrs = append(versionStrs, pkg.Spec.Version)
+			versionToPkg[pkg.Spec.Version] = pkg
 		}
 	}
 
@@ -282,15 +282,15 @@ func (pi *PackageInstallCR) update(updateFunc func(*pkgingv1alpha1.PackageInstal
 	return fmt.Errorf("Updating package install: %s", lastErr)
 }
 
-func (pi *PackageInstallCR) reconcileFetchPlaceholderSecrets(pv datapkgingv1alpha1.Package) (datapkgingv1alpha1.Package, error) {
-	pvCopy := pv.DeepCopy()
-	for i, fetch := range pvCopy.Spec.Template.Spec.Fetch {
+func (pi *PackageInstallCR) reconcileFetchPlaceholderSecrets(pkg datapkgingv1alpha1.Package) (datapkgingv1alpha1.Package, error) {
+	pkgCopy := pkg.DeepCopy()
+	for i, fetch := range pkgCopy.Spec.Template.Spec.Fetch {
 		if fetch.ImgpkgBundle != nil && fetch.ImgpkgBundle.SecretRef == nil {
 			secretName, err := pi.createSecretForSecretgenController(i)
 			if err != nil {
 				return datapkgingv1alpha1.Package{}, err
 			}
-			pvCopy.Spec.Template.Spec.Fetch[i].ImgpkgBundle.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
+			pkgCopy.Spec.Template.Spec.Fetch[i].ImgpkgBundle.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
 		}
 
 		if fetch.Image != nil && fetch.Image.SecretRef == nil {
@@ -298,10 +298,10 @@ func (pi *PackageInstallCR) reconcileFetchPlaceholderSecrets(pv datapkgingv1alph
 			if err != nil {
 				return datapkgingv1alpha1.Package{}, err
 			}
-			pvCopy.Spec.Template.Spec.Fetch[i].Image.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
+			pkgCopy.Spec.Template.Spec.Fetch[i].Image.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
 		}
 	}
-	return *pvCopy, nil
+	return *pkgCopy, nil
 }
 
 func (pi PackageInstallCR) createSecretForSecretgenController(iteration int) (string, error) {
