@@ -9,10 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 )
 
@@ -85,6 +83,7 @@ spec:
 	logger.Section("Check placeholder secret deleted after PackageInstall deleted", func() {
 		cleanUp()
 
+		// Sleep to give PackageInstall time to delete
 		time.Sleep(1 * time.Second)
 		out, err := kubectl.RunWithOpts([]string{"get", "secret", name + "-fetch-0"}, e2e.RunOpts{AllowError: true})
 
@@ -176,9 +175,9 @@ spec:
 		// Delete App with kubectl first since kapp
 		// deletes ServiceAccount before App
 		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, e2e.RunOpts{AllowError: true})
-		kapp.Run([]string{"delete", "-a", registryName, "-n", registryNamespace})
 		kapp.Run([]string{"delete", "-a", name})
 		kapp.Run([]string{"delete", "-a", "secret-export"})
+		kapp.Run([]string{"delete", "-a", registryName, "-n", registryNamespace})
 	}
 	cleanUp()
 	defer cleanUp()
@@ -195,19 +194,6 @@ spec:
 	logger.Section("Create PackageInstall", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
 			e2e.RunOpts{StdinReader: strings.NewReader(pkgiYaml)})
-		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=PackageInstall"})
-
-		var cr v1alpha12.PackageInstall
-		err := yaml.Unmarshal([]byte(out), &cr)
-		if err != nil {
-			t.Fatalf("Failed to unmarshal: %s", err)
-		}
-
-		// Check that PackageInstall has no error initially.
-		// Despite checking for ReconcileSucceeded below, the
-		// PackageInstall may start in a failing state if placeholder
-		// secret is not populated quick enough.
-		require.Equal(t, "", cr.Status.UsefulErrorMessage)
 
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "app/" + name, "--timeout", "1m"})
