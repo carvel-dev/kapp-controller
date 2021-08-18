@@ -7,6 +7,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -310,20 +313,14 @@ func (pi PackageInstallCR) createSecretForSecretgenController(iteration int) (st
 			Annotations: map[string]string{
 				"secretgen.carvel.dev/image-pull-secret": "",
 			},
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion: "packaging.carvel.dev/v1alpha1",
-					Kind:       "PackageInstall",
-					Name:       pi.model.Name,
-					UID:        pi.model.UID,
-				},
-			},
 		},
 		Data: map[string][]byte{
 			corev1.DockerConfigJsonKey: []byte(`{"auths":{}}`),
 		},
 		Type: corev1.SecretTypeDockerConfigJson,
 	}
+
+	controllerutil.SetOwnerReference(pi.model, secret, scheme.Scheme)
 
 	_, err := pi.coreClient.CoreV1().Secrets(pi.model.Namespace).Create(context.Background(), secret, metav1.CreateOptions{})
 	if err != nil {
