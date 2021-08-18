@@ -6,7 +6,6 @@ package packageinstall
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -303,7 +302,7 @@ func (pi *PackageInstallCR) reconcileFetchPlaceholderSecrets(pv datapkgingv1alph
 }
 
 func (pi PackageInstallCR) createSecretForSecretgenController(iteration int) (string, error) {
-	secretName := fmt.Sprintf("%s-%s", pi.model.Name, "fetch"+strconv.Itoa(iteration))
+	secretName := fmt.Sprintf("%s-fetch-%d", pi.model.Name, iteration)
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,

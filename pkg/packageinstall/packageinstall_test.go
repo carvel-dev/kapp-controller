@@ -171,7 +171,7 @@ func Test_PlaceHolderSecretCreated_WhenPackageHasNoSecretRef(t *testing.T) {
 	assert.Nil(t, err)
 
 	gvr := schema.GroupVersionResource{"", "v1", "secrets"}
-	obj, err := fakek8s.Tracker().Get(gvr, "", "instl-pkg-fetch0")
+	obj, err := fakek8s.Tracker().Get(gvr, "", "instl-pkg-fetch-0")
 	assert.Nil(t, err)
 	require.NotNil(t, obj)
 	secret := obj.(*corev1.Secret)
@@ -187,7 +187,7 @@ func Test_PlaceHolderSecretCreated_WhenPackageHasNoSecretRef(t *testing.T) {
 	assert.Equal(t, 1, len(app.Spec.Fetch))
 	assert.NotNil(t, app.Spec.Fetch[0].ImgpkgBundle.SecretRef, "expected ImgpkgBundle secretRef to be non nil but was nil")
 
-	assert.Equal(t, "instl-pkg-fetch0", app.Spec.Fetch[0].ImgpkgBundle.SecretRef.Name)
+	assert.Equal(t, "instl-pkg-fetch-0", app.Spec.Fetch[0].ImgpkgBundle.SecretRef.Name)
 }
 
 func Test_PlaceHolderSecretsCreated_WhenPackageHasMultipleFetchStages(t *testing.T) {
@@ -243,7 +243,7 @@ func Test_PlaceHolderSecretsCreated_WhenPackageHasMultipleFetchStages(t *testing
 	assert.Nil(t, err)
 
 	gvr := schema.GroupVersionResource{"", "v1", "secrets"}
-	obj, err := fakek8s.Tracker().Get(gvr, "", "instl-pkg-fetch0")
+	obj, err := fakek8s.Tracker().Get(gvr, "", "instl-pkg-fetch-0")
 	assert.Nil(t, err)
 	require.NotNil(t, obj)
 	secret := obj.(*corev1.Secret)
@@ -251,7 +251,7 @@ func Test_PlaceHolderSecretsCreated_WhenPackageHasMultipleFetchStages(t *testing
 	assert.True(t, ok)
 
 	gvr = schema.GroupVersionResource{"", "v1", "secrets"}
-	obj, err = fakek8s.Tracker().Get(gvr, "", "instl-pkg-fetch1")
+	obj, err = fakek8s.Tracker().Get(gvr, "", "instl-pkg-fetch-1")
 	assert.Nil(t, err)
 	require.NotNil(t, obj)
 	secret = obj.(*corev1.Secret)
@@ -268,8 +268,8 @@ func Test_PlaceHolderSecretsCreated_WhenPackageHasMultipleFetchStages(t *testing
 	assert.NotNil(t, app.Spec.Fetch[0].ImgpkgBundle.SecretRef, "expected ImgpkgBundle secretRef to be non nil but was nil")
 	assert.NotNil(t, app.Spec.Fetch[1].Image.SecretRef, "expected Image secretRef to be non nil but was nil")
 
-	assert.Equal(t, "instl-pkg-fetch0", app.Spec.Fetch[0].ImgpkgBundle.SecretRef.Name)
-	assert.Equal(t, "instl-pkg-fetch1", app.Spec.Fetch[1].Image.SecretRef.Name)
+	assert.Equal(t, "instl-pkg-fetch-0", app.Spec.Fetch[0].ImgpkgBundle.SecretRef.Name)
+	assert.Equal(t, "instl-pkg-fetch-1", app.Spec.Fetch[1].Image.SecretRef.Name)
 }
 
 func Test_PlaceHolderSecretsNotCreated_WhenFetchStagesHaveSecrets(t *testing.T) {
@@ -364,7 +364,6 @@ func Test_PlaceHolderSecretCreated_WhenPackageInstallUpdated(t *testing.T) {
 		},
 	}
 
-	// Load package into fake client
 	fakePkgClient := fakeapiserver.NewSimpleClientset(&pkg)
 
 	model := &pkgingv1alpha1.PackageInstall{
@@ -402,7 +401,7 @@ func Test_PlaceHolderSecretCreated_WhenPackageInstallUpdated(t *testing.T) {
 	assert.Nil(t, err)
 
 	gvr := schema.GroupVersionResource{"", "v1", "secrets"}
-	obj, err := fakek8s.Tracker().Get(gvr, "", "instl-pkg-fetch0")
+	obj, err := fakek8s.Tracker().Get(gvr, "", "instl-pkg-fetch-0")
 	assert.Nil(t, err)
 	require.NotNil(t, obj)
 	secret := obj.(*corev1.Secret)
@@ -418,7 +417,7 @@ func Test_PlaceHolderSecretCreated_WhenPackageInstallUpdated(t *testing.T) {
 	assert.Equal(t, 1, len(app.Spec.Fetch))
 	assert.NotNil(t, app.Spec.Fetch[0].ImgpkgBundle.SecretRef, "expected ImgpkgBundle secretRef to be non nil but was nil")
 
-	assert.Equal(t, "instl-pkg-fetch0", app.Spec.Fetch[0].ImgpkgBundle.SecretRef.Name)
+	assert.Equal(t, "instl-pkg-fetch-0", app.Spec.Fetch[0].ImgpkgBundle.SecretRef.Name)
 }
 
 func Test_PlaceHolderSecretUpdated_WhenPlaceHolderSecretAlreadyExists(t *testing.T) {
@@ -494,7 +493,7 @@ func Test_PlaceHolderSecretUpdated_WhenPlaceHolderSecretAlreadyExists(t *testing
 	assert.Nil(t, err)
 
 	gvr := schema.GroupVersionResource{"", "v1", "secrets"}
-	obj, err := fakek8s.Tracker().Get(gvr, "", "instl-pkg-fetch0")
+	obj, err := fakek8s.Tracker().Get(gvr, "", "instl-pkg-fetch-0")
 	assert.Nil(t, err)
 	require.NotNil(t, obj)
 	secret := obj.(*corev1.Secret)
@@ -513,5 +512,5 @@ func Test_PlaceHolderSecretUpdated_WhenPlaceHolderSecretAlreadyExists(t *testing
 	assert.Equal(t, 1, len(app.Spec.Fetch))
 	assert.NotNil(t, app.Spec.Fetch[0].ImgpkgBundle.SecretRef, "expected ImgpkgBundle secretRef to be non nil but was nil")
 
-	assert.Equal(t, "instl-pkg-fetch0", app.Spec.Fetch[0].ImgpkgBundle.SecretRef.Name)
+	assert.Equal(t, "instl-pkg-fetch-0", app.Spec.Fetch[0].ImgpkgBundle.SecretRef.Name)
 }
