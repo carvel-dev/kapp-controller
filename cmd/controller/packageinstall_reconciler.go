@@ -24,7 +24,8 @@ type PackageInstallReconciler struct {
 }
 
 // NewPackageInstallReconciler is the constructor for the PackageInstallReconciler struct
-func NewPackageInstallReconciler(kcClient kcclient.Interface, pkgClient pkgclient.Interface, coreClient kubernetes.Interface, log logr.Logger) *PackageInstallReconciler {
+func NewPackageInstallReconciler(kcClient kcclient.Interface, pkgClient pkgclient.Interface,
+	coreClient kubernetes.Interface, log logr.Logger) *PackageInstallReconciler {
 	return &PackageInstallReconciler{kcClient: kcClient, pkgClient: pkgClient, coreClient: coreClient, log: log}
 }
 

@@ -39,7 +39,8 @@ type PackageInstallCR struct {
 func NewPackageInstallCR(model *pkgingv1alpha1.PackageInstall, log logr.Logger,
 	kcclient kcclient.Interface, pkgclient pkgclient.Interface, coreClient kubernetes.Interface) *PackageInstallCR {
 
-	return &PackageInstallCR{model: model, unmodifiedModel: model.DeepCopy(), log: log, kcclient: kcclient, pkgclient: pkgclient, coreClient: coreClient}
+	return &PackageInstallCR{model: model, unmodifiedModel: model.DeepCopy(), log: log,
+		kcclient: kcclient, pkgclient: pkgclient, coreClient: coreClient}
 }
 
 func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
