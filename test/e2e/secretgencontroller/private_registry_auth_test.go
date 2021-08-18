@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
@@ -25,23 +26,6 @@ func Test_PlaceholderSecrets_DeletedWhenPackageInstallDeleted(t *testing.T) {
 
 	pkgiYaml := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageMetadata
-metadata:
-  name: pkg.test.carvel.dev
-  namespace: %[1]s
-spec:
-  # This is the name we want to reference in resources such as PackageInstall.
-  displayName: "Test PackageMetadata in repo"
-  shortDescription: "PackageMetadata used for testing"
-  longDescription: "A longer, more detailed description of what the package contains and what it is for"
-  providerName: Carvel
-  maintainers:
-  - name: carvel
-  categories:
-  - testing
-  supportDescription: "Description of support provided for the package"
----
-apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
   name: pkg.test.carvel.dev.1.0.0
@@ -49,12 +33,6 @@ metadata:
 spec:
   refName: pkg.test.carvel.dev
   version: 1.0.0
-  licenses:
-  - Apache 2.0
-  capactiyRequirementsDescription: "cpu: 1,RAM: 2, Disk: 3"
-  releaseNotes: |
-    - Introduce simple-app package
-  releasedAt: 2021-05-05T18:57:06Z
   template:
     spec:
       fetch:
@@ -82,17 +60,6 @@ spec:
     refName: pkg.test.carvel.dev
     versionSelection:
       constraints: 1.0.0
-  values:
-  - secretRef:
-      name: pkg-demo-values
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: pkg-demo-values
-stringData:
-  values.yml: |
-    hello_msg: "hi"
 `, env.Namespace, name) + sas.ForNamespaceYAML()
 
 	cleanUp := func() {
@@ -117,8 +84,12 @@ stringData:
 
 	logger.Section("Check placeholder secret deleted after PackageInstall deleted", func() {
 		cleanUp()
+
+		time.Sleep(1 * time.Second)
 		out, err := kubectl.RunWithOpts([]string{"get", "secret", name + "-fetch-0"}, e2e.RunOpts{AllowError: true})
-		assert.NotNil(t, err, "expected error from not finding placeholder secret.\nGot: "+out)
+
+		require.NotNil(t, err, "expected error from not finding placeholder secret.\nGot: "+out)
+		assert.True(t, strings.Contains("NotFound", out), "expected error to be is not found but got: %s", err)
 	})
 }
 
@@ -135,23 +106,6 @@ func Test_PackageInstall_CanAuthenticateToPrivateRepository_UsingPlaceholderSecr
 	registryName := "test-registry"
 
 	pkgiYaml := fmt.Sprintf(`---
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageMetadata
-metadata:
-  name: pkg.test.carvel.dev
-  namespace: %[1]s
-spec:
-  # This is the name we want to reference in resources such as PackageInstall.
-  displayName: "Test PackageMetadata in repo"
-  shortDescription: "PackageMetadata used for testing"
-  longDescription: "A longer, more detailed description of what the package contains and what it is for"
-  providerName: Carvel
-  maintainers:
-  - name: carvel
-  categories:
-  - testing
-  supportDescription: "Description of support provided for the package"
----
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
@@ -249,10 +203,12 @@ spec:
 			t.Fatalf("Failed to unmarshal: %s", err)
 		}
 
+		// Check that PackageInstall has no error initially.
+		// Despite checking for ReconcileSucceeded below, the
+		// PackageInstall may start in a failing state if placeholder
+		// secret is not populated quick enough.
 		require.Equal(t, "", cr.Status.UsefulErrorMessage)
-	})
 
-	logger.Section("Check PackageInstall/App succeed", func() {
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "app/" + name, "--timeout", "1m"})
 		kubectl.Run([]string{"get", "configmap", "e2e-test-map"})
