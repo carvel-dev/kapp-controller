@@ -93,11 +93,11 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 	existingApp, err := pi.kcclient.KappctrlV1alpha1().Apps(pi.model.Namespace).Get(context.Background(), pi.model.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			err := pi.reconcileFetchPlaceholderSecrets(&pv)
+			pvWithPlaceholderSecrets, err := pi.reconcileFetchPlaceholderSecrets(pv)
 			if err != nil {
 				return reconcile.Result{}, err
 			}
-			return pi.createAppFromPackage(pv)
+			return pi.createAppFromPackage(pvWithPlaceholderSecrets)
 		}
 		return reconcile.Result{Requeue: true}, err
 	}
@@ -131,12 +131,12 @@ func (pi *PackageInstallCR) createAppFromPackage(pv datapkgingv1alpha1.Package) 
 }
 
 func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App, pv datapkgingv1alpha1.Package) (reconcile.Result, error) {
-	err := pi.reconcileFetchPlaceholderSecrets(&pv)
+	pvWithPlaceholderSecrets, err := pi.reconcileFetchPlaceholderSecrets(pv)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	desiredApp, err := NewApp(existingApp, pi.model, pv)
+	desiredApp, err := NewApp(existingApp, pi.model, pvWithPlaceholderSecrets)
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
 	}
@@ -280,25 +280,26 @@ func (pi *PackageInstallCR) update(updateFunc func(*pkgingv1alpha1.PackageInstal
 	return fmt.Errorf("Updating package install: %s", lastErr)
 }
 
-func (pi *PackageInstallCR) reconcileFetchPlaceholderSecrets(pv *datapkgingv1alpha1.Package) error {
-	for i, fetch := range pv.Spec.Template.Spec.Fetch {
+func (pi *PackageInstallCR) reconcileFetchPlaceholderSecrets(pv datapkgingv1alpha1.Package) (datapkgingv1alpha1.Package, error) {
+	pvCopy := pv.DeepCopy()
+	for i, fetch := range pvCopy.Spec.Template.Spec.Fetch {
 		if fetch.ImgpkgBundle != nil && fetch.ImgpkgBundle.SecretRef == nil {
 			secretName, err := pi.createSecretForSecretgenController(i)
 			if err != nil {
-				return err
+				return datapkgingv1alpha1.Package{}, err
 			}
-			pv.Spec.Template.Spec.Fetch[i].ImgpkgBundle.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
+			pvCopy.Spec.Template.Spec.Fetch[i].ImgpkgBundle.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
 		}
 
 		if fetch.Image != nil && fetch.Image.SecretRef == nil {
 			secretName, err := pi.createSecretForSecretgenController(i)
 			if err != nil {
-				return err
+				return datapkgingv1alpha1.Package{}, err
 			}
-			pv.Spec.Template.Spec.Fetch[i].Image.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
+			pvCopy.Spec.Template.Spec.Fetch[i].Image.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
 		}
 	}
-	return nil
+	return *pvCopy, nil
 }
 
 func (pi PackageInstallCR) createSecretForSecretgenController(iteration int) (string, error) {
