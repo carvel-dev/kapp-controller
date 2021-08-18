@@ -112,12 +112,12 @@ stringData:
 	})
 
 	logger.Section("Check placeholder secret created", func() {
-		kubectl.Run([]string{"get", "secret", name + "-fetch0"})
+		kubectl.Run([]string{"get", "secret", name + "-fetch-0"})
 	})
 
 	logger.Section("Check placeholder secret deleted after PackageInstall deleted", func() {
 		cleanUp()
-		out, err := kubectl.RunWithOpts([]string{"get", "secret", name + "fetch0"}, e2e.RunOpts{AllowError: true})
+		out, err := kubectl.RunWithOpts([]string{"get", "secret", name + "-fetch-0"}, e2e.RunOpts{AllowError: true})
 		assert.NotNil(t, err, "expected error from not finding placeholder secret.\nGot: "+out)
 	})
 }
