@@ -1,0 +1,81 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: registry
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: registry
+  name: registry-svc
+spec:
+  selector:
+    app: self-signed-registry
+  ports:
+  - port: 443
+    targetPort: 443
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: self-signed-registry
+  namespace: registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app:  self-signed-registry
+  template:
+    metadata:
+      labels:
+        app: self-signed-registry
+    spec:
+      containers:
+      - name: self-signed-registry
+        image: registry
+        env:
+        - name: REGISTRY_HTTP_ADDR
+          value: 0.0.0.0:443
+        - name: REGISTRY_HTTP_TLS_CERTIFICATE
+          value: /etc/ssl/registry.crt
+        - name: REGISTRY_HTTP_TLS_KEY
+          value: /etc/ssl/registry.key
+        - name: REGISTRY_AUTH_HTPASSWD_PATH
+          value: /etc/htpasswd/auth
+        - name: REGISTRY_AUTH_HTPASSWD_REALM
+          value: registry-realm
+        - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
+          value: /var/lib/tmp/registry
+        ports:
+        - containerPort: 443
+        volumeMounts:
+        - mountPath: /etc/ssl
+          readOnly: true
+          name: registry-certs
+        - mountPath: /etc/htpasswd
+          readOnly: true
+          name: htpasswd-auth
+        - mountPath: /var/lib
+          name: registry-sync
+      initContainers:
+      - name: registry-contents-populator
+        image: registry
+        command: ["/bin/sh","-c", "tar -xf /tmp/tmp-registry -C /var/lib"]
+        volumeMounts:
+          - mountPath: /tmp
+            name: registry-contents
+          - mountPath: /var/lib
+            name: registry-sync
+      volumes:
+      - name: registry-certs
+        secret:
+          secretName: registry-certs
+      - name: htpasswd-auth
+        secret:
+          secretName: htpasswd-auth
+      - name: registry-contents
+        configMap:
+          name: registry-contents
+      - name: registry-sync
+        emptyDir: {}

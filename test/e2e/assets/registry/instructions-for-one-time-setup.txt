@@ -1,0 +1,17 @@
+# start the docker registry
+docker run -d -p 5000:5000 --restart=always -v/tmp/registry:/var/lib/registry --name registry registry:2
+
+# push the nearly empty bundle to the local registry
+imgpkg push -b localhost:5000/secret-test/test-bundle -f ./one-time-setup-for-secretgen-registry
+
+# grab the files from the mountpoint we made and stored them in a configmap
+## tar them
+tar -cf tmp-registry /tmp/registry
+## make the configmap
+kubectl create configmap registry-contents --from-file=./tmp-registry
+kubectl get configmap registry-contents -o yaml > registry-contents.yml
+## clean up temporary artifacts
+rm tmp-registry                                                                                                                                                                                   [16/08/21| 5:12PM]
+kubectl delete configmap registry-contents
+
+## clean up the yaml, deleting the uid and version,  and changing the namespace to be in the "registry" ns, not default

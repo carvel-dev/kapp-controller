@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
+	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
@@ -167,9 +168,7 @@ stringData:
 		cr.Status.Template.Stderr = ""
 	}
 
-	if !reflect.DeepEqual(expectedStatus, cr.Status) {
-		t.Fatalf("\nStatus is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, cr.Status)
-	}
+	assert.Equal(t, expectedStatus, cr.Status)
 }
 
 func Test_PackageInstallStatus_DisplaysUsefulErrorMessage_ForDeploymentFailure(t *testing.T) {

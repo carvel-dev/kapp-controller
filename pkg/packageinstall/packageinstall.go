@@ -7,6 +7,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -16,9 +19,11 @@ import (
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reconciler"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -27,16 +32,17 @@ type PackageInstallCR struct {
 	model           *pkgingv1alpha1.PackageInstall
 	unmodifiedModel *pkgingv1alpha1.PackageInstall
 
-	log       logr.Logger
-	kcclient  kcclient.Interface
-	pkgclient pkgclient.Interface
+	log        logr.Logger
+	kcclient   kcclient.Interface
+	pkgclient  pkgclient.Interface
+	coreClient kubernetes.Interface
 }
 
 func NewPackageInstallCR(model *pkgingv1alpha1.PackageInstall, log logr.Logger,
-	kcclient kcclient.Interface, pkgclient pkgclient.Interface) *PackageInstallCR {
+	kcclient kcclient.Interface, pkgclient pkgclient.Interface, coreClient kubernetes.Interface) *PackageInstallCR {
 
-	return &PackageInstallCR{model: model, unmodifiedModel: model.DeepCopy(),
-		log: log, kcclient: kcclient, pkgclient: pkgclient}
+	return &PackageInstallCR{model: model, unmodifiedModel: model.DeepCopy(), log: log,
+		kcclient: kcclient, pkgclient: pkgclient, coreClient: coreClient}
 }
 
 func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
@@ -79,17 +85,21 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 
 	modelStatus.SetReconciling(pi.model.ObjectMeta)
 
-	pv, err := pi.referencedPkgVersion()
+	pkg, err := pi.referencedPkgVersion()
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
 	}
 
-	pi.model.Status.Version = pv.Spec.Version
+	pi.model.Status.Version = pkg.Spec.Version
 
 	existingApp, err := pi.kcclient.KappctrlV1alpha1().Apps(pi.model.Namespace).Get(context.Background(), pi.model.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return pi.createAppFromPackage(pv)
+			pkgWithPlaceholderSecrets, err := pi.reconcileFetchPlaceholderSecrets(pkg)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+			return pi.createAppFromPackage(pkgWithPlaceholderSecrets)
 		}
 		return reconcile.Result{Requeue: true}, err
 	}
@@ -105,11 +115,11 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 		modelStatus.SetReconcileCompleted(fmt.Errorf("Error (see .status.usefulErrorMessage for details)"))
 	}
 
-	return pi.reconcileAppWithPackage(existingApp, pv)
+	return pi.reconcileAppWithPackage(existingApp, pkg)
 }
 
-func (pi *PackageInstallCR) createAppFromPackage(pv datapkgingv1alpha1.Package) (reconcile.Result, error) {
-	desiredApp, err := NewApp(&v1alpha1.App{}, pi.model, pv)
+func (pi *PackageInstallCR) createAppFromPackage(pkg datapkgingv1alpha1.Package) (reconcile.Result, error) {
+	desiredApp, err := NewApp(&v1alpha1.App{}, pi.model, pkg)
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
 	}
@@ -122,8 +132,13 @@ func (pi *PackageInstallCR) createAppFromPackage(pv datapkgingv1alpha1.Package) 
 	return reconcile.Result{}, nil
 }
 
-func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App, pv datapkgingv1alpha1.Package) (reconcile.Result, error) {
-	desiredApp, err := NewApp(existingApp, pi.model, pv)
+func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App, pkg datapkgingv1alpha1.Package) (reconcile.Result, error) {
+	pkgWithPlaceholderSecrets, err := pi.reconcileFetchPlaceholderSecrets(pkg)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	desiredApp, err := NewApp(existingApp, pi.model, pkgWithPlaceholderSecrets)
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
 	}
@@ -145,7 +160,7 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 
 	semverConfig := pi.model.Spec.PackageRef.VersionSelection
 
-	pvList, err := pi.pkgclient.DataV1alpha1().Packages(pi.model.Namespace).List(context.Background(), metav1.ListOptions{})
+	pkgList, err := pi.pkgclient.DataV1alpha1().Packages(pi.model.Namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return datapkgingv1alpha1.Package{}, err
 	}
@@ -153,10 +168,10 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 	var versionStrs []string
 	versionToPkg := map[string]datapkgingv1alpha1.Package{}
 
-	for _, pv := range pvList.Items {
-		if pv.Spec.RefName == pi.model.Spec.PackageRef.RefName {
-			versionStrs = append(versionStrs, pv.Spec.Version)
-			versionToPkg[pv.Spec.Version] = pv
+	for _, pkg := range pkgList.Items {
+		if pkg.Spec.RefName == pi.model.Spec.PackageRef.RefName {
+			versionStrs = append(versionStrs, pkg.Spec.Version)
+			versionToPkg[pkg.Spec.Version] = pkg
 		}
 	}
 
@@ -265,4 +280,53 @@ func (pi *PackageInstallCR) update(updateFunc func(*pkgingv1alpha1.PackageInstal
 	}
 
 	return fmt.Errorf("Updating package install: %s", lastErr)
+}
+
+func (pi *PackageInstallCR) reconcileFetchPlaceholderSecrets(pkg datapkgingv1alpha1.Package) (datapkgingv1alpha1.Package, error) {
+	pkgCopy := pkg.DeepCopy()
+	for i, fetch := range pkgCopy.Spec.Template.Spec.Fetch {
+		if fetch.ImgpkgBundle != nil && fetch.ImgpkgBundle.SecretRef == nil {
+			secretName, err := pi.createSecretForSecretgenController(i)
+			if err != nil {
+				return datapkgingv1alpha1.Package{}, err
+			}
+			pkgCopy.Spec.Template.Spec.Fetch[i].ImgpkgBundle.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
+		}
+
+		if fetch.Image != nil && fetch.Image.SecretRef == nil {
+			secretName, err := pi.createSecretForSecretgenController(i)
+			if err != nil {
+				return datapkgingv1alpha1.Package{}, err
+			}
+			pkgCopy.Spec.Template.Spec.Fetch[i].Image.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
+		}
+	}
+	return *pkgCopy, nil
+}
+
+func (pi PackageInstallCR) createSecretForSecretgenController(iteration int) (string, error) {
+	secretName := fmt.Sprintf("%s-fetch-%d", pi.model.Name, iteration)
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: pi.model.Namespace,
+			Annotations: map[string]string{
+				"secretgen.carvel.dev/image-pull-secret": "",
+			},
+		},
+		Data: map[string][]byte{
+			corev1.DockerConfigJsonKey: []byte(`{"auths":{}}`),
+		},
+		Type: corev1.SecretTypeDockerConfigJson,
+	}
+
+	controllerutil.SetOwnerReference(pi.model, secret, scheme.Scheme)
+
+	_, err := pi.coreClient.CoreV1().Secrets(pi.model.Namespace).Create(context.Background(), secret, metav1.CreateOptions{})
+	if err != nil {
+		if !errors.IsAlreadyExists(err) {
+			return "", err
+		}
+	}
+	return secretName, nil
 }
