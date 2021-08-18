@@ -232,3 +232,20 @@ func (a *App) ConfigMapRefs() map[reftracker.RefKey]struct{} {
 
 	return configMaps
 }
+
+// HasImageOrImgpkgBundle is used to determine if the
+// App's spec contains a fetch stage for an image or
+// imgpkgbundle. It is mainly used to determine whether
+// to retry a fetch attempt when placeholder secrets are
+// involved with authenticating to private registries. Placeholder
+// secrets are not always populated quick enough for Apps to use
+// the secret, and private auth is only supported for images/bundles,
+// so this helps to narrow down when to retry a fetch attempt.
+func (a App) HasImageOrImgpkgBundle() bool {
+	for _, fetch := range a.app.Spec.Fetch {
+		if fetch.ImgpkgBundle != nil || fetch.Image != nil {
+			return true
+		}
+	}
+	return false
+}
