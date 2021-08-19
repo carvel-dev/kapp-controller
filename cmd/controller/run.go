@@ -199,7 +199,8 @@ func Run(opts Options, runLog logr.Logger) {
 		schRepo := handlers.NewSecretHandler(runLog, refTracker, updateStatusTracker)
 
 		pkgRepositoriesCtrlOpts := controller.Options{
-			Reconciler: NewPkgRepositoryReconciler(kcClient, runLog.WithName("prr"), appFactory, refTracker, updateStatusTracker),
+			Reconciler: NewPkgRepositoryReconciler(kcClient, coreClient,
+				runLog.WithName("prr"), appFactory, refTracker, updateStatusTracker),
 			// TODO: Consider making this configurable for multiple PackageRepo reconciles
 			MaxConcurrentReconciles: 1,
 		}

@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"time"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 
@@ -43,6 +44,31 @@ func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
 	}
 
 	result = a.runVendir(confReader, dstPath)
+	// retry if error occurs before reporting failure.
+	// This is mainly done to support private registry
+	// authentication for images/bundles since placeholder
+	// secrets may not be populated in time.
+	if result.Error != nil && a.HasImageOrImgpkgBundle() {
+		// Only retrying once resulted in flaky behavior
+		// for private auth so use 3 iterations.
+		for i := 0; i < 3; i++ {
+			// Sleep for 2 seconds to allow secretgen-controller
+			// to update placeholder secret(s).
+			time.Sleep(2 * time.Second)
+			confReader, err = vendir.ConfigReader()
+			if err != nil {
+				result.AttachErrorf("Fetching: %v", err)
+				return "", result
+			}
+			result = a.runVendir(confReader, dstPath)
+			if result.Error == nil {
+				break
+			}
+		}
+		if result.Error != nil {
+			return "", result
+		}
+	}
 
 	// if only one fetch, update dstPath for backwards compatibility
 	if len(a.app.Spec.Fetch) == 1 {
