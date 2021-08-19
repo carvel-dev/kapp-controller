@@ -3,7 +3,6 @@ module github.com/vmware-tanzu/carvel-kapp-controller
 go 1.16
 
 require (
-	cloud.google.com/go v0.60.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20190620071333-e64a0ec8b42a // indirect
 	github.com/fatih/color v1.12.0 // indirect
 	github.com/ghodss/yaml v1.0.0
@@ -20,11 +19,10 @@ require (
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966 // indirect
-	github.com/vmware-tanzu/carvel-vendir v0.21.1
+	github.com/vmware-tanzu/carvel-vendir v0.22.0
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/tools v0.1.5 // indirect
-	google.golang.org/genproto v0.0.0-20200707001353-8e8330bf89df // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	honnef.co/go/tools v0.2.0 // indirect
 	k8s.io/api v0.19.2
@@ -41,3 +39,5 @@ require (
 )
 
 replace github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.4.1
+
+replace cloud.google.com/go => cloud.google.com/go v0.60.0
