@@ -1,0 +1,20 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg.test.carvel.dev.1.0.0
+spec:
+  refName: pkg.test.carvel.dev
+  version: 1.0.0
+  template:
+    spec:
+      fetch:
+        - imgpkgBundle:
+            image: registry-svc.registry.svc.cluster.local:443/secret-test/test-bundle
+      template:
+        - ytt: {}
+        - kbld:
+            paths:
+              - "-"
+              - ".imgpkg/images.yml"
+      deploy:
+        - kapp: {}
