@@ -5,20 +5,26 @@ package controller
 
 import (
 	"context"
-
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
+	"fmt"
 
 	"github.com/go-logr/logr"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type PkgRepositoryReconciler struct {
 	client          kcclient.Interface
+	coreClient      kubernetes.Interface
 	log             logr.Logger
 	appFactory      AppFactory
 	appRefTracker   *reftracker.AppRefTracker
@@ -27,9 +33,12 @@ type PkgRepositoryReconciler struct {
 
 var _ reconcile.Reconciler = &PkgRepositoryReconciler{}
 
-func NewPkgRepositoryReconciler(appClient kcclient.Interface, log logr.Logger, appFactory AppFactory,
-	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *PkgRepositoryReconciler {
-	return &PkgRepositoryReconciler{appClient, log, appFactory, appRefTracker, appUpdateStatus}
+// NewPkgRepositoryReconciler is the constructor for the PkgRepositoryReconciler struct
+func NewPkgRepositoryReconciler(appClient kcclient.Interface, coreClient kubernetes.Interface,
+	log logr.Logger, appFactory AppFactory, appRefTracker *reftracker.AppRefTracker,
+	appUpdateStatus *reftracker.AppUpdateStatus) *PkgRepositoryReconciler {
+	return &PkgRepositoryReconciler{appClient, coreClient, log,
+		appFactory, appRefTracker, appUpdateStatus}
 }
 
 func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
@@ -53,6 +62,8 @@ func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconci
 		return reconcile.Result{}, err
 	}
 
+	r.ReconcileFetchPlaceholderSecrets(*existingPkgRepository, app)
+
 	crdApp := r.appFactory.NewCRDPackageRepo(app, existingPkgRepository, log)
 	r.UpdatePackageRepoRefs(crdApp.ResourceRefs(), app)
 
@@ -64,6 +75,60 @@ func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconci
 	}
 
 	return crdApp.Reconcile(force)
+}
+
+// ReconcileFetchPlaceholderSecrets helps determine if a placeholder secret
+// needs to be created for the PackageRepository. This placeholder secret is
+// populated by secretgen-controller so PackageRepositories can authenticate
+// to private registries without needing to explicitly declare a secretRef.
+// If no secretRef is specified for the PackageRepository, the placeholder
+// is created and used by the PackageRepository.
+func (r *PkgRepositoryReconciler) ReconcileFetchPlaceholderSecrets(pkgr pkgv1alpha1.PackageRepository, app *v1alpha1.App) error {
+	for i, fetch := range app.Spec.Fetch {
+		if fetch.ImgpkgBundle != nil && fetch.ImgpkgBundle.SecretRef == nil {
+			secretName, err := r.createSecretForSecretgenController(pkgr, i)
+			if err != nil {
+				return err
+			}
+			app.Spec.Fetch[i].ImgpkgBundle.SecretRef = &v1alpha1.AppFetchLocalRef{secretName}
+		}
+
+		if fetch.Image != nil && fetch.Image.SecretRef == nil {
+			secretName, err := r.createSecretForSecretgenController(pkgr, i)
+			if err != nil {
+				return err
+			}
+			app.Spec.Fetch[i].Image.SecretRef = &v1alpha1.AppFetchLocalRef{secretName}
+		}
+	}
+	return nil
+}
+
+func (r *PkgRepositoryReconciler) createSecretForSecretgenController(pkgr pkgv1alpha1.PackageRepository, i int) (string, error) {
+	secretName := fmt.Sprintf("%s-fetch-%d", pkgr.Name, i)
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: pkgr.Namespace,
+			Annotations: map[string]string{
+				"secretgen.carvel.dev/image-pull-secret": "",
+			},
+		},
+		Data: map[string][]byte{
+			corev1.DockerConfigJsonKey: []byte(`{"auths":{}}`),
+		},
+		Type: corev1.SecretTypeDockerConfigJson,
+	}
+
+	controllerutil.SetOwnerReference(&pkgr, secret, scheme.Scheme)
+
+	_, err := r.coreClient.CoreV1().Secrets(pkgr.Namespace).Create(context.Background(), secret, metav1.CreateOptions{})
+	if err != nil {
+		if !errors.IsAlreadyExists(err) {
+			return "", err
+		}
+	}
+	return secretName, nil
 }
 
 func (r *PkgRepositoryReconciler) UpdatePackageRepoRefs(refKeys map[reftracker.RefKey]struct{}, app *v1alpha1.App) {

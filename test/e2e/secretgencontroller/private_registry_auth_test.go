@@ -200,3 +200,84 @@ spec:
 		kubectl.Run([]string{"get", "configmap", "e2e-test-map"})
 	})
 }
+
+func Test_PackageRepository_CanAuthenticateToPrivateRepository_UsingPlaceholderSecret(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+	name := "repo-private-auth"
+	sas := e2e.ServiceAccounts{env.Namespace}
+
+	// If this changes, the skip-tls-verify domain must be updated to match
+	registryNamespace := "registry"
+	registryName := "test-registry"
+
+	pkgrYaml := fmt.Sprintf(`---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: %[2]s
+  namespace: %[1]s
+spec:
+  fetch:
+    image:
+      url: registry-svc.%[3]s.svc.cluster.local:443/secret-test/test-repo
+`, env.Namespace, name, registryNamespace) + sas.ForNamespaceYAML()
+
+	secretYaml := fmt.Sprintf(`
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: regcred
+type: kubernetes.io/dockerconfigjson
+stringData:
+  .dockerconfigjson: |
+    {
+      "auths": {
+        "registry-svc.%s.svc.cluster.local:443": {
+          "username": "testuser",
+          "password": "testpassword",
+          "auth": ""
+        }
+      }
+    }
+---
+apiVersion: secretgen.k14s.io/v1alpha1
+kind: SecretExport
+metadata:
+  name: regcred
+spec:
+  toNamespaces:
+  - %s
+`, registryNamespace, env.Namespace)
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+		kapp.Run([]string{"delete", "-a", "secret-export"})
+		kapp.Run([]string{"delete", "-a", registryName, "-n", registryNamespace})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("Deploy registry with self signed certs", func() {
+		kapp.Run([]string{"deploy", "-f", "../assets/registry/registry2.yml", "-f", "../assets/registry/certs-for-skip-tls.yml", "-f", "../assets/registry/htpasswd-auth", "-f", "../assets/registry/registry-contents.yml", "-a", registryName})
+	})
+
+	logger.Section("Create Docker Registry Secret", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", "secret-export", "-f", "-"},
+			e2e.RunOpts{StdinReader: strings.NewReader(secretYaml)})
+	})
+
+	logger.Section("Create PackageRepository", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgrYaml)})
+
+		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgr/" + name, "--timeout", "1m"})
+	})
+
+	logger.Section("Check Packages created from PackageRepository", func() {
+		kubectl.Run([]string{"get", "package", "pkg.test.carvel.dev.1.0.0"})
+	})
+}

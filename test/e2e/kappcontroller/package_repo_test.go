@@ -52,7 +52,7 @@ spec:
 			FriendlyDescription: "Reconcile failed: Fetching resources: Error (see .status.usefulErrorMessage for details)",
 			UsefulErrorMessage:  "vendir: Error: Syncing directory '0':\n  Syncing directory '.' with imgpkgBundle contents:\n    Imgpkg: exit status 1 (stderr: Error: Checking if image is bundle: Collecting images: Working with index.docker.io/k8slt/i-dont-exist:latest: GET https://index.docker.io/v2/k8slt/i-dont-exist/manifests/latest: UNAUTHORIZED: authentication required; [map[Action:pull Class: Name:k8slt/i-dont-exist Type:repository]]\n)\n",
 		},
-		ConsecutiveReconcileFailures: 4,
+		ConsecutiveReconcileFailures: 0,
 	}
 
 	cleanup := func() {
@@ -78,11 +78,14 @@ spec:
 		}
 
 		cleanupStatusForAssertion(&cr)
+		// This property can be flaky with retry logic so setting to 0 for assertion
+		cr.Status.ConsecutiveReconcileFailures = 0
 
 		// assert on expectedStatus
 		if !reflect.DeepEqual(expectedStatus, cr.Status) {
 			return fmt.Errorf("\nstatus is not same:\nExpected:\n%#v\nGot:\n%#v", expectedStatus, cr.Status)
 		}
+
 		return nil
 	})
 }
