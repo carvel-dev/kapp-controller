@@ -33,6 +33,7 @@ type DirectoryContents struct {
 	Path string `json:"path"`
 
 	Git           *DirectoryContentsGit           `json:"git,omitempty"`
+	Hg            *DirectoryContentsHg            `json:"hg,omitempty"`
 	HTTP          *DirectoryContentsHTTP          `json:"http,omitempty"`
 	Image         *DirectoryContentsImage         `json:"image,omitempty"`
 	ImgpkgBundle  *DirectoryContentsImgpkgBundle  `json:"imgpkgBundle,omitempty"`
@@ -68,6 +69,18 @@ type DirectoryContentsGitVerification struct {
 	PublicKeysSecretRef *DirectoryContentsLocalRef `json:"publicKeysSecretRef,omitempty"`
 }
 
+type DirectoryContentsHg struct {
+	URL string `json:"url,omitempty"`
+	Ref string `json:"ref,omitempty"`
+	// Secret may include one or more keys: ssh-privatekey, ssh-knownhosts
+	// +optional
+	SecretRef *DirectoryContentsLocalRef `json:"secretRef,omitempty"`
+}
+
+type DirectoryContentsHgVerification struct {
+	PublicKeysSecretRef *DirectoryContentsLocalRef `json:"publicKeysSecretRef,omitempty"`
+}
+
 type DirectoryContentsHTTP struct {
 	// URL can point to one of following formats: text, tgz, zip
 	URL string `json:"url,omitempty"`
@@ -81,6 +94,10 @@ type DirectoryContentsHTTP struct {
 type DirectoryContentsImage struct {
 	// Example: username/app1-config:v0.1.0
 	URL string `json:"url,omitempty"`
+
+	TagSelection   *ctlver.VersionSelection `json:"tagSelection,omitempty"`
+	preresolvedTag string                   `json:"-"`
+
 	// Secret may include one or more keys: username, password, token.
 	// By default anonymous access is used for authentication.
 	// TODO support docker config formated secret
@@ -90,9 +107,15 @@ type DirectoryContentsImage struct {
 	DangerousSkipTLSVerify bool `json:"dangerousSkipTLSVerify,omitempty"`
 }
 
+func (c DirectoryContentsImage) PreresolvedTag() string { return c.preresolvedTag }
+
 type DirectoryContentsImgpkgBundle struct {
 	// Example: username/app1-config:v0.1.0
 	Image string `json:"image,omitempty"`
+
+	TagSelection   *ctlver.VersionSelection `json:"tagSelection,omitempty"`
+	preresolvedTag string                   `json:"-"`
+
 	// Secret may include one or more keys: username, password, token.
 	// By default anonymous access is used for authentication.
 	// TODO support docker config formated secret
@@ -103,11 +126,14 @@ type DirectoryContentsImgpkgBundle struct {
 	Recursive              bool `json:"recursive,omitempty"`
 }
 
+func (c DirectoryContentsImgpkgBundle) PreresolvedTag() string { return c.preresolvedTag }
+
 type DirectoryContentsGithubRelease struct {
-	Slug   string `json:"slug"` // e.g. organization/repository
-	Tag    string `json:"tag"`
-	Latest bool   `json:"latest,omitempty"`
-	URL    string `json:"url,omitempty"`
+	Slug         string                   `json:"slug"` // e.g. organization/repository
+	Tag          string                   `json:"tag"`
+	TagSelection *ctlver.VersionSelection `json:"tagSelection,omitempty"`
+	Latest       bool                     `json:"latest,omitempty"`
+	URL          string                   `json:"url,omitempty"`
 
 	Checksums                     map[string]string `json:"checksums,omitempty"`
 	DisableAutoChecksumValidation bool              `json:"disableAutoChecksumValidation,omitempty"`
@@ -200,6 +226,9 @@ func (c DirectoryContents) Validate() error {
 	if c.Git != nil {
 		srcTypes = append(srcTypes, "git")
 	}
+	if c.Hg != nil {
+		srcTypes = append(srcTypes, "hg")
+	}
 	if c.HTTP != nil {
 		srcTypes = append(srcTypes, "http")
 	}
@@ -268,6 +297,8 @@ func (c DirectoryContents) Lock(lockConfig LockDirectoryContents) error {
 	switch {
 	case c.Git != nil:
 		return c.Git.Lock(lockConfig.Git)
+	case c.Hg != nil:
+		return c.Hg.Lock(lockConfig.Hg)
 	case c.HTTP != nil:
 		return c.HTTP.Lock(lockConfig.HTTP)
 	case c.Image != nil:
@@ -300,6 +331,17 @@ func (c *DirectoryContentsGit) Lock(lockConfig *LockDirectoryContentsGit) error 
 	return nil
 }
 
+func (c *DirectoryContentsHg) Lock(lockConfig *LockDirectoryContentsHg) error {
+	if lockConfig == nil {
+		return fmt.Errorf("Expected hg lock configuration to be non-empty")
+	}
+	if len(lockConfig.SHA) == 0 {
+		return fmt.Errorf("Expected hg SHA to be non-empty")
+	}
+	c.Ref = lockConfig.SHA
+	return nil
+}
+
 func (c *DirectoryContentsHTTP) Lock(lockConfig *LockDirectoryContentsHTTP) error {
 	if lockConfig == nil {
 		return fmt.Errorf("Expected HTTP lock configuration to be non-empty")
@@ -315,6 +357,8 @@ func (c *DirectoryContentsImage) Lock(lockConfig *LockDirectoryContentsImage) er
 		return fmt.Errorf("Expected image URL to be non-empty")
 	}
 	c.URL = lockConfig.URL
+	c.TagSelection = nil // URL is fully resolved already
+	c.preresolvedTag = lockConfig.Tag
 	return nil
 }
 
@@ -326,6 +370,8 @@ func (c *DirectoryContentsImgpkgBundle) Lock(lockConfig *LockDirectoryContentsIm
 		return fmt.Errorf("Expected imgpkg bundle Image to be non-empty")
 	}
 	c.Image = lockConfig.Image
+	c.TagSelection = nil // URL is fully resolved already
+	c.preresolvedTag = lockConfig.Tag
 	return nil
 }
 
