@@ -87,6 +87,7 @@ func (v *Vendir) imageConf(image v1alpha1.AppFetchImage) vendirconf.DirectoryCon
 		NewRootPath: image.SubPath,
 		Image: &vendirconf.DirectoryContentsImage{
 			URL:                    image.URL,
+			TagSelection:           image.TagSelection,
 			SecretRef:              v.localRefConf(image.SecretRef),
 			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(image.URL),
 		},
@@ -98,6 +99,7 @@ func (v *Vendir) imgpkgBundleConf(imgpkgBundle v1alpha1.AppFetchImgpkgBundle) ve
 		Path: vendirEntireDirPath,
 		ImgpkgBundle: &vendirconf.DirectoryContentsImgpkgBundle{
 			Image:                  imgpkgBundle.Image,
+			TagSelection:           imgpkgBundle.TagSelection,
 			SecretRef:              v.localRefConf(imgpkgBundle.SecretRef),
 			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(imgpkgBundle.Image),
 		},
@@ -122,6 +124,7 @@ func (v *Vendir) gitConf(git v1alpha1.AppFetchGit) vendirconf.DirectoryContents 
 		NewRootPath: git.SubPath,
 		Git: &vendirconf.DirectoryContentsGit{
 			URL:           git.URL,
+			RefSelection:  git.RefSelection,
 			Ref:           git.Ref,
 			SecretRef:     v.localRefConf(git.SecretRef),
 			LFSSkipSmudge: git.LFSSkipSmudge,
