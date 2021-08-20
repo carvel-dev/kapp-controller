@@ -1,0 +1,19 @@
+# Generate k14stest-reg secret via
+#   kubectl create secret docker-registry k14stest-reg --docker-username=k14stest --docker-password=... --docker-server=index.docker.io -n kapp-controller-packaging-global
+apiVersion: v1
+kind: Secret
+metadata:
+  name: k14stest-reg
+  namespace: kapp-controller-packaging-global
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: e30K
+---
+apiVersion: secretgen.k14s.io/v1alpha1
+kind: SecretExport
+metadata:
+  name: k14stest-reg
+  namespace: kapp-controller-packaging-global
+spec:
+  toNamespaces:
+  - "*"
