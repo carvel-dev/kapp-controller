@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+// ScopedPath joins path with subpath, returning the result if and only if it is still within the original path.
+// (Security measure to prevent '..' shenanigans)
 func ScopedPath(path, subPath string) (string, error) {
 	newPath, err := filepath.Abs(filepath.Join(path, subPath))
 	if err != nil {
