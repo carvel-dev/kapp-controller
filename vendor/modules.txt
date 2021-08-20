@@ -1,5 +1,4 @@
-# cloud.google.com/go v0.60.0
-## explicit
+# cloud.google.com/go v0.65.0 => cloud.google.com/go v0.60.0
 cloud.google.com/go/compute/metadata
 # github.com/NYTimes/gziphandler v0.0.0-20170623195520-56545f4a5d46
 github.com/NYTimes/gziphandler
@@ -157,7 +156,7 @@ github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966
 ## explicit
-# github.com/vmware-tanzu/carvel-vendir v0.21.1
+# github.com/vmware-tanzu/carvel-vendir v0.22.0
 ## explicit
 github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config
 github.com/vmware-tanzu/carvel-vendir/pkg/vendir/version
@@ -225,9 +224,11 @@ golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
 golang.org/x/net/websocket
-# golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
+# golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
 golang.org/x/oauth2
+golang.org/x/oauth2/authhandler
 golang.org/x/oauth2/google
+golang.org/x/oauth2/google/internal/externalaccount
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
@@ -286,8 +287,7 @@ google.golang.org/appengine/internal/modules
 google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20200707001353-8e8330bf89df
-## explicit
+# google.golang.org/genproto v0.0.0-20200626011028-ee7919e894b5
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.29.1
 google.golang.org/grpc
@@ -971,3 +971,4 @@ sigs.k8s.io/structured-merge-diff/v4/value
 ## explicit
 sigs.k8s.io/yaml
 # github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.4.1
+# cloud.google.com/go => cloud.google.com/go v0.60.0
