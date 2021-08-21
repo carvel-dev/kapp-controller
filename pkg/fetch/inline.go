@@ -15,6 +15,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// Inline struct helps you fetch files or strings from a storage location such as a configmap or secret.
+// For an example if you had a controller in your cluster that generated certs and stored them in a configmap or secret,
+// you could use this inline fetcher to retrieve those certs to pass them on to a templating step.
 type Inline struct {
 	opts       v1alpha1.AppFetchInline
 	nsName     string

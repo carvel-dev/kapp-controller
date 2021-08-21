@@ -14,6 +14,8 @@ type KubeconfigRestricted struct {
 	result string
 }
 
+// NewKubeconfigRestricted takes kubeconfig yaml as input and returns kubeconfig yaml with certain fields restricted (removed).
+// Developers may find it informative to view their own config at ~/.kube/config
 func NewKubeconfigRestricted(input string) (*KubeconfigRestricted, error) {
 	var inputConfig clientcmd.Config
 

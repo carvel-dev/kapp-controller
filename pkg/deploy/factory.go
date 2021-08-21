@@ -47,6 +47,8 @@ func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
 	return NewKapp(opts, processedGenericOpts, cancelCh), nil
 }
 
+// NewKappPrivileged is used for package repositories where users aren't required to provide
+// a service account, so it will install resources using its own privileges.
 func (f Factory) NewKappPrivileged(opts v1alpha1.AppDeployKapp,
 	genericOpts GenericOpts, cancelCh chan struct{}) (*Kapp, error) {
 
@@ -54,7 +56,7 @@ func (f Factory) NewKappPrivileged(opts v1alpha1.AppDeployKapp,
 		Name:      genericOpts.Name,
 		Namespace: genericOpts.Namespace,
 		// Just use the default service account. Mainly
-		// used for PacakgeRepos now so users do not need
+		// used for PackageRepos now so users do not need
 		// to specify serviceaccount via PackageRepo CR.
 		Kubeconfig:                    nil,
 		DangerousUsePodServiceAccount: true,

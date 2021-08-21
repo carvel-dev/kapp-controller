@@ -29,6 +29,9 @@ type Kapp struct {
 
 var _ Deploy = &Kapp{}
 
+// NewKapp takes the kapp yaml from spec.deploy.kapp as arg kapp,
+// additional info from the larger app resource (e.g. service account, name, namespace) as genericOpts,
+// and a cancel channel that gets passed through to the exec call that runs kapp.
 func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts ProcessedGenericOpts, cancelCh chan struct{}) *Kapp {
 	return &Kapp{opts, genericOpts, cancelCh}
 }
