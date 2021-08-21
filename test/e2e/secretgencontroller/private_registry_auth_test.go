@@ -162,7 +162,7 @@ stringData:
       }
     }
 ---
-apiVersion: secretgen.k14s.io/v1alpha1
+apiVersion: secretgen.carvel.dev/v1alpha1
 kind: SecretExport
 metadata:
   name: regcred
@@ -244,7 +244,7 @@ stringData:
       }
     }
 ---
-apiVersion: secretgen.k14s.io/v1alpha1
+apiVersion: secretgen.carvel.dev/v1alpha1
 kind: SecretExport
 metadata:
   name: regcred
