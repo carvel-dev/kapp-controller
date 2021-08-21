@@ -12,6 +12,8 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+
+	// we run vendir by shelling out to it, but we create the vendir configs with help from a vendored copy of vendir.
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -40,6 +42,8 @@ func NewVendir(nsName string, coreClient kubernetes.Interface, skipTLSConfig Ski
 		}}
 }
 
+// AddDir adds a directory to vendir's config for each fetcher that the app spec declares.
+// vendir fetches resources into your filesystem, so the destination directory is a core part of vendir config.
 func (v *Vendir) AddDir(fetch v1alpha1.AppFetch, dirPath string) error {
 	switch {
 	case fetch.Inline != nil:
@@ -182,6 +186,9 @@ func (v *Vendir) localRefConf(ref *v1alpha1.AppFetchLocalRef) *vendirconf.Direct
 	}
 }
 
+// ConfigReader generates config yaml bytes and wraps them in a bytes.Reader.
+// These bytes could be written to a file and then passed to vendir
+// but can also be mapped to stdin of the vendir process.
 func (v *Vendir) ConfigReader() (io.Reader, error) {
 	var resourcesYaml [][]byte
 	for _, dir := range v.config.Directories {
