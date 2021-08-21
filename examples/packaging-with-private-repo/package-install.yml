@@ -1,0 +1,53 @@
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: pkg-demo
+  annotations:
+    # Need to add an overlay because original bundle does not specify image pull secret for Deployment
+    ext.packaging.carvel.dev/ytt-paths-from-secret-name.0: add-image-pull-secrets
+spec:
+  serviceAccountName: default-ns-sa
+  packageRef:
+    refName: pkg.test.carvel.dev
+    versionSelection:
+      constraints: 1.0.0
+  values:
+  - secretRef:
+      name: pkg-demo-values
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pkg-demo-values
+stringData:
+  values.yml: |
+    hello_msg: "hi"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: add-image-pull-secrets
+stringData:
+  add-ips.yml: |
+    #@ load("@ytt:overlay", "overlay")
+
+    ---
+    kind: Secret
+    apiVersion: v1
+    metadata:
+      name: simple-app-registry-creds
+      annotations:
+        secretgen.carvel.dev/image-pull-secret: ""
+    type: kubernetes.io/dockerconfigjson
+    data:
+      .dockerconfigjson: e30K
+
+    #@overlay/match by=overlay.subset({"kind":"Deployment"})
+    ---
+    spec:
+      template:
+        spec:
+          #@overlay/match missing_ok=True
+          imagePullSecrets:
+          - name: simple-app-registry-creds

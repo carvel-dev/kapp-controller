@@ -1,0 +1,14 @@
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: e2e-repo.test.carvel.dev
+  # Adds it to global namespace (as defined by kapp-controller)
+  # which makes packages available in all namespaces
+  namespace: kapp-controller-packaging-global
+spec:
+  fetch:
+    imgpkgBundle:
+      # Copy over repo (mentioned in ../packaging-with-repo/package-repository.yml) to a private location via
+      #   imgpkg copy -b ... --to-repo registry.com/something/my-repo
+      image: k14stest/private-repo@sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c
