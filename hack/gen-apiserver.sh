@@ -38,6 +38,7 @@ go run vendor/k8s.io/code-generator/cmd/informer-gen/main.go \
   --go-header-file hack/gen-boilerplate.txt
 
 echo "Generating deepcopy"
+rm -f $(find pkg/apiserver|grep zz_generated.deepcopy)
 go run vendor/k8s.io/code-generator/cmd/deepcopy-gen/main.go \
   --input-dirs "${KC_PKG}/pkg/apiserver/apis/datapackaging/v1alpha1" \
   --input-dirs "${KC_PKG}/pkg/apiserver/apis/datapackaging" \
@@ -45,12 +46,14 @@ go run vendor/k8s.io/code-generator/cmd/deepcopy-gen/main.go \
   --go-header-file hack/gen-boilerplate.txt
 
 echo "Generating conversions"
+rm -f $(find pkg/apiserver|grep zz_generated.conversion)
 go run vendor/k8s.io/code-generator/cmd/conversion-gen/main.go \
   --input-dirs "${KC_PKG}/pkg/apiserver/apis/datapackaging/v1alpha1,${KC_PKG}/pkg/apiserver/apis/datapackaging" \
   -O zz_generated.conversion \
   --go-header-file hack/gen-boilerplate.txt
 
 echo "Generating openapi"
+rm -f $(find pkg/apiserver|grep zz_generated.openapi)
 go run vendor/k8s.io/code-generator/cmd/openapi-gen/main.go \
   --input-dirs "${KC_PKG}/pkg/apiserver/apis/datapackaging/v1alpha1" \
   --input-dirs "${KC_PKG}/pkg/apis/kappctrl/v1alpha1" \
