@@ -18,7 +18,8 @@ import (
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reconciler"
-	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
+	verv1alpha1 "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -175,7 +176,7 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 		}
 	}
 
-	verConfig := versions.VersionSelection{Semver: semverConfig}
+	verConfig := verv1alpha1.VersionSelection{Semver: semverConfig}
 
 	selectedVersion, err := versions.HighestConstrainedVersion(versionStrs, verConfig)
 	if err != nil {
