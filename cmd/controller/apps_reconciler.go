@@ -5,11 +5,10 @@ package controller
 
 import (
 	"context"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
-
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +36,7 @@ func (r *AppsReconciler) Reconcile(ctx context.Context, request reconcile.Reques
 	// TODO currently we've decided to get a fresh copy of app so
 	// that we do not operate on stale copy for efficiency reasons
 	existingApp, err := r.appClient.KappctrlV1alpha1().Apps(request.Namespace).Get(ctx, request.Name, metav1.GetOptions{})
-	metrics.InitMetrics(existingApp.Name, existingApp.Namespace)
+
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.Info("Could not find App")
@@ -49,6 +48,7 @@ func (r *AppsReconciler) Reconcile(ctx context.Context, request reconcile.Reques
 	}
 
 	crdApp := r.appFactory.NewCRDApp(existingApp, log)
+	metrics.InitMetrics(existingApp.Name, existingApp.Namespace)
 	r.UpdateAppRefs(crdApp.ResourceRefs(), existingApp)
 
 	force := false

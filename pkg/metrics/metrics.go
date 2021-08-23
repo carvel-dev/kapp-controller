@@ -80,7 +80,7 @@ func init() {
 
 // InitMetrics initializes counter metrics .
 func InitMetrics(appName string, namespace string) {
-	for key, _ := range serverMetrics.metrics {
+	for key := range serverMetrics.metrics {
 		if c, ok := serverMetrics.metrics[key].(*prometheus.CounterVec); ok {
 			c.WithLabelValues(appName, namespace).Add(0)
 		}
@@ -89,7 +89,7 @@ func InitMetrics(appName string, namespace string) {
 
 // DeleteMetrics initializes counter metrics .
 func DeleteMetrics(appName string, namespace string) {
-	for key, _ := range serverMetrics.metrics {
+	for key := range serverMetrics.metrics {
 		if c, ok := serverMetrics.metrics[key].(*prometheus.CounterVec); ok {
 			c.DeleteLabelValues(appName, namespace)
 		}
