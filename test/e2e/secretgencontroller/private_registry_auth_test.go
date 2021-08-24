@@ -195,8 +195,6 @@ spec:
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
 			e2e.RunOpts{StdinReader: strings.NewReader(pkgiYaml)})
 
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "app/" + name, "--timeout", "1m"})
 		kubectl.Run([]string{"get", "configmap", "e2e-test-map"})
 	})
 }
@@ -273,8 +271,6 @@ spec:
 	logger.Section("Create PackageRepository", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
 			e2e.RunOpts{StdinReader: strings.NewReader(pkgrYaml)})
-
-		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgr/" + name, "--timeout", "1m"})
 	})
 
 	logger.Section("Check Packages created from PackageRepository", func() {
