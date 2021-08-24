@@ -1,4 +1,4 @@
-// Copyright 2020 VMware, Inc.
+// Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 package metrics
@@ -81,7 +81,7 @@ func init() {
 	}
 }
 
-// InitMetrics initializes counter metrics .
+// InitMetrics initializes counter metrics
 func InitMetrics(appName string, namespace string) {
 	for key := range sm.metrics {
 		if c, ok := sm.metrics[key].(*prometheus.CounterVec); ok {
@@ -90,7 +90,7 @@ func InitMetrics(appName string, namespace string) {
 	}
 }
 
-// DeleteMetrics deletes counter metrics .
+// DeleteMetrics deletes counter metrics
 func DeleteMetrics(appName string, namespace string) {
 	for key := range sm.metrics {
 		if c, ok := sm.metrics[key].(*prometheus.CounterVec); ok {
