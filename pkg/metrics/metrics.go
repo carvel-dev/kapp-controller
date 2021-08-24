@@ -24,7 +24,7 @@ const (
 
 	// Labels
 	kappNameLabel      = "appName"
-	KappNamespaceLabel = "namespace"
+	kappNamespaceLabel = "namespace"
 )
 
 var (
@@ -36,7 +36,7 @@ var (
 					Name:      reconcileAttemptTotal,
 					Help:      "Total number of attempted reconciles",
 				},
-				[]string{kappNameLabel, KappNamespaceLabel},
+				[]string{kappNameLabel, kappNamespaceLabel},
 			),
 			reconcileSuccessTotal: prometheus.NewCounterVec(
 				prometheus.CounterOpts{
@@ -44,7 +44,7 @@ var (
 					Name:      reconcileSuccessTotal,
 					Help:      "Total number of success reconciles",
 				},
-				[]string{kappNameLabel, KappNamespaceLabel},
+				[]string{kappNameLabel, kappNamespaceLabel},
 			),
 			reconcileFailureTotal: prometheus.NewCounterVec(
 				prometheus.CounterOpts{
@@ -52,7 +52,7 @@ var (
 					Name:      reconcileFailureTotal,
 					Help:      "Total number of failed reconciles",
 				},
-				[]string{kappNameLabel, KappNamespaceLabel},
+				[]string{kappNameLabel, kappNamespaceLabel},
 			),
 			reconcileDeleteAttemptTotal: prometheus.NewCounterVec(
 				prometheus.CounterOpts{
@@ -60,7 +60,7 @@ var (
 					Name:      reconcileDeleteAttemptTotal,
 					Help:      "Total number of attempted reconcile deletion",
 				},
-				[]string{kappNameLabel, KappNamespaceLabel},
+				[]string{kappNameLabel, kappNamespaceLabel},
 			),
 			reconcileDeleteFailedTotal: prometheus.NewCounterVec(
 				prometheus.CounterOpts{
@@ -68,7 +68,7 @@ var (
 					Name:      reconcileDeleteFailedTotal,
 					Help:      "Total number of failed reconcile deletion",
 				},
-				[]string{kappNameLabel, KappNamespaceLabel},
+				[]string{kappNameLabel, kappNamespaceLabel},
 			),
 		},
 	}
