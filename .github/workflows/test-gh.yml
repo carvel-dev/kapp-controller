@@ -31,7 +31,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         only: ytt, kapp, kbld, imgpkg, vendir
         ytt: v0.35.1
-        kapp: v0.37.0
+        kapp: v0.38.0
         kbld: v0.30.0
         imgpkg: v0.14.0
         vendir: v0.21.1
