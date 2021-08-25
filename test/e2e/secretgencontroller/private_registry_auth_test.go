@@ -28,6 +28,8 @@ kind: Package
 metadata:
   name: pkg.test.carvel.dev.1.0.0
   namespace: %[1]s
+  annotations:
+    kapp.k14s.io/change-group: "package"
 spec:
   refName: pkg.test.carvel.dev
   version: 1.0.0
@@ -52,6 +54,7 @@ metadata:
   namespace: %[1]s
   annotations:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/packageinstalls
+    kapp.k14s.io/change-rule: "upsert after upserting package"
 spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   packageRef:
@@ -110,6 +113,8 @@ kind: Package
 metadata:
   name: pkg.test.carvel.dev.1.0.0
   namespace: %[1]s
+  annotations:
+    kapp.k14s.io/change-group: "package"
 spec:
   refName: pkg.test.carvel.dev
   version: 1.0.0
@@ -134,6 +139,7 @@ metadata:
   namespace: %[1]s
   annotations:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/packageinstalls
+    kapp.k14s.io/change-rule: "upsert after upserting package"
 spec:
   syncPeriod: 30s
   serviceAccountName: kappctrl-e2e-ns-sa
