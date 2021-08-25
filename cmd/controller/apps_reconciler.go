@@ -18,20 +18,22 @@ import (
 type AppsReconciler struct {
 	appClient       kcclient.Interface
 	log             logr.Logger
+	servMetrics     *metrics.ServerMetrics
 	appFactory      AppFactory
 	appRefTracker   *reftracker.AppRefTracker
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
-func NewAppsReconciler(appClient kcclient.Interface, log logr.Logger, appFactory AppFactory,
+func NewAppsReconciler(appClient kcclient.Interface, log logr.Logger, servMetrics *metrics.ServerMetrics, appFactory AppFactory,
 	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *AppsReconciler {
-	return &AppsReconciler{appClient, log, appFactory, appRefTracker, appUpdateStatus}
+	return &AppsReconciler{appClient, log, servMetrics, appFactory, appRefTracker, appUpdateStatus}
 }
 
 var _ reconcile.Reconciler = &AppsReconciler{}
 
 func (r *AppsReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
+	servMetrics := r.servMetrics
 
 	// TODO currently we've decided to get a fresh copy of app so
 	// that we do not operate on stale copy for efficiency reasons
@@ -47,8 +49,8 @@ func (r *AppsReconciler) Reconcile(ctx context.Context, request reconcile.Reques
 		return reconcile.Result{}, err
 	}
 
-	crdApp := r.appFactory.NewCRDApp(existingApp, log)
-	metrics.InitMetrics(existingApp.Name, existingApp.Namespace)
+	crdApp := r.appFactory.NewCRDApp(existingApp, log, servMetrics)
+
 	r.UpdateAppRefs(crdApp.ResourceRefs(), existingApp)
 
 	force := false

@@ -6,6 +6,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"reflect"
 
 	"github.com/go-logr/logr"
@@ -20,24 +21,25 @@ import (
 )
 
 type CRDApp struct {
-	app       *App
-	appModel  *kcv1alpha1.App
-	log       logr.Logger
-	appClient kcclient.Interface
+	app         *App
+	appModel    *kcv1alpha1.App
+	log         logr.Logger
+	servMetrics *metrics.ServerMetrics
+	appClient   kcclient.Interface
 }
 
-func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger,
+func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger, servMetrics *metrics.ServerMetrics,
 	appClient kcclient.Interface, fetchFactory fetch.Factory,
 	templateFactory template.Factory, deployFactory deploy.Factory) *CRDApp {
 
-	crdApp := &CRDApp{appModel: appModel, log: log, appClient: appClient}
+	crdApp := &CRDApp{appModel: appModel, log: log, servMetrics: servMetrics, appClient: appClient}
 
 	crdApp.app = NewApp(*appModel, Hooks{
 		BlockDeletion:   crdApp.blockDeletion,
 		UnblockDeletion: crdApp.unblockDeletion,
 		UpdateStatus:    crdApp.updateStatus,
 		WatchChanges:    crdApp.watchChanges,
-	}, fetchFactory, templateFactory, deployFactory, log)
+	}, fetchFactory, templateFactory, deployFactory, log, servMetrics)
 
 	return crdApp
 }

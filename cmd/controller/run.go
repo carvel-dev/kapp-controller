@@ -5,6 +5,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"net/http"         // Pprof related
 	_ "net/http/pprof" // Pprof related
 	"os"
@@ -92,6 +93,10 @@ func Run(opts Options, runLog logr.Logger) {
 		os.Exit(1)
 	}
 
+	runLog.Info("setting up metrics")
+	servMetrics := metrics.NewServerMetrics()
+	servMetrics.RegisterAllMetrics()
+
 	// assign bindPort to env var KAPPCTRL_API_PORT if available
 	var bindPort int
 	if apiPort, ok := os.LookupEnv(kappctrlAPIPORTEnvKey); ok {
@@ -130,7 +135,7 @@ func Run(opts Options, runLog logr.Logger) {
 		cfgmhApp := handlers.NewConfigMapHandler(runLog, refTracker, updateStatusTracker)
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
-				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), appFactory, refTracker, updateStatusTracker),
+				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), servMetrics, appFactory, refTracker, updateStatusTracker),
 				log:      runLog.WithName("pr"),
 			}),
 			MaxConcurrentReconciles: opts.Concurrency,

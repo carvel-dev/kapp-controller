@@ -8,7 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
-type serverMetrics struct {
+type ServerMetrics struct {
 	metrics map[string]prometheus.Collector
 }
 
@@ -27,8 +27,8 @@ const (
 	kappNamespaceLabel = "namespace"
 )
 
-var (
-	sm = serverMetrics{
+func NewServerMetrics() *ServerMetrics {
+	return &ServerMetrics{
 		metrics: map[string]prometheus.Collector{
 			reconcileAttemptTotal: prometheus.NewCounterVec(
 				prometheus.CounterOpts{
@@ -72,17 +72,17 @@ var (
 			),
 		},
 	}
-)
+}
 
 // RegisterAllMetrics registers all prometheus metrics.
-func init() {
+func (sm *ServerMetrics) RegisterAllMetrics() {
 	for _, pm := range sm.metrics {
 		metrics.Registry.MustRegister(pm)
 	}
 }
 
 // InitMetrics initializes counter metrics
-func InitMetrics(appName string, namespace string) {
+func (sm *ServerMetrics) InitMetrics(appName string, namespace string) {
 	for key := range sm.metrics {
 		if c, ok := sm.metrics[key].(*prometheus.CounterVec); ok {
 			c.WithLabelValues(appName, namespace).Add(0)
@@ -91,7 +91,7 @@ func InitMetrics(appName string, namespace string) {
 }
 
 // DeleteMetrics deletes counter metrics
-func DeleteMetrics(appName string, namespace string) {
+func (sm *ServerMetrics) DeleteMetrics(appName string, namespace string) {
 	for key := range sm.metrics {
 		if c, ok := sm.metrics[key].(*prometheus.CounterVec); ok {
 			c.DeleteLabelValues(appName, namespace)
@@ -100,35 +100,35 @@ func DeleteMetrics(appName string, namespace string) {
 }
 
 // RegisterReconcileAttempt increments reconcileAttemptTotal
-func RegisterReconcileAttempt(appName string, namespace string) {
+func (sm *ServerMetrics) RegisterReconcileAttempt(appName string, namespace string) {
 	if c, ok := sm.metrics[reconcileAttemptTotal].(*prometheus.CounterVec); ok {
 		c.WithLabelValues(appName, namespace).Inc()
 	}
 }
 
 // RegisterReconcileSuccess increments reconcileSuccessTotal
-func RegisterReconcileSuccess(appName string, namespace string) {
+func (sm *ServerMetrics) RegisterReconcileSuccess(appName string, namespace string) {
 	if c, ok := sm.metrics[reconcileSuccessTotal].(*prometheus.CounterVec); ok {
 		c.WithLabelValues(appName, namespace).Inc()
 	}
 }
 
 // RegisterReconcileFailure increments reconcileFailureTotal
-func RegisterReconcileFailure(appName string, namespace string) {
+func (sm *ServerMetrics) RegisterReconcileFailure(appName string, namespace string) {
 	if c, ok := sm.metrics[reconcileFailureTotal].(*prometheus.CounterVec); ok {
 		c.WithLabelValues(appName, namespace).Inc()
 	}
 }
 
 // RegisterReconcileDeleteAttempt increments reconcileDeleteAttemptTotal
-func RegisterReconcileDeleteAttempt(appName string, namespace string) {
+func (sm *ServerMetrics) RegisterReconcileDeleteAttempt(appName string, namespace string) {
 	if c, ok := sm.metrics[reconcileDeleteAttemptTotal].(*prometheus.CounterVec); ok {
 		c.WithLabelValues(appName, namespace).Inc()
 	}
 }
 
 // RegisterReconcileDeleteFailed increments reconcileDeleteFailedTotal
-func RegisterReconcileDeleteFailed(appName string, namespace string) {
+func (sm *ServerMetrics) RegisterReconcileDeleteFailed(appName string, namespace string) {
 	if c, ok := sm.metrics[reconcileDeleteFailedTotal].(*prometheus.CounterVec); ok {
 		c.WithLabelValues(appName, namespace).Inc()
 	}

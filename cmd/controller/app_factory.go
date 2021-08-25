@@ -12,6 +12,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	ctlpkgr "github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	"k8s.io/client-go/kubernetes"
@@ -23,11 +24,12 @@ type AppFactory struct {
 	kcConfig   *config.Config
 }
 
-func (f *AppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *ctlapp.CRDApp {
+func (f *AppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger, servMetrics *metrics.ServerMetrics) *ctlapp.CRDApp {
 	fetchFactory := fetch.NewFactory(f.coreClient, f.kcConfig)
 	templateFactory := template.NewFactory(f.coreClient, fetchFactory)
 	deployFactory := deploy.NewFactory(f.coreClient)
-	return ctlapp.NewCRDApp(app, log, f.appClient, fetchFactory, templateFactory, deployFactory)
+	servMetrics.InitMetrics(app.Name, app.Namespace)
+	return ctlapp.NewCRDApp(app, log, servMetrics, f.appClient, fetchFactory, templateFactory, deployFactory)
 }
 
 // TODO: Create a PackageRepo factory for this func

@@ -4,6 +4,7 @@
 package app
 
 import (
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"sync"
 
 	"github.com/ghodss/yaml"
@@ -31,7 +32,8 @@ type App struct {
 	templateFactory template.Factory
 	deployFactory   deploy.Factory
 
-	log logr.Logger
+	log         logr.Logger
+	servMetrics *metrics.ServerMetrics
 
 	pendingStatusUpdate   bool
 	flushAllStatusUpdates bool
@@ -39,11 +41,11 @@ type App struct {
 
 func NewApp(app v1alpha1.App, hooks Hooks,
 	fetchFactory fetch.Factory, templateFactory template.Factory,
-	deployFactory deploy.Factory, log logr.Logger) *App {
+	deployFactory deploy.Factory, log logr.Logger, servMetrics *metrics.ServerMetrics) *App {
 
 	return &App{app: app, appPrev: *(app.DeepCopy()), hooks: hooks,
 		fetchFactory: fetchFactory, templateFactory: templateFactory,
-		deployFactory: deployFactory, log: log}
+		deployFactory: deployFactory, log: log, servMetrics: servMetrics}
 }
 
 func (a *App) Name() string      { return a.app.Name }
