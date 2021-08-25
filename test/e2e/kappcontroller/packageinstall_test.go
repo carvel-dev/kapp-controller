@@ -311,6 +311,9 @@ spec:
 `, name, env.Namespace) + sas.ForNamespaceYAML()
 
 	cleanUp := func() {
+		// Need to recreate ServiceAccount in event test fails
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-", "--filter-kind", "ServiceAccount"},
+			e2e.RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
 		kapp.Run([]string{"delete", "-a", name})
 	}
 	cleanUp()
@@ -334,8 +337,7 @@ spec:
 	logger.Section("Bring back service account and see that kubectl delete succeeds", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-", "--filter-kind", "ServiceAccount"},
 			e2e.RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
-
-		kubectl.Run([]string{"delete", "pkgi", name, "--wait=true"})
+		kubectl.Run([]string{"delete", "pkgi", name})
 	})
 }
 
