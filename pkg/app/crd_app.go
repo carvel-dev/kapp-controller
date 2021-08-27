@@ -28,6 +28,7 @@ type CRDApp struct {
 	appClient   kcclient.Interface
 }
 
+// NewCRDApp creates new CRD app
 func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger, servMetrics *metrics.ServerMetrics,
 	appClient kcclient.Interface, fetchFactory fetch.Factory,
 	templateFactory template.Factory, deployFactory deploy.Factory) *CRDApp {
