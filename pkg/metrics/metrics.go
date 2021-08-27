@@ -6,6 +6,7 @@ package metrics
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	"sync"
 )
 
 // ServerMetrics holds server metrics
@@ -17,10 +18,14 @@ type ServerMetrics struct {
 	reconcileDeleteFailedTotal  *prometheus.CounterVec
 }
 
+var (
+	once sync.Once
+)
+
 const (
 	metricNamespace = "kapp"
 
-	// kpp metrics
+	// kapp metrics
 	reconcileAttemptTotal       = "reconcile_attempt_total"
 	reconcileSuccessTotal       = "reconcile_success_total"
 	reconcileFailureTotal       = "reconcile_failure_total"
@@ -80,13 +85,15 @@ func NewServerMetrics() *ServerMetrics {
 
 // RegisterAllMetrics registers all prometheus metrics.
 func (sm *ServerMetrics) RegisterAllMetrics() {
-	metrics.Registry.MustRegister(
-		sm.reconcileAttemptTotal,
-		sm.reconcileSuccessTotal,
-		sm.reconcileFailureTotal,
-		sm.reconcileDeleteAttemptTotal,
-		sm.reconcileDeleteFailedTotal,
-	)
+	once.Do(func() {
+		metrics.Registry.MustRegister(
+			sm.reconcileAttemptTotal,
+			sm.reconcileSuccessTotal,
+			sm.reconcileFailureTotal,
+			sm.reconcileDeleteAttemptTotal,
+			sm.reconcileDeleteFailedTotal,
+		)
+	})
 }
 
 // InitMetrics initializes metrics
