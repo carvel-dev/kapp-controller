@@ -5,6 +5,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"reflect"
 	"testing"
 
@@ -22,6 +23,9 @@ import (
 
 func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	log := logf.Log.WithName("kc")
+
+	servMetrics := metrics.NewServerMetrics()
+	servMetrics.RegisterAllMetrics()
 
 	// The url under fetch is invalid, which will cause this
 	// app to fail before deploy.
@@ -43,7 +47,9 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	crdApp := NewCRDApp(&app, log, nil, kappcs, fetchFac, tmpFac, deployFac)
+	servMetrics.InitMetrics(app.Name, app.Namespace)
+
+	crdApp := NewCRDApp(&app, log, servMetrics, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "unexpected error with reconciling", err)
 
@@ -80,12 +86,16 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.T) {
 	log := logf.Log.WithName("kc")
 
+	servMetrics := metrics.NewServerMetrics()
+	servMetrics.RegisterAllMetrics()
+
 	fetchInline := map[string]string{
 		"file.yml": `foo: #@ data.values.nothere`,
 	}
 	app := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "simple-app",
+			Name:      "simple-app",
+			Namespace: "pkg-standalone",
 		},
 		Spec: v1alpha1.AppSpec{
 			Fetch: []v1alpha1.AppFetch{
@@ -103,7 +113,9 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	crdApp := NewCRDApp(&app, log, nil, kappcs, fetchFac, tmpFac, deployFac)
+	servMetrics.InitMetrics(app.Name, app.Namespace)
+
+	crdApp := NewCRDApp(&app, log, servMetrics, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "Unexpected error with reconciling", err)
 
