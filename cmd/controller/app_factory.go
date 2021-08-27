@@ -24,6 +24,7 @@ type AppFactory struct {
 	kcConfig   *config.Config
 }
 
+// NewCRDApp creates new CRD app
 func (f *AppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger, servMetrics *metrics.ServerMetrics) *ctlapp.CRDApp {
 	fetchFactory := fetch.NewFactory(f.coreClient, f.kcConfig)
 	templateFactory := template.NewFactory(f.coreClient, fetchFactory)

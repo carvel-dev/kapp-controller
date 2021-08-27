@@ -87,6 +87,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	log := logf.Log.WithName("kc")
 
 	servMetrics := metrics.NewServerMetrics()
+	servMetrics.RegisterAllMetrics()
 
 	fetchInline := map[string]string{
 		"file.yml": `foo: #@ data.values.nothere`,
