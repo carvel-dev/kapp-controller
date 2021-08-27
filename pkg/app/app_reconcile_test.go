@@ -27,7 +27,8 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	// app to fail before deploy.
 	app := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "simple-app",
+			Name:      "simple-app",
+			Namespace: "pkg-standalone",
 		},
 		Spec: v1alpha1.AppSpec{
 			Fetch: []v1alpha1.AppFetch{

@@ -8,7 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
-// ServerMetrics
+// ServerMetrics holds server metrics
 type ServerMetrics struct {
 	reconcileAttemptTotal       *prometheus.CounterVec
 	reconcileSuccessTotal       *prometheus.CounterVec
