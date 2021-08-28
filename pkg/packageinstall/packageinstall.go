@@ -124,7 +124,8 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 
 	pi.model.Status.LastAttemptedVersion = pkg.Spec.Version
 
-	existingApp, err := pi.kcclient.KappctrlV1alpha1().Apps(pi.model.Namespace).Get(context.Background(), pi.model.Name, metav1.GetOptions{})
+	existingApp, err := pi.kcclient.KappctrlV1alpha1().Apps(pi.model.Namespace).Get(
+		context.Background(), pi.model.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			pkgWithPlaceholderSecrets, err := pi.reconcileFetchPlaceholderSecrets(pkg)
@@ -176,7 +177,8 @@ func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App,
 	}
 
 	if !equality.Semantic.DeepEqual(desiredApp, existingApp) {
-		_, err = pi.kcclient.KappctrlV1alpha1().Apps(desiredApp.Namespace).Update(context.Background(), desiredApp, metav1.UpdateOptions{})
+		_, err = pi.kcclient.KappctrlV1alpha1().Apps(desiredApp.Namespace).Update(
+			context.Background(), desiredApp, metav1.UpdateOptions{})
 		if err != nil {
 			return reconcile.Result{Requeue: true}, err
 		}
@@ -192,7 +194,8 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 
 	semverConfig := pi.model.Spec.PackageRef.VersionSelection
 
-	pkgList, err := pi.pkgclient.DataV1alpha1().Packages(pi.model.Namespace).List(context.Background(), metav1.ListOptions{})
+	pkgList, err := pi.pkgclient.DataV1alpha1().Packages(pi.model.Namespace).List(
+		context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return datapkgingv1alpha1.Package{}, err
 	}
@@ -290,7 +293,8 @@ func (pi *PackageInstallCR) reconcileDelete(modelStatus *reconciler.Status) (rec
 
 func (pi *PackageInstallCR) updateStatus() error {
 	if !equality.Semantic.DeepEqual(pi.unmodifiedModel.Status, pi.model.Status) {
-		_, err := pi.kcclient.PackagingV1alpha1().PackageInstalls(pi.model.Namespace).UpdateStatus(context.Background(), pi.model, metav1.UpdateOptions{})
+		_, err := pi.kcclient.PackagingV1alpha1().PackageInstalls(pi.model.Namespace).UpdateStatus(
+			context.Background(), pi.model, metav1.UpdateOptions{})
 		if err != nil {
 			return fmt.Errorf("Updating installed package status: %s", err)
 		}
@@ -351,14 +355,14 @@ func (pi *PackageInstallCR) update(updateFunc func(*pkgingv1alpha1.PackageInstal
 }
 
 func (pi *PackageInstallCR) reconcileFetchPlaceholderSecrets(pkg datapkgingv1alpha1.Package) (datapkgingv1alpha1.Package, error) {
-	pkgCopy := pkg.DeepCopy()
-	for i, fetch := range pkgCopy.Spec.Template.Spec.Fetch {
+	pkg = *pkg.DeepCopy()
+	for i, fetch := range pkg.Spec.Template.Spec.Fetch {
 		if fetch.ImgpkgBundle != nil && fetch.ImgpkgBundle.SecretRef == nil {
 			secretName, err := pi.createSecretForSecretgenController(i)
 			if err != nil {
 				return datapkgingv1alpha1.Package{}, err
 			}
-			pkgCopy.Spec.Template.Spec.Fetch[i].ImgpkgBundle.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
+			pkg.Spec.Template.Spec.Fetch[i].ImgpkgBundle.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
 		}
 
 		if fetch.Image != nil && fetch.Image.SecretRef == nil {
@@ -366,10 +370,10 @@ func (pi *PackageInstallCR) reconcileFetchPlaceholderSecrets(pkg datapkgingv1alp
 			if err != nil {
 				return datapkgingv1alpha1.Package{}, err
 			}
-			pkgCopy.Spec.Template.Spec.Fetch[i].Image.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
+			pkg.Spec.Template.Spec.Fetch[i].Image.SecretRef = &kcv1alpha1.AppFetchLocalRef{secretName}
 		}
 	}
-	return *pkgCopy, nil
+	return pkg, nil
 }
 
 func (pi PackageInstallCR) createSecretForSecretgenController(iteration int) (string, error) {
@@ -390,7 +394,8 @@ func (pi PackageInstallCR) createSecretForSecretgenController(iteration int) (st
 
 	controllerutil.SetOwnerReference(pi.model, secret, scheme.Scheme)
 
-	_, err := pi.coreClient.CoreV1().Secrets(pi.model.Namespace).Create(context.Background(), secret, metav1.CreateOptions{})
+	_, err := pi.coreClient.CoreV1().Secrets(pi.model.Namespace).Create(
+		context.Background(), secret, metav1.CreateOptions{})
 	if err != nil {
 		if !errors.IsAlreadyExists(err) {
 			return "", err
