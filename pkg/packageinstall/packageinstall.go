@@ -28,6 +28,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+const (
+	// DowngradableAnnKey specifies annotation that user can place on
+	// PackageInstall to indicate that lower version of the package
+	// can be selected vs whats currently installed.
+	DowngradableAnnKey = "packaging.carvel.dev/downgradable"
+)
+
 // nolint: revive
 type PackageInstallCR struct {
 	model           *pkgingv1alpha1.PackageInstall
@@ -91,7 +98,31 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 		return reconcile.Result{Requeue: true}, err
 	}
 
+	// Set new desired version before checking if it's not applicable
 	pi.model.Status.Version = pkg.Spec.Version
+
+	_, canDowngrade := pi.model.Annotations[DowngradableAnnKey]
+	if !canDowngrade && pi.model.Status.LastAttemptedVersion != "" {
+		matchedVers := versions.NewRelaxedSemversNoErr([]string{pkg.Spec.Version})
+
+		matchedVers, err = matchedVers.FilterConstraints(">=" + pi.model.Status.LastAttemptedVersion)
+		if err != nil {
+			return reconcile.Result{}, fmt.Errorf("Filtering by last attempted version '%s': %s",
+				pi.model.Status.LastAttemptedVersion, err)
+		}
+
+		if matchedVers.Len() == 0 {
+			errMsg := fmt.Sprintf(
+				"Stopped installing matched version '%s' since last attempted version '%s' is higher",
+				pkg.Spec.Version, pi.model.Status.LastAttemptedVersion)
+			modelStatus.SetUsefulErrorMessage(errMsg)
+			modelStatus.SetReconcileCompleted(fmt.Errorf("Error (see .status.usefulErrorMessage for details)"))
+			// Nothing to do until available packages change or PackageInstall changes
+			return reconcile.Result{}, nil
+		}
+	}
+
+	pi.model.Status.LastAttemptedVersion = pkg.Spec.Version
 
 	existingApp, err := pi.kcclient.KappctrlV1alpha1().Apps(pi.model.Namespace).Get(context.Background(), pi.model.Name, metav1.GetOptions{})
 	if err != nil {
