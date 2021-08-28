@@ -234,9 +234,45 @@ func (pi *PackageInstallCR) reconcileDelete(modelStatus *reconciler.Status) (rec
 		return reconcile.Result{Requeue: true}, err
 	}
 
+	unchangeExistingApp := existingApp.DeepCopy()
+
+	// Ensure that several fields that may affect how App is deleted
+	// are set to same values as they are on PackageInstall
+	if existingApp.Spec.ServiceAccountName != pi.model.Spec.ServiceAccountName {
+		existingApp.Spec.ServiceAccountName = pi.model.Spec.ServiceAccountName
+	}
+	if existingApp.Spec.Cluster != pi.model.Spec.Cluster {
+		existingApp.Spec.Cluster = pi.model.Spec.Cluster
+	}
+	if existingApp.Spec.NoopDelete != pi.model.Spec.NoopDelete {
+		existingApp.Spec.NoopDelete = pi.model.Spec.NoopDelete
+	}
+	if existingApp.Spec.Paused != pi.model.Spec.Paused {
+		existingApp.Spec.Paused = pi.model.Spec.Paused
+	}
+	if existingApp.Spec.Canceled != pi.model.Spec.Canceled {
+		existingApp.Spec.Canceled = pi.model.Spec.Canceled
+	}
+
+	if !equality.Semantic.DeepEqual(existingApp, unchangeExistingApp) {
+		existingApp, err = pi.kcclient.KappctrlV1alpha1().Apps(existingApp.Namespace).Update(
+			context.Background(), existingApp, metav1.UpdateOptions{})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return reconcile.Result{}, pi.unblockDeletion()
+			}
+			return reconcile.Result{Requeue: true}, err
+		}
+	}
+
 	if existingApp.DeletionTimestamp == nil {
-		err := pi.kcclient.KappctrlV1alpha1().Apps(pi.model.Namespace).Delete(
-			context.Background(), pi.model.Name, metav1.DeleteOptions{})
+		err := pi.kcclient.KappctrlV1alpha1().Apps(existingApp.Namespace).Delete(
+			context.Background(), existingApp.Name, metav1.DeleteOptions{})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return reconcile.Result{}, pi.unblockDeletion()
+			}
+		}
 		return reconcile.Result{}, err
 	}
 
