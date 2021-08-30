@@ -25,10 +25,38 @@ export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
 Release versions are scraped from git tags in the same style as the goreleaser
 tool.
 
+Tag the release - it's necessary to do this first because the release process uses the latest tag to record the version.
 ```
-# create and push the release tag (see `git tag --list` for examples)
+git tag "v1.2.3"
+```
+
+Authenticate to the image registry where the image will be pushed (`i.e. index.docker.io/k14s`).
+
+Build and push the kapp-controller image and generate the release YAML.
+```
 ./hack/build-release.sh
 ```
+
+The release YAML will be available as `./tmp/release.yml`.
+
+Verify the release deploys successfully to a Kubernetes cluster.
+```
+kapp deploy -a kc -f ./tmp/release.yml
+```
+
+After verifying, push the tag to GitHub.
+```
+git push --tags
+```
+
+After pushing up the tag, you can `Draft a new release` through the GitHub UI and 
+add release notes in the format shown [here](https://github.com/vmware-tanzu/carvel-kapp-controller/releases/tag/v0.20.0). 
+Make sure to always thank external contributors for their additions to kapp-controller 
+in the release notes.
+
+As part of drafting the release through the GitHub UI, include the generated `release.yml` 
+file and make sure to document the file checksum. This checksum is generated as part of 
+the `./hack/build-release.sh` but can be rerun as `shasum -a 256 ./tmp/release*.yml`.
 
 ### Packaging Development
 
