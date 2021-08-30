@@ -501,7 +501,18 @@ func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
 			t.Fatalf("Failed to unmarshal: %s", err)
 		}
 
-		expectedStatus := packageInstallExpectedStatus(v1alpha1.ReconcileSucceeded, corev1.ConditionTrue, 1, "Reconcile succeeded", "1.0.0")
+		expectedStatus := pkgingv1alpha1.PackageInstallStatus{
+			GenericStatus: v1alpha1.GenericStatus{
+				Conditions: []v1alpha1.AppCondition{{
+					Type:   v1alpha1.ReconcileSucceeded,
+					Status: corev1.ConditionTrue,
+				}},
+				ObservedGeneration:  1,
+				FriendlyDescription: "Reconcile succeeded",
+			},
+			Version: "1.0.0",
+			LastAttemptedVersion: "1.0.0",
+		}
 
 		if !reflect.DeepEqual(expectedStatus, cr.Status) {
 			t.Fatalf("\nStatus is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, cr.Status)
@@ -522,7 +533,18 @@ func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
 			t.Fatalf("Failed to unmarshal: %s", err)
 		}
 
-		expectedStatus := packageInstallExpectedStatus(v1alpha1.ReconcileSucceeded, corev1.ConditionTrue, 2, "Reconcile succeeded", "2.0.0")
+		expectedStatus := pkgingv1alpha1.PackageInstallStatus{
+			GenericStatus: v1alpha1.GenericStatus{
+				Conditions: []v1alpha1.AppCondition{{
+					Type:   v1alpha1.ReconcileSucceeded,
+					Status: corev1.ConditionTrue,
+				}},
+				ObservedGeneration:  2,
+				FriendlyDescription: "Reconcile succeeded",
+			},
+			Version: "2.0.0",
+			LastAttemptedVersion: "2.0.0",
+		}
 
 		if !reflect.DeepEqual(expectedStatus, crPkgi.Status) {
 			t.Fatalf("\nStatus is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, crPkgi.Status)
@@ -614,19 +636,4 @@ spec:
    versionSelection:
      constraints: %[2]s
 `, name, version) + sas.ForNamespaceYAML()
-}
-
-func packageInstallExpectedStatus(condType v1alpha1.AppConditionType, condStatus corev1.ConditionStatus,
-	observedGen int64, desc, version string) pkgingv1alpha1.PackageInstallStatus {
-	return pkgingv1alpha1.PackageInstallStatus{
-		GenericStatus: v1alpha1.GenericStatus{
-			Conditions: []v1alpha1.AppCondition{{
-				Type:   condType,
-				Status: condStatus,
-			}},
-			ObservedGeneration:  observedGen,
-			FriendlyDescription: desc,
-		},
-		Version: version,
-	}
 }
