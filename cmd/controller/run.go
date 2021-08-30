@@ -164,7 +164,7 @@ func Run(opts Options, runLog logr.Logger) {
 	{ // add controller for PackageInstall
 		pkgInstallCtrlOpts := controller.Options{
 			Reconciler:              NewPackageInstallReconciler(kcClient, pkgClient, coreClient, runLog.WithName("ipr")),
-			MaxConcurrentReconciles: opts.Concurrency,
+			MaxConcurrentReconciles: 1,
 		}
 
 		pkgInstallCtrl, err := controller.New("kapp-controller-packageinstall", mgr, pkgInstallCtrlOpts)
