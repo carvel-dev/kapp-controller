@@ -13,7 +13,13 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
+	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver"
+	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
+	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
+	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -24,14 +30,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
-
-	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 )
 
 const (
@@ -162,35 +160,24 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	{ // add controller for PackageInstall
-		pkgInstallCtrlOpts := controller.Options{
-			Reconciler:              NewPackageInstallReconciler(kcClient, pkgClient, coreClient, runLog.WithName("ipr")),
+		pkgToPkgInstallHandler := pkginstall.NewPackageInstallVersionHandler(
+			kcClient, opts.PackagingGloablNS, runLog.WithName("handler"))
+
+		reconciler := pkginstall.NewPackageInstallReconciler(
+			kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, runLog.WithName("pkgi"))
+
+		ctrl, err := controller.New("pkgi", mgr, controller.Options{
+			Reconciler:              reconciler,
 			MaxConcurrentReconciles: 1,
-		}
-
-		pkgInstallCtrl, err := controller.New("kapp-controller-packageinstall", mgr, pkgInstallCtrlOpts)
-		if err != nil {
-			runLog.Error(err, "unable to set up kapp-controller-packageinstall")
-			os.Exit(1)
-		}
-
-		err = pkgInstallCtrl.Watch(&source.Kind{Type: &pkgingv1alpha1.PackageInstall{}}, &handler.EnqueueRequestForObject{})
-		if err != nil {
-			runLog.Error(err, "unable to watch *pkgingv1alpha1.PackageInstall")
-			os.Exit(1)
-		}
-
-		err = pkgInstallCtrl.Watch(&source.Kind{Type: &datapkgingv1alpha1.Package{}}, handlers.NewPackageInstallVersionHandler(kcClient, opts.PackagingGloablNS, runLog.WithName("handler")))
-		if err != nil {
-			runLog.Error(err, "unable to watch *datapkgingv1alpha1.Package for PackageInstall")
-			os.Exit(1)
-		}
-
-		err = pkgInstallCtrl.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
-			OwnerType:    &pkgingv1alpha1.PackageInstall{},
-			IsController: true,
 		})
 		if err != nil {
-			runLog.Error(err, "unable to watch *kcv1alpha1.App for PackageInstall")
+			runLog.Error(err, "unable to set up PackageInstalls")
+			os.Exit(1)
+		}
+
+		err = reconciler.AttachWatches(ctrl)
+		if err != nil {
+			runLog.Error(err, "unable to attach watches for PackageInstalls")
 			os.Exit(1)
 		}
 	}
