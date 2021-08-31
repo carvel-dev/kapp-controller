@@ -42,7 +42,7 @@ type Options struct {
 }
 
 // Based on https://github.com/kubernetes-sigs/controller-runtime/blob/8f633b179e1c704a6e40440b528252f147a3362a/examples/builtins/main.go
-func Run(opts Options, runLog logr.Logger) {
+func Run(opts Options, runLog logr.Logger) error {
 	runLog.Info("start controller")
 	runLog.Info("setting up manager")
 
@@ -54,8 +54,7 @@ func Run(opts Options, runLog logr.Logger) {
 
 	mgr, err := manager.New(restConfig, manager.Options{Namespace: opts.Namespace, Scheme: kcconfig.Scheme})
 	if err != nil {
-		runLog.Error(err, "unable to set up overall controller manager")
-		os.Exit(1)
+		return fmt.Errorf("Setting up overall controller manager: %s", err)
 	}
 
 	logProxies(runLog)
@@ -64,26 +63,22 @@ func Run(opts Options, runLog logr.Logger) {
 
 	coreClient, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		runLog.Error(err, "building core client")
-		os.Exit(1)
+		return fmt.Errorf("Building core client: %s", err)
 	}
 
 	kcClient, err := kcclient.NewForConfig(restConfig)
 	if err != nil {
-		runLog.Error(err, "building app client")
-		os.Exit(1)
+		return fmt.Errorf("Building kappctrl client: %s", err)
 	}
 
 	kcConfig, err := kcconfig.GetConfig(coreClient)
 	if err != nil {
-		runLog.Error(err, "getting kapp-controller config")
-		os.Exit(1)
+		return fmt.Errorf("getting kapp-controller config: %s", err)
 	}
 
 	pkgClient, err := pkgclient.NewForConfig(restConfig)
 	if err != nil {
-		runLog.Error(err, "building app client")
-		os.Exit(1)
+		return fmt.Errorf("Building packaging client: %s", err)
 	}
 
 	// assign bindPort to env var KAPPCTRL_API_PORT if available
@@ -91,23 +86,20 @@ func Run(opts Options, runLog logr.Logger) {
 	if apiPort, ok := os.LookupEnv(kappctrlAPIPORTEnvKey); ok {
 		var err error
 		if bindPort, err = strconv.Atoi(apiPort); err != nil {
-			runLog.Error(fmt.Errorf("%s environment variable must be an integer", kappctrlAPIPORTEnvKey), "reading server port")
-			os.Exit(1)
+			return fmt.Errorf("Reading %s env var (must be int): %s", kappctrlAPIPORTEnvKey, err)
 		}
 	} else {
-		runLog.Error(fmt.Errorf("os call failed to read env var %s", kappctrlAPIPORTEnvKey), "reading server port")
-		os.Exit(1)
+		return fmt.Errorf("Expected to find %s env var", kappctrlAPIPORTEnvKey)
 	}
+
 	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, opts.PackagingGloablNS, bindPort)
 	if err != nil {
-		runLog.Error(err, "creating server")
-		os.Exit(1)
+		return fmt.Errorf("Building API server: %s", err)
 	}
 
 	err = server.Run()
 	if err != nil {
-		runLog.Error(err, "starting server")
-		os.Exit(1)
+		return fmt.Errorf("Starting API server: %s", err)
 	}
 
 	refTracker := reftracker.NewAppRefTracker()
@@ -126,14 +118,12 @@ func Run(opts Options, runLog logr.Logger) {
 			MaxConcurrentReconciles: opts.Concurrency,
 		})
 		if err != nil {
-			runLog.Error(err, "unable to set up Apps")
-			os.Exit(1)
+			return fmt.Errorf("Setting up Apps reconciler: %s", err)
 		}
 
 		err = reconciler.AttachWatches(ctrl)
 		if err != nil {
-			runLog.Error(err, "unable to attach watches for Apps")
-			os.Exit(1)
+			return fmt.Errorf("Setting up Apps reconciler watches: %s", err)
 		}
 	}
 
@@ -149,14 +139,12 @@ func Run(opts Options, runLog logr.Logger) {
 			MaxConcurrentReconciles: 1,
 		})
 		if err != nil {
-			runLog.Error(err, "unable to set up PackageInstalls")
-			os.Exit(1)
+			return fmt.Errorf("Setting up PackageInstalls reconciler: %s", err)
 		}
 
 		err = reconciler.AttachWatches(ctrl)
 		if err != nil {
-			runLog.Error(err, "unable to attach watches for PackageInstalls")
-			os.Exit(1)
+			return fmt.Errorf("Setting up PackageInstalls reconciler watches: %s", err)
 		}
 	}
 
@@ -172,14 +160,12 @@ func Run(opts Options, runLog logr.Logger) {
 			MaxConcurrentReconciles: 1,
 		})
 		if err != nil {
-			runLog.Error(err, "unable to set up PackageRepositories")
-			os.Exit(1)
+			return fmt.Errorf("Setting up PackageRepositories reconciler: %s", err)
 		}
 
 		err = reconciler.AttachWatches(ctrl)
 		if err != nil {
-			runLog.Error(err, "unable to attach watches for PackageRepositories")
-			os.Exit(1)
+			return fmt.Errorf("Setting up PackageRepositories reconciler watches: %s", err)
 		}
 	}
 
@@ -193,13 +179,13 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		runLog.Error(err, "unable to run manager")
-		os.Exit(1)
+		return fmt.Errorf("Running manager: %s", err)
 	}
 
 	runLog.Info("Exiting")
 	server.Stop()
-	os.Exit(0)
+
+	return nil
 }
 
 func logProxies(runLog logr.Logger) {
