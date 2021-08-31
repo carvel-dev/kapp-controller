@@ -1,14 +1,14 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package controller_test
+package app_test
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	app_ "github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -36,7 +36,7 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 	appKey := reftracker.NewAppKey(app.Name, app.Namespace)
 	appRefTracker.ReconcileRefs(refKeyMap, appKey)
 
-	ar := controller.NewAppsReconciler(nil, nil, controller.AppFactory{}, appRefTracker, nil)
+	ar := app_.NewAppsReconciler(nil, nil, app_.AppFactory{}, appRefTracker, nil)
 
 	// This map represents the secrets the App has on its spec
 	refMap := map[reftracker.RefKey]struct{}{
@@ -92,7 +92,7 @@ func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
 	appKey := reftracker.NewAppKey(app.Name, app.Namespace)
 	appRefTracker.ReconcileRefs(refKeyMap, appKey)
 
-	ar := controller.NewAppsReconciler(nil, nil, controller.AppFactory{}, appRefTracker, nil)
+	ar := app_.NewAppsReconciler(nil, nil, app_.AppFactory{}, appRefTracker, nil)
 
 	// This map represents the secrets the App has
 	// on its spec

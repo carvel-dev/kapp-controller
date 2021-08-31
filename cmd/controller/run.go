@@ -12,24 +12,20 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver"
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reconciler"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp" // Initialize gcp client auth plugin
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 const (
@@ -116,41 +112,27 @@ func Run(opts Options, runLog logr.Logger) {
 
 	refTracker := reftracker.NewAppRefTracker()
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
-	appFactory := AppFactory{coreClient, kcClient, kcConfig}
 
 	{ // add controller for apps
-		schApp := reconciler.NewSecretHandler(runLog, refTracker, updateStatusTracker)
-		cfgmhApp := reconciler.NewConfigMapHandler(runLog, refTracker, updateStatusTracker)
+		appFactory := app.AppFactory{coreClient, kcClient, kcConfig}
+		reconciler := app.NewAppsReconciler(kcClient, runLog.WithName("app"),
+			appFactory, refTracker, updateStatusTracker)
 
-		ctrlAppOpts := controller.Options{
+		ctrl, err := controller.New("app", mgr, controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
-				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), appFactory, refTracker, updateStatusTracker),
-				log:      runLog.WithName("pr"),
+				delegate: reconciler,
+				log:      runLog.WithName("er"),
 			}),
 			MaxConcurrentReconciles: opts.Concurrency,
-		}
-
-		ctrlApp, err := controller.New("kapp-controller-app", mgr, ctrlAppOpts)
+		})
 		if err != nil {
-			runLog.Error(err, "unable to set up kapp-controller-app")
+			runLog.Error(err, "unable to set up Apps")
 			os.Exit(1)
 		}
 
-		err = ctrlApp.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForObject{})
+		err = reconciler.AttachWatches(ctrl)
 		if err != nil {
-			runLog.Error(err, "unable to watch Apps")
-			os.Exit(1)
-		}
-
-		err = ctrlApp.Watch(&source.Kind{Type: &v1.Secret{}}, schApp)
-		if err != nil {
-			runLog.Error(err, "unable to watch Secrets")
-			os.Exit(1)
-		}
-
-		err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, cfgmhApp)
-		if err != nil {
-			runLog.Error(err, "unable to watch ConfigMaps")
+			runLog.Error(err, "unable to attach watches for Apps")
 			os.Exit(1)
 		}
 	}
