@@ -1,12 +1,11 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package controller
+package app
 
 import (
 	"github.com/go-logr/logr"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	ctlapp "github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
@@ -16,14 +15,14 @@ import (
 )
 
 type AppFactory struct {
-	coreClient kubernetes.Interface
-	appClient  kcclient.Interface
-	kcConfig   *config.Config
+	CoreClient kubernetes.Interface
+	AppClient  kcclient.Interface
+	KcConfig   *config.Config
 }
 
-func (f *AppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *ctlapp.CRDApp {
-	fetchFactory := fetch.NewFactory(f.coreClient, f.kcConfig)
-	templateFactory := template.NewFactory(f.coreClient, fetchFactory)
-	deployFactory := deploy.NewFactory(f.coreClient)
-	return ctlapp.NewCRDApp(app, log, f.appClient, fetchFactory, templateFactory, deployFactory)
+func (f *AppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *CRDApp {
+	fetchFactory := fetch.NewFactory(f.CoreClient, f.KcConfig)
+	templateFactory := template.NewFactory(f.CoreClient, fetchFactory)
+	deployFactory := deploy.NewFactory(f.CoreClient)
+	return NewCRDApp(app, log, f.AppClient, fetchFactory, templateFactory, deployFactory)
 }
