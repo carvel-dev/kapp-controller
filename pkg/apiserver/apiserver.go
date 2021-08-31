@@ -42,8 +42,10 @@ const (
 
 	TokenPath = "/token-dir"
 
-	kappctrlNSEnvKey = "KAPPCTRL_SYSTEM_NAMESPACE"
-	apiServiceName   = "v1alpha1.data.packaging.carvel.dev"
+	kappctrlNSEnvKey  = "KAPPCTRL_SYSTEM_NAMESPACE"
+	kappctrlSVCEnvKey = "KAPPCTRL_SYSTEM_SERVICE"
+
+	apiServiceName = "v1alpha1.data.packaging.carvel.dev"
 )
 
 var (
@@ -198,11 +200,19 @@ func updateAPIService(client aggregatorclient.Interface, caProvider dynamiccerti
 }
 
 func apiServiceEndoint() string {
-	const apiServiceName = "packaging-api"
+	var apiServiceName = getEnvVal(kappctrlSVCEnvKey, "packaging-api")
 	ns := os.Getenv(kappctrlNSEnvKey)
 	if ns == "" {
 		panic("Cannot get api service endpoint, Kapp-controller namespace is empty")
 	}
 
 	return fmt.Sprintf("%s.%s.svc", apiServiceName, ns)
+}
+
+func getEnvVal(key string, defaultVal string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+
+	return defaultVal
 }
