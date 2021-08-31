@@ -1,7 +1,7 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package handlers
+package reconciler
 
 import (
 	"github.com/go-logr/logr"

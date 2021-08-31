@@ -1,7 +1,7 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package controller
+package pkgrepository
 
 import (
 	"context"
@@ -12,14 +12,17 @@ import (
 	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reconciler"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type PkgRepositoryReconciler struct {
@@ -41,6 +44,22 @@ func NewPkgRepositoryReconciler(appClient kcclient.Interface, coreClient kuberne
 		appFactory, appRefTracker, appUpdateStatus}
 }
 
+func (r *PkgRepositoryReconciler) AttachWatches(controller controller.Controller) error {
+	err := controller.Watch(&source.Kind{Type: &pkgv1alpha1.PackageRepository{}}, &handler.EnqueueRequestForObject{})
+	if err != nil {
+		return fmt.Errorf("Watching PackageRepositories: %s", err)
+	}
+
+	schRepo := reconciler.NewSecretHandler(r.log, r.appRefTracker, r.appUpdateStatus)
+
+	err = controller.Watch(&source.Kind{Type: &corev1.Secret{}}, schRepo)
+	if err != nil {
+		return fmt.Errorf("Watching Secrets: %s", err)
+	}
+
+	return nil
+}
+
 func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
@@ -57,7 +76,7 @@ func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconci
 		return reconcile.Result{}, err
 	}
 
-	app, err := pkgrepository.NewPackageRepoApp(existingPkgRepository)
+	app, err := NewPackageRepoApp(existingPkgRepository)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

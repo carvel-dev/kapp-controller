@@ -12,14 +12,14 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver"
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reconciler"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -116,16 +116,12 @@ func Run(opts Options, runLog logr.Logger) {
 
 	refTracker := reftracker.NewAppRefTracker()
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
-
-	appFactory := AppFactory{
-		coreClient: coreClient,
-		kcConfig:   kcConfig,
-		appClient:  kcClient,
-	}
+	appFactory := AppFactory{coreClient, kcClient, kcConfig}
 
 	{ // add controller for apps
-		schApp := handlers.NewSecretHandler(runLog, refTracker, updateStatusTracker)
-		cfgmhApp := handlers.NewConfigMapHandler(runLog, refTracker, updateStatusTracker)
+		schApp := reconciler.NewSecretHandler(runLog, refTracker, updateStatusTracker)
+		cfgmhApp := reconciler.NewConfigMapHandler(runLog, refTracker, updateStatusTracker)
+
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
 				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), appFactory, refTracker, updateStatusTracker),
@@ -183,30 +179,24 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	{ // add controller for pkgrepositories
-		schRepo := handlers.NewSecretHandler(runLog, refTracker, updateStatusTracker)
+		appFactory := pkgrepository.AppFactory{coreClient, kcClient, kcConfig}
 
-		pkgRepositoriesCtrlOpts := controller.Options{
-			Reconciler: NewPkgRepositoryReconciler(kcClient, coreClient,
-				runLog.WithName("prr"), appFactory, refTracker, updateStatusTracker),
+		reconciler := pkgrepository.NewPkgRepositoryReconciler(kcClient, coreClient,
+			runLog.WithName("pkgr"), appFactory, refTracker, updateStatusTracker)
+
+		ctrl, err := controller.New("pkgr", mgr, controller.Options{
+			Reconciler: reconciler,
 			// TODO: Consider making this configurable for multiple PackageRepo reconciles
 			MaxConcurrentReconciles: 1,
-		}
-
-		pkgRepositoryCtrl, err := controller.New("kapp-controller-package-repository", mgr, pkgRepositoriesCtrlOpts)
+		})
 		if err != nil {
-			runLog.Error(err, "unable to set up kapp-controller-package-repository")
+			runLog.Error(err, "unable to set up PackageRepositories")
 			os.Exit(1)
 		}
 
-		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &pkgingv1alpha1.PackageRepository{}}, &handler.EnqueueRequestForObject{})
+		err = reconciler.AttachWatches(ctrl)
 		if err != nil {
-			runLog.Error(err, "unable to watch *pkgingv1alpha1.PackageRepository")
-			os.Exit(1)
-		}
-
-		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &v1.Secret{}}, schRepo)
-		if err != nil {
-			runLog.Error(err, "unable to watch Secrets")
+			runLog.Error(err, "unable to attach watches for PackageRepositories")
 			os.Exit(1)
 		}
 	}
