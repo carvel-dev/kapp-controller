@@ -15,13 +15,14 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// AppFactory allows to create "hidden" Apps for reconciling PackageRepositories.
 type AppFactory struct {
 	CoreClient kubernetes.Interface
 	AppClient  kcclient.Interface
 	KcConfig   *config.Config
 }
 
-// TODO: Create a PackageRepo factory for this func
+// NewCRDPackageRepo constructs "hidden" App to reconcile PackageRepository.
 func (f *AppFactory) NewCRDPackageRepo(app *kcv1alpha1.App, pkgr *pkgv1alpha1.PackageRepository, log logr.Logger) *CRDApp {
 	fetchFactory := fetch.NewFactory(f.CoreClient, f.KcConfig)
 	templateFactory := template.NewFactory(f.CoreClient, fetchFactory)
