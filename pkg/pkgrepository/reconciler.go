@@ -154,6 +154,7 @@ func (r *Reconciler) createSecretForSecretgenController(pkgr pkgv1alpha1.Package
 	return secretName, nil
 }
 
+// nolint: revive
 func (r *Reconciler) UpdatePackageRepoRefs(refKeys map[reftracker.RefKey]struct{}, app *v1alpha1.App) {
 	pkgRepoKey := reftracker.NewPackageRepositoryKey(app.Name, app.Namespace)
 	// If PackageRepo is being deleted, remove

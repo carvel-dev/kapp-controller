@@ -26,15 +26,15 @@ import (
 type Reconciler struct {
 	appClient       kcclient.Interface
 	log             logr.Logger
-	appFactory      AppFactory
+	crdAppFactory   CRDAppFactory
 	appRefTracker   *reftracker.AppRefTracker
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
 // NewReconciler constructs new Reconciler.
-func NewReconciler(appClient kcclient.Interface, log logr.Logger, appFactory AppFactory,
+func NewReconciler(appClient kcclient.Interface, log logr.Logger, crdAppFactory CRDAppFactory,
 	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *Reconciler {
-	return &Reconciler{appClient, log, appFactory, appRefTracker, appUpdateStatus}
+	return &Reconciler{appClient, log, crdAppFactory, appRefTracker, appUpdateStatus}
 }
 
 var _ reconcile.Reconciler = &Reconciler{}
@@ -62,6 +62,7 @@ func (r *Reconciler) AttachWatches(controller controller.Controller) error {
 	return nil
 }
 
+// nolint: revive
 func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
@@ -78,7 +79,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 		return reconcile.Result{}, err
 	}
 
-	crdApp := r.appFactory.NewCRDApp(existingApp, log)
+	crdApp := r.crdAppFactory.NewCRDApp(existingApp, log)
 	r.UpdateAppRefs(crdApp.ResourceRefs(), existingApp)
 
 	force := false
@@ -91,6 +92,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 	return crdApp.Reconcile(force)
 }
 
+// nolint: revive
+// TODO should be made private
 func (r *Reconciler) UpdateAppRefs(refKeys map[reftracker.RefKey]struct{}, app *v1alpha1.App) {
 	appKey := reftracker.NewAppKey(app.Name, app.Namespace)
 	// If App is being deleted, remove the App
@@ -105,6 +108,8 @@ func (r *Reconciler) UpdateAppRefs(refKeys map[reftracker.RefKey]struct{}, app *
 	r.appRefTracker.ReconcileRefs(refKeys, appKey)
 }
 
+// nolint: revive
+// TODO should be removed since AppRefTracker is passed into this object
 func (r *Reconciler) AppRefTracker() *reftracker.AppRefTracker {
 	return r.appRefTracker
 }
