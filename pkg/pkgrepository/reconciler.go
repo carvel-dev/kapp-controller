@@ -25,8 +25,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-// PkgRepositoryReconciler is responsible for reconciling PackageRepositories.
-type PkgRepositoryReconciler struct {
+// Reconciler is responsible for reconciling PackageRepositories.
+type Reconciler struct {
 	client          kcclient.Interface
 	coreClient      kubernetes.Interface
 	log             logr.Logger
@@ -35,18 +35,18 @@ type PkgRepositoryReconciler struct {
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
-var _ reconcile.Reconciler = &PkgRepositoryReconciler{}
+var _ reconcile.Reconciler = &Reconciler{}
 
-// NewPkgRepositoryReconciler is the constructor for the PkgRepositoryReconciler struct
-func NewPkgRepositoryReconciler(appClient kcclient.Interface, coreClient kubernetes.Interface,
+// NewReconciler is the constructor for the Reconciler struct
+func NewReconciler(appClient kcclient.Interface, coreClient kubernetes.Interface,
 	log logr.Logger, appFactory AppFactory, appRefTracker *reftracker.AppRefTracker,
-	appUpdateStatus *reftracker.AppUpdateStatus) *PkgRepositoryReconciler {
-	return &PkgRepositoryReconciler{appClient, coreClient, log,
+	appUpdateStatus *reftracker.AppUpdateStatus) *Reconciler {
+	return &Reconciler{appClient, coreClient, log,
 		appFactory, appRefTracker, appUpdateStatus}
 }
 
 // AttachWatches configures watches needed for reconciler to reconcile PackageRepository.
-func (r *PkgRepositoryReconciler) AttachWatches(controller controller.Controller) error {
+func (r *Reconciler) AttachWatches(controller controller.Controller) error {
 	err := controller.Watch(&source.Kind{Type: &pkgv1alpha1.PackageRepository{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return fmt.Errorf("Watching PackageRepositories: %s", err)
@@ -64,7 +64,7 @@ func (r *PkgRepositoryReconciler) AttachWatches(controller controller.Controller
 
 // Reconcile ensures that Packages/PackageMetadatas are imported
 // into the cluster from given PackageRepository.
-func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
 	log.Info("Reconciling")
@@ -106,7 +106,7 @@ func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconci
 // to private registries without needing to explicitly declare a secretRef.
 // If no secretRef is specified for the PackageRepository, the placeholder
 // is created and used by the PackageRepository.
-func (r *PkgRepositoryReconciler) ReconcileFetchPlaceholderSecrets(pkgr pkgv1alpha1.PackageRepository, app *v1alpha1.App) error {
+func (r *Reconciler) ReconcileFetchPlaceholderSecrets(pkgr pkgv1alpha1.PackageRepository, app *v1alpha1.App) error {
 	for i, fetch := range app.Spec.Fetch {
 		if fetch.ImgpkgBundle != nil && fetch.ImgpkgBundle.SecretRef == nil {
 			secretName, err := r.createSecretForSecretgenController(pkgr, i)
@@ -127,7 +127,7 @@ func (r *PkgRepositoryReconciler) ReconcileFetchPlaceholderSecrets(pkgr pkgv1alp
 	return nil
 }
 
-func (r *PkgRepositoryReconciler) createSecretForSecretgenController(pkgr pkgv1alpha1.PackageRepository, i int) (string, error) {
+func (r *Reconciler) createSecretForSecretgenController(pkgr pkgv1alpha1.PackageRepository, i int) (string, error) {
 	secretName := fmt.Sprintf("%s-fetch-%d", pkgr.Name, i)
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -154,7 +154,7 @@ func (r *PkgRepositoryReconciler) createSecretForSecretgenController(pkgr pkgv1a
 	return secretName, nil
 }
 
-func (r *PkgRepositoryReconciler) UpdatePackageRepoRefs(refKeys map[reftracker.RefKey]struct{}, app *v1alpha1.App) {
+func (r *Reconciler) UpdatePackageRepoRefs(refKeys map[reftracker.RefKey]struct{}, app *v1alpha1.App) {
 	pkgRepoKey := reftracker.NewPackageRepositoryKey(app.Name, app.Namespace)
 	// If PackageRepo is being deleted, remove
 	// from all its associated references.

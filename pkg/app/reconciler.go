@@ -22,8 +22,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-// AppsReconciler is responsible for reconciling Apps.
-type AppsReconciler struct {
+// Reconciler is responsible for reconciling Apps.
+type Reconciler struct {
 	appClient       kcclient.Interface
 	log             logr.Logger
 	appFactory      AppFactory
@@ -31,16 +31,16 @@ type AppsReconciler struct {
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
-// NewAppsReconciler constructs new AppsReconciler.
-func NewAppsReconciler(appClient kcclient.Interface, log logr.Logger, appFactory AppFactory,
-	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *AppsReconciler {
-	return &AppsReconciler{appClient, log, appFactory, appRefTracker, appUpdateStatus}
+// NewReconciler constructs new Reconciler.
+func NewReconciler(appClient kcclient.Interface, log logr.Logger, appFactory AppFactory,
+	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *Reconciler {
+	return &Reconciler{appClient, log, appFactory, appRefTracker, appUpdateStatus}
 }
 
-var _ reconcile.Reconciler = &AppsReconciler{}
+var _ reconcile.Reconciler = &Reconciler{}
 
 // AttachWatches configures watches needed for reconciler to reconcile Apps.
-func (r *AppsReconciler) AttachWatches(controller controller.Controller) error {
+func (r *Reconciler) AttachWatches(controller controller.Controller) error {
 	err := controller.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return fmt.Errorf("Watch Apps: %s", err)
@@ -62,7 +62,7 @@ func (r *AppsReconciler) AttachWatches(controller controller.Controller) error {
 	return nil
 }
 
-func (r *AppsReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
 	// TODO currently we've decided to get a fresh copy of app so
@@ -91,7 +91,7 @@ func (r *AppsReconciler) Reconcile(ctx context.Context, request reconcile.Reques
 	return crdApp.Reconcile(force)
 }
 
-func (r *AppsReconciler) UpdateAppRefs(refKeys map[reftracker.RefKey]struct{}, app *v1alpha1.App) {
+func (r *Reconciler) UpdateAppRefs(refKeys map[reftracker.RefKey]struct{}, app *v1alpha1.App) {
 	appKey := reftracker.NewAppKey(app.Name, app.Namespace)
 	// If App is being deleted, remove the App
 	// from all its associated references.
@@ -105,6 +105,6 @@ func (r *AppsReconciler) UpdateAppRefs(refKeys map[reftracker.RefKey]struct{}, a
 	r.appRefTracker.ReconcileRefs(refKeys, appKey)
 }
 
-func (r *AppsReconciler) AppRefTracker() *reftracker.AppRefTracker {
+func (r *Reconciler) AppRefTracker() *reftracker.AppRefTracker {
 	return r.appRefTracker
 }
