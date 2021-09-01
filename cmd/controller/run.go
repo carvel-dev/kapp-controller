@@ -107,7 +107,7 @@ func Run(opts Options, runLog logr.Logger) error {
 
 	{ // add controller for apps
 		appFactory := app.AppFactory{coreClient, kcClient, kcConfig}
-		reconciler := app.NewAppsReconciler(kcClient, runLog.WithName("app"),
+		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 			appFactory, refTracker, updateStatusTracker)
 
 		ctrl, err := controller.New("app", mgr, controller.Options{
@@ -131,7 +131,7 @@ func Run(opts Options, runLog logr.Logger) error {
 		pkgToPkgInstallHandler := pkginstall.NewPackageInstallVersionHandler(
 			kcClient, opts.PackagingGloablNS, runLog.WithName("handler"))
 
-		reconciler := pkginstall.NewPackageInstallReconciler(
+		reconciler := pkginstall.NewReconciler(
 			kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, runLog.WithName("pkgi"))
 
 		ctrl, err := controller.New("pkgi", mgr, controller.Options{
@@ -151,7 +151,7 @@ func Run(opts Options, runLog logr.Logger) error {
 	{ // add controller for pkgrepositories
 		appFactory := pkgrepository.AppFactory{coreClient, kcClient, kcConfig}
 
-		reconciler := pkgrepository.NewPkgRepositoryReconciler(kcClient, coreClient,
+		reconciler := pkgrepository.NewReconciler(kcClient, coreClient,
 			runLog.WithName("pkgr"), appFactory, refTracker, updateStatusTracker)
 
 		ctrl, err := controller.New("pkgr", mgr, controller.Options{

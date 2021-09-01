@@ -22,8 +22,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-// PackageInstallReconciler is responsible for reconciling PackageInstalls.
-type PackageInstallReconciler struct {
+// Reconciler is responsible for reconciling PackageInstalls.
+type Reconciler struct {
 	kcClient               kcclient.Interface
 	pkgClient              pkgclient.Interface
 	coreClient             kubernetes.Interface
@@ -31,17 +31,17 @@ type PackageInstallReconciler struct {
 	log                    logr.Logger
 }
 
-// NewPackageInstallReconciler is the constructor for the PackageInstallReconciler struct
-func NewPackageInstallReconciler(kcClient kcclient.Interface, pkgClient pkgclient.Interface,
+// NewReconciler is the constructor for the Reconciler struct
+func NewReconciler(kcClient kcclient.Interface, pkgClient pkgclient.Interface,
 	coreClient kubernetes.Interface, pkgToPkgInstallHandler *PackageInstallVersionHandler,
-	log logr.Logger) *PackageInstallReconciler {
-	return &PackageInstallReconciler{kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, log}
+	log logr.Logger) *Reconciler {
+	return &Reconciler{kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, log}
 }
 
-var _ reconcile.Reconciler = &PackageInstallReconciler{}
+var _ reconcile.Reconciler = &Reconciler{}
 
 // AttachWatches configures watches needed for reconciler to reconcile PackageInstalls.
-func (r *PackageInstallReconciler) AttachWatches(controller controller.Controller) error {
+func (r *Reconciler) AttachWatches(controller controller.Controller) error {
 	err := controller.Watch(&source.Kind{Type: &pkgingv1alpha1.PackageInstall{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return fmt.Errorf("Watching PackageInstalls: %s", err)
@@ -64,7 +64,7 @@ func (r *PackageInstallReconciler) AttachWatches(controller controller.Controlle
 }
 
 // Reconcile ensures associated App is created per PackageInstall.
-func (r *PackageInstallReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
 	existingPkgInstall, err := r.kcClient.PackagingV1alpha1().PackageInstalls(request.Namespace).Get(ctx, request.Name, metav1.GetOptions{})

@@ -39,7 +39,7 @@ func Test_PlaceholderSecretCreated_WhenPackageRepositoryHasNoSecret(t *testing.T
 	fakek8s := fake.NewSimpleClientset()
 	log := logf.Log.WithName("kc")
 
-	pkgri := pkgrepository.NewPkgRepositoryReconciler(fakekctrl, fakek8s,
+	pkgri := pkgrepository.NewReconciler(fakekctrl, fakek8s,
 		log, pkgrepository.AppFactory{}, nil, nil)
 
 	app, err := pkgrepository.NewPackageRepoApp(pkgr)
@@ -82,7 +82,7 @@ func Test_PlaceholderSecretNotCreated_WhenPackageRepositoryHasSecret(t *testing.
 	fakek8s := fake.NewSimpleClientset()
 	log := logf.Log.WithName("kc")
 
-	pkgri := pkgrepository.NewPkgRepositoryReconciler(fakekctrl, fakek8s,
+	pkgri := pkgrepository.NewReconciler(fakekctrl, fakek8s,
 		log, pkgrepository.AppFactory{}, nil, nil)
 
 	app, err := pkgrepository.NewPackageRepoApp(pkgr)
