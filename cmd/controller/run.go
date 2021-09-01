@@ -106,7 +106,7 @@ func Run(opts Options, runLog logr.Logger) error {
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
 
 	{ // add controller for apps
-		appFactory := app.AppFactory{coreClient, kcClient, kcConfig}
+		appFactory := app.CRDAppFactory{coreClient, kcClient, kcConfig}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 			appFactory, refTracker, updateStatusTracker)
 
