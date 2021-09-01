@@ -22,6 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+// AppsReconciler is responsible for reconciling Apps.
 type AppsReconciler struct {
 	appClient       kcclient.Interface
 	log             logr.Logger
@@ -30,6 +31,7 @@ type AppsReconciler struct {
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
+// NewAppsReconciler constructs new AppsReconciler.
 func NewAppsReconciler(appClient kcclient.Interface, log logr.Logger, appFactory AppFactory,
 	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *AppsReconciler {
 	return &AppsReconciler{appClient, log, appFactory, appRefTracker, appUpdateStatus}
@@ -37,6 +39,7 @@ func NewAppsReconciler(appClient kcclient.Interface, log logr.Logger, appFactory
 
 var _ reconcile.Reconciler = &AppsReconciler{}
 
+// AttachWatches configures watches needed for reconciler to reconcile Apps.
 func (r *AppsReconciler) AttachWatches(controller controller.Controller) error {
 	err := controller.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {

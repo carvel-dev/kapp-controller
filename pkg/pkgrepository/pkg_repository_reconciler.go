@@ -25,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+// PkgRepositoryReconciler is responsible for reconciling PackageRepositories.
 type PkgRepositoryReconciler struct {
 	client          kcclient.Interface
 	coreClient      kubernetes.Interface
@@ -44,6 +45,7 @@ func NewPkgRepositoryReconciler(appClient kcclient.Interface, coreClient kuberne
 		appFactory, appRefTracker, appUpdateStatus}
 }
 
+// AttachWatches configures watches needed for reconciler to reconcile PackageRepository.
 func (r *PkgRepositoryReconciler) AttachWatches(controller controller.Controller) error {
 	err := controller.Watch(&source.Kind{Type: &pkgv1alpha1.PackageRepository{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
@@ -60,6 +62,8 @@ func (r *PkgRepositoryReconciler) AttachWatches(controller controller.Controller
 	return nil
 }
 
+// Reconcile ensures that Packages/PackageMetadatas are imported
+// into the cluster from given PackageRepository.
 func (r *PkgRepositoryReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 

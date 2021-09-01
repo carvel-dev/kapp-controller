@@ -22,6 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+// PackageInstallReconciler is responsible for reconciling PackageInstalls.
 type PackageInstallReconciler struct {
 	kcClient               kcclient.Interface
 	pkgClient              pkgclient.Interface
@@ -39,6 +40,7 @@ func NewPackageInstallReconciler(kcClient kcclient.Interface, pkgClient pkgclien
 
 var _ reconcile.Reconciler = &PackageInstallReconciler{}
 
+// AttachWatches configures watches needed for reconciler to reconcile PackageInstalls.
 func (r *PackageInstallReconciler) AttachWatches(controller controller.Controller) error {
 	err := controller.Watch(&source.Kind{Type: &pkgingv1alpha1.PackageInstall{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
@@ -61,6 +63,7 @@ func (r *PackageInstallReconciler) AttachWatches(controller controller.Controlle
 	return nil
 }
 
+// Reconcile ensures associated App is created per PackageInstall.
 func (r *PackageInstallReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 

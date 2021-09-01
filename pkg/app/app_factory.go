@@ -14,12 +14,14 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// AppFactory allows to create CRDApps.
 type AppFactory struct {
 	CoreClient kubernetes.Interface
 	AppClient  kcclient.Interface
 	KcConfig   *config.Config
 }
 
+// NewCRDApp creates a CRDApp injecting necessary dependencies.
 func (f *AppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *CRDApp {
 	fetchFactory := fetch.NewFactory(f.CoreClient, f.KcConfig)
 	templateFactory := template.NewFactory(f.CoreClient, fetchFactory)
