@@ -45,8 +45,6 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	appMetrics.InitMetrics(app.Name, app.Namespace)
-
 	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "unexpected error with reconciling", err)
@@ -108,8 +106,6 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	fetchFac := fetch.NewFactory(k8scs, nil)
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
-
-	appMetrics.InitMetrics(app.Name, app.Namespace)
 
 	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
