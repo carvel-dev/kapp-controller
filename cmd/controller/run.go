@@ -12,26 +12,20 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver"
+	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
+	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
+	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp" // Initialize gcp client auth plugin
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
-
-	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 )
 
 const (
@@ -48,7 +42,7 @@ type Options struct {
 }
 
 // Based on https://github.com/kubernetes-sigs/controller-runtime/blob/8f633b179e1c704a6e40440b528252f147a3362a/examples/builtins/main.go
-func Run(opts Options, runLog logr.Logger) {
+func Run(opts Options, runLog logr.Logger) error {
 	runLog.Info("start controller")
 	runLog.Info("setting up manager")
 
@@ -60,8 +54,7 @@ func Run(opts Options, runLog logr.Logger) {
 
 	mgr, err := manager.New(restConfig, manager.Options{Namespace: opts.Namespace, Scheme: kcconfig.Scheme})
 	if err != nil {
-		runLog.Error(err, "unable to set up overall controller manager")
-		os.Exit(1)
+		return fmt.Errorf("Setting up overall controller manager: %s", err)
 	}
 
 	logProxies(runLog)
@@ -70,26 +63,22 @@ func Run(opts Options, runLog logr.Logger) {
 
 	coreClient, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		runLog.Error(err, "building core client")
-		os.Exit(1)
+		return fmt.Errorf("Building core client: %s", err)
 	}
 
 	kcClient, err := kcclient.NewForConfig(restConfig)
 	if err != nil {
-		runLog.Error(err, "building app client")
-		os.Exit(1)
+		return fmt.Errorf("Building kappctrl client: %s", err)
 	}
 
 	kcConfig, err := kcconfig.GetConfig(coreClient)
 	if err != nil {
-		runLog.Error(err, "getting kapp-controller config")
-		os.Exit(1)
+		return fmt.Errorf("getting kapp-controller config: %s", err)
 	}
 
 	pkgClient, err := pkgclient.NewForConfig(restConfig)
 	if err != nil {
-		runLog.Error(err, "building app client")
-		os.Exit(1)
+		return fmt.Errorf("Building packaging client: %s", err)
 	}
 
 	// assign bindPort to env var KAPPCTRL_API_PORT if available
@@ -97,130 +86,86 @@ func Run(opts Options, runLog logr.Logger) {
 	if apiPort, ok := os.LookupEnv(kappctrlAPIPORTEnvKey); ok {
 		var err error
 		if bindPort, err = strconv.Atoi(apiPort); err != nil {
-			runLog.Error(fmt.Errorf("%s environment variable must be an integer", kappctrlAPIPORTEnvKey), "reading server port")
-			os.Exit(1)
+			return fmt.Errorf("Reading %s env var (must be int): %s", kappctrlAPIPORTEnvKey, err)
 		}
 	} else {
-		runLog.Error(fmt.Errorf("os call failed to read env var %s", kappctrlAPIPORTEnvKey), "reading server port")
-		os.Exit(1)
+		return fmt.Errorf("Expected to find %s env var", kappctrlAPIPORTEnvKey)
 	}
+
 	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, opts.PackagingGloablNS, bindPort)
 	if err != nil {
-		runLog.Error(err, "creating server")
-		os.Exit(1)
+		return fmt.Errorf("Building API server: %s", err)
 	}
 
 	err = server.Run()
 	if err != nil {
-		runLog.Error(err, "starting server")
-		os.Exit(1)
+		return fmt.Errorf("Starting API server: %s", err)
 	}
 
 	refTracker := reftracker.NewAppRefTracker()
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
 
-	appFactory := AppFactory{
-		coreClient: coreClient,
-		kcConfig:   kcConfig,
-		appClient:  kcClient,
-	}
-
 	{ // add controller for apps
-		schApp := handlers.NewSecretHandler(runLog, refTracker, updateStatusTracker)
-		cfgmhApp := handlers.NewConfigMapHandler(runLog, refTracker, updateStatusTracker)
-		ctrlAppOpts := controller.Options{
+		appFactory := app.CRDAppFactory{coreClient, kcClient, kcConfig}
+		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
+			appFactory, refTracker, updateStatusTracker)
+
+		ctrl, err := controller.New("app", mgr, controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
-				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), appFactory, refTracker, updateStatusTracker),
-				log:      runLog.WithName("pr"),
+				delegate: reconciler,
+				log:      runLog.WithName("er"),
 			}),
 			MaxConcurrentReconciles: opts.Concurrency,
+		})
+		if err != nil {
+			return fmt.Errorf("Setting up Apps reconciler: %s", err)
 		}
 
-		ctrlApp, err := controller.New("kapp-controller-app", mgr, ctrlAppOpts)
+		err = reconciler.AttachWatches(ctrl)
 		if err != nil {
-			runLog.Error(err, "unable to set up kapp-controller-app")
-			os.Exit(1)
-		}
-
-		err = ctrlApp.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForObject{})
-		if err != nil {
-			runLog.Error(err, "unable to watch Apps")
-			os.Exit(1)
-		}
-
-		err = ctrlApp.Watch(&source.Kind{Type: &v1.Secret{}}, schApp)
-		if err != nil {
-			runLog.Error(err, "unable to watch Secrets")
-			os.Exit(1)
-		}
-
-		err = ctrlApp.Watch(&source.Kind{Type: &v1.ConfigMap{}}, cfgmhApp)
-		if err != nil {
-			runLog.Error(err, "unable to watch ConfigMaps")
-			os.Exit(1)
+			return fmt.Errorf("Setting up Apps reconciler watches: %s", err)
 		}
 	}
 
 	{ // add controller for PackageInstall
-		pkgInstallCtrlOpts := controller.Options{
-			Reconciler:              NewPackageInstallReconciler(kcClient, pkgClient, coreClient, runLog.WithName("ipr")),
+		pkgToPkgInstallHandler := pkginstall.NewPackageInstallVersionHandler(
+			kcClient, opts.PackagingGloablNS, runLog.WithName("handler"))
+
+		reconciler := pkginstall.NewReconciler(
+			kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, runLog.WithName("pkgi"))
+
+		ctrl, err := controller.New("pkgi", mgr, controller.Options{
+			Reconciler:              reconciler,
 			MaxConcurrentReconciles: 1,
-		}
-
-		pkgInstallCtrl, err := controller.New("kapp-controller-packageinstall", mgr, pkgInstallCtrlOpts)
-		if err != nil {
-			runLog.Error(err, "unable to set up kapp-controller-packageinstall")
-			os.Exit(1)
-		}
-
-		err = pkgInstallCtrl.Watch(&source.Kind{Type: &pkgingv1alpha1.PackageInstall{}}, &handler.EnqueueRequestForObject{})
-		if err != nil {
-			runLog.Error(err, "unable to watch *pkgingv1alpha1.PackageInstall")
-			os.Exit(1)
-		}
-
-		err = pkgInstallCtrl.Watch(&source.Kind{Type: &datapkgingv1alpha1.Package{}}, handlers.NewPackageInstallVersionHandler(kcClient, opts.PackagingGloablNS, runLog.WithName("handler")))
-		if err != nil {
-			runLog.Error(err, "unable to watch *datapkgingv1alpha1.Package for PackageInstall")
-			os.Exit(1)
-		}
-
-		err = pkgInstallCtrl.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
-			OwnerType:    &pkgingv1alpha1.PackageInstall{},
-			IsController: true,
 		})
 		if err != nil {
-			runLog.Error(err, "unable to watch *kcv1alpha1.App for PackageInstall")
-			os.Exit(1)
+			return fmt.Errorf("Setting up PackageInstalls reconciler: %s", err)
+		}
+
+		err = reconciler.AttachWatches(ctrl)
+		if err != nil {
+			return fmt.Errorf("Setting up PackageInstalls reconciler watches: %s", err)
 		}
 	}
 
 	{ // add controller for pkgrepositories
-		schRepo := handlers.NewSecretHandler(runLog, refTracker, updateStatusTracker)
+		appFactory := pkgrepository.AppFactory{coreClient, kcClient, kcConfig}
 
-		pkgRepositoriesCtrlOpts := controller.Options{
-			Reconciler: NewPkgRepositoryReconciler(kcClient, coreClient,
-				runLog.WithName("prr"), appFactory, refTracker, updateStatusTracker),
+		reconciler := pkgrepository.NewReconciler(kcClient, coreClient,
+			runLog.WithName("pkgr"), appFactory, refTracker, updateStatusTracker)
+
+		ctrl, err := controller.New("pkgr", mgr, controller.Options{
+			Reconciler: reconciler,
 			// TODO: Consider making this configurable for multiple PackageRepo reconciles
 			MaxConcurrentReconciles: 1,
+		})
+		if err != nil {
+			return fmt.Errorf("Setting up PackageRepositories reconciler: %s", err)
 		}
 
-		pkgRepositoryCtrl, err := controller.New("kapp-controller-package-repository", mgr, pkgRepositoriesCtrlOpts)
+		err = reconciler.AttachWatches(ctrl)
 		if err != nil {
-			runLog.Error(err, "unable to set up kapp-controller-package-repository")
-			os.Exit(1)
-		}
-
-		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &pkgingv1alpha1.PackageRepository{}}, &handler.EnqueueRequestForObject{})
-		if err != nil {
-			runLog.Error(err, "unable to watch *pkgingv1alpha1.PackageRepository")
-			os.Exit(1)
-		}
-
-		err = pkgRepositoryCtrl.Watch(&source.Kind{Type: &v1.Secret{}}, schRepo)
-		if err != nil {
-			runLog.Error(err, "unable to watch Secrets")
-			os.Exit(1)
+			return fmt.Errorf("Setting up PackageRepositories reconciler watches: %s", err)
 		}
 	}
 
@@ -234,13 +179,13 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		runLog.Error(err, "unable to run manager")
-		os.Exit(1)
+		return fmt.Errorf("Running manager: %s", err)
 	}
 
 	runLog.Info("Exiting")
 	server.Stop()
-	os.Exit(0)
+
+	return nil
 }
 
 func logProxies(runLog logr.Logger) {

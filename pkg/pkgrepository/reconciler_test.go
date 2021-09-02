@@ -1,14 +1,13 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package controller_test
+package pkgrepository_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller"
 	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	fakekappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
@@ -40,8 +39,8 @@ func Test_PlaceholderSecretCreated_WhenPackageRepositoryHasNoSecret(t *testing.T
 	fakek8s := fake.NewSimpleClientset()
 	log := logf.Log.WithName("kc")
 
-	pkgri := controller.NewPkgRepositoryReconciler(fakekctrl, fakek8s,
-		log, controller.AppFactory{}, nil, nil)
+	pkgri := pkgrepository.NewReconciler(fakekctrl, fakek8s,
+		log, pkgrepository.AppFactory{}, nil, nil)
 
 	app, err := pkgrepository.NewPackageRepoApp(pkgr)
 	assert.Nil(t, err, "error from creating PackageRepository App: %s", err)
@@ -83,8 +82,8 @@ func Test_PlaceholderSecretNotCreated_WhenPackageRepositoryHasSecret(t *testing.
 	fakek8s := fake.NewSimpleClientset()
 	log := logf.Log.WithName("kc")
 
-	pkgri := controller.NewPkgRepositoryReconciler(fakekctrl, fakek8s,
-		log, controller.AppFactory{}, nil, nil)
+	pkgri := pkgrepository.NewReconciler(fakekctrl, fakek8s,
+		log, pkgrepository.AppFactory{}, nil, nil)
 
 	app, err := pkgrepository.NewPackageRepoApp(pkgr)
 	assert.Nil(t, err, "error from creating PackageRepository App: %s", err)
