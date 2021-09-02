@@ -211,7 +211,7 @@ func (a *App) setReconciling() {
 		Status: corev1.ConditionTrue,
 	})
 
-	a.servMetrics.RegisterReconcileAttempt(a.app.Name, a.app.Namespace)
+	a.appMetrics.RegisterReconcileAttempt(a.app.Name, a.app.Namespace)
 	a.app.Status.FriendlyDescription = "Reconciling"
 }
 
@@ -227,7 +227,7 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 		a.app.Status.ConsecutiveReconcileFailures++
 		a.app.Status.ConsecutiveReconcileSuccesses = 0
 		a.app.Status.FriendlyDescription = fmt.Sprintf("Reconcile failed: %s", result.ErrorStr())
-		a.servMetrics.RegisterReconcileFailure(a.app.Name, a.app.Namespace)
+		a.appMetrics.RegisterReconcileFailure(a.app.Name, a.app.Namespace)
 		a.setUsefulErrorMessage(result)
 	} else {
 		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
@@ -238,7 +238,7 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 		a.app.Status.ConsecutiveReconcileSuccesses++
 		a.app.Status.ConsecutiveReconcileFailures = 0
 		a.app.Status.FriendlyDescription = "Reconcile succeeded"
-		a.servMetrics.RegisterReconcileSuccess(a.app.Name, a.app.Namespace)
+		a.appMetrics.RegisterReconcileSuccess(a.app.Name, a.app.Namespace)
 		a.app.Status.UsefulErrorMessage = ""
 	}
 }
@@ -251,7 +251,7 @@ func (a *App) setDeleting() {
 		Status: corev1.ConditionTrue,
 	})
 
-	a.servMetrics.RegisterReconcileDeleteAttempt(a.app.Name, a.app.Namespace)
+	a.appMetrics.RegisterReconcileDeleteAttempt(a.app.Name, a.app.Namespace)
 	a.app.Status.FriendlyDescription = "Deleting"
 }
 
@@ -265,10 +265,10 @@ func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
 			Message: result.ErrorStr(),
 		})
 		a.app.Status.FriendlyDescription = fmt.Sprintf("Delete failed: %s", result.ErrorStr())
-		a.servMetrics.RegisterReconcileDeleteFailed(a.app.Name, a.app.Namespace)
+		a.appMetrics.RegisterReconcileDeleteFailed(a.app.Name, a.app.Namespace)
 		a.setUsefulErrorMessage(result)
 	} else {
-		a.servMetrics.DeleteMetrics(a.app.Name, a.app.Namespace)
+		a.appMetrics.DeleteMetrics(a.app.Name, a.app.Namespace)
 	}
 }
 

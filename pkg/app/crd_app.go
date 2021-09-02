@@ -21,26 +21,26 @@ import (
 )
 
 type CRDApp struct {
-	app         *App
-	appModel    *kcv1alpha1.App
-	log         logr.Logger
-	servMetrics *metrics.ServerMetrics
-	appClient   kcclient.Interface
+	app        *App
+	appModel   *kcv1alpha1.App
+	log        logr.Logger
+	appMetrics *metrics.AppMetrics
+	appClient  kcclient.Interface
 }
 
 // NewCRDApp creates new CRD app
-func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger, servMetrics *metrics.ServerMetrics,
+func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger, appMetrics *metrics.AppMetrics,
 	appClient kcclient.Interface, fetchFactory fetch.Factory,
 	templateFactory template.Factory, deployFactory deploy.Factory) *CRDApp {
 
-	crdApp := &CRDApp{appModel: appModel, log: log, servMetrics: servMetrics, appClient: appClient}
+	crdApp := &CRDApp{appModel: appModel, log: log, appMetrics: appMetrics, appClient: appClient}
 
 	crdApp.app = NewApp(*appModel, Hooks{
 		BlockDeletion:   crdApp.blockDeletion,
 		UnblockDeletion: crdApp.unblockDeletion,
 		UpdateStatus:    crdApp.updateStatus,
 		WatchChanges:    crdApp.watchChanges,
-	}, fetchFactory, templateFactory, deployFactory, log, servMetrics)
+	}, fetchFactory, templateFactory, deployFactory, log, appMetrics)
 
 	return crdApp
 }
@@ -117,6 +117,7 @@ func (a *CRDApp) updateApp(updateFunc func(*kcv1alpha1.App)) error {
 }
 
 func (a *CRDApp) Reconcile(force bool) (reconcile.Result, error) {
+	a.appMetrics.InitMetrics(a.app.Name(), a.app.Namespace())
 	return a.app.Reconcile(force)
 }
 

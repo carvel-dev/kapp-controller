@@ -5,10 +5,10 @@ package controller
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,25 +16,24 @@ import (
 )
 
 type AppsReconciler struct {
-	appClient       kcclient.Interface
-	log             logr.Logger
-	servMetrics     *metrics.ServerMetrics
+	appClient kcclient.Interface
+	log       logr.Logger
+
 	appFactory      AppFactory
 	appRefTracker   *reftracker.AppRefTracker
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
 // NewAppsReconciler reconciles new app
-func NewAppsReconciler(appClient kcclient.Interface, log logr.Logger, servMetrics *metrics.ServerMetrics, appFactory AppFactory,
+func NewAppsReconciler(appClient kcclient.Interface, log logr.Logger, appFactory AppFactory,
 	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *AppsReconciler {
-	return &AppsReconciler{appClient, log, servMetrics, appFactory, appRefTracker, appUpdateStatus}
+	return &AppsReconciler{appClient, log, appFactory, appRefTracker, appUpdateStatus}
 }
 
 var _ reconcile.Reconciler = &AppsReconciler{}
 
 func (r *AppsReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
-	servMetrics := r.servMetrics
 
 	// TODO currently we've decided to get a fresh copy of app so
 	// that we do not operate on stale copy for efficiency reasons
@@ -50,7 +49,7 @@ func (r *AppsReconciler) Reconcile(ctx context.Context, request reconcile.Reques
 		return reconcile.Result{}, err
 	}
 
-	crdApp := r.appFactory.NewCRDApp(existingApp, log, servMetrics)
+	crdApp := r.appFactory.NewCRDApp(existingApp, log)
 
 	r.UpdateAppRefs(crdApp.ResourceRefs(), existingApp)
 

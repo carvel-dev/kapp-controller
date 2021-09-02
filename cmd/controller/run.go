@@ -5,7 +5,6 @@ package controller
 
 import (
 	"fmt"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"net/http"         // Pprof related
 	_ "net/http/pprof" // Pprof related
 	"os"
@@ -15,6 +14,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -94,8 +94,8 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	runLog.Info("setting up metrics")
-	servMetrics := metrics.NewServerMetrics()
-	servMetrics.RegisterAllMetrics()
+	appMetrics := metrics.NewServerMetrics()
+	appMetrics.RegisterAllMetrics()
 
 	// assign bindPort to env var KAPPCTRL_API_PORT if available
 	var bindPort int
@@ -128,6 +128,7 @@ func Run(opts Options, runLog logr.Logger) {
 		coreClient: coreClient,
 		kcConfig:   kcConfig,
 		appClient:  kcClient,
+		appMetrics: appMetrics,
 	}
 
 	{ // add controller for apps
@@ -135,7 +136,7 @@ func Run(opts Options, runLog logr.Logger) {
 		cfgmhApp := handlers.NewConfigMapHandler(runLog, refTracker, updateStatusTracker)
 		ctrlAppOpts := controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
-				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), servMetrics, appFactory, refTracker, updateStatusTracker),
+				delegate: NewAppsReconciler(kcClient, runLog.WithName("ar"), appFactory, refTracker, updateStatusTracker),
 				log:      runLog.WithName("pr"),
 			}),
 			MaxConcurrentReconciles: opts.Concurrency,

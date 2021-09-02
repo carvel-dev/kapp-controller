@@ -22,15 +22,16 @@ type AppFactory struct {
 	coreClient kubernetes.Interface
 	appClient  kcclient.Interface
 	kcConfig   *config.Config
+	appMetrics *metrics.AppMetrics
 }
 
 // NewCRDApp creates new CRD app
-func (f *AppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger, servMetrics *metrics.ServerMetrics) *ctlapp.CRDApp {
+func (f *AppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *ctlapp.CRDApp {
 	fetchFactory := fetch.NewFactory(f.coreClient, f.kcConfig)
 	templateFactory := template.NewFactory(f.coreClient, fetchFactory)
 	deployFactory := deploy.NewFactory(f.coreClient)
-	servMetrics.InitMetrics(app.Name, app.Namespace)
-	return ctlapp.NewCRDApp(app, log, servMetrics, f.appClient, fetchFactory, templateFactory, deployFactory)
+
+	return ctlapp.NewCRDApp(app, log, f.appMetrics, f.appClient, fetchFactory, templateFactory, deployFactory)
 }
 
 // TODO: Create a PackageRepo factory for this func

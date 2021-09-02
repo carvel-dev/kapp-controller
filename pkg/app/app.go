@@ -4,7 +4,6 @@
 package app
 
 import (
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"sync"
 
 	"github.com/ghodss/yaml"
@@ -12,6 +11,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 )
@@ -32,8 +32,8 @@ type App struct {
 	templateFactory template.Factory
 	deployFactory   deploy.Factory
 
-	log         logr.Logger
-	servMetrics *metrics.ServerMetrics
+	log        logr.Logger
+	appMetrics *metrics.AppMetrics
 
 	pendingStatusUpdate   bool
 	flushAllStatusUpdates bool
@@ -41,11 +41,11 @@ type App struct {
 
 func NewApp(app v1alpha1.App, hooks Hooks,
 	fetchFactory fetch.Factory, templateFactory template.Factory,
-	deployFactory deploy.Factory, log logr.Logger, servMetrics *metrics.ServerMetrics) *App {
+	deployFactory deploy.Factory, log logr.Logger, appMetrics *metrics.AppMetrics) *App {
 
 	return &App{app: app, appPrev: *(app.DeepCopy()), hooks: hooks,
 		fetchFactory: fetchFactory, templateFactory: templateFactory,
-		deployFactory: deployFactory, log: log, servMetrics: servMetrics}
+		deployFactory: deployFactory, log: log, appMetrics: appMetrics}
 }
 
 func (a *App) Name() string      { return a.app.Name }
