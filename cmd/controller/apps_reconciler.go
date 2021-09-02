@@ -16,15 +16,13 @@ import (
 )
 
 type AppsReconciler struct {
-	appClient kcclient.Interface
-	log       logr.Logger
-
+	appClient       kcclient.Interface
+	log             logr.Logger
 	appFactory      AppFactory
 	appRefTracker   *reftracker.AppRefTracker
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
-// NewAppsReconciler reconciles new app
 func NewAppsReconciler(appClient kcclient.Interface, log logr.Logger, appFactory AppFactory,
 	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *AppsReconciler {
 	return &AppsReconciler{appClient, log, appFactory, appRefTracker, appUpdateStatus}
@@ -38,7 +36,6 @@ func (r *AppsReconciler) Reconcile(ctx context.Context, request reconcile.Reques
 	// TODO currently we've decided to get a fresh copy of app so
 	// that we do not operate on stale copy for efficiency reasons
 	existingApp, err := r.appClient.KappctrlV1alpha1().Apps(request.Namespace).Get(ctx, request.Name, metav1.GetOptions{})
-
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.Info("Could not find App")
@@ -50,7 +47,6 @@ func (r *AppsReconciler) Reconcile(ctx context.Context, request reconcile.Reques
 	}
 
 	crdApp := r.appFactory.NewCRDApp(existingApp, log)
-
 	r.UpdateAppRefs(crdApp.ResourceRefs(), existingApp)
 
 	force := false

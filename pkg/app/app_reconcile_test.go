@@ -23,9 +23,7 @@ import (
 
 func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	log := logf.Log.WithName("kc")
-
-	servMetrics := metrics.NewServerMetrics()
-	servMetrics.RegisterAllMetrics()
+	appMetrics := &metrics.AppMetrics{}
 
 	// The url under fetch is invalid, which will cause this
 	// app to fail before deploy.
@@ -47,9 +45,9 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	servMetrics.InitMetrics(app.Name, app.Namespace)
+	appMetrics.InitMetrics(app.Name, app.Namespace)
 
-	crdApp := NewCRDApp(&app, log, servMetrics, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "unexpected error with reconciling", err)
 
@@ -85,9 +83,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 
 func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.T) {
 	log := logf.Log.WithName("kc")
-
-	servMetrics := metrics.NewServerMetrics()
-	servMetrics.RegisterAllMetrics()
+	appMetrics := &metrics.AppMetrics{}
 
 	fetchInline := map[string]string{
 		"file.yml": `foo: #@ data.values.nothere`,
@@ -113,9 +109,9 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	servMetrics.InitMetrics(app.Name, app.Namespace)
+	appMetrics.InitMetrics(app.Name, app.Namespace)
 
-	crdApp := NewCRDApp(&app, log, servMetrics, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "Unexpected error with reconciling", err)
 
