@@ -1062,6 +1062,9 @@ spec:
                 type: array
               friendlyDescription:
                 type: string
+              lastAttemptedVersion:
+                description: LastAttemptedVersion specifies what version was last attempted to be installed. It does _not_ indicate it was successfully installed.
+                type: string
               observedGeneration:
                 format: int64
                 type: integer
