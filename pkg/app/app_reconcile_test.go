@@ -28,35 +28,35 @@ var noopMetrics = &metrics.AppMetrics{
 			Namespace: "test-1",
 			Name:      "test-1",
 		},
-		[]string{},
+		[]string{"label1", "label2"},
 	),
 	ReconcileSuccessTotal: prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "test-2",
 			Name:      "test-2",
 		},
-		[]string{},
+		[]string{"label1", "label2"},
 	),
 	ReconcileFailureTotal: prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "test-3",
 			Name:      "test-3",
 		},
-		[]string{},
+		[]string{"label1", "label2"},
 	),
 	ReconcileDeleteAttemptTotal: prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "test-4",
 			Name:      "test-4",
 		},
-		[]string{},
+		[]string{"label1", "label2"},
 	),
 	ReconcileDeleteFailedTotal: prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "test-5",
 			Name:      "test-5",
 		},
-		[]string{},
+		[]string{"label1", "label2"},
 	),
 }
 
