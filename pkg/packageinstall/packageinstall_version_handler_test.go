@@ -1,17 +1,17 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package handlers_test
+package packageinstall_test
 
 import (
 	"reflect"
 	"testing"
 
 	"github.com/go-logr/logr"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller/handlers"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
+	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -53,7 +53,7 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 
 	// Load installed package into fake client
 	kappcs := fake.NewSimpleClientset(&eligibleInstalledPkg, &ineligibleInstalledPkg)
-	ipvh := handlers.NewPackageInstallVersionHandler(kappcs, "", &EmptyLog{})
+	ipvh := pkginstall.NewPackageInstallVersionHandler(kappcs, "", &EmptyLog{})
 
 	event := event.GenericEvent{
 		Object: &datapkgingv1alpha1.Package{

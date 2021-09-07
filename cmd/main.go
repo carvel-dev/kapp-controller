@@ -38,7 +38,12 @@ func main() {
 	mainLog.Info("kapp-controller", "version", Version)
 
 	if runController {
-		controller.Run(ctrlOpts, log.WithName("controller"))
+		err := controller.Run(ctrlOpts, log.WithName("controller"))
+		if err != nil {
+			mainLog.Error(err, "Exited run with error")
+			os.Exit(1)
+		}
+		os.Exit(0)
 		panic("unreachable: controller returned")
 	}
 
