@@ -10,6 +10,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	"k8s.io/client-go/kubernetes"
 )
@@ -19,6 +20,7 @@ type CRDAppFactory struct {
 	CoreClient kubernetes.Interface
 	AppClient  kcclient.Interface
 	KcConfig   *config.Config
+	AppMetrics *metrics.AppMetrics
 }
 
 // NewCRDApp creates a CRDApp injecting necessary dependencies.
@@ -26,5 +28,5 @@ func (f *CRDAppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *CRDApp 
 	fetchFactory := fetch.NewFactory(f.CoreClient, f.KcConfig)
 	templateFactory := template.NewFactory(f.CoreClient, fetchFactory)
 	deployFactory := deploy.NewFactory(f.CoreClient)
-	return NewCRDApp(app, log, f.AppClient, fetchFactory, templateFactory, deployFactory)
+	return NewCRDApp(app, log, f.AppMetrics, f.AppClient, fetchFactory, templateFactory, deployFactory)
 }
