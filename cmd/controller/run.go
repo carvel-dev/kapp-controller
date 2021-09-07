@@ -94,7 +94,7 @@ func Run(opts Options, runLog logr.Logger) {
 	}
 
 	runLog.Info("setting up metrics")
-	appMetrics := metrics.NewServerMetrics()
+	appMetrics := metrics.NewAppMetrics()
 	appMetrics.RegisterAllMetrics()
 
 	// assign bindPort to env var KAPPCTRL_API_PORT if available

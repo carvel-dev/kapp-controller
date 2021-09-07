@@ -6,7 +6,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"reflect"
 
 	"github.com/go-logr/logr"
@@ -14,6 +13,7 @@ import (
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -117,7 +117,6 @@ func (a *CRDApp) updateApp(updateFunc func(*kcv1alpha1.App)) error {
 }
 
 func (a *CRDApp) Reconcile(force bool) (reconcile.Result, error) {
-	a.appMetrics.InitMetrics(a.app.Name(), a.app.Namespace())
 	return a.app.Reconcile(force)
 }
 

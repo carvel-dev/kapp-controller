@@ -5,6 +5,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"reflect"
 	"testing"
@@ -21,9 +22,47 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+var noopMetrics = &metrics.AppMetrics{
+	ReconcileAttemptTotal: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "test-1",
+			Name:      "test-1",
+		},
+		[]string{},
+	),
+	ReconcileSuccessTotal: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "test-2",
+			Name:      "test-2",
+		},
+		[]string{},
+	),
+	ReconcileFailureTotal: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "test-3",
+			Name:      "test-3",
+		},
+		[]string{},
+	),
+	ReconcileDeleteAttemptTotal: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "test-4",
+			Name:      "test-4",
+		},
+		[]string{},
+	),
+	ReconcileDeleteFailedTotal: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "test-5",
+			Name:      "test-5",
+		},
+		[]string{},
+	),
+}
+
 func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	log := logf.Log.WithName("kc")
-	appMetrics := &metrics.AppMetrics{}
+	var appMetrics = noopMetrics
 
 	// The url under fetch is invalid, which will cause this
 	// app to fail before deploy.
@@ -81,7 +120,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 
 func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.T) {
 	log := logf.Log.WithName("kc")
-	appMetrics := &metrics.AppMetrics{}
+	var appMetrics = noopMetrics
 
 	fetchInline := map[string]string{
 		"file.yml": `foo: #@ data.values.nothere`,

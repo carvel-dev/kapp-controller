@@ -21,6 +21,8 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 
 	var err error
 
+	a.appMetrics.InitMetrics(a.Name(), a.Namespace())
+
 	switch {
 	case a.app.Spec.Canceled || a.app.Spec.Paused:
 		a.log.Info("App is canceled or paused, not reconciling")
