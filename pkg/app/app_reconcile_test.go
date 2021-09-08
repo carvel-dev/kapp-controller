@@ -5,8 +5,6 @@ package app
 
 import (
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"reflect"
 	"testing"
 
@@ -15,6 +13,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,47 +21,9 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-var noopMetrics = &metrics.AppMetrics{
-	ReconcileAttemptTotal: prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "test-1",
-			Name:      "test-1",
-		},
-		[]string{"label1", "label2"},
-	),
-	ReconcileSuccessTotal: prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "test-2",
-			Name:      "test-2",
-		},
-		[]string{"label1", "label2"},
-	),
-	ReconcileFailureTotal: prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "test-3",
-			Name:      "test-3",
-		},
-		[]string{"label1", "label2"},
-	),
-	ReconcileDeleteAttemptTotal: prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "test-4",
-			Name:      "test-4",
-		},
-		[]string{"label1", "label2"},
-	),
-	ReconcileDeleteFailedTotal: prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "test-5",
-			Name:      "test-5",
-		},
-		[]string{"label1", "label2"},
-	),
-}
-
 func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	log := logf.Log.WithName("kc")
-	var appMetrics = noopMetrics
+	var appMetrics = metrics.NewAppMetrics()
 
 	// The url under fetch is invalid, which will cause this
 	// app to fail before deploy.
@@ -120,7 +81,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 
 func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.T) {
 	log := logf.Log.WithName("kc")
-	var appMetrics = noopMetrics
+	var appMetrics = metrics.NewAppMetrics()
 
 	fetchInline := map[string]string{
 		"file.yml": `foo: #@ data.values.nothere`,
