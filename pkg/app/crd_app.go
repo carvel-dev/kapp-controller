@@ -13,6 +13,7 @@ import (
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,24 +21,26 @@ import (
 )
 
 type CRDApp struct {
-	app       *App
-	appModel  *kcv1alpha1.App
-	log       logr.Logger
-	appClient kcclient.Interface
+	app        *App
+	appModel   *kcv1alpha1.App
+	log        logr.Logger
+	appMetrics *metrics.AppMetrics
+	appClient  kcclient.Interface
 }
 
-func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger,
+// NewCRDApp creates new CRD app
+func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger, appMetrics *metrics.AppMetrics,
 	appClient kcclient.Interface, fetchFactory fetch.Factory,
 	templateFactory template.Factory, deployFactory deploy.Factory) *CRDApp {
 
-	crdApp := &CRDApp{appModel: appModel, log: log, appClient: appClient}
+	crdApp := &CRDApp{appModel: appModel, log: log, appMetrics: appMetrics, appClient: appClient}
 
 	crdApp.app = NewApp(*appModel, Hooks{
 		BlockDeletion:   crdApp.blockDeletion,
 		UnblockDeletion: crdApp.unblockDeletion,
 		UpdateStatus:    crdApp.updateStatus,
 		WatchChanges:    crdApp.watchChanges,
-	}, fetchFactory, templateFactory, deployFactory, log)
+	}, fetchFactory, templateFactory, deployFactory, log, appMetrics)
 
 	return crdApp
 }
