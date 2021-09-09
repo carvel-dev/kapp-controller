@@ -49,7 +49,7 @@ func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log)
+	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
 
 	out := app.SecretRefs()
 	if !reflect.DeepEqual(out, expected) {
@@ -75,7 +75,7 @@ func Test_SecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log)
+	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
 
 	out := app.SecretRefs()
 	if len(out) != 0 {

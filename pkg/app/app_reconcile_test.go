@@ -13,6 +13,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,12 +23,14 @@ import (
 
 func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	log := logf.Log.WithName("kc")
+	var appMetrics = metrics.NewAppMetrics()
 
 	// The url under fetch is invalid, which will cause this
 	// app to fail before deploy.
 	app := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "simple-app",
+			Name:      "simple-app",
+			Namespace: "pkg-standalone",
 		},
 		Spec: v1alpha1.AppSpec{
 			Fetch: []v1alpha1.AppFetch{
@@ -42,7 +45,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "unexpected error with reconciling", err)
 
@@ -78,13 +81,15 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 
 func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.T) {
 	log := logf.Log.WithName("kc")
+	var appMetrics = metrics.NewAppMetrics()
 
 	fetchInline := map[string]string{
 		"file.yml": `foo: #@ data.values.nothere`,
 	}
 	app := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "simple-app",
+			Name:      "simple-app",
+			Namespace: "pkg-standalone",
 		},
 		Spec: v1alpha1.AppSpec{
 			Fetch: []v1alpha1.AppFetch{
@@ -102,7 +107,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	tmpFac := template.NewFactory(k8scs, fetchFac)
 	deployFac := deploy.NewFactory(k8scs)
 
-	crdApp := NewCRDApp(&app, log, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "Unexpected error with reconciling", err)
 

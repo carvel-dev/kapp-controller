@@ -17,6 +17,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
@@ -81,6 +82,10 @@ func Run(opts Options, runLog logr.Logger) error {
 		return fmt.Errorf("Building packaging client: %s", err)
 	}
 
+	runLog.Info("setting up metrics")
+	appMetrics := metrics.NewAppMetrics()
+	appMetrics.RegisterAllMetrics()
+
 	// assign bindPort to env var KAPPCTRL_API_PORT if available
 	var bindPort int
 	if apiPort, ok := os.LookupEnv(kappctrlAPIPORTEnvKey); ok {
@@ -106,7 +111,7 @@ func Run(opts Options, runLog logr.Logger) error {
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
 
 	{ // add controller for apps
-		appFactory := app.CRDAppFactory{coreClient, kcClient, kcConfig}
+		appFactory := app.CRDAppFactory{coreClient, kcClient, kcConfig, appMetrics}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 			appFactory, refTracker, updateStatusTracker)
 

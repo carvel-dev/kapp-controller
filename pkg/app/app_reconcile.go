@@ -21,6 +21,8 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 
 	var err error
 
+	a.appMetrics.InitMetrics(a.Name(), a.Namespace())
+
 	switch {
 	case a.app.Spec.Canceled || a.app.Spec.Paused:
 		a.log.Info("App is canceled or paused, not reconciling")
@@ -211,6 +213,7 @@ func (a *App) setReconciling() {
 		Status: corev1.ConditionTrue,
 	})
 
+	a.appMetrics.RegisterReconcileAttempt(a.app.Name, a.app.Namespace)
 	a.app.Status.FriendlyDescription = "Reconciling"
 }
 
@@ -226,6 +229,7 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 		a.app.Status.ConsecutiveReconcileFailures++
 		a.app.Status.ConsecutiveReconcileSuccesses = 0
 		a.app.Status.FriendlyDescription = fmt.Sprintf("Reconcile failed: %s", result.ErrorStr())
+		a.appMetrics.RegisterReconcileFailure(a.app.Name, a.app.Namespace)
 		a.setUsefulErrorMessage(result)
 	} else {
 		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
@@ -236,6 +240,7 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 		a.app.Status.ConsecutiveReconcileSuccesses++
 		a.app.Status.ConsecutiveReconcileFailures = 0
 		a.app.Status.FriendlyDescription = "Reconcile succeeded"
+		a.appMetrics.RegisterReconcileSuccess(a.app.Name, a.app.Namespace)
 		a.app.Status.UsefulErrorMessage = ""
 	}
 }
@@ -248,6 +253,7 @@ func (a *App) setDeleting() {
 		Status: corev1.ConditionTrue,
 	})
 
+	a.appMetrics.RegisterReconcileDeleteAttempt(a.app.Name, a.app.Namespace)
 	a.app.Status.FriendlyDescription = "Deleting"
 }
 
@@ -261,9 +267,10 @@ func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
 			Message: result.ErrorStr(),
 		})
 		a.app.Status.FriendlyDescription = fmt.Sprintf("Delete failed: %s", result.ErrorStr())
+		a.appMetrics.RegisterReconcileDeleteFailed(a.app.Name, a.app.Namespace)
 		a.setUsefulErrorMessage(result)
 	} else {
-		// assume resource will be deleted, hence nothing to update
+		a.appMetrics.DeleteMetrics(a.app.Name, a.app.Namespace)
 	}
 }
 
