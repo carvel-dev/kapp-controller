@@ -34,7 +34,7 @@ jobs:
         kapp: v0.39.0
         kbld: v0.30.0
         imgpkg: v0.14.0
-        vendir: v0.21.1
+        vendir: v0.23.0
     - name: Run Tests
       run: |
         set -e -x
