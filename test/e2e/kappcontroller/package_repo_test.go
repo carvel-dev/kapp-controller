@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/ghodss/yaml"
+	"github.com/stretchr/testify/assert"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
@@ -45,7 +46,7 @@ spec:
 			}},
 			ObservedGeneration:  1,
 			FriendlyDescription: "Reconcile failed: Fetching resources: Error (see .status.usefulErrorMessage for details)",
-			UsefulErrorMessage:  "vendir: Error: Syncing directory '0':\n  Syncing directory '.' with imgpkgBundle contents:\n    Imgpkg: exit status 1 (stderr: Error: Checking if image is bundle: Collecting images: Working with index.docker.io/k8slt/i-dont-exist:latest: GET https://index.docker.io/v2/k8slt/i-dont-exist/manifests/latest: UNAUTHORIZED: authentication required; [map[Action:pull Class: Name:k8slt/i-dont-exist Type:repository]]\n)\n",
+			UsefulErrorMessage:  "vendir: Error: Syncing directory '0':\n  Syncing directory '.' with imgpkgBundle contents:\n    Imgpkg: exit status 1 (stderr: imgpkg: Error: Checking if image is bundle:\n  Fetching image:\n    GET https://index.docker.io/v2/k8slt/i-dont-exist/manifests/latest:\n      UNAUTHORIZED: authentication required; [map[Action:pull Class: Name:k8slt/i-dont-exist Type:repository]]\n)\n",
 		},
 		ConsecutiveReconcileFailures: 1,
 	}
@@ -74,9 +75,7 @@ spec:
 	cleanupStatusForAssertion(&cr)
 
 	// assert on expectedStatus
-	if !reflect.DeepEqual(expectedStatus, cr.Status) {
-		t.Fatalf("\nstatus is not same:\nExpected:\n%#v\nGot:\n%#v", expectedStatus, cr.Status)
-	}
+	assert.Equal(t, expectedStatus, cr.Status)
 }
 
 func Test_PackageRepoStatus_Success(t *testing.T) {
