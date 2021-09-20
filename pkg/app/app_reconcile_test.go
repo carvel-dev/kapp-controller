@@ -60,7 +60,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 			}},
 			ObservedGeneration:  0,
 			FriendlyDescription: "Reconcile failed: Fetching resources: Error (see .status.usefulErrorMessage for details)",
-			UsefulErrorMessage:  "Error: Syncing directory '0': Syncing directory '.' with HTTP contents: Downloading URL: Initiating URL download: Get \"i-dont-exist\": unsupported protocol scheme \"\"\n",
+			UsefulErrorMessage:  "vendir: Error: Syncing directory '0':\n  Syncing directory '.' with HTTP contents:\n    Downloading URL:\n      Initiating URL download:\n        Get \"i-dont-exist\": unsupported protocol scheme \"\"\n",
 		},
 		Fetch: &v1alpha1.AppStatusFetch{
 			Error:    "Fetching resources: Error (see .status.usefulErrorMessage for details)",
@@ -74,9 +74,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	// No need to assert on stderr as its captured elsewhere
 	crdApp.app.Status().Fetch.Stderr = ""
 
-	assert.True(t,
-		reflect.DeepEqual(expectedStatus, crdApp.app.Status()),
-		fmt.Sprintf("Status is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, crdApp.app.Status()))
+	assert.Equal(t, expectedStatus, crdApp.app.Status())
 }
 
 func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.T) {
