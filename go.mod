@@ -20,7 +20,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966 // indirect
-	github.com/vmware-tanzu/carvel-vendir v0.22.1-0.20210822004142-43142f6b60cd
+	go get github.com/vmware-tanzu/carvel-vendir
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/tools v0.1.5
