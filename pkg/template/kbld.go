@@ -39,6 +39,8 @@ func (t *Kbld) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		return exec.NewCmdRunResultWithErr(err)
 	}
 
+	args = append(args, "--build=false")
+
 	var stdoutBs, stderrBs bytes.Buffer
 
 	cmd := goexec.Command("kbld", args...)
