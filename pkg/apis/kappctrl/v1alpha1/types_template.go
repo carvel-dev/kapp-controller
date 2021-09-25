@@ -60,14 +60,21 @@ type AppTemplateJsonnet struct{}
 type AppTemplateSops struct {
 	PGP   *AppTemplateSopsPGP `json:"pgp,omitempty" protobuf:"bytes,1,opt,name=pgp"`
 	Paths []string            `json:"paths,omitempty" protobuf:"bytes,2,rep,name=paths"`
+	Age   *AppTemplateSopsAge `json:"age,omitempty" protobuf:"bytes,3,opt,name=age"`
 }
 
 // +k8s:openapi-gen=true
 type AppTemplateSopsPGP struct {
-	PrivateKeysSecretRef *AppTemplateSopsPGPPrivateKeysSecretRef `json:"privateKeysSecretRef,omitempty" protobuf:"bytes,1,opt,name=privateKeysSecretRef"`
+	PrivateKeysSecretRef *AppTemplateSopsPrivateKeysSecretRef `json:"privateKeysSecretRef,omitempty" protobuf:"bytes,1,opt,name=privateKeysSecretRef"`
+	PublicKey            string                               `json:"publicKey,omitempty" protobuf:"bytes,2,opt,name=publicKey"`
 }
 
 // +k8s:openapi-gen=true
-type AppTemplateSopsPGPPrivateKeysSecretRef struct {
+type AppTemplateSopsAge struct {
+	PrivateKeysSecretRef *AppTemplateSopsPrivateKeysSecretRef `json:"privateKeysSecretRef,omitempty" protobuf:"bytes,1,opt,name=privateKeysSecretRef"`
+}
+
+// +k8s:openapi-gen=true
+type AppTemplateSopsPrivateKeysSecretRef struct {
 	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
 }

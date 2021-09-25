@@ -12,6 +12,7 @@ import (
 	"os"
 	goexec "os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -32,6 +33,7 @@ var _ Template = &Sops{}
 
 func NewSops(opts v1alpha1.AppTemplateSops,
 	genericOpts GenericOpts, coreClient kubernetes.Interface) *Sops {
+	fmt.Println("=============\nMakingNewSops!\n=====================")
 	return &Sops{opts, genericOpts, coreClient}
 }
 
@@ -46,22 +48,24 @@ func (t *Sops) TemplateStream(input io.Reader, dirPath string) exec.CmdRunResult
 func (t *Sops) decryptDir(dirPath string, input io.Reader) exec.CmdRunResult {
 	result := exec.CmdRunResult{}
 
-	gpgHomeDir, configPath, err := t.configPaths()
+	config, err := t.makeConfig()
 	if err != nil {
-		result.AttachErrorf("Building config paths: %s", err)
+		result.AttachErrorf("Building config: %s", err)
 		return result
 	}
 
-	defer gpgHomeDir.Remove()
+	defer config.cryptoHomeDir.Remove()
 
+	var args, env []string
 	// Be explicit about the config path to avoid sops searching for it
-	args := []string{"--config=" + configPath}
-	env := []string{"GNUPGHOME=" + gpgHomeDir.Path()}
+	args = []string{"--config=" + config.configPath}
 
 	switch {
 	case t.opts.PGP != nil:
-		// no additional args
-
+		env = []string{"GNUPGHOME=" + config.cryptoHomeDir.Path()}
+	case t.opts.Age != nil:
+		args = append(args, "--age="+config.agePublicKey)
+		env = []string{"SOPS_AGE_KEY_FILE=" + filepath.Join(config.cryptoHomeDir.Path(), "key.txt")}
 	default:
 		result.AttachErrorf("%s", fmt.Errorf("Unsupported SOPS strategy"))
 		return result
@@ -206,37 +210,89 @@ func (*Sops) shapeDecryptedContents(contentsBs []byte) ([]byte, error) {
 	return contentsBs, nil
 }
 
-func (t *Sops) configPaths() (*memdir.TmpDir, string, error) {
-	gpgHomeDir := memdir.NewTmpDir("template-sops-config")
+type sopsCryptoStrategy int8 // just a hunch that we'll never have a 257th encryption provider but if you're still using this in the year 2666 and upgrading to an int16, sorry about this and also all the CO2, single-use plastic, and whatever else we did wrong
+const (
+	PGP sopsCryptoStrategy = iota
+	age
+)
 
-	err := gpgHomeDir.Create()
-	if err != nil {
-		return nil, "", err
-	}
-
-	if t.opts.PGP.PrivateKeysSecretRef != nil {
-		privateKeys, err := t.getFromSecret(*t.opts.PGP.PrivateKeysSecretRef)
-		if err != nil {
-			return nil, "", fmt.Errorf("Getting private keys secret: %s", err)
-		}
-
-		err = gpgKeyring{privateKeys}.Write(gpgHomeDir.Path())
-		if err != nil {
-			return nil, "", fmt.Errorf("Generating secring.gpg: %s", err)
-		}
-	}
-
-	configPath := filepath.Join(gpgHomeDir.Path(), ".sops.yml")
-
-	err = ioutil.WriteFile(configPath, []byte("{}"), 0600)
-	if err != nil {
-		return nil, "", fmt.Errorf("Generating config file: %s", err)
-	}
-
-	return gpgHomeDir, configPath, nil
+type sopsConfig struct {
+	cryptoHomeDir *memdir.TmpDir
+	configPath    string
+	agePublicKey  string
+	strategy      sopsCryptoStrategy
 }
 
-func (t *Sops) getFromSecret(secretRef v1alpha1.AppTemplateSopsPGPPrivateKeysSecretRef) (string, error) {
+func (sc *sopsConfig) storeAgePublicKeyFrom(keyFile string) error {
+	myre := regexp.MustCompile(`(?:public key: )(.*)`)
+	matches := myre.FindStringSubmatch(keyFile)
+	if len(matches) != 2 {
+		return fmt.Errorf("Unexpected format of sops age secret contents: expected to find exactly one line with the string \"public key\"")
+	}
+	sc.agePublicKey = matches[1]
+	return nil
+}
+
+func (sc *sopsConfig) createConfigPath() error {
+	sc.configPath = filepath.Join(sc.cryptoHomeDir.Path(), ".sops.yml")
+
+	if err := ioutil.WriteFile(sc.configPath, []byte("{}"), 0600); err != nil {
+		return fmt.Errorf("Generating config file: %s", err)
+	}
+	return nil
+}
+
+// extractKeysFromSecretRefContents interprets the secretContents according to the encryption strategy configured in sc.
+func (sc *sopsConfig) extractKeysFromSecretRefContents(secretContents string) error {
+	switch sc.strategy {
+	case PGP:
+		err := gpgKeyring{secretContents}.Write(sc.cryptoHomeDir.Path())
+		if err != nil {
+			return fmt.Errorf("Generating secring.gpg: %s", err)
+		}
+	case age:
+		if err := ioutil.WriteFile(filepath.Join(sc.cryptoHomeDir.Path(), "key.txt"), []byte(secretContents), 0600); err != nil {
+			return fmt.Errorf("Creating key.txt file: %s", err)
+		}
+		sc.storeAgePublicKeyFrom(secretContents)
+	default:
+		return fmt.Errorf("Unrecognized sops encryption strategy %d", sc.strategy)
+	}
+	return nil
+}
+
+func (t *Sops) makeConfig() (sopsConfig, error) {
+	cryptoHomeDir := memdir.NewTmpDir("template-sops-config")
+	config := sopsConfig{cryptoHomeDir, "", "", 0}
+
+	if err := cryptoHomeDir.Create(); err != nil {
+		return config, err
+	}
+
+	var secretRef *v1alpha1.AppTemplateSopsPrivateKeysSecretRef
+	if t.opts.PGP != nil {
+		secretRef = t.opts.PGP.PrivateKeysSecretRef
+		config.strategy = PGP
+	} else if t.opts.Age != nil {
+		secretRef = t.opts.Age.PrivateKeysSecretRef
+		config.strategy = age
+	}
+
+	secretContents, err := t.getSecretContents(*secretRef)
+	if err != nil {
+		return config, fmt.Errorf("Getting private keys secret: %s", err)
+	}
+
+	config.extractKeysFromSecretRefContents(secretContents)
+
+	if err = config.createConfigPath(); err != nil {
+		return config, err
+	}
+
+	return config, nil
+}
+
+func (t *Sops) getSecretContents(secretRef v1alpha1.AppTemplateSopsPrivateKeysSecretRef) (string, error) {
 	secret, err := t.coreClient.CoreV1().Secrets(t.genericOpts.Namespace).Get(context.Background(), secretRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return "", err

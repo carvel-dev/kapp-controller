@@ -42,6 +42,12 @@ RUN wget -O- https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.
   echo "185348fd77fc160d5bdf3cd20ecbc796163504fd3df196d7cb29000773657b74  /usr/local/bin/sops" | sha256sum -c - && \
   chmod +x /usr/local/bin/sops && sops -v
 
+# age (encryption for sops)
+RUN wget -O- 'https://dl.filippo.io/age/v1.0.0?for=linux/amd64' > age.tar && \
+  echo "6414f71ce947fbbea1314f6e9786c5d48436ebc76c3fd6167bf018e432b3b669  age.tar" | sha256sum -c - && \
+  tar -xzf age.tar && cp age/age /usr/local/bin && \
+  chmod +x /usr/local/bin/age && age --version
+
 # kapp-controller
 COPY . .
 # helpful ldflags reference: https://www.digitalocean.com/community/tutorials/using-ldflags-to-set-version-information-for-go-applications
@@ -69,6 +75,7 @@ COPY --from=0 /usr/local/bin/vendir .
 COPY --from=0 /usr/local/bin/ytt .
 COPY --from=0 /usr/local/bin/kbld .
 COPY --from=0 /usr/local/bin/sops .
+COPY --from=0 /usr/local/bin/age .
 
 # deployers
 COPY --from=0 /usr/local/bin/kapp .

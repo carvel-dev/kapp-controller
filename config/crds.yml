@@ -362,6 +362,14 @@ spec:
                               type: object
                             sops:
                               properties:
+                                age:
+                                  properties:
+                                    privateKeysSecretRef:
+                                      properties:
+                                        name:
+                                          type: string
+                                      type: object
+                                  type: object
                                 paths:
                                   items:
                                     type: string
@@ -373,6 +381,8 @@ spec:
                                         name:
                                           type: string
                                       type: object
+                                    publicKey:
+                                      type: string
                                   type: object
                               type: object
                             ytt:
@@ -758,6 +768,14 @@ spec:
                       type: object
                     sops:
                       properties:
+                        age:
+                          properties:
+                            privateKeysSecretRef:
+                              properties:
+                                name:
+                                  type: string
+                              type: object
+                          type: object
                         paths:
                           items:
                             type: string
@@ -769,6 +787,8 @@ spec:
                                 name:
                                   type: string
                               type: object
+                            publicKey:
+                              type: string
                           type: object
                       type: object
                     ytt:
