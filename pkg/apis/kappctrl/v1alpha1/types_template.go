@@ -1,6 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+//nolint:revive // we're unlikely to write descriptive godoc comments in this file.
 package v1alpha1
 
 // +k8s:openapi-gen=true

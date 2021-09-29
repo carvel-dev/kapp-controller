@@ -212,7 +212,7 @@ func (*Sops) shapeDecryptedContents(contentsBs []byte) ([]byte, error) {
 
 type sopsCryptoStrategy int8 // just a hunch that we'll never have a 257th encryption provider but if you're still using this in the year 2666 and upgrading to an int16, sorry about this and also all the CO2, single-use plastic, and whatever else we did wrong
 const (
-	PGP sopsCryptoStrategy = iota
+	pgp sopsCryptoStrategy = iota
 	age
 )
 
@@ -245,7 +245,7 @@ func (sc *sopsConfig) createConfigPath() error {
 // extractKeysFromSecretRefContents interprets the secretContents according to the encryption strategy configured in sc.
 func (sc *sopsConfig) extractKeysFromSecretRefContents(secretContents string) error {
 	switch sc.strategy {
-	case PGP:
+	case pgp:
 		err := gpgKeyring{secretContents}.Write(sc.cryptoHomeDir.Path())
 		if err != nil {
 			return fmt.Errorf("Generating secring.gpg: %s", err)
@@ -272,7 +272,7 @@ func (t *Sops) makeConfig() (sopsConfig, error) {
 	var secretRef *v1alpha1.AppTemplateSopsPrivateKeysSecretRef
 	if t.opts.PGP != nil {
 		secretRef = t.opts.PGP.PrivateKeysSecretRef
-		config.strategy = PGP
+		config.strategy = pgp
 	} else if t.opts.Age != nil {
 		secretRef = t.opts.Age.PrivateKeysSecretRef
 		config.strategy = age
