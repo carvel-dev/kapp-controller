@@ -12,7 +12,6 @@ import (
 	"os"
 	goexec "os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -64,7 +63,6 @@ func (t *Sops) decryptDir(dirPath string, input io.Reader) exec.CmdRunResult {
 	case t.opts.PGP != nil:
 		env = []string{"GNUPGHOME=" + config.cryptoHomeDir.Path()}
 	case t.opts.Age != nil:
-		args = append(args, "--age="+config.agePublicKey)
 		env = []string{"SOPS_AGE_KEY_FILE=" + filepath.Join(config.cryptoHomeDir.Path(), "key.txt")}
 	default:
 		result.AttachErrorf("%s", fmt.Errorf("Unsupported SOPS strategy"))
@@ -219,18 +217,7 @@ const (
 type sopsConfig struct {
 	cryptoHomeDir *memdir.TmpDir
 	configPath    string
-	agePublicKey  string
 	strategy      sopsCryptoStrategy
-}
-
-func (sc *sopsConfig) storeAgePublicKeyFrom(keyFile string) error {
-	myre := regexp.MustCompile(`(?:public key: )(.*)`)
-	matches := myre.FindStringSubmatch(keyFile)
-	if len(matches) != 2 {
-		return fmt.Errorf("Unexpected format of sops age secret contents: expected to find exactly one line with the string \"public key\"")
-	}
-	sc.agePublicKey = matches[1]
-	return nil
 }
 
 func (sc *sopsConfig) createConfigPath() error {
@@ -254,7 +241,6 @@ func (sc *sopsConfig) extractKeysFromSecretRefContents(secretContents string) er
 		if err := ioutil.WriteFile(filepath.Join(sc.cryptoHomeDir.Path(), "key.txt"), []byte(secretContents), 0600); err != nil {
 			return fmt.Errorf("Creating key.txt file: %s", err)
 		}
-		sc.storeAgePublicKeyFrom(secretContents)
 	default:
 		return fmt.Errorf("Unrecognized sops encryption strategy %d", sc.strategy)
 	}
@@ -263,7 +249,7 @@ func (sc *sopsConfig) extractKeysFromSecretRefContents(secretContents string) er
 
 func (t *Sops) makeConfig() (sopsConfig, error) {
 	cryptoHomeDir := memdir.NewTmpDir("template-sops-config")
-	config := sopsConfig{cryptoHomeDir, "", "", 0}
+	config := sopsConfig{cryptoHomeDir, "", 0}
 
 	if err := cryptoHomeDir.Create(); err != nil {
 		return config, err
