@@ -20,7 +20,7 @@ export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
 ./hack/test-all.sh
 ```
 
-### Known Issues
+### Troubleshooting tips
 
 1. If testing against a `minikube` cluster, run `eval $(minikube docker-env)` before development.
 
