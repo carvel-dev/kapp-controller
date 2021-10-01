@@ -20,6 +20,17 @@ export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
 ./hack/test-all.sh
 ```
 
+### Troubleshooting tips
+
+1. If testing against a `minikube` cluster, run `eval $(minikube docker-env)` before development.
+
+   This prevents the following error, which is a result of the docker daemon being unable to pull the `kapp-controller` dev image.
+
+```
+11:01:16AM:     ^ Pending: ImagePullBackOff (message: Back-off pulling image "kbld:kapp-controller-sha256-1bb8a9169c8265defc094a0220fa51d8c69a621d778813e4c4567d8cabde0e45")
+11:01:05AM:     ^ Pending: ErrImagePull (message: rpc error: code = Unknown desc = Error response from daemon: pull access denied for kbld, repository does not exist or may require 'docker login': denied: requested access to the resource is denied)
+```
+
 ### Release
 
 Release versions are scraped from git tags in the same style as the goreleaser
