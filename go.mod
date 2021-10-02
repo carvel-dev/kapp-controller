@@ -8,7 +8,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v0.4.0
 	github.com/go-openapi/spec v0.19.3
-	github.com/gogo/protobuf v1.3.1
+	github.com/gogo/protobuf v1.3.2
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/google/go-containerregistry v0.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2 // indirect
@@ -26,10 +26,10 @@ require (
 	golang.org/x/tools v0.1.5
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	honnef.co/go/tools v0.2.0 // indirect
-	k8s.io/api v0.19.2
-	k8s.io/apimachinery v0.19.2
-	k8s.io/apiserver v0.19.2
-	k8s.io/client-go v0.19.2
+	k8s.io/api v0.19.15
+	k8s.io/apimachinery v0.19.15
+	k8s.io/apiserver v0.19.15
+	k8s.io/client-go v0.19.15
 	k8s.io/code-generator v0.19.2
 	k8s.io/klog v1.0.0
 	k8s.io/kube-aggregator v0.19.2
