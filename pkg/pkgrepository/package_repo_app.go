@@ -19,6 +19,21 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 	desiredApp.DeletionTimestamp = pkgRepository.DeletionTimestamp
 	desiredApp.Generation = pkgRepository.Generation
 
+	kappRawOpts := []string{
+		"--wait-timeout=30s",
+		"--kube-api-qps=30",
+		"--kube-api-burst=40",
+		// Default kapp-controller service account allows listing all namespaces
+		// but does not allow listing of most resources in such namespaces --
+		// instead of spinning wheels trying to list, scope to "current" namespace
+		"--dangerous-scope-to-fallback-allowed-namespaces=true",
+	}
+	kappDeployRawOpts := append([]string{
+		"--logs=false",
+		"--app-changes-max-to-keep=5",
+	}, kappRawOpts...)
+	kappDeleteRawOpts := append([]string{}, kappRawOpts...)
+
 	desiredApp.Spec = kcv1alpha1.AppSpec{
 		Fetch: []kcv1alpha1.AppFetch{{
 			Image:        pkgRepository.Spec.Fetch.Image,
@@ -71,9 +86,9 @@ metadata:
 		}},
 		Deploy: []kcv1alpha1.AppDeploy{{
 			Kapp: &kcv1alpha1.AppDeployKapp{
-				RawOptions: []string{"--wait-timeout=30s", "--kube-api-qps=20", "--kube-api-burst=30"},
+				RawOptions: kappDeployRawOpts,
 				Delete: &kcv1alpha1.AppDeployKappDelete{
-					RawOptions: []string{"--wait-timeout=30s", "--kube-api-qps=20", "--kube-api-burst=30"},
+					RawOptions: kappDeleteRawOpts,
 				},
 			},
 		}},
