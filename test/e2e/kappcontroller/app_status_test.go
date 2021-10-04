@@ -77,7 +77,7 @@ spec:
 			}},
 			ObservedGeneration:  1,
 			FriendlyDescription: "Reconcile failed: Deploying: Error (see .status.usefulErrorMessage for details)",
-			UsefulErrorMessage:  "kapp: Error: Checking existance of resource configmap/configmap (v1) namespace: does-not-exist: configmaps \"configmap\" is forbidden:\n  User \"system:serviceaccount:" + env.Namespace + ":kappctrl-e2e-ns-sa\" cannot get resource \"configmaps\" in API group \"\" in the namespace \"does-not-exist\" (reason: Forbidden)",
+			UsefulErrorMessage:  "kapp: Error: Checking existence of resource configmap/configmap (v1) namespace: does-not-exist: configmaps \"configmap\" is forbidden:\n  User \"system:serviceaccount:" + env.Namespace + ":kappctrl-e2e-ns-sa\" cannot get resource \"configmaps\" in API group \"\" in the namespace \"does-not-exist\" (reason: Forbidden)",
 		},
 		Deploy: &v1alpha1.AppStatusDeploy{
 			ExitCode: 1,
