@@ -16,6 +16,7 @@ var (
 		"--tty",
 
 		"--dangerous-ignore-failing-api-services",
+		"--dangerous-scope-to-fallback-allowed-namespaces",
 
 		// Filtering
 		"--filter",
