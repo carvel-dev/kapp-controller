@@ -14,7 +14,7 @@ import (
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -43,7 +43,7 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 	desiredApp.Spec = *pkgVersion.Spec.Template.Spec
 	desiredApp.Spec.ServiceAccountName = pkgInstall.Spec.ServiceAccountName
 	if pkgInstall.Spec.SyncPeriod == nil {
-		desiredApp.Spec.SyncPeriod = &v1.Duration{Duration: time.Minute * 10}
+		desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: time.Minute * 10}
 	} else {
 		desiredApp.Spec.SyncPeriod = pkgInstall.Spec.SyncPeriod
 	}

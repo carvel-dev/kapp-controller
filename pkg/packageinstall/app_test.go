@@ -15,11 +15,10 @@ import (
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // several tests below have no SyncPeriod set so they'll all use the same default.
-var defaultSyncPeriod v1.Duration = v1.Duration{10 * time.Minute}
+var defaultSyncPeriod metav1.Duration = metav1.Duration{10 * time.Minute}
 
 func TestAppExtYttPathsFromSecretNameAnn(t *testing.T) {
 	ipkg := &pkgingv1alpha1.PackageInstall{
@@ -391,7 +390,7 @@ func TestAppCustomFetchSecretNames(t *testing.T) {
 			},
 		},
 		Spec: pkgingv1alpha1.PackageInstallSpec{
-			SyncPeriod: &v1.Duration{100 * time.Second},
+			SyncPeriod: &metav1.Duration{100 * time.Second},
 		},
 	}
 
@@ -424,7 +423,7 @@ func TestAppCustomFetchSecretNames(t *testing.T) {
 
 	expectedApp := &kcv1alpha1.App{
 		Spec: kcv1alpha1.AppSpec{
-			SyncPeriod: &v1.Duration{100 * time.Second},
+			SyncPeriod: &metav1.Duration{100 * time.Second},
 			Fetch: []kcv1alpha1.AppFetch{
 				{HelmChart: &kcv1alpha1.AppFetchHelmChart{ // 0
 					// no repository specified, so no secret set

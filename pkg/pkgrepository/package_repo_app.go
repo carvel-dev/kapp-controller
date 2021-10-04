@@ -96,7 +96,7 @@ metadata:
 	}
 
 	if pkgRepository.Spec.SyncPeriod == nil {
-		desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: time.Minute * 5}
+		desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: time.Minute * 10}
 	} else {
 		desiredApp.Spec.SyncPeriod = pkgRepository.Spec.SyncPeriod
 	}
