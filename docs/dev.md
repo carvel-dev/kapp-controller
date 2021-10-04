@@ -1,21 +1,33 @@
-## Development & Deploy
+## Development
 
-Install ytt, kbld, kapp beforehand (https://k14s.io).
+### Prerequisites
+
+Install ytt, kbld, kapp beforehand (https://k14s.io). We provide a handy script to pull the required dependencies.
 
 ```
-./hack/build.sh # to build locally
+./hack/install-deps.sh
+```
+### Build Locally
 
-# deploys secretgen-controller with kapp-controller
-# and also runs tests where kapp-controller integrates 
-# with secretgen-controller
+```
+./hack/build.sh
+```
+
+### Test e2e
+
+```
+# KAPPCTRL_E2E_SECRETGEN_CONTROLLER:
+#   Optionally deploys secretgen-controller with kapp-controller.
+#   Also enables tests where kapp-controller integrates with secretgen-controller.
 export KAPPCTRL_E2E_SECRETGEN_CONTROLLER=true
 
-# add `-v image_repo=docker.io/username/kapp-controller` with your registry to ytt invocation inside
-./hack/deploy.sh # to deploy
-
-# deploys test assets in addition to kapp-controller for e2e tests
+# Deploys test assets and kapp-controller
+# OPTIONAL: add `-v image_repo=YOUR_IMAGE_REGISTRY/kapp-controller`
+# where `YOUR_IMAGE_REGISTRY` is the path to your registry.
 ./hack/deploy-test.sh
 
+# KAPPCTRL_E2E_NAMESPACE:
+#   Required name of the namespace where e2e tests run, creates if non-existant.
 export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
 ./hack/test-all.sh
 ```
@@ -31,7 +43,7 @@ export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
 11:01:05AM:     ^ Pending: ErrImagePull (message: rpc error: code = Unknown desc = Error response from daemon: pull access denied for kbld, repository does not exist or may require 'docker login': denied: requested access to the resource is denied)
 ```
 
-### Release
+## Releasing
 
 Release versions are scraped from git tags in the same style as the goreleaser
 tool.
@@ -69,7 +81,7 @@ As part of drafting the release through the GitHub UI, include the generated `re
 file and make sure to document the file checksum. This checksum is generated as part of 
 the `./hack/build-release.sh` but can be rerun as `shasum -a 256 ./tmp/release*.yml`.
 
-### Packaging Development
+## Packaging Development
 
 Due to the fact the one of our resources is named package, which is a golang
 keyword, we were not able to use the code-generation binaries. To get around
