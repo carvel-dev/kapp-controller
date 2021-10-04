@@ -32,7 +32,6 @@ var _ Template = &Sops{}
 
 func NewSops(opts v1alpha1.AppTemplateSops,
 	genericOpts GenericOpts, coreClient kubernetes.Interface) *Sops {
-	fmt.Println("=============\nMakingNewSops!\n=====================")
 	return &Sops{opts, genericOpts, coreClient}
 }
 
