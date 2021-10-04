@@ -6,6 +6,7 @@ package packageinstall_test
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/require"
@@ -14,7 +15,11 @@ import (
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// several tests below have no SyncPeriod set so they'll all use the same default.
+var defaultSyncPeriod v1.Duration = v1.Duration{10 * time.Minute}
 
 func TestAppExtYttPathsFromSecretNameAnn(t *testing.T) {
 	ipkg := &pkgingv1alpha1.PackageInstall{
@@ -53,6 +58,7 @@ func TestAppExtYttPathsFromSecretNameAnn(t *testing.T) {
 
 	expectedApp := &kcv1alpha1.App{
 		Spec: kcv1alpha1.AppSpec{
+			SyncPeriod: &defaultSyncPeriod,
 			Template: []kcv1alpha1.AppTemplate{
 				// Helm template step is untouched
 				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
@@ -136,6 +142,7 @@ func TestAppExtYttDataValuesOverlaysAnn(t *testing.T) {
 
 	expectedApp := &kcv1alpha1.App{
 		Spec: kcv1alpha1.AppSpec{
+			SyncPeriod: &defaultSyncPeriod,
 			Template: []kcv1alpha1.AppTemplate{
 				{Ytt: &kcv1alpha1.AppTemplateYtt{
 					Inline: &kcv1alpha1.AppFetchInline{
@@ -205,6 +212,7 @@ func TestAppYttValues(t *testing.T) {
 
 	expectedApp := &kcv1alpha1.App{
 		Spec: kcv1alpha1.AppSpec{
+			SyncPeriod: &defaultSyncPeriod,
 			Template: []kcv1alpha1.AppTemplate{
 				{Ytt: &kcv1alpha1.AppTemplateYtt{
 					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
@@ -273,6 +281,7 @@ func TestAppHelmTemplateValues(t *testing.T) {
 
 	expectedApp := &kcv1alpha1.App{
 		Spec: kcv1alpha1.AppSpec{
+			SyncPeriod: &defaultSyncPeriod,
 			Template: []kcv1alpha1.AppTemplate{
 				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{
 					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
@@ -381,6 +390,9 @@ func TestAppCustomFetchSecretNames(t *testing.T) {
 				"ext.packaging.carvel.dev/fetch-6-secret-name": "secret6-name",
 			},
 		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			SyncPeriod: &v1.Duration{100 * time.Second},
+		},
 	}
 
 	pkgVersion := datapkgingv1alpha1.Package{
@@ -412,6 +424,7 @@ func TestAppCustomFetchSecretNames(t *testing.T) {
 
 	expectedApp := &kcv1alpha1.App{
 		Spec: kcv1alpha1.AppSpec{
+			SyncPeriod: &v1.Duration{100 * time.Second},
 			Fetch: []kcv1alpha1.AppFetch{
 				{HelmChart: &kcv1alpha1.AppFetchHelmChart{ // 0
 					// no repository specified, so no secret set
