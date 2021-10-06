@@ -1,6 +1,6 @@
 <!--  Thanks for sending a pull request!  Here are some tips for you:
 
-1. If this is your first time, please read our contributor guidelines: https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/CONTRIBUTING.md and developer guide https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/docs/dev.md
+If this is your first time, please read our contributor guidelines: https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/CONTRIBUTING.md and developer guide https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/docs/dev.md
 -->
 
 #### What this PR does / why we need it:
