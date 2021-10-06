@@ -3,19 +3,6 @@
 1. If this is your first time, please read our contributor guidelines: https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/CONTRIBUTING.md and developer guide https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/docs/dev.md
 -->
 
-#### What type of PR is this?
-
-<!--
-Please add a label to your pull request that matches the type of change you are making.
-
-Some Examples include:
-bug
-documentation
-enhancement
-discussion
-question
--->
-
 #### What this PR does / why we need it:
 
 #### Which issue(s) this PR fixes:
