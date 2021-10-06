@@ -266,6 +266,8 @@ func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
 			Status:  corev1.ConditionTrue,
 			Message: result.ErrorStr(),
 		})
+		a.app.Status.ConsecutiveReconcileFailures++
+		a.app.Status.ConsecutiveReconcileSuccesses = 0
 		a.app.Status.FriendlyDescription = fmt.Sprintf("Delete failed: %s", result.ErrorStr())
 		a.appMetrics.RegisterReconcileDeleteFailed(a.app.Name, a.app.Namespace)
 		a.setUsefulErrorMessage(result)
