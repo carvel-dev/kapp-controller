@@ -4,11 +4,16 @@
 package pkgrepository
 
 import (
+	"os"
 	"time"
 
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+var (
+	kappDebug = os.Getenv("KAPPCTRL_PKGR_KAPP_DEBUG") == "true"
 )
 
 func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1alpha1.App, error) {
@@ -28,10 +33,25 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 		// instead of spinning wheels trying to list, scope to "current" namespace
 		"--dangerous-scope-to-fallback-allowed-namespaces=true",
 	}
+
+	if kappDebug {
+		kappRawOpts = append(kappRawOpts, "--debug=true")
+	}
+
 	kappDeployRawOpts := append([]string{
 		"--logs=false",
 		"--app-changes-max-to-keep=5",
+		// GKE for some reason does not like high volume of GETs for our API server
+		// and ends up taking very long time to respond to SubjectAccessReviews (SAR).
+		// We can disable existing check entirely since we do not allow to "take ownership"
+		// of other Package/PackageMetadata and we do not _need_ to adopt Packages that
+		// are not owned by kapp already.
+		"--existing-non-labeled-resources-check=false",
+		// ... could in theory just lower concurrency, but decided to turn it off entirely.
+		// (on GKE, 6 was a sweet spot, 10 exhibited hanging behaviour)
+		// "--existing-non-labeled-resources-check-concurrency=6",
 	}, kappRawOpts...)
+
 	kappDeleteRawOpts := append([]string{}, kappRawOpts...)
 
 	desiredApp.Spec = kcv1alpha1.AppSpec{
