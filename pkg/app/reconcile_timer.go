@@ -22,7 +22,7 @@ func NewReconcileTimer(app v1alpha1.App) ReconcileTimer {
 }
 
 func (rt ReconcileTimer) DurationUntilReady(err error) time.Duration {
-	if err != nil || rt.hasReconcileStatus(v1alpha1.ReconcileFailed) {
+	if err != nil || rt.hasReconcileStatus(v1alpha1.ReconcileFailed) || rt.hasReconcileStatus(v1alpha1.DeleteFailed) {
 		return rt.failureSyncPeriod()
 	}
 
@@ -46,7 +46,7 @@ func (rt ReconcileTimer) IsReadyAt(timeAt time.Time) bool {
 		return true
 	}
 
-	if rt.hasReconcileStatus(v1alpha1.ReconcileFailed) {
+	if rt.hasReconcileStatus(v1alpha1.ReconcileFailed) || rt.hasReconcileStatus(v1alpha1.DeleteFailed) {
 		if timeAt.UTC().Sub(lastReconcileTime) >= rt.failureSyncPeriod() {
 			return true
 		}
