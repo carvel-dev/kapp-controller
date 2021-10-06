@@ -61,6 +61,9 @@ var (
 var (
 	kappAllowedDeployFlagSet = exec.NewFlagSet(kappAllowedSharedOpts, kappAllowedChangeOpts, []string{
 		"--dangerous-allow-empty-list-of-resources",
+
+		"--existing-non-labeled-resources-check",
+		"--existing-non-labeled-resources-check-concurrency",
 		"--dangerous-override-ownership-of-existing-resources",
 
 		"--into-ns",
