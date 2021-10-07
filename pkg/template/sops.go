@@ -52,17 +52,17 @@ func (t *Sops) decryptDir(dirPath string, input io.Reader) exec.CmdRunResult {
 		return result
 	}
 
-	defer config.cryptoHomeDir.Remove()
+	defer config.CryptoHomeDir.Remove()
 
 	var args, env []string
 	// Be explicit about the config path to avoid sops searching for it
-	args = []string{"--config=" + config.configPath}
+	args = []string{"--config=" + config.ConfigPath}
 
 	switch {
 	case t.opts.PGP != nil:
-		env = []string{"GNUPGHOME=" + config.cryptoHomeDir.Path()}
+		env = []string{"GNUPGHOME=" + config.CryptoHomeDir.Path()}
 	case t.opts.Age != nil:
-		env = []string{"SOPS_AGE_KEY_FILE=" + filepath.Join(config.cryptoHomeDir.Path(), "key.txt")}
+		env = []string{"SOPS_AGE_KEY_FILE=" + filepath.Join(config.CryptoHomeDir.Path(), "key.txt")}
 	default:
 		result.AttachErrorf("%s", fmt.Errorf("Unsupported SOPS strategy"))
 		return result
@@ -214,34 +214,34 @@ const (
 )
 
 type sopsConfig struct {
-	cryptoHomeDir *memdir.TmpDir
-	configPath    string
-	strategy      sopsCryptoStrategy
+	CryptoHomeDir *memdir.TmpDir
+	ConfigPath    string
+	Strategy      sopsCryptoStrategy
 }
 
-func (sc *sopsConfig) createConfigPath() error {
-	sc.configPath = filepath.Join(sc.cryptoHomeDir.Path(), ".sops.yml")
+func (sc *sopsConfig) CreateConfigPath() error {
+	sc.ConfigPath = filepath.Join(sc.CryptoHomeDir.Path(), ".sops.yml")
 
-	if err := ioutil.WriteFile(sc.configPath, []byte("{}"), 0600); err != nil {
+	if err := ioutil.WriteFile(sc.ConfigPath, []byte("{}"), 0600); err != nil {
 		return fmt.Errorf("Generating config file: %s", err)
 	}
 	return nil
 }
 
 // extractKeysFromSecretRefContents interprets the secretContents according to the encryption strategy configured in sc.
-func (sc *sopsConfig) extractKeysFromSecretRefContents(secretContents string) error {
-	switch sc.strategy {
+func (sc *sopsConfig) ExtractKeysFromSecretRefContents(secretContents string) error {
+	switch sc.Strategy {
 	case pgp:
-		err := gpgKeyring{secretContents}.Write(sc.cryptoHomeDir.Path())
+		err := gpgKeyring{secretContents}.Write(sc.CryptoHomeDir.Path())
 		if err != nil {
 			return fmt.Errorf("Generating secring.gpg: %s", err)
 		}
 	case age:
-		if err := ioutil.WriteFile(filepath.Join(sc.cryptoHomeDir.Path(), "key.txt"), []byte(secretContents), 0600); err != nil {
+		if err := ioutil.WriteFile(filepath.Join(sc.CryptoHomeDir.Path(), "key.txt"), []byte(secretContents), 0600); err != nil {
 			return fmt.Errorf("Creating key.txt file: %s", err)
 		}
 	default:
-		return fmt.Errorf("Unrecognized sops encryption strategy %d", sc.strategy)
+		return fmt.Errorf("Unrecognized sops encryption strategy %d", sc.Strategy)
 	}
 	return nil
 }
@@ -257,10 +257,10 @@ func (t *Sops) makeConfig() (sopsConfig, error) {
 	var secretRef *v1alpha1.AppTemplateSopsPrivateKeysSecretRef
 	if t.opts.PGP != nil {
 		secretRef = t.opts.PGP.PrivateKeysSecretRef
-		config.strategy = pgp
+		config.Strategy = pgp
 	} else if t.opts.Age != nil {
 		secretRef = t.opts.Age.PrivateKeysSecretRef
-		config.strategy = age
+		config.Strategy = age
 	}
 
 	secretContents, err := t.getSecretContents(*secretRef)
@@ -268,9 +268,9 @@ func (t *Sops) makeConfig() (sopsConfig, error) {
 		return config, fmt.Errorf("Getting private keys secret: %s", err)
 	}
 
-	config.extractKeysFromSecretRefContents(secretContents)
+	config.ExtractKeysFromSecretRefContents(secretContents)
 
-	if err = config.createConfigPath(); err != nil {
+	if err = config.CreateConfigPath(); err != nil {
 		return config, err
 	}
 
