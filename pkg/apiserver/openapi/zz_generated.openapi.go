@@ -1185,14 +1185,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSopsPGP(ref common.ReferenceCa
 							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef"),
 						},
 					},
-					"PublicKey": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
 				},
-				Required: []string{"PublicKey"},
 			},
 		},
 		Dependencies: []string{

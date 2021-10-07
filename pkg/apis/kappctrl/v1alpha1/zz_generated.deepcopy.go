@@ -782,15 +782,15 @@ func (in *AppTemplateSops) DeepCopyInto(out *AppTemplateSops) {
 		*out = new(AppTemplateSopsPGP)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.Age != nil {
-		in, out := &in.Age, &out.Age
-		*out = new(AppTemplateSopsAge)
-		(*in).DeepCopyInto(*out)
-	}
 	if in.Paths != nil {
 		in, out := &in.Paths, &out.Paths
 		*out = make([]string, len(*in))
 		copy(*out, *in)
+	}
+	if in.Age != nil {
+		in, out := &in.Age, &out.Age
+		*out = new(AppTemplateSopsAge)
+		(*in).DeepCopyInto(*out)
 	}
 	return
 }

@@ -302,8 +302,6 @@ message AppTemplateSopsAge {
 // +k8s:openapi-gen=true
 message AppTemplateSopsPGP {
   optional AppTemplateSopsPrivateKeysSecretRef privateKeysSecretRef = 1;
-
-  optional string publicKey = 2;
 }
 
 // +k8s:openapi-gen=true

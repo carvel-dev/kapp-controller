@@ -381,8 +381,6 @@ spec:
                                         name:
                                           type: string
                                       type: object
-                                    publicKey:
-                                      type: string
                                   type: object
                               type: object
                             ytt:
@@ -787,8 +785,6 @@ spec:
                                 name:
                                   type: string
                               type: object
-                            publicKey:
-                              type: string
                           type: object
                       type: object
                     ytt:

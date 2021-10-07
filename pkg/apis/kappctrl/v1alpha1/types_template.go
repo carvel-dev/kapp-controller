@@ -67,7 +67,6 @@ type AppTemplateSops struct {
 // +k8s:openapi-gen=true
 type AppTemplateSopsPGP struct {
 	PrivateKeysSecretRef *AppTemplateSopsPrivateKeysSecretRef `json:"privateKeysSecretRef,omitempty" protobuf:"bytes,1,opt,name=privateKeysSecretRef"`
-	PublicKey            string                               `json:"publicKey,omitempty" protobuf:"bytes,2,opt,name=publicKey"`
 }
 
 // +k8s:openapi-gen=true

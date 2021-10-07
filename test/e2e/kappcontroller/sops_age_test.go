@@ -22,7 +22,7 @@ func TestSopsAge(t *testing.T) {
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
-  name: test-sops
+  name: test-sops-age
   annotations:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
 spec:
@@ -78,7 +78,7 @@ stringData:
 
 ` + sas.ForNamespaceYAML()
 
-	name := "test-sops" // TODO: where does this name-ctrl come from?
+	name := "test-sops-age"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
 	}

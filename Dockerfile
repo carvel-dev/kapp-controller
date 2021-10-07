@@ -43,9 +43,9 @@ RUN wget -O- https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.
   chmod +x /usr/local/bin/sops && sops -v
 
 # age (encryption for sops)
-RUN wget -O- https://github.com/FiloSottile/age/releases/download/v1.0.0/age-v1.0.0-linux-amd64.tar.gz > age.tar && \
-  echo "6414f71ce947fbbea1314f6e9786c5d48436ebc76c3fd6167bf018e432b3b669  age.tar" | sha256sum -c - && \
-  tar -xzf age.tar && cp age/age /usr/local/bin && \
+RUN wget -O- https://github.com/FiloSottile/age/releases/download/v1.0.0/age-v1.0.0-linux-amd64.tar.gz > age.tgz && \
+  echo "6414f71ce947fbbea1314f6e9786c5d48436ebc76c3fd6167bf018e432b3b669  age.tgz" | sha256sum -c - && \
+  tar -xzf age.tgz && cp age/age /usr/local/bin && \
   chmod +x /usr/local/bin/age && age --version
 
 # kapp-controller
