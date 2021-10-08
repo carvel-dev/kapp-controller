@@ -46,22 +46,23 @@ func (t *Sops) TemplateStream(input io.Reader, dirPath string) exec.CmdRunResult
 func (t *Sops) decryptDir(dirPath string, input io.Reader) exec.CmdRunResult {
 	result := exec.CmdRunResult{}
 
-	gpgHomeDir, configPath, err := t.configPaths()
+	config, err := t.makeConfig()
 	if err != nil {
-		result.AttachErrorf("Building config paths: %s", err)
+		result.AttachErrorf("Building config: %s", err)
 		return result
 	}
 
-	defer gpgHomeDir.Remove()
+	defer config.CryptoHomeDir.Remove()
 
+	var args, env []string
 	// Be explicit about the config path to avoid sops searching for it
-	args := []string{"--config=" + configPath}
-	env := []string{"GNUPGHOME=" + gpgHomeDir.Path()}
+	args = []string{"--config=" + config.ConfigPath}
 
 	switch {
 	case t.opts.PGP != nil:
-		// no additional args
-
+		env = []string{"GNUPGHOME=" + config.CryptoHomeDir.Path()}
+	case t.opts.Age != nil:
+		env = []string{"SOPS_AGE_KEY_FILE=" + filepath.Join(config.CryptoHomeDir.Path(), "key.txt")}
 	default:
 		result.AttachErrorf("%s", fmt.Errorf("Unsupported SOPS strategy"))
 		return result
@@ -206,37 +207,87 @@ func (*Sops) shapeDecryptedContents(contentsBs []byte) ([]byte, error) {
 	return contentsBs, nil
 }
 
-func (t *Sops) configPaths() (*memdir.TmpDir, string, error) {
-	gpgHomeDir := memdir.NewTmpDir("template-sops-config")
+type sopsCryptoStrategy int8 // just a hunch that we'll never have a 257th encryption provider but if you're still using this in the year 2666 and upgrading to an int16, sorry about this and also all the CO2, single-use plastic, and whatever else we did wrong
+const (
+	pgp sopsCryptoStrategy = iota
+	age
+)
 
-	err := gpgHomeDir.Create()
-	if err != nil {
-		return nil, "", err
-	}
-
-	if t.opts.PGP.PrivateKeysSecretRef != nil {
-		privateKeys, err := t.getFromSecret(*t.opts.PGP.PrivateKeysSecretRef)
-		if err != nil {
-			return nil, "", fmt.Errorf("Getting private keys secret: %s", err)
-		}
-
-		err = gpgKeyring{privateKeys}.Write(gpgHomeDir.Path())
-		if err != nil {
-			return nil, "", fmt.Errorf("Generating secring.gpg: %s", err)
-		}
-	}
-
-	configPath := filepath.Join(gpgHomeDir.Path(), ".sops.yml")
-
-	err = ioutil.WriteFile(configPath, []byte("{}"), 0600)
-	if err != nil {
-		return nil, "", fmt.Errorf("Generating config file: %s", err)
-	}
-
-	return gpgHomeDir, configPath, nil
+type sopsConfig struct {
+	CryptoHomeDir *memdir.TmpDir
+	ConfigPath    string
+	Strategy      sopsCryptoStrategy
 }
 
-func (t *Sops) getFromSecret(secretRef v1alpha1.AppTemplateSopsPGPPrivateKeysSecretRef) (string, error) {
+func (sc *sopsConfig) CreateConfigPath() error {
+	sc.ConfigPath = filepath.Join(sc.CryptoHomeDir.Path(), ".sops.yml")
+
+	err := ioutil.WriteFile(sc.ConfigPath, []byte("{}"), 0600)
+	if err != nil {
+		return fmt.Errorf("Generating config file: %s", err)
+	}
+	return nil
+}
+
+// extractKeysFromSecretRefContents interprets the secretContents according to the encryption strategy configured in sc.
+func (sc *sopsConfig) ExtractKeysFromSecretRefContents(secretContents string) error {
+	switch sc.Strategy {
+	case pgp:
+		err := gpgKeyring{secretContents}.Write(sc.CryptoHomeDir.Path())
+		if err != nil {
+			return fmt.Errorf("Generating secring.gpg: %s", err)
+		}
+	case age:
+		err := ioutil.WriteFile(filepath.Join(sc.CryptoHomeDir.Path(), "key.txt"), []byte(secretContents), 0600)
+		if err != nil {
+			return fmt.Errorf("Creating key.txt file: %s", err)
+		}
+	default:
+		return fmt.Errorf("Unrecognized sops encryption strategy %d", sc.Strategy)
+	}
+	return nil
+}
+
+func (t *Sops) makeConfig() (sopsConfig, error) {
+	cryptoHomeDir := memdir.NewTmpDir("template-sops-config")
+	config := sopsConfig{cryptoHomeDir, "", 0}
+
+	err := cryptoHomeDir.Create()
+	if err != nil {
+		return config, err
+	}
+
+	var secretRef *v1alpha1.AppTemplateSopsPrivateKeysSecretRef
+	if t.opts.PGP != nil {
+		secretRef = t.opts.PGP.PrivateKeysSecretRef
+		config.Strategy = pgp
+	} else if t.opts.Age != nil {
+		secretRef = t.opts.Age.PrivateKeysSecretRef
+		config.Strategy = age
+	}
+
+	secretContents, err := t.getSecretContents(*secretRef)
+	if err != nil {
+		cryptoHomeDir.Remove()
+		return config, fmt.Errorf("Getting private keys secret: %s", err)
+	}
+
+	err = config.ExtractKeysFromSecretRefContents(secretContents)
+	if err != nil {
+		cryptoHomeDir.Remove()
+		return config, err
+	}
+
+	err = config.CreateConfigPath()
+	if err != nil {
+		cryptoHomeDir.Remove()
+		return config, err
+	}
+
+	return config, nil
+}
+
+func (t *Sops) getSecretContents(secretRef v1alpha1.AppTemplateSopsPrivateKeysSecretRef) (string, error) {
 	secret, err := t.coreClient.CoreV1().Secrets(t.genericOpts.Namespace).Get(context.Background(), secretRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
