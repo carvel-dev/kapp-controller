@@ -222,7 +222,8 @@ type sopsConfig struct {
 func (sc *sopsConfig) CreateConfigPath() error {
 	sc.ConfigPath = filepath.Join(sc.CryptoHomeDir.Path(), ".sops.yml")
 
-	if err := ioutil.WriteFile(sc.ConfigPath, []byte("{}"), 0600); err != nil {
+	err := ioutil.WriteFile(sc.ConfigPath, []byte("{}"), 0600)
+	if err != nil {
 		return fmt.Errorf("Generating config file: %s", err)
 	}
 	return nil
@@ -237,7 +238,8 @@ func (sc *sopsConfig) ExtractKeysFromSecretRefContents(secretContents string) er
 			return fmt.Errorf("Generating secring.gpg: %s", err)
 		}
 	case age:
-		if err := ioutil.WriteFile(filepath.Join(sc.CryptoHomeDir.Path(), "key.txt"), []byte(secretContents), 0600); err != nil {
+		err := ioutil.WriteFile(filepath.Join(sc.CryptoHomeDir.Path(), "key.txt"), []byte(secretContents), 0600)
+		if err != nil {
 			return fmt.Errorf("Creating key.txt file: %s", err)
 		}
 	default:
@@ -250,7 +252,8 @@ func (t *Sops) makeConfig() (sopsConfig, error) {
 	cryptoHomeDir := memdir.NewTmpDir("template-sops-config")
 	config := sopsConfig{cryptoHomeDir, "", 0}
 
-	if err := cryptoHomeDir.Create(); err != nil {
+	err := cryptoHomeDir.Create()
+	if err != nil {
 		return config, err
 	}
 
@@ -265,12 +268,19 @@ func (t *Sops) makeConfig() (sopsConfig, error) {
 
 	secretContents, err := t.getSecretContents(*secretRef)
 	if err != nil {
+		cryptoHomeDir.Remove()
 		return config, fmt.Errorf("Getting private keys secret: %s", err)
 	}
 
-	config.ExtractKeysFromSecretRefContents(secretContents)
+	err = config.ExtractKeysFromSecretRefContents(secretContents)
+	if err != nil {
+		cryptoHomeDir.Remove()
+		return config, err
+	}
 
-	if err = config.CreateConfigPath(); err != nil {
+	err = config.CreateConfigPath()
+	if err != nil {
+		cryptoHomeDir.Remove()
 		return config, err
 	}
 
