@@ -1,22 +1,75 @@
 ## Development & Deploy
 
-Install ytt, kbld, kapp beforehand (https://k14s.io).
+### Prerequisites
+
+You will need the following tools to build and deploy kapp-controller: 
+* ytt
+* kbld
+* kapp
+
+For linux/mac users, all the tools below can be installed by running `./hack/install-deps.sh`.
+
+For windows users, please download the binaries from the respective GitHub repositories:
+* https://github.com/vmware-tanzu/carvel-ytt
+* https://github.com/vmware-tanzu/carvel-kbld
+* https://github.com/vmware-tanzu/carvel-kapp
+
+### Build
+
+To build the kapp-controller project locally, run the following:
+```
+./hack/build.sh
+```
+
+### Deploy
+
+The kapp-controller source can be built and deployed to a Kubernetes cluster using one of the options below.
+
+#### minikube 
 
 ```
-./hack/build.sh # to build locally
+eval $(minikube docker-env)
+./hack/deploy.sh
+```
 
+#### Non-minikube environment
+
+1. Change the [push_images property](https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/config/values.yml#L10) to true
+2. Change the [image_repo property](https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/config/values.yml#L12) to the location to push the kapp-controller image
+3. Run `./hack/deploy.sh`
+
+#### secretgen-controller for private auth workflows
+
+See more on kapp-controller's integration with secretgen-controller [here](https://carvel.dev/kapp-controller/docs/latest/private-registry-auth/).
+
+```
 # deploys secretgen-controller with kapp-controller
-# and also runs tests where kapp-controller integrates 
-# with secretgen-controller
 export KAPPCTRL_E2E_SECRETGEN_CONTROLLER=true
 
-# add `-v image_repo=docker.io/username/kapp-controller` with your registry to ytt invocation inside
-./hack/deploy.sh # to deploy
+# use one of the methods above for where/how to deploy kapp-controller
+./hack/deploy.sh
+```
 
-# deploys test assets in addition to kapp-controller for e2e tests
+### Testing
+
+kapp-controller has unit tests and e2e tests that can be run as documented below.
+
+#### Unit Testing
+
+```
+./hack/test.sh
+```
+
+#### e2e Testing
+
+```
+# deploy kapp-controller to cluster with test assets
 ./hack/deploy-test.sh
 
+# namespace where tests will be run on cluster
 export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
+
+# run e2e test suite
 ./hack/test-all.sh
 ```
 
