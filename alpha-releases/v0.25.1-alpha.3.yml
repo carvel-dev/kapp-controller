@@ -53,10 +53,14 @@ spec:
       openAPIV3Schema:
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -112,10 +116,14 @@ spec:
       openAPIV3Schema:
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -140,7 +148,8 @@ spec:
                   spec:
                     properties:
                       canceled:
-                        description: Canceled when set to true will stop all active changes
+                        description: Canceled when set to true will stop all active
+                          changes
                         type: boolean
                       cluster:
                         properties:
@@ -212,10 +221,12 @@ spec:
                                       type: object
                                   type: object
                                 secretRef:
-                                  description: 'Secret may include one or more keys: ssh-privatekey, ssh-knownhosts'
+                                  description: 'Secret may include one or more keys:
+                                    ssh-privatekey, ssh-knownhosts'
                                   properties:
                                     name:
-                                      description: Object is expected to be within same namespace
+                                      description: Object is expected to be within
+                                        same namespace
                                       type: string
                                   type: object
                                 subPath:
@@ -233,7 +244,8 @@ spec:
                                     secretRef:
                                       properties:
                                         name:
-                                          description: Object is expected to be within same namespace
+                                          description: Object is expected to be within
+                                            same namespace
                                           type: string
                                       type: object
                                     url:
@@ -245,10 +257,12 @@ spec:
                             http:
                               properties:
                                 secretRef:
-                                  description: 'Secret may include one or more keys: username, password'
+                                  description: 'Secret may include one or more keys:
+                                    username, password'
                                   properties:
                                     name:
-                                      description: Object is expected to be within same namespace
+                                      description: Object is expected to be within
+                                        same namespace
                                       type: string
                                   type: object
                                 sha256:
@@ -256,16 +270,21 @@ spec:
                                 subPath:
                                   type: string
                                 url:
-                                  description: 'URL can point to one of following formats: text, tgz, zip'
+                                  description: 'URL can point to one of following
+                                    formats: text, tgz, zip'
                                   type: string
                               type: object
                             image:
                               properties:
                                 secretRef:
-                                  description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication. TODO support docker config formated secret'
+                                  description: 'Secret may include one or more keys:
+                                    username, password, token. By default anonymous
+                                    access is used for authentication. TODO support
+                                    docker config formated secret'
                                   properties:
                                     name:
-                                      description: Object is expected to be within same namespace
+                                      description: Object is expected to be within
+                                        same namespace
                                       type: string
                                   type: object
                                 subPath:
@@ -294,10 +313,14 @@ spec:
                                 image:
                                   type: string
                                 secretRef:
-                                  description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication. TODO support docker config formated secret'
+                                  description: 'Secret may include one or more keys:
+                                    username, password, token. By default anonymous
+                                    access is used for authentication. TODO support
+                                    docker config formated secret'
                                   properties:
                                     name:
-                                      description: Object is expected to be within same namespace
+                                      description: Object is expected to be within
+                                        same namespace
                                       type: string
                                   type: object
                                 tagSelection:
@@ -345,10 +368,13 @@ spec:
                           type: object
                         type: array
                       noopDelete:
-                        description: When NoopDeletion set to true, App deletion should delete App CR but preserve App's associated resources
+                        description: When NoopDeletion set to true, App deletion should
+                          delete App CR but preserve App's associated resources
                         type: boolean
                       paused:
-                        description: Paused when set to true will ignore all pending changes, once it set back to false, pending changes will be applied
+                        description: Paused when set to true will ignore all pending
+                          changes, once it set back to false, pending changes will
+                          be applied
                         type: boolean
                       serviceAccountName:
                         type: string
@@ -477,7 +503,9 @@ spec:
                 - spec
                 type: object
               valuesSchema:
-                description: valuesSchema can be used to show template values that can be configured by users when a Package is installed in an OpenAPI schema format.
+                description: valuesSchema can be used to show template values that
+                  can be configured by users when a Package is installed in an OpenAPI
+                  schema format.
                 properties:
                   openAPIv3:
                     nullable: true
@@ -513,7 +541,8 @@ spec:
       jsonPath: .status.friendlyDescription
       name: Description
       type: string
-    - description: Last time app started being deployed. Does not mean anything was changed.
+    - description: Last time app started being deployed. Does not mean anything was
+        changed.
       jsonPath: .status.deploy.startedAt
       name: Since-Deploy
       type: date
@@ -526,10 +555,14 @@ spec:
       openAPIV3Schema:
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -608,7 +641,8 @@ spec:
                               type: object
                           type: object
                         secretRef:
-                          description: 'Secret may include one or more keys: ssh-privatekey, ssh-knownhosts'
+                          description: 'Secret may include one or more keys: ssh-privatekey,
+                            ssh-knownhosts'
                           properties:
                             name:
                               description: Object is expected to be within same namespace
@@ -629,7 +663,8 @@ spec:
                             secretRef:
                               properties:
                                 name:
-                                  description: Object is expected to be within same namespace
+                                  description: Object is expected to be within same
+                                    namespace
                                   type: string
                               type: object
                             url:
@@ -641,7 +676,8 @@ spec:
                     http:
                       properties:
                         secretRef:
-                          description: 'Secret may include one or more keys: username, password'
+                          description: 'Secret may include one or more keys: username,
+                            password'
                           properties:
                             name:
                               description: Object is expected to be within same namespace
@@ -652,13 +688,16 @@ spec:
                         subPath:
                           type: string
                         url:
-                          description: 'URL can point to one of following formats: text, tgz, zip'
+                          description: 'URL can point to one of following formats:
+                            text, tgz, zip'
                           type: string
                       type: object
                     image:
                       properties:
                         secretRef:
-                          description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication. TODO support docker config formated secret'
+                          description: 'Secret may include one or more keys: username,
+                            password, token. By default anonymous access is used for
+                            authentication. TODO support docker config formated secret'
                           properties:
                             name:
                               description: Object is expected to be within same namespace
@@ -690,7 +729,9 @@ spec:
                         image:
                           type: string
                         secretRef:
-                          description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication. TODO support docker config formated secret'
+                          description: 'Secret may include one or more keys: username,
+                            password, token. By default anonymous access is used for
+                            authentication. TODO support docker config formated secret'
                           properties:
                             name:
                               description: Object is expected to be within same namespace
@@ -741,10 +782,12 @@ spec:
                   type: object
                 type: array
               noopDelete:
-                description: When NoopDeletion set to true, App deletion should delete App CR but preserve App's associated resources
+                description: When NoopDeletion set to true, App deletion should delete
+                  App CR but preserve App's associated resources
                 type: boolean
               paused:
-                description: Paused when set to true will ignore all pending changes, once it set back to false, pending changes will be applied
+                description: Paused when set to true will ignore all pending changes,
+                  once it set back to false, pending changes will be applied
                 type: boolean
               serviceAccountName:
                 type: string
@@ -876,10 +919,14 @@ spec:
                   description: TODO rename to Condition
                   properties:
                     message:
-                      description: Human-readable message indicating details about last transition.
+                      description: Human-readable message indicating details about
+                        last transition.
                       type: string
                     reason:
-                      description: Unique, this should be a short, machine understandable string that gives the reason for condition's last transition. If it reports "ResizeStarted" that means the underlying persistent volume is being resized.
+                      description: Unique, this should be a short, machine understandable
+                        string that gives the reason for condition's last transition.
+                        If it reports "ResizeStarted" that means the underlying persistent
+                        volume is being resized.
                       type: string
                     status:
                       type: string
@@ -1011,10 +1058,14 @@ spec:
       openAPIV3Schema:
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -1036,7 +1087,9 @@ spec:
                     type: string
                 type: object
               noopDelete:
-                description: When NoopDelete set to true, PackageInstall deletion should delete PackageInstall/App CR but preserve App's associated resources.
+                description: When NoopDelete set to true, PackageInstall deletion
+                  should delete PackageInstall/App CR but preserve App's associated
+                  resources.
                 type: boolean
               packageRef:
                 properties:
@@ -1056,12 +1109,15 @@ spec:
                     type: object
                 type: object
               paused:
-                description: Paused when set to true will ignore all pending changes, once it set back to false, pending changes will be applied
+                description: Paused when set to true will ignore all pending changes,
+                  once it set back to false, pending changes will be applied
                 type: boolean
               serviceAccountName:
                 type: string
               syncPeriod:
-                description: Controls frequency of App reconciliation in time + unit format. Always >= 30s. If value below 30s is specified, 30s will be used.
+                description: Controls frequency of App reconciliation in time + unit
+                  format. Always >= 30s. If value below 30s is specified, 30s will
+                  be used.
                 type: string
               values:
                 items:
@@ -1083,10 +1139,14 @@ spec:
                   description: TODO rename to Condition
                   properties:
                     message:
-                      description: Human-readable message indicating details about last transition.
+                      description: Human-readable message indicating details about
+                        last transition.
                       type: string
                     reason:
-                      description: Unique, this should be a short, machine understandable string that gives the reason for condition's last transition. If it reports "ResizeStarted" that means the underlying persistent volume is being resized.
+                      description: Unique, this should be a short, machine understandable
+                        string that gives the reason for condition's last transition.
+                        If it reports "ResizeStarted" that means the underlying persistent
+                        volume is being resized.
                       type: string
                     status:
                       type: string
@@ -1098,6 +1158,11 @@ spec:
                   type: object
                 type: array
               friendlyDescription:
+                type: string
+              lastAttemptedVersion:
+                description: LastAttemptedVersion specifies what version was last
+                  attempted to be installed. It does _not_ indicate it was successfully
+                  installed.
                 type: string
               observedGeneration:
                 format: int64
@@ -1147,10 +1212,14 @@ spec:
       openAPIV3Schema:
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -1181,7 +1250,8 @@ spec:
                             type: object
                         type: object
                       secretRef:
-                        description: 'Secret may include one or more keys: ssh-privatekey, ssh-knownhosts'
+                        description: 'Secret may include one or more keys: ssh-privatekey,
+                          ssh-knownhosts'
                         properties:
                           name:
                             description: Object is expected to be within same namespace
@@ -1195,7 +1265,8 @@ spec:
                   http:
                     properties:
                       secretRef:
-                        description: 'Secret may include one or more keys: username, password'
+                        description: 'Secret may include one or more keys: username,
+                          password'
                         properties:
                           name:
                             description: Object is expected to be within same namespace
@@ -1206,13 +1277,16 @@ spec:
                       subPath:
                         type: string
                       url:
-                        description: 'URL can point to one of following formats: text, tgz, zip'
+                        description: 'URL can point to one of following formats: text,
+                          tgz, zip'
                         type: string
                     type: object
                   image:
                     properties:
                       secretRef:
-                        description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication. TODO support docker config formated secret'
+                        description: 'Secret may include one or more keys: username,
+                          password, token. By default anonymous access is used for
+                          authentication. TODO support docker config formated secret'
                         properties:
                           name:
                             description: Object is expected to be within same namespace
@@ -1244,7 +1318,9 @@ spec:
                       image:
                         type: string
                       secretRef:
-                        description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication. TODO support docker config formated secret'
+                        description: 'Secret may include one or more keys: username,
+                          password, token. By default anonymous access is used for
+                          authentication. TODO support docker config formated secret'
                         properties:
                           name:
                             description: Object is expected to be within same namespace
@@ -1268,7 +1344,8 @@ spec:
                     type: object
                 type: object
               paused:
-                description: Paused when set to true will ignore all pending changes, once it set back to false, pending changes will be applied
+                description: Paused when set to true will ignore all pending changes,
+                  once it set back to false, pending changes will be applied
                 type: boolean
               syncPeriod:
                 description: Controls frequency of PackageRepository reconciliation
@@ -1283,10 +1360,14 @@ spec:
                   description: TODO rename to Condition
                   properties:
                     message:
-                      description: Human-readable message indicating details about last transition.
+                      description: Human-readable message indicating details about
+                        last transition.
                       type: string
                     reason:
-                      description: Unique, this should be a short, machine understandable string that gives the reason for condition's last transition. If it reports "ResizeStarted" that means the underlying persistent volume is being resized.
+                      description: Unique, this should be a short, machine understandable
+                        string that gives the reason for condition's last transition.
+                        If it reports "ResizeStarted" that means the underlying persistent
+                        volume is being resized.
                       type: string
                     status:
                       type: string
@@ -1369,18 +1450,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    kapp-controller.carvel.dev/version: v0.25.0-alpha.1
+    kapp-controller.carvel.dev/version: v0.25.1-alpha.3
     kbld.k14s.io/images: |
-      - Metas:
-        - Path: /Users/jkimmel/go/src/github.com/vmware-tanzu/carvel-kapp-controller
-          Type: local
-        - Dirty: true
-          RemoteURL: git@github.com:vmware-tanzu/carvel-kapp-controller.git
-          SHA: 527423019f65ccd2bb303f2d709696a407a0a2c6
-          Tags:
-          - v0.25.0-alpha.1
-          Type: git
-        URL: ghcr.io/vmware-tanzu/carvel-kapp-controller@sha256:7f9ac048e50056cc9c5764c59be46769d73c7e5ee9ad61f6c2ffdfa6c33e8f04
+      - origins:
+        - local:
+            path: /Users/jkimmel/go/src/github.com/vmware-tanzu/carvel-kapp-controller
+        - git:
+            dirty: false
+            remoteURL: git@github.com:vmware-tanzu/carvel-kapp-controller.git
+            sha: 60410b844df465b8f971b9a0d463378177f0ee3a
+            tags:
+            - v0.25.1-alpha.3
+        url: ghcr.io/vmware-tanzu/carvel-kapp-controller@sha256:a351d7b273266eac56f44c103eb80e02bf56fcd3c7fdf8a8a93643656313ca77
   name: kapp-controller
   namespace: kapp-controller
 spec:
@@ -1406,7 +1487,7 @@ spec:
               fieldPath: metadata.namespace
         - name: KAPPCTRL_API_PORT
           value: "10350"
-        image: ghcr.io/vmware-tanzu/carvel-kapp-controller@sha256:7f9ac048e50056cc9c5764c59be46769d73c7e5ee9ad61f6c2ffdfa6c33e8f04
+        image: ghcr.io/vmware-tanzu/carvel-kapp-controller@sha256:a351d7b273266eac56f44c103eb80e02bf56fcd3c7fdf8a8a93643656313ca77
         name: kapp-controller
         ports:
         - containerPort: 10350
