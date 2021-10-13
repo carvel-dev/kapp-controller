@@ -20,11 +20,8 @@ func TestHTTPProxy(t *testing.T) {
 		// app name must match the app name being deployed in hack/deploy-test.sh
 		out := kubectl.Run([]string{"logs", "deployment/kapp-controller"})
 
-		assert.Containsf(out, "http_proxy is enabled.",
-			"expected log line detailing http_proxy is enabled")
-
-		assert.Containsf(out, "no_proxy is enabled.",
-			"expected log line detailing no_proxy is enabled")
+		assert.Contains(out, "http_proxy is enabled.", "expected log line detailing http_proxy is enabled")
+		assert.Contains(out, "no_proxy is enabled.", "expected log line detailing no_proxy is enabled")
 	})
 
 }
