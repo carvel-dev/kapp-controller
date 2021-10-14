@@ -195,14 +195,14 @@ func Run(opts Options, runLog logr.Logger) error {
 
 func logProxies(runLog logr.Logger) {
 	if proxyVal := os.Getenv("http_proxy"); proxyVal != "" {
-		runLog.Info(fmt.Sprintf("Using http proxy '%s'", proxyVal))
+		runLog.Info("http_proxy is enabled.")
 	}
 
 	if proxyVal := os.Getenv("https_proxy"); proxyVal != "" {
-		runLog.Info(fmt.Sprintf("Using https proxy '%s'", proxyVal))
+		runLog.Info("https_proxy is enabled.")
 	}
 
 	if noProxyVal := os.Getenv("no_proxy"); noProxyVal != "" {
-		runLog.Info(fmt.Sprintf("No proxy set for: %s", noProxyVal))
+		runLog.Info("no_proxy is enabled.")
 	}
 }
