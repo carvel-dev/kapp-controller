@@ -9,6 +9,6 @@ source $(dirname "$0")/version-util.sh
 
 ytt -f config/ -f config-release -v kapp_controller_version="$(get_kappctrl_ver)" | kbld -f- > ./tmp/release.yml
 
-shasum -a 256 ./tmp/release*.yml
+shasum -a 256 ./tmp/release*.yml | tee ./tmp/checksums.txt
 
 echo SUCCESS
