@@ -7,7 +7,7 @@
 
 # git tag version extraction graciously provided by https://github.com/vmware-tanzu/carvel-imgpkg/blob/develop/hack/build-binaries.sh
 function get_latest_git_tag {
-  git describe --tags | grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+'
+  git describe --tags | grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+)?'
 }
 
 function get_kappctrl_ver {
