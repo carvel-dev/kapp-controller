@@ -6,9 +6,9 @@ RUN tdnf install -y tar wget gzip
 
 # adapted from golang docker image
 ENV PATH /usr/local/go/bin:$PATH
-ENV GOLANG_VERSION 1.16.5
+ENV GOLANG_VERSION 1.17.1
 ENV GO_REL_ARCH linux-amd64
-ENV GO_REL_SHA b12c23023b68de22f74c0524f10b753e7b08b1504cb7e417eccebdd3fae49061
+ENV GO_REL_SHA dab7d9c34361dc21ec237d584590d72500652e7c909bf082758fb63064fca0ef
 
 RUN set eux; \
     wget -O go.tgz "https://golang.org/dl/go${GOLANG_VERSION}.${GO_REL_ARCH}.tar.gz" --progress=dot:giga; \
