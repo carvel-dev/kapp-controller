@@ -35,11 +35,12 @@ const (
 )
 
 type Options struct {
-	Concurrency       int
-	Namespace         string
-	EnablePprof       bool
-	APIRequestTimeout time.Duration
-	PackagingGloablNS string
+	Concurrency        int
+	Namespace          string
+	EnablePprof        bool
+	APIRequestTimeout  time.Duration
+	PackagingGloablNS  string
+	MetricsBindAddress string
 }
 
 // Based on https://github.com/kubernetes-sigs/controller-runtime/blob/8f633b179e1c704a6e40440b528252f147a3362a/examples/builtins/main.go
@@ -53,7 +54,8 @@ func Run(opts Options, runLog logr.Logger) error {
 		restConfig.Timeout = opts.APIRequestTimeout
 	}
 
-	mgr, err := manager.New(restConfig, manager.Options{Namespace: opts.Namespace, Scheme: kcconfig.Scheme})
+	mgr, err := manager.New(restConfig, manager.Options{Namespace: opts.Namespace,
+		Scheme: kcconfig.Scheme, MetricsBindAddress: opts.MetricsBindAddress})
 	if err != nil {
 		return fmt.Errorf("Setting up overall controller manager: %s", err)
 	}
