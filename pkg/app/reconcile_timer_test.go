@@ -4,6 +4,7 @@
 package app
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
@@ -27,9 +28,11 @@ func TestSucceededDurationUntilReady(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		durationUntilReady := NewReconcileTimer(app).DurationUntilReady(nil)
-		if durationUntilReady < syncPeriod || durationUntilReady > (syncPeriod+10*time.Second) {
-			t.Fatalf("Expected duration until next reconcile to be in [syncPeriod, syncPeriod + 10]")
-		}
+		assert.False(
+			t,
+			durationUntilReady < syncPeriod || durationUntilReady > (syncPeriod+10*time.Second),
+			"Expected duration until next reconcile to be in [syncPeriod, syncPeriod + 10]",
+		)
 	}
 }
 
@@ -52,10 +55,7 @@ func TestFailureSyncMathOverflowGuard(t *testing.T) {
 	// In the overflow case, delay would be negative due to the 2^x overflow,
 	// which would be less than syncPeriod and would be returned. This checks
 	// the guard against overflow works
-	if delay != syncPeriod {
-		t.Fatalf("Expected failureSync period to handle an overflow")
-	}
-
+	assert.Equal(t, delay, syncPeriod, "Expected failureSync period to handle an overflow")
 }
 
 func TestConsecutiveFailuresOverflowGuard(t *testing.T) {
@@ -76,10 +76,7 @@ func TestConsecutiveFailuresOverflowGuard(t *testing.T) {
 
 	// make sure that if consecutive failed reconciles has overflowed, we just
 	// return syncPeriod instead of a fractional duration (due to neg exp in 2^x)
-	if delay != syncPeriod {
-		t.Fatalf("Expected failureSync period to handle an overflow")
-	}
-
+	assert.Equal(t, delay, syncPeriod, "Expected failureSync period to handle an overflow")
 }
 
 func TestFailedDurationUntilReady(t *testing.T) {
@@ -113,14 +110,15 @@ func TestFailedDurationUntilReady(t *testing.T) {
 		app.Status.ConsecutiveReconcileFailures = m.NumberOfFailedReconciles
 
 		durationUntilReady := NewReconcileTimer(app).DurationUntilReady(nil)
-		if durationUntilReady != m.ExpectedDuration {
-			t.Fatalf(
-				"Expected app with %d failure(s) to have duration %d but got %d",
-				m.NumberOfFailedReconciles,
-				m.ExpectedDuration,
-				durationUntilReady,
-			)
-		}
+		assert.Equalf(
+			t,
+			m.ExpectedDuration,
+			durationUntilReady,
+			"Expected app with %d failure(s) to have duration %d but got %d",
+			m.NumberOfFailedReconciles,
+			m.ExpectedDuration,
+			durationUntilReady,
+		)
 	}
 }
 
@@ -144,19 +142,13 @@ func TestSucceededIsReadyAt(t *testing.T) {
 	}
 
 	isReady := NewReconcileTimer(app).IsReadyAt(timeOfReady)
-	if !isReady {
-		t.Fatalf("Expected app to be ready after syncPeriod of 30s")
-	}
+	assert.True(t, isReady, "Expected app to be ready after syncPeriod of 30s")
 
 	isReady = NewReconcileTimer(app).IsReadyAt(timeOfReady.Add(1 * time.Second))
-	if !isReady {
-		t.Fatalf("Expected app to be ready after exceeding syncPeriod of 30s")
-	}
+	assert.True(t, isReady, "Expected app to be ready after exceeding syncPeriod of 30s")
 
 	isReady = NewReconcileTimer(app).IsReadyAt(timeOfReady.Add(-1 * time.Second))
-	if isReady {
-		t.Fatalf("Expected app to not be ready under syncPeriod of 30s")
-	}
+	assert.False(t, isReady, "Expected app to not be ready under syncPeriod of 30s")
 }
 
 func TestFailedIsReadyAt(t *testing.T) {
@@ -180,19 +172,13 @@ func TestFailedIsReadyAt(t *testing.T) {
 	}
 
 	isReady := NewReconcileTimer(app).IsReadyAt(timeOfReady)
-	if !isReady {
-		t.Fatalf("Expected app to be ready after syncPeriod of 2s")
-	}
+	assert.True(t, isReady, "Expected app to be ready after syncPeriod of 2s")
 
 	isReady = NewReconcileTimer(app).IsReadyAt(timeOfReady.Add(1 * time.Second))
-	if !isReady {
-		t.Fatalf("Expected app to be ready after exceeding syncPeriod of 2s")
-	}
+	assert.True(t, isReady, "Expected app to be ready after exceeding syncPeriod of 2s")
 
 	isReady = NewReconcileTimer(app).IsReadyAt(timeOfReady.Add(-1 * time.Second))
-	if isReady {
-		t.Fatalf("Expected app to not be ready under syncPeriod of 2s")
-	}
+	assert.False(t, isReady, "Expected app to not be ready under syncPeriod of 2s")
 }
 
 func TestIsReadyAtWithStaleDeployTime(t *testing.T) {

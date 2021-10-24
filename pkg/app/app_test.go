@@ -4,6 +4,7 @@
 package app_test
 
 import (
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 
@@ -62,9 +63,7 @@ func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
 
 	out := app.SecretRefs()
-	if !reflect.DeepEqual(out, expected) {
-		t.Fatalf("\n Expected: %s\nGot: %s\n", expected, out)
-	}
+	assert.Truef(t, reflect.DeepEqual(out, expected), "Expected: %s\nGot: %s\n", expected, out)
 }
 
 func Test_SecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
@@ -88,9 +87,7 @@ func Test_SecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
 
 	out := app.SecretRefs()
-	if len(out) != 0 {
-		t.Fatalf("\n Expected: %s\nGot: %s\n", "No SecretRefs to be returned", out)
-	}
+	assert.Equal(t, 0, len(out), "No SecretRefs to be returned")
 }
 
 func Test_ConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
@@ -128,9 +125,7 @@ func Test_ConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
 
 	out := app.ConfigMapRefs()
-	if !reflect.DeepEqual(out, expected) {
-		t.Fatalf("\n Expected: %s\nGot: %s\n", expected, out)
-	}
+	assert.Truef(t, reflect.DeepEqual(out, expected), "Expected: %s\nGot: %s\n", expected, out)
 }
 
 func Test_ConfigMapRefs_RetrievesNoConfigMapRefs_WhenNonePresent(t *testing.T) {
@@ -154,7 +149,5 @@ func Test_ConfigMapRefs_RetrievesNoConfigMapRefs_WhenNonePresent(t *testing.T) {
 	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
 
 	out := app.ConfigMapRefs()
-	if len(out) != 0 {
-		t.Fatalf("\n Expected: %s\nGot: %s\n", "No ConfigMapRefs to be returned", out)
-	}
+	assert.Lenf(t, out, 0, "Expected: %s\nGot: %s\n", "No ConfigMapRefs to be returned", out)
 }

@@ -4,6 +4,7 @@
 package app_test
 
 import (
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 
@@ -56,17 +57,13 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 	}
 
 	out, _ = appRefTracker.AppsForRef(keySecretName3)
-	if !reflect.DeepEqual(out, expected) {
-		t.Fatalf("\nExpected: %s\nGot: %s", expected, out)
-	}
+	assert.Truef(t, reflect.DeepEqual(out, expected), "Expected: %s\nGot: %s", expected, out)
 
 	expected = map[reftracker.RefKey]struct{}{
 		appKey: {},
 	}
 	out, _ = appRefTracker.AppsForRef(keySecretName)
-	if !reflect.DeepEqual(out, expected) {
-		t.Fatalf("\nExpected: %s\nGot: %s", expected, out)
-	}
+	assert.Truef(t, reflect.DeepEqual(out, expected), "Expected: %s\nGot: %s", expected, out)
 }
 
 func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
@@ -111,8 +108,6 @@ func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
 
 	for refKey := range refMap {
 		out, _ := ar.AppRefTracker().AppsForRef(refKey)
-		if !reflect.DeepEqual(out, expected) {
-			t.Fatalf("\nExpected: %s\nGot: %s", expected, out)
-		}
+		assert.Truef(t, reflect.DeepEqual(out, expected), "Expected: %s\nGot: %s", expected, out)
 	}
 }
