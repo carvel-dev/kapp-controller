@@ -25,10 +25,8 @@ const (
 	HelmTemplateOverlayNameSpaceKey = "ext.packaging.carvel.dev/helm-template-namespace"
 
 	// Resulting secret names are sorted deterministically by suffix
-	ExtYttPathsFromSecretNameAnnKey        = "ext.packaging.carvel.dev/ytt-paths-from-secret-name"
-	ExtYttPathsFromSecretNameAnnKeyPrefix  = ExtYttPathsFromSecretNameAnnKey + "."
-	ExtHelmPathsFromSecretNameAnnKey       = "ext.packaging.carvel.dev/helm-template-values-from-secret-name"
-	ExtHelmPathsFromSecretNameAnnKeyPrefix = ExtHelmPathsFromSecretNameAnnKey + "."
+	ExtYttPathsFromSecretNameAnnKey  = "ext.packaging.carvel.dev/ytt-paths-from-secret-name"
+	ExtHelmPathsFromSecretNameAnnKey = "ext.packaging.carvel.dev/helm-template-values-from-secret-name"
 
 	ExtYttDataValuesOverlaysAnnKey = "ext.packaging.carvel.dev/ytt-data-values-overlays"
 
@@ -106,7 +104,7 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 				if _, found := pkgInstall.Annotations[HelmTemplateOverlayNameSpaceKey]; found {
 					templateStep.HelmTemplate.Namespace = pkgInstall.Annotations[HelmTemplateOverlayNameSpaceKey]
 				}
-				for _, secretName := range secretNamesFromAnn(pkgInstall, "helm") {
+				for _, secretName := range secretNamesFromAnn(pkgInstall, ExtHelmPathsFromSecretNameAnnKey) {
 					templateStep.HelmTemplate.ValuesFrom = append(templateStep.HelmTemplate.ValuesFrom, kcv1alpha1.AppTemplateValuesSource{
 						SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
 							Name: secretName,
@@ -131,7 +129,7 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 			if !yttPathsApplied {
 				yttPathsApplied = true
 
-				for _, secretName := range secretNamesFromAnn(pkgInstall, "ytt") {
+				for _, secretName := range secretNamesFromAnn(pkgInstall, ExtYttPathsFromSecretNameAnnKey) {
 					if templateStep.Ytt.Inline == nil {
 						templateStep.Ytt.Inline = &kcv1alpha1.AppFetchInline{}
 					}
@@ -175,53 +173,27 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 	return desiredApp, nil
 }
 
-func secretNamesFromAnn(installedPkg *pkgingv1alpha1.PackageInstall, annType string) []string {
-	if annType == "ytt" {
-		var suffixes []string
-		suffixToSecretName := map[string]string{}
+func secretNamesFromAnn(installedPkg *pkgingv1alpha1.PackageInstall, annKey string) []string {
+	var suffixes []string
+	suffixToSecretName := map[string]string{}
 
-		for annKey, secretName := range installedPkg.Annotations {
-			if annKey == ExtYttPathsFromSecretNameAnnKey {
-				suffix := ""
-				suffixToSecretName[suffix] = secretName
-				suffixes = append(suffixes, suffix)
-			} else if strings.HasPrefix(annKey, ExtYttPathsFromSecretNameAnnKeyPrefix) {
-				suffix := strings.TrimPrefix(annKey, ExtYttPathsFromSecretNameAnnKeyPrefix)
-				suffixToSecretName[suffix] = secretName
-				suffixes = append(suffixes, suffix)
-			}
+	for ann, secretName := range installedPkg.Annotations {
+		if ann == annKey {
+			suffix := ""
+			suffixToSecretName[suffix] = secretName
+			suffixes = append(suffixes, suffix)
+		} else if strings.HasPrefix(ann, annKey+".") {
+			suffix := strings.TrimPrefix(ann, annKey+".")
+			suffixToSecretName[suffix] = secretName
+			suffixes = append(suffixes, suffix)
 		}
-
-		sort.Strings(suffixes)
-
-		var result []string
-		for _, suffix := range suffixes {
-			result = append(result, suffixToSecretName[suffix])
-		}
-		return result
-	} else if annType == "helm" {
-		var suffixes []string
-		suffixToSecretName := map[string]string{}
-
-		for annKey, secretName := range installedPkg.Annotations {
-			if annKey == ExtHelmPathsFromSecretNameAnnKey {
-				suffix := ""
-				suffixToSecretName[suffix] = secretName
-				suffixes = append(suffixes, suffix)
-			} else if strings.HasPrefix(annKey, ExtHelmPathsFromSecretNameAnnKeyPrefix) {
-				suffix := strings.TrimPrefix(annKey, ExtHelmPathsFromSecretNameAnnKeyPrefix)
-				suffixToSecretName[suffix] = secretName
-				suffixes = append(suffixes, suffix)
-			}
-		}
-
-		sort.Strings(suffixes)
-
-		var result []string
-		for _, suffix := range suffixes {
-			result = append(result, suffixToSecretName[suffix])
-		}
-		return result
 	}
-	return nil
+
+	sort.Strings(suffixes)
+
+	var result []string
+	for _, suffix := range suffixes {
+		result = append(result, suffixToSecretName[suffix])
+	}
+	return result
 }
