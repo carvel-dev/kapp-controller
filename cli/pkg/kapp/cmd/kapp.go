@@ -13,6 +13,8 @@ import (
 	cmdag "github.com/k14s/kapp/pkg/kapp/cmd/appgroup"
 	cmdcm "github.com/k14s/kapp/pkg/kapp/cmd/configmap"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	cmdpkg "github.com/k14s/kapp/pkg/kapp/cmd/package"
+	pkgrepo "github.com/k14s/kapp/pkg/kapp/cmd/package/repository"
 	cmdsa "github.com/k14s/kapp/pkg/kapp/cmd/serviceaccount"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	"github.com/k14s/kapp/pkg/kapp/logger"
@@ -119,6 +121,17 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	appCmd.AddCommand(cmdtools.NewDiffCmd(cmdtools.NewDiffOptions(o.ui, o.depsFactory), flagsFactory))
 	appCmd.AddCommand(cmdtools.NewListLabelsCmd(cmdtools.NewListLabelsOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(appCmd)
+
+	pkgrepoCmd := pkgrepo.NewCmd()
+	//pkgrepoCmd.AddCommand(pkgrepo.NewCmd())
+	// appCmd.AddCommand(cmdtools.NewDiffCmd(cmdtools.NewDiffOptions(o.ui, o.depsFactory), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgrepo.NewListCmd(pkgrepo.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+
+	pkgCmd := cmdpkg.NewCmd()
+	pkgCmd.AddCommand(pkgrepoCmd)
+	// appCmd.AddCommand(cmdtools.NewDiffCmd(cmdtools.NewDiffOptions(o.ui, o.depsFactory), flagsFactory))
+	// appCmd.AddCommand(cmdtools.NewListLabelsCmd(cmdtools.NewListLabelsOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	cmd.AddCommand(pkgCmd)
 
 	finishDebugLog := func(cmd *cobra.Command) {
 		origRunE := cmd.RunE
