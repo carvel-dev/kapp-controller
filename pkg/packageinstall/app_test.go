@@ -46,6 +46,7 @@ func TestAppExtPathsFromSecretNameAnn(t *testing.T) {
 				Spec: &kcv1alpha1.AppSpec{
 					Template: []kcv1alpha1.AppTemplate{
 						{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
+						{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
 						{Ytt: &kcv1alpha1.AppTemplateYtt{}},
 						{Ytt: &kcv1alpha1.AppTemplateYtt{}},
 					},
@@ -87,6 +88,9 @@ func TestAppExtPathsFromSecretNameAnn(t *testing.T) {
 						},
 					},
 				}},
+				// Second Helm template step is untouched
+				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
+
 				{Ytt: &kcv1alpha1.AppTemplateYtt{
 					Inline: &kcv1alpha1.AppFetchInline{
 						PathsFrom: []kcv1alpha1.AppFetchInlineSource{
