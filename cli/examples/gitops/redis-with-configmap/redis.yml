@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  annotations:
+    kapp.k14s.io/versioned: ""
+data:
+  redis-config: |
+    maxmemory 3mb
+    maxmemory-policy allkeys-lru
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: redis
+  annotations:
+    #! Use replace strategy since Pod cannot be modified "meaningfully"
+    kapp.k14s.io/update-strategy: fallback-on-replace
+spec:
+  containers:
+  - name: redis
+    image: k8s.gcr.io/redis:e2e
+    ports:
+    - containerPort: 6379
+    resources:
+      limits:
+        cpu: 100m
+    volumeMounts:
+    - mountPath: /redis-data
+      name: data
+    - mountPath: /redis-config
+      name: config
+  volumes:
+  - name: data
+    emptyDir: {}
+  - name: config
+    configMap:
+      name: redis-config
+      items:
+      - key: redis-config
+        path: redis.conf
