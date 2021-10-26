@@ -14,6 +14,7 @@ import (
 	cmdcm "github.com/k14s/kapp/pkg/kapp/cmd/configmap"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	cmdpkg "github.com/k14s/kapp/pkg/kapp/cmd/package"
+	pkgavail "github.com/k14s/kapp/pkg/kapp/cmd/package/packageavailable"
 	pkginst "github.com/k14s/kapp/pkg/kapp/cmd/package/packageinstall"
 	pkgrepo "github.com/k14s/kapp/pkg/kapp/cmd/package/repository"
 	cmdsa "github.com/k14s/kapp/pkg/kapp/cmd/serviceaccount"
@@ -132,9 +133,13 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	pkgiCmd.AddCommand(pkginst.NewListCmd(pkginst.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	pkgiCmd.AddCommand(pkginst.NewGetCmd(pkginst.NewGetOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 
+	pkgaCmd := pkgavail.NewCmd()
+	pkgaCmd.AddCommand(pkgavail.NewListCmd(pkgavail.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+
 	pkgCmd := cmdpkg.NewCmd()
 	pkgCmd.AddCommand(pkgrepoCmd)
 	pkgCmd.AddCommand(pkgiCmd)
+	pkgCmd.AddCommand(pkgaCmd)
 	// appCmd.AddCommand(cmdtools.NewDiffCmd(cmdtools.NewDiffOptions(o.ui, o.depsFactory), flagsFactory))
 	// appCmd.AddCommand(cmdtools.NewListLabelsCmd(cmdtools.NewListLabelsOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(pkgCmd)
