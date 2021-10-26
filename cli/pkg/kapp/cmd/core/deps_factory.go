@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/cppforlife/go-cli-ui/ui"
+	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -18,6 +19,7 @@ import (
 type DepsFactory interface {
 	DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error)
 	CoreClient() (kubernetes.Interface, error)
+	KappCtrlClient() (kcclient.Interface, error)
 	ConfigureWarnings(warnings bool)
 }
 
@@ -76,6 +78,22 @@ func (f *DepsFactoryImpl) CoreClient() (kubernetes.Interface, error) {
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("Building Core clientset: %s", err)
+	}
+
+	f.printTarget(config)
+
+	return clientset, nil
+}
+
+func (f *DepsFactoryImpl) KappCtrlClient() (kcclient.Interface, error) {
+	config, err := f.configFactory.RESTConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := kcclient.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("Building packaging clientset: %s", err)
 	}
 
 	f.printTarget(config)
