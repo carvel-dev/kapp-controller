@@ -20,16 +20,20 @@ import (
 // several tests below have no SyncPeriod set so they'll all use the same default.
 var defaultSyncPeriod metav1.Duration = metav1.Duration{10 * time.Minute}
 
-func TestAppExtYttPathsFromSecretNameAnn(t *testing.T) {
+func TestAppExtPathsFromSecretNameAnn(t *testing.T) {
 	ipkg := &pkgingv1alpha1.PackageInstall{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "app",
 			Namespace: "default",
 			Annotations: map[string]string{
-				"ext.packaging.carvel.dev/ytt-paths-from-secret-name":      "no-suffix",
-				"ext.packaging.carvel.dev/ytt-paths-from-secret-name.4":    "suffix-4",
-				"ext.packaging.carvel.dev/ytt-paths-from-secret-name.2":    "suffix-2",
-				"ext.packaging.carvel.dev/ytt-paths-from-secret-name.text": "suffix-text",
+				"ext.packaging.carvel.dev/ytt-paths-from-secret-name":                 "ytt-no-suffix",
+				"ext.packaging.carvel.dev/ytt-paths-from-secret-name.4":               "ytt-suffix-4",
+				"ext.packaging.carvel.dev/ytt-paths-from-secret-name.2":               "ytt-suffix-2",
+				"ext.packaging.carvel.dev/ytt-paths-from-secret-name.text":            "ytt-suffix-text",
+				"ext.packaging.carvel.dev/helm-template-values-from-secret-name":      "helm-no-suffix",
+				"ext.packaging.carvel.dev/helm-template-values-from-secret-name.4":    "helm-suffix-4",
+				"ext.packaging.carvel.dev/helm-template-values-from-secret-name.2":    "helm-suffix-2",
+				"ext.packaging.carvel.dev/helm-template-values-from-secret-name.text": "helm-suffix-text",
 			},
 		},
 	}
@@ -41,6 +45,7 @@ func TestAppExtYttPathsFromSecretNameAnn(t *testing.T) {
 			Template: datapkgingv1alpha1.AppTemplateSpec{
 				Spec: &kcv1alpha1.AppSpec{
 					Template: []kcv1alpha1.AppTemplate{
+						{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
 						{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
 						{Ytt: &kcv1alpha1.AppTemplateYtt{}},
 						{Ytt: &kcv1alpha1.AppTemplateYtt{}},
@@ -59,35 +64,135 @@ func TestAppExtYttPathsFromSecretNameAnn(t *testing.T) {
 		Spec: kcv1alpha1.AppSpec{
 			SyncPeriod: &defaultSyncPeriod,
 			Template: []kcv1alpha1.AppTemplate{
-				// Helm template step is untouched
+				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{
+					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
+						kcv1alpha1.AppTemplateValuesSource{
+							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
+								Name: "helm-no-suffix",
+							},
+						},
+						kcv1alpha1.AppTemplateValuesSource{
+							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
+								Name: "helm-suffix-2",
+							},
+						},
+						kcv1alpha1.AppTemplateValuesSource{
+							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
+								Name: "helm-suffix-4",
+							},
+						},
+						kcv1alpha1.AppTemplateValuesSource{
+							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
+								Name: "helm-suffix-text",
+							},
+						},
+					},
+				}},
+				// Second Helm template step is untouched
 				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
+
 				{Ytt: &kcv1alpha1.AppTemplateYtt{
 					Inline: &kcv1alpha1.AppFetchInline{
 						PathsFrom: []kcv1alpha1.AppFetchInlineSource{
 							kcv1alpha1.AppFetchInlineSource{
 								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									Name: "no-suffix",
+									Name: "ytt-no-suffix",
 								},
 							},
 							kcv1alpha1.AppFetchInlineSource{
 								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									Name: "suffix-2",
+									Name: "ytt-suffix-2",
 								},
 							},
 							kcv1alpha1.AppFetchInlineSource{
 								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									Name: "suffix-4",
+									Name: "ytt-suffix-4",
 								},
 							},
 							kcv1alpha1.AppFetchInlineSource{
 								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									Name: "suffix-text",
+									Name: "ytt-suffix-text",
 								},
 							},
 						},
 					},
 				}},
 				// Second ytt templating step is untouched
+				{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+			},
+		},
+	}
+
+	// Not interesting in metadata in this test
+	app.ObjectMeta = metav1.ObjectMeta{}
+
+	if !reflect.DeepEqual(expectedApp, app) {
+		bs, _ := yaml.Marshal(app)
+		t.Fatalf("App does not match expected app: (actual)\n%s", bs)
+	}
+}
+func TestAppHelmOverlaysFromAnn(t *testing.T) {
+	ipkg := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "app",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"ext.packaging.carvel.dev/helm-template-name":      "helm-new-name",
+				"ext.packaging.carvel.dev/helm-template-namespace": "helm-new-namespace",
+			},
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			Values: []pkgingv1alpha1.PackageInstallValues{
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values1"}},
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values2"}},
+			},
+		},
+	}
+
+	pkgVersion := datapkgingv1alpha1.Package{
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "expec-pkg",
+			Version: "1.5.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &kcv1alpha1.AppSpec{
+					Template: []kcv1alpha1.AppTemplate{
+						{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{
+							Name:      "helm-default-name",
+							Namespace: "helm-default-namespace",
+						}},
+						{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+					},
+				},
+			},
+		},
+	}
+
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	if err != nil {
+		t.Fatalf("Expected no err, but was: %s", err)
+	}
+
+	expectedApp := &kcv1alpha1.App{
+		Spec: kcv1alpha1.AppSpec{
+			SyncPeriod: &defaultSyncPeriod,
+			Template: []kcv1alpha1.AppTemplate{
+				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{
+					Name:      "helm-new-name",
+					Namespace: "helm-new-namespace",
+					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
+						kcv1alpha1.AppTemplateValuesSource{
+							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
+								Name: "values1",
+							},
+						},
+						kcv1alpha1.AppTemplateValuesSource{
+							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
+								Name: "values2",
+							},
+						},
+					},
+				}},
+				// Ytt template step is untouched
 				{Ytt: &kcv1alpha1.AppTemplateYtt{}},
 			},
 		},
