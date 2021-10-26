@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package repository
+package packageinstall
 
 import (
 	"context"
@@ -32,22 +32,22 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	cmd := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"l", "ls"},
-		Short:   "List package repositories in a namespace",
+		Short:   "List installed Packages in a namespace",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List repositories in all namespaces")
+	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List installed Packages in all namespaces")
 	return cmd
 }
 
 func (o *ListOptions) Run() error {
-	tableTitle := fmt.Sprintf("Repositories in namespace '%s'", o.NamespaceFlags.Name)
+	tableTitle := fmt.Sprintf("Installed Packages in namespace '%s'", o.NamespaceFlags.Name)
 	nsHeader := uitable.NewHeader("Namespace")
 	nsHeader.Hidden = true
 
 	if o.AllNamespaces {
 		o.NamespaceFlags.Name = ""
-		tableTitle = "Repositories in all namespaces"
+		tableTitle = "Installed Packages in all namespaces"
 		nsHeader.Hidden = false
 	}
 
@@ -56,22 +56,23 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	repoList, err := client.PackagingV1alpha1().PackageRepositories(
+	pkgiList, err := client.PackagingV1alpha1().PackageInstalls(
 		o.NamespaceFlags.Name).List(context.Background(), metav1.ListOptions{})
+
 	if err != nil {
 		return err
 	}
 
 	table := uitable.Table{
 		Title:   tableTitle,
-		Content: "repositories",
+		Content: "PackageInstalls",
 
 		Header: []uitable.Header{
 			nsHeader,
 			uitable.NewHeader("Name"),
-			uitable.NewHeader("URL"),
-			uitable.NewHeader("Description"),
-			uitable.NewHeader("Details"),
+			uitable.NewHeader("Package Name"),
+			uitable.NewHeader("Package Version"),
+			uitable.NewHeader("Status"),
 		},
 
 		SortBy: []uitable.ColumnSort{
@@ -80,13 +81,13 @@ func (o *ListOptions) Run() error {
 		},
 	}
 
-	for _, repo := range repoList.Items {
+	for _, pkgi := range pkgiList.Items {
 		table.Rows = append(table.Rows, []uitable.Value{
-			cmdcore.NewValueNamespace(repo.Namespace),
-			uitable.NewValueString(repo.Name),
-			uitable.NewValueString("TODO url"),
-			uitable.NewValueString(repo.Status.FriendlyDescription),
-			uitable.NewValueString(repo.Status.UsefulErrorMessage),
+			cmdcore.NewValueNamespace(pkgi.Namespace),
+			uitable.NewValueString(pkgi.Name),
+			uitable.NewValueString(pkgi.Spec.PackageRef.RefName),
+			uitable.NewValueString(pkgi.Status.Version),
+			uitable.NewValueString(pkgi.Status.FriendlyDescription),
 		})
 	}
 
