@@ -60,6 +60,7 @@ func (f Factory) NewKappPrivileged(opts v1alpha1.AppDeployKapp,
 		// to specify serviceaccount via PackageRepo CR.
 		Kubeconfig:                    nil,
 		DangerousUsePodServiceAccount: true,
+		IsPackageRepository:           true,
 	}
 
 	return NewKapp(opts, pgo, cancelCh), nil

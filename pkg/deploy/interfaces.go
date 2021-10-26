@@ -28,4 +28,5 @@ type ProcessedGenericOpts struct {
 
 	Kubeconfig                    *KubeconfigRestricted
 	DangerousUsePodServiceAccount bool
+	IsPackageRepository           bool
 }

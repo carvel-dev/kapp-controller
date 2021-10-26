@@ -1,0 +1,48 @@
+
+1.) when we run kapp deploy -a test-repo -f testrepo.yml --labels foo=bar   where do those labels go?
+
+2.) when we run kapp inspect, how does it know what Kind things are?
+
+3.) what is the e2e test doing differently from when we manually kapp-deploy the yaml?
+
+3.a) why is it that we run the e2etest and do kapp inspect we see something very different than if we paste that same yaml into a file, deploy it for ourselves, and inspect it?
+
+➜  carvel-kapp-controller git:(repo-configmap-names) ✗ kapp inspect -a test-repo
+Target cluster 'https://127.0.0.1:53808' (nodes: minikube)
+
+Resources in app 'test-repo'
+
+Namespace  Name                   Kind               Owner  Conds.  Rs  Ri  Age
+default    basic.test.carvel.dev  PackageRepository  kapp   1/1 t   ok  -   11m
+
+Rs: Reconcile state
+Ri: Reconcile information
+
+1 resources
+
+Succeeded
+➜  carvel-kapp-controller git:(repo-configmap-names) ✗ kapp inspect -a basic.test.carvel.dev-repo-ctrl -n kappctrl-test
+Target cluster 'https://127.0.0.1:53808' (nodes: minikube)
+
+Resources in app 'basic.test.carvel.dev-repo-ctrl'
+
+Namespace      Name                            Kind             Owner  Conds.  Rs  Ri  Age
+kappctrl-test  pkg.test.carvel.dev             PackageMetadata  kapp   -       ok  -   17m
+^              pkg.test.carvel.dev.1.0.0       Package          kapp   -       ok  -   17m
+^              pkg.test.carvel.dev.2.0.0       Package          kapp   -       ok  -   17m
+^              pkg.test.carvel.dev.3.0.0-rc.1  Package          kapp   -       ok  -   17m
+
+Rs: Reconcile state
+Ri: Reconcile information
+
+4 resources
+
+Succeeded
+
+
+
+###    test-repo and basic.test.carvel.dev-repo-ctrl    were both made by calling kapp deploy -a <name> on the yaml in the e2e test!!
+
+3.b.) why does only the one from the end-to-end test get the "-repo" smurfed on the end?  (per the changes we made to kapp-controller)
+
+

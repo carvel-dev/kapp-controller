@@ -22,9 +22,10 @@ const (
 )
 
 type Kapp struct {
-	opts        v1alpha1.AppDeployKapp
-	genericOpts ProcessedGenericOpts
-	cancelCh    chan struct{}
+	opts                v1alpha1.AppDeployKapp
+	genericOpts         ProcessedGenericOpts
+	cancelCh            chan struct{}
+	IsPackageRepository bool
 }
 
 var _ Deploy = &Kapp{}
@@ -33,7 +34,7 @@ var _ Deploy = &Kapp{}
 // additional info from the larger app resource (e.g. service account, name, namespace) as genericOpts,
 // and a cancel channel that gets passed through to the exec call that runs kapp.
 func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts ProcessedGenericOpts, cancelCh chan struct{}) *Kapp {
-	return &Kapp{opts, genericOpts, cancelCh}
+	return &Kapp{opts, genericOpts, cancelCh, genericOpts.IsPackageRepository}
 }
 
 func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
@@ -42,6 +43,10 @@ func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 	args, err := a.addDeployArgs([]string{"deploy", "-f", "-"})
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(err)
+	}
+
+	if a.IsPackageRepository {
+		a.addDeployArgs([]string{"--labels", "kind=PackageRepository"})
 	}
 
 	args, env := a.addGenericArgs(args)
@@ -148,7 +153,13 @@ func (a *Kapp) trackCmdOutput(cmd *goexec.Cmd, startedApplyingFunc func(),
 	return liveResult, doneCh
 }
 
-func (a *Kapp) managedName() string { return a.genericOpts.Name + "-ctrl" }
+func (a *Kapp) managedName() string {
+	if a.IsPackageRepository {
+		return a.genericOpts.Name + "-repo-ctrl"
+	} else {
+		return a.genericOpts.Name + "-ctrl"
+	}
+}
 
 func (a *Kapp) addDeployArgs(args []string) ([]string, error) {
 	if len(a.opts.IntoNs) > 0 {

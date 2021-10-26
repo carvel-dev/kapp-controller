@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
@@ -146,6 +147,10 @@ spec:
 	if !reflect.DeepEqual(expectedStatus, cr.Status) {
 		t.Fatalf("\nstatus is not same:\nExpected:\n%#v\nGot:\n%#v", expectedStatus, cr.Status)
 	}
+
+	fmt.Println("Repository should exist")
+	time.Sleep(5000 * time.Second)
+	fmt.Println("naptime is over")
 }
 
 func Test_PackageRepoBundle_PackagesAvailable(t *testing.T) {
