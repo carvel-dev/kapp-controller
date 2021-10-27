@@ -71,14 +71,13 @@ func listAvailablePackages(o *ListOptions) (uitable.Table, error) {
 		nsHeader.Hidden = false
 	}
 
-	client, err := o.depsFactory.KappCtrlClient()
+	client, err := o.depsFactory.PackageClient()
 	if err != nil {
 		return uitable.Table{}, err
 	}
 
-	pkgaList, err := client.InternalV1alpha1().InternalPackageMetadatas(
+	pkgaList, err := client.DataV1alpha1().PackageMetadatas(
 		o.NamespaceFlags.Name).List(context.Background(), metav1.ListOptions{})
-
 	if err != nil {
 		return uitable.Table{}, err
 	}
@@ -122,14 +121,14 @@ func listAvailablePackageVersions(o *ListOptions) (uitable.Table, error) {
 		nsHeader.Hidden = false
 	}
 
-	client, err := o.depsFactory.KappCtrlClient()
+	client, err := o.depsFactory.PackageClient()
 	if err != nil {
 		return uitable.Table{}, err
 	}
 
-	pkgaList, err := client.InternalV1alpha1().InternalPackages(
-		o.NamespaceFlags.Name).List(context.Background(), metav1.ListOptions{})
-
+	fieldSelector := fmt.Sprintf("spec.refName=%s", o.PackageName)
+	pkgaList, err := client.DataV1alpha1().Packages(
+		o.NamespaceFlags.Name).List(context.Background(), metav1.ListOptions{FieldSelector: fieldSelector})
 	if err != nil {
 		return uitable.Table{}, err
 	}
