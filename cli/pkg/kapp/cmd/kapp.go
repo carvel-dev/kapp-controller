@@ -135,6 +135,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 
 	pkgaCmd := pkgavail.NewCmd()
 	pkgaCmd.AddCommand(pkgavail.NewListCmd(pkgavail.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	pkgaCmd.AddCommand(pkgavail.NewGetCmd(pkgavail.NewGetOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 
 	pkgCmd := cmdpkg.NewCmd()
 	pkgCmd.AddCommand(pkgrepoCmd)
