@@ -1,0 +1,22 @@
+Problem:
+- when I install a pkgr as -a test-repo  with a spec.metadata.name=my-repo
+  - a pkgr named my-repo
+  - kapp-app named test-repo
+    - a configmap named test-repo
+    - kapp inspect -a test-repo shows that it's a packageRepository
+  - a kapp-controller-created kapp-app named my-repo-ctrl
+    - a configmap named my-repo-ctrl
+    - kapp inspect -a my-repo-ctrl shows a list of packages (doesn't know it's a repository anymore)
+
+
+- if my spec.metadata.name had been "my-app" and then I went to install the package also named "my-app",
+   NOW I have a problem because the pkgi will also create a configmap named my-app-ctrl.
+
+
+Solution
+- for new resources
+  - turns out we have a slight detour in the pkgr codepath already, so there's a straightforward point to encode that it _is_ a pkgr, and that it should have a different name, e.g. with `-repo-ctrl` appended instead of just `-ctrl`
+- for existing resources
+  - we want a trick for renaming existing pkgr-derived configmaps to have the -repo-ctrl in their name.
+    - we can get the yaml of the resource and feed it back into kapp deploy with a fixed name,  if we can detect which resources were created by pkgrs .
+    -- if you describe the configmap and look at the usedGVs is there a reliable difference between the ones created by a PKGR vs PKGI

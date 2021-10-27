@@ -1,7 +1,7 @@
 apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
-  name: basic.test.carvel.dev
+  name: my-repo
 spec:
   fetch:
     imgpkgBundle:
