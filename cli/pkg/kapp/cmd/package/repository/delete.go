@@ -43,7 +43,6 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().StringVarP(&o.RepositoryName, "repository", "R", "", "Delete a package repository")
 	cmd.Flags().BoolVarP(&o.Wait, "wait", "", true, "Wait for the package repository reconciliation to complete, optional. To disable wait, specify --wait=false")
-	cmd.Flags().BoolVarP(&o.NonIntereactive, "yes", "y", false, "Delete package repository without asking for confirmation, optional")
 	cmd.Flags().DurationVarP(&o.PollInterval, "poll-interval", "", 1*time.Second, "Time interval between subsequent polls of package repository reconciliation status, optional")
 	cmd.Flags().DurationVarP(&o.PollTimeout, "poll-timeout", "", 5*time.Minute, "Timeout value for polls of package repository reconciliation status, optional")
 	return cmd
@@ -57,12 +56,7 @@ func (o *DeleteOptions) Run() error {
 
 	o.ui.PrintLinef("Deleting package repository '%s' in namespace '%s'", o.RepositoryName, o.NamespaceFlags.Name)
 
-	//TODO: Use ui_flags
-	if !o.NonIntereactive {
-		if err := o.ui.AskForConfirmation(); err != nil {
-			return err
-		}
-	}
+	o.ui.AskForConfirmation()
 
 	err = client.PackagingV1alpha1().PackageRepositories(
 		o.NamespaceFlags.Name).Delete(context.Background(), o.RepositoryName, metav1.DeleteOptions{})
