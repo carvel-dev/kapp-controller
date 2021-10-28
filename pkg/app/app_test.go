@@ -4,10 +4,10 @@
 package app_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	apppkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
