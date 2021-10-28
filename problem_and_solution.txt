@@ -20,3 +20,172 @@ Solution
   - we want a trick for renaming existing pkgr-derived configmaps to have the -repo-ctrl in their name.
     - we can get the yaml of the resource and feed it back into kapp deploy with a fixed name,  if we can detect which resources were created by pkgrs .
     -- if you describe the configmap and look at the usedGVs is there a reliable difference between the ones created by a PKGR vs PKGI
+
+
+Open Question:
+Do we need to migrate the names of the `...-change-<hash>` configmaps also?   for computer readability? for human consistency?
+(the label on the -change-... configmap would be pointing at something that no longer exists)
+
+
+
+tap beta 2 package repository as installed via tanzu
+➜  carvel-kapp-controller git:(repo-configmap-names) ✗ kubectl describe configmap tanzu-tap-repository-repo-ctrl -
+n tap-install
+Name:         tanzu-tap-repository-repo-ctrl
+Namespace:    tap-install
+
+############ REPOS
+
+➜  carvel-kapp-controller git:(repo-configmap-names) ✗ kubectl describe configmap tanzu-tap-repository-repo-ctrl -n tap-install | grep usedGVs | jq '.usedGVs'
+[
+  {
+    "Group": "data.packaging.carvel.dev",
+    "Version": "v1alpha1"
+  }
+]
+
+
+➜  carvel-kapp-controller git:(repo-configmap-names) ✗ kubectl describe configmap my-repo-repo-ctrl | grep usedGVs | jq '.usedGVs'
+[
+  {
+    "Group": "data.packaging.carvel.dev",
+    "Version": "v1alpha1"
+  }
+]
+
+kubectl describe configmap tce-repo-repo-ctrl -n tanzu-package-repo-global | grep usedGVs | jq '.usedGVs'
+[
+  {
+    "Group": "data.packaging.carvel.dev",
+    "Version": "v1alpha1"
+  }
+]
+
+
+################# Packages, apps
+➜  carvel-kapp-controller git:(repo-configmap-names) ✗ kubectl describe configmap cert-manager [28/10/21| 3:33PM]
+Name:         cert-manager
+Namespace:    default
+Labels:       kapp.k14s.io/is-app=
+Annotations:  <none>
+
+
+➜  carvel-kapp-controller git:(repo-configmap-names) ✗ kubectl describe configmap cert-manager | grep usedGVs | jq '.usedGVs'
+[
+  {
+    "Group": "apiextensions.k8s.io",
+    "Version": "v1"
+  },
+  {
+    "Group": "",
+    "Version": "v1"
+  },
+  {
+    "Group": "rbac.authorization.k8s.io",
+    "Version": "v1"
+  },
+  {
+    "Group": "apps",
+    "Version": "v1"
+  },
+  {
+    "Group": "admissionregistration.k8s.io",
+    "Version": "v1"
+  }
+]
+
+
+
+➜  carvel-kapp-controller git:(repo-configmap-names) ✗ kubectl describe configmap sg           [28/10/21| 3:33PM]
+Name:         sg
+Namespace:    default
+Labels:       kapp.k14s.io/is-app=
+Annotations:  <none>
+
+
+➜  carvel-kapp-controller git:(repo-configmap-names) ✗ kubectl describe configmap sg | grep usedGVs | jq '.usedGVs'
+[
+  {
+    "Group": "apiextensions.k8s.io",
+    "Version": "v1"
+  },
+  {
+    "Group": "apps",
+    "Version": "v1"
+  },
+  {
+    "Group": "",
+    "Version": "v1"
+  },
+  {
+    "Group": "rbac.authorization.k8s.io",
+    "Version": "v1"
+  }
+]
+
+
+#### pkgi s
+
+kubectl get pkgi -n tap-install         [28/10/21| 3:38PM]
+NAME                    PACKAGE NAME                                   PACKAGE VERSION   DESCRIPTION           AGE
+convention-controller   controller.conventions.apps.tanzu.vmware.com   0.4.2             Reconcile succeeded   86s
+
+➜  carvel-kapp-controller git:(repo-configmap-names) ✗ kubectl describe configmap convention-controller-ctrl -n tap-install | grep GVs | jq '.usedGVs'
+[
+  {
+    "Group": "",
+    "Version": "v1"
+  },
+  {
+    "Group": "apiextensions.k8s.io",
+    "Version": "v1"
+  },
+  {
+    "Group": "rbac.authorization.k8s.io",
+    "Version": "v1"
+  },
+  {
+    "Group": "apps",
+    "Version": "v1"
+  },
+  {
+    "Group": "cert-manager.io",
+    "Version": "v1"
+  },
+  {
+    "Group": "admissionregistration.k8s.io",
+    "Version": "v1"
+  }
+]
+
+
+
+kubectl get pkgi -n tanzu-package-repo-global                                                                                                                                                      [28/10/21| 4:06PM]
+NAME      PACKAGE NAME                         PACKAGE VERSION   DESCRIPTION                                                            AGE
+contour   contour.community.tanzu.vmware.com   1.17.1            Reconciling                                                            8m28s
+harbor    harbor.community.tanzu.vmware.com    2.2.3             Reconcile failed: Error (see .status.usefulErrorMessage for details)   10m
+
+
+➜  carvel-kapp-controller git:(repo-configmap-names) ✗ kubectl describe configmap contour-ctrl -n tanzu-package-repo-global | grep GVs | jq '.usedGVs'                                                                                                    [28/10/21| 4:06PM]
+[
+  {
+    "Group": "",
+    "Version": "v1"
+  },
+  {
+    "Group": "apiextensions.k8s.io",
+    "Version": "v1"
+  },
+  {
+    "Group": "rbac.authorization.k8s.io",
+    "Version": "v1"
+  },
+  {
+    "Group": "batch",
+    "Version": "v1"
+  },
+  {
+    "Group": "apps",
+    "Version": "v1"
+  }
+]
