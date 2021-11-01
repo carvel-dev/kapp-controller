@@ -4,13 +4,23 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 
+	kappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	kappipkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -63,4 +73,92 @@ func getCurrentRepositoryAndTagInUse(pkgr *kappipkg.PackageRepository) (reposito
 	}
 
 	return repository, tag, nil
+}
+
+func newPackageRepository(repositoryName, repositoryImg, namespace string) (*v1alpha1.PackageRepository, error) {
+	pkgr := &v1alpha1.PackageRepository{
+		TypeMeta:   v1.TypeMeta{APIVersion: "install.package.carvel.dev/v1alpha1", Kind: "PackageRepository"},
+		ObjectMeta: v1.ObjectMeta{Name: repositoryName, Namespace: namespace},
+		Spec: v1alpha1.PackageRepositorySpec{Fetch: &v1alpha1.PackageRepositoryFetch{
+			ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: repositoryImg},
+		}},
+	}
+
+	_, tag, err := parseRegistryImageURL(repositoryImg)
+	if err != nil {
+		return nil, fmt.Errorf("Failed tp parse OCI registry URL: %s", err)
+	}
+
+	if tag == "" {
+		pkgr.Spec.Fetch.ImgpkgBundle.TagSelection = &versions.VersionSelection{
+			Semver: &versions.VersionSelectionSemver{
+				Constraints: ">0.0.0",
+			},
+		}
+	}
+	return pkgr, nil
+}
+
+func updateExistingPackageRepoository(existingRepository *v1alpha1.PackageRepository,
+	repositoryName, repositoryImg, namespace string) (*v1alpha1.PackageRepository, error) {
+	repositoryToUpdate := existingRepository.DeepCopy()
+
+	_, tag, err := parseRegistryImageURL(repositoryImg)
+	if err != nil {
+		return nil, fmt.Errorf("Failed tp parse OCI registry URL: %s", err)
+	}
+
+	repositoryToUpdate.Spec = kappipkg.PackageRepositorySpec{
+		Fetch: &kappipkg.PackageRepositoryFetch{
+			ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: repositoryImg},
+		},
+	}
+
+	if tag == "" {
+		repositoryToUpdate.Spec.Fetch.ImgpkgBundle.TagSelection = &versions.VersionSelection{
+			Semver: &versions.VersionSelectionSemver{
+				Constraints: ">0.0.0",
+			},
+		}
+	}
+	return repositoryToUpdate, err
+}
+
+func waitForPackageRepositoryInstallation(pollInterval time.Duration, pollTimeout time.Duration,
+	namespace string, repository string, client versioned.Interface) error {
+	var (
+		status             kappctrl.GenericStatus
+		reconcileSucceeded bool
+	)
+	if err := wait.Poll(pollInterval, pollTimeout, func() (done bool, err error) {
+		resource, err := client.PackagingV1alpha1().PackageRepositories(
+			namespace).Get(context.Background(), repository, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+
+		if resource.Generation != resource.Status.ObservedGeneration {
+			// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
+			return false, nil
+		}
+		status = resource.Status.GenericStatus
+
+		for _, cond := range status.Conditions {
+			switch {
+			case cond.Type == kappctrl.ReconcileSucceeded && cond.Status == corev1.ConditionTrue:
+				reconcileSucceeded = true
+				return true, nil
+			case cond.Type == kappctrl.ReconcileFailed && cond.Status == corev1.ConditionTrue:
+				return false, fmt.Errorf("resource reconciliation failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+			}
+		}
+		return false, nil
+	}); err != nil {
+		return err
+	}
+
+	if !reconcileSucceeded {
+		return fmt.Errorf("PackageRepository reconciliation failed")
+	}
+	return nil
 }

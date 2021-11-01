@@ -15,7 +15,7 @@ import (
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/tkgpackagedatamodel"
 )
 
-// parseRegistryImageURL parses the registry image URL to get repository and tag, tag is empty if not specified
+// qparseRegistryImageURL parses the registry image URL to get repository and tag, tag is empty if not specified
 func parseRegistryImageURL(imgURL string) (repository, tag string, err error) {
 	ref, err := name.ParseReference(imgURL, name.WeakValidation)
 	if err != nil {

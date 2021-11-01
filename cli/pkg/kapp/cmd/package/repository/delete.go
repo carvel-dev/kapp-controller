@@ -5,6 +5,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -21,12 +22,11 @@ type DeleteOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	NamespaceFlags  cmdcore.NamespaceFlags
-	RepositoryName  string
-	Wait            bool
-	NonIntereactive bool
-	PollInterval    time.Duration
-	PollTimeout     time.Duration
+	NamespaceFlags cmdcore.NamespaceFlags
+	RepositoryName string
+	Wait           bool
+	PollInterval   time.Duration
+	PollTimeout    time.Duration
 }
 
 func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeleteOptions {
@@ -73,13 +73,14 @@ func (o *DeleteOptions) Run() error {
 				o.NamespaceFlags.Name).Get(context.Background(), o.RepositoryName, metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
+					o.ui.PrintLinef("Resource deleted successfully")
 					break
 				}
 				return err
 			}
 
-			if time.Now().Before(start.Add(o.PollTimeout)) {
-				break
+			if time.Now().After(start.Add(o.PollTimeout)) {
+				return fmt.Errorf("Timed out waiting for resource deletion")
 			}
 			time.Sleep(o.PollInterval)
 		}

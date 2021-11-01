@@ -143,6 +143,7 @@ github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/ty
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/packaging/v1alpha1
 # github.com/vmware-tanzu/carvel-vendir v0.23.0
+## explicit
 github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1
 # golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 ## explicit
