@@ -1,0 +1,27 @@
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: tce-repo
+  namespace: default
+spec:
+  serviceAccountName: default-ns-sa
+  fetch:
+  - inline:
+      paths:
+        file.yml: |
+          apiVersion: packaging.carvel.dev/v1alpha1
+          kind: PackageRepository
+          metadata:
+            name: tce.repo.vmware.com
+          spec:
+            fetch:
+              imgpkgBundle:
+                image: projects.registry.vmware.com/tce/main:0.9.1
+            template:
+            - ytt: {}
+            deploy:
+            - kapp: {}
+  template:
+  - ytt: {}
+  deploy:
+  - kapp: {}

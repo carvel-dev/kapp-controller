@@ -189,3 +189,23 @@ harbor    harbor.community.tanzu.vmware.com    2.2.3             Reconcile faile
     "Version": "v1"
   }
 ]
+
+
+
+
+### after making a repo inline in an app
+
+➜  carvel-kapp-controller git:(repo-configmap-names) ✗ kubectl describe configmap tce-repo | grep usedGVs | jq '.usedGVs'
+[
+  {
+    "Group": "packaging.carvel.dev",
+    "Version": "v1alpha1"
+  }
+]
+➜  carvel-kapp-controller git:(repo-configmap-names) ✗ kubectl describe configmap tce-inline | grep usedGVs | jq '.usedGVs'
+[
+  {
+    "Group": "kappctrl.k14s.io",
+    "Version": "v1alpha1"
+  }
+]
