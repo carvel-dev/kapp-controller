@@ -136,6 +136,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	pkgiCmd := pkginst.NewCmd()
 	pkgiCmd.AddCommand(pkginst.NewListCmd(pkginst.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	pkgiCmd.AddCommand(pkginst.NewGetCmd(pkginst.NewGetOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewCreateCmd(pkginst.NewCreateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	pkgiCmd.AddCommand(pkginst.NewDeleteCmd(pkginst.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 
 	pkgaCmd := pkgavail.NewCmd()
