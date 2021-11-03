@@ -22,7 +22,7 @@ type GetOptions struct {
 	logger      logger.Logger
 
 	NamespaceFlags cmdcore.NamespaceFlags
-	PackageName    string
+	Name           string
 }
 
 func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *GetOptions {
@@ -37,23 +37,22 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.PackageName, "package", "P", "", "List all available versions of package")
+	cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name")
 	return cmd
 }
 
 func (o *GetOptions) Run() error {
 	var pkgName, pkgVersion string
-	pkgNameVersion := strings.Split(o.PackageName, "/")
+	pkgNameVersion := strings.Split(o.Name, "/")
 	if len(pkgNameVersion) == 2 {
 		pkgName = pkgNameVersion[0]
 		pkgVersion = pkgNameVersion[1]
 	} else if len(pkgNameVersion) == 1 {
 		pkgName = pkgNameVersion[0]
 	} else {
-		return fmt.Errorf("package should be of the format name or name/version")
+		return fmt.Errorf("Package name should be of the format 'name' or 'name/version'")
 	}
 
-	tableTitle := fmt.Sprintf("Package details for '%s'", pkgName)
 	headers := []uitable.Header{
 		uitable.NewHeader("name"),
 		uitable.NewHeader("display-name"),
@@ -88,12 +87,13 @@ func (o *GetOptions) Run() error {
 	}
 
 	if pkgVersion != "" {
-
-		pkg, err := client.DataV1alpha1().Packages(
-			o.NamespaceFlags.Name).Get(context.Background(), fmt.Sprintf("%s.%s", pkgName, pkgVersion), metav1.GetOptions{})
+		// TODO should we use --field-selector?
+		pkg, err := client.DataV1alpha1().Packages(o.NamespaceFlags.Name).Get(
+			context.Background(), fmt.Sprintf("%s.%s", pkgName, pkgVersion), metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
+
 		headers = append(headers, []uitable.Header{
 			uitable.NewHeader("version"),
 			uitable.NewHeader("released-at"),
@@ -112,19 +112,14 @@ func (o *GetOptions) Run() error {
 	}
 
 	table := uitable.Table{
-		Title:   tableTitle,
-		Content: "Package Details",
+		// TODO better title? should it be different for package vs packagemetadata
+		Title:     fmt.Sprintf("Package details for '%s'", pkgName),
+		Transpose: true,
 
 		Header: headers,
-
-		SortBy: []uitable.ColumnSort{
-			{Column: 0, Asc: true},
-			{Column: 1, Asc: true},
-		},
+		Rows:   [][]uitable.Value{row},
 	}
 
-	table.Rows = append(table.Rows, row)
-	table.Transpose = true
 	o.ui.PrintTable(table)
 
 	return nil

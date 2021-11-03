@@ -13,6 +13,7 @@ import (
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 )
 
 type ListOptions struct {
@@ -22,7 +23,8 @@ type ListOptions struct {
 
 	NamespaceFlags cmdcore.NamespaceFlags
 	AllNamespaces  bool
-	PackageName    string
+
+	Name string
 }
 
 func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
@@ -34,33 +36,24 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Use:     "list",
 		Aliases: []string{"l", "ls"},
 		Short:   "List available packages in a namespace",
-		Args:    cobra.MaximumNArgs(1),
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List available packages")
-	cmd.Flags().StringVarP(&o.PackageName, "package", "P", "", "List all available versions of package")
+
+	cmd.Flags().StringVarP(&o.Name, "package", "p", "", "List all available versions of package")
+
 	return cmd
 }
 
 func (o *ListOptions) Run() error {
-	var table uitable.Table
-	var err error
-	if o.PackageName != "" {
-		table, err = listAvailablePackageVersions(o)
-	} else {
-		table, err = listAvailablePackages(o)
+	if o.Name != "" {
+		return o.listPackages()
 	}
-	if err != nil {
-		return err
-	}
-
-	o.ui.PrintTable(table)
-
-	return nil
+	return o.listPackageMetadatas()
 }
 
-func listAvailablePackages(o *ListOptions) (uitable.Table, error) {
+func (o *ListOptions) listPackageMetadatas() error {
 	tableTitle := fmt.Sprintf("Available packages in namespace '%s'", o.NamespaceFlags.Name)
 	nsHeader := uitable.NewHeader("Namespace")
 	nsHeader.Hidden = true
@@ -73,17 +66,18 @@ func listAvailablePackages(o *ListOptions) (uitable.Table, error) {
 
 	client, err := o.depsFactory.PackageClient()
 	if err != nil {
-		return uitable.Table{}, err
+		return err
 	}
 
-	pkgaList, err := client.DataV1alpha1().PackageMetadatas(
+	pkgmList, err := client.DataV1alpha1().PackageMetadatas(
 		o.NamespaceFlags.Name).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		return uitable.Table{}, err
+		return err
 	}
 
 	table := uitable.Table{
-		Title:   tableTitle,
+		Title: tableTitle,
+		// TODO these arent really packages
 		Content: "Packages Available",
 
 		Header: []uitable.Header{
@@ -99,38 +93,42 @@ func listAvailablePackages(o *ListOptions) (uitable.Table, error) {
 		},
 	}
 
-	for _, pkga := range pkgaList.Items {
+	for _, pkgm := range pkgmList.Items {
 		table.Rows = append(table.Rows, []uitable.Value{
-			cmdcore.NewValueNamespace(pkga.Namespace),
-			uitable.NewValueString(pkga.Name),
-			uitable.NewValueString(pkga.Spec.DisplayName),
-			uitable.NewValueString(pkga.Spec.ShortDescription),
+			cmdcore.NewValueNamespace(pkgm.Namespace),
+			uitable.NewValueString(pkgm.Name),
+			uitable.NewValueString(pkgm.Spec.DisplayName),
+			uitable.NewValueString(pkgm.Spec.ShortDescription),
 		})
 	}
-	return table, err
+
+	o.ui.PrintTable(table)
+
+	return err
 }
 
-func listAvailablePackageVersions(o *ListOptions) (uitable.Table, error) {
-	tableTitle := fmt.Sprintf("Available package versions for '%s' in namespace '%s'", o.PackageName, o.NamespaceFlags.Name)
+func (o *ListOptions) listPackages() error {
+	// TODO figure out better naming... these are packages
+	tableTitle := fmt.Sprintf("Available package versions for '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 	nsHeader := uitable.NewHeader("Namespace")
 	nsHeader.Hidden = true
 
 	if o.AllNamespaces {
 		o.NamespaceFlags.Name = ""
-		tableTitle = fmt.Sprintf("Available package versions for '%s' in all namespaces", o.PackageName)
+		tableTitle = fmt.Sprintf("Available package versions for '%s' in all namespaces", o.Name)
 		nsHeader.Hidden = false
 	}
 
 	client, err := o.depsFactory.PackageClient()
 	if err != nil {
-		return uitable.Table{}, err
+		return err
 	}
 
-	fieldSelector := fmt.Sprintf("spec.refName=%s", o.PackageName)
-	pkgaList, err := client.DataV1alpha1().Packages(
-		o.NamespaceFlags.Name).List(context.Background(), metav1.ListOptions{FieldSelector: fieldSelector})
+	listOpts := metav1.ListOptions{FieldSelector: fields.Set{"spec.refName": o.Name}.String()}
+	pkgList, err := client.DataV1alpha1().Packages(
+		o.NamespaceFlags.Name).List(context.Background(), listOpts)
 	if err != nil {
-		return uitable.Table{}, err
+		return err
 	}
 
 	table := uitable.Table{
@@ -150,13 +148,16 @@ func listAvailablePackageVersions(o *ListOptions) (uitable.Table, error) {
 		},
 	}
 
-	for _, pkga := range pkgaList.Items {
+	for _, pkg := range pkgList.Items {
 		table.Rows = append(table.Rows, []uitable.Value{
-			cmdcore.NewValueNamespace(pkga.Namespace),
-			uitable.NewValueString(pkga.Spec.RefName),
-			uitable.NewValueString(pkga.Spec.Version),
-			uitable.NewValueString(pkga.Spec.ReleasedAt.String()),
+			cmdcore.NewValueNamespace(pkg.Namespace),
+			uitable.NewValueString(pkg.Spec.RefName),
+			uitable.NewValueString(pkg.Spec.Version),
+			uitable.NewValueString(pkg.Spec.ReleasedAt.String()),
 		})
 	}
-	return table, err
+
+	o.ui.PrintTable(table)
+
+	return err
 }
