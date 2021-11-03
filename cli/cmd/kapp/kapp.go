@@ -11,7 +11,6 @@ import (
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/k14s/kapp/pkg/kapp/cmd"
-	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 
 	// Import to initialize client auth plugins.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -20,9 +19,6 @@ import (
 func main() {
 	err := nonExitingMain()
 	if err != nil {
-		if typedErr, ok := err.(cmdapp.ExitStatus); ok {
-			os.Exit(typedErr.ExitStatus())
-		}
 		os.Exit(1)
 	}
 }
