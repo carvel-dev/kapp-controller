@@ -61,7 +61,7 @@ func NewClusterResourceFromYaml(t *testing.T, kubectl Kubectl, kind, name, yaml 
 			return
 		}
 		require.True(t, time.Now().Before(start.Add(25*time.Second)))
-		time.Sleep(5*time.Second)
+		time.Sleep(5 * time.Second)
 	}
 }
 
