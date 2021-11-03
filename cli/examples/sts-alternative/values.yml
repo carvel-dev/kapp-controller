@@ -1,5 +1,0 @@
-#@data/values
----
-name: redis
-replicas: 3
-per_pod_service: true
