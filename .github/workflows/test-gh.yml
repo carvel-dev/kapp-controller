@@ -42,6 +42,11 @@ jobs:
         mkdir /tmp/bin
         export PATH=/tmp/bin:$PATH
 
+        # Need to install protoc to run generators used in ./hack/verify-no-dirty-files.sh
+        curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v3.15.8/protoc-3.15.8-linux-x86_64.zip
+        echo "b9ff821d2a4f9e9943dc2a13e6a76d99c7472dac46ddd3718a3a4c3b877c044a  protoc-3.15.8-linux-x86_64.zip" | sha256sum -c -
+        unzip protoc-3.15.8-linux-x86_64.zip -d /tmp
+
         ./hack/verify-no-dirty-files.sh
 
         wget -O- https://github.com/kubernetes/minikube/releases/download/v1.21.0/minikube-linux-amd64 > /tmp/bin/minikube
