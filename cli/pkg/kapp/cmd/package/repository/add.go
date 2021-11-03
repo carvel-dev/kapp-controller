@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type AddOptions struct {
@@ -66,7 +66,7 @@ func (o *AddOptions) Run() error {
 
 	if o.CreateNamespace {
 		_, err := kappClient.CoreV1().Namespaces().Create(context.Background(),
-			&corev1.Namespace{ObjectMeta: v1.ObjectMeta{Name: o.NamespaceFlags.Name}}, v1.CreateOptions{})
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: o.NamespaceFlags.Name}}, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
@@ -78,7 +78,7 @@ func (o *AddOptions) Run() error {
 	}
 
 	_, err = client.PackagingV1alpha1().PackageRepositories(o.NamespaceFlags.Name).Create(
-		context.Background(), pkgRepository, v1.CreateOptions{})
+		context.Background(), pkgRepository, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
