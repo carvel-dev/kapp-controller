@@ -51,13 +51,8 @@ func (o *GetOptions) Run() error {
 		return err
 	}
 
-	// TODO: Do we wanna error out if we are not fetching an imgpkgBundle ?
-	repository, tag, _ := getCurrentRepositoryAndTagInUse(pkgr)
-
-	tableTitle := "Package repository information"
 	table := uitable.Table{
-		Title:     tableTitle,
-		Content:   "PackageRepository",
+		Title:     "Package repository",
 		Transpose: true,
 
 		Header: []uitable.Header{
@@ -68,12 +63,10 @@ func (o *GetOptions) Run() error {
 			uitable.NewHeader("Status"),
 			uitable.NewHeader("Reason"),
 		},
-
-		SortBy: []uitable.ColumnSort{
-			{Column: 0, Asc: true},
-			{Column: 1, Asc: true},
-		},
 	}
+
+	// TODO how to show imgpkg information?
+	repository, tag, _ := getCurrentRepositoryAndTagInUse(pkgr)
 
 	table.Rows = append(table.Rows, []uitable.Value{
 		uitable.NewValueString(pkgr.Name),
