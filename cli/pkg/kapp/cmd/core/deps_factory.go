@@ -22,15 +22,12 @@ type DepsFactory interface {
 	CoreClient() (kubernetes.Interface, error)
 	KappCtrlClient() (kcclient.Interface, error)
 	PackageClient() (pkgclient.Interface, error)
-	ConfigureWarnings(warnings bool)
 }
 
 type DepsFactoryImpl struct {
 	configFactory   ConfigFactory
 	ui              ui.UI
 	printTargetOnce *sync.Once
-
-	Warnings bool
 }
 
 var _ DepsFactory = &DepsFactoryImpl{}
@@ -42,9 +39,7 @@ func NewDepsFactoryImpl(configFactory ConfigFactory, ui ui.UI) *DepsFactoryImpl 
 		printTargetOnce: &sync.Once{}}
 }
 
-type DynamicClientOpts struct {
-	Warnings bool
-}
+type DynamicClientOpts struct{}
 
 func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error) {
 	config, err := f.configFactory.RESTConfig()
@@ -54,12 +49,7 @@ func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interfa
 
 	// copy to avoid mutating the passed-in config
 	cpConfig := rest.CopyConfig(config)
-
-	if opts.Warnings {
-		cpConfig.WarningHandler = f.newWarningHandler()
-	} else {
-		cpConfig.WarningHandler = rest.NoWarnings{}
-	}
+	cpConfig.WarningHandler = rest.NoWarnings{}
 
 	clientset, err := dynamic.NewForConfig(cpConfig)
 	if err != nil {
@@ -119,10 +109,6 @@ func (f *DepsFactoryImpl) PackageClient() (pkgclient.Interface, error) {
 	return clientset, nil
 }
 
-func (f *DepsFactoryImpl) ConfigureWarnings(warnings bool) {
-	f.Warnings = warnings
-}
-
 func (f *DepsFactoryImpl) printTarget(config *rest.Config) {
 	f.printTargetOnce.Do(func() {
 		nodesDesc := f.summarizeNodes(config)
@@ -160,18 +146,6 @@ func (f *DepsFactoryImpl) summarizeNodes(config *rest.Config) string {
 		}
 		return fmt.Sprintf("%s, %d+", oldestNode.Name, len(nodes.Items)-1)
 	}
-}
-
-func (f *DepsFactoryImpl) newWarningHandler() rest.WarningHandler {
-	if !f.Warnings {
-		return rest.NoWarnings{}
-	}
-	options := rest.WarningWriterOptions{
-		Deduplicate: true,
-		Color:       false,
-	}
-	warningWriter := rest.NewWarningWriter(uiWriter{ui: f.ui}, options)
-	return warningWriter
 }
 
 type uiWriter struct {
