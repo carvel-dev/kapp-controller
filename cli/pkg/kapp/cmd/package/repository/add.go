@@ -9,7 +9,6 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
@@ -53,7 +52,6 @@ func NewAddCmd(o *AddOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 }
 
 func (o *AddOptions) Run() error {
-
 	client, err := o.depsFactory.KappCtrlClient()
 	if err != nil {
 		return err
