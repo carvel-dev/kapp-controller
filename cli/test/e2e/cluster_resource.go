@@ -8,8 +8,10 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -43,6 +45,30 @@ func NewMissingClusterResource(t *testing.T, kind, name, ns string, kubectl Kube
 	_, err := kubectl.RunWithOpts([]string{"get", kind, name, "-n", ns, "-o", "yaml"}, RunOpts{AllowError: true})
 	if err == nil || !strings.Contains(err.Error(), "Error from server (NotFound)") {
 		t.Fatalf("Expected resource to not exist")
+	}
+}
+
+func NewClusterResourceFromYaml(t *testing.T, kubectl Kubectl, kind, name, yaml string) {
+	_, err := kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{StdinReader: strings.NewReader(yaml)})
+	require.NoError(t, err)
+
+	start := time.Now()
+	for {
+		out, err := kubectl.RunWithOpts([]string{"get", kind, name}, RunOpts{})
+		require.NoError(t, err)
+
+		if strings.Contains(out, "Reconcile succeeded") {
+			return
+		}
+		require.True(t, time.Now().Before(start.Add(25*time.Second)))
+		time.Sleep(5*time.Second)
+	}
+}
+
+func RemoveClusterResource(t *testing.T, kind, name, ns string, kubectl Kubectl) {
+	_, err := kubectl.RunWithOpts([]string{"delete", kind, name, "-n", ns}, RunOpts{AllowError: true, NoNamespace: true})
+	if err != nil {
+		require.Contains(t, err.Error(), "Error from server (NotFound)", "Failed to delete resource %s/%s: %s")
 	}
 }
 
