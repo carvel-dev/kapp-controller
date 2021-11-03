@@ -21,13 +21,15 @@ type AddOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	NamespaceFlags  cmdcore.NamespaceFlags
-	RepositoryName  string
-	RepositoryURL   string
+	NamespaceFlags cmdcore.NamespaceFlags
+	Name           string
+	URL            string
+
 	CreateNamespace bool
-	Wait            bool
-	PollInterval    time.Duration
-	PollTimeout     time.Duration
+
+	Wait         bool
+	PollInterval time.Duration
+	PollTimeout  time.Duration
 }
 
 func NewAddOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *AddOptions {
@@ -40,14 +42,20 @@ func NewAddCmd(o *AddOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Short: "Add a package repository",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
+
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.RepositoryName, "repository", "R", "", "Add a package repository")
-	cmd.Flags().StringVarP(&o.RepositoryURL, "url", "", "", "OCI registry url for package repository bundle")
+
+	cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name")
+	// TODO consider how to support other repository types
+	cmd.Flags().StringVar(&o.URL, "url", "", "OCI registry url for package repository bundle")
+	cmd.MarkFlagRequired("url")
+
 	cmd.Flags().BoolVarP(&o.CreateNamespace, "create-namespace", "", false, "Create namespace if the target namespace does not exist, optional")
+
 	cmd.Flags().BoolVarP(&o.Wait, "wait", "", true, "Wait for the package repository reconciliation to complete, optional. To disable wait, specify --wait=false")
 	cmd.Flags().DurationVarP(&o.PollInterval, "poll-interval", "", 1*time.Second, "Time interval between subsequent polls of package repository reconciliation status, optional")
 	cmd.Flags().DurationVarP(&o.PollTimeout, "poll-timeout", "", 5*time.Minute, "Timeout value for polls of package repository reconciliation status, optional")
-	cmd.MarkFlagRequired("url")
+
 	return cmd
 }
 
@@ -70,7 +78,7 @@ func (o *AddOptions) Run() error {
 		}
 	}
 
-	pkgRepository, err := newPackageRepository(o.RepositoryName, o.RepositoryURL, o.NamespaceFlags.Name)
+	pkgRepository, err := newPackageRepository(o.Name, o.URL, o.NamespaceFlags.Name)
 	if err != nil {
 		return err
 	}
@@ -83,7 +91,7 @@ func (o *AddOptions) Run() error {
 
 	if o.Wait {
 		o.ui.PrintLinef("Waiting for package repository to be added")
-		err = waitForPackageRepositoryInstallation(o.PollInterval, o.PollTimeout, o.NamespaceFlags.Name, o.RepositoryName, client)
+		err = waitForPackageRepositoryInstallation(o.PollInterval, o.PollTimeout, o.NamespaceFlags.Name, o.Name, client)
 	}
 
 	return err

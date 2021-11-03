@@ -18,9 +18,9 @@ type GetOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
-	pkgrName    string
 
 	NamespaceFlags cmdcore.NamespaceFlags
+	Name           string
 }
 
 func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *GetOptions {
@@ -35,19 +35,18 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVar(&o.pkgrName, "name", "", "Name of package repository")
+	cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name")
 	return cmd
 }
 
 func (o *GetOptions) Run() error {
-
 	client, err := o.depsFactory.KappCtrlClient()
 	if err != nil {
 		return err
 	}
 
 	pkgr, err := client.PackagingV1alpha1().PackageRepositories(
-		o.NamespaceFlags.Name).Get(context.Background(), o.pkgrName, metav1.GetOptions{})
+		o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}

@@ -11,14 +11,14 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/spf13/cobra"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	kappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	kappipkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const (
@@ -73,53 +73,40 @@ func getCurrentRepositoryAndTagInUse(pkgr *kappipkg.PackageRepository) (reposito
 	return repository, tag, nil
 }
 
-func newPackageRepository(repositoryName, repositoryImg, namespace string) (*v1alpha1.PackageRepository, error) {
+func newPackageRepository(name, url, namespace string) (*v1alpha1.PackageRepository, error) {
 	pkgr := &v1alpha1.PackageRepository{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "install.package.carvel.dev/v1alpha1", Kind: "PackageRepository"},
-		ObjectMeta: metav1.ObjectMeta{Name: repositoryName, Namespace: namespace},
-		Spec: v1alpha1.PackageRepositorySpec{Fetch: &v1alpha1.PackageRepositoryFetch{
-			ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: repositoryImg},
-		}},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
 	}
 
-	_, tag, err := parseRegistryImageURL(repositoryImg)
+	return updateExistingPackageRepository(pkgr, url)
+}
+
+func updateExistingPackageRepository(pkgr *v1alpha1.PackageRepository,
+	url string) (*v1alpha1.PackageRepository, error) {
+
+	pkgr = pkgr.DeepCopy()
+
+	pkgr.Spec = kappipkg.PackageRepositorySpec{
+		Fetch: &kappipkg.PackageRepositoryFetch{
+			ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: url},
+		},
+	}
+
+	_, tag, err := parseRegistryImageURL(url)
 	if err != nil {
-		return nil, fmt.Errorf("Failed tp parse OCI registry URL: %s", err)
+		return nil, fmt.Errorf("Parsing OCI registry URL: %s", err)
 	}
 
 	if tag == "" {
 		pkgr.Spec.Fetch.ImgpkgBundle.TagSelection = &versions.VersionSelection{
-			Semver: &versions.VersionSelectionSemver{
-				Constraints: ">0.0.0",
-			},
+			Semver: &versions.VersionSelectionSemver{},
 		}
 	}
-	return pkgr, nil
-}
 
-func updateExistingPackageRepoository(existingRepository *v1alpha1.PackageRepository,
-	repositoryName, repositoryImg, namespace string) (*v1alpha1.PackageRepository, error) {
-	repositoryToUpdate := existingRepository.DeepCopy()
-
-	_, tag, err := parseRegistryImageURL(repositoryImg)
-	if err != nil {
-		return nil, fmt.Errorf("Failed tp parse OCI registry URL: %s", err)
-	}
-
-	repositoryToUpdate.Spec = kappipkg.PackageRepositorySpec{
-		Fetch: &kappipkg.PackageRepositoryFetch{
-			ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: repositoryImg},
-		},
-	}
-
-	if tag == "" {
-		repositoryToUpdate.Spec.Fetch.ImgpkgBundle.TagSelection = &versions.VersionSelection{
-			Semver: &versions.VersionSelectionSemver{
-				Constraints: ">0.0.0",
-			},
-		}
-	}
-	return repositoryToUpdate, err
+	return pkgr, err
 }
 
 func waitForPackageRepositoryInstallation(pollInterval time.Duration, pollTimeout time.Duration,

@@ -10,7 +10,6 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -23,10 +22,11 @@ type DeleteOptions struct {
 	logger      logger.Logger
 
 	NamespaceFlags cmdcore.NamespaceFlags
-	RepositoryName string
-	Wait           bool
-	PollInterval   time.Duration
-	PollTimeout    time.Duration
+	Name           string
+
+	Wait         bool
+	PollInterval time.Duration
+	PollTimeout  time.Duration
 }
 
 func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeleteOptions {
@@ -40,11 +40,14 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		Short:   "Delete a package repository",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
+
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.RepositoryName, "repository", "R", "", "Delete a package repository")
+	cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name")
+
 	cmd.Flags().BoolVarP(&o.Wait, "wait", "", true, "Wait for the package repository reconciliation to complete, optional. To disable wait, specify --wait=false")
 	cmd.Flags().DurationVarP(&o.PollInterval, "poll-interval", "", 1*time.Second, "Time interval between subsequent polls of package repository reconciliation status, optional")
 	cmd.Flags().DurationVarP(&o.PollTimeout, "poll-timeout", "", 5*time.Minute, "Timeout value for polls of package repository reconciliation status, optional")
+
 	return cmd
 }
 
@@ -54,12 +57,12 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	o.ui.PrintLinef("Deleting package repository '%s' in namespace '%s'", o.RepositoryName, o.NamespaceFlags.Name)
+	o.ui.PrintLinef("Deleting package repository '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 
 	o.ui.AskForConfirmation()
 
 	err = client.PackagingV1alpha1().PackageRepositories(
-		o.NamespaceFlags.Name).Delete(context.Background(), o.RepositoryName, metav1.DeleteOptions{})
+		o.NamespaceFlags.Name).Delete(context.Background(), o.Name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
@@ -70,7 +73,7 @@ func (o *DeleteOptions) Run() error {
 		o.ui.PrintLinef("Waiting for deletion to be completed")
 		for {
 			_, err := client.PackagingV1alpha1().PackageRepositories(
-				o.NamespaceFlags.Name).Get(context.Background(), o.RepositoryName, metav1.GetOptions{})
+				o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					o.ui.PrintLinef("Resource deleted successfully")
