@@ -12,7 +12,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	kappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -77,8 +76,8 @@ func getCurrentRepositoryAndTagInUse(pkgr *kappipkg.PackageRepository) (reposito
 
 func newPackageRepository(repositoryName, repositoryImg, namespace string) (*v1alpha1.PackageRepository, error) {
 	pkgr := &v1alpha1.PackageRepository{
-		TypeMeta:   v1.TypeMeta{APIVersion: "install.package.carvel.dev/v1alpha1", Kind: "PackageRepository"},
-		ObjectMeta: v1.ObjectMeta{Name: repositoryName, Namespace: namespace},
+		TypeMeta:   metav1.TypeMeta{APIVersion: "install.package.carvel.dev/v1alpha1", Kind: "PackageRepository"},
+		ObjectMeta: metav1.ObjectMeta{Name: repositoryName, Namespace: namespace},
 		Spec: v1alpha1.PackageRepositorySpec{Fetch: &v1alpha1.PackageRepositoryFetch{
 			ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: repositoryImg},
 		}},

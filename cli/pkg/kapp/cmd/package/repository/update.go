@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type UpdateOptions struct {
@@ -68,14 +68,14 @@ func (o *UpdateOptions) Run() error {
 
 	if o.CreateNamespace {
 		_, err := kappClient.CoreV1().Namespaces().Create(context.Background(),
-			&corev1.Namespace{ObjectMeta: v1.ObjectMeta{Name: o.NamespaceFlags.Name}}, v1.CreateOptions{})
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: o.NamespaceFlags.Name}}, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
 	}
 
 	existingRepository, err := client.PackagingV1alpha1().PackageRepositories(o.NamespaceFlags.Name).Get(
-		context.Background(), o.RepositoryName, v1.GetOptions{})
+		context.Background(), o.RepositoryName, metav1.GetOptions{})
 
 	if err != nil {
 		if errors.IsNotFound(err) && o.CreateRepository {
@@ -84,7 +84,7 @@ func (o *UpdateOptions) Run() error {
 				return err
 			}
 			_, err = client.PackagingV1alpha1().PackageRepositories(o.NamespaceFlags.Name).Create(
-				context.Background(), pkgRepository, v1.CreateOptions{})
+				context.Background(), pkgRepository, metav1.CreateOptions{})
 			if err != nil {
 				return err
 			}
@@ -98,7 +98,7 @@ func (o *UpdateOptions) Run() error {
 			return err
 		}
 		_, err = client.PackagingV1alpha1().PackageRepositories(o.NamespaceFlags.Name).Update(
-			context.Background(), pkgRepository, v1.UpdateOptions{})
+			context.Background(), pkgRepository, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
