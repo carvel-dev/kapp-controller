@@ -9,10 +9,9 @@ import (
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:       "available",
-		ValidArgs: []string{"list", "get"},
-		Aliases:   []string{"pkga"},
-		Short:     "PackageAvailable",
+		Use:     "available",
+		Aliases: []string{"a"},
+		Short:   "Available packages",
 	}
 	return cmd
 }
