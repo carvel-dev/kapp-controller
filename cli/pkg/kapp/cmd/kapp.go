@@ -137,6 +137,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	pkgiCmd.AddCommand(pkginst.NewListCmd(pkginst.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	pkgiCmd.AddCommand(pkginst.NewGetCmd(pkginst.NewGetOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	pkgiCmd.AddCommand(pkginst.NewCreateCmd(pkginst.NewCreateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewUpdateCmd(pkginst.NewCreateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	pkgiCmd.AddCommand(pkginst.NewDeleteCmd(pkginst.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 
 	pkgaCmd := pkgavail.NewCmd()
@@ -147,6 +148,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	pkgCmd.AddCommand(pkgrepoCmd)
 	pkgCmd.AddCommand(pkgiCmd)
 	pkgCmd.AddCommand(pkgaCmd)
+	pkgCmd.AddCommand(pkginst.NewInstallCmd(pkginst.NewCreateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	// appCmd.AddCommand(cmdtools.NewDiffCmd(cmdtools.NewDiffOptions(o.ui, o.depsFactory), flagsFactory))
 	// appCmd.AddCommand(cmdtools.NewListLabelsCmd(cmdtools.NewListLabelsOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(pkgCmd)

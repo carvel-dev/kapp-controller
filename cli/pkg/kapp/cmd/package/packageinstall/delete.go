@@ -15,12 +15,14 @@ import (
 	"github.com/spf13/cobra"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/dynamic"
 )
 
 type DeleteOptions struct {
@@ -62,14 +64,20 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	client, err := o.depsFactory.KappCtrlClient()
+	kcClient, err := o.depsFactory.KappCtrlClient()
+	if err != nil {
+		return nil
+	}
+
+	//TODO: Read warnings flag. Is it needed?
+	dynamicClient, err := o.depsFactory.DynamicClient(cmdcore.DynamicClientOpts{})
 	if err != nil {
 		return nil
 	}
 
 	o.ui.PrintLinef("Getting package install '%s' from namespace '%s'", o.pkgiName, o.NamespaceFlags.Name)
 
-	pkgi, err := client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
+	pkgi, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
 		context.Background(), o.pkgiName, metav1.GetOptions{},
 	)
 	if err != nil {
@@ -77,7 +85,7 @@ func (o *DeleteOptions) Run() error {
 			return err
 		}
 		o.ui.PrintLinef("Could not find PackageInstall '%s' in namespace '%s'. Cleaning up created resources.", o.pkgiName, o.NamespaceFlags.Name)
-		err = o.cleanUpIfInstallNotFound()
+		err = o.cleanUpIfInstallNotFound(dynamicClient)
 		if err != nil {
 			return err
 		}
@@ -86,7 +94,7 @@ func (o *DeleteOptions) Run() error {
 
 	o.ui.PrintLinef("Deleting package install '%s' from namespace '%s'", o.pkgiName, o.NamespaceFlags.Name)
 
-	err = client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Delete(
+	err = kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Delete(
 		context.Background(), o.pkgiName, metav1.DeleteOptions{},
 	)
 	if err != nil {
@@ -98,12 +106,12 @@ func (o *DeleteOptions) Run() error {
 	}
 
 	o.ui.PrintLinef("Waiting for deletion of PackageInstall '%s' from namespace '%s'", o.pkgiName, o.NamespaceFlags.Name)
-	err = o.waitForResourceDelete()
+	err = o.waitForResourceDelete(kcClient)
 	if err != nil {
 		return err
 	}
 
-	err = o.deleteInstallCreatedResources(pkgi)
+	err = o.deleteInstallCreatedResources(pkgi, dynamicClient)
 	if err != nil {
 		return err
 	}
@@ -112,7 +120,7 @@ func (o *DeleteOptions) Run() error {
 }
 
 // deletePkgPluginCreatedResources deletes the associated resources which were installed upon installation of the PackageInstall CR
-func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.PackageInstall) error {
+func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.PackageInstall, dynamicClient dynamic.Interface) error {
 	for k, resourceName := range pkgInstall.GetAnnotations() {
 		split := strings.Split(k, "/")
 		if len(split) <= 1 {
@@ -139,7 +147,7 @@ func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.
 			Group:    apiGroup,
 			Version:  version,
 			Resource: resourceKind.Resource(),
-		}, resourceName, namespace)
+		}, resourceName, namespace, dynamicClient)
 
 		if err != nil {
 			return err
@@ -149,14 +157,14 @@ func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.
 	return nil
 }
 
-func (o *DeleteOptions) cleanUpIfInstallNotFound() error {
+func (o *DeleteOptions) cleanUpIfInstallNotFound(dynamicClient dynamic.Interface) error {
 
 	err := o.deleteIfExistsAndOwned(
 		schema.GroupVersionResource{
 			Group:    corev1.SchemeGroupVersion.Group,
 			Version:  corev1.SchemeGroupVersion.Version,
 			Resource: KindServiceAccount.Resource(),
-		}, KindServiceAccount.Name(o.pkgiName, o.NamespaceFlags.Name), o.NamespaceFlags.Name)
+		}, KindServiceAccount.Name(o.pkgiName, o.NamespaceFlags.Name), o.NamespaceFlags.Name, dynamicClient)
 	if err != nil {
 		return err
 	}
@@ -166,7 +174,7 @@ func (o *DeleteOptions) cleanUpIfInstallNotFound() error {
 			Group:    corev1.SchemeGroupVersion.Group,
 			Version:  corev1.SchemeGroupVersion.Version,
 			Resource: KindServiceAccount.Resource(),
-		}, KindClusterRole.Name(o.pkgiName, o.NamespaceFlags.Name), o.NamespaceFlags.Name)
+		}, KindClusterRole.Name(o.pkgiName, o.NamespaceFlags.Name), o.NamespaceFlags.Name, dynamicClient)
 	if err != nil {
 		return err
 	}
@@ -176,7 +184,7 @@ func (o *DeleteOptions) cleanUpIfInstallNotFound() error {
 			Group:    rbacv1.SchemeGroupVersion.Group,
 			Version:  rbacv1.SchemeGroupVersion.Version,
 			Resource: KindClusterRole.Resource(),
-		}, KindClusterRole.Name(o.pkgiName, o.NamespaceFlags.Name), "")
+		}, KindClusterRole.Name(o.pkgiName, o.NamespaceFlags.Name), "", dynamicClient)
 	if err != nil {
 		return err
 	}
@@ -186,7 +194,7 @@ func (o *DeleteOptions) cleanUpIfInstallNotFound() error {
 			Group:    rbacv1.SchemeGroupVersion.Group,
 			Version:  rbacv1.SchemeGroupVersion.Version,
 			Resource: KindClusterRoleBinding.Resource(),
-		}, KindClusterRoleBinding.Name(o.pkgiName, o.NamespaceFlags.Name), "")
+		}, KindClusterRoleBinding.Name(o.pkgiName, o.NamespaceFlags.Name), "", dynamicClient)
 	if err != nil {
 		return err
 	}
@@ -194,13 +202,8 @@ func (o *DeleteOptions) cleanUpIfInstallNotFound() error {
 	return nil
 }
 
-func (o *DeleteOptions) deleteIfExistsAndOwned(groupVersionResource schema.GroupVersionResource, name string, namespace string) error {
-	client, err := o.depsFactory.DynamicClient(cmdcore.DynamicClientOpts{})
-	if err != nil {
-		return err
-	}
-
-	resource, err := client.Resource(groupVersionResource).Namespace(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+func (o *DeleteOptions) deleteIfExistsAndOwned(groupVersionResource schema.GroupVersionResource, name string, namespace string, dynamicClient dynamic.Interface) error {
+	resource, err := dynamicClient.Resource(groupVersionResource).Namespace(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			// Ignoring NotFound errors
@@ -219,7 +222,7 @@ func (o *DeleteOptions) deleteIfExistsAndOwned(groupVersionResource schema.Group
 	}
 
 	o.ui.PrintLinef("Deleting '%s': %s", groupVersionResource.Resource, name)
-	err = client.Resource(groupVersionResource).Namespace(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+	err = dynamicClient.Resource(groupVersionResource).Namespace(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
@@ -227,14 +230,8 @@ func (o *DeleteOptions) deleteIfExistsAndOwned(groupVersionResource schema.Group
 	return nil
 }
 
-func (o *DeleteOptions) deleteResourceUsingGVR(groupVersionResource schema.GroupVersionResource, name string, namespace string) error {
-	//TODO: Read warnings flag. Is it needed?
-	client, err := o.depsFactory.DynamicClient(cmdcore.DynamicClientOpts{})
-	if err != nil {
-		return err
-	}
-
-	err = client.Resource(groupVersionResource).Namespace(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+func (o *DeleteOptions) deleteResourceUsingGVR(groupVersionResource schema.GroupVersionResource, name string, namespace string, dynamicClient dynamic.Interface) error {
+	err := dynamicClient.Resource(groupVersionResource).Namespace(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
@@ -242,14 +239,9 @@ func (o *DeleteOptions) deleteResourceUsingGVR(groupVersionResource schema.Group
 	return nil
 }
 
-func (o *DeleteOptions) waitForResourceDelete() error {
-	client, err := o.depsFactory.KappCtrlClient()
-	if err != nil {
-		return err
-	}
-
-	err = wait.Poll(o.pollInterval, o.pollTimeout, func() (bool, error) {
-		resource, err := client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
+func (o *DeleteOptions) waitForResourceDelete(kcClient kcclient.Interface) error {
+	err := wait.Poll(o.pollInterval, o.pollTimeout, func() (bool, error) {
+		resource, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
 			context.Background(), o.pkgiName, metav1.GetOptions{},
 		)
 		if err != nil {
