@@ -209,3 +209,47 @@ harbor    harbor.community.tanzu.vmware.com    2.2.3             Reconcile faile
     "Version": "v1alpha1"
   }
 ]
+
+
+
+
+
+if a user creates a pkgi with a name "my-repo" -> kc will create a kapp deploy with name "my-repo-ctrl"
+[..]
+
+
+pkgr tap;   we currently make tap-ctrl.
+kapp-controller updates, and now we make one called tap-repo-ctrl. 
+additionally, we convert tap-ctrl --> tap-repo-ctrl.
+
+now if we make a pkgi named tap, we get tap-ctrl
+
+so then when pkgr tap reconciles, it knows its associated to tap-repo-ctrl. so it shouldn't look at the pkgi's tap-ctrl configmap.
+theres no defined order so they could wind up in a race and you could screw up the pkgi if it's in the process of overwriting. 
+BUT if there's also a check on the UsedGVs "fingerprint",  then the pkgr will know to create the "tap-repo-ctrl" 
+
+
+
+corner case to check: if you have a pkgi that only installs packageCRs and packageMetadatas,  then what group(s) does it use?
+
+
+
+
+alternative:  give kapp a new feature that kapp-controller passes through additional metadata so each configmap is very explicitly labelled of what 'kind' it was for.
+
+if today we introduce a featyre that renames pkgr and pkgi ,  then neither one of them should fail.  kapp controller can do the rename or we can try to introduce it in kap as like a "--rename from" so kapp deploy has a single atomic migrate command
+
+goal: kapp deploy might have to check configmaps at one-time migration but not have kc do it over and over and over again.
+
+k8s has name length restrictions -> configmaps seem like they can go above 200 characters no problem.
+
+
+is there ever a chance that the pkgr reconciler tries to use the old configmaps, or ..
+
+if we're renaming should we be also doing some namespacing , e.g. adding .kc or .kapp.k14s.io  -  it's probably overall a cross-project change that starts in kapp and then kc consumes a new version of kapp. 
+high-level plan, solve kc issue. see kapp issue 146.
+
+dmitriy's --prev-app example the flag would always be there.  so then kapp would be responsible for 'knowing' when/how to apply those flags. 
+preference is to push it all into kapp and then all kc has to do is consume it.
+
+go over with a fine tooth comb all the implications around decisions. 
