@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -98,4 +99,14 @@ Succeeded`))
 
 		require.Equal(t, expectedOutput, out)
 	})
+}
+
+func replaceSpaces(result string) string {
+	// result = strings.Replace(result, " ", "_", -1) // useful for debugging
+	result = strings.Replace(result, " \n", " $\n", -1) // explicit endline
+	return result
+}
+
+func replaceTarget(result string) string {
+	return regexp.MustCompile("Target cluster .+\n").ReplaceAllString(result, "")
 }
