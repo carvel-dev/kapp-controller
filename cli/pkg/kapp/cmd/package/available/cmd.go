@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package packageavailable
+package available
 
 import (
 	"github.com/spf13/cobra"
