@@ -78,34 +78,12 @@ func (o *GetOptions) Run() error {
 				continue
 			}
 
-			s, err := coreClient.CoreV1().Secrets(o.NamespaceFlags.Name).Get(context.Background(), "db-user-pass", metav1.GetOptions{})
+			_, err := coreClient.CoreV1().Secrets(o.NamespaceFlags.Name).Get(context.Background(), value.SecretRef.Name, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
 
-			var data []byte
-			yamlSeperator := "---"
-			for _, value := range s.Data {
-				if len(string(value)) < 3 {
-					data = append(data, yamlSeperator...)
-					data = append(data, "\n"...)
-				}
-				if len(string(value)) >= 3 && string(value)[:3] != yamlSeperator {
-					data = append(data, yamlSeperator...)
-					data = append(data, "\n"...)
-				}
-				data = append(data, value...)
-			}
-
-			if len(string(data)) < 3 {
-				dataValue += yamlSeperator
-				dataValue += "\n"
-			}
-			if len(string(data)) >= 3 && string(data)[:3] != yamlSeperator {
-				dataValue += yamlSeperator
-				dataValue += "\n"
-			}
-			dataValue += string(data)
+			//TODO: Add secret yaml to a buffer which can be written to a file
 		}
 		if _, err = fmt.Fprintf(w, "%s", dataValue); err != nil {
 			return err

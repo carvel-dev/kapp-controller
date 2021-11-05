@@ -14,6 +14,7 @@ import (
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
+	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
@@ -21,10 +22,11 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 )
 
-type CreateOptions struct {
+type CreateOrUpdateOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
@@ -42,14 +44,15 @@ type CreateOptions struct {
 
 	install bool
 
-	NamespaceFlags cmdcore.NamespaceFlags
+	NamespaceFlags     cmdcore.NamespaceFlags
+	CreatedAnnotations *CreatedResourceAnnotations
 }
 
-func NewCreateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *CreateOptions {
-	return &CreateOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewCreateOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *CreateOrUpdateOptions {
+	return &CreateOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
-func NewCreateCmd(o *CreateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
+func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Install package",
@@ -70,7 +73,7 @@ func NewCreateCmd(o *CreateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	return cmd
 }
 
-func NewInstallCmd(o *CreateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
+func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install",
 		Short: "Install package",
@@ -91,7 +94,7 @@ func NewInstallCmd(o *CreateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.C
 	return cmd
 }
 
-func NewUpdateCmd(o *CreateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
+func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",
 		Short: "Update package",
@@ -113,8 +116,7 @@ func NewUpdateCmd(o *CreateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	return cmd
 }
 
-func (o *CreateOptions) RunCreate() error {
-
+func (o *CreateOrUpdateOptions) RunCreate() error {
 	client, err := o.depsFactory.CoreClient()
 	if err != nil {
 		return err
@@ -136,6 +138,8 @@ func (o *CreateOptions) RunCreate() error {
 		return err
 	}
 
+	o.CreatedAnnotations = NewCreatedResourceAnnotations(o.pkgiName, o.NamespaceFlags.Name)
+
 	isServiceAccountCreated, isSecretCreated, err := o.createRelatedResources(client)
 	if err != nil {
 		return err
@@ -147,7 +151,7 @@ func (o *CreateOptions) RunCreate() error {
 	}
 
 	if o.wait {
-		if err = waitForResourceInstallation(o.pkgiName, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, o.ui, kcClient); err != nil {
+		if err = o.waitForResourceInstallation(o.pkgiName, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, o.ui, kcClient); err != nil {
 			return err
 		}
 	}
@@ -155,7 +159,7 @@ func (o *CreateOptions) RunCreate() error {
 	return nil
 }
 
-func (o *CreateOptions) RunUpdate() error {
+func (o *CreateOrUpdateOptions) RunUpdate() error {
 	client, err := o.depsFactory.CoreClient()
 	if err != nil {
 		return err
@@ -165,6 +169,8 @@ func (o *CreateOptions) RunUpdate() error {
 	if err != nil {
 		return err
 	}
+
+	o.CreatedAnnotations = NewCreatedResourceAnnotations(o.pkgiName, o.NamespaceFlags.Name)
 
 	o.ui.PrintLinef("Getting package install for '%s'", o.pkgiName)
 	pkgInstall, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
@@ -190,7 +196,7 @@ func (o *CreateOptions) RunUpdate() error {
 		}
 
 		if o.wait {
-			if err = waitForResourceInstallation(o.pkgiName, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, o.ui, kcClient); err != nil {
+			if err = o.waitForResourceInstallation(o.pkgiName, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, o.ui, kcClient); err != nil {
 				return err
 			}
 		}
@@ -213,7 +219,7 @@ func (o *CreateOptions) RunUpdate() error {
 	}
 
 	o.ui.PrintLinef("Updating package install for '%s'", o.pkgiName)
-	addCreatedResourceAnnotations(&pkgInstall.ObjectMeta, false, isSecretCreated)
+	o.addCreatedResourceAnnotations(&pkgInstall.ObjectMeta, false, isSecretCreated)
 	_, err = kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Update(
 		context.Background(), updatedPkgInstall, metav1.UpdateOptions{},
 	)
@@ -223,15 +229,14 @@ func (o *CreateOptions) RunUpdate() error {
 	}
 
 	if o.wait {
-		if err = waitForResourceInstallation(o.pkgiName, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, o.ui, kcClient); err != nil {
+		if err = o.waitForResourceInstallation(o.pkgiName, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, o.ui, kcClient); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// TODO: Handle created resource names better. Reduce duplication of logic used to get the names
-func (o *CreateOptions) createRelatedResources(client kubernetes.Interface) (bool, bool, error) {
+func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interface) (bool, bool, error) {
 	var (
 		isServiceAccountCreated bool
 		isSecretCreated         bool
@@ -240,17 +245,17 @@ func (o *CreateOptions) createRelatedResources(client kubernetes.Interface) (boo
 
 	if o.serviceAccountName == "" {
 
-		o.ui.PrintLinef("Creating service account '%s'", fmt.Sprintf(ServiceAccountName, o.pkgiName, o.NamespaceFlags.Name))
+		o.ui.PrintLinef("Creating service account '%s'", o.CreatedAnnotations.ServiceAccountAnnValue())
 		if isServiceAccountCreated, err = o.createOrUpdateServiceAccount(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
 
-		o.ui.PrintLinef("Creating cluster admin role '%s'", fmt.Sprintf(ClusterRoleName, o.pkgiName, o.NamespaceFlags.Name))
+		o.ui.PrintLinef("Creating cluster admin role '%s'", o.CreatedAnnotations.ClusterRoleAnnValue())
 		if err := o.createOrUpdateClusterAdminRole(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
 
-		o.ui.PrintLinef("Creating cluster role binding '%s'", fmt.Sprintf(ClusterRoleBindingName, o.pkgiName, o.NamespaceFlags.Name))
+		o.ui.PrintLinef("Creating cluster role binding '%s'", o.CreatedAnnotations.ClusterRoleBindingAnnValue())
 		if err := o.createOrUpdateClusterRoleBinding(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
@@ -265,7 +270,7 @@ func (o *CreateOptions) createRelatedResources(client kubernetes.Interface) (boo
 			return isServiceAccountCreated, isSecretCreated, err
 		}
 		if svcAccountAnnotation, ok := svcAccount.GetAnnotations()[KappPkgAnnotation]; ok {
-			if svcAccountAnnotation != fmt.Sprintf("%s-%s", o.pkgiName, o.NamespaceFlags.Name) {
+			if svcAccountAnnotation != o.CreatedAnnotations.PackageAnnValue() {
 				err = fmt.Errorf("provided service account '%s' is already used by another package in namespace '%s': %s", o.serviceAccountName, o.NamespaceFlags.Name, err.Error())
 				return isServiceAccountCreated, isSecretCreated, err
 			}
@@ -273,7 +278,7 @@ func (o *CreateOptions) createRelatedResources(client kubernetes.Interface) (boo
 	}
 
 	if o.valuesFile != "" {
-		o.ui.PrintLinef("Creating secret '%s'", fmt.Sprintf(SecretName, o.pkgiName, o.NamespaceFlags.Name))
+		o.ui.PrintLinef("Creating secret '%s'", o.CreatedAnnotations.SecretAnnValue())
 		if isSecretCreated, err = o.createOrUpdateDataValuesSecret(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
@@ -282,11 +287,11 @@ func (o *CreateOptions) createRelatedResources(client kubernetes.Interface) (boo
 	return isServiceAccountCreated, isSecretCreated, nil
 }
 
-func (o *CreateOptions) createOrUpdateClusterAdminRole(client kubernetes.Interface) error {
+func (o *CreateOrUpdateOptions) createOrUpdateClusterAdminRole(client kubernetes.Interface) error {
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        fmt.Sprintf(ClusterRoleName, o.pkgiName, o.NamespaceFlags.Name),
-			Annotations: map[string]string{KappPkgAnnotation: fmt.Sprintf("%s-%s", o.pkgiName, o.NamespaceFlags.Name)},
+			Name:        o.CreatedAnnotations.ClusterRoleAnnValue(),
+			Annotations: map[string]string{KappPkgAnnotation: o.CreatedAnnotations.PackageAnnValue()},
 		},
 		Rules: []rbacv1.PolicyRule{
 			{APIGroups: []string{"*"}, Verbs: []string{"*"}, Resources: []string{"*"}},
@@ -308,22 +313,22 @@ func (o *CreateOptions) createOrUpdateClusterAdminRole(client kubernetes.Interfa
 	return nil
 }
 
-func (o *CreateOptions) createOrUpdateClusterRoleBinding(client kubernetes.Interface) error {
+func (o *CreateOrUpdateOptions) createOrUpdateClusterRoleBinding(client kubernetes.Interface) error {
 	svcAccount := o.serviceAccountName
 	if svcAccount == "" {
-		svcAccount = fmt.Sprintf(ServiceAccountName, o.pkgiName, o.NamespaceFlags.Name)
+		svcAccount = o.CreatedAnnotations.ServiceAccountAnnValue()
 	}
 
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        fmt.Sprintf(ClusterRoleBindingName, o.pkgiName, o.NamespaceFlags.Name),
-			Annotations: map[string]string{KappPkgAnnotation: fmt.Sprintf("%s-%s", o.pkgiName, o.NamespaceFlags.Name)},
+			Name:        o.CreatedAnnotations.ClusterRoleBindingAnnValue(),
+			Annotations: map[string]string{KappPkgAnnotation: o.CreatedAnnotations.PackageAnnValue()},
 		},
 		Subjects: []rbacv1.Subject{{Kind: KindServiceAccount.AsString(), Name: svcAccount, Namespace: o.NamespaceFlags.Name}},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: rbacv1.SchemeGroupVersion.Group,
 			Kind:     KindClusterRole.AsString(),
-			Name:     fmt.Sprintf(ClusterRoleName, o.pkgiName, o.NamespaceFlags.Name),
+			Name:     o.CreatedAnnotations.ClusterRoleAnnValue(),
 		},
 	}
 
@@ -342,7 +347,7 @@ func (o *CreateOptions) createOrUpdateClusterRoleBinding(client kubernetes.Inter
 	return nil
 }
 
-func (o *CreateOptions) createOrUpdateDataValuesSecret(client kubernetes.Interface) (bool, error) {
+func (o *CreateOrUpdateOptions) createOrUpdateDataValuesSecret(client kubernetes.Interface) (bool, error) {
 	var err error
 
 	dataValues := make(map[string][]byte)
@@ -353,9 +358,9 @@ func (o *CreateOptions) createOrUpdateDataValuesSecret(client kubernetes.Interfa
 	}
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        fmt.Sprintf(SecretName, o.pkgiName, o.NamespaceFlags.Name),
+			Name:        o.CreatedAnnotations.SecretAnnValue(),
 			Namespace:   o.NamespaceFlags.Name,
-			Annotations: map[string]string{KappPkgAnnotation: fmt.Sprintf("%s-%s", o.pkgiName, o.NamespaceFlags.Name)},
+			Annotations: map[string]string{KappPkgAnnotation: o.CreatedAnnotations.PackageAnnValue()},
 		},
 		Data: dataValues,
 	}
@@ -375,7 +380,7 @@ func (o *CreateOptions) createOrUpdateDataValuesSecret(client kubernetes.Interfa
 	return true, nil
 }
 
-func (o *CreateOptions) createNamespace(client kubernetes.Interface) error {
+func (o *CreateOrUpdateOptions) createNamespace(client kubernetes.Interface) error {
 
 	ns := &corev1.Namespace{
 		TypeMeta:   metav1.TypeMeta{Kind: KindNamespace.AsString()},
@@ -390,10 +395,10 @@ func (o *CreateOptions) createNamespace(client kubernetes.Interface) error {
 	return nil
 }
 
-func (o *CreateOptions) createPackageInstall(serviceAccountCreated, secretCreated bool, kcClient kcclient.Interface) error {
+func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secretCreated bool, kcClient kcclient.Interface) error {
 	svcAccount := o.serviceAccountName
 	if svcAccount == "" {
-		svcAccount = fmt.Sprintf(ServiceAccountName, o.pkgiName, o.NamespaceFlags.Name)
+		svcAccount = o.CreatedAnnotations.ServiceAccountAnnValue()
 	}
 
 	// construct the PackageInstall CR
@@ -416,13 +421,13 @@ func (o *CreateOptions) createPackageInstall(serviceAccountCreated, secretCreate
 		packageInstall.Spec.Values = []kcpkgv1alpha1.PackageInstallValues{
 			{
 				SecretRef: &kcpkgv1alpha1.PackageInstallValuesSecretRef{
-					Name: fmt.Sprintf(SecretName, o.pkgiName, o.NamespaceFlags.Name),
+					Name: o.CreatedAnnotations.SecretAnnValue(),
 				},
 			},
 		}
 	}
 
-	addCreatedResourceAnnotations(&packageInstall.ObjectMeta, serviceAccountCreated, secretCreated)
+	o.addCreatedResourceAnnotations(&packageInstall.ObjectMeta, serviceAccountCreated, secretCreated)
 
 	_, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Create(context.Background(), packageInstall, metav1.CreateOptions{})
 	if err != nil {
@@ -432,12 +437,13 @@ func (o *CreateOptions) createPackageInstall(serviceAccountCreated, secretCreate
 	return nil
 }
 
-func (o *CreateOptions) createOrUpdateServiceAccount(client kubernetes.Interface) (bool, error) {
+func (o *CreateOrUpdateOptions) createOrUpdateServiceAccount(client kubernetes.Interface) (bool, error) {
 	serviceAccount := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        fmt.Sprintf(ServiceAccountName, o.pkgiName, o.NamespaceFlags.Name),
+			Name:        o.CreatedAnnotations.ServiceAccountAnnValue(),
 			Namespace:   o.NamespaceFlags.Name,
-			Annotations: map[string]string{KappPkgAnnotation: fmt.Sprintf("%s-%s", o.pkgiName, o.NamespaceFlags.Name)}},
+			Annotations: map[string]string{KappPkgAnnotation: o.CreatedAnnotations.PackageAnnValue()},
+		},
 	}
 
 	_, err := client.CoreV1().ServiceAccounts(o.NamespaceFlags.Name).Create(context.Background(), serviceAccount, metav1.CreateOptions{})
@@ -455,7 +461,7 @@ func (o *CreateOptions) createOrUpdateServiceAccount(client kubernetes.Interface
 	return true, nil
 }
 
-func (o *CreateOptions) preparePackageInstallForUpdate(pkgInstall *kcpkgv1alpha1.PackageInstall) (*kcpkgv1alpha1.PackageInstall, bool, error) {
+func (o *CreateOrUpdateOptions) preparePackageInstallForUpdate(pkgInstall *kcpkgv1alpha1.PackageInstall) (*kcpkgv1alpha1.PackageInstall, bool, error) {
 	var (
 		changed bool
 		err     error
@@ -491,7 +497,7 @@ func (o *CreateOptions) preparePackageInstallForUpdate(pkgInstall *kcpkgv1alpha1
 	return updatedPkgInstall, changed, nil
 }
 
-func (o *CreateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *kcpkgv1alpha1.PackageInstall, client kubernetes.Interface) (bool, error) {
+func (o *CreateOrUpdateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *kcpkgv1alpha1.PackageInstall, client kubernetes.Interface) (bool, error) {
 	var (
 		secretCreated bool
 		err           error
@@ -501,7 +507,7 @@ func (o *CreateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *kcpkgv1al
 		return false, nil
 	}
 
-	secretName := fmt.Sprintf(SecretName, o.pkgiName, o.NamespaceFlags.Name)
+	secretName := o.CreatedAnnotations.SecretAnnValue()
 
 	if secretName == pkgInstallToUpdate.GetAnnotations()[KappPkgAnnotation+"-"+KindSecret.AsString()] {
 		o.ui.PrintLinef("Updating secret '%s'", secretName)
@@ -523,10 +529,10 @@ func (o *CreateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *kcpkgv1al
 	return secretCreated, nil
 }
 
-func (o *CreateOptions) updateDataValuesSecret(client kubernetes.Interface) error {
+func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interface) error {
 	var err error
 	dataValues := make(map[string][]byte)
-	secretName := fmt.Sprintf(SecretName, o.pkgiName, o.NamespaceFlags.Name)
+	secretName := o.CreatedAnnotations.SecretAnnValue()
 
 	if dataValues[filepath.Base(o.valuesFile)], err = ioutil.ReadFile(o.valuesFile); err != nil {
 		return fmt.Errorf("failed to read from data values file '%s': %s", o.valuesFile, err.Error())
@@ -538,6 +544,65 @@ func (o *CreateOptions) updateDataValuesSecret(client kubernetes.Interface) erro
 	_, err = client.CoreV1().Secrets(o.NamespaceFlags.Name).Update(context.Background(), secret, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update Secret resource: %s", err.Error())
+	}
+
+	return nil
+}
+
+func (o *CreateOrUpdateOptions) addCreatedResourceAnnotations(meta *metav1.ObjectMeta, createdSvcAccount, createdSecret bool) {
+	if meta.Annotations == nil {
+		meta.Annotations = make(map[string]string)
+	}
+	if createdSvcAccount {
+		meta.Annotations[KappPkgAnnotation+"-"+KindClusterRole.AsString()] = o.CreatedAnnotations.ClusterRoleAnnValue()
+		meta.Annotations[KappPkgAnnotation+"-"+KindClusterRoleBinding.AsString()] = o.CreatedAnnotations.ClusterRoleBindingAnnValue()
+		meta.Annotations[KappPkgAnnotation+"-"+KindServiceAccount.AsString()] = o.CreatedAnnotations.ServiceAccountAnnValue()
+	}
+	if createdSecret {
+		meta.Annotations[KappPkgAnnotation+"-"+KindSecret.AsString()] = o.CreatedAnnotations.SecretAnnValue()
+	}
+}
+
+// waitForResourceInstallation waits until the package get installed successfully or a failure happen
+func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace string, pollInterval, pollTimeout time.Duration, ui ui.UI, client kcclient.Interface) error {
+	var (
+		status             kcv1alpha1.GenericStatus
+		reconcileSucceeded bool
+	)
+	ui.PrintLinef("Waiting for PackageInstall reconciliation for '%s'", name)
+	err := wait.Poll(pollInterval, pollTimeout, func() (done bool, err error) {
+
+		resource, err := client.PackagingV1alpha1().PackageInstalls(namespace).Get(context.Background(), name, metav1.GetOptions{})
+		//resource, err := p.kappClient.GetPackageInstall(name, namespace)
+		if err != nil {
+			return false, err
+		}
+		if resource.Generation != resource.Status.ObservedGeneration {
+			// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
+			return false, nil
+		}
+		status = resource.Status.GenericStatus
+
+		for _, condition := range status.Conditions {
+			ui.PrintLinef("PackageInstall resource install status: %s", condition.Type)
+
+			switch {
+			case condition.Type == kcv1alpha1.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
+				ui.PrintLinef("PackageInstall resource successfully reconciled")
+				reconcileSucceeded = true
+				return true, nil
+			case condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue:
+				return false, fmt.Errorf("resource reconciliation failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+			}
+		}
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	if !reconcileSucceeded {
+		return fmt.Errorf("PackageInstall resource reconciliation failed")
 	}
 
 	return nil
