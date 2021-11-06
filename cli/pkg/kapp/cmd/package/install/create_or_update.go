@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -127,7 +128,24 @@ func (o *CreateOrUpdateOptions) RunCreate() error {
 		return err
 	}
 
-	// TODO: Fallback to update if exists
+	pkgInstall, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
+		context.Background(), o.pkgiName, metav1.GetOptions{},
+	)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+	}
+
+	// Fallback to update if resource exists
+	if pkgInstall != nil && err == nil {
+		o.ui.PrintLinef("Updating existing package install")
+		err = o.update(client, kcClient, pkgInstall)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 
 	if o.createNewNamespace {
 		o.ui.PrintLinef("Creating namespace '%s'", o.NamespaceFlags.Name)
@@ -140,6 +158,15 @@ func (o *CreateOrUpdateOptions) RunCreate() error {
 
 	o.CreatedAnnotations = NewCreatedResourceAnnotations(o.pkgiName, o.NamespaceFlags.Name)
 
+	err = o.create(client, kcClient)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient versioned.Interface) error {
 	isServiceAccountCreated, isSecretCreated, err := o.createRelatedResources(client)
 	if err != nil {
 		return err
@@ -185,25 +212,23 @@ func (o *CreateOrUpdateOptions) RunUpdate() error {
 		}
 		o.ui.PrintLinef("Installing package '%s'", o.pkgiName)
 
-		isServiceAccountCreated, isSecretCreated, err := o.createRelatedResources(client)
+		err = o.create(client, kcClient)
 		if err != nil {
 			return err
-		}
-
-		o.ui.PrintLinef("Creating package install resource")
-		if err = o.createPackageInstall(isServiceAccountCreated, isSecretCreated, kcClient); err != nil {
-			return err
-		}
-
-		if o.wait {
-			if err = o.waitForResourceInstallation(o.pkgiName, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, o.ui, kcClient); err != nil {
-				return err
-			}
 		}
 
 		return nil
 	}
 
+	err = o.update(client, kcClient, pkgInstall)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient versioned.Interface, pkgInstall *kcpkgv1alpha1.PackageInstall) error {
 	updatedPkgInstall, changed, err := o.preparePackageInstallForUpdate(pkgInstall)
 	if err != nil {
 		return err
@@ -233,6 +258,7 @@ func (o *CreateOrUpdateOptions) RunUpdate() error {
 			return err
 		}
 	}
+
 	return nil
 }
 
