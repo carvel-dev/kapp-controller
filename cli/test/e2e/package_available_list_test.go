@@ -79,7 +79,7 @@ Succeeded`))
 	})
 
 	logger.Section("package available list versions of a package", func() {
-		out, err := kapp.RunWithOpts([]string{"package", "available", "list", "-P", "pkg.test.carvel.dev"}, RunOpts{})
+		out, err := kapp.RunWithOpts([]string{"package", "available", "list", "-p", "pkg.test.carvel.dev"}, RunOpts{})
 		require.NoError(t, err)
 
 		out = strings.TrimSpace(replaceSpaces(replaceTarget(out)))
