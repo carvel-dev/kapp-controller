@@ -12,7 +12,7 @@ import (
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/core"
 	cmdpkg "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/package"
 	pkgavail "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/package/available"
-	pkginst "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/package/install"
+	pkginst "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/package/installed"
 	pkgrepo "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/package/repository"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/logger"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/version"
