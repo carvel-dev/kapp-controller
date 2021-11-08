@@ -1,0 +1,99 @@
+name: Trivy CVE Dependency Scanner
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  scan-all:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v1
+        with:
+          go-version: "1.17"
+      - name: Install Carvel Tools
+        uses: vmware-tanzu/carvel-setup-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          only: ytt, kapp, kbld, vendir
+          ytt: v0.37.0
+          kapp: v0.42.0
+          kbld: v0.31.0
+          vendir: v0.23.0
+      - name: Build the kapp-controller binary file
+        run: |
+          ./hack/build.sh
+      - name: Run Trivy vulnerability scanner for kapp-controller binary
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'rootfs'
+          ignore-unfixed: true
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results-binary.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+      - name: Build image from Dockerfile
+        run: |
+          docker build -t docker.io/carvel/kapp-controller:${{ github.sha }} .
+      - name: Run Trivy vulnerability scanner for docker image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'docker.io/carvel/kapp-controller:${{ github.sha }}'
+          ignore-unfixed: true
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results-image.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: '.'
+      - name: Run Trivy to generate report for slack Notification - binary
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'rootfs'
+          ignore-unfixed: true
+          format: json
+          output: 'results-binary.json'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+      - name: Run Trivy to generate report for slack Notification - dockerfile
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'docker.io/carvel/kapp-controller:${{ github.sha }}'
+          ignore-unfixed: true
+          format: json
+          output: 'results-image.json'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+      - name: Create Issues Summary
+        run: |
+          summary_binary=$(jq '.[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' results-binary.json | tr -d \\)
+          summary_image=$(jq '.[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' results-image.json | tr -d \\)
+          summary_all="$summary_binary $summary_image"
+          if [ -z $summary_all ]
+          then
+            summary="0 Issues"
+          fi
+          echo "SUMMARY=$summary_all" >> $GITHUB_ENV
+      - name: Send Slack Notification
+        uses: slackapi/slack-github-action@v1.15.0
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        with:
+          channel-id: G01FTP43JMQ
+          slack-message: "Trivy Scan Summary is: ${{ env.SUMMARY }} "
+      - name: Send Failure notification
+        if: always() && job.status == 'failure'
+        uses: slackapi/slack-github-action@v1.15.0
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        with:
+          channel-id: G01FTP43JMQ
+          slack-message: "Trivy scan failed. Please check the latest github action run for trivy scanner."
