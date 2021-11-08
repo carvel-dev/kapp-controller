@@ -1,4 +1,4 @@
-module github.com/k14s/kapp
+module github.com/vmware-tanzu/carvel-kapp-controller/cli
 
 go 1.16
 

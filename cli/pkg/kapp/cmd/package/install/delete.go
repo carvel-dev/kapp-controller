@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/core"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
