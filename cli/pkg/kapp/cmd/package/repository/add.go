@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/core"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/logger"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

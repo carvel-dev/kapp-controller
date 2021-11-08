@@ -8,14 +8,14 @@ import (
 
 	"github.com/cppforlife/cobrautil"
 	"github.com/cppforlife/go-cli-ui/ui"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	cmdpkg "github.com/k14s/kapp/pkg/kapp/cmd/package"
-	pkgavail "github.com/k14s/kapp/pkg/kapp/cmd/package/available"
-	pkginst "github.com/k14s/kapp/pkg/kapp/cmd/package/install"
-	pkgrepo "github.com/k14s/kapp/pkg/kapp/cmd/package/repository"
-	"github.com/k14s/kapp/pkg/kapp/logger"
-	"github.com/k14s/kapp/pkg/kapp/version"
 	"github.com/spf13/cobra"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/core"
+	cmdpkg "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/package"
+	pkgavail "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/package/available"
+	pkginst "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/package/install"
+	pkgrepo "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/package/repository"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/logger"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/version"
 )
 
 type KappOptions struct {
