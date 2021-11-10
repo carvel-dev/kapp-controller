@@ -54,14 +54,14 @@ func (o *GetOptions) Run() error {
 	}
 
 	headers := []uitable.Header{
-		uitable.NewHeader("name"),
-		uitable.NewHeader("display-name"),
-		uitable.NewHeader("short-description"),
-		uitable.NewHeader("package-provider"),
-		uitable.NewHeader("long-description"),
-		uitable.NewHeader("maintainers"),
-		uitable.NewHeader("support"),
-		uitable.NewHeader("category"),
+		uitable.NewHeader("NAME"),
+		uitable.NewHeader("DISPLAY-NAME"),
+		uitable.NewHeader("SHORT-DESCRIPTION"),
+		uitable.NewHeader("PACKAGE-PROVIDER"),
+		uitable.NewHeader("LONG-DESCRIPTION"),
+		uitable.NewHeader("MAINTAINERS"),
+		uitable.NewHeader("SUPPORT"),
+		uitable.NewHeader("CATEGORY"),
 	}
 
 	client, err := o.depsFactory.PackageClient()
@@ -95,11 +95,11 @@ func (o *GetOptions) Run() error {
 		}
 
 		headers = append(headers, []uitable.Header{
-			uitable.NewHeader("version"),
-			uitable.NewHeader("released-at"),
-			uitable.NewHeader("minimum-capacity-requirements"),
-			uitable.NewHeader("release-notes"),
-			uitable.NewHeader("license"),
+			uitable.NewHeader("VERSION"),
+			uitable.NewHeader("RELEASED-AT"),
+			uitable.NewHeader("MINIMUM-CAPACITY-REQUIREMENTS"),
+			uitable.NewHeader("RELEASE-NOTES"),
+			uitable.NewHeader("LICENSE"),
 		}...)
 
 		row = append(row, []uitable.Value{
