@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72
 	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
+	github.com/getkin/kin-openapi v0.81.0
 	github.com/google/go-containerregistry v0.1.2
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/spf13/cobra v1.1.3

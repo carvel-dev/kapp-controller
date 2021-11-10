@@ -23,6 +23,8 @@ type GetOptions struct {
 
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
+
+	ValuesSchema bool
 }
 
 func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *GetOptions {
@@ -38,6 +40,8 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name")
+
+	cmd.Flags().BoolVar(&o.ValuesSchema, "values-schema", false, "Values schema of the package, optional")
 	return cmd
 }
 
@@ -51,6 +55,13 @@ func (o *GetOptions) Run() error {
 		pkgName = pkgNameVersion[0]
 	} else {
 		return fmt.Errorf("Package name should be of the format 'name' or 'name/version'")
+	}
+
+	if o.ValuesSchema {
+		if pkgVersion == "" {
+			return fmt.Errorf("version is required when --values-schema flag is declared. Please specify <PACKAGE-NAME>/<VERSION>")
+		}
+		return o.GetValuesSchema(pkgName, pkgVersion)
 	}
 
 	headers := []uitable.Header{
@@ -123,4 +134,55 @@ func (o *GetOptions) Run() error {
 	o.ui.PrintTable(table)
 
 	return nil
+}
+
+func (o *GetOptions) GetValuesSchema(pkgName, pkgVersion string) error {
+	client, err := o.depsFactory.PackageClient()
+	if err != nil {
+		return err
+	}
+
+	pkg, err := client.DataV1alpha1().Packages(o.NamespaceFlags.Name).Get(
+		context.Background(), fmt.Sprintf("%s.%s", pkgName, pkgVersion), metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	if len(pkg.Spec.ValuesSchema.OpenAPIv3.Raw) == 0 {
+		o.ui.PrintLinef("package '%s/%s' does not have any user configurable values in the '%s' namespace", pkgName, pkgVersion, o.NamespaceFlags.Name)
+		return nil
+	}
+
+	dataValuesSchemaParser, err := NewValuesSchemaParser(pkg.Spec.ValuesSchema)
+	if err != nil {
+		return err
+	}
+	parsedProperties, err := dataValuesSchemaParser.ParseProperties()
+	if err != nil {
+		return err
+	}
+
+	table := uitable.Table{
+		Title: fmt.Sprintf("Values schema for '%s'", pkgName),
+
+		Header: []uitable.Header{
+			uitable.NewHeader("KEY"),
+			uitable.NewHeader("DEFAULT"),
+			uitable.NewHeader("TYPE"),
+			uitable.NewHeader("DESCRIPTION"),
+		},
+	}
+
+	for _, v := range parsedProperties {
+		table.Rows = append(table.Rows, []uitable.Value{
+			uitable.NewValueString(v.Key),
+			uitable.NewValueInterface(v.Default),
+			uitable.NewValueInterface(v.Type),
+			uitable.NewValueInterface(v.Description),
+		})
+	}
+
+	o.ui.PrintTable(table)
+
+	return err
 }
