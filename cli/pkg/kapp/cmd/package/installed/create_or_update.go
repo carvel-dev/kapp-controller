@@ -378,6 +378,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateDataValuesSecret(client kubernetes
 
 	dataValues := make(map[string][]byte)
 
+	//TODO: Make filepath agnostic
 	dataValues[filepath.Base(o.valuesFile)], err = ioutil.ReadFile(o.valuesFile)
 	if err != nil {
 		return false, fmt.Errorf("failed to read from data values file '%s': %s", o.valuesFile, err.Error())
@@ -560,6 +561,7 @@ func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interfa
 	dataValues := make(map[string][]byte)
 	secretName := o.CreatedAnnotations.SecretAnnValue()
 
+	//TODO: Make filename agnostic
 	if dataValues[filepath.Base(o.valuesFile)], err = ioutil.ReadFile(o.valuesFile); err != nil {
 		return fmt.Errorf("failed to read from data values file '%s': %s", o.valuesFile, err.Error())
 	}
