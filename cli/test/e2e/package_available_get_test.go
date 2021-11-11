@@ -82,14 +82,14 @@ spec:
 
 		expectedOutputRows := []map[string]string{
 			{
-				"category":          "",
+				"categories":          "",
 				"display_name":      "Carvel Test Package",
 				"long_description":  "",
 				"maintainers":       "",
 				"name":              "test-pkg.carvel.dev",
-				"package_provider":  "",
+				"provider":  "",
 				"short_description": "Carvel package for testing installation",
-				"support":           "",
+				"support_description":           "",
 			},
 		}
 
