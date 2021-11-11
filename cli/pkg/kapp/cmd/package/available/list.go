@@ -25,6 +25,8 @@ type ListOptions struct {
 	AllNamespaces  bool
 
 	Name string
+
+	Wide bool
 }
 
 func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
@@ -42,6 +44,8 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List available packages")
 
 	cmd.Flags().StringVarP(&o.Name, "package", "p", "", "List all available versions of package")
+
+	cmd.Flags().BoolVar(&o.Wide, "wide", false, "Show additional info")
 
 	return cmd
 }
@@ -75,16 +79,17 @@ func (o *ListOptions) listPackageMetadatas() error {
 		return err
 	}
 
+	shortDesc := uitable.NewHeader("Short description")
+	shortDesc.Hidden = !o.Wide
+
 	table := uitable.Table{
 		Title: tableTitle,
-		// TODO these arent really packages
-		Content: "Packages Available",
 
 		Header: []uitable.Header{
 			nsHeader,
 			uitable.NewHeader("Name"),
-			uitable.NewHeader("Display-Name"),
-			uitable.NewHeader("Short-Description"),
+			uitable.NewHeader("Display name"),
+			shortDesc,
 		},
 
 		SortBy: []uitable.ColumnSort{

@@ -80,40 +80,24 @@ spec:
 	defer cleanUp()
 
 	logger.Section("package available list with no package present", func() {
-		out, err := kappCtrl.RunWithOpts([]string{"package", "available", "list", "--json"}, RunOpts{})
+		out, err := kappCtrl.RunWithOpts([]string{"package", "available", "list", "--json", "--wide"}, RunOpts{})
 		require.NoError(t, err)
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
-
-		expectedOutputHeader := map[string]string{
-			"name":              "Name",
-			"display_name":      "Display-Name",
-			"short_description": "Short-Description",
-		}
-		require.Exactly(t, expectedOutputHeader, output.Tables[0].Header)
 
 		expectedOutputRows := []map[string]string{}
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
 
-	logger.Section("Adding test package", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
-			StdinReader: strings.NewReader(yaml), AllowError: true,
-		})
-		require.NoError(t, err)
-	})
-
 	logger.Section("package available list with one package available", func() {
-		out, err := kappCtrl.RunWithOpts([]string{"package", "available", "list", "--json"}, RunOpts{})
+		kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
+			StdinReader: strings.NewReader(yaml),
+		})
+
+		out, err := kappCtrl.RunWithOpts([]string{"package", "available", "list", "--json", "--wide"}, RunOpts{})
 		require.NoError(t, err)
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
-		expectedOutputHeader := map[string]string{
-			"name":              "Name",
-			"display_name":      "Display-Name",
-			"short_description": "Short-Description",
-		}
-		require.Exactly(t, expectedOutputHeader, output.Tables[0].Header)
 
 		expectedOutputRows := []map[string]string{
 			{
@@ -130,12 +114,6 @@ spec:
 		require.NoError(t, err)
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
-		expectedOutputHeader := map[string]string{
-			"name":        "Name",
-			"version":     "Version",
-			"released_at": "Released-At",
-		}
-		require.Exactly(t, expectedOutputHeader, output.Tables[0].Header)
 
 		expectedOutputRows := []map[string]string{
 			{
