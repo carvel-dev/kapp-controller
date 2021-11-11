@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"strings"
 	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
@@ -14,7 +15,9 @@ func TestPackageRepositoryList(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
+	kappCtrl := Kapp{t, env.Namespace, env.KappCtrlBinaryPath, logger}
+
+	appName := "test-package-repository"
 
 	repoYml := `---
 apiVersion: packaging.carvel.dev/v1alpha1
@@ -26,18 +29,15 @@ spec:
     imgpkgBundle:
       image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c`
 
-	pkgrName := "e2e-repo.test.carvel.dev"
-	pkgrKind := "PackageRepository"
-
 	cleanUp := func() {
-		RemoveClusterResource(t, pkgrKind, pkgrName, kapp.namespace, kubectl)
+		kapp.Run([]string{"delete", "-a", appName})
 	}
 
 	cleanUp()
 	defer cleanUp()
 
 	logger.Section("package repository list with no package present", func() {
-		out, err := kapp.RunWithOpts([]string{"package", "repository", "list", "--json"}, RunOpts{})
+		out, err := kappCtrl.RunWithOpts([]string{"package", "repository", "list", "--json"}, RunOpts{})
 		require.NoError(t, err)
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
@@ -48,10 +48,15 @@ spec:
 
 	})
 
-	NewClusterResourceFromYaml(t, kubectl, pkgrKind, pkgrName, repoYml)
+	logger.Section("adding package repository", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
+			StdinReader: strings.NewReader(repoYml),
+		})
+		require.NoError(t, err)
+	})
 
 	logger.Section("package repository list with one package installed", func() {
-		out, err := kapp.RunWithOpts([]string{"package", "installed", "list", "--json", "-A"}, RunOpts{})
+		out, err := kappCtrl.RunWithOpts([]string{"package", "repository", "list", "--json"}, RunOpts{})
 		require.NoError(t, err)
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
@@ -59,14 +64,12 @@ spec:
 		//TODO: Update once we handle URLs better
 		expectedOutputRows := []map[string]string{
 			{
-				"name":            "testpkgi",
-				"namespace":       "default",
-				"package_name":    "pkg.test.carvel.dev",
-				"package_version": "1.0.0",
-				"status":          "Reconcile succeeded",
+				"name":        "e2e-repo.test.carvel.dev",
+				"url":         "TODO url",
+				"description": "Reconcile succeeded",
+				"details":     "",
 			},
 		}
-
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
 }
