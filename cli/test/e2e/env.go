@@ -10,8 +10,9 @@ import (
 )
 
 type Env struct {
-	Namespace      string
-	KappBinaryPath string
+	Namespace          string
+	KappBinaryPath     string
+	KappCtrlBinaryPath string
 }
 
 func BuildEnv(t *testing.T) Env {
@@ -20,9 +21,15 @@ func BuildEnv(t *testing.T) Env {
 		kappPath = "kapp"
 	}
 
+	kappCtrlPath := os.Getenv("KAPPCTRL_BINARY_PATH")
+	if kappCtrlPath == "" {
+		kappCtrlPath = "kapp"
+	}
+
 	env := Env{
-		Namespace:      os.Getenv("KAPP_E2E_NAMESPACE"),
-		KappBinaryPath: kappPath,
+		Namespace:          os.Getenv("KAPP_E2E_NAMESPACE"),
+		KappBinaryPath:     kappPath,
+		KappCtrlBinaryPath: kappCtrlPath,
 	}
 	env.Validate(t)
 	return env
