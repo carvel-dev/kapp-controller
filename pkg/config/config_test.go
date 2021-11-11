@@ -101,3 +101,32 @@ func Test_GetConfig_ReturnsSecret_WhenOnlySecretExists(t *testing.T) {
 
 	assert.Equal(t, expected, httpProxyActual)
 }
+
+func Test_KubernetesServiceHost_IsSet(t *testing.T) {
+	secret := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kapp-controller-config",
+			Namespace: "default",
+		},
+		Data: map[string][]byte{
+			"noProxy": []byte("KAPPCTRL_KUBERNETES_SERVICE_HOST"),
+		},
+	}
+
+	defer os.Unsetenv("no_proxy")
+	defer os.Unsetenv("KUBERNETES_SERVICE_HOST")
+
+	os.Setenv("KUBERNETES_SERVICE_HOST", "10.96.0.1")
+
+	k8scs := k8sfake.NewSimpleClientset(secret)
+
+	config, err := kcconfig.GetConfig(k8scs)
+	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
+
+	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
+
+	expected := "10.96.0.1"
+	noProxyActual := os.Getenv("no_proxy")
+
+	assert.Equal(t, expected, noProxyActual)
+}

@@ -31,6 +31,9 @@ const (
 	noProxyEnvVar    = "no_proxy"
 
 	skipTLSVerifyKey = "dangerousSkipTLSVerify"
+
+	kubernetesServiceHostEnvVar    = "KUBERNETES_SERVICE_HOST"
+	kubernetesServiceHostShorthand = "KAPPCTRL_KUBERNETES_SERVICE_HOST"
 )
 
 // Config is populated from the cluster's Secret or ConfigMap and sets behavior of kapp-controller.
@@ -104,7 +107,7 @@ func (gc *Config) Apply() error {
 		return fmt.Errorf("Adding trusted certs: %s", err)
 	}
 
-	gc.configureProxies(gc.httpProxy, gc.httpsProxy, gc.noProxy)
+	gc.configureProxies()
 
 	return nil
 }
@@ -149,20 +152,28 @@ func (gc *Config) addTrustedCerts(certChain string) (err error) {
 	return file.Close()
 }
 
-func (gc *Config) configureProxies(httpProxy, httpsProxy, noProxy string) {
-	if httpProxy != "" {
-		os.Setenv(httpProxyEnvVar, httpProxy)
-		os.Setenv(strings.ToUpper(httpProxyEnvVar), httpProxy)
+func (gc *Config) configureProxies() {
+	if gc.httpProxy != "" {
+		os.Setenv(httpProxyEnvVar, gc.httpProxy)
+		os.Setenv(strings.ToUpper(httpProxyEnvVar), gc.httpProxy)
 	}
 
-	if httpsProxy != "" {
-		os.Setenv(httpsProxyEnvVar, httpsProxy)
-		os.Setenv(strings.ToUpper(httpsProxyEnvVar), httpsProxy)
+	if gc.httpsProxy != "" {
+		os.Setenv(httpsProxyEnvVar, gc.httpsProxy)
+		os.Setenv(strings.ToUpper(httpsProxyEnvVar), gc.httpsProxy)
 	}
 
-	if noProxy != "" {
-		os.Setenv(noProxyEnvVar, noProxy)
-		os.Setenv(strings.ToUpper(noProxyEnvVar), noProxy)
+	if gc.noProxy != "" {
+		gc.addKubernetesServiceHostInNoProxy()
+		os.Setenv(noProxyEnvVar, gc.noProxy)
+		os.Setenv(strings.ToUpper(noProxyEnvVar), gc.noProxy)
+	}
+}
+
+func (gc *Config) addKubernetesServiceHostInNoProxy() {
+	if strings.Contains(gc.noProxy, kubernetesServiceHostShorthand) {
+		k8sSvcHost := os.Getenv(kubernetesServiceHostEnvVar)
+		gc.noProxy = strings.Replace(gc.noProxy, kubernetesServiceHostShorthand, k8sSvcHost, 1)
 	}
 }
 
