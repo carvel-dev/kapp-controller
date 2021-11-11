@@ -41,12 +41,13 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name")
 
-	cmd.Flags().BoolVar(&o.ValuesSchema, "values-schema", false, "Values schema of the package, optional")
+	cmd.Flags().BoolVar(&o.ValuesSchema, "values-schema", false, "Values schema of the package (optional)")
 	return cmd
 }
 
 func (o *GetOptions) Run() error {
 	var pkgName, pkgVersion string
+
 	pkgNameVersion := strings.Split(o.Name, "/")
 	if len(pkgNameVersion) == 2 {
 		pkgName = pkgNameVersion[0]
@@ -59,20 +60,24 @@ func (o *GetOptions) Run() error {
 
 	if o.ValuesSchema {
 		if pkgVersion == "" {
-			return fmt.Errorf("version is required when --values-schema flag is declared. Please specify <PACKAGE-NAME>/<VERSION>")
+			return fmt.Errorf("Package version is required when --values-schema flag is declared")
 		}
-		return o.GetValuesSchema(pkgName, pkgVersion)
+		return o.showValuesSchema(pkgName, pkgVersion)
 	}
 
+	return o.show(pkgName, pkgVersion)
+}
+
+func (o *GetOptions) show(pkgName, pkgVersion string) error {
 	headers := []uitable.Header{
-		uitable.NewHeader("NAME"),
-		uitable.NewHeader("DISPLAY-NAME"),
-		uitable.NewHeader("SHORT-DESCRIPTION"),
-		uitable.NewHeader("PACKAGE-PROVIDER"),
-		uitable.NewHeader("LONG-DESCRIPTION"),
-		uitable.NewHeader("MAINTAINERS"),
-		uitable.NewHeader("SUPPORT"),
-		uitable.NewHeader("CATEGORY"),
+		uitable.NewHeader("Name"),
+		uitable.NewHeader("Display name"),
+		uitable.NewHeader("Short description"),
+		uitable.NewHeader("Provider"),
+		uitable.NewHeader("Long description"),
+		uitable.NewHeader("Maintainers"),
+		uitable.NewHeader("Support description"),
+		uitable.NewHeader("Categories"),
 	}
 
 	client, err := o.depsFactory.PackageClient()
@@ -106,11 +111,11 @@ func (o *GetOptions) Run() error {
 		}
 
 		headers = append(headers, []uitable.Header{
-			uitable.NewHeader("VERSION"),
-			uitable.NewHeader("RELEASED-AT"),
-			uitable.NewHeader("MINIMUM-CAPACITY-REQUIREMENTS"),
-			uitable.NewHeader("RELEASE-NOTES"),
-			uitable.NewHeader("LICENSE"),
+			uitable.NewHeader("Version"),
+			uitable.NewHeader("Released at"),
+			uitable.NewHeader("Min capacity requirements"),
+			uitable.NewHeader("Release notes"),
+			uitable.NewHeader("Licenses"),
 		}...)
 
 		row = append(row, []uitable.Value{
@@ -136,7 +141,7 @@ func (o *GetOptions) Run() error {
 	return nil
 }
 
-func (o *GetOptions) GetValuesSchema(pkgName, pkgVersion string) error {
+func (o *GetOptions) showValuesSchema(pkgName, pkgVersion string) error {
 	client, err := o.depsFactory.PackageClient()
 	if err != nil {
 		return err
@@ -149,7 +154,7 @@ func (o *GetOptions) GetValuesSchema(pkgName, pkgVersion string) error {
 	}
 
 	if len(pkg.Spec.ValuesSchema.OpenAPIv3.Raw) == 0 {
-		o.ui.PrintLinef("package '%s/%s' does not have any user configurable values in the '%s' namespace", pkgName, pkgVersion, o.NamespaceFlags.Name)
+		o.ui.PrintLinef("Package '%s/%s' does not have any user configurable values in the '%s' namespace", pkgName, pkgVersion, o.NamespaceFlags.Name)
 		return nil
 	}
 
@@ -157,19 +162,20 @@ func (o *GetOptions) GetValuesSchema(pkgName, pkgVersion string) error {
 	if err != nil {
 		return err
 	}
+
 	parsedProperties, err := dataValuesSchemaParser.ParseProperties()
 	if err != nil {
 		return err
 	}
 
 	table := uitable.Table{
-		Title: fmt.Sprintf("Values schema for '%s'", pkgName),
+		Title: fmt.Sprintf("Values schema for '%s/%s'", pkgName, pkgVersion),
 
 		Header: []uitable.Header{
-			uitable.NewHeader("KEY"),
-			uitable.NewHeader("DEFAULT"),
-			uitable.NewHeader("TYPE"),
-			uitable.NewHeader("DESCRIPTION"),
+			uitable.NewHeader("Key"),
+			uitable.NewHeader("Default"),
+			uitable.NewHeader("Type"),
+			uitable.NewHeader("Description"),
 		},
 	}
 
@@ -177,6 +183,7 @@ func (o *GetOptions) GetValuesSchema(pkgName, pkgVersion string) error {
 		table.Rows = append(table.Rows, []uitable.Value{
 			uitable.NewValueString(v.Key),
 			uitable.NewValueInterface(v.Default),
+			// TODO switch to strings
 			uitable.NewValueInterface(v.Type),
 			uitable.NewValueInterface(v.Description),
 		})
