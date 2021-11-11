@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"strings"
 	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
@@ -14,7 +15,9 @@ func TestPackageRepositoryGet(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
+	kappCtrl := Kapp{t, env.Namespace, env.KappCtrlBinaryPath, logger}
+
+	appName := "test-package-repository"
 
 	repoYml := `---
 apiVersion: packaging.carvel.dev/v1alpha1
@@ -26,20 +29,31 @@ spec:
     imgpkgBundle:
       image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c`
 
-	pkgrName := "e2e-repo.test.carvel.dev"
-	pkgrKind := "PackageRepository"
-
 	cleanUp := func() {
-		RemoveClusterResource(t, pkgrKind, pkgrName, kapp.namespace, kubectl)
+		kapp.Run([]string{"delete", "-a", appName})
 	}
 
 	cleanUp()
 	defer cleanUp()
 
-	NewClusterResourceFromYaml(t, kubectl, pkgrKind, pkgrName, repoYml)
+	pkgrName := "e2e-repo.test.carvel.dev"
+
+	logger.Section("package repository get without the package being present", func() {
+		_, err := kappCtrl.RunWithOpts([]string{"package", "repository", "get", "-r", pkgrName, "--json"}, RunOpts{
+			AllowError: true,
+		})
+		require.Error(t, err)
+	})
+
+	logger.Section("adding package repository", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
+			StdinReader: strings.NewReader(repoYml),
+		})
+		require.NoError(t, err)
+	})
 
 	logger.Section("package repository get", func() {
-		out, err := kapp.RunWithOpts([]string{"package", "repository", "get", "-r", pkgrName, "--json"}, RunOpts{})
+		out, err := kappCtrl.RunWithOpts([]string{"package", "repository", "get", "-r", pkgrName, "--json"}, RunOpts{})
 		require.NoError(t, err)
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
@@ -54,7 +68,6 @@ spec:
 				"version":    "<replaced>",
 			},
 		}
-
 		require.Exactly(t, expectedOutputRows, replaceVersion(output.Tables[0].Rows))
 	})
 }
