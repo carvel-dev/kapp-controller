@@ -83,13 +83,13 @@ spec:
 		expectedOutputRows := []map[string]string{
 			{
 				"categories":          "",
-				"display_name":      "Carvel Test Package",
-				"long_description":  "",
-				"maintainers":       "",
-				"name":              "test-pkg.carvel.dev",
-				"provider":  "",
-				"short_description": "Carvel package for testing installation",
-				"support_description":           "",
+				"display_name":        "Carvel Test Package",
+				"long_description":    "",
+				"maintainers":         "",
+				"name":                "test-pkg.carvel.dev",
+				"provider":            "",
+				"short_description":   "Carvel package for testing installation",
+				"support_description": "",
 			},
 		}
 
