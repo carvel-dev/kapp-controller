@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPackageInstalledGet(t *testing.T) {
+func TestPackageAvailableGet(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -28,12 +28,9 @@ spec:
 
 	pkgrName := "e2e-repo.test.carvel.dev"
 	pkgName := "pkg.test.carvel.dev"
-	pkgVersion := "1.0.0"
 	pkgrKind := "PackageRepository"
-	pkgiName := "testpkgi"
 
 	cleanUp := func() {
-		_, _ = kapp.RunWithOpts([]string{"package", "installed", "delete", "--name", pkgiName}, RunOpts{})
 		RemoveClusterResource(t, pkgrKind, pkgrName, kapp.namespace, kubectl)
 	}
 
@@ -42,23 +39,22 @@ spec:
 
 	NewClusterResourceFromYaml(t, kubectl, pkgrKind, pkgrName, repoYml)
 
-	_, err := kapp.RunWithOpts([]string{"package", "installed", "create", "--name", pkgiName, "--package-name", pkgName, "--version", pkgVersion}, RunOpts{})
-	require.NoError(t, err)
-
-	logger.Section("package installed get", func() {
-		out, err := kapp.RunWithOpts([]string{"package", "installed", "get", "--name", pkgiName, "--json"}, RunOpts{})
+	logger.Section("package available get", func() {
+		out, err := kapp.RunWithOpts([]string{"package", "available", "get", "-p", pkgName, "--json"}, RunOpts{})
 		require.NoError(t, err)
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expectedOutputRows := []map[string]string{
 			{
-				"conditions":           "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
-				"name":                 "testpkgi",
-				"package_name":         "pkg.test.carvel.dev",
-				"package_version":      "1.0.0",
-				"status":               "Reconcile succeeded",
-				"useful_error_message": "",
+				"category":          "testing",
+				"display_name":      "Carvel Test Package",
+				"long_description":  "This is a test application which has been packaged using the Carvel tools and can be deployed with them. For more information you can visit https://carvel.dev/.",
+				"maintainers":       "- name: Carvel Team",
+				"name":              "pkg.test.carvel.dev",
+				"package_provider":  "Carvel",
+				"short_description": "Carvel package for testing installation",
+				"support":           "Visit #carvel in slack: https://kubernetes.slack.com/archives/CH8KCCKA5.",
 			},
 		}
 
