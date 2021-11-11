@@ -21,10 +21,11 @@ type GetOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
-	pkgiName    string
-	valuesFile  string
 
 	NamespaceFlags cmdcore.NamespaceFlags
+	Name    string
+
+	valuesFile  string	
 }
 
 func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *GetOptions {
@@ -35,26 +36,24 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 	cmd := &cobra.Command{
 		Use:     "get",
 		Aliases: []string{"g"},
-		Short:   "Get installed Package",
+		Short:   "Get installed package",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVar(&o.pkgiName, "name", "", "Name of PackageInstall")
+	cmd.Flags().StringVar(&o.Name, "name", "", "Name of PackageInstall")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "File path for exporting configuration values file")
 	return cmd
 }
 
 func (o *GetOptions) Run() error {
-
 	client, err := o.depsFactory.KappCtrlClient()
 	if err != nil {
 		return err
 	}
 
 	pkgi, err := client.PackagingV1alpha1().PackageInstalls(
-		o.NamespaceFlags.Name).Get(context.Background(), o.pkgiName, metav1.GetOptions{})
+		o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 	if err != nil {
-		//Handle IsNotFound error?
 		return err
 	}
 
