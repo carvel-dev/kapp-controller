@@ -12,8 +12,12 @@ import (
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/logger"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type DeleteOptions struct {
@@ -67,26 +71,45 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	//TODO: Use better approach for waiting
 	if o.Wait {
-		start := time.Now()
-		o.ui.PrintLinef("Waiting for deletion to be completed")
-		for {
-			_, err := client.PackagingV1alpha1().PackageRepositories(
-				o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
-			if err != nil {
-				if apierrors.IsNotFound(err) {
-					o.ui.PrintLinef("Resource deleted successfully")
-					break
-				}
-				return err
-			}
+		return o.waitForDeletion(client)
+	}
 
-			if time.Now().After(start.Add(o.PollTimeout)) {
-				return fmt.Errorf("Timed out waiting for resource deletion")
+	return nil
+}
+
+func (o *DeleteOptions) waitForDeletion(client versioned.Interface) error {
+	o.ui.PrintLinef("Waiting for deletion to be completed")
+
+	if err := wait.Poll(o.PollInterval, o.PollTimeout, func() (bool, error) {
+		pkg, err := client.PackagingV1alpha1().PackageRepositories(
+			o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				o.ui.PrintLinef("Repository deleted successfully")
+				return true, nil
 			}
-			time.Sleep(o.PollInterval)
+			return false, err
 		}
+
+		if pkg.Generation != pkg.Status.ObservedGeneration {
+			// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
+			return false, nil
+		}
+
+		status := pkg.Status.GenericStatus
+		for _, cond := range status.Conditions {
+			if cond.Type == v1alpha1.DeleteFailed && cond.Status == corev1.ConditionTrue {
+				return false, fmt.Errorf("Resource deletion failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+			}
+		}
+		return false, nil
+
+	}); err != nil {
+		if err == wait.ErrWaitTimeout {
+			return fmt.Errorf("Timed out waiting for repository deletion")
+		}
+		return err
 	}
 
 	return nil
