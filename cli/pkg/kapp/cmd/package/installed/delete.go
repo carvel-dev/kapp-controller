@@ -29,13 +29,13 @@ type DeleteOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
-	pkgiName    string
+
+	NamespaceFlags cmdcore.NamespaceFlags
+	Name    string
 
 	pollInterval time.Duration
 	pollTimeout  time.Duration
 	wait         bool
-
-	NamespaceFlags cmdcore.NamespaceFlags
 }
 
 func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeleteOptions {
@@ -46,19 +46,22 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	cmd := &cobra.Command{
 		Use:     "delete",
 		Aliases: []string{"d"},
-		Short:   "Uninstall installed Package",
+		Short:   "Uninstall installed package",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVar(&o.pkgiName, "name", "", "Name of PackageInstall")
+	cmd.Flags().StringVar(&o.Name, "name", "", "Name of PackageInstall")
+
 	cmd.Flags().DurationVar(&o.pollInterval, "poll-interval", 1*time.Second, "Time interval between consecutive polls while reconciling")
 	cmd.Flags().DurationVar(&o.pollTimeout, "poll-timeout", 1*time.Minute, "Timeout for the reconciliation process")
 	cmd.Flags().BoolVar(&o.wait, "wait", true, "Wait for reconcilation, default true")
+
 	return cmd
 }
 
 func (o *DeleteOptions) Run() error {
-	o.ui.PrintLinef("Delete package install '%s' from namespace '%s'", o.pkgiName, o.NamespaceFlags.Name)
+	o.ui.PrintLinef("Delete package install '%s' from namespace '%s'", o.Name, o.NamespaceFlags.Name)
+
 	err := o.ui.AskForConfirmation()
 	if err != nil {
 		return err
@@ -75,48 +78,39 @@ func (o *DeleteOptions) Run() error {
 		return nil
 	}
 
-	o.ui.PrintLinef("Getting package install '%s' from namespace '%s'", o.pkgiName, o.NamespaceFlags.Name)
-
 	pkgi, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
-		context.Background(), o.pkgiName, metav1.GetOptions{},
-	)
+		context.Background(), o.Name, metav1.GetOptions{})
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
-		o.ui.PrintLinef("Could not find PackageInstall '%s' in namespace '%s'. Cleaning up created resources.", o.pkgiName, o.NamespaceFlags.Name)
-		err = o.cleanUpIfInstallNotFound(dynamicClient)
-		if err != nil {
-			return err
-		}
-		return nil
+
+		o.ui.PrintLinef("Could not find package install '%s' in namespace '%s'. Cleaning up created resources.", o.Name, o.NamespaceFlags.Name)
+
+		return o.cleanUpIfInstallNotFound(dynamicClient)
 	}
 
-	o.ui.PrintLinef("Deleting package install '%s' from namespace '%s'", o.pkgiName, o.NamespaceFlags.Name)
+	o.ui.PrintLinef("Deleting package install '%s' from namespace '%s'", o.Name, o.NamespaceFlags.Name)
 
 	err = kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Delete(
-		context.Background(), o.pkgiName, metav1.DeleteOptions{},
-	)
+		context.Background(), o.Name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
 
+	// TODO dont think we can support no-wait for deletion since we have to clean up other resources
 	if !o.wait {
 		return nil
 	}
 
-	o.ui.PrintLinef("Waiting for deletion of PackageInstall '%s' from namespace '%s'", o.pkgiName, o.NamespaceFlags.Name)
+	o.ui.PrintLinef("Waiting for deletion of package install '%s' from namespace '%s'", o.Name, o.NamespaceFlags.Name)
+
 	err = o.waitForResourceDelete(kcClient)
 	if err != nil {
 		return err
 	}
 
-	err = o.deleteInstallCreatedResources(pkgi, dynamicClient)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return o.deleteInstallCreatedResources(pkgi, dynamicClient)
 }
 
 // deletePkgPluginCreatedResources deletes the associated resources which were installed upon installation of the PackageInstall CR
@@ -129,9 +123,7 @@ func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.
 
 		resourceKind := CreatedResourceKind(strings.TrimPrefix(split[1], KappPkgAnnotationPrefix+"-"))
 
-		var apiGroup string
-		var version string
-		var namespace string
+		var apiGroup, version, namespace string
 		if resourceKind == KindClusterRole || resourceKind == KindClusterRoleBinding {
 			apiGroup = rbacv1.SchemeGroupVersion.Group
 			version = rbacv1.SchemeGroupVersion.Version
@@ -148,7 +140,6 @@ func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.
 			Version:  version,
 			Resource: resourceKind.Resource(),
 		}, resourceName, namespace, dynamicClient)
-
 		if err != nil {
 			return err
 		}
@@ -158,13 +149,12 @@ func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.
 }
 
 func (o *DeleteOptions) cleanUpIfInstallNotFound(dynamicClient dynamic.Interface) error {
-
 	err := o.deleteIfExistsAndOwned(
 		schema.GroupVersionResource{
 			Group:    corev1.SchemeGroupVersion.Group,
 			Version:  corev1.SchemeGroupVersion.Version,
 			Resource: KindServiceAccount.Resource(),
-		}, KindServiceAccount.Name(o.pkgiName, o.NamespaceFlags.Name), o.NamespaceFlags.Name, dynamicClient)
+		}, KindServiceAccount.Name(o.Name, o.NamespaceFlags.Name), o.NamespaceFlags.Name, dynamicClient)
 	if err != nil {
 		return err
 	}
@@ -174,7 +164,7 @@ func (o *DeleteOptions) cleanUpIfInstallNotFound(dynamicClient dynamic.Interface
 			Group:    corev1.SchemeGroupVersion.Group,
 			Version:  corev1.SchemeGroupVersion.Version,
 			Resource: KindServiceAccount.Resource(),
-		}, KindClusterRole.Name(o.pkgiName, o.NamespaceFlags.Name), o.NamespaceFlags.Name, dynamicClient)
+		}, KindClusterRole.Name(o.Name, o.NamespaceFlags.Name), o.NamespaceFlags.Name, dynamicClient)
 	if err != nil {
 		return err
 	}
@@ -184,7 +174,7 @@ func (o *DeleteOptions) cleanUpIfInstallNotFound(dynamicClient dynamic.Interface
 			Group:    rbacv1.SchemeGroupVersion.Group,
 			Version:  rbacv1.SchemeGroupVersion.Version,
 			Resource: KindClusterRole.Resource(),
-		}, KindClusterRole.Name(o.pkgiName, o.NamespaceFlags.Name), "", dynamicClient)
+		}, KindClusterRole.Name(o.Name, o.NamespaceFlags.Name), "", dynamicClient)
 	if err != nil {
 		return err
 	}
@@ -194,7 +184,7 @@ func (o *DeleteOptions) cleanUpIfInstallNotFound(dynamicClient dynamic.Interface
 			Group:    rbacv1.SchemeGroupVersion.Group,
 			Version:  rbacv1.SchemeGroupVersion.Version,
 			Resource: KindClusterRoleBinding.Resource(),
-		}, KindClusterRoleBinding.Name(o.pkgiName, o.NamespaceFlags.Name), "", dynamicClient)
+		}, KindClusterRoleBinding.Name(o.Name, o.NamespaceFlags.Name), "", dynamicClient)
 	if err != nil {
 		return err
 	}
@@ -213,7 +203,7 @@ func (o *DeleteOptions) deleteIfExistsAndOwned(groupVersionResource schema.Group
 	}
 
 	annotations := resource.GetAnnotations()
-	pkgiIdentifier := fmt.Sprintf("%s-%s", o.pkgiName, o.NamespaceFlags.Name)
+	pkgiIdentifier := fmt.Sprintf("%s-%s", o.Name, o.NamespaceFlags.Name)
 
 	val, found := annotations[KappPkgAnnotation]
 	if !found || val != pkgiIdentifier {
@@ -242,7 +232,7 @@ func (o *DeleteOptions) deleteResourceUsingGVR(groupVersionResource schema.Group
 func (o *DeleteOptions) waitForResourceDelete(kcClient kcclient.Interface) error {
 	err := wait.Poll(o.pollInterval, o.pollTimeout, func() (bool, error) {
 		resource, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
-			context.Background(), o.pkgiName, metav1.GetOptions{},
+			context.Background(), o.Name, metav1.GetOptions{},
 		)
 		if err != nil {
 			if errors.IsNotFound(err) {

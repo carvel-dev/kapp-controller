@@ -55,9 +55,9 @@ func (o *ListOptions) Run() error {
 	if err != nil {
 		return err
 	}
+
 	pkgiList, err := client.PackagingV1alpha1().PackageInstalls(
 		o.NamespaceFlags.Name).List(context.Background(), metav1.ListOptions{})
-
 	if err != nil {
 		return err
 	}
