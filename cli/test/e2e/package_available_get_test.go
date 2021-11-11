@@ -4,6 +4,8 @@
 package e2e
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
@@ -14,47 +16,80 @@ func TestPackageAvailableGet(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
+	kappCtrl := Kapp{t, env.Namespace, env.KappCtrlBinaryPath, logger}
 
-	repoYml := `---
-apiVersion: packaging.carvel.dev/v1alpha1
-kind: PackageRepository
+	appName := "test-package-name"
+
+	packageMetadataName := "test-pkg.carvel.dev"
+
+	packageMetadata := fmt.Sprintf(`---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
 metadata:
-  name: e2e-repo.test.carvel.dev
+  name: %s
 spec:
-  fetch:
-    imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c`
+  displayName: "Carvel Test Package"
+  shortDescription: "Carvel package for testing installation"`, packageMetadataName)
 
-	pkgrName := "e2e-repo.test.carvel.dev"
-	pkgName := "pkg.test.carvel.dev"
-	pkgrKind := "PackageRepository"
+	packageName := "test-pkg.carvel.dev.1.0.0"
+	packageVersion := "1.0.0"
+
+	packageCR := fmt.Sprintf(`---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: %s
+spec:
+  refName: test-pkg.carvel.dev
+  version: %s
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v1.0.0
+      template:
+      - ytt:
+          paths:
+          - config/
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
+      deploy:
+      - kapp: {}`, packageName, packageVersion)
+
+	yaml := packageMetadata + "\n" + packageCR
 
 	cleanUp := func() {
-		RemoveClusterResource(t, pkgrKind, pkgrName, kapp.namespace, kubectl)
+		kapp.Run([]string{"delete", "-a", appName})
 	}
 
 	cleanUp()
 	defer cleanUp()
 
-	NewClusterResourceFromYaml(t, kubectl, pkgrKind, pkgrName, repoYml)
+	logger.Section("Adding test package", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
+			StdinReader: strings.NewReader(yaml), AllowError: true,
+		})
+		require.NoError(t, err)
+	})
 
 	logger.Section("package available get", func() {
-		out, err := kapp.RunWithOpts([]string{"package", "available", "get", "-p", pkgName, "--json"}, RunOpts{})
+		out, err := kappCtrl.RunWithOpts([]string{"package", "available", "get", "-p", packageMetadataName, "--json"}, RunOpts{})
 		require.NoError(t, err)
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expectedOutputRows := []map[string]string{
 			{
-				"category":          "testing",
+				"category":          "",
 				"display_name":      "Carvel Test Package",
-				"long_description":  "This is a test application which has been packaged using the Carvel tools and can be deployed with them. For more information you can visit https://carvel.dev/.",
-				"maintainers":       "- name: Carvel Team",
-				"name":              "pkg.test.carvel.dev",
-				"package_provider":  "Carvel",
+				"long_description":  "",
+				"maintainers":       "",
+				"name":              "test-pkg.carvel.dev",
+				"package_provider":  "",
 				"short_description": "Carvel package for testing installation",
-				"support":           "Visit #carvel in slack: https://kubernetes.slack.com/archives/CH8KCCKA5.",
+				"support":           "",
 			},
 		}
 
