@@ -4,6 +4,8 @@
 package e2e
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
@@ -14,39 +16,73 @@ func TestPackageInstalledGet(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
+	kappCtrl := Kapp{t, env.Namespace, env.KappCtrlBinaryPath, logger}
 
-	repoYml := `---
-apiVersion: packaging.carvel.dev/v1alpha1
-kind: PackageRepository
-metadata:
-  name: e2e-repo.test.carvel.dev
-spec:
-  fetch:
-    imgpkgBundle:
-      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c`
-
-	pkgrName := "e2e-repo.test.carvel.dev"
-	pkgName := "pkg.test.carvel.dev"
-	pkgVersion := "1.0.0"
-	pkgrKind := "PackageRepository"
+	appName := "test-package-name"
 	pkgiName := "testpkgi"
+	packageMetadataName := "test-pkg.carvel.dev"
+
+	packageMetadata := fmt.Sprintf(`---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: %s
+spec:
+  displayName: "Carvel Test Package"
+  shortDescription: "Carvel package for testing installation"`, packageMetadataName)
+
+	packageName := "test-pkg.carvel.dev.1.0.0"
+	packageVersion := "1.0.0"
+
+	packageCR := fmt.Sprintf(`---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: %s
+spec:
+  refName: test-pkg.carvel.dev
+  version: %s
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v1.0.0
+      template:
+      - ytt:
+          paths:
+          - config/
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
+      deploy:
+      - kapp: {}`, packageName, packageVersion)
+
+	yaml := packageMetadata + "\n" + packageCR
 
 	cleanUp := func() {
-		_, _ = kapp.RunWithOpts([]string{"package", "installed", "delete", "--name", pkgiName}, RunOpts{})
-		RemoveClusterResource(t, pkgrKind, pkgrName, kapp.namespace, kubectl)
+		// TODO: Check for error while uninstalling in cleanup?
+		kappCtrl.Run([]string{"package", "installed", "delete", "--name", pkgiName})
+		kapp.Run([]string{"delete", "-a", appName})
 	}
 
 	cleanUp()
 	defer cleanUp()
 
-	NewClusterResourceFromYaml(t, kubectl, pkgrKind, pkgrName, repoYml)
+	logger.Section("Adding test package", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
+			StdinReader: strings.NewReader(yaml), AllowError: true,
+		})
+		require.NoError(t, err)
+	})
 
-	_, err := kapp.RunWithOpts([]string{"package", "installed", "create", "--name", pkgiName, "--package-name", pkgName, "--version", pkgVersion}, RunOpts{})
-	require.NoError(t, err)
+	logger.Section("Installing test package", func() {
+		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--name", pkgiName, "--package-name", packageMetadataName, "--version", packageVersion}, RunOpts{})
+		require.NoError(t, err)
+	})
 
 	logger.Section("package installed get", func() {
-		out, err := kapp.RunWithOpts([]string{"package", "installed", "get", "--name", pkgiName, "--json"}, RunOpts{})
+		out, err := kappCtrl.RunWithOpts([]string{"package", "installed", "get", "--name", pkgiName, "--json"}, RunOpts{})
 		require.NoError(t, err)
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
@@ -55,7 +91,7 @@ spec:
 			{
 				"conditions":           "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
 				"name":                 "testpkgi",
-				"package_name":         "pkg.test.carvel.dev",
+				"package_name":         "test-pkg.carvel.dev",
 				"package_version":      "1.0.0",
 				"status":               "Reconcile succeeded",
 				"useful_error_message": "",
