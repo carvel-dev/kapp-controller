@@ -51,10 +51,20 @@ spec:
 				"repository": "index.docker.io/k8slt/kc-e2e-test-repo",
 				"status":     "Reconcile succeeded",
 				"tag":        "sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c",
-				"version":    "3164318",
+				"version":    "<replaced>",
 			},
 		}
 
-		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
+		require.Exactly(t, expectedOutputRows, replaceVersion(output.Tables[0].Rows))
 	})
+}
+
+func replaceVersion(result []map[string]string) []map[string]string {
+	for i, row := range result {
+		if len(row["version"]) > 0 {
+			row["version"] = "<replaced>"
+		}
+		result[i] = row
+	}
+	return result
 }
