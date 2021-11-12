@@ -45,39 +45,24 @@ spec:
 		require.Error(t, err)
 	})
 
-	logger.Section("adding package repository", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
+	logger.Section("package repository get", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
 			StdinReader: strings.NewReader(repoYml),
 		})
-		require.NoError(t, err)
-	})
 
-	logger.Section("package repository get", func() {
 		out, err := kappCtrl.RunWithOpts([]string{"package", "repository", "get", "-r", pkgrName, "--json"}, RunOpts{})
 		require.NoError(t, err)
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
-		expectedOutputRows := []map[string]string{
-			{
-				"name":       "e2e-repo.test.carvel.dev",
-				"reason":     "",
-				"repository": "index.docker.io/k8slt/kc-e2e-test-repo",
-				"status":     "Reconcile succeeded",
-				"tag":        "sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c",
-				"version":    "<replaced>",
-			},
-		}
-		require.Exactly(t, expectedOutputRows, replaceVersion(output.Tables[0].Rows))
+		expectedOutputRows := []map[string]string{{
+			"conditions":           "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
+			"description":          "Reconcile succeeded",
+			"name":                 "e2e-repo.test.carvel.dev",
+			"repository":           "index.docker.io/k8slt/kc-e2e-test-repo",
+			"tag":                  "sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c",
+			"useful_error_message": "",
+		}}
+		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
-}
-
-func replaceVersion(result []map[string]string) []map[string]string {
-	for i, row := range result {
-		if len(row["version"]) > 0 {
-			row["version"] = "<replaced>"
-		}
-		result[i] = row
-	}
-	return result
 }
