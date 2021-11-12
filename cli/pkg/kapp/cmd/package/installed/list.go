@@ -32,11 +32,11 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	cmd := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"l", "ls"},
-		Short:   "List installed Packages in a namespace",
+		Short:   "List installed packages in a namespace",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List installed Packages in all namespaces")
+	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List installed packages in all namespaces")
 	return cmd
 }
 
