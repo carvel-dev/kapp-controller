@@ -49,7 +49,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVar(&o.Name, "name", "", "Name of PackageInstall")
+	cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
 
 	cmd.Flags().DurationVar(&o.pollInterval, "poll-interval", 1*time.Second, "Time interval between consecutive polls while reconciling")
 	cmd.Flags().DurationVar(&o.pollTimeout, "poll-timeout", 1*time.Minute, "Timeout for the reconciliation process")

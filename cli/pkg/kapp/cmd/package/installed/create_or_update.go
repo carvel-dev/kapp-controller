@@ -60,9 +60,9 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.RunCreate() },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVar(&o.pkgiName, "name", "", "Name of PackageInstall")
-	cmd.Flags().StringVar(&o.packageName, "package-name", "", "Name of package to be installed")
-	cmd.Flags().StringVar(&o.version, "version", "", "Version of package to be installed")
+	cmd.Flags().StringVarP(&o.pkgiName, "package-install", "i", "", "Set installed package name")
+	cmd.Flags().StringVar(&o.packageName, "package-name", "", "Set package name")
+	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().BoolVar(&o.createNewNamespace, "create-namespace", false, "Create namespace if the target namespace does not exist, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
@@ -81,9 +81,9 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.RunCreate() },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVar(&o.pkgiName, "name", "", "Name of PackageInstall")
-	cmd.Flags().StringVar(&o.packageName, "package-name", "", "Name of package to be installed")
-	cmd.Flags().StringVar(&o.version, "version", "", "Version of package to be installed")
+	cmd.Flags().StringVarP(&o.pkgiName, "package-install", "i", "", "Set installed package name")
+	cmd.Flags().StringVar(&o.packageName, "package-name", "", "Set package name")
+	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().BoolVar(&o.createNewNamespace, "create-namespace", false, "Create namespace if the target namespace does not exist, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
@@ -102,9 +102,9 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.RunUpdate() },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVar(&o.pkgiName, "name", "", "Name of PackageInstall")
+	cmd.Flags().StringVarP(&o.pkgiName, "package-install", "i", "", "Set installed package name")
 	cmd.Flags().StringVar(&o.packageName, "package-name", "", "Name of package install to be updated")
-	cmd.Flags().StringVar(&o.version, "version", "", "Version of package to be installed")
+	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().BoolVar(&o.createNewNamespace, "create-namespace", false, "Create namespace if the target namespace does not exist, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
@@ -129,8 +129,7 @@ func (o *CreateOrUpdateOptions) RunCreate() error {
 	}
 
 	pkgInstall, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
-		context.Background(), o.pkgiName, metav1.GetOptions{},
-	)
+		context.Background(), o.pkgiName, metav1.GetOptions{})
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err

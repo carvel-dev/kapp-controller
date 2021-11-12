@@ -61,30 +61,33 @@ spec:
 	yaml := packageMetadata + "\n" + packageCR
 
 	cleanUp := func() {
-		kappCtrl.Run([]string{"package", "installed", "delete", "--name", pkgiName})
+		kappCtrl.Run([]string{"package", "installed", "delete", "--package-install", pkgiName})
 		kapp.Run([]string{"delete", "-a", appName})
 	}
 
 	cleanUp()
 	defer cleanUp()
 
-	logger.Section("Adding test package", func() {
+	logger.Section("package installed get", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
 			StdinReader: strings.NewReader(yaml),
 		})
-	})
 
-	logger.Section("package installed get", func() {
-		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--name", pkgiName, "--package-name", packageMetadataName, "--version", packageVersion}, RunOpts{})
-		require.NoError(t, err)
+		kappCtrl.RunWithOpts([]string{
+			"package", "installed", "create",
+			"--package-install", pkgiName,
+			"--package-name", packageMetadataName,
+			"--version", packageVersion,
+		}, RunOpts{})
 
-		out, err := kappCtrl.RunWithOpts([]string{"package", "installed", "get", "--name", pkgiName, "--json"}, RunOpts{})
+		out, err := kappCtrl.RunWithOpts([]string{"package", "installed", "get", "--package-install", pkgiName, "--json"}, RunOpts{})
 		require.NoError(t, err)
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expectedOutputRows := []map[string]string{{
 			"conditions":           "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
+			"namespace":            env.Namespace,
 			"name":                 "testpkgi",
 			"package_name":         "test-pkg.carvel.dev",
 			"package_version":      "1.0.0",

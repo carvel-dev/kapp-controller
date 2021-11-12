@@ -77,12 +77,12 @@ spec:
 		})
 		require.NoError(t, err)
 
-		_, err = kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--name", pkgiName, "--package-name", packageMetadataName, "--version", packageVersion}, RunOpts{})
+		_, err = kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--package-install", pkgiName, "--package-name", packageMetadataName, "--version", packageVersion}, RunOpts{})
 		require.NoError(t, err)
 	})
 
 	logger.Section("Delete installed package and created resources", func() {
-		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "delete", "--name", pkgiName}, RunOpts{})
+		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "delete", "--package-install", pkgiName}, RunOpts{})
 		require.NoError(t, err)
 	})
 
