@@ -26,7 +26,8 @@ type ListOptions struct {
 
 	Name string
 
-	Wide bool
+	Summary bool
+	Wide    bool
 }
 
 func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
@@ -43,6 +44,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List available packages in all namespaces")
 
+	cmd.Flags().BoolVar(&o.Summary, "summary", true, "Show summarized list of packages")
 	cmd.Flags().StringVarP(&o.Name, "package", "p", "", "List all available versions of package")
 
 	cmd.Flags().BoolVar(&o.Wide, "wide", false, "Show additional info")
@@ -51,20 +53,20 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 }
 
 func (o *ListOptions) Run() error {
-	if o.Name != "" {
-		return o.listPackages()
+	if o.Summary && o.Name == "" {
+		return o.listPackageMetadatas()
 	}
-	return o.listPackageMetadatas()
+	return o.listPackages()
 }
 
 func (o *ListOptions) listPackageMetadatas() error {
-	tableTitle := fmt.Sprintf("Available packages in namespace '%s'", o.NamespaceFlags.Name)
+	tableTitle := fmt.Sprintf("Available summarized packages in namespace '%s'", o.NamespaceFlags.Name)
 	nsHeader := uitable.NewHeader("Namespace")
 	nsHeader.Hidden = true
 
 	if o.AllNamespaces {
 		o.NamespaceFlags.Name = ""
-		tableTitle = "Available packages in all namespaces"
+		tableTitle = "Available summarized packages in all namespaces"
 		nsHeader.Hidden = false
 	}
 
@@ -113,14 +115,13 @@ func (o *ListOptions) listPackageMetadatas() error {
 }
 
 func (o *ListOptions) listPackages() error {
-	// TODO figure out better naming... these are packages
-	tableTitle := fmt.Sprintf("Available package versions for '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+	tableTitle := fmt.Sprintf("Available packages in namespace '%s'", o.NamespaceFlags.Name)
 	nsHeader := uitable.NewHeader("Namespace")
 	nsHeader.Hidden = true
 
 	if o.AllNamespaces {
 		o.NamespaceFlags.Name = ""
-		tableTitle = fmt.Sprintf("Available package versions for '%s' in all namespaces", o.Name)
+		tableTitle = "Available packages in all namespaces"
 		nsHeader.Hidden = false
 	}
 
@@ -129,7 +130,11 @@ func (o *ListOptions) listPackages() error {
 		return err
 	}
 
-	listOpts := metav1.ListOptions{FieldSelector: fields.Set{"spec.refName": o.Name}.String()}
+	listOpts := metav1.ListOptions{}
+	if len(o.Name) > 0 {
+		listOpts.FieldSelector = fields.Set{"spec.refName": o.Name}.String()
+	}
+
 	pkgList, err := client.DataV1alpha1().Packages(
 		o.NamespaceFlags.Name).List(context.Background(), listOpts)
 	if err != nil {
@@ -143,7 +148,7 @@ func (o *ListOptions) listPackages() error {
 			nsHeader,
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Version"),
-			uitable.NewHeader("Released-At"),
+			uitable.NewHeader("Released at"),
 		},
 
 		SortBy: []uitable.ColumnSort{

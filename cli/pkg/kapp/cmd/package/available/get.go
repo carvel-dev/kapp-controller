@@ -14,7 +14,10 @@ import (
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/logger"
+	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 )
 
 type GetOptions struct {
@@ -59,48 +62,60 @@ func (o *GetOptions) Run() error {
 		return fmt.Errorf("Package name should be of the format 'name' or 'name/version'")
 	}
 
-	if o.ValuesSchema {
-		if pkgVersion == "" {
-			return fmt.Errorf("Package version is required when --values-schema flag is declared")
-		}
-		return o.showValuesSchema(pkgName, pkgVersion)
-	}
-
-	return o.show(pkgName, pkgVersion)
-}
-
-func (o *GetOptions) show(pkgName, pkgVersion string) error {
-	headers := []uitable.Header{
-		uitable.NewHeader("Name"),
-		uitable.NewHeader("Display name"),
-		uitable.NewHeader("Short description"),
-		uitable.NewHeader("Provider"),
-		uitable.NewHeader("Long description"),
-		uitable.NewHeader("Maintainers"),
-		uitable.NewHeader("Support description"),
-		uitable.NewHeader("Categories"),
-	}
-
 	client, err := o.depsFactory.PackageClient()
 	if err != nil {
 		return err
 	}
 
+	if o.ValuesSchema {
+		if pkgVersion == "" {
+			return fmt.Errorf("Package version is required when --values-schema flag is declared")
+		}
+		return o.showValuesSchema(client, pkgName, pkgVersion)
+	}
+
+	return o.show(client, pkgName, pkgVersion)
+}
+
+func (o *GetOptions) show(client pkgclient.Interface, pkgName, pkgVersion string) error {
+	// Name is always present
+	headers := []uitable.Header{uitable.NewHeader("Name")}
+	row := []uitable.Value{uitable.NewValueString(pkgName)}
+
 	pkgMetadata, err := client.DataV1alpha1().PackageMetadatas(
 		o.NamespaceFlags.Name).Get(context.Background(), pkgName, metav1.GetOptions{})
 	if err != nil {
-		return err
+		if !apierrors.IsNotFound(err) {
+			return err
+		}
+		pkgMetadata = nil
 	}
 
-	row := []uitable.Value{
-		uitable.NewValueString(pkgMetadata.Name),
-		uitable.NewValueString(pkgMetadata.Spec.DisplayName),
-		uitable.NewValueString(wordwrap.WrapString(pkgMetadata.Spec.ShortDescription, 80)),
-		uitable.NewValueString(pkgMetadata.Spec.ProviderName),
-		uitable.NewValueString(wordwrap.WrapString(pkgMetadata.Spec.LongDescription, 80)),
-		uitable.NewValueInterface(pkgMetadata.Spec.Maintainers),
-		uitable.NewValueString(wordwrap.WrapString(pkgMetadata.Spec.SupportDescription, 80)),
-		uitable.NewValueInterface(pkgMetadata.Spec.Categories),
+	// PackageMetadata record is not required to be present
+	if pkgMetadata != nil {
+		headers = append(headers, []uitable.Header{
+			uitable.NewHeader("Display name"),
+
+			uitable.NewHeader("Categories"),
+			uitable.NewHeader("Short description"),
+			uitable.NewHeader("Long description"),
+
+			uitable.NewHeader("Provider"),
+			uitable.NewHeader("Maintainers"),
+			uitable.NewHeader("Support description"),
+		}...)
+
+		row = append(row, []uitable.Value{
+			uitable.NewValueString(pkgMetadata.Spec.DisplayName),
+
+			uitable.NewValueInterface(pkgMetadata.Spec.Categories),
+			uitable.NewValueString(wordwrap.WrapString(pkgMetadata.Spec.ShortDescription, 80)),
+			uitable.NewValueString(wordwrap.WrapString(pkgMetadata.Spec.LongDescription, 80)),
+
+			uitable.NewValueString(pkgMetadata.Spec.ProviderName),
+			uitable.NewValueInterface(pkgMetadata.Spec.Maintainers),
+			uitable.NewValueString(wordwrap.WrapString(pkgMetadata.Spec.SupportDescription, 80)),
+		}...)
 	}
 
 	if pkgVersion != "" {
@@ -122,8 +137,8 @@ func (o *GetOptions) show(pkgName, pkgVersion string) error {
 		row = append(row, []uitable.Value{
 			uitable.NewValueString(pkg.Spec.Version),
 			uitable.NewValueString(pkg.Spec.ReleasedAt.String()),
-			uitable.NewValueString(pkg.Spec.CapactiyRequirementsDescription),
-			uitable.NewValueString(pkg.Spec.ReleaseNotes),
+			uitable.NewValueString(wordwrap.WrapString(pkg.Spec.CapactiyRequirementsDescription, 80)),
+			uitable.NewValueString(wordwrap.WrapString(pkg.Spec.ReleaseNotes, 80)),
 			uitable.NewValueStrings(pkg.Spec.Licenses),
 		}...)
 	}
@@ -136,15 +151,49 @@ func (o *GetOptions) show(pkgName, pkgVersion string) error {
 
 	o.ui.PrintTable(table)
 
+	if pkgVersion == "" {
+		return o.showVersions(client)
+	}
+
 	return nil
 }
 
-func (o *GetOptions) showValuesSchema(pkgName, pkgVersion string) error {
-	client, err := o.depsFactory.PackageClient()
+func (o *GetOptions) showVersions(client pkgclient.Interface) error {
+	listOpts := metav1.ListOptions{}
+	if len(o.Name) > 0 {
+		listOpts.FieldSelector = fields.Set{"spec.refName": o.Name}.String()
+	}
+
+	pkgList, err := client.DataV1alpha1().Packages(
+		o.NamespaceFlags.Name).List(context.Background(), listOpts)
 	if err != nil {
 		return err
 	}
 
+	table := uitable.Table{
+		Header: []uitable.Header{
+			uitable.NewHeader("Version"),
+			uitable.NewHeader("Released at"),
+		},
+
+		SortBy: []uitable.ColumnSort{
+			{Column: 0, Asc: true},
+		},
+	}
+
+	for _, pkg := range pkgList.Items {
+		table.Rows = append(table.Rows, []uitable.Value{
+			uitable.NewValueString(pkg.Spec.Version),
+			uitable.NewValueString(pkg.Spec.ReleasedAt.String()),
+		})
+	}
+
+	o.ui.PrintTable(table)
+
+	return nil
+}
+
+func (o *GetOptions) showValuesSchema(client pkgclient.Interface, pkgName, pkgVersion string) error {
 	pkg, err := client.DataV1alpha1().Packages(o.NamespaceFlags.Name).Get(
 		context.Background(), fmt.Sprintf("%s.%s", pkgName, pkgVersion), metav1.GetOptions{})
 	if err != nil {
