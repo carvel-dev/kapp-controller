@@ -87,20 +87,23 @@ spec:
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
-		expectedOutputRows := []map[string]string{
-			{
-				"categories":          "",
-				"display_name":        "Carvel Test Package",
-				"long_description":    "",
-				"maintainers":         "",
-				"name":                "test-pkg.carvel.dev",
-				"provider":            "",
-				"short_description":   "Carvel package for testing installation",
-				"support_description": "",
-			},
-		}
-
+		expectedOutputRows := []map[string]string{{
+			"categories":          "",
+			"display_name":        "Carvel Test Package",
+			"long_description":    "",
+			"maintainers":         "",
+			"name":                "test-pkg.carvel.dev",
+			"provider":            "",
+			"short_description":   "Carvel package for testing installation",
+			"support_description": "",
+		}}
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
+
+		expectedOutputRows = []map[string]string{{
+			"version":     "1.0.0",
+			"released_at": "0001-01-01 00:00:00 +0000 UTC",
+		}}
+		require.Exactly(t, expectedOutputRows, output.Tables[1].Rows)
 	})
 
 	logger.Section("package available get value schema", func() {
@@ -109,14 +112,12 @@ spec:
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
-		expectedOutputRows := []map[string]string{
-			{
-				"default":     "80",
-				"description": "App port",
-				"key":         "app_port",
-				"type":        "integer",
-			},
-		}
+		expectedOutputRows := []map[string]string{{
+			"default":     "80",
+			"description": "App port",
+			"key":         "app_port",
+			"type":        "integer",
+		}}
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
 }
