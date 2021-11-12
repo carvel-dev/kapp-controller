@@ -8,6 +8,7 @@ require (
 	github.com/getkin/kin-openapi v0.81.0
 	github.com/google/go-containerregistry v0.1.2
 	github.com/google/gofuzz v1.2.0 // indirect
+	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
