@@ -58,9 +58,9 @@ spec:
 		expectedOutputRows := []map[string]string{{
 			"conditions":           "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
 			"description":          "Reconcile succeeded",
+			"namespace":            env.Namespace,
 			"name":                 "e2e-repo.test.carvel.dev",
-			"repository":           "index.docker.io/k8slt/kc-e2e-test-repo",
-			"tag":                  "sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c",
+			"source":               "(imgpkg) index.docker.io/k8slt/kc-e2e-test-repo@sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c",
 			"useful_error_message": "",
 		}}
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)

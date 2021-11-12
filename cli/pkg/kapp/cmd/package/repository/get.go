@@ -51,25 +51,22 @@ func (o *GetOptions) Run() error {
 		return err
 	}
 
-	// TODO how to show imgpkg information?
-	repository, tag, _ := getCurrentRepositoryAndTagInUse(pkgr)
-
 	table := uitable.Table{
 		Transpose: true,
 
 		Header: []uitable.Header{
+			uitable.NewHeader("Namespace"),
 			uitable.NewHeader("Name"),
-			uitable.NewHeader("Repository"),
-			uitable.NewHeader("Tag"),
+			uitable.NewHeader("Source"),
 			uitable.NewHeader("Description"),
 			uitable.NewHeader("Conditions"),
 			uitable.NewHeader("Useful error message"),
 		},
 
 		Rows: [][]uitable.Value{{
+			uitable.NewValueString(pkgr.Namespace),
 			uitable.NewValueString(pkgr.Name),
-			uitable.NewValueString(repository),
-			uitable.NewValueString(tag),
+			NewSourceValue(*pkgr),
 			uitable.NewValueString(pkgr.Status.FriendlyDescription),
 			uitable.NewValueInterface(pkgr.Status.Conditions),
 			uitable.NewValueString(pkgr.Status.UsefulErrorMessage),
