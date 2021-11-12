@@ -10,6 +10,7 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
+	"github.com/mitchellh/go-wordwrap"
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/logger"
@@ -94,12 +95,12 @@ func (o *GetOptions) show(pkgName, pkgVersion string) error {
 	row := []uitable.Value{
 		uitable.NewValueString(pkgMetadata.Name),
 		uitable.NewValueString(pkgMetadata.Spec.DisplayName),
-		uitable.NewValueString(pkgMetadata.Spec.ShortDescription),
+		uitable.NewValueString(wordwrap.WrapString(pkgMetadata.Spec.ShortDescription, 80)),
 		uitable.NewValueString(pkgMetadata.Spec.ProviderName),
-		uitable.NewValueString(pkgMetadata.Spec.LongDescription),
+		uitable.NewValueString(wordwrap.WrapString(pkgMetadata.Spec.LongDescription, 80)),
 		uitable.NewValueInterface(pkgMetadata.Spec.Maintainers),
-		uitable.NewValueString(pkgMetadata.Spec.SupportDescription),
-		uitable.NewValueStrings(pkgMetadata.Spec.Categories),
+		uitable.NewValueString(wordwrap.WrapString(pkgMetadata.Spec.SupportDescription, 80)),
+		uitable.NewValueInterface(pkgMetadata.Spec.Categories),
 	}
 
 	if pkgVersion != "" {
