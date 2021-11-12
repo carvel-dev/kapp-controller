@@ -10,7 +10,7 @@ import (
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "package",
-		Aliases: []string{"pkg"},
+		Aliases: []string{"pkg", "p"},
 		Short:   "Package",
 	}
 	return cmd

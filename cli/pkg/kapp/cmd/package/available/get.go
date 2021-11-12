@@ -129,12 +129,9 @@ func (o *GetOptions) show(pkgName, pkgVersion string) error {
 	}
 
 	table := uitable.Table{
-		// TODO better title? should it be different for package vs packagemetadata
-		Title:     fmt.Sprintf("Package details for '%s'", pkgName),
 		Transpose: true,
-
-		Header: headers,
-		Rows:   [][]uitable.Value{row},
+		Header:    headers,
+		Rows:      [][]uitable.Value{row},
 	}
 
 	o.ui.PrintTable(table)
