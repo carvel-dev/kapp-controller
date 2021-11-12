@@ -70,7 +70,6 @@ func (o *ListOptions) Run() error {
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("URL"),
 			uitable.NewHeader("Description"),
-			uitable.NewHeader("Details"),
 		},
 
 		SortBy: []uitable.ColumnSort{
@@ -85,7 +84,6 @@ func (o *ListOptions) Run() error {
 			uitable.NewValueString(repo.Name),
 			uitable.NewValueString("TODO url"),
 			uitable.NewValueString(repo.Status.FriendlyDescription),
-			uitable.NewValueString(repo.Status.UsefulErrorMessage),
 		})
 	}
 

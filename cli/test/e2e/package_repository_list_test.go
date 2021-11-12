@@ -43,33 +43,26 @@ spec:
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expectedOutputRows := []map[string]string{}
-
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
-
 	})
 
-	logger.Section("adding package repository", func() {
+	logger.Section("package repository list with one package installed", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
 			StdinReader: strings.NewReader(repoYml),
 		})
 		require.NoError(t, err)
-	})
 
-	logger.Section("package repository list with one package installed", func() {
 		out, err := kappCtrl.RunWithOpts([]string{"package", "repository", "list", "--json"}, RunOpts{})
 		require.NoError(t, err)
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
 		//TODO: Update once we handle URLs better
-		expectedOutputRows := []map[string]string{
-			{
-				"name":        "e2e-repo.test.carvel.dev",
-				"url":         "TODO url",
-				"description": "Reconcile succeeded",
-				"details":     "",
-			},
-		}
+		expectedOutputRows := []map[string]string{{
+			"name":        "e2e-repo.test.carvel.dev",
+			"url":         "TODO url",
+			"description": "Reconcile succeeded",
+		}}
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
 }
