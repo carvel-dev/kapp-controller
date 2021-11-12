@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/logger"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -56,7 +57,7 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	repoList, err := client.PackagingV1alpha1().PackageRepositories(
+	pkgrList, err := client.PackagingV1alpha1().PackageRepositories(
 		o.NamespaceFlags.Name).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return err
@@ -68,7 +69,7 @@ func (o *ListOptions) Run() error {
 		Header: []uitable.Header{
 			nsHeader,
 			uitable.NewHeader("Name"),
-			uitable.NewHeader("URL"),
+			uitable.NewHeader("Source"),
 			uitable.NewHeader("Description"),
 		},
 
@@ -78,16 +79,36 @@ func (o *ListOptions) Run() error {
 		},
 	}
 
-	for _, repo := range repoList.Items {
+	for _, pkgr := range pkgrList.Items {
 		table.Rows = append(table.Rows, []uitable.Value{
-			cmdcore.NewValueNamespace(repo.Namespace),
-			uitable.NewValueString(repo.Name),
-			uitable.NewValueString("TODO url"),
-			uitable.NewValueString(repo.Status.FriendlyDescription),
+			cmdcore.NewValueNamespace(pkgr.Namespace),
+			uitable.NewValueString(pkgr.Name),
+			cmdcore.NewValueTruncated(NewSourceValue(pkgr), 60),
+			cmdcore.NewValueTruncated(uitable.NewValueString(pkgr.Status.FriendlyDescription), 40),
 		})
 	}
 
 	o.ui.PrintTable(table)
 
 	return nil
+}
+
+// NewSourceValue returns a string summarizing spec.fetch for humans
+// TODO should we place this into kapp-controller and expose as status field?
+func NewSourceValue(pkgr v1alpha1.PackageRepository) uitable.Value {
+	source := "(unknown)"
+
+	if pkgr.Spec.Fetch != nil {
+		switch {
+		case pkgr.Spec.Fetch.ImgpkgBundle != nil:
+			source = "(imgpkg) " + pkgr.Spec.Fetch.ImgpkgBundle.Image
+			if pkgr.Spec.Fetch.ImgpkgBundle.TagSelection != nil && pkgr.Spec.Fetch.ImgpkgBundle.TagSelection.Semver != nil {
+				source += fmt.Sprintf(" (%s)", pkgr.Spec.Fetch.ImgpkgBundle.TagSelection.Semver.Constraints)
+			}
+		default:
+			// stays unknown
+		}
+	}
+
+	return uitable.NewValueString(source)
 }

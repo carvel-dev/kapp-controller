@@ -47,20 +47,18 @@ spec:
 	})
 
 	logger.Section("package repository list with one package installed", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
+		kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
 			StdinReader: strings.NewReader(repoYml),
 		})
-		require.NoError(t, err)
 
 		out, err := kappCtrl.RunWithOpts([]string{"package", "repository", "list", "--json"}, RunOpts{})
 		require.NoError(t, err)
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
-		//TODO: Update once we handle URLs better
 		expectedOutputRows := []map[string]string{{
 			"name":        "e2e-repo.test.carvel.dev",
-			"url":         "TODO url",
+			"source":      "(imgpkg) index.docker.io/k8slt/kc-e2e-test-repo@sha256:ddd93...",
 			"description": "Reconcile succeeded",
 		}}
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
