@@ -39,10 +39,9 @@ func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.L
 
 func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "delete",
-		Aliases: []string{"l", "ls"},
-		Short:   "Delete a package repository",
-		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Use:   "delete",
+		Short: "Delete a package repository",
+		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
