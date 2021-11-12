@@ -36,11 +36,11 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 	cmd := &cobra.Command{
 		Use:     "get",
 		Aliases: []string{"g"},
-		Short:   "Get installed package",
+		Short:   "Get details for installed package",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVar(&o.Name, "name", "", "Name of PackageInstall")
+	cmd.Flags().StringVar(&o.Name, "package-install", "i", "Set installed package name")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "File path for exporting configuration values file")
 	return cmd
 }
@@ -91,13 +91,11 @@ func (o *GetOptions) Run() error {
 		return nil
 	}
 
-	tableTitle := "Package Information"
 	table := uitable.Table{
-		Title:     tableTitle,
-		Content:   "PackageInstalls",
 		Transpose: true,
 
 		Header: []uitable.Header{
+			uitable.NewHeader("Namespace"),
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Package name"),
 			uitable.NewHeader("Package version"),
@@ -106,20 +104,16 @@ func (o *GetOptions) Run() error {
 			uitable.NewHeader("Useful error message"),
 		},
 
-		SortBy: []uitable.ColumnSort{
-			{Column: 0, Asc: true},
-			{Column: 1, Asc: true},
-		},
+		Rows: [][]uitable.Value{{
+			uitable.NewValueString(pkgi.Namespace),
+			uitable.NewValueString(pkgi.Name),
+			uitable.NewValueString(pkgi.Spec.PackageRef.RefName),
+			uitable.NewValueString(pkgi.Status.Version),
+			uitable.NewValueString(pkgi.Status.FriendlyDescription),
+			uitable.NewValueInterface(pkgi.Status.Conditions),
+			uitable.NewValueString(pkgi.Status.UsefulErrorMessage),
+		}},
 	}
-
-	table.Rows = append(table.Rows, []uitable.Value{
-		uitable.NewValueString(pkgi.Name),
-		uitable.NewValueString(pkgi.Spec.PackageRef.RefName),
-		uitable.NewValueString(pkgi.Status.Version),
-		uitable.NewValueString(pkgi.Status.FriendlyDescription),
-		uitable.NewValueInterface(pkgi.Status.Conditions),
-		uitable.NewValueString(pkgi.Status.UsefulErrorMessage),
-	})
 
 	o.ui.PrintTable(table)
 

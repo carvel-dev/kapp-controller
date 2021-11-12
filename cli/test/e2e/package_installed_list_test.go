@@ -62,7 +62,7 @@ spec:
 
 	cleanUp := func() {
 		// TODO: Check for error while uninstalling in cleanup?
-		kappCtrl.Run([]string{"package", "installed", "delete", "--name", pkgiName})
+		kappCtrl.Run([]string{"package", "installed", "delete", "--package-install", pkgiName})
 		kapp.Run([]string{"delete", "-a", appName})
 	}
 
@@ -76,9 +76,7 @@ spec:
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expectedOutputRows := []map[string]string{}
-
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
-
 	})
 
 	logger.Section("Adding test package", func() {
@@ -89,7 +87,9 @@ spec:
 	})
 
 	logger.Section("Installing test package", func() {
-		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--name", pkgiName, "--package-name", packageMetadataName, "--version", packageVersion}, RunOpts{})
+		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "create",
+			"--package-install", pkgiName, "--package-name", packageMetadataName,
+			"--version", packageVersion}, RunOpts{})
 		require.NoError(t, err)
 	})
 
@@ -99,15 +99,12 @@ spec:
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
-		expectedOutputRows := []map[string]string{
-			{
-				"name":            "testpkgi",
-				"package_name":    "test-pkg.carvel.dev",
-				"package_version": "1.0.0",
-				"status":          "Reconcile succeeded",
-			},
-		}
-
+		expectedOutputRows := []map[string]string{{
+			"name":            "testpkgi",
+			"package_name":    "test-pkg.carvel.dev",
+			"package_version": "1.0.0",
+			"status":          "Reconcile succeeded",
+		}}
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
 }

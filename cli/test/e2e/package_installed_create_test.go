@@ -64,7 +64,7 @@ spec:
 
 	cleanUp := func() {
 		// TODO: Check for error while uninstalling in cleanup?
-		kappCtrl.Run([]string{"package", "installed", "delete", "--name", pkgiName})
+		kappCtrl.Run([]string{"package", "installed", "delete", "--package-install", pkgiName})
 		kapp.Run([]string{"delete", "-a", appName})
 	}
 
@@ -79,7 +79,7 @@ spec:
 	})
 
 	logger.Section("Installing test package", func() {
-		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--name", pkgiName, "--package-name", packageMetadataName, "--version", packageVersion}, RunOpts{})
+		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--package-install", pkgiName, "--package-name", packageMetadataName, "--version", packageVersion}, RunOpts{})
 		require.NoError(t, err)
 	})
 

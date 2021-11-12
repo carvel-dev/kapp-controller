@@ -41,13 +41,13 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 }
 
 func (o *ListOptions) Run() error {
-	tableTitle := fmt.Sprintf("Installed Packages in namespace '%s'", o.NamespaceFlags.Name)
+	tableTitle := fmt.Sprintf("Installed packages in namespace '%s'", o.NamespaceFlags.Name)
 	nsHeader := uitable.NewHeader("Namespace")
 	nsHeader.Hidden = true
 
 	if o.AllNamespaces {
 		o.NamespaceFlags.Name = ""
-		tableTitle = "Installed Packages in all namespaces"
+		tableTitle = "Installed packages in all namespaces"
 		nsHeader.Hidden = false
 	}
 
@@ -63,8 +63,7 @@ func (o *ListOptions) Run() error {
 	}
 
 	table := uitable.Table{
-		Title:   tableTitle,
-		Content: "PackageInstalls",
+		Title: tableTitle,
 
 		Header: []uitable.Header{
 			nsHeader,
