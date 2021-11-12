@@ -29,7 +29,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "repository",
 		Aliases: []string{"pkgr", "repo"},
-		Short:   "Repository",
+		Short:   "Package repositories",
 	}
 	return cmd
 }

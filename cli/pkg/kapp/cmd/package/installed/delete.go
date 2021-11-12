@@ -31,7 +31,7 @@ type DeleteOptions struct {
 	logger      logger.Logger
 
 	NamespaceFlags cmdcore.NamespaceFlags
-	Name    string
+	Name           string
 
 	pollInterval time.Duration
 	pollTimeout  time.Duration

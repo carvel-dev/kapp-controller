@@ -23,9 +23,9 @@ type GetOptions struct {
 	logger      logger.Logger
 
 	NamespaceFlags cmdcore.NamespaceFlags
-	Name    string
+	Name           string
 
-	valuesFile  string	
+	valuesFile string
 }
 
 func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *GetOptions {

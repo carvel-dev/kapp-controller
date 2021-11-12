@@ -137,8 +137,7 @@ func (o *ListOptions) listPackages() error {
 	}
 
 	table := uitable.Table{
-		Title:   tableTitle,
-		Content: "Package Versions Available",
+		Title: tableTitle,
 
 		Header: []uitable.Header{
 			nsHeader,
