@@ -39,7 +39,7 @@ spec:
 	pkgrName := "e2e-repo.test.carvel.dev"
 
 	logger.Section("deletion of nonexistent repository", func() {
-		_, err := kappCtrl.RunWithOpts([]string{"package", "repository", "get", "-r", pkgrName}, RunOpts{
+		_, err := kappCtrl.RunWithOpts([]string{"package", "repository", "delete", "-r", pkgrName}, RunOpts{
 			AllowError: true,
 		})
 		require.Error(t, err)
