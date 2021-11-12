@@ -51,31 +51,30 @@ func (o *GetOptions) Run() error {
 		return err
 	}
 
+	// TODO how to show imgpkg information?
+	repository, tag, _ := getCurrentRepositoryAndTagInUse(pkgr)
+
 	table := uitable.Table{
-		Title:     "Package repository",
 		Transpose: true,
 
 		Header: []uitable.Header{
 			uitable.NewHeader("Name"),
-			uitable.NewHeader("Version"),
 			uitable.NewHeader("Repository"),
 			uitable.NewHeader("Tag"),
-			uitable.NewHeader("Status"),
-			uitable.NewHeader("Reason"),
+			uitable.NewHeader("Description"),
+			uitable.NewHeader("Conditions"),
+			uitable.NewHeader("Useful error message"),
 		},
+
+		Rows: [][]uitable.Value{{
+			uitable.NewValueString(pkgr.Name),
+			uitable.NewValueString(repository),
+			uitable.NewValueString(tag),
+			uitable.NewValueInterface(pkgr.Status.FriendlyDescription),
+			uitable.NewValueInterface(pkgr.Status.Conditions),
+			uitable.NewValueString(pkgr.Status.UsefulErrorMessage),
+		}},
 	}
-
-	// TODO how to show imgpkg information?
-	repository, tag, _ := getCurrentRepositoryAndTagInUse(pkgr)
-
-	table.Rows = append(table.Rows, []uitable.Value{
-		uitable.NewValueString(pkgr.Name),
-		uitable.NewValueString(pkgr.ResourceVersion),
-		uitable.NewValueString(repository),
-		uitable.NewValueString(tag),
-		uitable.NewValueInterface(pkgr.Status.FriendlyDescription),
-		uitable.NewValueString(pkgr.Status.UsefulErrorMessage),
-	})
 
 	o.ui.PrintTable(table)
 

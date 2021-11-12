@@ -61,7 +61,6 @@ spec:
 	yaml := packageMetadata + "\n" + packageCR
 
 	cleanUp := func() {
-		// TODO: Check for error while uninstalling in cleanup?
 		kappCtrl.Run([]string{"package", "installed", "delete", "--name", pkgiName})
 		kapp.Run([]string{"delete", "-a", appName})
 	}
@@ -70,33 +69,28 @@ spec:
 	defer cleanUp()
 
 	logger.Section("Adding test package", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
-			StdinReader: strings.NewReader(yaml), AllowError: true,
+		kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
+			StdinReader: strings.NewReader(yaml),
 		})
-		require.NoError(t, err)
-	})
-
-	logger.Section("Installing test package", func() {
-		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--name", pkgiName, "--package-name", packageMetadataName, "--version", packageVersion}, RunOpts{})
-		require.NoError(t, err)
 	})
 
 	logger.Section("package installed get", func() {
+		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--name", pkgiName, "--package-name", packageMetadataName, "--version", packageVersion}, RunOpts{})
+		require.NoError(t, err)
+
 		out, err := kappCtrl.RunWithOpts([]string{"package", "installed", "get", "--name", pkgiName, "--json"}, RunOpts{})
 		require.NoError(t, err)
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
-		expectedOutputRows := []map[string]string{
-			{
-				"conditions":           "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
-				"name":                 "testpkgi",
-				"package_name":         "test-pkg.carvel.dev",
-				"package_version":      "1.0.0",
-				"status":               "Reconcile succeeded",
-				"useful_error_message": "",
-			},
-		}
+		expectedOutputRows := []map[string]string{{
+			"conditions":           "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
+			"name":                 "testpkgi",
+			"package_name":         "test-pkg.carvel.dev",
+			"package_version":      "1.0.0",
+			"description":          "Reconcile succeeded",
+			"useful_error_message": "",
+		}}
 
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})

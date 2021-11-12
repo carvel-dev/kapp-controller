@@ -63,8 +63,7 @@ func (o *ListOptions) Run() error {
 	}
 
 	table := uitable.Table{
-		Title:   tableTitle,
-		Content: "repositories",
+		Title: tableTitle,
 
 		Header: []uitable.Header{
 			nsHeader,

@@ -99,11 +99,11 @@ func (o *GetOptions) Run() error {
 
 		Header: []uitable.Header{
 			uitable.NewHeader("Name"),
-			uitable.NewHeader("Package Name"),
-			uitable.NewHeader("Package Version"),
-			uitable.NewHeader("Status"),
+			uitable.NewHeader("Package name"),
+			uitable.NewHeader("Package version"),
+			uitable.NewHeader("Description"),
 			uitable.NewHeader("Conditions"),
-			uitable.NewHeader("Useful Error Message"),
+			uitable.NewHeader("Useful error message"),
 		},
 
 		SortBy: []uitable.ColumnSort{
