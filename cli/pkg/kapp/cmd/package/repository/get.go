@@ -70,7 +70,7 @@ func (o *GetOptions) Run() error {
 			uitable.NewValueString(pkgr.Name),
 			uitable.NewValueString(repository),
 			uitable.NewValueString(tag),
-			uitable.NewValueInterface(pkgr.Status.FriendlyDescription),
+			uitable.NewValueString(pkgr.Status.FriendlyDescription),
 			uitable.NewValueInterface(pkgr.Status.Conditions),
 			uitable.NewValueString(pkgr.Status.UsefulErrorMessage),
 		}},
