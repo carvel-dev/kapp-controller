@@ -42,6 +42,13 @@ metadata:
 spec:
   refName: test-pkg.carvel.dev
   version: %s
+  valuesSchema:
+    openAPIv3:
+      properties:
+        app_port:
+          default: 80
+          description: App port
+          type: integer
   template:
     spec:
       fetch:
@@ -93,6 +100,23 @@ spec:
 			},
 		}
 
+		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
+	})
+
+	logger.Section("package available get value schema", func() {
+		out, err := kappCtrl.RunWithOpts([]string{"package", "available", "get", "-p", fmt.Sprintf("%s/%s", packageMetadataName, packageVersion), "--values-schema", "--json"}, RunOpts{})
+		require.NoError(t, err)
+
+		output := uitest.JSONUIFromBytes(t, []byte(out))
+
+		expectedOutputRows := []map[string]string{
+			{
+				"default":     "80",
+				"description": "App port",
+				"key":         "app_port",
+				"type":        "integer",
+			},
+		}
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
 }
