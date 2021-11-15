@@ -230,9 +230,8 @@ func (o *GetOptions) showValuesSchema(client pkgclient.Interface, pkgName, pkgVe
 		table.Rows = append(table.Rows, []uitable.Value{
 			uitable.NewValueString(v.Key),
 			uitable.NewValueInterface(v.Default),
-			// TODO switch to strings
-			uitable.NewValueInterface(v.Type),
-			uitable.NewValueInterface(v.Description),
+			uitable.NewValueString(v.Type),
+			uitable.NewValueString(v.Description),
 		})
 	}
 
