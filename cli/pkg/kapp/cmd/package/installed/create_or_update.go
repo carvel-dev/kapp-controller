@@ -139,6 +139,8 @@ func (o *CreateOrUpdateOptions) RunCreate() error {
 		}
 	}
 
+	o.CreatedAnnotations = NewCreatedResourceAnnotations(o.pkgiName, o.NamespaceFlags.Name)
+
 	// Fallback to update if resource exists
 	if pkgInstall != nil && err == nil {
 		o.ui.PrintLinef("Updating existing package install")
@@ -157,8 +159,6 @@ func (o *CreateOrUpdateOptions) RunCreate() error {
 	} else if _, err = client.CoreV1().Namespaces().Get(context.Background(), o.NamespaceFlags.Name, metav1.GetOptions{}); err != nil {
 		return err
 	}
-
-	o.CreatedAnnotations = NewCreatedResourceAnnotations(o.pkgiName, o.NamespaceFlags.Name)
 
 	err = o.create(client, kcClient)
 	if err != nil {
