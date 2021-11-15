@@ -35,7 +35,6 @@ type DeleteOptions struct {
 
 	pollInterval time.Duration
 	pollTimeout  time.Duration
-	wait         bool
 }
 
 func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeleteOptions {
@@ -53,7 +52,6 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 
 	cmd.Flags().DurationVar(&o.pollInterval, "poll-interval", 1*time.Second, "Time interval between consecutive polls while reconciling")
 	cmd.Flags().DurationVar(&o.pollTimeout, "poll-timeout", 1*time.Minute, "Timeout for the reconciliation process")
-	cmd.Flags().BoolVar(&o.wait, "wait", true, "Wait for reconcilation, default true")
 
 	return cmd
 }
@@ -95,11 +93,6 @@ func (o *DeleteOptions) Run() error {
 		context.Background(), o.Name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
-	}
-
-	// TODO dont think we can support no-wait for deletion since we have to clean up other resources
-	if !o.wait {
-		return nil
 	}
 
 	o.ui.PrintLinef("Waiting for deletion of package install '%s' from namespace '%s'", o.Name, o.NamespaceFlags.Name)
