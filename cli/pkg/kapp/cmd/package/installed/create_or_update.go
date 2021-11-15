@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"path/filepath"
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -25,6 +24,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+)
+
+const (
+	valuesFileKey = "values"
 )
 
 type CreateOrUpdateOptions struct {
@@ -377,8 +380,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateDataValuesSecret(client kubernetes
 
 	dataValues := make(map[string][]byte)
 
-	//TODO: Make filepath agnostic
-	dataValues[filepath.Base(o.valuesFile)], err = ioutil.ReadFile(o.valuesFile)
+	dataValues[valuesFileKey], err = ioutil.ReadFile(o.valuesFile)
 	if err != nil {
 		return false, fmt.Errorf("failed to read from data values file '%s': %s", o.valuesFile, err.Error())
 	}
@@ -560,8 +562,7 @@ func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interfa
 	dataValues := make(map[string][]byte)
 	secretName := o.CreatedAnnotations.SecretAnnValue()
 
-	//TODO: Make filename agnostic
-	if dataValues[filepath.Base(o.valuesFile)], err = ioutil.ReadFile(o.valuesFile); err != nil {
+	if dataValues[valuesFileKey], err = ioutil.ReadFile(o.valuesFile); err != nil {
 		return fmt.Errorf("failed to read from data values file '%s': %s", o.valuesFile, err.Error())
 	}
 	secret := &corev1.Secret{
