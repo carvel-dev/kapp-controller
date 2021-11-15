@@ -34,10 +34,6 @@ func parseRegistryImageURL(imgURL string) (string, string, error) {
 	repository := ref.Context().String()
 	tag := ref.Identifier()
 
-	// the parser function sets the tag to "latest" if not specified, however we want it to be empty
-	if tag == defaultRepositoryImageTag && !strings.HasSuffix(imgURL, ":"+defaultRepositoryImageTag) {
-		tag = ""
-	}
 	return repository, tag, nil
 }
 
@@ -51,10 +47,6 @@ func getCurrentRepositoryAndTagInUse(pkgr *kappipkg.PackageRepository) (reposito
 	repository, tag, err = parseRegistryImageURL(pkgr.Spec.Fetch.ImgpkgBundle.Image)
 	if err != nil {
 		return "", "", fmt.Errorf("Failed to parse OCI registry URL: %s", err.Error())
-	}
-
-	if tag == "" {
-		tag = defaultRepositoryImageTag
 	}
 
 	if pkgr.Spec.Fetch.ImgpkgBundle.TagSelection != nil && pkgr.Spec.Fetch.ImgpkgBundle.TagSelection.Semver != nil {
@@ -91,7 +83,8 @@ func updateExistingPackageRepository(pkgr *v1alpha1.PackageRepository,
 		return nil, fmt.Errorf("Parsing OCI registry URL: %s", err)
 	}
 
-	if tag == "" {
+	// the parser function sets the tag to "latest" even if not specified
+	if tag == defaultRepositoryImageTag && !strings.HasSuffix(url, ":"+defaultRepositoryImageTag) {
 		pkgr.Spec.Fetch.ImgpkgBundle.TagSelection = &versions.VersionSelection{
 			Semver: &versions.VersionSelectionSemver{},
 		}
