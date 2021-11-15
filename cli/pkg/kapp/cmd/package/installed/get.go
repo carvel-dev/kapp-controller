@@ -57,7 +57,6 @@ func (o *GetOptions) Run() error {
 		return err
 	}
 
-	//TODO: Verify and enhance how we export values file
 	if o.valuesFile != "" {
 		f, err := os.Create(o.valuesFile)
 		if err != nil {
@@ -71,22 +70,27 @@ func (o *GetOptions) Run() error {
 			return err
 		}
 
-		dataValue := ""
-		for _, value := range pkgi.Spec.Values {
-			if value.SecretRef == nil {
-				continue
-			}
-
-			_, err := coreClient.CoreV1().Secrets(o.NamespaceFlags.Name).Get(context.Background(), value.SecretRef.Name, metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-
-			//TODO: Add secret yaml to a buffer which can be written to a file
+		if len(pkgi.Spec.Values) != 1 {
+			return fmt.Errorf("Expected 1 values reference, found %s", len(pkgi.Spec.Values))
 		}
-		if _, err = fmt.Fprintf(w, "%s", dataValue); err != nil {
+
+		if pkgi.Spec.Values[0].SecretRef == nil {
+			return fmt.Errorf("Values do not reference a Secret")
+		}
+
+		secretName := pkgi.Spec.Values[0].SecretRef.Name
+		valuesSecret, err := coreClient.CoreV1().Secrets(o.NamespaceFlags.Name).Get(context.Background(), secretName, metav1.GetOptions{})
+		if err != nil {
 			return err
 		}
+
+		data, ok := valuesSecret.Data[valuesFileKey]
+		if !ok {
+			// TODO: Add hint saying that install was not created by this CLI
+			return fmt.Errorf("Expected to find %s key")
+		}
+
+		w.Write(data)
 		w.Flush()
 		return nil
 	}
