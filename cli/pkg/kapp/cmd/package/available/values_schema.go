@@ -21,8 +21,8 @@ import (
 //   DataValueProperty.Default = "fluent-bit"
 type DataValueProperty struct {
 	Key         string
-	Type        interface{}
-	Description interface{}
+	Type        string
+	Description string
 	Default     interface{}
 }
 
@@ -67,8 +67,8 @@ func (parser *PackageValuesSchemaParser) walkOnValueSchemaProperties(docMap map[
 	if properties, exist = docMap["properties"]; !exist && len(parser.fieldPath) > 0 {
 		parser.DataValueProperties = append(parser.DataValueProperties, DataValueProperty{
 			Key:         strings.Join(parser.fieldPath, "."),
-			Type:        docMap["type"],
-			Description: docMap["description"],
+			Type:        docMap["type"].(string),
+			Description: docMap["description"].(string),
 			Default:     docMap["default"],
 		})
 		return nil
@@ -97,8 +97,8 @@ func (parser *PackageValuesSchemaParser) walkOnValueSchemaProperties(docMap map[
 	if len(propertiesMap) == 0 {
 		parser.DataValueProperties = append(parser.DataValueProperties, DataValueProperty{
 			Key:         strings.Join(parser.fieldPath, "."),
-			Type:        docMap["type"],
-			Description: docMap["description"],
+			Type:        docMap["type"].(string),
+			Description: docMap["description"].(string),
 			Default:     docMap["default"],
 		})
 		return nil
