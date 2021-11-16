@@ -5,8 +5,8 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/core"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/logger"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 )
 
 type LoggerFlags struct {

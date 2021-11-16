@@ -12,8 +12,8 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/core"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/logger"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -71,7 +71,7 @@ func (o *GetOptions) Run() error {
 		}
 
 		if len(pkgi.Spec.Values) != 1 {
-			return fmt.Errorf("Expected 1 values reference, found %s", len(pkgi.Spec.Values))
+			return fmt.Errorf("Expected 1 values reference, found %d", len(pkgi.Spec.Values))
 		}
 
 		if pkgi.Spec.Values[0].SecretRef == nil {
@@ -87,7 +87,7 @@ func (o *GetOptions) Run() error {
 		data, ok := valuesSecret.Data[valuesFileKey]
 		if !ok {
 			// TODO: Add hint saying that install was not created by this CLI
-			return fmt.Errorf("Expected to find %s key")
+			return fmt.Errorf("Expected to find key")
 		}
 
 		w.Write(data)

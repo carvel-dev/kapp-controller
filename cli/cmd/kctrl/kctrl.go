@@ -10,7 +10,7 @@ import (
 
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
 	"github.com/cppforlife/go-cli-ui/ui"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd"
 
 	// Import to initialize client auth plugins.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -33,11 +33,11 @@ func nonExitingMain() error {
 	confUI := ui.NewConfUI(ui.NewNoopLogger())
 	defer confUI.Flush()
 
-	command := cmd.NewDefaultKappCmd(confUI)
+	command := cmd.NewDefaultKctrlCmd(confUI)
 
 	err := command.Execute()
 	if err != nil {
-		confUI.ErrorLinef("kapp: Error: %v", uierrs.NewMultiLineError(err))
+		confUI.ErrorLinef("kctrl: Error: %v", uierrs.NewMultiLineError(err))
 		return err
 	}
 

@@ -1,5 +1,5 @@
-/kapp
-/kapp-*
 /tmp
+/kctrl
+/kctrl-*
 
 .idea

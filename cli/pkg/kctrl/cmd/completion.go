@@ -15,36 +15,36 @@ import (
 
 func NewCmdCompletion() *cobra.Command {
 	example := `  # bash <= 3.2
-  source /dev/stdin <<< "$(kapp completion bash)"
+  source /dev/stdin <<< "$(kctrl completion bash)"
 
   # bash >= 4.0
-  source <(kapp completion bash)
+  source <(kctrl completion bash)
 
   # bash <= 3.2 on osx
   brew install bash-completion # ensure you have bash-completion 1.3+
-  kapp completion bash > $(brew --prefix)/etc/bash_completion.d/kapp
+  kctrl completion bash > $(brew --prefix)/etc/bash_completion.d/kctrl
 
   # bash >= 4.0 on osx
   brew install bash-completion@2
-  kapp completion bash > $(brew --prefix)/etc/bash_completion.d/kapp
+  kctrl completion bash > $(brew --prefix)/etc/bash_completion.d/kctrl
 
   # zsh
-  source <(kapp completion zsh)
+  source <(kctrl completion zsh)
 
   # zsh on osx / oh-my-zsh
-  kapp completion zsh > "${fpath[1]}/_kapp"
+  kctrl completion zsh > "${fpath[1]}/kctrl"
 
   # fish:
-  kapp completion fish | source
+  kctrl completion fish | source
 
   # To load completions for each session, execute once:
-  kapp completion fish > ~/.config/fish/completions/kapp.fish
+  kctrl completion fish > ~/.config/fish/completions/kctrl.fish
 
   # powershell:
-  kapp completion powershell | Out-String | Invoke-Expression
+  kctrl completion powershell | Out-String | Invoke-Expression
 
   # To load completions for every new session, run:
-  kapp completion powershell > kapp.ps1
+  kctrl completion powershell > kctrl.ps1
   # and source this file from your powershell profile.
 `
 

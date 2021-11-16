@@ -14,7 +14,7 @@ func TestPackageRepositoryDelete(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	kappCtrl := Kapp{t, env.Namespace, env.KappCtrlBinaryPath, logger}
+	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
 	kubectl := Kubectl{t, env.Namespace, logger}
 
 	appName := "test-package-repository-delete"

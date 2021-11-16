@@ -10,11 +10,11 @@ import (
 
 func TestVersion(t *testing.T) {
 	env := BuildEnv(t)
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
+	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, Logger{}}
 
-	out, _ := kapp.RunWithOpts([]string{"version"}, RunOpts{NoNamespace: true})
+	out, _ := kappCtrl.RunWithOpts([]string{"version"}, RunOpts{NoNamespace: true})
 
-	if !strings.Contains(out, "kapp version") {
+	if !strings.Contains(out, "kctrl version") {
 		t.Fatalf("Expected to find client version")
 	}
 }

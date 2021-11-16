@@ -12,7 +12,7 @@ import (
 func TestPackageRepositoryAddOrUpdate(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kappCtrl := Kapp{t, env.Namespace, env.KappCtrlBinaryPath, logger}
+	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
 	kubectl := Kubectl{t, env.Namespace, logger}
 
 	pkgrName := "test-package-repository"

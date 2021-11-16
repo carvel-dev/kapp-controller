@@ -114,7 +114,7 @@ func (f *ConfigFactoryImpl) clientConfig() (bool, clientcmd.ClientConfig, error)
 
 	if len(configYAML) > 0 {
 		envHostPort := net.JoinHostPort(os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT"))
-		configYAML = strings.ReplaceAll(configYAML, "${KAPP_KUBERNETES_SERVICE_HOST_PORT}", envHostPort)
+		configYAML = strings.ReplaceAll(configYAML, "${KCTRL_KUBERNETES_SERVICE_HOST_PORT}", envHostPort)
 		config, err := clientcmd.NewClientConfigFromBytes([]byte(configYAML))
 		return true, config, err
 	}
