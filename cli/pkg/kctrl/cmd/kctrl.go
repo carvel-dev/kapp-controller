@@ -66,9 +66,7 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 	cmd.SetOutput(uiBlockWriter{o.ui}) // setting output for cmd.Help()
 
 	cmd.SetUsageTemplate(cobrautil.HelpSectionsUsageTemplate([]cobrautil.HelpSection{
-		cmdcore.AppHelpGroup,
-		cmdcore.AppSupportHelpGroup,
-		cmdcore.MiscHelpGroup,
+		cmdcore.PackageHelpGroup,
 		cmdcore.RestOfCommandsHelpGroup,
 	}))
 

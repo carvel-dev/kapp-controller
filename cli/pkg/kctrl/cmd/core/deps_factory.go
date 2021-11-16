@@ -147,12 +147,3 @@ func (f *DepsFactoryImpl) summarizeNodes(config *rest.Config) string {
 		return fmt.Sprintf("%s, %d+", oldestNode.Name, len(nodes.Items)-1)
 	}
 }
-
-type uiWriter struct {
-	ui ui.UI
-}
-
-func (w uiWriter) Write(data []byte) (int, error) {
-	w.ui.BeginLinef("%s", data)
-	return len(data), nil
-}
