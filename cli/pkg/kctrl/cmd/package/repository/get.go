@@ -9,8 +9,8 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/core"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/logger"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

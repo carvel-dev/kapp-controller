@@ -15,7 +15,7 @@ func TestPackageInstalledCreate(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	kappCtrl := Kapp{t, env.Namespace, env.KappCtrlBinaryPath, logger}
+	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
 	kubectl := Kubectl{t, env.Namespace, logger}
 
 	appName := "test-package-name"
@@ -83,19 +83,19 @@ spec:
 		require.NoError(t, err)
 	})
 
-	svcAccountName := fmt.Sprintf("%s-kapp-test-sa", pkgiName)
+	svcAccountName := fmt.Sprintf("%s-%s-sa", pkgiName, env.Namespace)
 	logger.Section("Check for Service Account", func() {
 		_, err := kubectl.RunWithOpts([]string{"get", "sa", svcAccountName}, RunOpts{})
 		require.NoError(t, err)
 	})
 
-	clusterRoleName := fmt.Sprintf("%s-kapp-test-cluster-role", pkgiName)
+	clusterRoleName := fmt.Sprintf("%s-%s-cluster-role", pkgiName, env.Namespace)
 	logger.Section("Check for Cluster Role", func() {
 		_, err := kubectl.RunWithOpts([]string{"get", "clusterroles", clusterRoleName}, RunOpts{})
 		require.NoError(t, err)
 	})
 
-	clusterRoleBindingName := fmt.Sprintf("%s-kapp-test-cluster-rolebinding", pkgiName)
+	clusterRoleBindingName := fmt.Sprintf("%s-%s-cluster-rolebinding", pkgiName, env.Namespace)
 	logger.Section("Check for Cluster Role Binding", func() {
 		_, err := kubectl.RunWithOpts([]string{"get", "clusterrolebindings", clusterRoleBindingName}, RunOpts{})
 		require.NoError(t, err)

@@ -8,8 +8,8 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/core"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/version"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/version"
 )
 
 type VersionOptions struct {
@@ -30,7 +30,7 @@ func NewVersionCmd(o *VersionOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 }
 
 func (o *VersionOptions) Run() error {
-	o.ui.PrintBlock([]byte(fmt.Sprintf("kapp version %s\n", version.Version)))
+	o.ui.PrintBlock([]byte(fmt.Sprintf("kctrl version %s\n", version.Version)))
 
 	return nil
 }

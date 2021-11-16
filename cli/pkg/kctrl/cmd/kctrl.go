@@ -9,16 +9,16 @@ import (
 	"github.com/cppforlife/cobrautil"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/core"
-	cmdpkg "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/package"
-	pkgavail "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/package/available"
-	pkginst "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/package/installed"
-	pkgrepo "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/cmd/package/repository"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/logger"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kapp/version"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	cmdpkg "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package"
+	pkgavail "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/available"
+	pkginst "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
+	pkgrepo "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/version"
 )
 
-type KappOptions struct {
+type KctrlOptions struct {
 	ui            *ui.ConfUI
 	logger        *logger.UILogger
 	configFactory cmdcore.ConfigFactory
@@ -30,25 +30,25 @@ type KappOptions struct {
 	KubeconfigFlags cmdcore.KubeconfigFlags
 }
 
-func NewKappOptions(ui *ui.ConfUI, configFactory cmdcore.ConfigFactory,
-	depsFactory cmdcore.DepsFactory) *KappOptions {
+func NewKctrlOptions(ui *ui.ConfUI, configFactory cmdcore.ConfigFactory,
+	depsFactory cmdcore.DepsFactory) *KctrlOptions {
 
-	return &KappOptions{ui: ui, logger: logger.NewUILogger(ui),
+	return &KctrlOptions{ui: ui, logger: logger.NewUILogger(ui),
 		configFactory: configFactory, depsFactory: depsFactory}
 }
 
-func NewDefaultKappCmd(ui *ui.ConfUI) *cobra.Command {
+func NewDefaultKctrlCmd(ui *ui.ConfUI) *cobra.Command {
 	configFactory := cmdcore.NewConfigFactoryImpl()
 	depsFactory := cmdcore.NewDepsFactoryImpl(configFactory, ui)
-	options := NewKappOptions(ui, configFactory, depsFactory)
+	options := NewKctrlOptions(ui, configFactory, depsFactory)
 	flagsFactory := cmdcore.NewFlagsFactory(configFactory, depsFactory)
-	return NewKappCmd(options, flagsFactory)
+	return NewKctrlCmd(options, flagsFactory)
 }
 
-func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
+func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "kapp",
-		Short: "kapp helps to manage applications on your Kubernetes cluster",
+		Use:   "kctrl",
+		Short: "kctrl helps to manage packages and repositories on your Kubernetes cluster",
 
 		RunE: cobrautil.ShowHelp,
 
