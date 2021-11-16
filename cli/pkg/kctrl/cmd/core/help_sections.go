@@ -12,20 +12,10 @@ const (
 )
 
 var (
-	AppHelpGroup = cobrautil.HelpSection{
+	PackageHelpGroup = cobrautil.HelpSection{
 		Key:   cmdGroupKey,
-		Value: "app",
-		Title: "App Commands:",
-	}
-	AppSupportHelpGroup = cobrautil.HelpSection{
-		Key:   cmdGroupKey,
-		Value: "app-support",
-		Title: "App Support Commands:",
-	}
-	MiscHelpGroup = cobrautil.HelpSection{
-		Key:   cmdGroupKey,
-		Value: "misc",
-		Title: "Misc Commands:",
+		Value: "package",
+		Title: "Package Commands:",
 	}
 	RestOfCommandsHelpGroup = cobrautil.HelpSection{
 		Key:   cmdGroupKey,
