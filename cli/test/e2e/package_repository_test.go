@@ -104,9 +104,9 @@ func TestPackageRepository(t *testing.T) {
 		require.Error(t, err)
 
 		kubectl.Run([]string{"get", kind, pkgrName})
-		
+
 		kappCtrl.Run([]string{"package", "repository", "update", "-r", pkgrName, "--url", pkgrURL})
-		
+
 		out := kappCtrl.Run([]string{"package", "repository", "get", "-r", pkgrName, "--json"})
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
