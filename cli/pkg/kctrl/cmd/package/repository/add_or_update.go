@@ -225,39 +225,32 @@ func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *v1alpha1.Pack
 }
 
 func (o *AddOrUpdateOptions) waitForPackageRepositoryInstallation(client kcclient.Interface) error {
-	var (
-		status             kappctrl.GenericStatus
-		reconcileSucceeded bool
-	)
 	if err := wait.Poll(o.PollInterval, o.PollTimeout, func() (done bool, err error) {
-		resource, err := client.PackagingV1alpha1().PackageRepositories(
+		pkgr, err := client.PackagingV1alpha1().PackageRepositories(
 			o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
 
-		if resource.Generation != resource.Status.ObservedGeneration {
+		if pkgr.Generation != pkgr.Status.ObservedGeneration {
 			// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
 			return false, nil
 		}
-		status = resource.Status.GenericStatus
+
+		status := pkgr.Status.GenericStatus
 
 		for _, cond := range status.Conditions {
 			switch {
 			case cond.Type == kappctrl.ReconcileSucceeded && cond.Status == corev1.ConditionTrue:
-				reconcileSucceeded = true
 				return true, nil
 			case cond.Type == kappctrl.ReconcileFailed && cond.Status == corev1.ConditionTrue:
-				return false, fmt.Errorf("resource reconciliation failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+				return false, fmt.Errorf("PackageRepository reconciliation failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
 			}
 		}
 		return false, nil
 	}); err != nil {
-		return err
+		return fmt.Errorf("PackageRepository reconciliation failed: %s", err)
 	}
 
-	if !reconcileSucceeded {
-		return fmt.Errorf("PackageRepository reconciliation failed")
-	}
 	return nil
 }
