@@ -34,25 +34,17 @@ jobs:
           git clone --depth 1 https://github.com/aquasecurity/trivy
       - name: Run Trivy Reports
         run: |
-          # kapp-controller binary - sarif
-          trivy rootfs --ignore-unfixed --format template --template "@trivy/contrib/sarif.tpl" \
-            --output trivy-results-binary.sarif --severity "MEDIUM,HIGH,CRITICAL" \
-            "controller"
+          export TRIVY_IGNORE_UNFIXED=true
+          export TRIVY_SEVERITY="MEDIUM,HIGH,CRITICAL"
+          export TRIVY_TEMPLATE="@trivy/contrib/sarif.tpl"
 
-          # kapp-controller docker image - sarif
-          trivy image --ignore-unfixed --format template --template "@trivy/contrib/sarif.tpl" \
-            --output trivy-results-image.sarif --severity "MEDIUM,HIGH,CRITICAL" \
-            "docker.io/carvel/kapp-controller:${{ github.sha }}"
+          # kapp-controller binary - output in sarif and json
+          trivy rootfs --format template --output trivy-results-binary.sarif "controller"
+          trivy rootfs --format json --output trivy-results-binary.json "controller"
 
-          # kapp-controller docker image - json
-          trivy rootfs --ignore-unfixed --format json \
-            --output trivy-results-binary.json --severity "MEDIUM,HIGH,CRITICAL" \
-            "controller"
-
-          # kapp-controller docker image - json
-          trivy image --ignore-unfixed --format json \
-            --output trivy-results-image.json --severity "MEDIUM,HIGH,CRITICAL" \
-            "docker.io/carvel/kapp-controller:${{ github.sha }}"
+          # kapp-controller docker image - output in sarif and json
+          trivy image --format template --output trivy-results-image.sarif "docker.io/carvel/kapp-controller:${{ github.sha }}"
+          trivy image --format json --output trivy-results-image.json "docker.io/carvel/kapp-controller:${{ github.sha }}"
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v1
         with:
