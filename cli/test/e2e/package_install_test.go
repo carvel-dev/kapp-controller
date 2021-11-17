@@ -32,12 +32,12 @@ spec:
   displayName: "Carvel Test Package"
   shortDescription: "Carvel package for testing installation"`, packageMetadataName)
 
-	packageName := "test-pkg.carvel.dev.1.0.0"
+	packageName1 := "test-pkg.carvel.dev.1.0.0"
 	packageName2 := "test-pkg.carvel.dev.2.0.0"
-	packageVersion := "1.0.0"
+	packageVersion1 := "1.0.0"
 	packageVersion2 := "2.0.0"
 
-	packageCR1 := fmt.Sprintf(`---
+	packageCR := `---
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
@@ -59,31 +59,11 @@ spec:
           - "-"
           - ".imgpkg/images.yml"
       deploy:
-      - kapp: {}`, packageName, packageVersion)
+      - kapp: {}`
 
-	packageCR2 := fmt.Sprintf(`---
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
-metadata:
-  name: %s
-spec:
-  refName: test-pkg.carvel.dev
-  version: %s
-  template:
-    spec:
-      fetch:
-      - imgpkgBundle:
-          image: k8slt/kctrl-example-pkg:v1.0.0
-      template:
-      - ytt:
-          paths:
-          - config/
-      - kbld:
-          paths:
-          - "-"
-          - ".imgpkg/images.yml"
-      deploy:
-      - kapp: {}`, packageName2, packageVersion2)
+	packageCR1 := fmt.Sprintf(packageCR, packageName1, packageVersion1)
+
+	packageCR2 := fmt.Sprintf(packageCR, packageName2, packageVersion2)
 
 	yaml := packageMetadata + "\n" + packageCR1 + "\n" + packageCR2
 
@@ -98,6 +78,16 @@ spec:
 	cleanUp()
 	defer cleanUp()
 
+	logger.Section("package installed list with no package present", func() {
+		out, err := kappCtrl.RunWithOpts([]string{"package", "available", "list", "--json"}, RunOpts{})
+		require.NoError(t, err)
+
+		output := uitest.JSONUIFromBytes(t, []byte(out))
+
+		expectedOutputRows := []map[string]string{}
+		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
+	})
+
 	logger.Section("Adding test package", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
 			StdinReader: strings.NewReader(yaml), AllowError: true,
@@ -106,7 +96,7 @@ spec:
 	})
 
 	logger.Section("Installing test package", func() {
-		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--package-install", pkgiName, "--package-name", packageMetadataName, "--version", packageVersion}, RunOpts{})
+		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--package-install", pkgiName, "--package-name", packageMetadataName, "--version", packageVersion1}, RunOpts{})
 		require.NoError(t, err)
 	})
 
@@ -122,6 +112,21 @@ spec:
 		clusterRoleBindingName := fmt.Sprintf("%s-%s-cluster-rolebinding", pkgiName, env.Namespace)
 		_, err = kubectl.RunWithOpts([]string{"get", "clusterrolebindings", clusterRoleBindingName}, RunOpts{})
 		require.NoError(t, err)
+	})
+
+	logger.Section("package installed list with one package installed", func() {
+		out, err := kappCtrl.RunWithOpts([]string{"package", "installed", "list", "--json"}, RunOpts{})
+		require.NoError(t, err)
+
+		output := uitest.JSONUIFromBytes(t, []byte(out))
+
+		expectedOutputRows := []map[string]string{{
+			"name":            "testpkgi",
+			"package_name":    "test-pkg.carvel.dev",
+			"package_version": "1.0.0",
+			"status":          "Reconcile succeeded",
+		}}
+		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
 
 	logger.Section("package installed get", func() {
