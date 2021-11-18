@@ -50,7 +50,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	cmd := &cobra.Command{
 		Use:   "add",
 		Short: "Add a package repository",
-		RunE:  func(_ *cobra.Command, _ []string) error { return o.RunAdd() },
+		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
@@ -66,6 +66,9 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	cmd.Flags().DurationVarP(&o.PollInterval, "poll-interval", "", 1*time.Second, "Time interval between subsequent polls of package repository reconciliation status, optional")
 	cmd.Flags().DurationVarP(&o.PollTimeout, "poll-timeout", "", 5*time.Minute, "Timeout value for polls of package repository reconciliation status, optional")
 
+	// For `add` command create option will always be true
+	o.CreateRepository = true
+
 	return cmd
 }
 
@@ -73,7 +76,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 	cmd := &cobra.Command{
 		Use:   "update",
 		Short: "Update a package repository",
-		RunE:  func(_ *cobra.Command, _ []string) error { return o.RunUpdate() },
+		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
@@ -92,23 +95,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 	return cmd
 }
 
-func (o *AddOrUpdateOptions) RunAdd() error {
-	client, err := o.depsFactory.KappCtrlClient()
-	if err != nil {
-		return err
-	}
-
-	if o.CreateNamespace {
-		err := o.createNamespace()
-		if err != nil {
-			return err
-		}
-	}
-
-	return o.add(client)
-}
-
-func (o *AddOrUpdateOptions) RunUpdate() error {
+func (o *AddOrUpdateOptions) Run() error {
 	client, err := o.depsFactory.KappCtrlClient()
 	if err != nil {
 		return err
