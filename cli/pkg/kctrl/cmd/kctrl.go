@@ -70,43 +70,36 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 		cmdcore.RestOfCommandsHelpGroup,
 	}))
 
+	SetGlobalFlags(o, cmd, flagsFactory)
+
+	ConfigurePathResolvers(o, cmd, flagsFactory)
+
+	cmd.AddCommand(NewVersionCmd(NewVersionOptions(o.ui), flagsFactory))
+
+	pkgCmd := cmdpkg.NewCmd()
+	AddPackageCommands(o, pkgCmd, flagsFactory)
+
+	cmd.AddCommand(pkgCmd)
+
+	ConfigureGlobalFlags(o, cmd, flagsFactory)
+
+	return cmd
+}
+
+func SetGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
 	o.UIFlags.Set(cmd, flagsFactory)
 	o.LoggerFlags.Set(cmd, flagsFactory)
 	o.KubeAPIFlags.Set(cmd, flagsFactory)
 	o.KubeconfigFlags.Set(cmd, flagsFactory)
+}
 
+func ConfigurePathResolvers(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
 	o.configFactory.ConfigurePathResolver(o.KubeconfigFlags.Path.Value)
 	o.configFactory.ConfigureContextResolver(o.KubeconfigFlags.Context.Value)
 	o.configFactory.ConfigureYAMLResolver(o.KubeconfigFlags.YAML.Value)
+}
 
-	cmd.AddCommand(NewVersionCmd(NewVersionOptions(o.ui), flagsFactory))
-
-	pkgrepoCmd := pkgrepo.NewCmd()
-	pkgrepoCmd.AddCommand(pkgrepo.NewListCmd(pkgrepo.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	pkgrepoCmd.AddCommand(pkgrepo.NewGetCmd(pkgrepo.NewGetOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	pkgrepoCmd.AddCommand(pkgrepo.NewDeleteCmd(pkgrepo.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	pkgrepoCmd.AddCommand(pkgrepo.NewAddCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	pkgrepoCmd.AddCommand(pkgrepo.NewUpdateCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-
-	pkgiCmd := pkginst.NewCmd()
-	pkgiCmd.AddCommand(pkginst.NewListCmd(pkginst.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	pkgiCmd.AddCommand(pkginst.NewGetCmd(pkginst.NewGetOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	pkgiCmd.AddCommand(pkginst.NewCreateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	pkgiCmd.AddCommand(pkginst.NewUpdateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	pkgiCmd.AddCommand(pkginst.NewDeleteCmd(pkginst.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-
-	pkgaCmd := pkgavail.NewCmd()
-	pkgaCmd.AddCommand(pkgavail.NewListCmd(pkgavail.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	pkgaCmd.AddCommand(pkgavail.NewGetCmd(pkgavail.NewGetOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-
-	pkgCmd := cmdpkg.NewCmd()
-	pkgCmd.AddCommand(pkgrepoCmd)
-	pkgCmd.AddCommand(pkgiCmd)
-	pkgCmd.AddCommand(pkgaCmd)
-	pkgCmd.AddCommand(pkginst.NewInstallCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-
-	cmd.AddCommand(pkgCmd)
-
+func ConfigureGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
 	finishDebugLog := func(cmd *cobra.Command) {
 		origRunE := cmd.RunE
 		if origRunE != nil {
@@ -127,12 +120,31 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 	// Last one runs first
 	cobrautil.VisitCommands(cmd, finishDebugLog, cobrautil.ReconfigureCmdWithSubcmd,
 		cobrautil.ReconfigureLeafCmds(cobrautil.DisallowExtraArgs), configureGlobal, cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd))
+}
 
-	// Completion command have to be added after the VisitCommands
-	// This due to the ReconfigureLeafCmds that we do not want to have enforced for the completion
-	// This configurations forces all nodes to do not accept extra args, but the completion requires 1 extra arg
-	cmd.AddCommand(NewCmdCompletion())
-	return cmd
+func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
+	pkgrepoCmd := pkgrepo.NewCmd()
+	pkgrepoCmd.AddCommand(pkgrepo.NewListCmd(pkgrepo.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgrepo.NewGetCmd(pkgrepo.NewGetOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgrepo.NewDeleteCmd(pkgrepo.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgrepo.NewAddCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgrepo.NewUpdateCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+
+	pkgiCmd := pkginst.NewCmd()
+	pkgiCmd.AddCommand(pkginst.NewListCmd(pkginst.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewGetCmd(pkginst.NewGetOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewCreateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewUpdateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewDeleteCmd(pkginst.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+
+	pkgaCmd := pkgavail.NewCmd()
+	pkgaCmd.AddCommand(pkgavail.NewListCmd(pkgavail.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	pkgaCmd.AddCommand(pkgavail.NewGetCmd(pkgavail.NewGetOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+
+	cmd.AddCommand(pkgrepoCmd)
+	cmd.AddCommand(pkgiCmd)
+	cmd.AddCommand(pkgaCmd)
+	cmd.AddCommand(pkginst.NewInstallCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 }
 
 type uiBlockWriter struct {
