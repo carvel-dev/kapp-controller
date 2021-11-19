@@ -52,7 +52,7 @@ jobs:
         with:
           channel-id: C02MTA7F2G1
           slack-message: "Trivy scan workflow [${{steps.latest-sha.outputs.tag}}] failed. Please check the latest github action run for trivy scanner."
-  scan-all:
+  scan-develop-branch:
     runs-on: ubuntu-latest
     permissions:
       security-events: write
