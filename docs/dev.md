@@ -148,7 +148,7 @@ Some files to make note of when working on the release process:
 * [`./hack/build-release.sh`](../hack/build-release.sh)
   - build-release.sh uses kbld and ytt to build and push the kapp-controller image to ghcr.io 
    and also generates the kapp-controller release.yml
-* [`.github/workflows/release.yml`](../.github/workflows/release.yml)
+* [`.github/workflows/release.yml`](../.github/workflows/release-process.yml)
   - GitHub Action workflow for release process
 
 ### Packaging Development
