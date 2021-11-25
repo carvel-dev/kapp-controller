@@ -147,6 +147,22 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 	cmd.AddCommand(pkginst.NewInstallCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 }
 
+func AttachGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
+	SetGlobalFlags(o, cmd, flagsFactory)
+	ConfigurePathResolvers(o, cmd, flagsFactory)
+	ConfigureGlobalFlags(o, cmd, flagsFactory)
+}
+
+func AttachKctrlPackageCommandTree(cmd *cobra.Command, confUI *ui.ConfUI) {
+	configFactory := cmdcore.NewConfigFactoryImpl()
+	depsFactory := cmdcore.NewDepsFactoryImpl(configFactory, confUI)
+	options := NewKctrlOptions(confUI, configFactory, depsFactory)
+	flagsFactory := cmdcore.NewFlagsFactory(configFactory, depsFactory)
+
+	AddPackageCommands(options, cmd, flagsFactory)
+	AttachGlobalFlags(options, cmd, flagsFactory)
+}
+
 type uiBlockWriter struct {
 	ui ui.UI
 }
