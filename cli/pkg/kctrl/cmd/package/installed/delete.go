@@ -35,20 +35,25 @@ type DeleteOptions struct {
 
 	pollInterval time.Duration
 	pollTimeout  time.Duration
+
+	positionalNameArg bool
 }
 
-func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeleteOptions {
-	return &DeleteOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *DeleteOptions {
+	return &DeleteOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
 }
 
 func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete",
 		Short: "Uninstall installed package",
-		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
+
+	if !o.positionalNameArg {
+		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
+	}
 
 	cmd.Flags().DurationVar(&o.pollInterval, "poll-interval", 1*time.Second, "Time interval between consecutive polls while reconciling")
 	cmd.Flags().DurationVar(&o.pollTimeout, "poll-timeout", 1*time.Minute, "Timeout for the reconciliation process")
@@ -56,7 +61,11 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	return cmd
 }
 
-func (o *DeleteOptions) Run() error {
+func (o *DeleteOptions) Run(args []string) error {
+	if o.positionalNameArg {
+		o.Name = args[0]
+	}
+
 	o.ui.PrintLinef("Delete package install '%s' from namespace '%s'", o.Name, o.NamespaceFlags.Name)
 
 	err := o.ui.AskForConfirmation()

@@ -40,22 +40,27 @@ type AddOrUpdateOptions struct {
 	Wait         bool
 	PollInterval time.Duration
 	PollTimeout  time.Duration
+
+	positionalNameArg bool
 }
 
-func NewAddOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *AddOrUpdateOptions {
-	return &AddOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewAddOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *AddOrUpdateOptions {
+	return &AddOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
 }
 
 func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add",
 		Short: "Add a package repository",
-		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name")
+	if !o.positionalNameArg {
+		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name")
+	}
+
 	// TODO consider how to support other repository types
 	cmd.Flags().StringVar(&o.URL, "url", "", "OCI registry url for package repository bundle")
 	cmd.MarkFlagRequired("url")
@@ -76,12 +81,15 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 	cmd := &cobra.Command{
 		Use:   "update",
 		Short: "Update a package repository",
-		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name")
+	if !o.positionalNameArg {
+		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name")
+	}
+
 	cmd.Flags().StringVarP(&o.URL, "url", "", "", "OCI registry url for package repository bundle")
 	cmd.MarkFlagRequired("url")
 
@@ -95,7 +103,11 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 	return cmd
 }
 
-func (o *AddOrUpdateOptions) Run() error {
+func (o *AddOrUpdateOptions) Run(args []string) error {
+	if o.positionalNameArg {
+		o.Name = args[0]
+	}
+
 	client, err := o.depsFactory.KappCtrlClient()
 	if err != nil {
 		return err

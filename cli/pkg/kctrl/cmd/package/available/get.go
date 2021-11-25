@@ -29,10 +29,12 @@ type GetOptions struct {
 	Name           string
 
 	ValuesSchema bool
+
+	positionalNameArg bool
 }
 
-func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *GetOptions {
-	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *GetOptions {
+	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
 }
 
 func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -40,17 +42,24 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Use:     "get",
 		Aliases: []string{"g"},
 		Short:   "Get details for an available package or the openAPI schema of a package with a specific version",
-		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name")
+
+	if !o.positionalNameArg {
+		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name")
+	}
 
 	cmd.Flags().BoolVar(&o.ValuesSchema, "values-schema", false, "Values schema of the package (optional)")
 	return cmd
 }
 
-func (o *GetOptions) Run() error {
+func (o *GetOptions) Run(args []string) error {
 	var pkgName, pkgVersion string
+
+	if o.positionalNameArg {
+		o.Name = args[0]
+	}
 
 	pkgNameVersion := strings.Split(o.Name, "/")
 	if len(pkgNameVersion) == 2 {

@@ -28,10 +28,12 @@ type ListOptions struct {
 
 	Summary bool
 	Wide    bool
+
+	positionalNameArg bool
 }
 
-func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
-	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *ListOptions {
+	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -39,20 +41,26 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Use:     "list",
 		Aliases: []string{"l", "ls"},
 		Short:   "List available packages in a namespace",
-		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List available packages in all namespaces")
 
 	cmd.Flags().BoolVar(&o.Summary, "summary", true, "Show summarized list of packages")
-	cmd.Flags().StringVarP(&o.Name, "package", "p", "", "List all available versions of package")
+	if !o.positionalNameArg {
+		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "List all available versions of package")
+	}
 
 	cmd.Flags().BoolVar(&o.Wide, "wide", false, "Show additional info")
 
 	return cmd
 }
 
-func (o *ListOptions) Run() error {
+func (o *ListOptions) Run(args []string) error {
+	if o.positionalNameArg && len(args) > 0 {
+		o.Name = args[0]
+	}
+
 	if o.Summary && o.Name == "" {
 		return o.listPackageMetadatas()
 	}

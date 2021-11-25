@@ -28,28 +28,37 @@ type DeleteOptions struct {
 	Name           string
 
 	WaitFlags cmdcore.WaitFlags
+
+	positionalNameArg bool
 }
 
-func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeleteOptions {
-	return &DeleteOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *DeleteOptions {
+	return &DeleteOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
 }
 
 func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete",
 		Short: "Delete a package repository",
-		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name")
+
+	if !o.positionalNameArg {
+		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name")
+	}
 
 	o.WaitFlags.Set(cmd, flagsFactory)
 
 	return cmd
 }
 
-func (o *DeleteOptions) Run() error {
+func (o *DeleteOptions) Run(args []string) error {
+	if o.positionalNameArg {
+		o.Name = args[0]
+	}
+
 	client, err := o.depsFactory.KappCtrlClient()
 	if err != nil {
 		return err
