@@ -26,10 +26,12 @@ type GetOptions struct {
 	Name           string
 
 	valuesFile string
+
+	positionalNameArg bool
 }
 
-func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *GetOptions {
-	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *GetOptions {
+	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
 }
 
 func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -37,15 +39,23 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Use:     "get",
 		Aliases: []string{"g"},
 		Short:   "Get details for installed package",
-		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVar(&o.Name, "package-install", "i", "Set installed package name")
+
+	if !o.positionalNameArg {
+		cmd.Flags().StringVar(&o.Name, "package-install", "i", "Set installed package name")
+	}
+
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "File path for exporting configuration values file")
 	return cmd
 }
 
-func (o *GetOptions) Run() error {
+func (o *GetOptions) Run(args []string) error {
+	if o.positionalNameArg {
+		o.Name = args[0]
+	}
+
 	client, err := o.depsFactory.KappCtrlClient()
 	if err != nil {
 		return err

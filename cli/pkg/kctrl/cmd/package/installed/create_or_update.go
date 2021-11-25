@@ -39,7 +39,6 @@ type CreateOrUpdateOptions struct {
 	pollTimeout  time.Duration
 	wait         bool
 
-	pkgiName           string
 	packageName        string
 	version            string
 	valuesFile         string
@@ -48,22 +47,29 @@ type CreateOrUpdateOptions struct {
 
 	install bool
 
+	Name               string
 	NamespaceFlags     cmdcore.NamespaceFlags
 	CreatedAnnotations *CreatedResourceAnnotations
+
+	positionalNameArg bool
 }
 
-func NewCreateOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *CreateOrUpdateOptions {
-	return &CreateOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewCreateOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *CreateOrUpdateOptions {
+	return &CreateOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
 }
 
 func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Install package",
-		RunE:  func(_ *cobra.Command, _ []string) error { return o.RunCreate() },
+		RunE:  func(_ *cobra.Command, args []string) error { return o.RunCreate(args) },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.pkgiName, "package-install", "i", "", "Set installed package name")
+
+	if !o.positionalNameArg {
+		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
+	}
+
 	cmd.Flags().StringVar(&o.packageName, "package-name", "", "Set package name")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
@@ -81,10 +87,14 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 	cmd := &cobra.Command{
 		Use:   "install",
 		Short: "Install package",
-		RunE:  func(_ *cobra.Command, _ []string) error { return o.RunCreate() },
+		RunE:  func(_ *cobra.Command, args []string) error { return o.RunCreate(args) },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.pkgiName, "package-install", "i", "", "Set installed package name")
+
+	if !o.positionalNameArg {
+		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
+	}
+
 	cmd.Flags().StringVar(&o.packageName, "package-name", "", "Set package name")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
@@ -102,10 +112,14 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	cmd := &cobra.Command{
 		Use:   "update",
 		Short: "Update package",
-		RunE:  func(_ *cobra.Command, _ []string) error { return o.RunUpdate() },
+		RunE:  func(_ *cobra.Command, args []string) error { return o.RunUpdate(args) },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.pkgiName, "package-install", "i", "", "Set installed package name")
+
+	if !o.positionalNameArg {
+		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
+	}
+
 	cmd.Flags().StringVar(&o.packageName, "package-name", "", "Name of package install to be updated")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
@@ -120,7 +134,11 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	return cmd
 }
 
-func (o *CreateOrUpdateOptions) RunCreate() error {
+func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
+	if o.positionalNameArg {
+		o.Name = args[0]
+	}
+
 	client, err := o.depsFactory.CoreClient()
 	if err != nil {
 		return err
@@ -132,14 +150,14 @@ func (o *CreateOrUpdateOptions) RunCreate() error {
 	}
 
 	pkgInstall, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
-		context.Background(), o.pkgiName, metav1.GetOptions{})
+		context.Background(), o.Name, metav1.GetOptions{})
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
 	}
 
-	o.CreatedAnnotations = NewCreatedResourceAnnotations(o.pkgiName, o.NamespaceFlags.Name)
+	o.CreatedAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
 
 	// Fallback to update if resource exists
 	if pkgInstall != nil && err == nil {
@@ -180,7 +198,7 @@ func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient ver
 	}
 
 	if o.wait {
-		if err = o.waitForResourceInstallation(o.pkgiName, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, o.ui, kcClient); err != nil {
+		if err = o.waitForResourceInstallation(o.Name, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, o.ui, kcClient); err != nil {
 			return err
 		}
 	}
@@ -188,7 +206,11 @@ func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient ver
 	return nil
 }
 
-func (o *CreateOrUpdateOptions) RunUpdate() error {
+func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
+	if o.positionalNameArg {
+		o.Name = args[0]
+	}
+
 	client, err := o.depsFactory.CoreClient()
 	if err != nil {
 		return err
@@ -199,11 +221,11 @@ func (o *CreateOrUpdateOptions) RunUpdate() error {
 		return err
 	}
 
-	o.CreatedAnnotations = NewCreatedResourceAnnotations(o.pkgiName, o.NamespaceFlags.Name)
+	o.CreatedAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
 
-	o.ui.PrintLinef("Getting package install for '%s'", o.pkgiName)
+	o.ui.PrintLinef("Getting package install for '%s'", o.Name)
 	pkgInstall, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
-		context.Background(), o.pkgiName, metav1.GetOptions{},
+		context.Background(), o.Name, metav1.GetOptions{},
 	)
 	if err != nil {
 		if !errors.IsNotFound(err) {
@@ -212,7 +234,7 @@ func (o *CreateOrUpdateOptions) RunUpdate() error {
 		if !o.install {
 			return fmt.Errorf("Package not installed")
 		}
-		o.ui.PrintLinef("Installing package '%s'", o.pkgiName)
+		o.ui.PrintLinef("Installing package '%s'", o.Name)
 
 		err = o.create(client, kcClient)
 		if err != nil {
@@ -245,18 +267,18 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient vers
 		return err
 	}
 
-	o.ui.PrintLinef("Updating package install for '%s'", o.pkgiName)
+	o.ui.PrintLinef("Updating package install for '%s'", o.Name)
 	o.addCreatedResourceAnnotations(&pkgInstall.ObjectMeta, false, isSecretCreated)
 	_, err = kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Update(
 		context.Background(), updatedPkgInstall, metav1.UpdateOptions{},
 	)
 	if err != nil {
-		err = fmt.Errorf("failed to update package '%s': %s", o.pkgiName, err.Error())
+		err = fmt.Errorf("failed to update package '%s': %s", o.Name, err.Error())
 		return err
 	}
 
 	if o.wait {
-		if err = o.waitForResourceInstallation(o.pkgiName, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, o.ui, kcClient); err != nil {
+		if err = o.waitForResourceInstallation(o.Name, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, o.ui, kcClient); err != nil {
 			return err
 		}
 	}
@@ -431,7 +453,7 @@ func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secr
 
 	// construct the PackageInstall CR
 	packageInstall := &kcpkgv1alpha1.PackageInstall{
-		ObjectMeta: metav1.ObjectMeta{Name: o.pkgiName, Namespace: o.NamespaceFlags.Name},
+		ObjectMeta: metav1.ObjectMeta{Name: o.Name, Namespace: o.NamespaceFlags.Name},
 		Spec: kcpkgv1alpha1.PackageInstallSpec{
 			ServiceAccountName: svcAccount,
 			PackageRef: &kcpkgv1alpha1.PackageRef{
@@ -498,7 +520,7 @@ func (o *CreateOrUpdateOptions) preparePackageInstallForUpdate(pkgInstall *kcpkg
 	updatedPkgInstall := pkgInstall.DeepCopy()
 
 	if updatedPkgInstall.Spec.PackageRef == nil || updatedPkgInstall.Spec.PackageRef.VersionSelection == nil {
-		err = fmt.Errorf("failed to update package '%s' as no existing package reference/version was found in the package install", o.pkgiName)
+		err = fmt.Errorf("failed to update package '%s' as no existing package reference/version was found in the package install", o.Name)
 		return nil, false, err
 	}
 
@@ -506,7 +528,7 @@ func (o *CreateOrUpdateOptions) preparePackageInstallForUpdate(pkgInstall *kcpkg
 	// This will prevent the users from accidentally overwriting an installed package with another package content due to choosing a pre-existing name for the package isntall.
 	// Otherwise if o.PackageName is not provided, fill it from the installed package spec
 	if o.packageName != "" && updatedPkgInstall.Spec.PackageRef.RefName != o.packageName {
-		err = fmt.Errorf("installed package '%s' is already associated with package '%s'", o.pkgiName, updatedPkgInstall.Spec.PackageRef.RefName)
+		err = fmt.Errorf("installed package '%s' is already associated with package '%s'", o.Name, updatedPkgInstall.Spec.PackageRef.RefName)
 		return nil, false, err
 	}
 	o.packageName = updatedPkgInstall.Spec.PackageRef.RefName
