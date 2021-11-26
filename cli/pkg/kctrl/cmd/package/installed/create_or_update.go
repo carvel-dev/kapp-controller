@@ -319,7 +319,7 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 			err = fmt.Errorf("failed to find service account '%s' in namespace '%s': %s", o.serviceAccountName, o.NamespaceFlags.Name, err.Error())
 			return isServiceAccountCreated, isSecretCreated, err
 		}
-		if svcAccountAnnotation, ok := svcAccount.GetAnnotations()[KappPkgAnnotation]; ok {
+		if svcAccountAnnotation, ok := svcAccount.GetAnnotations()[KctrlPkgAnnotation]; ok {
 			if svcAccountAnnotation != o.CreatedAnnotations.PackageAnnValue() {
 				err = fmt.Errorf("provided service account '%s' is already used by another package in namespace '%s': %s", o.serviceAccountName, o.NamespaceFlags.Name, err.Error())
 				return isServiceAccountCreated, isSecretCreated, err
@@ -341,7 +341,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateClusterAdminRole(client kubernetes
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        o.CreatedAnnotations.ClusterRoleAnnValue(),
-			Annotations: map[string]string{KappPkgAnnotation: o.CreatedAnnotations.PackageAnnValue()},
+			Annotations: map[string]string{KctrlPkgAnnotation: o.CreatedAnnotations.PackageAnnValue()},
 		},
 		Rules: []rbacv1.PolicyRule{
 			{APIGroups: []string{"*"}, Verbs: []string{"*"}, Resources: []string{"*"}},
@@ -372,7 +372,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateClusterRoleBinding(client kubernet
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        o.CreatedAnnotations.ClusterRoleBindingAnnValue(),
-			Annotations: map[string]string{KappPkgAnnotation: o.CreatedAnnotations.PackageAnnValue()},
+			Annotations: map[string]string{KctrlPkgAnnotation: o.CreatedAnnotations.PackageAnnValue()},
 		},
 		Subjects: []rbacv1.Subject{{Kind: KindServiceAccount.AsString(), Name: svcAccount, Namespace: o.NamespaceFlags.Name}},
 		RoleRef: rbacv1.RoleRef{
@@ -410,7 +410,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateDataValuesSecret(client kubernetes
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        o.CreatedAnnotations.SecretAnnValue(),
 			Namespace:   o.NamespaceFlags.Name,
-			Annotations: map[string]string{KappPkgAnnotation: o.CreatedAnnotations.PackageAnnValue()},
+			Annotations: map[string]string{KctrlPkgAnnotation: o.CreatedAnnotations.PackageAnnValue()},
 		},
 		Data: dataValues,
 	}
@@ -492,7 +492,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateServiceAccount(client kubernetes.I
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        o.CreatedAnnotations.ServiceAccountAnnValue(),
 			Namespace:   o.NamespaceFlags.Name,
-			Annotations: map[string]string{KappPkgAnnotation: o.CreatedAnnotations.PackageAnnValue()},
+			Annotations: map[string]string{KctrlPkgAnnotation: o.CreatedAnnotations.PackageAnnValue()},
 		},
 	}
 
@@ -559,7 +559,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *k
 
 	secretName := o.CreatedAnnotations.SecretAnnValue()
 
-	if secretName == pkgInstallToUpdate.GetAnnotations()[KappPkgAnnotation+"-"+KindSecret.AsString()] {
+	if secretName == pkgInstallToUpdate.GetAnnotations()[KctrlPkgAnnotation+"-"+KindSecret.AsString()] {
 		o.ui.PrintLinef("Updating secret '%s'", secretName)
 		if err = o.updateDataValuesSecret(client); err != nil {
 			err = fmt.Errorf("failed to update secret based on values file: %s", err.Error())
@@ -604,12 +604,12 @@ func (o *CreateOrUpdateOptions) addCreatedResourceAnnotations(meta *metav1.Objec
 		meta.Annotations = make(map[string]string)
 	}
 	if createdSvcAccount {
-		meta.Annotations[KappPkgAnnotation+"-"+KindClusterRole.AsString()] = o.CreatedAnnotations.ClusterRoleAnnValue()
-		meta.Annotations[KappPkgAnnotation+"-"+KindClusterRoleBinding.AsString()] = o.CreatedAnnotations.ClusterRoleBindingAnnValue()
-		meta.Annotations[KappPkgAnnotation+"-"+KindServiceAccount.AsString()] = o.CreatedAnnotations.ServiceAccountAnnValue()
+		meta.Annotations[KctrlPkgAnnotation+"-"+KindClusterRole.AsString()] = o.CreatedAnnotations.ClusterRoleAnnValue()
+		meta.Annotations[KctrlPkgAnnotation+"-"+KindClusterRoleBinding.AsString()] = o.CreatedAnnotations.ClusterRoleBindingAnnValue()
+		meta.Annotations[KctrlPkgAnnotation+"-"+KindServiceAccount.AsString()] = o.CreatedAnnotations.ServiceAccountAnnValue()
 	}
 	if createdSecret {
-		meta.Annotations[KappPkgAnnotation+"-"+KindSecret.AsString()] = o.CreatedAnnotations.SecretAnnValue()
+		meta.Annotations[KctrlPkgAnnotation+"-"+KindSecret.AsString()] = o.CreatedAnnotations.SecretAnnValue()
 	}
 }
 
