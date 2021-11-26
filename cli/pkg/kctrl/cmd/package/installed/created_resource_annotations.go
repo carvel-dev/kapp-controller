@@ -7,12 +7,12 @@ import "fmt"
 
 const (
 	// For use with packages created using kapp-ctrl-cli
-	KappPkgAnnotation       = "packaging.carvel.dev/package"
-	KappPkgAnnotationPrefix = "package"
+	// KappPkgAnnotation       = "packaging.carvel.dev/package"
+	// KappPkgAnnotationPrefix = "package"
 
 	// For use with packages created with Tanzu CLI
-	// KappPkgAnnotation       = "tkg.tanzu.vmware.com/tanzu-package"
-	// KappPkgAnnotationPrefix = "tanzu-package"
+	KctrlPkgAnnotation       = "tkg.tanzu.vmware.com/tanzu-package"
+	KctrlPkgAnnotationPrefix = "tanzu-package"
 
 	ClusterRoleBindingName = "%s-%s-cluster-rolebinding"
 	ClusterRoleName        = "%s-%s-cluster-role"
@@ -25,10 +25,10 @@ type CreatedResourceAnnotations struct {
 	namespace string
 }
 
-func NewCreatedResourceAnnotations(name string, namepsace string) *CreatedResourceAnnotations {
+func NewCreatedResourceAnnotations(name string, namespace string) *CreatedResourceAnnotations {
 	return &CreatedResourceAnnotations{
 		name:      name,
-		namespace: namepsace,
+		namespace: namespace,
 	}
 }
 

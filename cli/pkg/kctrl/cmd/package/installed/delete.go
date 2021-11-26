@@ -122,7 +122,7 @@ func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.
 			continue
 		}
 
-		resourceKind := CreatedResourceKind(strings.TrimPrefix(split[1], KappPkgAnnotationPrefix+"-"))
+		resourceKind := CreatedResourceKind(strings.TrimPrefix(split[1], KctrlPkgAnnotationPrefix+"-"))
 
 		var apiGroup, version, namespace string
 		if resourceKind == KindClusterRole || resourceKind == KindClusterRoleBinding {
@@ -206,7 +206,7 @@ func (o *DeleteOptions) deleteIfExistsAndOwned(groupVersionResource schema.Group
 	annotations := resource.GetAnnotations()
 	pkgiIdentifier := fmt.Sprintf("%s-%s", o.Name, o.NamespaceFlags.Name)
 
-	val, found := annotations[KappPkgAnnotation]
+	val, found := annotations[KctrlPkgAnnotation]
 	if !found || val != pkgiIdentifier {
 		// Do not delete if the resource is not owned by the package, but no need to error out
 		return nil
