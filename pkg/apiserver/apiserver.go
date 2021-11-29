@@ -125,7 +125,7 @@ func (as *APIServer) Run() error {
 		}
 		time.Sleep(1 * time.Second)
 	}
-	return fmt.Errorf("timed out after %s waiting for api server to become healthy", retries*time.Second)
+	return fmt.Errorf("timed out after %s waiting for api server to become healthy. Check the status by running `kubectl get apiservices v1alpha1.data.packaging.carvel.dev -o yaml`", retries*time.Second)
 }
 
 func (as *APIServer) Stop() {
