@@ -80,6 +80,5 @@ COPY --from=0 /usr/local/bin/kapp .
 # Name it kapp-controller to identify it easier in process tree
 COPY --from=0 /go/src/github.com/vmware-tanzu/carvel-kapp-controller/controller kapp-controller
 
-
 ENV PATH="/:${PATH}"
 ENTRYPOINT ["/kapp-controller"]
