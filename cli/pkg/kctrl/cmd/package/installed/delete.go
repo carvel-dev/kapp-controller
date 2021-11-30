@@ -116,13 +116,21 @@ func (o *DeleteOptions) Run(args []string) error {
 
 // deletePkgPluginCreatedResources deletes the associated resources which were installed upon installation of the PackageInstall CR
 func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.PackageInstall, dynamicClient dynamic.Interface) error {
+	deletedResources := map[CreatedResourceKind]bool{}
 	for k, resourceName := range pkgInstall.GetAnnotations() {
 		split := strings.Split(k, "/")
 		if len(split) <= 1 {
 			continue
 		}
 
-		resourceKind := CreatedResourceKind(strings.TrimPrefix(split[1], KctrlPkgAnnotationPrefix+"-"))
+		resourceKind := CreatedResourceKind(strings.TrimPrefix(split[1], KctrlPkgAnnotationPrefix))
+
+		// To support older versions of Tanzu CLI. To be deprecated
+		resourceKind = CreatedResourceKind(strings.TrimPrefix(resourceKind.AsString(), TanzuPkgAnnotationPrefix))
+		if deletedResources[resourceKind] {
+			continue
+		}
+		deletedResources[resourceKind] = true
 
 		var apiGroup, version, namespace string
 		if resourceKind == KindClusterRole || resourceKind == KindClusterRoleBinding {
@@ -209,7 +217,12 @@ func (o *DeleteOptions) deleteIfExistsAndOwned(groupVersionResource schema.Group
 	val, found := annotations[KctrlPkgAnnotation]
 	if !found || val != pkgiIdentifier {
 		// Do not delete if the resource is not owned by the package, but no need to error out
-		return nil
+
+		// To support older version of Tanzu CLI. To be deprecated
+		val, found = annotations[TanzuPkgAnnotation]
+		if !found || val != pkgiIdentifier {
+			return nil
+		}
 	}
 
 	o.ui.PrintLinef("Deleting '%s': %s", groupVersionResource.Resource, name)

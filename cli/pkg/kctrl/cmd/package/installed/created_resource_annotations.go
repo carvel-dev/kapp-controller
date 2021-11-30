@@ -7,12 +7,12 @@ import "fmt"
 
 const (
 	// For use with packages created using kapp-ctrl-cli
-	// KappPkgAnnotation       = "packaging.carvel.dev/package"
-	// KappPkgAnnotationPrefix = "package"
+	KctrlPkgAnnotation       = "packaging.carvel.dev/package"
+	KctrlPkgAnnotationPrefix = "package-"
 
-	// For use with packages created with Tanzu CLI
-	KctrlPkgAnnotation       = "tkg.tanzu.vmware.com/tanzu-package"
-	KctrlPkgAnnotationPrefix = "tanzu-package"
+	// For use with packages created with Tanzu CLI. To be deprecated
+	TanzuPkgAnnotation       = "tkg.tanzu.vmware.com/tanzu-package"
+	TanzuPkgAnnotationPrefix = "tanzu-package-"
 
 	ClusterRoleBindingName = "%s-%s-cluster-rolebinding"
 	ClusterRoleName        = "%s-%s-cluster-role"
