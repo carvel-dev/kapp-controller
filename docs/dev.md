@@ -32,11 +32,22 @@ eval $(minikube docker-env)
 ./hack/deploy.sh
 ```
 
+*Note:* for rapid iteration while developing, you can run the script
+`./hack/dev-deploy` which is much faster (0.5 minutes vs. 4+ minutes), but it
+requires that you have previously run the full deploy at least once to set
+things up.
+
 #### Non-minikube environment
 
 1. Change the [push_images property](https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/config/values.yml#L10) to true
 2. Change the [image_repo property](https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/config/values.yml#L12) to the location to push the kapp-controller image
 3. Run `./hack/deploy.sh`
+
+*Note:* As above, while iterating you may prefer to run
+`./hack/dev-deploy` which is much faster (0.5 minutes vs. 4+ minutes), but it
+requires that you have previously run the full deploy at least once to set
+things up. Additionally you may need to make changes directly to the overlay in
+config-dev-deploy/build.yml.
 
 #### secretgen-controller for private auth workflows
 
