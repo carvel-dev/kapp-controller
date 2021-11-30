@@ -139,6 +139,11 @@ func (t *Ytt) addInlinePaths(args []string) ([]string, *memdir.TmpDir, error) {
 
 	inline := t.fetchFactory.NewInline(*t.opts.Inline, t.genericOpts.Namespace)
 
+	// TODO / question:should we be creating the path at this point rather than doing the o.stat and conditional create one layer deeper?
+	// TODO / question: does this suffice to get the path cleaned up later? is this important? do we need to do something else to get the path cleaned up later?
+	//        e.g. t.opts.Inline.PathsFrom ,  but then it diverges based on secret/configmap  and so that seemed weird?
+	t.opts.Paths = append(t.opts.Paths, inlineDir.Path())
+
 	err = inline.Retrieve(inlineDir.Path())
 	if err != nil {
 		return nil, inlineDir, err
