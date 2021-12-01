@@ -97,15 +97,12 @@ func (t *Inline) writeFile(dstPath, subPath string, content []byte) error {
 		return err
 	}
 
-	_, err = os.Stat(filepath.Dir(newPath))
-	if os.IsNotExist(err) {
-		_, err = os.Create(filepath.Dir(newPath))
-		if err != nil {
-			return fmt.Errorf("Creating directory for inline file '%s': %s", filepath.Dir(newPath), err)
-		}
+	err = os.MkdirAll(filepath.Dir(newPath), 0700)
+	if err != nil {
+		return fmt.Errorf("Creating directory '%s' for inline file: %s", filepath.Dir(newPath), err)
 	}
 
-	err = ioutil.WriteFile(filepath.Dir(newPath), content, 0777)
+	err = ioutil.WriteFile(newPath, content, 0600)
 	if err != nil {
 		return fmt.Errorf("Writing inline file '%s': %s", newPath, err)
 	}
