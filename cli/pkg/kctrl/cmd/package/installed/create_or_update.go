@@ -198,7 +198,7 @@ func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient ver
 	}
 
 	if o.wait {
-		if err = o.waitForResourceInstallation(o.Name, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, o.ui, kcClient); err != nil {
+		if err = o.waitForResourceInstallation(o.Name, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, kcClient); err != nil {
 			return err
 		}
 	}
@@ -278,7 +278,7 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient vers
 	}
 
 	if o.wait {
-		if err = o.waitForResourceInstallation(o.Name, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, o.ui, kcClient); err != nil {
+		if err = o.waitForResourceInstallation(o.Name, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, kcClient); err != nil {
 			return err
 		}
 	}
@@ -644,12 +644,12 @@ func (o *CreateOrUpdateOptions) addCreatedResourceAnnotations(meta *metav1.Objec
 }
 
 // waitForResourceInstallation waits until the package get installed successfully or a failure happen
-func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace string, pollInterval, pollTimeout time.Duration, ui ui.UI, client kcclient.Interface) error {
+func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace string, pollInterval, pollTimeout time.Duration, client kcclient.Interface) error {
 	var (
 		status             kcv1alpha1.GenericStatus
 		reconcileSucceeded bool
 	)
-	ui.PrintLinef("Waiting for PackageInstall reconciliation for '%s'", name)
+	o.ui.PrintLinef("Waiting for PackageInstall reconciliation for '%s'", name)
 	err := wait.Poll(pollInterval, pollTimeout, func() (done bool, err error) {
 
 		resource, err := client.PackagingV1alpha1().PackageInstalls(namespace).Get(context.Background(), name, metav1.GetOptions{})
@@ -664,11 +664,11 @@ func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace stri
 		status = resource.Status.GenericStatus
 
 		for _, condition := range status.Conditions {
-			ui.PrintLinef("PackageInstall resource install status: %s", condition.Type)
+			o.ui.BeginLinef("PackageInstall resource install status: %s\n", condition.Type)
 
 			switch {
 			case condition.Type == kcv1alpha1.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
-				ui.PrintLinef("PackageInstall resource successfully reconciled")
+				o.ui.PrintLinef("PackageInstall resource successfully reconciled")
 				reconcileSucceeded = true
 				return true, nil
 			case condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue:

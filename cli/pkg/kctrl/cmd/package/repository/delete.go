@@ -102,8 +102,9 @@ func (o *DeleteOptions) waitForDeletion(client versioned.Interface) error {
 		// Should wait for generation to be observed before checking
 		// the reconciliation status so that we know we are checking the new spec
 		if pkgr.Generation == pkgr.Status.ObservedGeneration {
-			for _, cond := range pkgr.Status.Conditions {
-				if cond.Type == v1alpha1.DeleteFailed && cond.Status == corev1.ConditionTrue {
+			for _, condition := range pkgr.Status.Conditions {
+				o.ui.BeginLinef("'PackageRepository' resource deletion status: %s\n", condition.Type)
+				if condition.Type == v1alpha1.DeleteFailed && condition.Status == corev1.ConditionTrue {
 					return fmt.Errorf("Deletion failed: %s", pkgr.Status.UsefulErrorMessage)
 				}
 			}
