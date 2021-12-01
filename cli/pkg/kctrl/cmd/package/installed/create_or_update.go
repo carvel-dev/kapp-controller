@@ -70,7 +70,7 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
 	}
 
-	cmd.Flags().StringVar(&o.packageName, "package-name", "", "Set package name")
+	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().BoolVar(&o.createNewNamespace, "create-namespace", false, "Create namespace if the target namespace does not exist, optional")
@@ -95,7 +95,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
 	}
 
-	cmd.Flags().StringVar(&o.packageName, "package-name", "", "Set package name")
+	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().BoolVar(&o.createNewNamespace, "create-namespace", false, "Create namespace if the target namespace does not exist, optional")
@@ -120,7 +120,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
 	}
 
-	cmd.Flags().StringVar(&o.packageName, "package-name", "", "Name of package install to be updated")
+	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Name of package install to be updated")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().BoolVar(&o.createNewNamespace, "create-namespace", false, "Create namespace if the target namespace does not exist, optional")
