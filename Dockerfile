@@ -62,9 +62,6 @@ RUN groupadd -g 2000 kapp-controller && useradd -r -u 1000 --create-home -g kapp
 RUN chmod g+w /etc/pki/tls/certs/ca-bundle.crt && chgrp kapp-controller /etc/pki/tls/certs/ca-bundle.crt
 USER kapp-controller
 
-# Name it kapp-controller to identify it easier in process tree
-COPY --from=0 /go/src/github.com/vmware-tanzu/carvel-kapp-controller/controller kapp-controller
-
 # fetchers
 COPY --from=0 /helm-v2-unpacked/linux-amd64/helm helmv2
 COPY --from=0 /helm-unpacked/linux-amd64/helm .
@@ -79,6 +76,9 @@ COPY --from=0 /usr/local/bin/age .
 
 # deployers
 COPY --from=0 /usr/local/bin/kapp .
+
+# Name it kapp-controller to identify it easier in process tree
+COPY --from=0 /go/src/github.com/vmware-tanzu/carvel-kapp-controller/controller kapp-controller
 
 ENV PATH="/:${PATH}"
 ENTRYPOINT ["/kapp-controller"]
