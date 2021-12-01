@@ -96,7 +96,7 @@ spec:
 	})
 
 	logger.Section("Installing test package", func() {
-		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--package-install", pkgiName, "--package-name", packageMetadataName, "--version", packageVersion1}, RunOpts{})
+		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--package-install", pkgiName, "-p", packageMetadataName, "--version", packageVersion1}, RunOpts{})
 		require.NoError(t, err)
 	})
 
@@ -154,7 +154,7 @@ spec:
 		_, err := kappCtrl.RunWithOpts([]string{
 			"package", "installed", "update",
 			"--package-install", pkgiName,
-			"--package-name", packageMetadataName,
+			"-p", packageMetadataName,
 			"--version", packageVersion2,
 		}, RunOpts{})
 		require.NoError(t, err)
