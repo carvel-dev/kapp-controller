@@ -141,7 +141,7 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 	}
 
 	if o.Wait {
-		o.ui.PrintLinef("Waiting for package repository to be updated")
+		o.ui.BeginLinef("Waiting for package repository to be updated")
 		err = o.waitForPackageRepositoryInstallation(client)
 	}
 
@@ -238,11 +238,14 @@ func (o *AddOrUpdateOptions) waitForPackageRepositoryInstallation(client kcclien
 
 		status := pkgr.Status.GenericStatus
 
-		for _, cond := range status.Conditions {
+		for _, condition := range status.Conditions {
+			o.ui.BeginLinef("PackageRepository resource install status: %s\n", condition.Type)
+
 			switch {
-			case cond.Type == kappctrl.ReconcileSucceeded && cond.Status == corev1.ConditionTrue:
+			case condition.Type == kappctrl.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
+				o.ui.PrintLinef("PackageInstall resource successfully reconciled")
 				return true, nil
-			case cond.Type == kappctrl.ReconcileFailed && cond.Status == corev1.ConditionTrue:
+			case condition.Type == kappctrl.ReconcileFailed && condition.Status == corev1.ConditionTrue:
 				return false, fmt.Errorf("PackageRepository reconciliation failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
 			}
 		}

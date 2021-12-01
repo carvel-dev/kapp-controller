@@ -260,7 +260,7 @@ func (o *DeleteOptions) waitForResourceDelete(kcClient kcclient.Interface) error
 		}
 		status := resource.Status.GenericStatus
 		for _, cond := range status.Conditions {
-			o.ui.PrintLinef("'PackageInstall' resource deletion status: %s", cond.Type)
+			o.ui.BeginLinef("'PackageInstall' resource deletion status: %s\n", cond.Type)
 			if cond.Type == kcv1alpha1.DeleteFailed && cond.Status == corev1.ConditionTrue {
 				return false, fmt.Errorf("resource deletion failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
 			}
