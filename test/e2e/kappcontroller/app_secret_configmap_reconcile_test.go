@@ -210,6 +210,95 @@ data:
 	})
 }
 
+func Test_SecretsAndConfigMapsWithCustomPathsCanReconcile(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
+
+	name := "inline-pathsfrom-directorypath"
+	appYaml := `---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: simple-app2
+  namespace: kappctrl-test
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
+spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
+  fetch:
+  - inline:
+      paths:
+        file-from-fetch-paths: ""
+        something/blah.txt: ""
+      pathsFrom:
+        - secretRef:
+            name: from-secret
+            directoryPath: dir
+  template:
+  - ytt:
+      inline:
+        pathsFrom:
+        - secretRef:
+            name: from-secret
+            directoryPath: something
+        paths:
+          config.yml: |
+            #@ load("@ytt:data", "data")
+            #@ load("@ytt:yaml", "yaml")
+
+            #@ print(data.list())
+
+            kind: ConfigMap
+            apiVersion: v1
+            metadata:
+              name: foo
+            data:
+              data: #@ yaml.encode(data.list())
+  deploy:
+  - kapp: {}
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: from-secret
+  namespace: kappctrl-test
+stringData:
+  file-from-secret: "thisIsData"
+` + sas.ForNamespaceYAML()
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
+	})
+
+	logger.Section("check configmap is populated", func() {
+		retry(t, 10*time.Second, func() error {
+			out := kubectl.Run([]string{"get", "configmap/foo", "-o", "yaml"})
+			expectedContentItems := []string{
+				"file-from-fetch-paths",
+				"config.yml",
+				"dir/file-from-secret",
+				"something/blah.txt",
+				"something/file-from-secret",
+			}
+
+			for _, item := range expectedContentItems {
+				if !strings.Contains(out, item) {
+					return fmt.Errorf("configmap %s missing item: %s", out, item)
+				}
+			}
+			return nil
+		})
+	})
+}
+
 func retry(t *testing.T, timeout time.Duration, f func() error) {
 	var err error
 	stopTime := time.Now().Add(timeout)

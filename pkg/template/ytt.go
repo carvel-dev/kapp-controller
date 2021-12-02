@@ -139,7 +139,6 @@ func (t *Ytt) addInlinePaths(args []string) ([]string, *memdir.TmpDir, error) {
 
 	inline := t.fetchFactory.NewInline(*t.opts.Inline, t.genericOpts.Namespace)
 
-	// TODO / question:should we be creating the path at this point rather than doing the o.stat and conditional create one layer deeper?
 	err = inline.Retrieve(inlineDir.Path())
 	if err != nil {
 		return nil, inlineDir, err
