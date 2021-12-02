@@ -19,6 +19,7 @@ spec:
   capacityRequirementsDescription: "cpu: 1,RAM: 2, Disk: 3"
   releaseNotes: |
     - add overlays to scale
+  releasedAt: 2021-05-07T18:57:06Z
   template:
     spec:
       fetch:

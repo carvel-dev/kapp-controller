@@ -15,6 +15,7 @@ spec:
   releaseNotes: |
     - remove overlays introduced in v2
     - revert back to v1
+  releasedAt: 2021-05-07T20:57:06Z
   template:
     spec:
       fetch:
