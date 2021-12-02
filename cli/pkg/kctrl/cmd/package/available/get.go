@@ -1,0 +1,250 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
+package available
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/cppforlife/go-cli-ui/ui"
+	uitable "github.com/cppforlife/go-cli-ui/ui/table"
+	"github.com/mitchellh/go-wordwrap"
+	"github.com/spf13/cobra"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+)
+
+type GetOptions struct {
+	ui          ui.UI
+	depsFactory cmdcore.DepsFactory
+	logger      logger.Logger
+
+	NamespaceFlags cmdcore.NamespaceFlags
+	Name           string
+
+	ValuesSchema bool
+
+	positionalNameArg bool
+}
+
+func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *GetOptions {
+	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
+}
+
+func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "get",
+		Aliases: []string{"g"},
+		Short:   "Get details for an available package or the openAPI schema of a package with a specific version",
+		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
+	}
+	o.NamespaceFlags.Set(cmd, flagsFactory)
+
+	if !o.positionalNameArg {
+		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name")
+	}
+
+	cmd.Flags().BoolVar(&o.ValuesSchema, "values-schema", false, "Values schema of the package (optional)")
+	return cmd
+}
+
+func (o *GetOptions) Run(args []string) error {
+	var pkgName, pkgVersion string
+
+	if o.positionalNameArg {
+		o.Name = args[0]
+	}
+
+	pkgNameVersion := strings.Split(o.Name, "/")
+	if len(pkgNameVersion) == 2 {
+		pkgName = pkgNameVersion[0]
+		pkgVersion = pkgNameVersion[1]
+	} else if len(pkgNameVersion) == 1 {
+		pkgName = pkgNameVersion[0]
+	} else {
+		return fmt.Errorf("Package name should be of the format 'name' or 'name/version'")
+	}
+
+	client, err := o.depsFactory.PackageClient()
+	if err != nil {
+		return err
+	}
+
+	if o.ValuesSchema {
+		if pkgVersion == "" {
+			return fmt.Errorf("Package version is required when --values-schema flag is declared")
+		}
+		return o.showValuesSchema(client, pkgName, pkgVersion)
+	}
+
+	return o.show(client, pkgName, pkgVersion)
+}
+
+func (o *GetOptions) show(client pkgclient.Interface, pkgName, pkgVersion string) error {
+	// Name is always present
+	headers := []uitable.Header{uitable.NewHeader("Name")}
+	row := []uitable.Value{uitable.NewValueString(pkgName)}
+
+	pkgMetadata, err := client.DataV1alpha1().PackageMetadatas(
+		o.NamespaceFlags.Name).Get(context.Background(), pkgName, metav1.GetOptions{})
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			return err
+		}
+		pkgMetadata = nil
+	}
+
+	// PackageMetadata record is not required to be present
+	if pkgMetadata != nil {
+		headers = append(headers, []uitable.Header{
+			uitable.NewHeader("Display name"),
+
+			uitable.NewHeader("Categories"),
+			uitable.NewHeader("Short description"),
+			uitable.NewHeader("Long description"),
+
+			uitable.NewHeader("Provider"),
+			uitable.NewHeader("Maintainers"),
+			uitable.NewHeader("Support description"),
+		}...)
+
+		row = append(row, []uitable.Value{
+			uitable.NewValueString(pkgMetadata.Spec.DisplayName),
+
+			uitable.NewValueInterface(pkgMetadata.Spec.Categories),
+			uitable.NewValueString(wordwrap.WrapString(pkgMetadata.Spec.ShortDescription, 80)),
+			uitable.NewValueString(wordwrap.WrapString(pkgMetadata.Spec.LongDescription, 80)),
+
+			uitable.NewValueString(pkgMetadata.Spec.ProviderName),
+			uitable.NewValueInterface(pkgMetadata.Spec.Maintainers),
+			uitable.NewValueString(wordwrap.WrapString(pkgMetadata.Spec.SupportDescription, 80)),
+		}...)
+	}
+
+	if pkgVersion != "" {
+		// TODO should we use --field-selector?
+		pkg, err := client.DataV1alpha1().Packages(o.NamespaceFlags.Name).Get(
+			context.Background(), fmt.Sprintf("%s.%s", pkgName, pkgVersion), metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		headers = append(headers, []uitable.Header{
+			uitable.NewHeader("Version"),
+			uitable.NewHeader("Released at"),
+			uitable.NewHeader("Min capacity requirements"),
+			uitable.NewHeader("Release notes"),
+			uitable.NewHeader("Licenses"),
+		}...)
+
+		row = append(row, []uitable.Value{
+			uitable.NewValueString(pkg.Spec.Version),
+			uitable.NewValueString(pkg.Spec.ReleasedAt.String()),
+			uitable.NewValueString(wordwrap.WrapString(pkg.Spec.CapactiyRequirementsDescription, 80)),
+			uitable.NewValueString(wordwrap.WrapString(pkg.Spec.ReleaseNotes, 80)),
+			uitable.NewValueStrings(pkg.Spec.Licenses),
+		}...)
+	}
+
+	table := uitable.Table{
+		Transpose: true,
+		Header:    headers,
+		Rows:      [][]uitable.Value{row},
+	}
+
+	o.ui.PrintTable(table)
+
+	if pkgVersion == "" {
+		return o.showVersions(client)
+	}
+
+	return nil
+}
+
+func (o *GetOptions) showVersions(client pkgclient.Interface) error {
+	listOpts := metav1.ListOptions{}
+	if len(o.Name) > 0 {
+		listOpts.FieldSelector = fields.Set{"spec.refName": o.Name}.String()
+	}
+
+	pkgList, err := client.DataV1alpha1().Packages(
+		o.NamespaceFlags.Name).List(context.Background(), listOpts)
+	if err != nil {
+		return err
+	}
+
+	table := uitable.Table{
+		Header: []uitable.Header{
+			uitable.NewHeader("Version"),
+			uitable.NewHeader("Released at"),
+		},
+
+		SortBy: []uitable.ColumnSort{
+			{Column: 0, Asc: true},
+		},
+	}
+
+	for _, pkg := range pkgList.Items {
+		table.Rows = append(table.Rows, []uitable.Value{
+			uitable.NewValueString(pkg.Spec.Version),
+			uitable.NewValueString(pkg.Spec.ReleasedAt.String()),
+		})
+	}
+
+	o.ui.PrintTable(table)
+
+	return nil
+}
+
+func (o *GetOptions) showValuesSchema(client pkgclient.Interface, pkgName, pkgVersion string) error {
+	pkg, err := client.DataV1alpha1().Packages(o.NamespaceFlags.Name).Get(
+		context.Background(), fmt.Sprintf("%s.%s", pkgName, pkgVersion), metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	if len(pkg.Spec.ValuesSchema.OpenAPIv3.Raw) == 0 {
+		o.ui.PrintLinef("Package '%s/%s' does not have any user configurable values in the '%s' namespace", pkgName, pkgVersion, o.NamespaceFlags.Name)
+		return nil
+	}
+
+	dataValuesSchemaParser, err := NewValuesSchemaParser(pkg.Spec.ValuesSchema)
+	if err != nil {
+		return err
+	}
+
+	parsedProperties, err := dataValuesSchemaParser.ParseProperties()
+	if err != nil {
+		return err
+	}
+
+	table := uitable.Table{
+		Title: fmt.Sprintf("Values schema for '%s/%s'", pkgName, pkgVersion),
+
+		Header: []uitable.Header{
+			uitable.NewHeader("Key"),
+			uitable.NewHeader("Default"),
+			uitable.NewHeader("Type"),
+			uitable.NewHeader("Description"),
+		},
+	}
+
+	for _, v := range parsedProperties {
+		table.Rows = append(table.Rows, []uitable.Value{
+			uitable.NewValueString(v.Key),
+			uitable.NewValueInterface(v.Default),
+			uitable.NewValueString(v.Type),
+			uitable.NewValueString(v.Description),
+		})
+	}
+
+	o.ui.PrintTable(table)
+
+	return err
+}
