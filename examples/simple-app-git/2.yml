@@ -16,7 +16,6 @@ spec:
         pathsFrom:
         - secretRef:
             name: simple-app-values
-            directoryPath: myFavoriteFolder
   deploy:
   - kapp: {}
 ---
