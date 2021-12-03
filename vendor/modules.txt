@@ -116,8 +116,8 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/go-containerregistry v0.1.2
-## explicit; go 1.13
+# github.com/google/go-containerregistry v0.4.1
+## explicit; go 1.14
 github.com/google/go-containerregistry/pkg/name
 # github.com/google/gofuzz v1.1.0
 ## explicit; go 1.12
@@ -910,7 +910,7 @@ k8s.io/client-go/util/homedir
 k8s.io/client-go/util/jsonpath
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/workqueue
-# k8s.io/code-generator v0.19.2
+# k8s.io/code-generator v0.19.7
 ## explicit; go 1.15
 k8s.io/code-generator
 k8s.io/code-generator/cmd/client-gen
@@ -958,8 +958,8 @@ k8s.io/component-base/metrics
 k8s.io/component-base/metrics/legacyregistry
 k8s.io/component-base/metrics/testutil
 k8s.io/component-base/version
-# k8s.io/gengo v0.0.0-20200428234225-8167cfdcfc14
-## explicit
+# k8s.io/gengo v0.0.0-20201113003025-83324d819ded
+## explicit; go 1.13
 k8s.io/gengo/args
 k8s.io/gengo/examples/deepcopy-gen/generators
 k8s.io/gengo/examples/defaulter-gen/generators
@@ -973,7 +973,7 @@ k8s.io/gengo/types
 # k8s.io/klog v1.0.0
 ## explicit; go 1.12
 k8s.io/klog
-# k8s.io/klog/v2 v2.2.0
+# k8s.io/klog/v2 v2.4.0
 ## explicit; go 1.13
 k8s.io/klog/v2
 # k8s.io/kube-aggregator v0.19.2
