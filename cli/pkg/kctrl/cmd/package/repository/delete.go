@@ -49,7 +49,11 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name")
 	}
 
-	o.WaitFlags.Set(cmd, flagsFactory)
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  1 * time.Second,
+		DefaultTimeout:   5 * time.Minute,
+	})
 
 	return cmd
 }
