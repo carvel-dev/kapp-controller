@@ -192,6 +192,10 @@ spec:
         - secretRef:
             name: from-secret
             directoryPath: fetch/dis/dir
+        # both secrets have same key, so without directoryPath one would overwrite the other
+        - secretRef:
+            name: another-from-secret
+            directoryPath: fetch/dat/dir
   template:
   - ytt:
       inline:
@@ -222,6 +226,14 @@ metadata:
   namespace: kappctrl-test
 stringData:
   file-from-secret: "thisIsData"
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: another-from-secret
+  namespace: kappctrl-test
+stringData:
+  file-from-secret: "SameKeyDifferentValues"
 ` + sas.ForNamespaceYAML()
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
@@ -239,6 +251,7 @@ stringData:
 			"file-from-fetch-paths",
 			"config.yml",
 			"fetch/dis/dir/file-from-secret",
+			"fetch/dat/dir/file-from-secret",
 			"template/dir/blah.txt",
 			"template/dir/file-from-secret",
 		}
