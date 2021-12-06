@@ -19,6 +19,7 @@ spec:
         properties:
           metadata:
             #@overlay/remove
+            #@overlay/match missing_ok=True
             description:
 #@overlay/remove
 #@overlay/match missing_ok=True
