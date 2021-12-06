@@ -121,7 +121,6 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Name of package install to be updated")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
-	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVarP(&o.install, "install", "", false, "Install package if the installed package does not exist, optional")
 
