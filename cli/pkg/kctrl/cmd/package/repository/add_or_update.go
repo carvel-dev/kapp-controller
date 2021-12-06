@@ -34,7 +34,6 @@ type AddOrUpdateOptions struct {
 	URL            string
 
 	CreateRepository bool
-	CreateNamespace  bool
 
 	Wait         bool
 	PollInterval time.Duration

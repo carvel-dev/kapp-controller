@@ -43,7 +43,6 @@ type CreateOrUpdateOptions struct {
 	version            string
 	valuesFile         string
 	serviceAccountName string
-	createNewNamespace bool
 
 	install bool
 
