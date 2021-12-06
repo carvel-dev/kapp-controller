@@ -192,6 +192,7 @@ func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *v1alpha1.Pack
 }
 
 func (o *AddOrUpdateOptions) waitForPackageRepositoryInstallation(client kcclient.Interface) error {
+	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
 		pkgr, err := client.PackagingV1alpha1().PackageRepositories(
 			o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
@@ -207,11 +208,11 @@ func (o *AddOrUpdateOptions) waitForPackageRepositoryInstallation(client kcclien
 		status := pkgr.Status.GenericStatus
 
 		for _, condition := range status.Conditions {
-			o.ui.BeginLinef("PackageRepository resource install status: %s\n", condition.Type)
+			msgsUI.NotifySection("PackageRepository install status: %s", condition.Type)
 
 			switch {
 			case condition.Type == kappctrl.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
-				o.ui.PrintLinef("PackageInstall resource successfully reconciled")
+				o.ui.PrintLinef("PackageRepository successfully reconciled")
 				return true, nil
 			case condition.Type == kappctrl.ReconcileFailed && condition.Status == corev1.ConditionTrue:
 				return false, fmt.Errorf("PackageRepository reconciliation failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
