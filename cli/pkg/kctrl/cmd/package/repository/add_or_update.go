@@ -20,7 +20,6 @@ import (
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -65,8 +64,6 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	cmd.Flags().StringVar(&o.URL, "url", "", "OCI registry url for package repository bundle")
 	cmd.MarkFlagRequired("url")
 
-	cmd.Flags().BoolVarP(&o.CreateNamespace, "create-namespace", "", false, "Create namespace if the target namespace does not exist, optional")
-
 	cmd.Flags().BoolVarP(&o.Wait, "wait", "", true, "Wait for the package repository reconciliation to complete, optional. To disable wait, specify --wait=false")
 	cmd.Flags().DurationVarP(&o.PollInterval, "poll-interval", "", 1*time.Second, "Time interval between subsequent polls of package repository reconciliation status, optional")
 	cmd.Flags().DurationVarP(&o.PollTimeout, "poll-timeout", "", 5*time.Minute, "Timeout value for polls of package repository reconciliation status, optional")
@@ -94,7 +91,6 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 	cmd.MarkFlagRequired("url")
 
 	cmd.Flags().BoolVar(&o.CreateRepository, "create", false, "Creates the package repository if it does not exist, optional")
-	cmd.Flags().BoolVar(&o.CreateNamespace, "create-namespace", false, "Create namespace if the target namespace does not exist, optional")
 
 	cmd.Flags().BoolVar(&o.Wait, "wait", true, "Wait for the package repository reconciliation to complete, optional. To disable wait, specify --wait=false")
 	cmd.Flags().DurationVar(&o.PollInterval, "poll-interval", 1*time.Second, "Time interval between subsequent polls of package repository reconciliation status, optional")
@@ -111,13 +107,6 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 	client, err := o.depsFactory.KappCtrlClient()
 	if err != nil {
 		return err
-	}
-
-	if o.CreateNamespace {
-		err := o.createNamespace()
-		if err != nil {
-			return err
-		}
 	}
 
 	existingRepository, err := client.PackagingV1alpha1().PackageRepositories(o.NamespaceFlags.Name).Get(
@@ -146,19 +135,6 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 	}
 
 	return err
-}
-
-func (o *AddOrUpdateOptions) createNamespace() error {
-	kappClient, err := o.depsFactory.CoreClient()
-	if err != nil {
-		return err
-	}
-	_, err = kappClient.CoreV1().Namespaces().Create(context.Background(),
-		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: o.NamespaceFlags.Name}}, metav1.CreateOptions{})
-	if err != nil && !errors.IsAlreadyExists(err) {
-		return err
-	}
-	return nil
 }
 
 func (o *AddOrUpdateOptions) add(client kcclient.Interface) error {

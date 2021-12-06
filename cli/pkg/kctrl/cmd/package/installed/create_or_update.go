@@ -73,7 +73,6 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
-	cmd.Flags().BoolVar(&o.createNewNamespace, "create-namespace", false, "Create namespace if the target namespace does not exist, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 
 	cmd.Flags().DurationVar(&o.pollInterval, "poll-interval", 1*time.Second, "Time interval between consecutive polls while reconciling")
@@ -98,7 +97,6 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
-	cmd.Flags().BoolVar(&o.createNewNamespace, "create-namespace", false, "Create namespace if the target namespace does not exist, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 
 	cmd.Flags().DurationVar(&o.pollInterval, "poll-interval", 1*time.Second, "Time interval between consecutive polls while reconciling")
@@ -123,7 +121,6 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Name of package install to be updated")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
-	cmd.Flags().BoolVar(&o.createNewNamespace, "create-namespace", false, "Create namespace if the target namespace does not exist, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVarP(&o.install, "install", "", false, "Install package if the installed package does not exist, optional")
 
@@ -167,15 +164,6 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 			return err
 		}
 		return nil
-	}
-
-	if o.createNewNamespace {
-		o.ui.PrintLinef("Creating namespace '%s'", o.NamespaceFlags.Name)
-		if err = o.createNamespace(client); err != nil {
-			return err
-		}
-	} else if _, err = client.CoreV1().Namespaces().Get(context.Background(), o.NamespaceFlags.Name, metav1.GetOptions{}); err != nil {
-		return err
 	}
 
 	err = o.create(client, kcClient)
@@ -445,21 +433,6 @@ func (o *CreateOrUpdateOptions) createOrUpdateDataValuesSecret(client kubernetes
 	}
 
 	return true, nil
-}
-
-func (o *CreateOrUpdateOptions) createNamespace(client kubernetes.Interface) error {
-
-	ns := &corev1.Namespace{
-		TypeMeta:   metav1.TypeMeta{Kind: KindNamespace.AsString()},
-		ObjectMeta: metav1.ObjectMeta{Name: o.NamespaceFlags.Name},
-	}
-
-	_, err := client.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{})
-	if err != nil && !errors.IsAlreadyExists(err) {
-		return err
-	}
-
-	return nil
 }
 
 func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secretCreated bool, kcClient kcclient.Interface) error {
