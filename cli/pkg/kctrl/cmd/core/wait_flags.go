@@ -15,8 +15,17 @@ type WaitFlags struct {
 	Timeout       time.Duration
 }
 
-func (f *WaitFlags) Set(cmd *cobra.Command, flagsFactory FlagsFactory) {
-	cmd.Flags().BoolVar(&f.Enabled, "wait", true, "Wait for reconciliation to complete")
-	cmd.Flags().DurationVar(&f.CheckInterval, "wait-check-interval", 1*time.Second, "Amount of time to sleep between checks while waiting")
-	cmd.Flags().DurationVar(&f.Timeout, "wait-timeout", 5*time.Minute, "Maximum amount of time to wait in wait phase")
+type WaitFlagsOpts struct {
+	AllowDisableWait bool
+	DefaultInterval  time.Duration
+	DefaultTimeout   time.Duration
+}
+
+func (f *WaitFlags) Set(cmd *cobra.Command, flagsFactory FlagsFactory, opts *WaitFlagsOpts) {
+	if opts.AllowDisableWait {
+		cmd.Flags().BoolVar(&f.Enabled, "wait", true, "Wait for reconciliation to complete")
+	}
+	f.Enabled = true
+	cmd.Flags().DurationVar(&f.CheckInterval, "wait-check-interval", opts.DefaultInterval, "Amount of time to sleep between checks while waiting")
+	cmd.Flags().DurationVar(&f.Timeout, "wait-timeout", opts.DefaultTimeout, "Maximum amount of time to wait in wait phase")
 }

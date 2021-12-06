@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -60,7 +61,11 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	cmd.Flags().StringVar(&o.URL, "url", "", "OCI registry url for package repository bundle")
 	cmd.MarkFlagRequired("url")
 
-	o.WaitFlags.Set(cmd, flagsFactory)
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  1 * time.Second,
+		DefaultTimeout:   5 * time.Minute,
+	})
 
 	// For `add` command create option will always be true
 	o.CreateRepository = true
@@ -86,7 +91,11 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 
 	cmd.Flags().BoolVar(&o.CreateRepository, "create", false, "Creates the package repository if it does not exist, optional")
 
-	o.WaitFlags.Set(cmd, flagsFactory)
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  1 * time.Second,
+		DefaultTimeout:   5 * time.Minute,
+	})
 
 	return cmd
 }

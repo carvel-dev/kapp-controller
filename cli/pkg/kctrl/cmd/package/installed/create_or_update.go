@@ -35,9 +35,7 @@ type CreateOrUpdateOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	pollInterval time.Duration
-	pollTimeout  time.Duration
-	wait         bool
+	WaitFlags cmdcore.WaitFlags
 
 	packageName        string
 	version            string
@@ -74,9 +72,11 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 
-	cmd.Flags().DurationVar(&o.pollInterval, "poll-interval", 1*time.Second, "Time interval between consecutive polls while reconciling")
-	cmd.Flags().DurationVar(&o.pollTimeout, "poll-timeout", 1*time.Minute, "Timeout for the reconciliation process")
-	cmd.Flags().BoolVar(&o.wait, "wait", true, "Wait for reconcilation, default true")
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  1 * time.Second,
+		DefaultTimeout:   30 * time.Minute,
+	})
 
 	return cmd
 }
@@ -98,9 +98,11 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 
-	cmd.Flags().DurationVar(&o.pollInterval, "poll-interval", 1*time.Second, "Time interval between consecutive polls while reconciling")
-	cmd.Flags().DurationVar(&o.pollTimeout, "poll-timeout", 1*time.Minute, "Timeout for the reconciliation process")
-	cmd.Flags().BoolVar(&o.wait, "wait", true, "Wait for reconcilation, default true")
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  1 * time.Second,
+		DefaultTimeout:   30 * time.Minute,
+	})
 
 	return cmd
 }
@@ -123,9 +125,11 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVarP(&o.install, "install", "", false, "Install package if the installed package does not exist, optional")
 
-	cmd.Flags().DurationVar(&o.pollInterval, "poll-interval", 1*time.Second, "Time interval between consecutive polls while reconciling")
-	cmd.Flags().DurationVar(&o.pollTimeout, "poll-timeout", 1*time.Minute, "Timeout for the reconciliation process")
-	cmd.Flags().BoolVar(&o.wait, "wait", true, "Wait for reconcilation, default true")
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  1 * time.Second,
+		DefaultTimeout:   30 * time.Minute,
+	})
 
 	return cmd
 }
@@ -184,8 +188,8 @@ func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient ver
 		return err
 	}
 
-	if o.wait {
-		if err = o.waitForResourceInstallation(o.Name, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, kcClient); err != nil {
+	if o.WaitFlags.Enabled {
+		if err = o.waitForResourceInstallation(o.Name, o.NamespaceFlags.Name, o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, kcClient); err != nil {
 			return err
 		}
 	}
@@ -264,8 +268,8 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient vers
 		return err
 	}
 
-	if o.wait {
-		if err = o.waitForResourceInstallation(o.Name, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, kcClient); err != nil {
+	if o.WaitFlags.Enabled {
+		if err = o.waitForResourceInstallation(o.Name, o.NamespaceFlags.Name, o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, kcClient); err != nil {
 			return err
 		}
 	}
