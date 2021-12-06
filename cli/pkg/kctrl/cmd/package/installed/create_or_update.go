@@ -622,6 +622,7 @@ func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace stri
 		reconcileSucceeded bool
 	)
 	o.ui.PrintLinef("Waiting for PackageInstall reconciliation for '%s'", name)
+	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 	err := wait.Poll(pollInterval, pollTimeout, func() (done bool, err error) {
 
 		resource, err := client.PackagingV1alpha1().PackageInstalls(namespace).Get(context.Background(), name, metav1.GetOptions{})
@@ -636,15 +637,15 @@ func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace stri
 		status = resource.Status.GenericStatus
 
 		for _, condition := range status.Conditions {
-			o.ui.BeginLinef("PackageInstall resource install status: %s\n", condition.Type)
+			msgsUI.NotifySection("PackageInstall install status: %s", condition.Type)
 
 			switch {
 			case condition.Type == kcv1alpha1.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
-				o.ui.PrintLinef("PackageInstall resource successfully reconciled")
+				o.ui.PrintLinef("PackageInstall successfully reconciled")
 				reconcileSucceeded = true
 				return true, nil
 			case condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue:
-				return false, fmt.Errorf("resource reconciliation failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+				return false, fmt.Errorf("PackageInstall reconciliation failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
 			}
 		}
 		return false, nil
