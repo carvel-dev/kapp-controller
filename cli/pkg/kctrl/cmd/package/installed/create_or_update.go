@@ -48,7 +48,7 @@ type CreateOrUpdateOptions struct {
 
 	Name               string
 	NamespaceFlags     cmdcore.NamespaceFlags
-	CreatedAnnotations *CreatedResourceAnnotations
+	createdAnnotations *CreatedResourceAnnotations
 
 	positionalNameArg bool
 }
@@ -153,7 +153,7 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 		}
 	}
 
-	o.CreatedAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
+	o.createdAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
 
 	// Fallback to update if resource exists
 	if pkgInstall != nil && err == nil {
@@ -208,7 +208,7 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 		return err
 	}
 
-	o.CreatedAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
+	o.createdAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
 
 	o.ui.PrintLinef("Getting package install for '%s'", o.Name)
 	pkgInstall, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
@@ -282,17 +282,17 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 
 	if o.serviceAccountName == "" {
 
-		o.ui.PrintLinef("Creating service account '%s'", o.CreatedAnnotations.ServiceAccountAnnValue())
+		o.ui.PrintLinef("Creating service account '%s'", o.createdAnnotations.ServiceAccountAnnValue())
 		if isServiceAccountCreated, err = o.createOrUpdateServiceAccount(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
 
-		o.ui.PrintLinef("Creating cluster admin role '%s'", o.CreatedAnnotations.ClusterRoleAnnValue())
+		o.ui.PrintLinef("Creating cluster admin role '%s'", o.createdAnnotations.ClusterRoleAnnValue())
 		if err := o.createOrUpdateClusterAdminRole(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
 
-		o.ui.PrintLinef("Creating cluster role binding '%s'", o.CreatedAnnotations.ClusterRoleBindingAnnValue())
+		o.ui.PrintLinef("Creating cluster role binding '%s'", o.createdAnnotations.ClusterRoleBindingAnnValue())
 		if err := o.createOrUpdateClusterRoleBinding(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
@@ -315,7 +315,7 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 		}
 
 		if ok {
-			if svcAccountAnnotation != o.CreatedAnnotations.PackageAnnValue() {
+			if svcAccountAnnotation != o.createdAnnotations.PackageAnnValue() {
 				err = fmt.Errorf("provided service account '%s' is already used by another package in namespace '%s': %s", o.serviceAccountName, o.NamespaceFlags.Name, err.Error())
 				return isServiceAccountCreated, isSecretCreated, err
 			}
@@ -323,7 +323,7 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 	}
 
 	if o.valuesFile != "" {
-		o.ui.PrintLinef("Creating secret '%s'", o.CreatedAnnotations.SecretAnnValue())
+		o.ui.PrintLinef("Creating secret '%s'", o.createdAnnotations.SecretAnnValue())
 		if isSecretCreated, err = o.createOrUpdateDataValuesSecret(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
@@ -335,10 +335,10 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 func (o *CreateOrUpdateOptions) createOrUpdateClusterAdminRole(client kubernetes.Interface) error {
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: o.CreatedAnnotations.ClusterRoleAnnValue(),
+			Name: o.createdAnnotations.ClusterRoleAnnValue(),
 			Annotations: map[string]string{
-				KctrlPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
-				TanzuPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
+				KctrlPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
+				TanzuPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
 			},
 		},
 		Rules: []rbacv1.PolicyRule{
@@ -364,22 +364,22 @@ func (o *CreateOrUpdateOptions) createOrUpdateClusterAdminRole(client kubernetes
 func (o *CreateOrUpdateOptions) createOrUpdateClusterRoleBinding(client kubernetes.Interface) error {
 	svcAccount := o.serviceAccountName
 	if svcAccount == "" {
-		svcAccount = o.CreatedAnnotations.ServiceAccountAnnValue()
+		svcAccount = o.createdAnnotations.ServiceAccountAnnValue()
 	}
 
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: o.CreatedAnnotations.ClusterRoleBindingAnnValue(),
+			Name: o.createdAnnotations.ClusterRoleBindingAnnValue(),
 			Annotations: map[string]string{
-				KctrlPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
-				TanzuPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
+				KctrlPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
+				TanzuPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
 			},
 		},
 		Subjects: []rbacv1.Subject{{Kind: KindServiceAccount.AsString(), Name: svcAccount, Namespace: o.NamespaceFlags.Name}},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: rbacv1.SchemeGroupVersion.Group,
 			Kind:     KindClusterRole.AsString(),
-			Name:     o.CreatedAnnotations.ClusterRoleAnnValue(),
+			Name:     o.createdAnnotations.ClusterRoleAnnValue(),
 		},
 	}
 
@@ -409,11 +409,11 @@ func (o *CreateOrUpdateOptions) createOrUpdateDataValuesSecret(client kubernetes
 	}
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      o.CreatedAnnotations.SecretAnnValue(),
+			Name:      o.createdAnnotations.SecretAnnValue(),
 			Namespace: o.NamespaceFlags.Name,
 			Annotations: map[string]string{
-				KctrlPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
-				TanzuPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
+				KctrlPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
+				TanzuPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
 			},
 		},
 		Data: dataValues,
@@ -437,7 +437,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateDataValuesSecret(client kubernetes
 func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secretCreated bool, kcClient kcclient.Interface) error {
 	svcAccount := o.serviceAccountName
 	if svcAccount == "" {
-		svcAccount = o.CreatedAnnotations.ServiceAccountAnnValue()
+		svcAccount = o.createdAnnotations.ServiceAccountAnnValue()
 	}
 
 	// construct the PackageInstall CR
@@ -460,7 +460,7 @@ func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secr
 		packageInstall.Spec.Values = []kcpkgv1alpha1.PackageInstallValues{
 			{
 				SecretRef: &kcpkgv1alpha1.PackageInstallValuesSecretRef{
-					Name: o.CreatedAnnotations.SecretAnnValue(),
+					Name: o.createdAnnotations.SecretAnnValue(),
 				},
 			},
 		}
@@ -479,11 +479,11 @@ func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secr
 func (o *CreateOrUpdateOptions) createOrUpdateServiceAccount(client kubernetes.Interface) (bool, error) {
 	serviceAccount := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      o.CreatedAnnotations.ServiceAccountAnnValue(),
+			Name:      o.createdAnnotations.ServiceAccountAnnValue(),
 			Namespace: o.NamespaceFlags.Name,
 			Annotations: map[string]string{
-				KctrlPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
-				TanzuPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
+				KctrlPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
+				TanzuPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
 			},
 		},
 	}
@@ -549,7 +549,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *k
 		return false, nil
 	}
 
-	secretName := o.CreatedAnnotations.SecretAnnValue()
+	secretName := o.createdAnnotations.SecretAnnValue()
 
 	// Second condition supports older versions of Tanzu CLI. To be deprecated
 	if secretName == pkgInstallToUpdate.GetAnnotations()[KctrlPkgAnnotation+"-"+KindSecret.AsString()] ||
@@ -576,7 +576,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *k
 func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interface) error {
 	var err error
 	dataValues := make(map[string][]byte)
-	secretName := o.CreatedAnnotations.SecretAnnValue()
+	secretName := o.createdAnnotations.SecretAnnValue()
 
 	if dataValues[valuesFileKey], err = ioutil.ReadFile(o.valuesFile); err != nil {
 		return fmt.Errorf("failed to read from data values file '%s': %s", o.valuesFile, err.Error())
@@ -598,20 +598,20 @@ func (o *CreateOrUpdateOptions) addCreatedResourceAnnotations(meta *metav1.Objec
 		meta.Annotations = make(map[string]string)
 	}
 	if createdSvcAccount {
-		meta.Annotations[KctrlPkgAnnotation+"-"+KindClusterRole.AsString()] = o.CreatedAnnotations.ClusterRoleAnnValue()
-		meta.Annotations[KctrlPkgAnnotation+"-"+KindClusterRoleBinding.AsString()] = o.CreatedAnnotations.ClusterRoleBindingAnnValue()
-		meta.Annotations[KctrlPkgAnnotation+"-"+KindServiceAccount.AsString()] = o.CreatedAnnotations.ServiceAccountAnnValue()
+		meta.Annotations[KctrlPkgAnnotation+"-"+KindClusterRole.AsString()] = o.createdAnnotations.ClusterRoleAnnValue()
+		meta.Annotations[KctrlPkgAnnotation+"-"+KindClusterRoleBinding.AsString()] = o.createdAnnotations.ClusterRoleBindingAnnValue()
+		meta.Annotations[KctrlPkgAnnotation+"-"+KindServiceAccount.AsString()] = o.createdAnnotations.ServiceAccountAnnValue()
 
 		// To support older versions of Tanzu CLI. To be deprecated
-		meta.Annotations[TanzuPkgAnnotation+"-"+KindClusterRole.AsString()] = o.CreatedAnnotations.ClusterRoleAnnValue()
-		meta.Annotations[TanzuPkgAnnotation+"-"+KindClusterRoleBinding.AsString()] = o.CreatedAnnotations.ClusterRoleBindingAnnValue()
-		meta.Annotations[TanzuPkgAnnotation+"-"+KindServiceAccount.AsString()] = o.CreatedAnnotations.ServiceAccountAnnValue()
+		meta.Annotations[TanzuPkgAnnotation+"-"+KindClusterRole.AsString()] = o.createdAnnotations.ClusterRoleAnnValue()
+		meta.Annotations[TanzuPkgAnnotation+"-"+KindClusterRoleBinding.AsString()] = o.createdAnnotations.ClusterRoleBindingAnnValue()
+		meta.Annotations[TanzuPkgAnnotation+"-"+KindServiceAccount.AsString()] = o.createdAnnotations.ServiceAccountAnnValue()
 	}
 	if createdSecret {
-		meta.Annotations[KctrlPkgAnnotation+"-"+KindSecret.AsString()] = o.CreatedAnnotations.SecretAnnValue()
+		meta.Annotations[KctrlPkgAnnotation+"-"+KindSecret.AsString()] = o.createdAnnotations.SecretAnnValue()
 
 		// To support older versions of Tanzu CLI. To be deprecated
-		meta.Annotations[TanzuPkgAnnotation+"-"+KindSecret.AsString()] = o.CreatedAnnotations.SecretAnnValue()
+		meta.Annotations[TanzuPkgAnnotation+"-"+KindSecret.AsString()] = o.createdAnnotations.SecretAnnValue()
 	}
 }
 
