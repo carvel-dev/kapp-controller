@@ -85,6 +85,7 @@ func (o *DeleteOptions) Run(args []string) error {
 
 func (o *DeleteOptions) waitForDeletion(client versioned.Interface) error {
 	o.ui.PrintLinef("Waiting for deletion to be completed...")
+	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 
 	t1 := time.Now()
 
@@ -93,7 +94,7 @@ func (o *DeleteOptions) waitForDeletion(client versioned.Interface) error {
 			o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				o.ui.PrintLinef("Repository deleted successfully")
+				o.ui.PrintLinef("PackageRepository deleted successfully")
 				return nil
 			}
 			return err
@@ -103,9 +104,9 @@ func (o *DeleteOptions) waitForDeletion(client versioned.Interface) error {
 		// the reconciliation status so that we know we are checking the new spec
 		if pkgr.Generation == pkgr.Status.ObservedGeneration {
 			for _, condition := range pkgr.Status.Conditions {
-				o.ui.BeginLinef("'PackageRepository' resource deletion status: %s\n", condition.Type)
+				msgsUI.NotifySection("PackageRepository deletion status: %s", condition.Type)
 				if condition.Type == v1alpha1.DeleteFailed && condition.Status == corev1.ConditionTrue {
-					return fmt.Errorf("Deletion failed: %s", pkgr.Status.UsefulErrorMessage)
+					return fmt.Errorf("PackageRepository deletion failed: %s", pkgr.Status.UsefulErrorMessage)
 				}
 			}
 		}

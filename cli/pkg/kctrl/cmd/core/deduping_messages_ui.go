@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultForgetAfterDuration time.Duration = 1 * time.Minute
+	defaultForgetAfterDuration time.Duration = 30 * time.Second
 )
 
 type DedupingMessagesUI struct {
