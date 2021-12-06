@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	valuesFileKey = "values"
+	valuesFileKey = "values.yaml"
 )
 
 type CreateOrUpdateOptions struct {
