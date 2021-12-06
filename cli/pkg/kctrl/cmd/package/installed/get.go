@@ -44,7 +44,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
 	if !o.positionalNameArg {
-		cmd.Flags().StringVar(&o.Name, "package-install", "i", "Set installed package name")
+		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
 	}
 
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "File path for exporting configuration values file")
