@@ -29,6 +29,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
+	"k8s.io/apimachinery/pkg/util/sets"
 	auditinternal "k8s.io/apiserver/pkg/apis/audit"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 	auditv1alpha1 "k8s.io/apiserver/pkg/apis/audit/v1alpha1"
@@ -37,6 +38,7 @@ import (
 	"k8s.io/apiserver/pkg/audit/policy"
 	"k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/egressselector"
+	"k8s.io/apiserver/pkg/util/webhook"
 	pluginbuffered "k8s.io/apiserver/plugin/pkg/audit/buffered"
 	pluginlog "k8s.io/apiserver/plugin/pkg/audit/log"
 	plugintruncate "k8s.io/apiserver/plugin/pkg/audit/truncate"
@@ -120,6 +122,7 @@ type AuditLogOptions struct {
 	MaxBackups int
 	MaxSize    int
 	Format     string
+	Compress   bool
 
 	BatchOptions    AuditBatchOptions
 	TruncateOptions AuditTruncateOptions
@@ -153,7 +156,7 @@ type AuditDynamicOptions struct {
 func NewAuditOptions() *AuditOptions {
 	return &AuditOptions{
 		WebhookOptions: AuditWebhookOptions{
-			InitialBackoff: pluginwebhook.DefaultInitialBackoff,
+			InitialBackoff: pluginwebhook.DefaultInitialBackoffDelay,
 			BatchOptions: AuditBatchOptions{
 				Mode:        ModeBatch,
 				BatchConfig: defaultWebhookBatchConfig(),
@@ -245,6 +248,9 @@ func validateGroupVersionString(groupVersion string) error {
 	if !knownGroupVersion(gv) {
 		return fmt.Errorf("invalid group version, allowed versions are %q", knownGroupVersions)
 	}
+	if gv != auditv1.SchemeGroupVersion {
+		klog.Warningf("%q is deprecated and will be removed in a future release, use %q instead", gv, auditv1.SchemeGroupVersion)
+	}
 	return nil
 }
 
@@ -291,7 +297,11 @@ func (o *AuditOptions) ApplyTo(
 
 	// 2. Build log backend
 	var logBackend audit.Backend
-	if w := o.LogOptions.getWriter(); w != nil {
+	w, err := o.LogOptions.getWriter()
+	if err != nil {
+		return err
+	}
+	if w != nil {
 		if checker == nil {
 			klog.V(2).Info("No audit policy file provided, no events will be recorded for log backend")
 		} else {
@@ -306,7 +316,8 @@ func (o *AuditOptions) ApplyTo(
 			klog.V(2).Info("No audit policy file provided, no events will be recorded for webhook backend")
 		} else {
 			if c.EgressSelector != nil {
-				egressDialer, err := c.EgressSelector.Lookup(egressselector.Master.AsNetworkContext())
+				var egressDialer utilnet.DialFunc
+				egressDialer, err = c.EgressSelector.Lookup(egressselector.ControlPlane.AsNetworkContext())
 				if err != nil {
 					return err
 				}
@@ -449,6 +460,7 @@ func (o *AuditLogOptions) AddFlags(fs *pflag.FlagSet) {
 			strings.Join(pluginlog.AllowedFormats, ",")+".")
 	fs.StringVar(&o.GroupVersionString, "audit-log-version", o.GroupVersionString,
 		"API group and version used for serializing audit events written to log.")
+	fs.BoolVar(&o.Compress, "audit-log-compress", o.Compress, "If set, the rotated log files will be compressed using gzip.")
 }
 
 func (o *AuditLogOptions) Validate() []error {
@@ -471,14 +483,7 @@ func (o *AuditLogOptions) Validate() []error {
 	}
 
 	// Check log format
-	validFormat := false
-	for _, f := range pluginlog.AllowedFormats {
-		if f == o.Format {
-			validFormat = true
-			break
-		}
-	}
-	if !validFormat {
+	if !sets.NewString(pluginlog.AllowedFormats...).Has(o.Format) {
 		allErrors = append(allErrors, fmt.Errorf("invalid audit log format %s, allowed formats are %q", o.Format, strings.Join(pluginlog.AllowedFormats, ",")))
 	}
 
@@ -501,21 +506,35 @@ func (o *AuditLogOptions) enabled() bool {
 	return o != nil && o.Path != ""
 }
 
-func (o *AuditLogOptions) getWriter() io.Writer {
+func (o *AuditLogOptions) getWriter() (io.Writer, error) {
 	if !o.enabled() {
-		return nil
+		return nil, nil
 	}
 
-	var w io.Writer = os.Stdout
-	if o.Path != "-" {
-		w = &lumberjack.Logger{
-			Filename:   o.Path,
-			MaxAge:     o.MaxAge,
-			MaxBackups: o.MaxBackups,
-			MaxSize:    o.MaxSize,
-		}
+	if o.Path == "-" {
+		return os.Stdout, nil
 	}
-	return w
+
+	if err := o.ensureLogFile(); err != nil {
+		return nil, fmt.Errorf("ensureLogFile: %w", err)
+	}
+
+	return &lumberjack.Logger{
+		Filename:   o.Path,
+		MaxAge:     o.MaxAge,
+		MaxBackups: o.MaxBackups,
+		MaxSize:    o.MaxSize,
+		Compress:   o.Compress,
+	}, nil
+}
+
+func (o *AuditLogOptions) ensureLogFile() error {
+	mode := os.FileMode(0600)
+	f, err := os.OpenFile(o.Path, os.O_CREATE|os.O_APPEND|os.O_RDWR, mode)
+	if err != nil {
+		return err
+	}
+	return f.Close()
 }
 
 func (o *AuditLogOptions) newBackend(w io.Writer) audit.Backend {
@@ -566,7 +585,7 @@ func (o *AuditWebhookOptions) enabled() bool {
 // this is done so that the same trucate backend can wrap both the webhook and dynamic backends
 func (o *AuditWebhookOptions) newUntruncatedBackend(customDial utilnet.DialFunc) (audit.Backend, error) {
 	groupVersion, _ := schema.ParseGroupVersion(o.GroupVersionString)
-	webhook, err := pluginwebhook.NewBackend(o.ConfigFile, groupVersion, o.InitialBackoff, customDial)
+	webhook, err := pluginwebhook.NewBackend(o.ConfigFile, groupVersion, webhook.DefaultRetryBackoffWithInitialDelay(o.InitialBackoff), customDial)
 	if err != nil {
 		return nil, fmt.Errorf("initializing audit webhook: %v", err)
 	}

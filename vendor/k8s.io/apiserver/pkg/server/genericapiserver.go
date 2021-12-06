@@ -24,8 +24,7 @@ import (
 	"sync"
 	"time"
 
-	systemd "github.com/coreos/go-systemd/daemon"
-	"github.com/go-openapi/spec"
+	systemd "github.com/coreos/go-systemd/v22/daemon"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,14 +34,19 @@ import (
 	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilwaitgroup "k8s.io/apimachinery/pkg/util/waitgroup"
+	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/audit"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapi "k8s.io/apiserver/pkg/endpoints"
 	"k8s.io/apiserver/pkg/endpoints/discovery"
+	"k8s.io/apiserver/pkg/endpoints/handlers/fieldmanager"
+	"k8s.io/apiserver/pkg/features"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/server/healthz"
 	"k8s.io/apiserver/pkg/server/routes"
+	"k8s.io/apiserver/pkg/storageversion"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	utilopenapi "k8s.io/apiserver/pkg/util/openapi"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
@@ -51,6 +55,7 @@ import (
 	"k8s.io/kube-openapi/pkg/handler"
 	openapiutil "k8s.io/kube-openapi/pkg/util"
 	openapiproto "k8s.io/kube-openapi/pkg/util/proto"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 // Info about an API group.
@@ -169,9 +174,6 @@ type GenericAPIServer struct {
 	readyzChecksInstalled bool
 	livezGracePeriod      time.Duration
 	livezClock            clock.Clock
-	// the readiness stop channel is used to signal that the apiserver has initiated a shutdown sequence, this
-	// will cause readyz to return unhealthy.
-	readinessStopCh chan struct{}
 
 	// auditing. The backend is started after the server starts listening.
 	AuditBackend audit.Backend
@@ -184,10 +186,6 @@ type GenericAPIServer struct {
 	// EquivalentResourceRegistry provides information about resources equivalent to a given resource,
 	// and the kind associated with a given resource. As resources are installed, they are registered here.
 	EquivalentResourceRegistry runtime.EquivalentResourceRegistry
-
-	// enableAPIResponseCompression indicates whether API Responses should support compression
-	// if the client requests it via Accept-Encoding
-	enableAPIResponseCompression bool
 
 	// delegationTarget is the next delegate in the chain. This is never nil.
 	delegationTarget DelegationTarget
@@ -203,6 +201,18 @@ type GenericAPIServer struct {
 	// The limit on the request body size that would be accepted and decoded in a write request.
 	// 0 means no limit.
 	maxRequestBodyBytes int64
+
+	// APIServerID is the ID of this API server
+	APIServerID string
+
+	// StorageVersionManager holds the storage versions of the API resources installed by this server.
+	StorageVersionManager storageversion.Manager
+
+	// Version will enable the /version endpoint if non-nil
+	Version *version.Info
+
+	// lifecycleSignals provides access to the various signals that happen during the life cycle of the apiserver.
+	lifecycleSignals lifecycleSignals
 }
 
 // DelegationTarget is an interface which allows for composition of API servers with top level handling that works
@@ -297,7 +307,10 @@ func (s *GenericAPIServer) PrepareRun() preparedGenericAPIServer {
 
 	s.installHealthz()
 	s.installLivez()
-	err := s.addReadyzShutdownCheck(s.readinessStopCh)
+
+	// as soon as shutdown is initiated, readiness should start failing
+	readinessStopCh := s.lifecycleSignals.ShutdownInitiated.Signaled()
+	err := s.addReadyzShutdownCheck(readinessStopCh)
 	if err != nil {
 		klog.Errorf("Failed to install readyz shutdown check %s", err)
 	}
@@ -320,27 +333,49 @@ func (s *GenericAPIServer) PrepareRun() preparedGenericAPIServer {
 // Run spawns the secure http server. It only returns if stopCh is closed
 // or the secure port cannot be listened on initially.
 func (s preparedGenericAPIServer) Run(stopCh <-chan struct{}) error {
-	delayedStopCh := make(chan struct{})
+	delayedStopCh := s.lifecycleSignals.AfterShutdownDelayDuration
+	shutdownInitiatedCh := s.lifecycleSignals.ShutdownInitiated
 
 	go func() {
-		defer close(delayedStopCh)
+		defer delayedStopCh.Signal()
+		defer klog.V(1).InfoS("[graceful-termination] shutdown event", "name", delayedStopCh.Name())
 
 		<-stopCh
 
 		// As soon as shutdown is initiated, /readyz should start returning failure.
 		// This gives the load balancer a window defined by ShutdownDelayDuration to detect that /readyz is red
 		// and stop sending traffic to this server.
-		close(s.readinessStopCh)
+		shutdownInitiatedCh.Signal()
+		klog.V(1).InfoS("[graceful-termination] shutdown event", "name", shutdownInitiatedCh.Name())
 
 		time.Sleep(s.ShutdownDelayDuration)
 	}()
 
 	// close socket after delayed stopCh
-	stoppedCh, err := s.NonBlockingRun(delayedStopCh)
+	stoppedCh, listenerStoppedCh, err := s.NonBlockingRun(delayedStopCh.Signaled())
 	if err != nil {
 		return err
 	}
+	httpServerStoppedListeningCh := s.lifecycleSignals.HTTPServerStoppedListening
+	go func() {
+		<-listenerStoppedCh
+		httpServerStoppedListeningCh.Signal()
+		klog.V(1).InfoS("[graceful-termination] shutdown event", "name", httpServerStoppedListeningCh.Name())
+	}()
 
+	drainedCh := s.lifecycleSignals.InFlightRequestsDrained
+	go func() {
+		defer drainedCh.Signal()
+		defer klog.V(1).InfoS("[graceful-termination] shutdown event", "name", drainedCh.Name())
+
+		// wait for the delayed stopCh before closing the handler chain (it rejects everything after Wait has been called).
+		<-delayedStopCh.Signaled()
+
+		// Wait for all requests to finish, which are bounded by the RequestTimeout variable.
+		s.HandlerChainWaitGroup.Wait()
+	}()
+
+	klog.V(1).Info("[graceful-termination] waiting for shutdown to be initiated")
 	<-stopCh
 
 	// run shutdown hooks directly. This includes deregistering from the kubernetes endpoint in case of kube-apiserver.
@@ -348,22 +383,21 @@ func (s preparedGenericAPIServer) Run(stopCh <-chan struct{}) error {
 	if err != nil {
 		return err
 	}
+	klog.V(1).Info("[graceful-termination] RunPreShutdownHooks has completed")
 
-	// wait for the delayed stopCh before closing the handler chain (it rejects everything after Wait has been called).
-	<-delayedStopCh
+	// Wait for all requests in flight to drain, bounded by the RequestTimeout variable.
+	<-drainedCh.Signaled()
 	// wait for stoppedCh that is closed when the graceful termination (server.Shutdown) is finished.
 	<-stoppedCh
 
-	// Wait for all requests to finish, which are bounded by the RequestTimeout variable.
-	s.HandlerChainWaitGroup.Wait()
-
+	klog.V(1).Info("[graceful-termination] apiserver is exiting")
 	return nil
 }
 
 // NonBlockingRun spawns the secure http server. An error is
 // returned if the secure port cannot be listened on.
 // The returned channel is closed when the (asynchronous) termination is finished.
-func (s preparedGenericAPIServer) NonBlockingRun(stopCh <-chan struct{}) (<-chan struct{}, error) {
+func (s preparedGenericAPIServer) NonBlockingRun(stopCh <-chan struct{}) (<-chan struct{}, <-chan struct{}, error) {
 	// Use an stop channel to allow graceful shutdown without dropping audit events
 	// after http server shutdown.
 	auditStopCh := make(chan struct{})
@@ -372,20 +406,22 @@ func (s preparedGenericAPIServer) NonBlockingRun(stopCh <-chan struct{}) (<-chan
 	// before http server start serving. Otherwise the Backend.ProcessEvents call might block.
 	if s.AuditBackend != nil {
 		if err := s.AuditBackend.Run(auditStopCh); err != nil {
-			return nil, fmt.Errorf("failed to run the audit backend: %v", err)
+			return nil, nil, fmt.Errorf("failed to run the audit backend: %v", err)
 		}
 	}
 
 	// Use an internal stop channel to allow cleanup of the listeners on error.
 	internalStopCh := make(chan struct{})
 	var stoppedCh <-chan struct{}
+	var listenerStoppedCh <-chan struct{}
 	if s.SecureServingInfo != nil && s.Handler != nil {
 		var err error
-		stoppedCh, err = s.SecureServingInfo.Serve(s.Handler, s.ShutdownTimeout, internalStopCh)
+		klog.V(1).Infof("[graceful-termination] ShutdownTimeout=%s", s.ShutdownTimeout)
+		stoppedCh, listenerStoppedCh, err = s.SecureServingInfo.ServeWithListenerStopped(s.Handler, s.ShutdownTimeout, internalStopCh)
 		if err != nil {
 			close(internalStopCh)
 			close(auditStopCh)
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
@@ -408,11 +444,12 @@ func (s preparedGenericAPIServer) NonBlockingRun(stopCh <-chan struct{}) (<-chan
 		klog.Errorf("Unable to send systemd daemon successful start message: %v\n", err)
 	}
 
-	return stoppedCh, nil
+	return stoppedCh, listenerStoppedCh, nil
 }
 
 // installAPIResources is a private method for installing the REST storage backing each api groupversionresource
 func (s *GenericAPIServer) installAPIResources(apiPrefix string, apiGroupInfo *APIGroupInfo, openAPIModels openapiproto.Models) error {
+	var resourceInfos []*storageversion.ResourceInfo
 	for _, groupVersion := range apiGroupInfo.PrioritizedVersions {
 		if len(apiGroupInfo.VersionedResourcesStorageMap[groupVersion.Version]) == 0 {
 			klog.Warningf("Skipping API %v because it has no resources.", groupVersion)
@@ -424,11 +461,30 @@ func (s *GenericAPIServer) installAPIResources(apiPrefix string, apiGroupInfo *A
 			apiGroupVersion.OptionsExternalVersion = apiGroupInfo.OptionsExternalVersion
 		}
 		apiGroupVersion.OpenAPIModels = openAPIModels
+
+		if openAPIModels != nil && utilfeature.DefaultFeatureGate.Enabled(features.ServerSideApply) {
+			typeConverter, err := fieldmanager.NewTypeConverter(openAPIModels, false)
+			if err != nil {
+				return err
+			}
+			apiGroupVersion.TypeConverter = typeConverter
+		}
+
 		apiGroupVersion.MaxRequestBodyBytes = s.maxRequestBodyBytes
 
-		if err := apiGroupVersion.InstallREST(s.Handler.GoRestfulContainer); err != nil {
+		r, err := apiGroupVersion.InstallREST(s.Handler.GoRestfulContainer)
+		if err != nil {
 			return fmt.Errorf("unable to setup API %v: %v", apiGroupInfo, err)
 		}
+		resourceInfos = append(resourceInfos, r...)
+	}
+
+	if utilfeature.DefaultFeatureGate.Enabled(features.StorageVersionAPI) &&
+		utilfeature.DefaultFeatureGate.Enabled(features.APIServerIdentity) {
+		// API installation happens before we start listening on the handlers,
+		// therefore it is safe to register ResourceInfos here. The handler will block
+		// write requests until the storage versions of the targeting resources are updated.
+		s.StorageVersionManager.AddResourceInfo(resourceInfos...)
 	}
 
 	return nil
@@ -529,14 +585,15 @@ func (s *GenericAPIServer) newAPIGroupVersion(apiGroupInfo *APIGroupInfo, groupV
 		GroupVersion:     groupVersion,
 		MetaGroupVersion: apiGroupInfo.MetaGroupVersion,
 
-		ParameterCodec:  apiGroupInfo.ParameterCodec,
-		Serializer:      apiGroupInfo.NegotiatedSerializer,
-		Creater:         apiGroupInfo.Scheme,
-		Convertor:       apiGroupInfo.Scheme,
-		UnsafeConvertor: runtime.UnsafeObjectConvertor(apiGroupInfo.Scheme),
-		Defaulter:       apiGroupInfo.Scheme,
-		Typer:           apiGroupInfo.Scheme,
-		Linker:          runtime.SelfLinker(meta.NewAccessor()),
+		ParameterCodec:        apiGroupInfo.ParameterCodec,
+		Serializer:            apiGroupInfo.NegotiatedSerializer,
+		Creater:               apiGroupInfo.Scheme,
+		Convertor:             apiGroupInfo.Scheme,
+		ConvertabilityChecker: apiGroupInfo.Scheme,
+		UnsafeConvertor:       runtime.UnsafeObjectConvertor(apiGroupInfo.Scheme),
+		Defaulter:             apiGroupInfo.Scheme,
+		Typer:                 apiGroupInfo.Scheme,
+		Linker:                runtime.SelfLinker(meta.NewAccessor()),
 
 		EquivalentResourceRegistry: s.EquivalentResourceRegistry,
 
