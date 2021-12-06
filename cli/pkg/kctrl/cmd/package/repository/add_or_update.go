@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -35,9 +34,7 @@ type AddOrUpdateOptions struct {
 
 	CreateRepository bool
 
-	Wait         bool
-	PollInterval time.Duration
-	PollTimeout  time.Duration
+	WaitFlags cmdcore.WaitFlags
 
 	positionalNameArg bool
 }
@@ -63,9 +60,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	cmd.Flags().StringVar(&o.URL, "url", "", "OCI registry url for package repository bundle")
 	cmd.MarkFlagRequired("url")
 
-	cmd.Flags().BoolVarP(&o.Wait, "wait", "", true, "Wait for the package repository reconciliation to complete, optional. To disable wait, specify --wait=false")
-	cmd.Flags().DurationVarP(&o.PollInterval, "poll-interval", "", 1*time.Second, "Time interval between subsequent polls of package repository reconciliation status, optional")
-	cmd.Flags().DurationVarP(&o.PollTimeout, "poll-timeout", "", 5*time.Minute, "Timeout value for polls of package repository reconciliation status, optional")
+	o.WaitFlags.Set(cmd, flagsFactory)
 
 	// For `add` command create option will always be true
 	o.CreateRepository = true
@@ -91,9 +86,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 
 	cmd.Flags().BoolVar(&o.CreateRepository, "create", false, "Creates the package repository if it does not exist, optional")
 
-	cmd.Flags().BoolVar(&o.Wait, "wait", true, "Wait for the package repository reconciliation to complete, optional. To disable wait, specify --wait=false")
-	cmd.Flags().DurationVar(&o.PollInterval, "poll-interval", 1*time.Second, "Time interval between subsequent polls of package repository reconciliation status, optional")
-	cmd.Flags().DurationVar(&o.PollTimeout, "poll-timeout", 5*time.Minute, "Timeout value for polls of package repository reconciliation status, optional")
+	o.WaitFlags.Set(cmd, flagsFactory)
 
 	return cmd
 }
@@ -128,7 +121,7 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 		return err
 	}
 
-	if o.Wait {
+	if o.WaitFlags.Enabled {
 		o.ui.BeginLinef("Waiting for package repository to be updated")
 		err = o.waitForPackageRepositoryInstallation(client)
 	}
@@ -148,7 +141,7 @@ func (o *AddOrUpdateOptions) add(client kcclient.Interface) error {
 		return err
 	}
 
-	if o.Wait {
+	if o.WaitFlags.Enabled {
 		o.ui.PrintLinef("Waiting for package repository to be added")
 		err = o.waitForPackageRepositoryInstallation(client)
 	}
@@ -199,7 +192,7 @@ func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *v1alpha1.Pack
 }
 
 func (o *AddOrUpdateOptions) waitForPackageRepositoryInstallation(client kcclient.Interface) error {
-	if err := wait.Poll(o.PollInterval, o.PollTimeout, func() (done bool, err error) {
+	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
 		pkgr, err := client.PackagingV1alpha1().PackageRepositories(
 			o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 		if err != nil {
