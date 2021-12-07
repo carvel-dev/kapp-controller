@@ -271,7 +271,7 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient vers
 	}
 
 	o.ui.PrintLinef("Updating package install for '%s'", o.Name)
-	o.addCreatedResourceAnnotations(&pkgInstall.ObjectMeta, false, isSecretCreated)
+	o.addCreatedResourceAnnotations(&updatedPkgInstall.ObjectMeta, false, isSecretCreated)
 	_, err = kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Update(
 		context.Background(), updatedPkgInstall, metav1.UpdateOptions{},
 	)
