@@ -164,3 +164,97 @@ from_path: true
 		}
 	})
 }
+
+func Test_SecretsAndConfigMapsWithCustomPathsCanReconcile(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
+
+	name := "inline-pathsfrom-directorypath"
+	appYaml := `---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: simple-app2
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
+spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
+  fetch:
+  - inline:
+      paths:
+        file-from-fetch-paths: ""
+        template/dir/blah.txt: ""
+      pathsFrom:
+        - secretRef:
+            name: from-secret
+            directoryPath: fetch/dis/dir
+        # both secrets have same key, so without directoryPath one would overwrite the other
+        - secretRef:
+            name: another-from-secret
+            directoryPath: fetch/dat/dir
+  template:
+  - ytt:
+      inline:
+        pathsFrom:
+        - secretRef:
+            name: from-secret
+            directoryPath: template/dir
+        paths:
+          config.yml: |
+            #@ load("@ytt:data", "data")
+            #@ load("@ytt:yaml", "yaml")
+
+            kind: ConfigMap
+            apiVersion: v1
+            metadata:
+              name: foo
+            data:
+              data: #@ yaml.encode(data.list())
+  deploy:
+  - kapp: {}
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: from-secret
+stringData:
+  file-from-secret: "thisIsData"
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: another-from-secret
+stringData:
+  file-from-secret: "SameKeyDifferentValues"
+` + sas.ForNamespaceYAML()
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
+	})
+
+	logger.Section("check configmap is populated", func() {
+		out := kubectl.Run([]string{"get", "configmap/foo", "-o", "yaml"})
+		expectedContentItems := []string{
+			"file-from-fetch-paths",
+			"config.yml",
+			"fetch/dis/dir/file-from-secret",
+			"fetch/dat/dir/file-from-secret",
+			"template/dir/blah.txt",
+			"template/dir/file-from-secret",
+		}
+
+		for _, item := range expectedContentItems {
+			if !strings.Contains(out, item) {
+				t.Fatal("failed", fmt.Errorf("configmap %s missing item: %s", out, item))
+			}
+		}
+	})
+}

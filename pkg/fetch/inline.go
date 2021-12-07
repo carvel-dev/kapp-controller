@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -96,9 +97,14 @@ func (t *Inline) writeFile(dstPath, subPath string, content []byte) error {
 		return err
 	}
 
+	err = os.MkdirAll(filepath.Dir(newPath), 0700)
+	if err != nil {
+		return fmt.Errorf("Creating directory '%s' for inline file: %s", filepath.Dir(newPath), err)
+	}
+
 	err = ioutil.WriteFile(newPath, content, 0600)
 	if err != nil {
-		return fmt.Errorf("Writing file '%s': %s", newPath, err)
+		return fmt.Errorf("Writing inline file '%s': %s", newPath, err)
 	}
 
 	return nil
