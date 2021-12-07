@@ -10,11 +10,13 @@ import (
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
+	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
@@ -22,6 +24,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 )
@@ -146,6 +149,16 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 	kcClient, err := o.depsFactory.KappCtrlClient()
 	if err != nil {
 		return err
+	}
+
+	pkgclient, err := o.depsFactory.PackageClient()
+	if err != nil {
+		return err
+	}
+
+	if o.version == "" {
+		o.showVersions(pkgclient)
+		return fmt.Errorf("Expected --version to have a non empty value")
 	}
 
 	pkgInstall, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
@@ -660,6 +673,42 @@ func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace stri
 	if !reconcileSucceeded {
 		return fmt.Errorf("PackageInstall resource reconciliation failed")
 	}
+
+	return nil
+}
+
+func (o *CreateOrUpdateOptions) showVersions(client pkgclient.Interface) error {
+	listOpts := metav1.ListOptions{}
+	if len(o.Name) > 0 {
+		listOpts.FieldSelector = fields.Set{"spec.refName": o.packageName}.String()
+	}
+
+	pkgList, err := client.DataV1alpha1().Packages(
+		o.NamespaceFlags.Name).List(context.Background(), listOpts)
+	if err != nil {
+		return err
+	}
+
+	table := uitable.Table{
+		Title: fmt.Sprintf("Available Versions of %s", o.packageName),
+		Header: []uitable.Header{
+			uitable.NewHeader("Version"),
+			uitable.NewHeader("Released at"),
+		},
+
+		SortBy: []uitable.ColumnSort{
+			{Column: 0, Asc: true},
+		},
+	}
+
+	for _, pkg := range pkgList.Items {
+		table.Rows = append(table.Rows, []uitable.Value{
+			uitable.NewValueString(pkg.Spec.Version),
+			uitable.NewValueString(pkg.Spec.ReleasedAt.String()),
+		})
+	}
+
+	o.ui.PrintTable(table)
 
 	return nil
 }
