@@ -178,7 +178,6 @@ apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
   name: simple-app2
-  namespace: kappctrl-test
   annotations:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
 spec:
@@ -208,8 +207,6 @@ spec:
             #@ load("@ytt:data", "data")
             #@ load("@ytt:yaml", "yaml")
 
-            #@ print(data.list())
-
             kind: ConfigMap
             apiVersion: v1
             metadata:
@@ -223,7 +220,6 @@ kind: Secret
 apiVersion: v1
 metadata:
   name: from-secret
-  namespace: kappctrl-test
 stringData:
   file-from-secret: "thisIsData"
 ---
@@ -231,7 +227,6 @@ kind: Secret
 apiVersion: v1
 metadata:
   name: another-from-secret
-  namespace: kappctrl-test
 stringData:
   file-from-secret: "SameKeyDifferentValues"
 ` + sas.ForNamespaceYAML()
