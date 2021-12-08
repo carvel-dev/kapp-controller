@@ -91,13 +91,14 @@ func (o *DeleteOptions) Run(args []string) error {
 func (o *DeleteOptions) waitForDeletion(client versioned.Interface) error {
 	o.ui.PrintLinef("Waiting for deletion to be completed...")
 	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
+	description := getPackageRepositoryDescription(o.Name, o.NamespaceFlags.Name)
 
 	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
 		pkgr, err := client.PackagingV1alpha1().PackageRepositories(
 			o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				o.ui.PrintLinef("PackageRepository deleted successfully")
+				msgsUI.NotifySection("%s: DeletionSucceeded", description)
 				return true, nil
 			}
 			return false, err
@@ -107,15 +108,16 @@ func (o *DeleteOptions) waitForDeletion(client versioned.Interface) error {
 		// the reconciliation status so that we know we are checking the new spec
 		if pkgr.Generation == pkgr.Status.ObservedGeneration {
 			for _, condition := range pkgr.Status.Conditions {
-				msgsUI.NotifySection("PackageRepository deletion status: %s", condition.Type)
+				msgsUI.NotifySection("%s: %s", description, condition.Type)
+
 				if condition.Type == v1alpha1.DeleteFailed && condition.Status == corev1.ConditionTrue {
-					return false, fmt.Errorf("PackageRepository deletion failed: %s", pkgr.Status.UsefulErrorMessage)
+					return false, fmt.Errorf("%s: Deletion failed: %s", description, pkgr.Status.UsefulErrorMessage)
 				}
 			}
 		}
 		return false, nil
 	}); err != nil {
-		return fmt.Errorf("Timed out waiting for package repository to be deleted")
+		return fmt.Errorf("%s: Deletion failed: %s", description, err)
 	}
 	return nil
 }

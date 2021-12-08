@@ -204,6 +204,7 @@ func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *v1alpha1.Pack
 
 func (o *AddOrUpdateOptions) waitForPackageRepositoryInstallation(client kcclient.Interface) error {
 	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
+	description := getPackageRepositoryDescription(o.Name, o.NamespaceFlags.Name)
 	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
 		pkgr, err := client.PackagingV1alpha1().PackageRepositories(
 			o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
@@ -219,20 +220,29 @@ func (o *AddOrUpdateOptions) waitForPackageRepositoryInstallation(client kcclien
 		status := pkgr.Status.GenericStatus
 
 		for _, condition := range status.Conditions {
-			msgsUI.NotifySection("PackageRepository install status: %s", condition.Type)
+			msgsUI.NotifySection("%s: %s", description, condition.Type)
 
 			switch {
 			case condition.Type == kappctrl.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
-				o.ui.PrintLinef("PackageRepository successfully reconciled")
 				return true, nil
 			case condition.Type == kappctrl.ReconcileFailed && condition.Status == corev1.ConditionTrue:
-				return false, fmt.Errorf("PackageRepository reconciliation failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+				return false, fmt.Errorf("%s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
 			}
 		}
 		return false, nil
 	}); err != nil {
-		return fmt.Errorf("PackageRepository reconciliation failed: %s", err)
+		return fmt.Errorf("%s: Reconciliation failed: %s", description, err)
 	}
 
 	return nil
+}
+
+func getPackageRepositoryDescription(name string, namespace string) string {
+	description := fmt.Sprintf("packagerepository/%s (packaging.carvel.dev/v1alpha1)", name)
+	if len(namespace) > 0 {
+		description += " namespace: " + namespace
+	} else {
+		description += " cluster"
+	}
+	return description
 }
