@@ -131,7 +131,7 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 	}
 
 	if o.WaitFlags.Enabled {
-		o.ui.BeginLinef("Waiting for package repository to be updated")
+		o.ui.PrintLinef("Waiting for package repository to be updated")
 		err = o.waitForPackageRepositoryInstallation(client)
 	}
 
@@ -166,6 +166,12 @@ func (o *AddOrUpdateOptions) newPackageRepository() (*v1alpha1.PackageRepository
 		},
 	}
 
+	pkgr.Spec = kappipkg.PackageRepositorySpec{
+		Fetch: &kappipkg.PackageRepositoryFetch{
+			ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: o.URL},
+		},
+	}
+
 	return o.updateExistingPackageRepository(pkgr)
 }
 
@@ -173,11 +179,7 @@ func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *v1alpha1.Pack
 
 	pkgr = pkgr.DeepCopy()
 
-	pkgr.Spec = kappipkg.PackageRepositorySpec{
-		Fetch: &kappipkg.PackageRepositoryFetch{
-			ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: o.URL},
-		},
-	}
+	pkgr.Spec.Fetch.ImgpkgBundle.Image = o.URL
 
 	ref, err := name.ParseReference(o.URL, name.WeakValidation)
 	if err != nil {
