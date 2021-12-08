@@ -17,6 +17,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type DeleteOptions struct {
@@ -91,17 +92,15 @@ func (o *DeleteOptions) waitForDeletion(client versioned.Interface) error {
 	o.ui.PrintLinef("Waiting for deletion to be completed...")
 	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 
-	t1 := time.Now()
-
-	for {
+	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
 		pkgr, err := client.PackagingV1alpha1().PackageRepositories(
 			o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				o.ui.PrintLinef("PackageRepository deleted successfully")
-				return nil
+				return true, nil
 			}
-			return err
+			return false, err
 		}
 
 		// Should wait for generation to be observed before checking
@@ -110,15 +109,13 @@ func (o *DeleteOptions) waitForDeletion(client versioned.Interface) error {
 			for _, condition := range pkgr.Status.Conditions {
 				msgsUI.NotifySection("PackageRepository deletion status: %s", condition.Type)
 				if condition.Type == v1alpha1.DeleteFailed && condition.Status == corev1.ConditionTrue {
-					return fmt.Errorf("PackageRepository deletion failed: %s", pkgr.Status.UsefulErrorMessage)
+					return false, fmt.Errorf("PackageRepository deletion failed: %s", pkgr.Status.UsefulErrorMessage)
 				}
 			}
 		}
-
-		if time.Now().Sub(t1) > o.WaitFlags.Timeout {
-			return fmt.Errorf("Timed out waiting for package repository to be deleted")
-		}
-
-		time.Sleep(o.WaitFlags.CheckInterval)
+		return false, nil
+	}); err != nil {
+		return fmt.Errorf("Timed out waiting for package repository to be deleted")
 	}
+	return nil
 }
