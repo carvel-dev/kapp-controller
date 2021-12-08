@@ -27,7 +27,7 @@ func NewPlainMessagesUI(ui ui.UI) *PlainMessagesUI {
 }
 
 func (ui *PlainMessagesUI) NotifySection(msg string, args ...interface{}) {
-	ui.notify("---- "+msg+" ----", args...)
+	ui.notify(msg, args...)
 }
 
 func (ui *PlainMessagesUI) Notify(msgs []string) {
