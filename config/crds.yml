@@ -153,7 +153,6 @@ spec:
                         items:
                           properties:
                             git:
-                              description: TODO implement git
                               properties:
                                 lfsSkipSmudge:
                                   type: boolean
@@ -557,7 +556,6 @@ spec:
                 items:
                   properties:
                     git:
-                      description: TODO implement git
                       properties:
                         lfsSkipSmudge:
                           type: boolean
@@ -1141,7 +1139,6 @@ spec:
               fetch:
                 properties:
                   git:
-                    description: TODO implement git
                     properties:
                       lfsSkipSmudge:
                         type: boolean

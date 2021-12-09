@@ -92,7 +92,6 @@ message AppFetch {
   optional AppFetchImgpkgBundle imgpkgBundle = 6;
 }
 
-// TODO implement git
 // +k8s:openapi-gen=true
 message AppFetchGit {
   optional string url = 1;
