@@ -567,18 +567,31 @@ func (o *CreateOrUpdateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *k
 
 	secretName := o.createdAnnotations.SecretAnnValue()
 
+	if len(pkgInstallToUpdate.Spec.Values) > 1 {
+		return false, fmt.Errorf(`Expected package install to have one or no value references while updating. Please delete and install the package install with appropriate values.`)
+	}
+
+	if len(pkgInstallToUpdate.Spec.Values) == 1 && pkgInstallToUpdate.Spec.Values[0].SecretRef.Name != "" {
+		secretName = pkgInstallToUpdate.Spec.Values[0].SecretRef.Name
+		o.ui.PrintLinef("Updating secret '%s'", secretName)
+		err := o.updateDataValuesSecret(client, secretName)
+		if err != nil {
+			return false, fmt.Errorf("Failed to update manually referenced secret based on values file: %s", err.Error())
+		}
+		return true, nil
+	}
+
 	// Second condition supports older versions of Tanzu CLI. To be deprecated
 	if secretName == pkgInstallToUpdate.GetAnnotations()[KctrlPkgAnnotation+"-"+KindSecret.AsString()] ||
 		secretName == pkgInstallToUpdate.GetAnnotations()[TanzuPkgAnnotation+"-"+KindSecret.AsString()] {
 		o.ui.PrintLinef("Updating secret '%s'", secretName)
-		if err = o.updateDataValuesSecret(client); err != nil {
-			err = fmt.Errorf("failed to update secret based on values file: %s", err.Error())
-			return false, err
+		if err = o.updateDataValuesSecret(client, secretName); err != nil {
+			return false, fmt.Errorf("Failed to update secret based on values file: %s", err.Error())
 		}
 	} else {
 		o.ui.PrintLinef("Creating secret '%s'", secretName)
 		if secretCreated, err = o.createOrUpdateDataValuesSecret(client); err != nil {
-			return secretCreated, fmt.Errorf("failed to create secret based on values file: %s", err.Error())
+			return secretCreated, fmt.Errorf("Failed to create secret based on values file: %s", err.Error())
 		}
 	}
 
@@ -589,13 +602,28 @@ func (o *CreateOrUpdateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *k
 	return secretCreated, nil
 }
 
-func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interface) error {
+func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interface, secretName string) error {
 	var err error
 	dataValues := make(map[string][]byte)
-	secretName := o.createdAnnotations.SecretAnnValue()
 
-	if dataValues[valuesFileKey], err = ioutil.ReadFile(o.valuesFile); err != nil {
-		return fmt.Errorf("failed to read from data values file '%s': %s", o.valuesFile, err.Error())
+	createdSecret, err := client.CoreV1().Secrets(o.NamespaceFlags.Name).Get(context.Background(), secretName, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("Could not find manually referenced secret '%s' in namespace '%s'", secretName, o.NamespaceFlags.Name)
+	}
+
+	if len(createdSecret.Data) > 1 {
+		return fmt.Errorf("Could not safely update manually referenced secret '%s' as it has more than one data keys", secretName, o.NamespaceFlags.Name)
+	}
+
+	dataKey := valuesFileKey
+	if len(createdSecret.Data) == 1 {
+		for key := range createdSecret.Data {
+			dataKey = key
+		}
+	}
+
+	if dataValues[dataKey], err = ioutil.ReadFile(o.valuesFile); err != nil {
+		return fmt.Errorf("Failed to read from data values file '%s': %s", o.valuesFile, err.Error())
 	}
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: secretName, Namespace: o.NamespaceFlags.Name}, Data: dataValues,
@@ -603,7 +631,7 @@ func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interfa
 
 	_, err = client.CoreV1().Secrets(o.NamespaceFlags.Name).Update(context.Background(), secret, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to update Secret resource: %s", err.Error())
+		return fmt.Errorf("Failed to update Secret resource: %s", err.Error())
 	}
 
 	return nil
