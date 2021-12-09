@@ -164,12 +164,7 @@ func (o *AddOrUpdateOptions) newPackageRepository() (*v1alpha1.PackageRepository
 			Name:      o.Name,
 			Namespace: o.NamespaceFlags.Name,
 		},
-	}
-
-	pkgr.Spec = kappipkg.PackageRepositorySpec{
-		Fetch: &kappipkg.PackageRepositoryFetch{
-			ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: o.URL},
-		},
+		Spec: kappipkg.PackageRepositorySpec{},
 	}
 
 	return o.updateExistingPackageRepository(pkgr)
@@ -179,7 +174,9 @@ func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *v1alpha1.Pack
 
 	pkgr = pkgr.DeepCopy()
 
-	pkgr.Spec.Fetch.ImgpkgBundle.Image = o.URL
+	pkgr.Spec.Fetch = &kappipkg.PackageRepositoryFetch{
+		ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: o.URL},
+	}
 
 	ref, err := name.ParseReference(o.URL, name.WeakValidation)
 	if err != nil {
