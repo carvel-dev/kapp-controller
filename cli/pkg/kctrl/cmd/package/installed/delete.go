@@ -132,6 +132,11 @@ func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.
 		if deletedResources[resourceKind] {
 			continue
 		}
+
+		if CreatedResourceKind(resourceKind).Resource() == "" {
+			continue
+		}
+
 		deletedResources[resourceKind] = true
 
 		var apiGroup, version, namespace string
