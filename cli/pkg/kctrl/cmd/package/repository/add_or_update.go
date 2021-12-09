@@ -228,7 +228,7 @@ func (o *AddOrUpdateOptions) waitForPackageRepositoryInstallation(client kcclien
 		}
 		return false, nil
 	}); err != nil {
-		return fmt.Errorf("%s: Reconciliation failed: %s", description, err)
+		return fmt.Errorf("%s: Reconciling: %s", description, err)
 	}
 
 	return nil

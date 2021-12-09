@@ -252,12 +252,15 @@ func (o *DeleteOptions) deleteResourceUsingGVR(groupVersionResource schema.Group
 
 func (o *DeleteOptions) waitForResourceDelete(kcClient kcclient.Interface) error {
 	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
-	err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (bool, error) {
+	description := getPackageInstallDescription(o.Name, o.NamespaceFlags.Name)
+
+	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (bool, error) {
 		resource, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
 			context.Background(), o.Name, metav1.GetOptions{},
 		)
 		if err != nil {
 			if errors.IsNotFound(err) {
+				msgsUI.NotifySection("%s: DeletionSucceeded", description)
 				return true, nil
 			}
 			return false, err
@@ -267,17 +270,17 @@ func (o *DeleteOptions) waitForResourceDelete(kcClient kcclient.Interface) error
 			return false, nil
 		}
 		status := resource.Status.GenericStatus
+
 		for _, cond := range status.Conditions {
-			msgsUI.NotifySection("PackageInstall deletion status: %s", cond.Type)
+			msgsUI.NotifySection("%s: %s", description, cond.Type)
+
 			if cond.Type == kcv1alpha1.DeleteFailed && cond.Status == corev1.ConditionTrue {
-				return false, fmt.Errorf("resource deletion failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+				return false, fmt.Errorf("%s: Deleting: %s. %s", description, status.UsefulErrorMessage, status.FriendlyDescription)
 			}
 		}
 		return false, nil
-	})
-
-	if err != nil {
-		return err
+	}); err != nil {
+		return fmt.Errorf("%s: Deleting: %s", description, err)
 	}
 
 	return nil

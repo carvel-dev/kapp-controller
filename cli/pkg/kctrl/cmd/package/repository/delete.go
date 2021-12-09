@@ -104,6 +104,8 @@ func (o *DeleteOptions) waitForDeletion(client versioned.Interface) error {
 			return false, err
 		}
 
+		status := pkgr.Status.GenericStatus
+
 		// Should wait for generation to be observed before checking
 		// the reconciliation status so that we know we are checking the new spec
 		if pkgr.Generation == pkgr.Status.ObservedGeneration {
@@ -111,13 +113,13 @@ func (o *DeleteOptions) waitForDeletion(client versioned.Interface) error {
 				msgsUI.NotifySection("%s: %s", description, condition.Type)
 
 				if condition.Type == v1alpha1.DeleteFailed && condition.Status == corev1.ConditionTrue {
-					return false, fmt.Errorf("%s: Deletion failed: %s", description, pkgr.Status.UsefulErrorMessage)
+					return false, fmt.Errorf("%s: Deleting: %s. %s", description, status.UsefulErrorMessage, status.FriendlyDescription)
 				}
 			}
 		}
 		return false, nil
 	}); err != nil {
-		return fmt.Errorf("%s: Deletion failed: %s", description, err)
+		return fmt.Errorf("%s: Deleting: %s", description, err)
 	}
 	return nil
 }
