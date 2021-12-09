@@ -661,13 +661,11 @@ func (o *CreateOrUpdateOptions) addCreatedResourceAnnotations(meta *metav1.Objec
 
 // waitForResourceInstallation waits until the package get installed successfully or a failure happen
 func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace string, pollInterval, pollTimeout time.Duration, client kcclient.Interface) error {
-	var (
-		status             kcv1alpha1.GenericStatus
-		reconcileSucceeded bool
-	)
 	o.ui.PrintLinef("Waiting for PackageInstall reconciliation for '%s'", name)
 	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
-	err := wait.Poll(pollInterval, pollTimeout, func() (done bool, err error) {
+	description := getPackageInstallDescription(o.Name, o.NamespaceFlags.Name)
+
+	if err := wait.Poll(pollInterval, pollTimeout, func() (done bool, err error) {
 
 		resource, err := client.PackagingV1alpha1().PackageInstalls(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		//resource, err := p.kappClient.GetPackageInstall(name, namespace)
@@ -678,28 +676,21 @@ func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace stri
 			// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
 			return false, nil
 		}
-		status = resource.Status.GenericStatus
+		status := resource.Status.GenericStatus
 
 		for _, condition := range status.Conditions {
-			msgsUI.NotifySection("PackageInstall install status: %s", condition.Type)
+			msgsUI.NotifySection("%s: %s", description, condition.Type)
 
 			switch {
 			case condition.Type == kcv1alpha1.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
-				o.ui.PrintLinef("PackageInstall successfully reconciled")
-				reconcileSucceeded = true
 				return true, nil
 			case condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue:
-				return false, fmt.Errorf("PackageInstall reconciliation failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+				return false, fmt.Errorf("%s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
 			}
 		}
 		return false, nil
-	})
-	if err != nil {
-		return err
-	}
-
-	if !reconcileSucceeded {
-		return fmt.Errorf("PackageInstall resource reconciliation failed")
+	}); err != nil {
+		return fmt.Errorf("%s: Reconciling: %s", description, err)
 	}
 
 	return nil
@@ -739,4 +730,14 @@ func (o *CreateOrUpdateOptions) showVersions(client pkgclient.Interface) error {
 	o.ui.PrintTable(table)
 
 	return nil
+}
+
+func getPackageInstallDescription(name string, namespace string) string {
+	description := fmt.Sprintf("packageinstall/%s (data.packaging.carvel.dev/v1alpha1)", name)
+	if len(namespace) > 0 {
+		description += " namespace: " + namespace
+	} else {
+		description += " cluster"
+	}
+	return description
 }
