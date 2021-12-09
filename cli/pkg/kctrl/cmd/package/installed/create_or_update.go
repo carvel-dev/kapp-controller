@@ -733,7 +733,7 @@ func (o *CreateOrUpdateOptions) showVersions(client pkgclient.Interface) error {
 }
 
 func getPackageInstallDescription(name string, namespace string) string {
-	description := fmt.Sprintf("packageinstall/%s (data.packaging.carvel.dev/v1alpha1)", name)
+	description := fmt.Sprintf("packageinstall/%s (packaging.carvel.dev/v1alpha1)", name)
 	if len(namespace) > 0 {
 		description += " namespace: " + namespace
 	} else {
