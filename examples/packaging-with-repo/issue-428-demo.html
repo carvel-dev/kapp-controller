@@ -1,0 +1,174 @@
+<html>
+    <head>
+        <title>package layering</title>
+        <style>
+.header {
+  background-color: #F1F1F1;
+  text-align: center;
+  padding: 20px;
+  border: 1px hidden white;
+  border-radius: 6px;
+  margin: 8px;
+}
+
+input {
+    margin: 2px;
+}
+
+.namespace {
+    padding: 1em;
+    border: 1px;
+    border-color: black;
+    border-style: solid;
+    border-radius: 6px;
+    margin: 8px;
+    box-shadow: -3px 3px #DDD;
+    position: relative;
+}
+
+.package {
+    padding: 1em;
+    border: 1px;
+    border-color: black;
+    border-style: solid;
+    border-radius: 4px;
+    margin: 4px;
+    box-shadow: -1px 1px #DDD;
+    height: 50px;
+    width: 100px;
+    position: absolute;
+}
+
+
+
+.ns1 {
+  background-color: #FAF1F1;
+}
+
+.ns2 {
+  background-color: #F1FAF1;
+}
+
+.ns3 {
+  background-color: #F1F1FA;
+}
+        </style>
+    </head>
+    <body>
+        <h1 class="header">Package Layering</h1>
+        <h2>Proposal</h2>
+        <p>
+        Add an integer "priority" field in the PackageRepository CRD.
+        This value allows the operator who is authoring PackageRepositories to override or shadow
+        an existing package of the same name if they already know its priority value on that system.
+        It's also possible to set this priority at PKGR install time via YTT overlay.
+        </p>
+
+        <h3>Pros</h3>
+        <ul>
+            <li>Users consuming or installing the package would see only one version.</li>
+            <li>Allows "user override" if a specific user/team needs to patch a globally installed package in their ns.</li>
+            <li>Allows maintainers to override specific user/team installs if they need to push a global patch</li>
+            <li>Probably pretty simple to implement</li>
+        </ul>
+        <h3>Cons</h3>
+        <ul>
+            <li>Possible for escalation / "arms race" of priority values if users and admins keep incrementing the priority.</li>
+            <li>Doesn't solve adjacent issues around knowing which pkgr a package comes from</li>
+        </ul>
+
+        <h2>Interactive Demo</h2>
+        <p>
+            This demo allows visual intuitive exploration of setting priority of packages.
+            A sample package can be installed into any/all of three namespaces. While the default
+            priority or "z-index" of the package is 0, creating a new package of equal or higher priority will
+            override the existing one.
+        </p>
+        <p>
+            In this demo after multiple packages have been created in the namespace, the package showing on top is
+            the one that would be installed upon creation of a PackageInstall resource.
+        </p>
+        <div class="namespace ns1" id="ns1">
+            <h3>Namespace 1</h3>
+            <p>
+                &nbsp;
+            </p>
+        </div>
+
+        <div class="namespace ns2" id="ns2">
+            <h3>Namespace 2</h3>
+            <p>
+                &nbsp;
+            </p>
+        </div>
+
+        <div class="namespace ns3" id="ns3">
+            <h3>Namespace 3</h3>
+            <p>
+                &nbsp;
+            </p>
+        </div>
+
+        <form>
+            <!-- <label for="pname">Package Name: </label>
+            <input type="text" id="pname" name="fname"><br> -->
+            <div>Package Name: "shirt-manager"</div>
+            <label for="pz">Package Layering Priority:</label>
+            <input type="number" id="pz" name="pz" min="0" max="1000" value="0"><br>
+            <fieldset>
+                <legend>Destination Namespace(s)</legend>
+                <input type="checkbox" name="ns1-box" id="ns1-box" value="namespace 1"><label for="ns1-box">namespace 1</label><br>
+                <input type="checkbox" name="ns2-box" id="ns2-box" value="namespace 2"><label for="ns2-box">namespace 2</label><br>
+                <input type="checkbox" name="ns3-box" id="ns3-box" value="namespace 3"><label for="ns3-box">namespace 3</label><br>
+            </fieldset>
+            <input type="button" id="submit" name="submit" value="Create Package" onclick="createPackage()">
+        </form>
+
+    <script>
+        counters = {
+            ns1: 0,
+            ns2: 0,
+            ns3: 0
+        }
+
+        function randomColor() {
+            var letters = 'BCDEF'; //gaurantees that we produce some vaguely light color
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * letters.length)];
+            }
+            return color;
+        }
+
+        function addPackage(parentDivName, bgcolor, zindex){
+            var pkg = document.createElement("div");
+            pkg.className = "package";
+            pkg.innerHTML = "<b>shirt-manager</b><br>z: " + zindex;
+            pkg.style.backgroundColor = bgcolor;
+            pkg.style.zIndex = zindex;
+            pkg.style.top = 0 + (2 * counters[parentDivName]);
+            pkg.style.left = 150 + (8 * counters[parentDivName]);
+            counters[parentDivName] += 1;
+
+            document.getElementById(parentDivName).appendChild(pkg)
+        }
+
+        function createPackage()
+        {
+            var priority = document.getElementById("pz").value;
+            bgColor = randomColor();
+            if(document.getElementById('ns1-box').checked) {
+                addPackage('ns1', bgColor, priority)
+            }
+            if(document.getElementById('ns2-box').checked) {
+                addPackage('ns2', bgColor, priority)
+            }
+            if(document.getElementById('ns3-box').checked) {
+                addPackage('ns3', bgColor, priority)
+            }
+        }
+
+    </script>
+
+    </body>
+</html>
