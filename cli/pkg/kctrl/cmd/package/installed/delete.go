@@ -33,8 +33,7 @@ type DeleteOptions struct {
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
 
-	pollInterval time.Duration
-	pollTimeout  time.Duration
+	WaitFlags cmdcore.WaitFlags
 
 	positionalNameArg bool
 }
@@ -55,8 +54,11 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
 	}
 
-	cmd.Flags().DurationVar(&o.pollInterval, "poll-interval", 1*time.Second, "Time interval between consecutive polls while reconciling")
-	cmd.Flags().DurationVar(&o.pollTimeout, "poll-timeout", 1*time.Minute, "Timeout for the reconciliation process")
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: false,
+		DefaultInterval:  1 * time.Second,
+		DefaultTimeout:   5 * time.Minute,
+	})
 
 	return cmd
 }
@@ -130,6 +132,11 @@ func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.
 		if deletedResources[resourceKind] {
 			continue
 		}
+
+		if CreatedResourceKind(resourceKind).Resource() == "" {
+			continue
+		}
+
 		deletedResources[resourceKind] = true
 
 		var apiGroup, version, namespace string
@@ -244,12 +251,16 @@ func (o *DeleteOptions) deleteResourceUsingGVR(groupVersionResource schema.Group
 }
 
 func (o *DeleteOptions) waitForResourceDelete(kcClient kcclient.Interface) error {
-	err := wait.Poll(o.pollInterval, o.pollTimeout, func() (bool, error) {
+	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
+	description := getPackageInstallDescription(o.Name, o.NamespaceFlags.Name)
+
+	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (bool, error) {
 		resource, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
 			context.Background(), o.Name, metav1.GetOptions{},
 		)
 		if err != nil {
 			if errors.IsNotFound(err) {
+				msgsUI.NotifySection("%s: DeletionSucceeded", description)
 				return true, nil
 			}
 			return false, err
@@ -259,17 +270,17 @@ func (o *DeleteOptions) waitForResourceDelete(kcClient kcclient.Interface) error
 			return false, nil
 		}
 		status := resource.Status.GenericStatus
+
 		for _, cond := range status.Conditions {
-			o.ui.BeginLinef("'PackageInstall' resource deletion status: %s\n", cond.Type)
+			msgsUI.NotifySection("%s: %s", description, cond.Type)
+
 			if cond.Type == kcv1alpha1.DeleteFailed && cond.Status == corev1.ConditionTrue {
-				return false, fmt.Errorf("resource deletion failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+				return false, fmt.Errorf("%s: Deleting: %s. %s", description, status.UsefulErrorMessage, status.FriendlyDescription)
 			}
 		}
 		return false, nil
-	})
-
-	if err != nil {
-		return err
+	}); err != nil {
+		return fmt.Errorf("%s: Deleting: %s", description, err)
 	}
 
 	return nil

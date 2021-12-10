@@ -17,6 +17,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type DeleteOptions struct {
@@ -49,7 +50,11 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name")
 	}
 
-	o.WaitFlags.Set(cmd, flagsFactory)
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  1 * time.Second,
+		DefaultTimeout:   5 * time.Minute,
+	})
 
 	return cmd
 }
@@ -85,35 +90,36 @@ func (o *DeleteOptions) Run(args []string) error {
 
 func (o *DeleteOptions) waitForDeletion(client versioned.Interface) error {
 	o.ui.PrintLinef("Waiting for deletion to be completed...")
+	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
+	description := getPackageRepositoryDescription(o.Name, o.NamespaceFlags.Name)
 
-	t1 := time.Now()
-
-	for {
+	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
 		pkgr, err := client.PackagingV1alpha1().PackageRepositories(
 			o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				o.ui.PrintLinef("Repository deleted successfully")
-				return nil
+				msgsUI.NotifySection("%s: DeletionSucceeded", description)
+				return true, nil
 			}
-			return err
+			return false, err
 		}
+
+		status := pkgr.Status.GenericStatus
 
 		// Should wait for generation to be observed before checking
 		// the reconciliation status so that we know we are checking the new spec
 		if pkgr.Generation == pkgr.Status.ObservedGeneration {
 			for _, condition := range pkgr.Status.Conditions {
-				o.ui.BeginLinef("'PackageRepository' resource deletion status: %s\n", condition.Type)
+				msgsUI.NotifySection("%s: %s", description, condition.Type)
+
 				if condition.Type == v1alpha1.DeleteFailed && condition.Status == corev1.ConditionTrue {
-					return fmt.Errorf("Deletion failed: %s", pkgr.Status.UsefulErrorMessage)
+					return false, fmt.Errorf("%s: Deleting: %s. %s", description, status.UsefulErrorMessage, status.FriendlyDescription)
 				}
 			}
 		}
-
-		if time.Now().Sub(t1) > o.WaitFlags.Timeout {
-			return fmt.Errorf("Timed out waiting for package repository to be deleted")
-		}
-
-		time.Sleep(o.WaitFlags.CheckInterval)
+		return false, nil
+	}); err != nil {
+		return fmt.Errorf("%s: Deleting: %s", description, err)
 	}
+	return nil
 }

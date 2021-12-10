@@ -65,10 +65,12 @@ func (parser *PackageValuesSchemaParser) walkOnValueSchemaProperties(docMap map[
 	// Base case one: if current level does not have properties field, we do not need to go deeper to look for
 	// the nested properties.
 	if properties, exist = docMap["properties"]; !exist && len(parser.fieldPath) > 0 {
+		propertyType, _ := docMap["type"].(string)
+		description, _ := docMap["description"].(string)
 		parser.DataValueProperties = append(parser.DataValueProperties, DataValueProperty{
 			Key:         strings.Join(parser.fieldPath, "."),
-			Type:        docMap["type"].(string),
-			Description: docMap["description"].(string),
+			Type:        propertyType,
+			Description: description,
 			Default:     docMap["default"],
 		})
 		return nil
@@ -95,10 +97,12 @@ func (parser *PackageValuesSchemaParser) walkOnValueSchemaProperties(docMap map[
 	// Base case two: if current level does have properties field but that interface is an empty map, we do not need to
 	// look for nested properties.
 	if len(propertiesMap) == 0 {
+		propertyType, _ := docMap["type"].(string)
+		description, _ := docMap["description"].(string)
 		parser.DataValueProperties = append(parser.DataValueProperties, DataValueProperty{
 			Key:         strings.Join(parser.fieldPath, "."),
-			Type:        docMap["type"].(string),
-			Description: docMap["description"].(string),
+			Type:        propertyType,
+			Description: description,
 			Default:     docMap["default"],
 		})
 		return nil
