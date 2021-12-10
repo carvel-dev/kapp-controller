@@ -10,11 +10,13 @@ import (
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
+	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
@@ -22,12 +24,13 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 )
 
 const (
-	valuesFileKey = "values"
+	valuesFileKey = "values.yaml"
 )
 
 type CreateOrUpdateOptions struct {
@@ -35,21 +38,18 @@ type CreateOrUpdateOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	pollInterval time.Duration
-	pollTimeout  time.Duration
-	wait         bool
+	WaitFlags cmdcore.WaitFlags
 
 	packageName        string
 	version            string
 	valuesFile         string
 	serviceAccountName string
-	createNewNamespace bool
 
 	install bool
 
 	Name               string
 	NamespaceFlags     cmdcore.NamespaceFlags
-	CreatedAnnotations *CreatedResourceAnnotations
+	createdAnnotations *CreatedResourceAnnotations
 
 	positionalNameArg bool
 }
@@ -73,12 +73,13 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
-	cmd.Flags().BoolVar(&o.createNewNamespace, "create-namespace", false, "Create namespace if the target namespace does not exist, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 
-	cmd.Flags().DurationVar(&o.pollInterval, "poll-interval", 1*time.Second, "Time interval between consecutive polls while reconciling")
-	cmd.Flags().DurationVar(&o.pollTimeout, "poll-timeout", 1*time.Minute, "Timeout for the reconciliation process")
-	cmd.Flags().BoolVar(&o.wait, "wait", true, "Wait for reconcilation, default true")
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  1 * time.Second,
+		DefaultTimeout:   30 * time.Minute,
+	})
 
 	return cmd
 }
@@ -98,12 +99,13 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
-	cmd.Flags().BoolVar(&o.createNewNamespace, "create-namespace", false, "Create namespace if the target namespace does not exist, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 
-	cmd.Flags().DurationVar(&o.pollInterval, "poll-interval", 1*time.Second, "Time interval between consecutive polls while reconciling")
-	cmd.Flags().DurationVar(&o.pollTimeout, "poll-timeout", 1*time.Minute, "Timeout for the reconciliation process")
-	cmd.Flags().BoolVar(&o.wait, "wait", true, "Wait for reconcilation, default true")
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  1 * time.Second,
+		DefaultTimeout:   30 * time.Minute,
+	})
 
 	return cmd
 }
@@ -122,14 +124,14 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Name of package install to be updated")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
-	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
-	cmd.Flags().BoolVar(&o.createNewNamespace, "create-namespace", false, "Create namespace if the target namespace does not exist, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVarP(&o.install, "install", "", false, "Install package if the installed package does not exist, optional")
 
-	cmd.Flags().DurationVar(&o.pollInterval, "poll-interval", 1*time.Second, "Time interval between consecutive polls while reconciling")
-	cmd.Flags().DurationVar(&o.pollTimeout, "poll-timeout", 1*time.Minute, "Timeout for the reconciliation process")
-	cmd.Flags().BoolVar(&o.wait, "wait", true, "Wait for reconcilation, default true")
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  1 * time.Second,
+		DefaultTimeout:   30 * time.Minute,
+	})
 
 	return cmd
 }
@@ -149,6 +151,16 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 		return err
 	}
 
+	pkgclient, err := o.depsFactory.PackageClient()
+	if err != nil {
+		return err
+	}
+
+	if o.version == "" {
+		o.showVersions(pkgclient)
+		return fmt.Errorf("Expected --version to have a non empty value")
+	}
+
 	pkgInstall, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
 		context.Background(), o.Name, metav1.GetOptions{})
 	if err != nil {
@@ -157,7 +169,7 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 		}
 	}
 
-	o.CreatedAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
+	o.createdAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
 
 	// Fallback to update if resource exists
 	if pkgInstall != nil && err == nil {
@@ -167,15 +179,6 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 			return err
 		}
 		return nil
-	}
-
-	if o.createNewNamespace {
-		o.ui.PrintLinef("Creating namespace '%s'", o.NamespaceFlags.Name)
-		if err = o.createNamespace(client); err != nil {
-			return err
-		}
-	} else if _, err = client.CoreV1().Namespaces().Get(context.Background(), o.NamespaceFlags.Name, metav1.GetOptions{}); err != nil {
-		return err
 	}
 
 	err = o.create(client, kcClient)
@@ -197,8 +200,8 @@ func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient ver
 		return err
 	}
 
-	if o.wait {
-		if err = o.waitForResourceInstallation(o.Name, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, kcClient); err != nil {
+	if o.WaitFlags.Enabled {
+		if err = o.waitForResourceInstallation(o.Name, o.NamespaceFlags.Name, o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, kcClient); err != nil {
 			return err
 		}
 	}
@@ -221,7 +224,7 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 		return err
 	}
 
-	o.CreatedAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
+	o.createdAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
 
 	o.ui.PrintLinef("Getting package install for '%s'", o.Name)
 	pkgInstall, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
@@ -268,7 +271,7 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient vers
 	}
 
 	o.ui.PrintLinef("Updating package install for '%s'", o.Name)
-	o.addCreatedResourceAnnotations(&pkgInstall.ObjectMeta, false, isSecretCreated)
+	o.addCreatedResourceAnnotations(&updatedPkgInstall.ObjectMeta, false, isSecretCreated)
 	_, err = kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Update(
 		context.Background(), updatedPkgInstall, metav1.UpdateOptions{},
 	)
@@ -277,8 +280,8 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient vers
 		return err
 	}
 
-	if o.wait {
-		if err = o.waitForResourceInstallation(o.Name, o.NamespaceFlags.Name, o.pollInterval, o.pollTimeout, kcClient); err != nil {
+	if o.WaitFlags.Enabled {
+		if err = o.waitForResourceInstallation(o.Name, o.NamespaceFlags.Name, o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, kcClient); err != nil {
 			return err
 		}
 	}
@@ -295,17 +298,17 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 
 	if o.serviceAccountName == "" {
 
-		o.ui.PrintLinef("Creating service account '%s'", o.CreatedAnnotations.ServiceAccountAnnValue())
+		o.ui.PrintLinef("Creating service account '%s'", o.createdAnnotations.ServiceAccountAnnValue())
 		if isServiceAccountCreated, err = o.createOrUpdateServiceAccount(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
 
-		o.ui.PrintLinef("Creating cluster admin role '%s'", o.CreatedAnnotations.ClusterRoleAnnValue())
+		o.ui.PrintLinef("Creating cluster admin role '%s'", o.createdAnnotations.ClusterRoleAnnValue())
 		if err := o.createOrUpdateClusterAdminRole(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
 
-		o.ui.PrintLinef("Creating cluster role binding '%s'", o.CreatedAnnotations.ClusterRoleBindingAnnValue())
+		o.ui.PrintLinef("Creating cluster role binding '%s'", o.createdAnnotations.ClusterRoleBindingAnnValue())
 		if err := o.createOrUpdateClusterRoleBinding(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
@@ -328,7 +331,7 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 		}
 
 		if ok {
-			if svcAccountAnnotation != o.CreatedAnnotations.PackageAnnValue() {
+			if svcAccountAnnotation != o.createdAnnotations.PackageAnnValue() {
 				err = fmt.Errorf("provided service account '%s' is already used by another package in namespace '%s': %s", o.serviceAccountName, o.NamespaceFlags.Name, err.Error())
 				return isServiceAccountCreated, isSecretCreated, err
 			}
@@ -336,7 +339,7 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 	}
 
 	if o.valuesFile != "" {
-		o.ui.PrintLinef("Creating secret '%s'", o.CreatedAnnotations.SecretAnnValue())
+		o.ui.PrintLinef("Creating secret '%s'", o.createdAnnotations.SecretAnnValue())
 		if isSecretCreated, err = o.createOrUpdateDataValuesSecret(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
@@ -348,10 +351,10 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 func (o *CreateOrUpdateOptions) createOrUpdateClusterAdminRole(client kubernetes.Interface) error {
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: o.CreatedAnnotations.ClusterRoleAnnValue(),
+			Name: o.createdAnnotations.ClusterRoleAnnValue(),
 			Annotations: map[string]string{
-				KctrlPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
-				TanzuPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
+				KctrlPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
+				TanzuPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
 			},
 		},
 		Rules: []rbacv1.PolicyRule{
@@ -377,22 +380,22 @@ func (o *CreateOrUpdateOptions) createOrUpdateClusterAdminRole(client kubernetes
 func (o *CreateOrUpdateOptions) createOrUpdateClusterRoleBinding(client kubernetes.Interface) error {
 	svcAccount := o.serviceAccountName
 	if svcAccount == "" {
-		svcAccount = o.CreatedAnnotations.ServiceAccountAnnValue()
+		svcAccount = o.createdAnnotations.ServiceAccountAnnValue()
 	}
 
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: o.CreatedAnnotations.ClusterRoleBindingAnnValue(),
+			Name: o.createdAnnotations.ClusterRoleBindingAnnValue(),
 			Annotations: map[string]string{
-				KctrlPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
-				TanzuPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
+				KctrlPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
+				TanzuPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
 			},
 		},
 		Subjects: []rbacv1.Subject{{Kind: KindServiceAccount.AsString(), Name: svcAccount, Namespace: o.NamespaceFlags.Name}},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: rbacv1.SchemeGroupVersion.Group,
 			Kind:     KindClusterRole.AsString(),
-			Name:     o.CreatedAnnotations.ClusterRoleAnnValue(),
+			Name:     o.createdAnnotations.ClusterRoleAnnValue(),
 		},
 	}
 
@@ -422,11 +425,11 @@ func (o *CreateOrUpdateOptions) createOrUpdateDataValuesSecret(client kubernetes
 	}
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      o.CreatedAnnotations.SecretAnnValue(),
+			Name:      o.createdAnnotations.SecretAnnValue(),
 			Namespace: o.NamespaceFlags.Name,
 			Annotations: map[string]string{
-				KctrlPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
-				TanzuPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
+				KctrlPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
+				TanzuPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
 			},
 		},
 		Data: dataValues,
@@ -447,25 +450,10 @@ func (o *CreateOrUpdateOptions) createOrUpdateDataValuesSecret(client kubernetes
 	return true, nil
 }
 
-func (o *CreateOrUpdateOptions) createNamespace(client kubernetes.Interface) error {
-
-	ns := &corev1.Namespace{
-		TypeMeta:   metav1.TypeMeta{Kind: KindNamespace.AsString()},
-		ObjectMeta: metav1.ObjectMeta{Name: o.NamespaceFlags.Name},
-	}
-
-	_, err := client.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{})
-	if err != nil && !errors.IsAlreadyExists(err) {
-		return err
-	}
-
-	return nil
-}
-
 func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secretCreated bool, kcClient kcclient.Interface) error {
 	svcAccount := o.serviceAccountName
 	if svcAccount == "" {
-		svcAccount = o.CreatedAnnotations.ServiceAccountAnnValue()
+		svcAccount = o.createdAnnotations.ServiceAccountAnnValue()
 	}
 
 	// construct the PackageInstall CR
@@ -488,7 +476,7 @@ func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secr
 		packageInstall.Spec.Values = []kcpkgv1alpha1.PackageInstallValues{
 			{
 				SecretRef: &kcpkgv1alpha1.PackageInstallValuesSecretRef{
-					Name: o.CreatedAnnotations.SecretAnnValue(),
+					Name: o.createdAnnotations.SecretAnnValue(),
 				},
 			},
 		}
@@ -507,11 +495,11 @@ func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secr
 func (o *CreateOrUpdateOptions) createOrUpdateServiceAccount(client kubernetes.Interface) (bool, error) {
 	serviceAccount := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      o.CreatedAnnotations.ServiceAccountAnnValue(),
+			Name:      o.createdAnnotations.ServiceAccountAnnValue(),
 			Namespace: o.NamespaceFlags.Name,
 			Annotations: map[string]string{
-				KctrlPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
-				TanzuPkgAnnotation: o.CreatedAnnotations.PackageAnnValue(),
+				KctrlPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
+				TanzuPkgAnnotation: o.createdAnnotations.PackageAnnValue(),
 			},
 		},
 	}
@@ -577,20 +565,33 @@ func (o *CreateOrUpdateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *k
 		return false, nil
 	}
 
-	secretName := o.CreatedAnnotations.SecretAnnValue()
+	secretName := o.createdAnnotations.SecretAnnValue()
+
+	if len(pkgInstallToUpdate.Spec.Values) > 1 {
+		return false, fmt.Errorf(`Expected package install to have one or no value references while updating. Please delete and install the package install with appropriate values.`)
+	}
+
+	if len(pkgInstallToUpdate.Spec.Values) == 1 && pkgInstallToUpdate.Spec.Values[0].SecretRef.Name != "" {
+		secretName = pkgInstallToUpdate.Spec.Values[0].SecretRef.Name
+		o.ui.PrintLinef("Updating secret '%s'", secretName)
+		err := o.updateDataValuesSecret(client, secretName)
+		if err != nil {
+			return false, fmt.Errorf("Failed to update manually referenced secret based on values file: %s", err.Error())
+		}
+		return true, nil
+	}
 
 	// Second condition supports older versions of Tanzu CLI. To be deprecated
 	if secretName == pkgInstallToUpdate.GetAnnotations()[KctrlPkgAnnotation+"-"+KindSecret.AsString()] ||
 		secretName == pkgInstallToUpdate.GetAnnotations()[TanzuPkgAnnotation+"-"+KindSecret.AsString()] {
 		o.ui.PrintLinef("Updating secret '%s'", secretName)
-		if err = o.updateDataValuesSecret(client); err != nil {
-			err = fmt.Errorf("failed to update secret based on values file: %s", err.Error())
-			return false, err
+		if err = o.updateDataValuesSecret(client, secretName); err != nil {
+			return false, fmt.Errorf("Failed to update secret based on values file: %s", err.Error())
 		}
 	} else {
 		o.ui.PrintLinef("Creating secret '%s'", secretName)
 		if secretCreated, err = o.createOrUpdateDataValuesSecret(client); err != nil {
-			return secretCreated, fmt.Errorf("failed to create secret based on values file: %s", err.Error())
+			return secretCreated, fmt.Errorf("Failed to create secret based on values file: %s", err.Error())
 		}
 	}
 
@@ -601,13 +602,28 @@ func (o *CreateOrUpdateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *k
 	return secretCreated, nil
 }
 
-func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interface) error {
+func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interface, secretName string) error {
 	var err error
 	dataValues := make(map[string][]byte)
-	secretName := o.CreatedAnnotations.SecretAnnValue()
 
-	if dataValues[valuesFileKey], err = ioutil.ReadFile(o.valuesFile); err != nil {
-		return fmt.Errorf("failed to read from data values file '%s': %s", o.valuesFile, err.Error())
+	createdSecret, err := client.CoreV1().Secrets(o.NamespaceFlags.Name).Get(context.Background(), secretName, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("Could not find manually referenced secret '%s' in namespace '%s'", secretName, o.NamespaceFlags.Name)
+	}
+
+	if len(createdSecret.Data) > 1 {
+		return fmt.Errorf("Could not safely update manually referenced secret '%s' as it has more than one data keys", secretName, o.NamespaceFlags.Name)
+	}
+
+	dataKey := valuesFileKey
+	if len(createdSecret.Data) == 1 {
+		for key := range createdSecret.Data {
+			dataKey = key
+		}
+	}
+
+	if dataValues[dataKey], err = ioutil.ReadFile(o.valuesFile); err != nil {
+		return fmt.Errorf("Failed to read from data values file '%s': %s", o.valuesFile, err.Error())
 	}
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: secretName, Namespace: o.NamespaceFlags.Name}, Data: dataValues,
@@ -615,7 +631,7 @@ func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interfa
 
 	_, err = client.CoreV1().Secrets(o.NamespaceFlags.Name).Update(context.Background(), secret, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to update Secret resource: %s", err.Error())
+		return fmt.Errorf("Failed to update Secret resource: %s", err.Error())
 	}
 
 	return nil
@@ -626,31 +642,30 @@ func (o *CreateOrUpdateOptions) addCreatedResourceAnnotations(meta *metav1.Objec
 		meta.Annotations = make(map[string]string)
 	}
 	if createdSvcAccount {
-		meta.Annotations[KctrlPkgAnnotation+"-"+KindClusterRole.AsString()] = o.CreatedAnnotations.ClusterRoleAnnValue()
-		meta.Annotations[KctrlPkgAnnotation+"-"+KindClusterRoleBinding.AsString()] = o.CreatedAnnotations.ClusterRoleBindingAnnValue()
-		meta.Annotations[KctrlPkgAnnotation+"-"+KindServiceAccount.AsString()] = o.CreatedAnnotations.ServiceAccountAnnValue()
+		meta.Annotations[KctrlPkgAnnotation+"-"+KindClusterRole.AsString()] = o.createdAnnotations.ClusterRoleAnnValue()
+		meta.Annotations[KctrlPkgAnnotation+"-"+KindClusterRoleBinding.AsString()] = o.createdAnnotations.ClusterRoleBindingAnnValue()
+		meta.Annotations[KctrlPkgAnnotation+"-"+KindServiceAccount.AsString()] = o.createdAnnotations.ServiceAccountAnnValue()
 
 		// To support older versions of Tanzu CLI. To be deprecated
-		meta.Annotations[TanzuPkgAnnotation+"-"+KindClusterRole.AsString()] = o.CreatedAnnotations.ClusterRoleAnnValue()
-		meta.Annotations[TanzuPkgAnnotation+"-"+KindClusterRoleBinding.AsString()] = o.CreatedAnnotations.ClusterRoleBindingAnnValue()
-		meta.Annotations[TanzuPkgAnnotation+"-"+KindServiceAccount.AsString()] = o.CreatedAnnotations.ServiceAccountAnnValue()
+		meta.Annotations[TanzuPkgAnnotation+"-"+KindClusterRole.AsString()] = o.createdAnnotations.ClusterRoleAnnValue()
+		meta.Annotations[TanzuPkgAnnotation+"-"+KindClusterRoleBinding.AsString()] = o.createdAnnotations.ClusterRoleBindingAnnValue()
+		meta.Annotations[TanzuPkgAnnotation+"-"+KindServiceAccount.AsString()] = o.createdAnnotations.ServiceAccountAnnValue()
 	}
 	if createdSecret {
-		meta.Annotations[KctrlPkgAnnotation+"-"+KindSecret.AsString()] = o.CreatedAnnotations.SecretAnnValue()
+		meta.Annotations[KctrlPkgAnnotation+"-"+KindSecret.AsString()] = o.createdAnnotations.SecretAnnValue()
 
 		// To support older versions of Tanzu CLI. To be deprecated
-		meta.Annotations[TanzuPkgAnnotation+"-"+KindSecret.AsString()] = o.CreatedAnnotations.SecretAnnValue()
+		meta.Annotations[TanzuPkgAnnotation+"-"+KindSecret.AsString()] = o.createdAnnotations.SecretAnnValue()
 	}
 }
 
 // waitForResourceInstallation waits until the package get installed successfully or a failure happen
 func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace string, pollInterval, pollTimeout time.Duration, client kcclient.Interface) error {
-	var (
-		status             kcv1alpha1.GenericStatus
-		reconcileSucceeded bool
-	)
 	o.ui.PrintLinef("Waiting for PackageInstall reconciliation for '%s'", name)
-	err := wait.Poll(pollInterval, pollTimeout, func() (done bool, err error) {
+	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
+	description := getPackageInstallDescription(o.Name, o.NamespaceFlags.Name)
+
+	if err := wait.Poll(pollInterval, pollTimeout, func() (done bool, err error) {
 
 		resource, err := client.PackagingV1alpha1().PackageInstalls(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		//resource, err := p.kappClient.GetPackageInstall(name, namespace)
@@ -661,29 +676,68 @@ func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace stri
 			// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
 			return false, nil
 		}
-		status = resource.Status.GenericStatus
+		status := resource.Status.GenericStatus
 
 		for _, condition := range status.Conditions {
-			o.ui.BeginLinef("PackageInstall resource install status: %s\n", condition.Type)
+			msgsUI.NotifySection("%s: %s", description, condition.Type)
 
 			switch {
 			case condition.Type == kcv1alpha1.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
-				o.ui.PrintLinef("PackageInstall resource successfully reconciled")
-				reconcileSucceeded = true
 				return true, nil
 			case condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue:
-				return false, fmt.Errorf("resource reconciliation failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+				return false, fmt.Errorf("%s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
 			}
 		}
 		return false, nil
-	})
+	}); err != nil {
+		return fmt.Errorf("%s: Reconciling: %s", description, err)
+	}
+
+	return nil
+}
+
+func (o *CreateOrUpdateOptions) showVersions(client pkgclient.Interface) error {
+	listOpts := metav1.ListOptions{}
+	if len(o.Name) > 0 {
+		listOpts.FieldSelector = fields.Set{"spec.refName": o.packageName}.String()
+	}
+
+	pkgList, err := client.DataV1alpha1().Packages(
+		o.NamespaceFlags.Name).List(context.Background(), listOpts)
 	if err != nil {
 		return err
 	}
 
-	if !reconcileSucceeded {
-		return fmt.Errorf("PackageInstall resource reconciliation failed")
+	table := uitable.Table{
+		Title: fmt.Sprintf("Available Versions of %s", o.packageName),
+		Header: []uitable.Header{
+			uitable.NewHeader("Version"),
+			uitable.NewHeader("Released at"),
+		},
+
+		SortBy: []uitable.ColumnSort{
+			{Column: 0, Asc: true},
+		},
 	}
 
+	for _, pkg := range pkgList.Items {
+		table.Rows = append(table.Rows, []uitable.Value{
+			uitable.NewValueString(pkg.Spec.Version),
+			uitable.NewValueString(pkg.Spec.ReleasedAt.String()),
+		})
+	}
+
+	o.ui.PrintTable(table)
+
 	return nil
+}
+
+func getPackageInstallDescription(name string, namespace string) string {
+	description := fmt.Sprintf("packageinstall/%s (packaging.carvel.dev/v1alpha1)", name)
+	if len(namespace) > 0 {
+		description += " namespace: " + namespace
+	} else {
+		description += " cluster"
+	}
+	return description
 }

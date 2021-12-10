@@ -25,7 +25,7 @@ type GetOptions struct {
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
 
-	valuesFile string
+	valuesFileOutput string
 
 	positionalNameArg bool
 }
@@ -44,10 +44,10 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
 	if !o.positionalNameArg {
-		cmd.Flags().StringVar(&o.Name, "package-install", "i", "Set installed package name")
+		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
 	}
 
-	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "File path for exporting configuration values file")
+	cmd.Flags().StringVar(&o.valuesFileOutput, "values-file-output", "", "File path for exporting configuration values file")
 	return cmd
 }
 
@@ -67,8 +67,8 @@ func (o *GetOptions) Run(args []string) error {
 		return err
 	}
 
-	if o.valuesFile != "" {
-		f, err := os.Create(o.valuesFile)
+	if o.valuesFileOutput != "" {
+		f, err := os.Create(o.valuesFileOutput)
 		if err != nil {
 			return err
 		}

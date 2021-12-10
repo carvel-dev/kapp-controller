@@ -20,7 +20,6 @@ import (
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -35,11 +34,8 @@ type AddOrUpdateOptions struct {
 	URL            string
 
 	CreateRepository bool
-	CreateNamespace  bool
 
-	Wait         bool
-	PollInterval time.Duration
-	PollTimeout  time.Duration
+	WaitFlags cmdcore.WaitFlags
 
 	positionalNameArg bool
 }
@@ -65,11 +61,11 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	cmd.Flags().StringVar(&o.URL, "url", "", "OCI registry url for package repository bundle")
 	cmd.MarkFlagRequired("url")
 
-	cmd.Flags().BoolVarP(&o.CreateNamespace, "create-namespace", "", false, "Create namespace if the target namespace does not exist, optional")
-
-	cmd.Flags().BoolVarP(&o.Wait, "wait", "", true, "Wait for the package repository reconciliation to complete, optional. To disable wait, specify --wait=false")
-	cmd.Flags().DurationVarP(&o.PollInterval, "poll-interval", "", 1*time.Second, "Time interval between subsequent polls of package repository reconciliation status, optional")
-	cmd.Flags().DurationVarP(&o.PollTimeout, "poll-timeout", "", 5*time.Minute, "Timeout value for polls of package repository reconciliation status, optional")
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  1 * time.Second,
+		DefaultTimeout:   5 * time.Minute,
+	})
 
 	// For `add` command create option will always be true
 	o.CreateRepository = true
@@ -94,11 +90,12 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 	cmd.MarkFlagRequired("url")
 
 	cmd.Flags().BoolVar(&o.CreateRepository, "create", false, "Creates the package repository if it does not exist, optional")
-	cmd.Flags().BoolVar(&o.CreateNamespace, "create-namespace", false, "Create namespace if the target namespace does not exist, optional")
 
-	cmd.Flags().BoolVar(&o.Wait, "wait", true, "Wait for the package repository reconciliation to complete, optional. To disable wait, specify --wait=false")
-	cmd.Flags().DurationVar(&o.PollInterval, "poll-interval", 1*time.Second, "Time interval between subsequent polls of package repository reconciliation status, optional")
-	cmd.Flags().DurationVar(&o.PollTimeout, "poll-timeout", 5*time.Minute, "Timeout value for polls of package repository reconciliation status, optional")
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  1 * time.Second,
+		DefaultTimeout:   5 * time.Minute,
+	})
 
 	return cmd
 }
@@ -111,13 +108,6 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 	client, err := o.depsFactory.KappCtrlClient()
 	if err != nil {
 		return err
-	}
-
-	if o.CreateNamespace {
-		err := o.createNamespace()
-		if err != nil {
-			return err
-		}
 	}
 
 	existingRepository, err := client.PackagingV1alpha1().PackageRepositories(o.NamespaceFlags.Name).Get(
@@ -140,25 +130,12 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 		return err
 	}
 
-	if o.Wait {
-		o.ui.BeginLinef("Waiting for package repository to be updated")
+	if o.WaitFlags.Enabled {
+		o.ui.PrintLinef("Waiting for package repository to be updated")
 		err = o.waitForPackageRepositoryInstallation(client)
 	}
 
 	return err
-}
-
-func (o *AddOrUpdateOptions) createNamespace() error {
-	kappClient, err := o.depsFactory.CoreClient()
-	if err != nil {
-		return err
-	}
-	_, err = kappClient.CoreV1().Namespaces().Create(context.Background(),
-		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: o.NamespaceFlags.Name}}, metav1.CreateOptions{})
-	if err != nil && !errors.IsAlreadyExists(err) {
-		return err
-	}
-	return nil
 }
 
 func (o *AddOrUpdateOptions) add(client kcclient.Interface) error {
@@ -173,7 +150,7 @@ func (o *AddOrUpdateOptions) add(client kcclient.Interface) error {
 		return err
 	}
 
-	if o.Wait {
+	if o.WaitFlags.Enabled {
 		o.ui.PrintLinef("Waiting for package repository to be added")
 		err = o.waitForPackageRepositoryInstallation(client)
 	}
@@ -187,6 +164,7 @@ func (o *AddOrUpdateOptions) newPackageRepository() (*v1alpha1.PackageRepository
 			Name:      o.Name,
 			Namespace: o.NamespaceFlags.Name,
 		},
+		Spec: kappipkg.PackageRepositorySpec{},
 	}
 
 	return o.updateExistingPackageRepository(pkgr)
@@ -196,10 +174,8 @@ func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *v1alpha1.Pack
 
 	pkgr = pkgr.DeepCopy()
 
-	pkgr.Spec = kappipkg.PackageRepositorySpec{
-		Fetch: &kappipkg.PackageRepositoryFetch{
-			ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: o.URL},
-		},
+	pkgr.Spec.Fetch = &kappipkg.PackageRepositoryFetch{
+		ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: o.URL},
 	}
 
 	ref, err := name.ParseReference(o.URL, name.WeakValidation)
@@ -224,7 +200,9 @@ func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *v1alpha1.Pack
 }
 
 func (o *AddOrUpdateOptions) waitForPackageRepositoryInstallation(client kcclient.Interface) error {
-	if err := wait.Poll(o.PollInterval, o.PollTimeout, func() (done bool, err error) {
+	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
+	description := getPackageRepositoryDescription(o.Name, o.NamespaceFlags.Name)
+	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
 		pkgr, err := client.PackagingV1alpha1().PackageRepositories(
 			o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 		if err != nil {
@@ -239,20 +217,29 @@ func (o *AddOrUpdateOptions) waitForPackageRepositoryInstallation(client kcclien
 		status := pkgr.Status.GenericStatus
 
 		for _, condition := range status.Conditions {
-			o.ui.BeginLinef("PackageRepository resource install status: %s\n", condition.Type)
+			msgsUI.NotifySection("%s: %s", description, condition.Type)
 
 			switch {
 			case condition.Type == kappctrl.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
-				o.ui.PrintLinef("PackageInstall resource successfully reconciled")
 				return true, nil
 			case condition.Type == kappctrl.ReconcileFailed && condition.Status == corev1.ConditionTrue:
-				return false, fmt.Errorf("PackageRepository reconciliation failed: %s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+				return false, fmt.Errorf("%s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
 			}
 		}
 		return false, nil
 	}); err != nil {
-		return fmt.Errorf("PackageRepository reconciliation failed: %s", err)
+		return fmt.Errorf("%s: Reconciling: %s", description, err)
 	}
 
 	return nil
+}
+
+func getPackageRepositoryDescription(name string, namespace string) string {
+	description := fmt.Sprintf("packagerepository/%s (packaging.carvel.dev/v1alpha1)", name)
+	if len(namespace) > 0 {
+		description += " namespace: " + namespace
+	} else {
+		description += " cluster"
+	}
+	return description
 }

@@ -40,6 +40,8 @@ spec:
   valuesSchema:
     openAPIv3:
       properties:
+        app_name:
+          description: App Name
         app_port:
           default: 80
           description: App port
@@ -180,12 +182,20 @@ spec:
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
-		expectedOutputRows := []map[string]string{{
-			"default":     "80",
-			"description": "App port",
-			"key":         "app_port",
-			"type":        "integer",
-		}}
+		expectedOutputRows := []map[string]string{
+			{
+				"default":     "",
+				"description": "App Name",
+				"key":         "app_name",
+				"type":        "",
+			},
+			{
+				"default":     "80",
+				"description": "App port",
+				"key":         "app_port",
+				"type":        "integer",
+			},
+		}
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
 }
