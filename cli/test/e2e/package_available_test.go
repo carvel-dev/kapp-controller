@@ -40,12 +40,12 @@ spec:
   valuesSchema:
     openAPIv3:
       properties:
-        app_name:
-          description: App Name
         app_port:
           default: 80
           description: App port
           type: integer
+        app_name:
+          description: App Name
   template:
     spec:
       fetch:
