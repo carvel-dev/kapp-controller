@@ -233,6 +233,10 @@ func (o *GetOptions) showValuesSchema(client pkgclient.Interface, pkgName, pkgVe
 			uitable.NewHeader("Type"),
 			uitable.NewHeader("Description"),
 		},
+
+		SortBy: []uitable.ColumnSort{
+			{Column: 0, Asc: true},
+		},
 	}
 
 	for _, v := range parsedProperties {
