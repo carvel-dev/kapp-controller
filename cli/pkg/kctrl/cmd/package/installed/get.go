@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -75,29 +76,9 @@ func (o *GetOptions) Run(args []string) error {
 		defer f.Close()
 		w := bufio.NewWriter(f)
 
-		coreClient, err := o.depsFactory.CoreClient()
+		data, err := o.getSecretData(pkgi)
 		if err != nil {
 			return err
-		}
-
-		if len(pkgi.Spec.Values) != 1 {
-			return fmt.Errorf("Expected 1 values reference, found %d", len(pkgi.Spec.Values))
-		}
-
-		if pkgi.Spec.Values[0].SecretRef == nil {
-			return fmt.Errorf("Values do not reference a Secret")
-		}
-
-		secretName := pkgi.Spec.Values[0].SecretRef.Name
-		valuesSecret, err := coreClient.CoreV1().Secrets(o.NamespaceFlags.Name).Get(context.Background(), secretName, metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-
-		data, ok := valuesSecret.Data[valuesFileKey]
-		if !ok {
-			// TODO: Add hint saying that install was not created by this CLI
-			return fmt.Errorf("Expected to find key")
 		}
 
 		w.Write(data)
@@ -132,4 +113,39 @@ func (o *GetOptions) Run(args []string) error {
 	o.ui.PrintTable(table)
 
 	return nil
+}
+
+func (o *GetOptions) getSecretData(pkgi *kcpkgv1alpha1.PackageInstall) ([]byte, error) {
+
+	if len(pkgi.Spec.Values) != 1 {
+		return nil, fmt.Errorf("Expected 1 values reference, found %d", len(pkgi.Spec.Values))
+	}
+
+	if pkgi.Spec.Values[0].SecretRef == nil {
+		return nil, fmt.Errorf("Values do not reference a Secret")
+	}
+
+	coreClient, err := o.depsFactory.CoreClient()
+	if err != nil {
+		return nil, err
+	}
+
+	secretName := pkgi.Spec.Values[0].SecretRef.Name
+	valuesSecret, err := coreClient.CoreV1().Secrets(o.NamespaceFlags.Name).Get(context.Background(), secretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	var dataKey string
+	for key := range valuesSecret.Data {
+		dataKey = key
+	}
+
+	data, ok := valuesSecret.Data[dataKey]
+	if !ok {
+		// TODO: Add hint saying that install was not created by this CLI
+		return nil, fmt.Errorf("Expected to find key")
+	}
+
+	return data, nil
 }
