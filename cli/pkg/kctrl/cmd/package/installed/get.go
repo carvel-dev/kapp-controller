@@ -136,6 +136,11 @@ func (o *GetOptions) getSecretData(pkgi *kcpkgv1alpha1.PackageInstall) ([]byte, 
 		return nil, err
 	}
 
+	if len(valuesSecret.Data) > 1 {
+		return nil, fmt.Errorf("Manually created values Secret has multiple keys")
+	}
+
+	// To get values data from any single key that is present
 	var dataKey string
 	for key := range valuesSecret.Data {
 		dataKey = key
