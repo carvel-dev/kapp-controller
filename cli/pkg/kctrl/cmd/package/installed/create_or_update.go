@@ -17,7 +17,6 @@ import (
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -189,7 +188,7 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 	return nil
 }
 
-func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient versioned.Interface) error {
+func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient kcclient.Interface) error {
 	isServiceAccountCreated, isSecretCreated, err := o.createRelatedResources(client)
 	if err != nil {
 		return err
@@ -255,7 +254,7 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 	return nil
 }
 
-func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient versioned.Interface, pkgInstall *kcpkgv1alpha1.PackageInstall) error {
+func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kcclient.Interface, pkgInstall *kcpkgv1alpha1.PackageInstall) error {
 	updatedPkgInstall, changed, err := o.preparePackageInstallForUpdate(pkgInstall)
 	if err != nil {
 		return err
