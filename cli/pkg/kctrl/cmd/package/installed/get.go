@@ -27,6 +27,7 @@ type GetOptions struct {
 	Name           string
 
 	valuesFileOutput string
+	values           bool
 
 	positionalNameArg bool
 }
@@ -49,6 +50,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 	}
 
 	cmd.Flags().StringVar(&o.valuesFileOutput, "values-file-output", "", "File path for exporting configuration values file")
+	cmd.Flags().BoolVar(&o.values, "values", false, "Get values data for pacakge install")
 	return cmd
 }
 
@@ -69,20 +71,18 @@ func (o *GetOptions) Run(args []string) error {
 	}
 
 	if o.valuesFileOutput != "" {
-		f, err := os.Create(o.valuesFileOutput)
+		err := o.downloadValuesData(pkgi)
 		if err != nil {
 			return err
 		}
-		defer f.Close()
-		w := bufio.NewWriter(f)
+		return nil
+	}
 
-		data, err := o.getSecretData(pkgi)
+	if o.values {
+		err := o.showValuesData(pkgi)
 		if err != nil {
 			return err
 		}
-
-		w.Write(data)
-		w.Flush()
 		return nil
 	}
 
@@ -153,4 +153,34 @@ func (o *GetOptions) getSecretData(pkgi *kcpkgv1alpha1.PackageInstall) ([]byte, 
 	}
 
 	return data, nil
+}
+
+func (o *GetOptions) downloadValuesData(pkgi *kcpkgv1alpha1.PackageInstall) error {
+	data, err := o.getSecretData(pkgi)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(o.valuesFileOutput)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	w := bufio.NewWriter(f)
+
+	w.Write(data)
+	w.Flush()
+
+	return nil
+}
+
+func (o *GetOptions) showValuesData(pkgi *kcpkgv1alpha1.PackageInstall) error {
+	data, err := o.getSecretData(pkgi)
+	if err != nil {
+		return err
+	}
+
+	o.ui.PrintBlock(data)
+
+	return nil
 }
