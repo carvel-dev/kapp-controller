@@ -46,6 +46,9 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 # List packages available on the cluster
 kctrl package available list
 
+# List packages available on the cluster with their short descriptions
+kctrl package available list --wide
+
 # List packages available in all namespaces
 kctrl package available list -A`,
 	}
