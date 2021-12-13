@@ -47,6 +47,9 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		Use:   "delete",
 		Short: "Uninstall installed package",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
+		Example: `
+# Delete package install
+kctrl package installed delete -i <package-install-name>`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 

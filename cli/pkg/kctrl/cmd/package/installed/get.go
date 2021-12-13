@@ -42,6 +42,15 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Aliases: []string{"g"},
 		Short:   "Get details for installed package",
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
+		Example: `
+# Get details for a package install
+kctrl package installed get -i <package-install-name>
+
+# View values being used by package install
+kctrl package installed get -i <package-install-name> --values
+
+# Download values being used by package install
+kctrl package installed get -i <package-install-name> --values-file-output <path-to-file>`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 

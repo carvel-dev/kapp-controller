@@ -62,6 +62,15 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		Use:   "create",
 		Short: "Install package",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.RunCreate(args) },
+		Example: `
+# Install a package
+kctrl package installed create -i <package-install-name> -p <package-name> --version <package-version>
+
+# Install package with values file
+kctrl package installed create -i <package-install-name> -p <package-name> --version <package-version> --values-file <path-to-file>
+
+# Install package and ask it to use an existing service account
+kctrl package installed create -i <package-install-name> -p <package-name> --version <package-version> --service-account-name <service-account-name>`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
@@ -88,6 +97,15 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 		Use:   "install",
 		Short: "Install package",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.RunCreate(args) },
+		Example: `
+# Install a package
+kctrl package install -i <package-install-name> -p <package-name> --version <package-version>
+
+# Install package with values file
+kctrl package install -i <package-install-name> -p <package-name> --version <package-version> --values-file <path-to-file>
+
+# Install package and ask it to use an existing service account
+kctrl package install -i <package-install-name> -p <package-name> --version <package-version> --service-account-name <service-account-name>`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
@@ -114,6 +132,12 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		Use:   "update",
 		Short: "Update package",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.RunUpdate(args) },
+		Example: `
+# Upgrade package install to a newer version
+kctrl package installed update -i <package-install-name> --version <new-pacakge-version>
+
+#Update package install with new values file
+kctrl package installed update -i <package-intalled-name> --values-file <path-to-file>`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
