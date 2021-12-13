@@ -35,6 +35,9 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Aliases: []string{"g"},
 		Short:   "Get details for a package repository",
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
+		Example: `
+# Get details for a package repository
+kctrl package repository get -r <repository-name>`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
