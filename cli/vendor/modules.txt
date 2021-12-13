@@ -73,6 +73,8 @@ github.com/imdario/mergo
 github.com/inconshreveable/mousetrap
 # github.com/json-iterator/go v1.1.11
 github.com/json-iterator/go
+# github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115
+github.com/k14s/semver/v4
 # github.com/mailru/easyjson v0.7.0
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
@@ -120,6 +122,7 @@ github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/ty
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/packaging/v1alpha1
 # github.com/vmware-tanzu/carvel-vendir v0.23.0
 ## explicit
+github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions
 github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1
 # golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 ## explicit

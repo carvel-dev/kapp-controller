@@ -162,6 +162,7 @@ func (o *ListOptions) listPackages() error {
 		SortBy: []uitable.ColumnSort{
 			{Column: 0, Asc: true},
 			{Column: 1, Asc: true},
+			{Column: 2, Asc: true},
 		},
 	}
 
@@ -169,7 +170,7 @@ func (o *ListOptions) listPackages() error {
 		table.Rows = append(table.Rows, []uitable.Value{
 			cmdcore.NewValueNamespace(pkg.Namespace),
 			uitable.NewValueString(pkg.Spec.RefName),
-			uitable.NewValueString(pkg.Spec.Version),
+			cmdcore.NewValueSemver(uitable.NewValueString(pkg.Spec.Version)),
 			uitable.NewValueString(pkg.Spec.ReleasedAt.String()),
 		})
 	}
