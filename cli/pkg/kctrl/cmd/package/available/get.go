@@ -48,7 +48,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 kctrl package available get --package <package-name>
 
 # Get the values schema for a particular version of the package
-kctrl package available get --package <package-name>/<package-version>`,
+kctrl package available get --package <package-name>/<package-version> --values-schema`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
