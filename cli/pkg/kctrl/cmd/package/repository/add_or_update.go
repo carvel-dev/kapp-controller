@@ -49,6 +49,9 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 		Use:   "add",
 		Short: "Add a package repository",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
+		Example: `
+# Add a package repository
+kctrl package repository add -r <repository-name> --url <repository-url>`,
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
@@ -78,6 +81,9 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 		Use:   "update",
 		Short: "Update a package repository",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
+		Example: `
+# Update a package repository with a new URL
+kctrl package repository update -r <repository-name> --url <new-repository-url>`,
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
