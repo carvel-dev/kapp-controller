@@ -43,6 +43,12 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Aliases: []string{"g"},
 		Short:   "Get details for an available package or the openAPI schema of a package with a specific version",
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
+		Example: `
+		# Get details about an available package
+		kctrl package available get --package <package-name>
+		
+		# Get the values schema for a particular version of the package
+		kctrl package available get --package <package-name>/<package-version>`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
