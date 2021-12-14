@@ -55,7 +55,7 @@ kctrl package installed get -i <package-install-name> --values-file-output <path
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
 	if !o.positionalNameArg {
-		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
+		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
 	}
 
 	cmd.Flags().StringVar(&o.valuesFileOutput, "values-file-output", "", "File path for exporting configuration values file")
@@ -66,6 +66,10 @@ kctrl package installed get -i <package-install-name> --values-file-output <path
 func (o *GetOptions) Run(args []string) error {
 	if o.positionalNameArg {
 		o.Name = args[0]
+	}
+
+	if len(o.Name) == 0 {
+		return fmt.Errorf("Expected package install name to be non empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
