@@ -50,10 +50,11 @@ kctrl package available get --package <package-name>
 # Get the values schema for a particular version of the package
 kctrl package available get --package <package-name>/<package-version> --values-schema`,
 	}
+
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
 	if !o.positionalNameArg {
-		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name")
+		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name (required)")
 	}
 
 	cmd.Flags().BoolVar(&o.ValuesSchema, "values-schema", false, "Values schema of the package (optional)")
@@ -65,6 +66,10 @@ func (o *GetOptions) Run(args []string) error {
 
 	if o.positionalNameArg {
 		o.Name = args[0]
+	}
+
+	if len(o.Name) == 0 {
+		return fmt.Errorf("Expected package name to be non-empty")
 	}
 
 	pkgNameVersion := strings.Split(o.Name, "/")
