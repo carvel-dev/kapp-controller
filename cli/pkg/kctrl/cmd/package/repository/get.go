@@ -5,6 +5,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
@@ -42,7 +43,7 @@ kctrl package repository get -r <repository-name>`,
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
 	if !o.positionalNameArg {
-		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name")
+		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
 	}
 
 	return cmd
@@ -51,6 +52,10 @@ kctrl package repository get -r <repository-name>`,
 func (o *GetOptions) Run(args []string) error {
 	if o.positionalNameArg {
 		o.Name = args[0]
+	}
+
+	if len(o.Name) == 0 {
+		return fmt.Errorf("Expected package repository name to be non-empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()

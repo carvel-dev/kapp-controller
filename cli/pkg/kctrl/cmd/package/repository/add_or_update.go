@@ -57,12 +57,11 @@ kctrl package repository add -r <repository-name> --url <repository-url>`,
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
 	if !o.positionalNameArg {
-		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name")
+		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
 	}
 
 	// TODO consider how to support other repository types
-	cmd.Flags().StringVar(&o.URL, "url", "", "OCI registry url for package repository bundle")
-	cmd.MarkFlagRequired("url")
+	cmd.Flags().StringVar(&o.URL, "url", "", "OCI registry url for package repository bundle (required)")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -89,11 +88,10 @@ kctrl package repository update -r <repository-name> --url <new-repository-url>`
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
 	if !o.positionalNameArg {
-		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name")
+		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
 	}
 
-	cmd.Flags().StringVarP(&o.URL, "url", "", "", "OCI registry url for package repository bundle")
-	cmd.MarkFlagRequired("url")
+	cmd.Flags().StringVarP(&o.URL, "url", "", "", "OCI registry url for package repository bundle (required)")
 
 	cmd.Flags().BoolVar(&o.CreateRepository, "create", false, "Creates the package repository if it does not exist, optional")
 
@@ -109,6 +107,14 @@ kctrl package repository update -r <repository-name> --url <new-repository-url>`
 func (o *AddOrUpdateOptions) Run(args []string) error {
 	if o.positionalNameArg {
 		o.Name = args[0]
+	}
+
+	if len(o.Name) == 0 {
+		return fmt.Errorf("Expected package repository name to be non-empty")
+	}
+
+	if len(o.URL) == 0 {
+		return fmt.Errorf("Expected package repository url to be non-empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
