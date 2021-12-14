@@ -54,7 +54,7 @@ kctrl package installed delete -i <package-install-name>`,
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
 	if !o.positionalNameArg {
-		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
+		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
 	}
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
@@ -69,6 +69,10 @@ kctrl package installed delete -i <package-install-name>`,
 func (o *DeleteOptions) Run(args []string) error {
 	if o.positionalNameArg {
 		o.Name = args[0]
+	}
+
+	if len(o.Name) == 0 {
+		return fmt.Errorf("Expected package install name to be non empty")
 	}
 
 	o.ui.PrintLinef("Delete package install '%s' from namespace '%s'", o.Name, o.NamespaceFlags.Name)

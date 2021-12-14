@@ -75,11 +75,11 @@ kctrl package installed create -i <package-install-name> -p <package-name> --ver
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
 	if !o.positionalNameArg {
-		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
+		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
 	}
 
-	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name")
-	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
+	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
+	cmd.Flags().StringVar(&o.version, "version", "", "Set package version (required)")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 
@@ -110,11 +110,11 @@ kctrl package install -i <package-install-name> -p <package-name> --version <pac
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
 	if !o.positionalNameArg {
-		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
+		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
 	}
 
-	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name")
-	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
+	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
+	cmd.Flags().StringVar(&o.version, "version", "", "Set package version (required)")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 
@@ -164,6 +164,18 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 		o.Name = args[0]
 	}
 
+	if len(o.Name) == 0 {
+		return fmt.Errorf("Expected package install name to be non empty")
+	}
+
+	if len(o.packageName) == 0 {
+		return fmt.Errorf("Expected package name to be non empty")
+	}
+
+	if len(o.version) == 0 {
+		return fmt.Errorf("Expected package version to be non empty")
+	}
+
 	client, err := o.depsFactory.CoreClient()
 	if err != nil {
 		return err
@@ -172,16 +184,6 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 	kcClient, err := o.depsFactory.KappCtrlClient()
 	if err != nil {
 		return err
-	}
-
-	pkgclient, err := o.depsFactory.PackageClient()
-	if err != nil {
-		return err
-	}
-
-	if o.version == "" {
-		o.showVersions(pkgclient)
-		return fmt.Errorf("Expected --version to have a non empty value")
 	}
 
 	pkgInstall, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
