@@ -49,6 +49,9 @@ kctrl package available list
 # List packages available on the cluster with their short descriptions
 kctrl package available list --wide
 
+# List all available package versions with release dates
+kctrl package available list --summary=false
+
 # List packages available in all namespaces
 kctrl package available list -A`,
 	}
