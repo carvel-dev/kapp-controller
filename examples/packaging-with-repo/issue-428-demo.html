@@ -39,7 +39,15 @@ input {
     position: absolute;
 }
 
-
+.code {
+  font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
+  font-size: smaller;
+  border-radius: 6px;
+  color: #111;
+  background-color: #DDD;
+  padding: 2em;
+  margin: 1em;
+}
 
 .ns1 {
   background-color: #FAF1F1;
@@ -55,8 +63,8 @@ input {
         </style>
     </head>
     <body>
-        <h1 class="header">Package Layering</h1>
-        <h2>Proposal</h2>
+        <h1 class="header">Package Name are Great Until They're Identical</h1>
+        <h2>Proposal 1: Layering ("like z-index")</h2>
         <p>
         Add an integer "priority" field in the PackageRepository CRD.
         This value allows the operator who is authoring PackageRepositories to override or shadow
@@ -75,6 +83,13 @@ input {
         <ul>
             <li>Possible for escalation / "arms race" of priority values if users and admins keep incrementing the priority.</li>
             <li>Doesn't solve adjacent issues around knowing which pkgr a package comes from</li>
+            <li>Requires a 'race' policy; options include:
+              <ul>
+                <li>First in wins and if another package of same name and priority appears it's an error at PKGR reconcile-time. (idempotent/consistent/portable since it will always error on conflict)</li>
+                <li>Last in wins quietly or with a small warning (not idempotent/consistent/portable since if everything is applied at once the order of first/last isn't deterministic)</li>
+              </ul>
+            </li>
+            <li>Per above the case where names overlap and the priority isn't set / is default, then there's still an error somebody has to resolve manually: if it's owned by the package repo author but not discovered until package consumer installs the repo, how will it be resolved?</li>
         </ul>
 
         <h2>Interactive Demo</h2>
@@ -82,7 +97,7 @@ input {
             This demo allows visual intuitive exploration of setting priority of packages.
             A sample package can be installed into any/all of three namespaces. While the default
             priority or "z-index" of the package is 0, creating a new package of equal or higher priority will
-            override the existing one.
+            override the existing one ("last in wins" strategy).
         </p>
         <p>
             In this demo after multiple packages have been created in the namespace, the package showing on top is
@@ -123,6 +138,39 @@ input {
             </fieldset>
             <input type="button" id="submit" name="submit" value="Create Package" onclick="createPackage()">
         </form>
+
+        <h2>Proposal 2: Long Names (Add a Layer of Indirection)</h2>
+        <p>
+          All Packages would have a "long name" that includes the parent package repository, but in cases without collision would be accessible via a "short name".
+          Example: <br>
+          <div class="code">
+            TAP REPO<br>
+            Short name: cert-manager.tanzu.vmware.com.1.5.3+tap.1<br>
+            Long name: cert-manager.tanzu.vmware.com-<pkgr name>.1.5.3+tap.1<br>
+
+            TCE REPO<br>
+            Short name: cert-manager.tanzu.vmware.com.1.6.1<br>
+            Long name: cert-manager.tanzu.vmware.com-<pkgr name>.1.6.1<br>
+          </div>
+        </p>
+
+        <h3>Pros</h3>
+        <ul>
+            <li>Empowers package consumers with full information and decision-making abilities</li>
+            <li>Allows "user override" if a specific user/team needs to patch a globally installed package in their ns.</li>
+            <li>Allows maintainers to override specific user/team installs if they need to push a global patch</li>
+            <li>Also solves adjacent issues around knowing which pkgr a package comes from</li>
+            <li>Would be backwards compatible at roll-out time with any packages/pkgis already existing</li>
+            <li>Is basically just "have the computer do what we're already doing by adding `+tap` to the names so we don't have to."</li>
+            <li>Fully deterministic: no race condition (because it just errors)</li>
+            <li>Probably pretty simple to implement unless I'm lying to myself</li>
+        </ul>
+        <h3>Cons</h3>
+        <ul>
+            <li>Empowers package consumers with full information and decision-making abilities</li>
+            <li>Effectively just kicks the "same name" problem up a level: what if two repos have the same name?</li>
+            <li>In cases of short-name collision now someone (a package consumer) has to go decipher the error message and pick the right long-name</li>
+        </ul>
 
     <script>
         counters = {
