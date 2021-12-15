@@ -1,4 +1,4 @@
-FROM photon:3.0
+FROM photon:4.0
 
 ARG KCTRL_VER=development
 
@@ -54,7 +54,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -ldflags="-X 'main.Version=$KCTRL_VER' -buildid=" -trimpath -o controller ./cmd/main.go
 
 # --- run image ---
-FROM photon:3.0
+FROM photon:4.0
 
 RUN tdnf install -y git openssh-clients shadow-tools sed
 
