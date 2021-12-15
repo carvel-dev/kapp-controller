@@ -28,7 +28,7 @@ install() {
   ytt_version=v0.37.0
   kbld_version=v0.31.0
   kapp_version=v0.43.0
-  imgpkg_version=v0.22.0
+  imgpkg_version=v0.24.0
   vendir_version=v0.24.0
 
   if [[ `uname` == Darwin ]]; then
@@ -36,14 +36,14 @@ install() {
     ytt_checksum=5eef9da11dd4f714495e2cf47041fc6fd413c8c393af4cc5bf3869e075b4e936
     kbld_checksum=d3b0a30bf3a79bedeb25d8548a91254954b99cd4a0c03f3a810b331fc4d1f071
     kapp_checksum=c5c7f34399293ccda62dc7b809535a8e2f2afb9901147429281c0f4884b13483
-    imgpkg_checksum=bc2819d73c6680c402a1ff4a51de07a5decafaef70b34662b46460c9a5eccc4c
+    imgpkg_checksum=f0c87c8caefb3d2a82e648779b36783403fe5c93930df2d5cbf4968713933392
     vendir_checksum=f3a738d1fe55803ad5faba495f662c48efa230976ccad7a159587dcf9b020f63
   else
     binary_type=linux-amd64
     ytt_checksum=1aad12386f6bae1a78197acdc7ec9e60c441f82c4ca944df8d3c78625750fe59
     kbld_checksum=ba0be56d9e74b067f3e659de0b79100b0b9df86a2e3e0e6ff533b1e019c22c23
     kapp_checksum=f8669039dfba001081c94576c898d10aba28ecceffcd98708e8f2c87c13109e4
-    imgpkg_checksum=d34a06097a781ed15a4f04d6fe72b41ccf9dae835c821ec524a99b6c4e647f03
+    imgpkg_checksum=cfcfcb5afc5e3d28ce1f2f67971a4dcd18f514dadf8a63d70c864e49c9ddca7e
     vendir_checksum=b7bfd227aa2e6df602f8e79edf725bb0a944b68d207005f42f46f061c4ecd55a
   fi
 
