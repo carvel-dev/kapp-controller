@@ -1245,6 +1245,32 @@ spec:
                             type: object
                         type: object
                     type: object
+                  inline:
+                    properties:
+                      paths:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      pathsFrom:
+                        items:
+                          properties:
+                            configMapRef:
+                              properties:
+                                directoryPath:
+                                  type: string
+                                name:
+                                  type: string
+                              type: object
+                            secretRef:
+                              properties:
+                                directoryPath:
+                                  type: string
+                                name:
+                                  type: string
+                              type: object
+                          type: object
+                        type: array
+                    type: object
                 type: object
               paused:
                 description: Paused when set to true will ignore all pending changes, once it set back to false, pending changes will be applied
