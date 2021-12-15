@@ -32,8 +32,8 @@ jobs:
         only: ytt, kapp, kbld, vendir
         ytt: v0.37.0
         kapp: v0.43.0
-        kbld: v0.31.0
-        vendir: v0.23.0
+        kbld: v0.32.0
+        vendir: v0.24.0
     - name: Run Tests
       run: |
         set -e -x
