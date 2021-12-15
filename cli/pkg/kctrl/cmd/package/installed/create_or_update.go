@@ -173,6 +173,12 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 	}
 
 	if len(o.version) == 0 {
+		pkgClient, err := o.depsFactory.PackageClient()
+		if err != nil {
+			return err
+		}
+
+		o.showVersions(pkgClient)
 		return fmt.Errorf("Expected package version to be non empty")
 	}
 
@@ -723,7 +729,7 @@ func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace stri
 
 func (o *CreateOrUpdateOptions) showVersions(client pkgclient.Interface) error {
 	listOpts := metav1.ListOptions{}
-	if len(o.Name) > 0 {
+	if len(o.packageName) > 0 {
 		listOpts.FieldSelector = fields.Set{"spec.refName": o.packageName}.String()
 	}
 
