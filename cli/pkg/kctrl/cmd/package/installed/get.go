@@ -161,8 +161,7 @@ func (o *GetOptions) getSecretData(pkgi *kcpkgv1alpha1.PackageInstall) ([]byte, 
 
 	data, ok := valuesSecret.Data[dataKey]
 	if !ok {
-		// TODO: Add hint saying that install was not created by this CLI
-		return nil, fmt.Errorf("Expected to find key")
+		return nil, fmt.Errorf("Could not find key with values data in referenced secret")
 	}
 
 	return data, nil
