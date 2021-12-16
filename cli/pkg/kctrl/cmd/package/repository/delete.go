@@ -44,7 +44,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: `
 # Delete a package repository
-kctrl package repository delete -r <repository-name>`,
+kctrl package repository delete -r tce`,
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
