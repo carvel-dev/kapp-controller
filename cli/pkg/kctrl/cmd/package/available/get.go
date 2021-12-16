@@ -45,10 +45,10 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: `
 # Get details about an available package
-kctrl package available get --package <package-name>
+kctrl package available get --package cert-manager.community.tanzu.vmware.com
 
 # Get the values schema for a particular version of the package
-kctrl package available get --package <package-name>/<package-version> --values-schema`,
+kctrl package available get --package cert-manager.community.tanzu.vmware.com --values-schema`,
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

@@ -53,7 +53,10 @@ kctrl package available list --wide
 kctrl package available list --summary=false
 
 # List packages available in all namespaces
-kctrl package available list -A`,
+kctrl package available list -A
+
+# List all available versions of a package
+kctrl package available --package cert-manager.community.tanzu.vmware.com`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List available packages in all namespaces")
