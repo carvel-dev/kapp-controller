@@ -643,7 +643,7 @@ func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interfa
 	}
 
 	if len(createdSecret.Data) > 1 {
-		return fmt.Errorf("Could not safely update manually referenced secret '%s' as it has more than one data keys", secretName, o.NamespaceFlags.Name)
+		return fmt.Errorf("Could not safely update manually referenced secret '%s' in namespace '%s' as it has more than one data keys", secretName, o.NamespaceFlags.Name)
 	}
 
 	dataKey := valuesFileKey
