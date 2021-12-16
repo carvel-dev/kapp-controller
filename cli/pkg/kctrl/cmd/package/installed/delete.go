@@ -49,7 +49,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: `
 # Delete package install
-kctrl package installed delete -i <package-install-name>`,
+kctrl package installed delete -i cert-man`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 

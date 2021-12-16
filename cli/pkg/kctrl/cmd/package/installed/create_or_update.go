@@ -64,13 +64,13 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		RunE:  func(_ *cobra.Command, args []string) error { return o.RunCreate(args) },
 		Example: `
 # Install a package
-kctrl package installed create -i <package-install-name> -p <package-name> --version <package-version>
+kctrl package installed create -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1
 
 # Install package with values file
-kctrl package installed create -i <package-install-name> -p <package-name> --version <package-version> --values-file <path-to-file>
+kctrl package installed create -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1 --values-file values.yml
 
 # Install package and ask it to use an existing service account
-kctrl package installed create -i <package-install-name> -p <package-name> --version <package-version> --service-account-name <service-account-name>`,
+kctrl package installed create -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1 --service-account-name existing-sa`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
@@ -99,13 +99,13 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 		RunE:  func(_ *cobra.Command, args []string) error { return o.RunCreate(args) },
 		Example: `
 # Install a package
-kctrl package install -i <package-install-name> -p <package-name> --version <package-version>
+kctrl package install -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1
 
 # Install package with values file
-kctrl package install -i <package-install-name> -p <package-name> --version <package-version> --values-file <path-to-file>
+kctrl package install -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1 --values-file values.yml
 
 # Install package and ask it to use an existing service account
-kctrl package install -i <package-install-name> -p <package-name> --version <package-version> --service-account-name <service-account-name>`,
+kctrl package install -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1 --service-account-name existing-sa`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
@@ -134,10 +134,10 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		RunE:  func(_ *cobra.Command, args []string) error { return o.RunUpdate(args) },
 		Example: `
 # Upgrade package install to a newer version
-kctrl package installed update -i <package-install-name> --version <new-pacakge-version>
+kctrl package installed update -i cert-man --version 1.6.1
 
 #Update package install with new values file
-kctrl package installed update -i <package-intalled-name> --values-file <path-to-file>`,
+kctrl package installed update -i <package-intalled-name> --values-file updated-values.yml`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 

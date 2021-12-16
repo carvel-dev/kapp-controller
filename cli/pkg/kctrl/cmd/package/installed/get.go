@@ -44,13 +44,13 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: `
 # Get details for a package install
-kctrl package installed get -i <package-install-name>
+kctrl package installed get -i cert-man
 
 # View values being used by package install
-kctrl package installed get -i <package-install-name> --values
+kctrl package installed get -i cert-man --values
 
 # Download values being used by package install
-kctrl package installed get -i <package-install-name> --values-file-output <path-to-file>`,
+kctrl package installed get -i cert-man --values-file-output <path-to-file>`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
