@@ -182,7 +182,7 @@ func (o *ListOptions) listPackages() error {
 		table.Rows = append(table.Rows, []uitable.Value{
 			cmdcore.NewValueNamespace(pkg.Namespace),
 			uitable.NewValueString(pkg.Spec.RefName),
-			cmdcore.NewValueSemver(uitable.NewValueString(pkg.Spec.Version)),
+			cmdcore.NewValueSemver(pkg.Spec.Version),
 			uitable.NewValueString(pkg.Spec.ReleasedAt.String()),
 		})
 	}
