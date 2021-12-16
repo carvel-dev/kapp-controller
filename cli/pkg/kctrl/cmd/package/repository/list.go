@@ -76,7 +76,7 @@ func (o *ListOptions) Run() error {
 			nsHeader,
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Source"),
-			uitable.NewHeader("Description"),
+			uitable.NewHeader("Status"),
 		},
 
 		SortBy: []uitable.ColumnSort{

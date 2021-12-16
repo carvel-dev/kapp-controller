@@ -68,9 +68,9 @@ func TestPackageRepository(t *testing.T) {
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expectedOutputRows := []map[string]string{{
-			"name":        pkgrName,
-			"source":      fmt.Sprintf("(imgpkg) %s", pkgrURL),
-			"description": "Reconcile succeeded",
+			"name":   pkgrName,
+			"source": fmt.Sprintf("(imgpkg) %s", pkgrURL),
+			"status": "Reconcile succeeded",
 		}}
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
