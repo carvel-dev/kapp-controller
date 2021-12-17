@@ -11,8 +11,8 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/prometheus/client_golang v1.11.0
 	github.com/stretchr/testify v1.7.0
-	github.com/vmware-tanzu/carvel-vendir v0.23.0
-	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
+	github.com/vmware-tanzu/carvel-vendir v0.24.0
+	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.5
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
