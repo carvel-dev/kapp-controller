@@ -27,8 +27,9 @@ func main() {
 	flag.StringVar(&ctrlOpts.PackagingGloablNS, "packaging-global-namespace", "", "The namespace used for global packaging resources")
 	flag.StringVar(&ctrlOpts.MetricsBindAddress, "metrics-bind-address", ":8080", "Address for metrics server. If 0, then metrics server doesnt listen on any port.")
 	flag.BoolVar(&ctrlOpts.EnablePprof, "dangerous-enable-pprof", false, "If set to true, enable pprof on "+controller.PprofListenAddr)
-	flag.DurationVar(&ctrlOpts.APIRequestTimeout, "api-request-timeout", time.Duration(0), "HTTP timeout for Kubernetes API requests")
 	flag.BoolVar(&runController, controllerinit.InternalControllerFlag, false, "[Internal] run the controller code")
+	flag.BoolVar(&ctrlOpts.APIPriorityAndFairness, "api-priority-and-fairness", true, "Enable/disable APIPriorityAndFairness feature gate for apiserver.")
+	flag.DurationVar(&ctrlOpts.APIRequestTimeout, "api-request-timeout", time.Duration(0), "HTTP timeout for Kubernetes API requests")
 	flag.Parse()
 
 	log := logf.Log.WithName("kc")

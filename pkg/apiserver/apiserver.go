@@ -10,27 +10,27 @@ import (
 	"os"
 	"time"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/openapi"
-
+	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller"
 	kcinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/install"
-	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
 	datapkginginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/install"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/openapi"
 	packagerest "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/registry/datapackaging"
+	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	genericopenapi "k8s.io/apiserver/pkg/endpoints/openapi"
+	"k8s.io/apiserver/pkg/features"
 	apirest "k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/dynamiccertificates"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
+	"k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-
-	genericopenapi "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/klog"
 	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	aggregatorclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
@@ -74,13 +74,13 @@ type APIServer struct {
 	aggClient aggregatorclient.Interface
 }
 
-func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, globalNamespace string, bindPort int) (*APIServer, error) {
+func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, ctrlOpts controller.Options, bindPort int) (*APIServer, error) {
 	aggClient, err := aggregatorclient.NewForConfig(clientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("building aggregation client: %v", err)
 	}
 
-	config, err := newServerConfig(aggClient, bindPort)
+	config, err := newServerConfig(aggClient, ctrlOpts, bindPort)
 	if err != nil {
 		return nil, err
 	}
@@ -90,8 +90,8 @@ func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kc
 		return nil, err
 	}
 
-	packageMetadatasStorage := packagerest.NewPackageMetadataCRDREST(kcClient, coreClient, globalNamespace)
-	packageStorage := packagerest.NewPackageCRDREST(kcClient, coreClient, globalNamespace)
+	packageMetadatasStorage := packagerest.NewPackageMetadataCRDREST(kcClient, coreClient, ctrlOpts.PackagingGloablNS)
+	packageStorage := packagerest.NewPackageCRDREST(kcClient, coreClient, ctrlOpts.PackagingGloablNS)
 
 	pkgGroup := genericapiserver.NewDefaultAPIGroupInfo(datapackaging.GroupName, Scheme, metav1.ParameterCodec, Codecs)
 	pkgv1alpha1Storage := map[string]apirest.Storage{}
@@ -147,7 +147,7 @@ func (as *APIServer) isReady() (bool, error) {
 	return false, nil
 }
 
-func newServerConfig(aggClient aggregatorclient.Interface, bindPort int) (*genericapiserver.RecommendedConfig, error) {
+func newServerConfig(aggClient aggregatorclient.Interface, ctrlOpts controller.Options, bindPort int) (*genericapiserver.RecommendedConfig, error) {
 	recommendedOptions := genericoptions.NewRecommendedOptions("", Codecs.LegacyCodec(v1alpha1.SchemeGroupVersion))
 	recommendedOptions.Etcd = nil
 
@@ -172,6 +172,17 @@ func newServerConfig(aggClient aggregatorclient.Interface, bindPort int) (*gener
 
 	if err := updateAPIService(aggClient, caContentProvider); err != nil {
 		return nil, fmt.Errorf("error updating api service with generated certs: %v", err)
+	}
+
+	// This was done since is causes logging issues for k8s cluster <=1.19.
+	// The logs occurred since this feature gate was not enabled in 1.19
+	// but is by default for 1.20. It causes k8s.io/apiserver 1.20 and up to
+	// make use of resources not available in 1.19 (i.e. flowcontrol API group).
+	if !ctrlOpts.APIPriorityAndFairness {
+		err := feature.DefaultMutableFeatureGate.Set(fmt.Sprintf("%s=false", features.APIPriorityAndFairness))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
