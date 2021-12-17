@@ -218,8 +218,8 @@ github.com/spf13/pflag
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/vmware-tanzu/carvel-vendir v0.23.0
-## explicit; go 1.16
+# github.com/vmware-tanzu/carvel-vendir v0.24.0
+## explicit; go 1.17
 github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config
 github.com/vmware-tanzu/carvel-vendir/pkg/vendir/version
 github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions
@@ -330,11 +330,12 @@ go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
 go.uber.org/zap/zapgrpc
-# golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
-## explicit; go 1.11
+# golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
+## explicit; go 1.17
 golang.org/x/crypto/cast5
 golang.org/x/crypto/cryptobyte
 golang.org/x/crypto/cryptobyte/asn1
+golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/openpgp
@@ -343,7 +344,6 @@ golang.org/x/crypto/openpgp/elgamal
 golang.org/x/crypto/openpgp/errors
 golang.org/x/crypto/openpgp/packet
 golang.org/x/crypto/openpgp/s2k
-golang.org/x/crypto/poly1305
 golang.org/x/crypto/salsa20/salsa
 # golang.org/x/mod v0.4.2
 ## explicit; go 1.12
