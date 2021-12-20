@@ -204,7 +204,6 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 
 	// Fallback to update if resource exists
 	if pkgInstall != nil && err == nil {
-		o.ui.PrintLinef("Updating existing package install")
 		err = o.update(client, kcClient, pkgInstall)
 		if err != nil {
 			return err
