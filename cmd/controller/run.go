@@ -100,7 +100,8 @@ func Run(opts Options, runLog logr.Logger) error {
 		return fmt.Errorf("Expected to find %s env var", kappctrlAPIPORTEnvKey)
 	}
 
-	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, opts.PackagingGloablNS, bindPort, opts.APIPriorityAndFairness)
+	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, apiserver.NewAPIServerOpts{
+		GlobalNamespace: opts.PackagingGloablNS, BindPort: bindPort, EnableAPIPriorityAndFairness: opts.APIPriorityAndFairness})
 	if err != nil {
 		return fmt.Errorf("Building API server: %s", err)
 	}

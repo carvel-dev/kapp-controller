@@ -72,13 +72,25 @@ type APIServer struct {
 	aggClient aggregatorclient.Interface
 }
 
-func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, globalNamespace string, bindPort int, enableAPIPriorityAndFairness bool) (*APIServer, error) {
+// NewAPIServerOpts is a collection of scalar arguments for the NewAPIServer function
+type NewAPIServerOpts struct {
+	// GlobalNamespace sets the special namespace that kc will always check,
+	// so things can be installed to either the ns you specify or this special global ns
+	GlobalNamespace string
+	// BindPort is the port on which to serve HTTPS with authentication and authorization
+	BindPort int
+	// EnableAPIPriorityAndFairness sets a featuregate to allow us backwards compatibility with
+	// v1.19 and earlier clusters - our libraries use the beta version of those APIs but they used to be alpha.
+	EnableAPIPriorityAndFairness bool
+}
+
+func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, opts NewAPIServerOpts) (*APIServer, error) { //nolint
 	aggClient, err := aggregatorclient.NewForConfig(clientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("building aggregation client: %v", err)
 	}
 
-	config, err := newServerConfig(aggClient, bindPort, enableAPIPriorityAndFairness)
+	config, err := newServerConfig(aggClient, opts.BindPort, opts.EnableAPIPriorityAndFairness)
 	if err != nil {
 		return nil, err
 	}
@@ -88,8 +100,8 @@ func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kc
 		return nil, err
 	}
 
-	packageMetadatasStorage := packagerest.NewPackageMetadataCRDREST(kcClient, coreClient, globalNamespace)
-	packageStorage := packagerest.NewPackageCRDREST(kcClient, coreClient, globalNamespace)
+	packageMetadatasStorage := packagerest.NewPackageMetadataCRDREST(kcClient, coreClient, opts.GlobalNamespace)
+	packageStorage := packagerest.NewPackageCRDREST(kcClient, coreClient, opts.GlobalNamespace)
 
 	pkgGroup := genericapiserver.NewDefaultAPIGroupInfo(datapackaging.GroupName, Scheme, metav1.ParameterCodec, Codecs)
 	pkgv1alpha1Storage := map[string]apirest.Storage{}
@@ -177,7 +189,10 @@ func newServerConfig(aggClient aggregatorclient.Interface, bindPort int, enableA
 		// APIs it relies on were in alpha.
 		// the apiserver library hardcodes the beta version of the resource
 		// so the best we can do for older k8s clusters is to allow it to be disabled.
-		feature.DefaultMutableFeatureGate.Set("APIPriorityAndFairness=false")
+		err := feature.DefaultMutableFeatureGate.Set("APIPriorityAndFairness=false")
+		if err != nil {
+			return nil, fmt.Errorf("error updating disabling feature gate for APIPriorityAndFairness: %v", err)
+		}
 	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
