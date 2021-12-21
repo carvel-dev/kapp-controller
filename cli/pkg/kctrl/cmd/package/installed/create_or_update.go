@@ -17,7 +17,6 @@ import (
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -63,15 +62,24 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		Use:   "create",
 		Short: "Install package",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.RunCreate(args) },
+		Example: `
+# Install a package
+kctrl package installed create -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1
+
+# Install package with values file
+kctrl package installed create -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1 --values-file values.yml
+
+# Install package and ask it to use an existing service account
+kctrl package installed create -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1 --service-account-name existing-sa`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
 	if !o.positionalNameArg {
-		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
+		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
 	}
 
-	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name")
-	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
+	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
+	cmd.Flags().StringVar(&o.version, "version", "", "Set package version (required)")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 
@@ -89,15 +97,24 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 		Use:   "install",
 		Short: "Install package",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.RunCreate(args) },
+		Example: `
+# Install a package
+kctrl package install -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1
+
+# Install package with values file
+kctrl package install -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1 --values-file values.yml
+
+# Install package and ask it to use an existing service account
+kctrl package install -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1 --service-account-name existing-sa`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
 	if !o.positionalNameArg {
-		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
+		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
 	}
 
-	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name")
-	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
+	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
+	cmd.Flags().StringVar(&o.version, "version", "", "Set package version (required)")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 
@@ -115,6 +132,12 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		Use:   "update",
 		Short: "Update package",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.RunUpdate(args) },
+		Example: `
+# Upgrade package install to a newer version
+kctrl package installed update -i cert-man --version 1.6.1
+
+#Update package install with new values file
+kctrl package installed update -i <package-intalled-name> --values-file updated-values.yml`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
@@ -141,6 +164,24 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 		o.Name = args[0]
 	}
 
+	if len(o.Name) == 0 {
+		return fmt.Errorf("Expected package install name to be non empty")
+	}
+
+	if len(o.packageName) == 0 {
+		return fmt.Errorf("Expected package name to be non empty")
+	}
+
+	if len(o.version) == 0 {
+		pkgClient, err := o.depsFactory.PackageClient()
+		if err != nil {
+			return err
+		}
+
+		o.showVersions(pkgClient)
+		return fmt.Errorf("Expected package version to be non empty")
+	}
+
 	client, err := o.depsFactory.CoreClient()
 	if err != nil {
 		return err
@@ -149,16 +190,6 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 	kcClient, err := o.depsFactory.KappCtrlClient()
 	if err != nil {
 		return err
-	}
-
-	pkgclient, err := o.depsFactory.PackageClient()
-	if err != nil {
-		return err
-	}
-
-	if o.version == "" {
-		o.showVersions(pkgclient)
-		return fmt.Errorf("Expected --version to have a non empty value")
 	}
 
 	pkgInstall, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
@@ -173,7 +204,6 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 
 	// Fallback to update if resource exists
 	if pkgInstall != nil && err == nil {
-		o.ui.PrintLinef("Updating existing package install")
 		err = o.update(client, kcClient, pkgInstall)
 		if err != nil {
 			return err
@@ -189,7 +219,7 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 	return nil
 }
 
-func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient versioned.Interface) error {
+func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient kcclient.Interface) error {
 	isServiceAccountCreated, isSecretCreated, err := o.createRelatedResources(client)
 	if err != nil {
 		return err
@@ -255,7 +285,7 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 	return nil
 }
 
-func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient versioned.Interface, pkgInstall *kcpkgv1alpha1.PackageInstall) error {
+func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kcclient.Interface, pkgInstall *kcpkgv1alpha1.PackageInstall) error {
 	updatedPkgInstall, changed, err := o.preparePackageInstallForUpdate(pkgInstall)
 	if err != nil {
 		return err
@@ -612,7 +642,7 @@ func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interfa
 	}
 
 	if len(createdSecret.Data) > 1 {
-		return fmt.Errorf("Could not safely update manually referenced secret '%s' as it has more than one data keys", secretName, o.NamespaceFlags.Name)
+		return fmt.Errorf("Could not safely update manually referenced secret '%s' in namespace '%s' as it has more than one data keys", secretName, o.NamespaceFlags.Name)
 	}
 
 	dataKey := valuesFileKey
@@ -698,7 +728,7 @@ func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace stri
 
 func (o *CreateOrUpdateOptions) showVersions(client pkgclient.Interface) error {
 	listOpts := metav1.ListOptions{}
-	if len(o.Name) > 0 {
+	if len(o.packageName) > 0 {
 		listOpts.FieldSelector = fields.Set{"spec.refName": o.packageName}.String()
 	}
 

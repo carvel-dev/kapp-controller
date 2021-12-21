@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -26,6 +27,7 @@ type GetOptions struct {
 	Name           string
 
 	valuesFileOutput string
+	values           bool
 
 	positionalNameArg bool
 }
@@ -40,20 +42,34 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Aliases: []string{"g"},
 		Short:   "Get details for installed package",
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
+		Example: `
+# Get details for a package install
+kctrl package installed get -i cert-man
+
+# View values being used by package install
+kctrl package installed get -i cert-man --values
+
+# Download values being used by package install
+kctrl package installed get -i cert-man --values-file-output <path-to-file>`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
 	if !o.positionalNameArg {
-		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
+		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
 	}
 
 	cmd.Flags().StringVar(&o.valuesFileOutput, "values-file-output", "", "File path for exporting configuration values file")
+	cmd.Flags().BoolVar(&o.values, "values", false, "Get values data for pacakge install")
 	return cmd
 }
 
 func (o *GetOptions) Run(args []string) error {
 	if o.positionalNameArg {
 		o.Name = args[0]
+	}
+
+	if len(o.Name) == 0 {
+		return fmt.Errorf("Expected package install name to be non empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
@@ -68,40 +84,18 @@ func (o *GetOptions) Run(args []string) error {
 	}
 
 	if o.valuesFileOutput != "" {
-		f, err := os.Create(o.valuesFileOutput)
+		err := o.downloadValuesData(pkgi)
 		if err != nil {
 			return err
 		}
-		defer f.Close()
-		w := bufio.NewWriter(f)
+		return nil
+	}
 
-		coreClient, err := o.depsFactory.CoreClient()
+	if o.values {
+		err := o.showValuesData(pkgi)
 		if err != nil {
 			return err
 		}
-
-		if len(pkgi.Spec.Values) != 1 {
-			return fmt.Errorf("Expected 1 values reference, found %d", len(pkgi.Spec.Values))
-		}
-
-		if pkgi.Spec.Values[0].SecretRef == nil {
-			return fmt.Errorf("Values do not reference a Secret")
-		}
-
-		secretName := pkgi.Spec.Values[0].SecretRef.Name
-		valuesSecret, err := coreClient.CoreV1().Secrets(o.NamespaceFlags.Name).Get(context.Background(), secretName, metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-
-		data, ok := valuesSecret.Data[valuesFileKey]
-		if !ok {
-			// TODO: Add hint saying that install was not created by this CLI
-			return fmt.Errorf("Expected to find key")
-		}
-
-		w.Write(data)
-		w.Flush()
 		return nil
 	}
 
@@ -130,6 +124,75 @@ func (o *GetOptions) Run(args []string) error {
 	}
 
 	o.ui.PrintTable(table)
+
+	return nil
+}
+
+func (o *GetOptions) getSecretData(pkgi *kcpkgv1alpha1.PackageInstall) ([]byte, error) {
+
+	if len(pkgi.Spec.Values) != 1 {
+		return nil, fmt.Errorf("Expected 1 values reference, found %d", len(pkgi.Spec.Values))
+	}
+
+	if pkgi.Spec.Values[0].SecretRef == nil {
+		return nil, fmt.Errorf("Values do not reference a Secret")
+	}
+
+	coreClient, err := o.depsFactory.CoreClient()
+	if err != nil {
+		return nil, err
+	}
+
+	secretName := pkgi.Spec.Values[0].SecretRef.Name
+	valuesSecret, err := coreClient.CoreV1().Secrets(o.NamespaceFlags.Name).Get(context.Background(), secretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(valuesSecret.Data) > 1 {
+		return nil, fmt.Errorf("Manually created values Secret has multiple keys")
+	}
+
+	// To get values data from any single key that is present
+	var dataKey string
+	for key := range valuesSecret.Data {
+		dataKey = key
+	}
+
+	data, ok := valuesSecret.Data[dataKey]
+	if !ok {
+		return nil, fmt.Errorf("Could not find key with values data in referenced secret")
+	}
+
+	return data, nil
+}
+
+func (o *GetOptions) downloadValuesData(pkgi *kcpkgv1alpha1.PackageInstall) error {
+	data, err := o.getSecretData(pkgi)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(o.valuesFileOutput)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	w := bufio.NewWriter(f)
+
+	w.Write(data)
+	w.Flush()
+
+	return nil
+}
+
+func (o *GetOptions) showValuesData(pkgi *kcpkgv1alpha1.PackageInstall) error {
+	data, err := o.getSecretData(pkgi)
+	if err != nil {
+		return err
+	}
+
+	o.ui.PrintBlock(data)
 
 	return nil
 }

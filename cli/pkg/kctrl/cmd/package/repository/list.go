@@ -35,6 +35,12 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Aliases: []string{"l", "ls"},
 		Short:   "List package repositories in a namespace",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Example: `
+# List package repositories
+kctrl package repository list
+
+# List package repositories in all namespaces
+kctrl package repository list -A`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List repositories in all namespaces")
@@ -70,7 +76,7 @@ func (o *ListOptions) Run() error {
 			nsHeader,
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Source"),
-			uitable.NewHeader("Description"),
+			uitable.NewHeader("Status"),
 		},
 
 		SortBy: []uitable.ColumnSort{

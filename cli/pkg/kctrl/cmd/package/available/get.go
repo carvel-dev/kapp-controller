@@ -43,11 +43,18 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Aliases: []string{"g"},
 		Short:   "Get details for an available package or the openAPI schema of a package with a specific version",
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
+		Example: `
+# Get details about an available package
+kctrl package available get --package cert-manager.community.tanzu.vmware.com
+
+# Get the values schema for a particular version of the package
+kctrl package available get --package cert-manager.community.tanzu.vmware.com --values-schema`,
 	}
+
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
 	if !o.positionalNameArg {
-		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name")
+		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name (required)")
 	}
 
 	cmd.Flags().BoolVar(&o.ValuesSchema, "values-schema", false, "Values schema of the package (optional)")
@@ -59,6 +66,10 @@ func (o *GetOptions) Run(args []string) error {
 
 	if o.positionalNameArg {
 		o.Name = args[0]
+	}
+
+	if len(o.Name) == 0 {
+		return fmt.Errorf("Expected package name to be non-empty")
 	}
 
 	pkgNameVersion := strings.Split(o.Name, "/")
@@ -232,6 +243,10 @@ func (o *GetOptions) showValuesSchema(client pkgclient.Interface, pkgName, pkgVe
 			uitable.NewHeader("Default"),
 			uitable.NewHeader("Type"),
 			uitable.NewHeader("Description"),
+		},
+
+		SortBy: []uitable.ColumnSort{
+			{Column: 0, Asc: true},
 		},
 	}
 

@@ -42,6 +42,21 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Aliases: []string{"l", "ls"},
 		Short:   "List available packages in a namespace",
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
+		Example: `
+# List packages available on the cluster
+kctrl package available list
+
+# List packages available on the cluster with their short descriptions
+kctrl package available list --wide
+
+# List all available package versions with release dates
+kctrl package available list --summary=false
+
+# List packages available in all namespaces
+kctrl package available list -A
+
+# List all available versions of a package
+kctrl package available --package cert-manager.community.tanzu.vmware.com`,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List available packages in all namespaces")
@@ -162,6 +177,7 @@ func (o *ListOptions) listPackages() error {
 		SortBy: []uitable.ColumnSort{
 			{Column: 0, Asc: true},
 			{Column: 1, Asc: true},
+			{Column: 2, Asc: true},
 		},
 	}
 
@@ -169,7 +185,7 @@ func (o *ListOptions) listPackages() error {
 		table.Rows = append(table.Rows, []uitable.Value{
 			cmdcore.NewValueNamespace(pkg.Namespace),
 			uitable.NewValueString(pkg.Spec.RefName),
-			uitable.NewValueString(pkg.Spec.Version),
+			cmdcore.NewValueSemver(pkg.Spec.Version),
 			uitable.NewValueString(pkg.Spec.ReleasedAt.String()),
 		})
 	}
