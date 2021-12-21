@@ -35,12 +35,13 @@ const (
 )
 
 type Options struct {
-	Concurrency        int
-	Namespace          string
-	EnablePprof        bool
-	APIRequestTimeout  time.Duration
-	PackagingGloablNS  string
-	MetricsBindAddress string
+	Concurrency            int
+	Namespace              string
+	EnablePprof            bool
+	APIRequestTimeout      time.Duration
+	PackagingGloablNS      string
+	MetricsBindAddress     string
+	APIPriorityAndFairness bool
 }
 
 // Based on https://github.com/kubernetes-sigs/controller-runtime/blob/8f633b179e1c704a6e40440b528252f147a3362a/examples/builtins/main.go
@@ -99,7 +100,7 @@ func Run(opts Options, runLog logr.Logger) error {
 		return fmt.Errorf("Expected to find %s env var", kappctrlAPIPORTEnvKey)
 	}
 
-	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, opts.PackagingGloablNS, bindPort)
+	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, opts.PackagingGloablNS, bindPort, opts.APIPriorityAndFairness)
 	if err != nil {
 		return fmt.Errorf("Building API server: %s", err)
 	}

@@ -72,13 +72,13 @@ type APIServer struct {
 	aggClient aggregatorclient.Interface
 }
 
-func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, globalNamespace string, bindPort int) (*APIServer, error) {
+func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, globalNamespace string, bindPort int, enableAPIPriorityAndFairness bool) (*APIServer, error) {
 	aggClient, err := aggregatorclient.NewForConfig(clientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("building aggregation client: %v", err)
 	}
 
-	config, err := newServerConfig(aggClient, bindPort)
+	config, err := newServerConfig(aggClient, bindPort, enableAPIPriorityAndFairness)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (as *APIServer) isReady() (bool, error) {
 	return false, nil
 }
 
-func newServerConfig(aggClient aggregatorclient.Interface, bindPort int) (*genericapiserver.RecommendedConfig, error) {
+func newServerConfig(aggClient aggregatorclient.Interface, bindPort int, enableAPIPriorityAndFairness bool) (*genericapiserver.RecommendedConfig, error) {
 	recommendedOptions := genericoptions.NewRecommendedOptions("", Codecs.LegacyCodec(v1alpha1.SchemeGroupVersion))
 	recommendedOptions.Etcd = nil
 
@@ -172,11 +172,13 @@ func newServerConfig(aggClient aggregatorclient.Interface, bindPort int) (*gener
 		return nil, fmt.Errorf("error updating api service with generated certs: %v", err)
 	}
 
-	// This was done since is causes logging issues for k8s cluster <=1.19.
-	// The logs occurred since this feature gate was not enabled in 1.19
-	// but is by default for 1.20. It cause client-go 1.20 and up to make
-	// use of resources not available in 1.19 (i.e. flowcontrol API group).
-	feature.DefaultMutableFeatureGate.Set("APIPriorityAndFairness=false")
+	if !enableAPIPriorityAndFairness {
+		// this feature gate was not enabled in k8s <=1.19 as the
+		// APIs it relies on were in alpha.
+		// the apiserver library hardcodes the beta version of the resource
+		// so the best we can do for older k8s clusters is to allow it to be disabled.
+		feature.DefaultMutableFeatureGate.Set("APIPriorityAndFairness=false")
+	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
 	if err := recommendedOptions.ApplyTo(serverConfig); err != nil {
