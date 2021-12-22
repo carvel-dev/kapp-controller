@@ -26,7 +26,7 @@ jobs:
           trivy image --format json --output trivy-results-image-latest.json ${{ steps.latest-sha.outputs.image }}
       - name: Check for new Vulnerabilities
         run: |
-          set -o pipefail
+          set -eo pipefail
 
           summary="Trivy scan has found new vulnerabilities in ${{steps.latest-sha.outputs.tag}} check https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"
 
@@ -35,7 +35,7 @@ jobs:
             summary="Trivy Scan has not found any new Security Issues in ${{steps.latest-sha.outputs.tag}}"
           fi
 
-          echo "SUMMARY=$summary" >> $GITHUB_ENV
+          echo "SUMMARY=$summary" >> "$GITHUB_ENV"
       - name: Send Slack Notification
         if: success()
         uses: slackapi/slack-github-action@v1.15.0
@@ -97,7 +97,7 @@ jobs:
           sarif_file: '.'
       - name: Check for new Vulnerabilities
         run: |
-          set -o pipefail
+          set -eo pipefail
 
           summary="Trivy scan has found new vulnerabilities - check https://github.com/vmware-tanzu/carvel-kapp-controller/security/code-scanning for more"
 
@@ -107,7 +107,7 @@ jobs:
             summary="Trivy Scan has not found any new Security Issues"
           fi
 
-          echo "SUMMARY=$summary" >> $GITHUB_ENV
+          echo "SUMMARY=$summary" >> "$GITHUB_ENV"
       - name: Send Slack Notification
         if: success()
         uses: slackapi/slack-github-action@v1.15.0
