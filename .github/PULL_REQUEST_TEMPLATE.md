@@ -24,6 +24,16 @@ Enter your extended release note in the block below.
 
 #### Additional Notes for your reviewer:
 
+##### Review Checklist:
+
+- [ ] Follows the [developer guidelines](https://carvel.dev/shared/docs/latest/development_guidelines/)
+- [ ] Relevant tests are added or updated
+- [ ] Relevant internal docs added or updated
+- [ ] Relevant carvel.dev docs added or updated in a separate PR and there's
+  a link to that PR
+- [ ] Code is at least as readable and maintainable as it was before this
+  change
+
 #### Additional documentation e.g., Proposal, usage docs, etc.:
 
 ```docs
