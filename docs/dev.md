@@ -25,7 +25,7 @@ To build the kapp-controller project locally, run the following:
 
 The kapp-controller source can be built and deployed to a Kubernetes cluster using one of the options below.
 
-#### minikube 
+#### minikube
 
 ```
 eval $(minikube docker-env)
@@ -83,6 +83,10 @@ export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
 # run e2e test suite
 ./hack/test-all.sh
 ```
+
+The `hack/test-e2e.sh` script (also run by `test-all`) will tee its output
+to both your stdout and the (gitignored) file `tmp/e2eoutput.txt` so that you
+can more easily grep/search/parse the output.
 
 ### Troubleshooting tips
 
