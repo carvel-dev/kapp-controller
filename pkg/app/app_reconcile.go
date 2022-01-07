@@ -84,9 +84,9 @@ func (a *App) reconcileDeploy() error {
 
 	// Reconcile inspect regardless of deploy success
 	// but don't inspect if deploy never attempted
-	// if a.app.Status.Deploy != nil {
-	// 	_ = a.reconcileInspect()
-	// }
+	if a.app.Status.Deploy != nil {
+		_ = a.reconcileInspect()
+	}
 
 	return a.updateStatus("marking reconcile completed")
 }
@@ -190,12 +190,14 @@ func (a *App) resetLastDeployStartedAt() {
 func (a *App) reconcileInspect() error {
 	inspectResult := a.inspect().WithFriendlyYAMLStrings()
 
-	a.app.Status.Inspect = &v1alpha1.AppStatusInspect{
-		Stdout:    inspectResult.Stdout,
-		Stderr:    inspectResult.Stderr,
-		ExitCode:  inspectResult.ExitCode,
-		Error:     inspectResult.ErrorStr(),
-		UpdatedAt: metav1.NewTime(time.Now().UTC()),
+	if !inspectResult.IsEmpty() {
+		a.app.Status.Inspect = &v1alpha1.AppStatusInspect{
+			Stdout:    inspectResult.Stdout,
+			Stderr:    inspectResult.Stderr,
+			ExitCode:  inspectResult.ExitCode,
+			Error:     inspectResult.ErrorStr(),
+			UpdatedAt: metav1.NewTime(time.Now().UTC()),
+		}
 	}
 
 	return a.updateStatus("marking inspect completed")

@@ -62,3 +62,10 @@ func (r CmdRunResult) WithFriendlyYAMLStrings() CmdRunResult {
 		Finished: r.Finished,
 	}
 }
+
+func (r CmdRunResult) IsEmpty() bool {
+	if r == (CmdRunResult{}) {
+		return true
+	}
+	return false
+}
