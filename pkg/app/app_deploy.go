@@ -98,15 +98,17 @@ func (a *App) inspect() exec.CmdRunResult {
 	for _, dep := range a.app.Spec.Deploy {
 		switch {
 		case dep.Kapp != nil:
-			cancelCh, closeCancelCh := a.newCancelCh()
-			defer closeCancelCh()
+			if dep.Kapp.Inspect != nil {
+				cancelCh, closeCancelCh := a.newCancelCh()
+				defer closeCancelCh()
 
-			kapp, err := a.newKapp(*dep.Kapp, cancelCh)
-			if err != nil {
-				return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
+				kapp, err := a.newKapp(*dep.Kapp, cancelCh)
+				if err != nil {
+					return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
+				}
+
+				result = kapp.Inspect()
 			}
-
-			result = kapp.Inspect()
 
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to inspect"))
