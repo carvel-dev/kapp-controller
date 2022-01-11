@@ -65,8 +65,5 @@ func (r CmdRunResult) WithFriendlyYAMLStrings() CmdRunResult {
 
 // IsEmpty returns true if CmdRunResult is empty, otherwise returns false
 func (r CmdRunResult) IsEmpty() bool {
-	if r == (CmdRunResult{}) {
-		return true
-	}
-	return false
+	return r == (CmdRunResult{})
 }
