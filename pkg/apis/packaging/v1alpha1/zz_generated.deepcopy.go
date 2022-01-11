@@ -237,6 +237,11 @@ func (in *PackageRepositoryFetch) DeepCopyInto(out *PackageRepositoryFetch) {
 		*out = new(kappctrlv1alpha1.AppFetchImgpkgBundle)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Inline != nil {
+		in, out := &in.Inline, &out.Inline
+		*out = new(kappctrlv1alpha1.AppFetchInline)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
