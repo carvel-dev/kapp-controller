@@ -57,6 +57,7 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 	desiredApp.Spec = kcv1alpha1.AppSpec{
 		Fetch: []kcv1alpha1.AppFetch{{
 			Image:        pkgRepository.Spec.Fetch.Image,
+			Inline:       pkgRepository.Spec.Fetch.Inline,
 			Git:          pkgRepository.Spec.Fetch.Git,
 			HTTP:         pkgRepository.Spec.Fetch.HTTP,
 			ImgpkgBundle: pkgRepository.Spec.Fetch.ImgpkgBundle,
