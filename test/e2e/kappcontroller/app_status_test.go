@@ -5,11 +5,11 @@ package kappcontroller
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/ghodss/yaml"
+	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
@@ -47,6 +47,7 @@ spec:
     - ytt: {}
   deploy:
     - kapp:
+        inspect: {}
         intoNs: does-not-exist`, name) + sas.ForNamespaceYAML()
 
 	cleanUpApp := func() {
@@ -77,7 +78,7 @@ spec:
 			}},
 			ObservedGeneration:  1,
 			FriendlyDescription: "Reconcile failed: Deploying: Error (see .status.usefulErrorMessage for details)",
-			UsefulErrorMessage:  "kapp: Error: Checking existence of resource configmap/configmap (v1) namespace: does-not-exist: configmaps \"configmap\" is forbidden:\n  User \"system:serviceaccount:" + env.Namespace + ":kappctrl-e2e-ns-sa\" cannot get resource \"configmaps\" in API group \"\" in the namespace \"does-not-exist\" (reason: Forbidden)",
+			UsefulErrorMessage:  "kapp: Error: Checking existence of resource configmap/configmap (v1) namespace: does-not-exist:\n  API server says: configmaps \"configmap\" is forbidden:\n    User \"system:serviceaccount:" + env.Namespace + ":kappctrl-e2e-ns-sa\" cannot get resource \"configmaps\" in API group \"\" in the namespace \"does-not-exist\" (reason: Forbidden)",
 		},
 		Deploy: &v1alpha1.AppStatusDeploy{
 			ExitCode: 1,
@@ -118,7 +119,5 @@ spec:
 		cr.Status.Template.Stderr = ""
 	}
 
-	if !reflect.DeepEqual(expectedStatus, cr.Status) {
-		t.Fatalf("\nStatus is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, cr.Status)
-	}
+	require.Equal(t, expectedStatus, cr.Status)
 }
