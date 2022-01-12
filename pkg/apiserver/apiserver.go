@@ -10,27 +10,25 @@ import (
 	"os"
 	"time"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/openapi"
-
 	kcinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/install"
-	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
 	datapkginginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/install"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/openapi"
 	packagerest "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/registry/datapackaging"
+	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	genericopenapi "k8s.io/apiserver/pkg/endpoints/openapi"
 	apirest "k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/dynamiccertificates"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
+	"k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-
-	genericopenapi "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/klog"
 	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	aggregatorclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
@@ -74,13 +72,25 @@ type APIServer struct {
 	aggClient aggregatorclient.Interface
 }
 
-func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, globalNamespace string, bindPort int) (*APIServer, error) {
+// NewAPIServerOpts is a collection of scalar arguments for the NewAPIServer function
+type NewAPIServerOpts struct {
+	// GlobalNamespace sets the special namespace that kc will always check,
+	// so things can be installed to either the ns you specify or this special global ns
+	GlobalNamespace string
+	// BindPort is the port on which to serve HTTPS with authentication and authorization
+	BindPort int
+	// EnableAPIPriorityAndFairness sets a featuregate to allow us backwards compatibility with
+	// v1.19 and earlier clusters - our libraries use the beta version of those APIs but they used to be alpha.
+	EnableAPIPriorityAndFairness bool
+}
+
+func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, opts NewAPIServerOpts) (*APIServer, error) { //nolint
 	aggClient, err := aggregatorclient.NewForConfig(clientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("building aggregation client: %v", err)
 	}
 
-	config, err := newServerConfig(aggClient, bindPort)
+	config, err := newServerConfig(aggClient, opts.BindPort, opts.EnableAPIPriorityAndFairness)
 	if err != nil {
 		return nil, err
 	}
@@ -90,8 +100,8 @@ func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kc
 		return nil, err
 	}
 
-	packageMetadatasStorage := packagerest.NewPackageMetadataCRDREST(kcClient, coreClient, globalNamespace)
-	packageStorage := packagerest.NewPackageCRDREST(kcClient, coreClient, globalNamespace)
+	packageMetadatasStorage := packagerest.NewPackageMetadataCRDREST(kcClient, coreClient, opts.GlobalNamespace)
+	packageStorage := packagerest.NewPackageCRDREST(kcClient, coreClient, opts.GlobalNamespace)
 
 	pkgGroup := genericapiserver.NewDefaultAPIGroupInfo(datapackaging.GroupName, Scheme, metav1.ParameterCodec, Codecs)
 	pkgv1alpha1Storage := map[string]apirest.Storage{}
@@ -147,7 +157,7 @@ func (as *APIServer) isReady() (bool, error) {
 	return false, nil
 }
 
-func newServerConfig(aggClient aggregatorclient.Interface, bindPort int) (*genericapiserver.RecommendedConfig, error) {
+func newServerConfig(aggClient aggregatorclient.Interface, bindPort int, enableAPIPriorityAndFairness bool) (*genericapiserver.RecommendedConfig, error) {
 	recommendedOptions := genericoptions.NewRecommendedOptions("", Codecs.LegacyCodec(v1alpha1.SchemeGroupVersion))
 	recommendedOptions.Etcd = nil
 
@@ -172,6 +182,17 @@ func newServerConfig(aggClient aggregatorclient.Interface, bindPort int) (*gener
 
 	if err := updateAPIService(aggClient, caContentProvider); err != nil {
 		return nil, fmt.Errorf("error updating api service with generated certs: %v", err)
+	}
+
+	if !enableAPIPriorityAndFairness {
+		// this feature gate was not enabled in k8s <=1.19 as the
+		// APIs it relies on were in alpha.
+		// the apiserver library hardcodes the beta version of the resource
+		// so the best we can do for older k8s clusters is to allow it to be disabled.
+		err := feature.DefaultMutableFeatureGate.Set("APIPriorityAndFairness=false")
+		if err != nil {
+			return nil, fmt.Errorf("error updating disabling feature gate for APIPriorityAndFairness: %v", err)
+		}
 	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
