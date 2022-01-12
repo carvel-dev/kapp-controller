@@ -77,6 +77,83 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	assert.Equal(t, expectedStatus, crdApp.app.Status())
 }
 
+func Test_NoInspectReconcile_IfInspectNotEnabled(t *testing.T) {
+	log := logf.Log.WithName("kc")
+	var appMetrics = metrics.NewAppMetrics()
+
+	app := v1alpha1.App{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "simple-app",
+			Namespace: "pkg-standalone",
+		},
+		Spec: v1alpha1.AppSpec{
+			Fetch: []v1alpha1.AppFetch{
+				v1alpha1.AppFetch{Inline: &v1alpha1.AppFetchInline{Paths: map[string]string{"file.yml": `|
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: configmap
+                data:
+                  key: value`}}},
+			},
+			Template: []v1alpha1.AppTemplate{
+				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{}},
+			},
+			Deploy: []v1alpha1.AppDeploy{
+				v1alpha1.AppDeploy{Kapp: &v1alpha1.AppDeployKapp{}},
+			},
+		},
+	}
+
+	k8scs := k8sfake.NewSimpleClientset()
+	kappcs := fake.NewSimpleClientset()
+	fetchFac := fetch.NewFactory(k8scs, nil)
+	tmpFac := template.NewFactory(k8scs, fetchFac)
+	deployFac := deploy.NewFactory(k8scs)
+
+	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
+	_, err := crdApp.Reconcile(false)
+	assert.Nil(t, err, "unexpected error with reconciling", err)
+
+	// Expected app status has no inspect on status
+	// since it's not enabled
+	expectedStatus := v1alpha1.AppStatus{
+		GenericStatus: v1alpha1.GenericStatus{
+			Conditions: []v1alpha1.AppCondition{{
+				Type:    v1alpha1.ReconcileFailed,
+				Status:  corev1.ConditionTrue,
+				Message: "Blocking for deploy: Updating app: apps.kappctrl.k14s.io \"simple-app\" not found",
+			}},
+			ObservedGeneration:  0,
+			FriendlyDescription: "Reconcile failed: Blocking for deploy: Updating app: apps.kappctrl.k14s.io \"simple-app\" not found",
+			UsefulErrorMessage:  "Blocking for deploy: Updating app: apps.kappctrl.k14s.io \"simple-app\" not found",
+		},
+		Fetch: &v1alpha1.AppStatusFetch{
+			Stdout:   "apiVersion: vendir.k14s.io/v1alpha1\ndirectories:\n- contents:\n  - inline: {}\n    path: .\n  path: \"0\"\nkind: LockConfig\n",
+			ExitCode: 0,
+		},
+		ConsecutiveReconcileFailures: 1,
+		Template: &v1alpha1.AppStatusTemplate{
+			ExitCode: 0,
+		},
+		Deploy: &v1alpha1.AppStatusDeploy{
+			Finished: true,
+			ExitCode: -1,
+			Error:    "Blocking for deploy: Updating app: apps.kappctrl.k14s.io \"simple-app\" not found",
+		},
+	}
+
+	crdApp.app.Status().Fetch.StartedAt = metav1.Time{}
+	crdApp.app.Status().Fetch.UpdatedAt = metav1.Time{}
+	crdApp.app.Status().Deploy.StartedAt = metav1.Time{}
+	crdApp.app.Status().Deploy.UpdatedAt = metav1.Time{}
+	crdApp.app.Status().Template.UpdatedAt = metav1.Time{}
+	// No need to assert on stderr as its captured elsewhere
+	crdApp.app.Status().Fetch.Stderr = ""
+
+	assert.Equal(t, expectedStatus, crdApp.app.Status())
+}
+
 func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	var appMetrics = metrics.NewAppMetrics()
