@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e -x -u
+set -e -x -u -o pipefail
 
 go clean -testcache
 
