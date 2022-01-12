@@ -198,6 +198,8 @@ func (a *App) reconcileInspect() error {
 			Error:     inspectResult.ErrorStr(),
 			UpdatedAt: metav1.NewTime(time.Now().UTC()),
 		}
+	} else {
+		a.app.Status.Inspect = nil
 	}
 
 	return a.updateStatus("marking inspect completed")
