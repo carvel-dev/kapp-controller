@@ -20,7 +20,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           only: ytt, kbld
-          ytt: v0.37.0
+          ytt: v0.38.0
           kbld: v0.31.0
 
       - name: Login to GitHub Container Registry
