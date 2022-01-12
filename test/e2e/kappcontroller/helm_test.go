@@ -70,6 +70,7 @@ spec:
           name: test-helm-values
   deploy:
   - kapp:
+      inspect: {}
       intoNs: %s
       delete:
         rawOptions: ["--apply-ignored=true"]
@@ -105,6 +106,7 @@ spec:
           name: test-helm-values
   deploy:
   - kapp:
+      inspect: {}
       intoNs: %s
       delete:
         rawOptions: ["--apply-ignored=true"]

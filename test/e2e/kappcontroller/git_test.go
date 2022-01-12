@@ -41,6 +41,7 @@ spec:
   - ytt: {}
   deploy:
   - kapp:
+      inspect: {}
       intoNs: %s
 `, env.Namespace) + sas.ForNamespaceYAML()
 
@@ -151,6 +152,7 @@ spec:
   - ytt: {}
   deploy:
   - kapp:
+      inspect: {}
       intoNs: %s
 `, env.Namespace, env.Namespace) + sas.ForNamespaceYAML()
 

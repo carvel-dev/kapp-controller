@@ -70,7 +70,8 @@ spec:
           - "-"
           - ".imgpkg/images.yml"
       deploy:
-      - kapp: {}
+      - kapp: 
+          inspect: {}
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageInstall
