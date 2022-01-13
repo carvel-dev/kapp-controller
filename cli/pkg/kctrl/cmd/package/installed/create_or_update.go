@@ -306,7 +306,7 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		context.Background(), updatedPkgInstall, metav1.UpdateOptions{},
 	)
 	if err != nil {
-		err = fmt.Errorf("failed to update package '%s': %s", o.Name, err.Error())
+		err = fmt.Errorf("Updating package '%s': %s", o.Name, err.Error())
 		return err
 	}
 
@@ -349,7 +349,7 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 		}
 		svcAccount, err := client.CoreV1().ServiceAccounts(o.NamespaceFlags.Name).Get(context.Background(), o.serviceAccountName, metav1.GetOptions{})
 		if err != nil {
-			err = fmt.Errorf("failed to find service account '%s' in namespace '%s': %s", o.serviceAccountName, o.NamespaceFlags.Name, err.Error())
+			err = fmt.Errorf("Finding service account '%s' in namespace '%s': %s", o.serviceAccountName, o.NamespaceFlags.Name, err.Error())
 			return isServiceAccountCreated, isSecretCreated, err
 		}
 
@@ -362,7 +362,7 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 
 		if ok {
 			if svcAccountAnnotation != o.createdAnnotations.PackageAnnValue() {
-				err = fmt.Errorf("provided service account '%s' is already used by another package in namespace '%s': %s", o.serviceAccountName, o.NamespaceFlags.Name, err.Error())
+				err = fmt.Errorf("Provided service account '%s' is already used by another package in namespace '%s': %s", o.serviceAccountName, o.NamespaceFlags.Name, err.Error())
 				return isServiceAccountCreated, isSecretCreated, err
 			}
 		}
@@ -451,7 +451,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateDataValuesSecret(client kubernetes
 
 	dataValues[valuesFileKey], err = ioutil.ReadFile(o.valuesFile)
 	if err != nil {
-		return false, fmt.Errorf("failed to read from data values file '%s': %s", o.valuesFile, err.Error())
+		return false, fmt.Errorf("Reading data values file '%s': %s", o.valuesFile, err.Error())
 	}
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -516,7 +516,7 @@ func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secr
 
 	_, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Create(context.Background(), packageInstall, metav1.CreateOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to create PackageInstall resource: %s", err.Error())
+		return fmt.Errorf("Creating PackageInstall resource: %s", err.Error())
 	}
 
 	return nil
@@ -558,7 +558,7 @@ func (o *CreateOrUpdateOptions) preparePackageInstallForUpdate(pkgInstall *kcpkg
 	updatedPkgInstall := pkgInstall.DeepCopy()
 
 	if updatedPkgInstall.Spec.PackageRef == nil || updatedPkgInstall.Spec.PackageRef.VersionSelection == nil {
-		err = fmt.Errorf("failed to update package '%s' as no existing package reference/version was found in the package install", o.Name)
+		err = fmt.Errorf("Failed to update package '%s' as no existing package reference/version was found in the package install", o.Name)
 		return nil, false, err
 	}
 
@@ -566,7 +566,7 @@ func (o *CreateOrUpdateOptions) preparePackageInstallForUpdate(pkgInstall *kcpkg
 	// This will prevent the users from accidentally overwriting an installed package with another package content due to choosing a pre-existing name for the package isntall.
 	// Otherwise if o.PackageName is not provided, fill it from the installed package spec
 	if o.packageName != "" && updatedPkgInstall.Spec.PackageRef.RefName != o.packageName {
-		err = fmt.Errorf("installed package '%s' is already associated with package '%s'", o.Name, updatedPkgInstall.Spec.PackageRef.RefName)
+		err = fmt.Errorf("Installed package '%s' is already associated with package '%s'", o.Name, updatedPkgInstall.Spec.PackageRef.RefName)
 		return nil, false, err
 	}
 	o.packageName = updatedPkgInstall.Spec.PackageRef.RefName
@@ -653,7 +653,7 @@ func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interfa
 	}
 
 	if dataValues[dataKey], err = ioutil.ReadFile(o.valuesFile); err != nil {
-		return fmt.Errorf("Failed to read from data values file '%s': %s", o.valuesFile, err.Error())
+		return fmt.Errorf("Reading data values file '%s': %s", o.valuesFile, err.Error())
 	}
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: secretName, Namespace: o.NamespaceFlags.Name}, Data: dataValues,
@@ -661,7 +661,7 @@ func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interfa
 
 	_, err = client.CoreV1().Secrets(o.NamespaceFlags.Name).Update(context.Background(), secret, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("Failed to update Secret resource: %s", err.Error())
+		return fmt.Errorf("Updating Secret resource: %s", err.Error())
 	}
 
 	return nil
