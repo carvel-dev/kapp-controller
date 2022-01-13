@@ -77,7 +77,7 @@ jobs:
           brew install aquasecurity/trivy/trivy
 
           # download the sarif format template
-          git clone --depth 1 https://github.com/aquasecurity/trivy
+          git clone --depth 1 -b "v0.22.0" https://github.com/aquasecurity/trivy
       - name: Run Trivy Reports
         run: |
           export TRIVY_IGNORE_UNFIXED=true
