@@ -89,13 +89,20 @@ to both your stdout and the (gitignored) file `tmp/e2eoutput.txt` so that you
 can more easily grep/search/parse the output.
 
 ### Profiling
-1.) Enable profiling by editing values.yaml and setting `dangerous_enable_pprof`
+1.) Enable profiling by editing config/values.yaml and setting `dangerous_enable_pprof`
 to true
-2.) deploy
-3.) If you're using minikube you can then get the url for pprof via `minikube service --url
+2.) deploy (see above)
+3.) install graphviz: `brew install graphviz`
+4.) If you're using minikube you can then get the url for pprof via `minikube service --url
 pprof -n kapp-controller` - then append `/debug/pprof/` as there is no redirect
-for `/`.  (so you might wind up with a final url like
-`http://192.168.64.2:32044/debug/pprof/`)
+for `/`.
+5.) consume data from the pprof server with your local toolchain. For instance
+the below will show you the memory usage profile:
+```
+> export PROFURL=`minikube service --url pprof -n kapp-controller`
+> go tool pprof -png $PROFURL/debug/pprof/heap > heap.png
+> open heap.png
+```
 
 ### Troubleshooting tips
 
