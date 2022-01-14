@@ -88,6 +88,15 @@ The `hack/test-e2e.sh` script (also run by `test-all`) will tee its output
 to both your stdout and the (gitignored) file `tmp/e2eoutput.txt` so that you
 can more easily grep/search/parse the output.
 
+### Profiling
+1.) Enable profiling by editing values.yaml and setting `dangerous_enable_pprof`
+to true
+2.) deploy
+3.) If you're using minikube you can then get the url for pprof via `minikube service --url
+pprof -n kapp-controller` - then append `/debug/pprof/` as there is no redirect
+for `/`.  (so you might wind up with a final url like
+`http://192.168.64.2:32044/debug/pprof/`)
+
 ### Troubleshooting tips
 
 1. If testing against a `minikube` cluster, run `eval $(minikube docker-env)` before development.
