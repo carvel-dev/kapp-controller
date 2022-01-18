@@ -14,7 +14,7 @@ func TestControllerVersion(t *testing.T) {
 
 	out, _ := kappCtrl.RunWithOpts([]string{"version", "--controller"}, RunOpts{NoNamespace: true})
 
-	if !strings.Contains(out, "kapp controller version") {
+	if !strings.Contains(out, "kapp-controller version") {
 		t.Fatalf("Expected to find controller version")
 	}
 }
