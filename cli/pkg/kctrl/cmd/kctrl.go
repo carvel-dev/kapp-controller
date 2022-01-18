@@ -74,7 +74,7 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 
 	ConfigurePathResolvers(o, cmd, flagsFactory)
 
-	cmd.AddCommand(NewVersionCmd(NewVersionOptions(o.ui), flagsFactory))
+	cmd.AddCommand(NewVersionCmd(NewVersionOptions(o.ui, o.depsFactory), flagsFactory))
 
 	pkgCmd := cmdpkg.NewCmd()
 	AddPackageCommands(o, pkgCmd, flagsFactory, false)
