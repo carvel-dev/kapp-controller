@@ -73,7 +73,7 @@ func (o *VersionOptions) showControllerVersion() error {
 		return err
 	}
 
-	o.ui.PrintBlock([]byte(fmt.Sprintf("kapp controller version %s\n", controllerDeployment.GetAnnotations()[kappControllerVersionAnn])))
+	o.ui.PrintBlock([]byte(fmt.Sprintf("kapp-controller version %s\n", controllerDeployment.GetAnnotations()[kappControllerVersionAnn])))
 
 	return nil
 }
