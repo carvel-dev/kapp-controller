@@ -6,7 +6,6 @@ package installed
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -449,7 +448,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateDataValuesSecret(client kubernetes
 
 	dataValues := make(map[string][]byte)
 
-	dataValues[valuesFileKey], err = ioutil.ReadFile(o.valuesFile)
+	dataValues[valuesFileKey], err = cmdcore.NewInputFile(o.valuesFile).Bytes()
 	if err != nil {
 		return false, fmt.Errorf("Reading data values file '%s': %s", o.valuesFile, err.Error())
 	}
@@ -652,7 +651,8 @@ func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interfa
 		}
 	}
 
-	if dataValues[dataKey], err = ioutil.ReadFile(o.valuesFile); err != nil {
+	dataValues[dataKey], err = cmdcore.NewInputFile(o.valuesFile).Bytes()
+	if err != nil {
 		return fmt.Errorf("Reading data values file '%s': %s", o.valuesFile, err.Error())
 	}
 	secret := &corev1.Secret{
