@@ -472,6 +472,9 @@ metadata:
 spec:
   group: kappctrl.k14s.io
   names:
+    categories:
+    - all
+    - carvel
     kind: App
     listKind: AppList
     plural: apps
@@ -958,6 +961,9 @@ metadata:
 spec:
   group: packaging.carvel.dev
   names:
+    categories:
+    - all
+    - carvel
     kind: PackageInstall
     listKind: PackageInstallList
     plural: packageinstalls
@@ -1105,6 +1111,9 @@ metadata:
 spec:
   group: packaging.carvel.dev
   names:
+    categories:
+    - all
+    - carvel
     kind: PackageRepository
     listKind: PackageRepositoryList
     plural: packagerepositories
