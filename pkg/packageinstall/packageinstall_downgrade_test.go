@@ -188,7 +188,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 					Message: "Error (see .status.usefulErrorMessage for details)",
 				}},
 				FriendlyDescription: "Reconcile failed: Error (see .status.usefulErrorMessage for details)",
-				UsefulErrorMessage:  "Stopped installing matched version '1.0.0' since last attempted version '2.0.0' is higher",
+				UsefulErrorMessage:  "Stopped installing matched version '1.0.0' since last attempted version '2.0.0' is higher.\nhint: Add annotation packaging.carvel.dev/downgradable: \"\" to PackageInstall to proceed with downgrade",
 			},
 		}, getPackageInstall(t, appClient, "instl-pkg").Status)
 

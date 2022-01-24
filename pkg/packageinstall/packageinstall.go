@@ -112,7 +112,8 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 
 		if matchedVers.Len() == 0 {
 			errMsg := fmt.Sprintf(
-				"Stopped installing matched version '%s' since last attempted version '%s' is higher",
+				"Stopped installing matched version '%s' since last attempted version '%s' is higher."+
+					"\nhint: Add annotation packaging.carvel.dev/downgradable: \"\" to PackageInstall to proceed with downgrade",
 				pkg.Spec.Version, pi.model.Status.LastAttemptedVersion)
 			modelStatus.SetUsefulErrorMessage(errMsg)
 			modelStatus.SetReconcileCompleted(fmt.Errorf("Error (see .status.usefulErrorMessage for details)"))
