@@ -33,8 +33,8 @@ RUN wget -O- https://get.helm.sh/helm-v2.17.0-linux-amd64.tar.gz > /helm && \
   echo "f3bec3c7c55f6a9eb9e6586b8c503f370af92fe987fcbf741f37707606d70296  /helm" | sha256sum -c - && \
   mkdir /helm-v2-unpacked && tar -C /helm-v2-unpacked -xzvf /helm
 
-RUN wget -O- https://get.helm.sh/helm-v3.7.1-linux-amd64.tar.gz > /helm && \
-  echo "6cd6cad4b97e10c33c978ff3ac97bb42b68f79766f1d2284cfd62ec04cd177f4  /helm" | sha256sum -c - && \
+RUN wget -O- https://get.helm.sh/helm-v3.8.0-linux-amd64.tar.gz > /helm && \
+  echo "8408c91e846c5b9ba15eb6b1a5a79fc22dd4d33ac6ea63388e5698d1b2320c8b  /helm" | sha256sum -c - && \
   mkdir /helm-unpacked && tar -C /helm-unpacked -xzvf /helm
 
 # sops
