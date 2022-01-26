@@ -42,7 +42,7 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
-          channel-id: C02MTA7F2G1
+          channel-id: G01FTP43JMQ
           slack-message: "${{ env.SUMMARY }}"
       - name: Send Failure notification
         if: failure()
