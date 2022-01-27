@@ -14,6 +14,10 @@ For windows users, please download the binaries from the respective GitHub repos
 * https://github.com/vmware-tanzu/carvel-kbld
 * https://github.com/vmware-tanzu/carvel-kapp
 
+**NOTE:** It is recommended to have the kapp-controller repository cloned to your `$GOPATH`.
+This is because kapp-controller's [code generator scripts](#code-generation) expect the project
+to be along the `$GOPATH`.
+
 ### Build
 
 To build the kapp-controller project locally, run the following:
@@ -171,12 +175,49 @@ Some files to make note of when working on the release process:
 * [`.github/workflows/release.yml`](../.github/workflows/release-process.yml)
   - GitHub Action workflow for release process
 
-### Packaging Development
+### Code Generation
+
+kapp-controller relies on Kubernetes-focused code generation tools to generate the following:
+* Custom resource definitions
+* Clients, deep copy, lister, and informer logic for kapp-controller types
+* API Server specifics: protobuf and openapi logic
+
+Code generation should take place when API changes are made to kapp-controller resources 
+(e.g. adding new fields). The CI for kapp-controller will always check if code generators 
+should have been run and notify users to do so if needed, so do not worry if you are unsure. 
+`./hack/verify-no-dirty-files.sh` can also be run locally to make sure any changes are ready 
+to be checked in.
+
+#### Prerequisite
+
+Make sure to have [protoc installed](https://grpc.io/docs/protoc-installation/).
+
+It is recommended work with the kapp-controller repository on your `$GOPATH` as this is 
+where the non-CRD generators currently output generated code.
+
+#### Custom resource generation 
+
+For CRD generation, kapp-controller makes use of [kubebuilder](https://book.kubebuilder.io/reference/generating-crd.html) 
+via scripts and configuration.
+
+Running `./hack/build.sh` calls out to [`./hack/gen-crds.sh`](../hack/gen-crds.sh). With every 
+build of kapp-controller, the CRDs will be regenerated and output to [config/crds.yml](../config/crds.yml).
+
+The `./hack/gen-crds.sh` script also makes use of a ytt overly in [`./hack/crd-overlay.yml`](../hack/crd-overlay.yml). 
+This overlay removes unnecessary properties of the generated YAML.
+
+#### Clients, deep copy, lister, and informer
+
+To regenerate clients, deep copy, lister, and informer code, use [`./hack/gen.sh`](../hack/gen.sh).
+
+#### API Server generation
+
+To regenerate code for API Server updates, use [`./hack/gen-apiserver.sh`](../hack/gen-apiserver.sh).
+
+#### Packaging Development
 
 Due to the fact the one of our resources is named package, which is a golang
 keyword, we were not able to use the code-generation binaries. To get around
 this, we generated the code using the name pkg, and then manually edited those
-files to enable us to use the name package. To avoid breaking this code, we are
-commenting out the gen script on the packaging branch for extra safety. We will
-have to come up with a long term solution to enable us to use the
-code-generation binaries again.
+files to enable us to use the name package. We will have to come up with a long 
+term solution to enable us to use the code-generation binaries again.
