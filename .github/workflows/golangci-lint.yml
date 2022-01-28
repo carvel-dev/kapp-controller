@@ -4,8 +4,14 @@ on:
   push:
     branches:
       - develop
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
   pull_request:
     types: [opened, reopened, synchronize]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
 
 jobs:
   golangci:
