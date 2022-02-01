@@ -34,8 +34,8 @@ jobs:
         run: |
           set -eou pipefail
           
-          old_darwin_amd64_sha=$(grep darwin-amd64 hack/install-deps.sh-e -A 5 | grep ${{ matrix.tool }}_checksum)
-          old_linux_amd64_sha=$(grep linux-amd64 hack/install-deps.sh-e -A 5 | grep ${{ matrix.tool }}_checksum)
+          old_darwin_amd64_sha=$(grep darwin-amd64 hack/install-deps.sh -A 5 | grep ${{ matrix.tool }}_checksum)
+          old_linux_amd64_sha=$(grep linux-amd64 hack/install-deps.sh -A 5 | grep ${{ matrix.tool }}_checksum)
                   
           release_notes=$(curl https://api.github.com/repos/vmware-tanzu/carvel-${{ matrix.tool }}/releases/latest | jq .body -r)
           new_darwin_amd64_sha=$( echo "$release_notes" | grep ${{ matrix.tool }}-darwin-amd64 | awk '{print $1;}')
