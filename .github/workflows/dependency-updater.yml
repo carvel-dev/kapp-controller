@@ -42,8 +42,8 @@ jobs:
           new_linux_amd64_sha=$( echo "$release_notes" | grep ${{ matrix.tool }}-linux-amd64 | awk '{print $1;}')
           
           sed -i '/${{ matrix.tool }}_version/s/${{ steps.current-version.outputs.version }}/${{ steps.latest-version.outputs.version }}/g' ./hack/install-deps.sh
-          sed -i "s/$old_darwin_amd64_sha/$new_darwin_amd64_sha/g" ./hack/install-deps.sh
-          sed -i "s/$old_linux_amd64_sha/$new_linux_amd64_sha/g" ./hack/install-deps.sh
+          sed -i "/${{ matrix.tool }}_checksum/s/$old_darwin_amd64_sha/$new_darwin_amd64_sha/g" ./hack/install-deps.sh
+          sed -i "/${{ matrix.tool }}_checksum/s/$old_linux_amd64_sha/$new_linux_amd64_sha/g" ./hack/install-deps.sh
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3.12.0
         with:
