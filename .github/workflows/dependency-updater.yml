@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: '0 12 * * *'
   workflow_dispatch:
+  push:
+    branches:
+    - dependency-updater-sed
       
 jobs:
   update-latest-release:
@@ -20,7 +23,7 @@ jobs:
         id: current-version
         run: |
           set -eou pipefail
-          echo ::set-output name=version::$(yq eval '.${{ matrix.tool }}.version' ./hack/dependencies.yml) 
+          echo ::set-output name=version::$(grep "${{ matrix.tool }}_version=v" hack/install-deps.sh | cut -d "=" -f2)
       - name: Get Latest Release Version
         id: latest-version
         run: |
@@ -31,16 +34,16 @@ jobs:
         run: |
           set -eou pipefail
           
-          old_darwin_amd64_sha=$(yq eval '.${{ matrix.tool }}.checksum_darwin' ./hack/dependencies.yml) 
-          old_linux_amd64_sha=$(yq eval '.${{ matrix.tool }}.checksum_linux' ./hack/dependencies.yml)
-          
+          old_darwin_amd64_sha=$(grep darwin-amd64 hack/install-deps.sh-e -A 5 | grep ${{ matrix.tool }}_checksum)
+          old_linux_amd64_sha=$(grep linux-amd64 hack/install-deps.sh-e -A 5 | grep ${{ matrix.tool }}_checksum)
+                  
           release_notes=$(curl https://api.github.com/repos/vmware-tanzu/carvel-${{ matrix.tool }}/releases/latest | jq .body -r)
           new_darwin_amd64_sha=$( echo "$release_notes" | grep ${{ matrix.tool }}-darwin-amd64 | awk '{print $1;}')
           new_linux_amd64_sha=$( echo "$release_notes" | grep ${{ matrix.tool }}-linux-amd64 | awk '{print $1;}')
-                    
-          yq eval '.${{ matrix.tool }}.version = "${{ steps.latest-version.outputs.version }}"' -i ./hack/dependencies.yml
-          yq eval ".${{ matrix.tool }}.checksum_darwin = \"${new_darwin_amd64_sha}\"" -i ./hack/dependencies.yml
-          yq eval ".${{ matrix.tool }}.checksum_linux = \"${new_linux_amd64_sha}\"" -i ./hack/dependencies.yml          
+          
+          sed -i '/${{ matrix.tool }}_version/s/${{ steps.current-version.outputs.version }}/${{ steps.latest-version.outputs.version }}/g' ./hack/install-deps.sh
+          sed -i "s/$old_darwin_amd64_sha/$new_darwin_amd64_sha/g' ./hack/install-deps.sh
+          sed -i "s/$old_linux_amd64_sha/$new_linux_amd64_sha/g' ./hack/install-deps.sh
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3.12.0
         with:
