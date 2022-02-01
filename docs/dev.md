@@ -172,7 +172,7 @@ Some files to make note of when working on the release process:
 * [`./hack/build-release.sh`](../hack/build-release.sh)
   - build-release.sh uses kbld and ytt to build and push the kapp-controller image to ghcr.io 
    and also generates the kapp-controller release.yml
-* [`.github/workflows/release.yml`](../.github/workflows/release-process.yml)
+* [`.github/workflows/release-process.yml`](../.github/workflows/release-process.yml)
   - GitHub Action workflow for release process
 
 ### Code Generation
@@ -221,3 +221,36 @@ keyword, we were not able to use the code-generation binaries. To get around
 this, we generated the code using the name pkg, and then manually edited those
 files to enable us to use the name package. We will have to come up with a long 
 term solution to enable us to use the code-generation binaries again.
+
+### Continuous Integration/Jobs
+
+kapp-controller uses GitHub Actions for all continuous integration for the project. 
+You can find these CI processes under the [`.github/workflows`](../.github/workflows) 
+folder. 
+
+#### Pull Requests
+
+On each pull request, the following CI processes run:
+* [`test-gh`](../.github/workflows/test-gh.yml) - Builds kapp-controller, deploys build to minikube, runs unit tests, runs e2e tests.
+* [`golangci-lint`](../.github/workflows/golangci-lint.yml) - Runs project linter. Configuration for linter is in [`.golangci.yml`](../.golangci.yml) file.
+* [`test-kctrl-gh`](../.github/workflows/test-kctrl-gh.yml) - Runs build and tests for kapp-controller CLI.
+* [`upgrade-testing`](../.github/workflows/upgrade-testing.yml) - This process deploys the latest released version of kapp-controller and then builds and 
+  redeploys the changes submitted in the pull request. This helps to assure changes do not break upgrades between kapp-controller versions.
+  
+#### Daily Jobs
+
+Each day, the following processes run:
+* [`Trivy CVE Dependency Scanner`](../.github/workflows/trivy-scan.yml) - This job runs a [`trivy`](https://aquasecurity.github.io/trivy/) scan on 
+the kapp-controller code base and latest release to identify CVEs.
+* [`Mark issues stale and close stale issues`](../.github/workflows/stale-issues-action.yml) - This job marks any issues without a comment for 40 
+days as a stale issue. If no comment is made in the issue, the issue will then be closed in the next 5 days.
+
+#### Jobs Based on Events
+
+The actions below are carried out when a certain event occurs:
+* [`Remove label on close`](../.github/workflows/closed-issue.yml) - This job runs whenever an issue is closed. It removes the `carvel-triage` 
+label from the closed issue to signal no further attention is needed on the issue.
+* [`Closed issue comment labeling`](../.github/workflows/closed-issue-comment.yml) - This job runs whenever a comment is posted to a closed 
+issue to signal maintainers should take a look.
+* [`kapp-controller release`](../.github/workflows/release-process.yml) - This job carries out the kapp-controller release. More information 
+available [here](#release).
