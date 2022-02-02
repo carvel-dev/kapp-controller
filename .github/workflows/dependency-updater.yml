@@ -20,7 +20,7 @@ jobs:
         id: current-version
         run: |
           set -eou pipefail
-          echo ::set-output name=version::$(yq eval '.${{ matrix.tool }}.version' ./hack/dependencies.yml) 
+          echo ::set-output name=version::$(yq eval '.${{ matrix.tool }}_version' ./hack/dependencies.yml) 
       - name: Get Latest Release Version
         id: latest-version
         run: |
@@ -31,16 +31,16 @@ jobs:
         run: |
           set -eou pipefail
           
-          old_darwin_amd64_sha=$(yq eval '.${{ matrix.tool }}.checksum_darwin' ./hack/dependencies.yml) 
-          old_linux_amd64_sha=$(yq eval '.${{ matrix.tool }}.checksum_linux' ./hack/dependencies.yml)
+          old_darwin_amd64_sha=$(yq eval '.${{ matrix.tool }}_checksum_darwin' ./hack/dependencies.yml) 
+          old_linux_amd64_sha=$(yq eval '.${{ matrix.tool }}_checksum_linux' ./hack/dependencies.yml)
           
           release_notes=$(curl https://api.github.com/repos/vmware-tanzu/carvel-${{ matrix.tool }}/releases/latest | jq .body -r)
           new_darwin_amd64_sha=$( echo "$release_notes" | grep ${{ matrix.tool }}-darwin-amd64 | awk '{print $1;}')
           new_linux_amd64_sha=$( echo "$release_notes" | grep ${{ matrix.tool }}-linux-amd64 | awk '{print $1;}')
                     
-          yq eval '.${{ matrix.tool }}.version = "${{ steps.latest-version.outputs.version }}"' -i ./hack/dependencies.yml
-          yq eval ".${{ matrix.tool }}.checksum_darwin = \"${new_darwin_amd64_sha}\"" -i ./hack/dependencies.yml
-          yq eval ".${{ matrix.tool }}.checksum_linux = \"${new_linux_amd64_sha}\"" -i ./hack/dependencies.yml          
+          yq eval '.${{ matrix.tool }}_version = "${{ steps.latest-version.outputs.version }}"' -i ./hack/dependencies.yml
+          yq eval ".${{ matrix.tool }}_checksum_darwin = \"${new_darwin_amd64_sha}\"" -i ./hack/dependencies.yml
+          yq eval ".${{ matrix.tool }}_checksum_linux = \"${new_linux_amd64_sha}\"" -i ./hack/dependencies.yml          
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3.12.0
         with:
