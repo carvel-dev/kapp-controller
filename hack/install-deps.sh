@@ -28,26 +28,26 @@ install() {
     exit 1
   fi
 
-  ytt_version=$(awk '/ytt_version/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
-  kbld_version=$(awk '/kbld_version/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
-  kapp_version=$(awk '/kapp_version/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
-  imgpkg_version=$(awk '/imgpkg_version/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
-  vendir_version=$(awk '/vendir_version/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+  ytt_version=$(sed -n -e 's/^ytt_version: //p' "${DEPENDENCIES_DIR}")
+  kbld_version=$(sed -n -e 's/^kbld_version: //p' "${DEPENDENCIES_DIR}")
+  kapp_version=$(sed -n -e 's/^kapp_version: //p' "${DEPENDENCIES_DIR}")
+  imgpkg_version=$(sed -n -e 's/^imgpkg_version: //p' "${DEPENDENCIES_DIR}")
+  vendir_version=$(sed -n -e 's/^vendir_version: //p' "${DEPENDENCIES_DIR}")
 
   if [[ `uname` == Darwin ]]; then
     binary_type=darwin-amd64
-    ytt_checksum=$(awk '/ytt_checksum_darwin/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
-    kbld_checksum=$(awk '/kbld_checksum_darwin/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
-    kapp_checksum=$(awk '/kapp_checksum_darwin/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
-    imgpkg_checksum=$(awk '/imgpkg_checksum_darwin/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
-    vendir_checksum=$(awk '/vendir_checksum_darwin/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+    ytt_checksum=$(sed -n -e 's/^ytt_checksum_darwin: //p' "${DEPENDENCIES_DIR}")
+    kbld_checksum=$(sed -n -e 's/^kbld_checksum_darwin: //p' "${DEPENDENCIES_DIR}")
+    kapp_checksum=$(sed -n -e 's/^kapp_checksum_darwin: //p' "${DEPENDENCIES_DIR}")
+    imgpkg_checksum=$(sed -n -e 's/^imgpkg_checksum_darwin: //p' "${DEPENDENCIES_DIR}")
+    vendir_checksum=$(sed -n -e 's/^vendir_checksum_darwin: //p' "${DEPENDENCIES_DIR}")
   else
     binary_type=linux-amd64
-    ytt_checksum=$(awk '/ytt_checksum_linux/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
-    kbld_checksum=$(awk '/kbld_checksum_linux/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
-    kapp_checksum=$(awk '/kapp_checksum_linux/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
-    imgpkg_checksum=$(awk '/imgpkg_checksum_linux/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
-    vendir_checksum=$(awk '/vendir_checksum_linux/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+    ytt_checksum=$(sed -n -e 's/^ytt_checksum_linux: //p' "${DEPENDENCIES_DIR}")
+    kbld_checksum=$(sed -n -e 's/^kbld_checksum_linux: //p' "${DEPENDENCIES_DIR}")
+    kapp_checksum=$(sed -n -e 's/^kapp_checksum_linux: //p' "${DEPENDENCIES_DIR}")
+    imgpkg_checksum=$(sed -n -e 's/^imgpkg_checksum_linux: //p' "${DEPENDENCIES_DIR}")
+    vendir_checksum=$(sed -n -e 's/^vendir_checksum_linux: //p' "${DEPENDENCIES_DIR}")
   fi
 
   echo "Installing ${binary_type} binaries..."
