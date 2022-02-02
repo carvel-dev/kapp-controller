@@ -24,8 +24,6 @@ type GenericStatus struct {
 type AppConditionType string
 
 const (
-	// "Reconciling" indicates that fetch/template/deploy is happening;
-	// it does not mean that any resource has changed
 	Reconciling        AppConditionType = "Reconciling"
 	ReconcileFailed    AppConditionType = "ReconcileFailed"
 	ReconcileSucceeded AppConditionType = "ReconcileSucceeded"
