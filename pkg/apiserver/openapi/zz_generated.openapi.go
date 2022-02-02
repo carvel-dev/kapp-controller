@@ -27,6 +27,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchGit":                         schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHTTP":                        schema_pkg_apis_kappctrl_v1alpha1_AppFetchHTTP(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChart":                   schema_pkg_apis_kappctrl_v1alpha1_AppFetchHelmChart(ref),
+		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChartRepo":               schema_pkg_apis_kappctrl_v1alpha1_AppFetchHelmChartRepo(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImage":                       schema_pkg_apis_kappctrl_v1alpha1_AppFetchImage(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImgpkgBundle":                schema_pkg_apis_kappctrl_v1alpha1_AppFetchImgpkgBundle(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline":                      schema_pkg_apis_kappctrl_v1alpha1_AppFetchInline(ref),
@@ -724,6 +725,32 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchHelmChart(ref common.ReferenceCal
 		},
 		Dependencies: []string{
 			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChartRepo"},
+	}
+}
+
+func schema_pkg_apis_kappctrl_v1alpha1_AppFetchHelmChartRepo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Repository url; scheme of oci:// will fetch experimental helm oci chart (v0.19.0+) (required)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"secretRef": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"},
 	}
 }
 

@@ -115,7 +115,6 @@ type AppFetchHelmChart struct {
 }
 
 // +k8s:openapi-gen=true
-
 type AppFetchHelmChartRepo struct {
 	// Repository url;
 	// scheme of oci:// will fetch experimental helm oci chart (v0.19.0+)
