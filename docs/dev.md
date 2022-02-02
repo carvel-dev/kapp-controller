@@ -195,6 +195,10 @@ Make sure to have [protoc installed](https://grpc.io/docs/protoc-installation/).
 It is recommended work with the kapp-controller repository on your `$GOPATH` as this is 
 where the non-CRD generators currently output generated code.
 
+#### Run All Generators at Once
+
+To run all generator scripts before checking changes in, use [`./hack/build-and-all-gen.sh`](../hack/build-and-all-gen.sh). 
+
 #### Custom resource generation 
 
 For CRD generation, kapp-controller makes use of [kubebuilder](https://book.kubebuilder.io/reference/generating-crd.html) 
