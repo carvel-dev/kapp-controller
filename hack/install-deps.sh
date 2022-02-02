@@ -2,6 +2,9 @@
 
 # shamelessly adapted from https://github.com/vmware-tanzu/carvel/blob/develop/site/static/install.sh
 
+DIR="$(dirname "${BASH_SOURCE[0]}")"
+DEPENDENCIES_DIR="${DIR}/dependencies.yml"
+
 if test -z "$BASH_VERSION"; then
   echo "Please run this script using bash, not sh or any other shell." >&2
   exit 1
@@ -32,26 +35,26 @@ install() {
     exit 1
   fi
 
-  ytt_version=$(yq eval '.ytt.version' ./hack/dependencies.yml)
-  kbld_version=$(yq eval '.kbld.version' ./hack/dependencies.yml)
-  kapp_version=$(yq eval '.kapp.version' ./hack/dependencies.yml)
-  imgpkg_version=$(yq eval '.imgpkg.version' ./hack/dependencies.yml)
-  vendir_version=$(yq eval '.vendir.version' ./hack/dependencies.yml)
+  ytt_version=$(awk '/ytt_version/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+  kbld_version=$(awk '/kbld_version/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+  kapp_version=$(awk '/kapp_version/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+  imgpkg_version=$(awk '/imgpkg_version/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+  vendir_version=$(awk '/vendir_version/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
 
   if [[ `uname` == Darwin ]]; then
     binary_type=darwin-amd64
-    ytt_checksum="$(yq eval '.ytt.checksum_darwin' ./hack/dependencies.yml)"
-    kbld_checksum="$(yq eval '.kbld.checksum_darwin' ./hack/dependencies.yml)"
-    kapp_checksum="$(yq eval '.kapp.checksum_darwin' ./hack/dependencies.yml)"
-    imgpkg_checksum="$(yq eval '.imgpkg.checksum_darwin' ./hack/dependencies.yml)"
-    vendir_checksum="$(yq eval '.vendir.checksum_darwin' ./hack/dependencies.yml)"
+    ytt_checksum=$(awk '/ytt_checksum_darwin/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+    kbld_checksum=$(awk '/kbld_checksum_darwin/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+    kapp_checksum=$(awk '/kapp_checksum_darwin/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+    imgpkg_checksum=$(awk '/imgpkg_checksum_darwin/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+    vendir_checksum=$(awk '/vendir_checksum_darwin/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
   else
     binary_type=linux-amd64
-    ytt_checksum="$(yq eval '.ytt.checksum_linux' ./hack/dependencies.yml)"
-    kbld_checksum="$(yq eval '.kbld.checksum_linux' ./hack/dependencies.yml)"
-    kapp_checksum="$(yq eval '.kapp.checksum_linux' ./hack/dependencies.yml)"
-    imgpkg_checksum="$(yq eval '.imgpkg.checksum_linux' ./hack/dependencies.yml)"
-    vendir_checksum="$(yq eval '.vendir.checksum_linux' ./hack/dependencies.yml)"
+    ytt_checksum=$(awk '/ytt_checksum_linux/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+    kbld_checksum=$(awk '/kbld_checksum_linux/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+    kapp_checksum=$(awk '/kapp_checksum_linux/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+    imgpkg_checksum=$(awk '/imgpkg_checksum_linux/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
+    vendir_checksum=$(awk '/vendir_checksum_linux/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
   fi
 
   echo "Installing ${binary_type} binaries..."
