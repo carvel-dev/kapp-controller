@@ -28,13 +28,6 @@ install() {
     exit 1
   fi
 
-  if which yq; then
-	  echo "found yq"
-  else
-    echo "Missing yq binary"
-    exit 1
-  fi
-
   ytt_version=$(awk '/ytt_version/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
   kbld_version=$(awk '/kbld_version/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
   kapp_version=$(awk '/kapp_version/{print $(NF-0)}' "${DEPENDENCIES_DIR}")
