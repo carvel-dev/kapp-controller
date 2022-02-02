@@ -27,7 +27,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchGit":                         schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHTTP":                        schema_pkg_apis_kappctrl_v1alpha1_AppFetchHTTP(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChart":                   schema_pkg_apis_kappctrl_v1alpha1_AppFetchHelmChart(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChartRepo":               schema_pkg_apis_kappctrl_v1alpha1_AppFetchHelmChartRepo(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImage":                       schema_pkg_apis_kappctrl_v1alpha1_AppFetchImage(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImgpkgBundle":                schema_pkg_apis_kappctrl_v1alpha1_AppFetchImgpkgBundle(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline":                      schema_pkg_apis_kappctrl_v1alpha1_AppFetchInline(ref),
@@ -328,13 +327,15 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppCluster(ref common.ReferenceCallback) 
 				Properties: map[string]spec.Schema{
 					"namespace": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Specifies namespace in destination cluster (optional)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"kubeconfigSecretRef": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppClusterKubeconfigSecretRef"),
+							Description: "Specifies secret containing kubeconfig (required)",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppClusterKubeconfigSecretRef"),
 						},
 					},
 				},
@@ -353,14 +354,16 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppClusterKubeconfigSecretRef(ref common.
 				Properties: map[string]spec.Schema{
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Specifies secret name within app's namespace (required)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"key": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Specifies key that contains kubeconfig (optional)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
@@ -418,7 +421,8 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppDeploy(ref common.ReferenceCallback) c
 				Properties: map[string]spec.Schema{
 					"kapp": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKapp"),
+							Description: "Use kapp to deploy resources",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKapp"),
 						},
 					},
 				},
@@ -437,13 +441,15 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppDeployKapp(ref common.ReferenceCallbac
 				Properties: map[string]spec.Schema{
 					"intoNs": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Override namespace for all resources (optional)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"mapNs": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Provide custom namespace override mapping (optional)",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -457,7 +463,8 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppDeployKapp(ref common.ReferenceCallbac
 					},
 					"rawOptions": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Pass through options to kapp deploy (optional)",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -471,12 +478,14 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppDeployKapp(ref common.ReferenceCallbac
 					},
 					"inspect": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappInspect"),
+							Description: "Configuration for inspect command (optional) as of kapp-controller v0.31.0, inspect is disabled by default add rawOptions or use an empty inspect config like `inspect: {}` to enable",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappInspect"),
 						},
 					},
 					"delete": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappDelete"),
+							Description: "Configuration for delete command (optional)",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappDelete"),
 						},
 					},
 				},
@@ -495,7 +504,8 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppDeployKappDelete(ref common.ReferenceC
 				Properties: map[string]spec.Schema{
 					"rawOptions": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Pass through options to kapp delete (optional)",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -521,7 +531,8 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppDeployKappInspect(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"rawOptions": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Pass through options to kapp inspect (optional)",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -547,32 +558,38 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetch(ref common.ReferenceCallback) co
 				Properties: map[string]spec.Schema{
 					"inline": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline"),
+							Description: "Pulls content from within this resource; or other resources in the cluster",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline"),
 						},
 					},
 					"image": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImage"),
+							Description: "Pulls content from Docker/OCI registry",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImage"),
 						},
 					},
 					"http": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHTTP"),
+							Description: "Uses http library to fetch file",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHTTP"),
 						},
 					},
 					"git": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchGit"),
+							Description: "Uses git to clone repository",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchGit"),
 						},
 					},
 					"helmChart": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChart"),
+							Description: "Uses helm fetch to fetch specified chart",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChart"),
 						},
 					},
 					"imgpkgBundle": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImgpkgBundle"),
+							Description: "Pulls imgpkg bundle from Docker/OCI registry (v0.17.0+)",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImgpkgBundle"),
 						},
 					},
 				},
@@ -591,37 +608,42 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref common.ReferenceCallback)
 				Properties: map[string]spec.Schema{
 					"url": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "http or ssh urls are supported (required)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"ref": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Branch, tag, commit; origin is the name of the remote (optional)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"refSelection": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
+							Description: "Specifies a strategy to resolve to an explicit ref (optional; v0.24.0+)",
+							Ref:         ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
 						},
 					},
 					"secretRef": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Secret may include one or more keys: ssh-privatekey, ssh-knownhosts",
+							Description: "Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password (optional) (if ssh-knownhosts is not specified, git will not perform strict host checking)",
 							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"),
 						},
 					},
 					"subPath": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Grab only portion of repository (optional)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"lfsSkipSmudge": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
+							Description: "Skip lfs download (optional)",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},
@@ -640,27 +662,29 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchHTTP(ref common.ReferenceCallback
 				Properties: map[string]spec.Schema{
 					"url": {
 						SchemaProps: spec.SchemaProps{
-							Description: "URL can point to one of following formats: text, tgz, zip",
+							Description: "URL can point to one of following formats: text, tgz, zip http and https url are supported; plain file, tgz and tar types are supported (required)",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"sha256": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Checksum to verify after download (optional)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"secretRef": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Secret may include one or more keys: username, password",
+							Description: "Secret to provide auth details (optional) Secret may include one or more keys: username, password",
 							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"),
 						},
 					},
 					"subPath": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Grab only portion of download (optional)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
@@ -703,31 +727,6 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchHelmChart(ref common.ReferenceCal
 	}
 }
 
-func schema_pkg_apis_kappctrl_v1alpha1_AppFetchHelmChartRepo(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"url": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"secretRef": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"},
-	}
-}
-
 func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImage(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -736,14 +735,15 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImage(ref common.ReferenceCallbac
 				Properties: map[string]spec.Schema{
 					"url": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Example: username/app1-config:v0.1.0",
+							Description: "Docker image url; unqualified, tagged, or digest references supported (required) Example: username/app1-config:v0.1.0",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"tagSelection": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
+							Description: "Specifies a strategy to choose a tag (optional; v0.24.0+) if specified, do not include a tag in url key",
+							Ref:         ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
 						},
 					},
 					"secretRef": {
@@ -754,8 +754,9 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImage(ref common.ReferenceCallbac
 					},
 					"subPath": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Grab only portion of image (optional)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
@@ -774,13 +775,15 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImgpkgBundle(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"image": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Docker image url; unqualified, tagged, or digest references supported (required)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"tagSelection": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
+							Description: "Specifies a strategy to choose a tag (optional; v0.24.0+) if specified, do not include a tag in url key",
+							Ref:         ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
 						},
 					},
 					"secretRef": {
@@ -805,7 +808,8 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchInline(ref common.ReferenceCallba
 				Properties: map[string]spec.Schema{
 					"paths": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
+							Description: "Specifies mapping of paths to their content; not recommended for sensitive values as CR is not encrypted (optional)",
+							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
 								Schema: &spec.Schema{
@@ -820,7 +824,8 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchInline(ref common.ReferenceCallba
 					},
 					"pathsFrom": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Specifies content via secrets and config maps; data values are recommended to be placed in secrets (optional)",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -871,8 +876,9 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchInlineSourceRef(ref common.Refere
 				Properties: map[string]spec.Schema{
 					"directoryPath": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Specifies where to place files found in secret (optional)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"name": {
@@ -914,13 +920,15 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppSpec(ref common.ReferenceCallback) com
 				Properties: map[string]spec.Schema{
 					"serviceAccountName": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Specifies that app should be deployed authenticated via given service account, found in this namespace (optional; v0.6.0+)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"cluster": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppCluster"),
+							Description: "Specifies that app should be deployed to destination cluster; by default, cluster is same as where this resource resides (optional; v0.5.0+)",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppCluster"),
 						},
 					},
 					"fetch": {
@@ -964,27 +972,27 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppSpec(ref common.ReferenceCallback) com
 					},
 					"paused": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Paused when set to true will ignore all pending changes, once it set back to false, pending changes will be applied",
+							Description: "Pauses _future_ reconcilation; does _not_ affect currently running reconciliation (optional; default=false)",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
 					"canceled": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Canceled when set to true will stop all active changes",
+							Description: "Cancels current and future reconciliations (optional; default=false)",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
 					"syncPeriod": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Controls frequency of app reconciliation",
+							Description: "Specifies the length of time to wait, in time + unit format, before reconciling. Always >= 30s. If value below 30s is specified, 30s will be used. (optional; v0.9.0+; default=30s)",
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Duration"),
 						},
 					},
 					"noopDelete": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When NoopDeletion set to true, App deletion should delete App CR but preserve App's associated resources",
+							Description: "Deletion requests for the App will result in the App CR being deleted, but its associated resources will not be deleted (optional; default=false; v0.18.0+)",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -1005,17 +1013,20 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplate(ref common.ReferenceCallback)
 				Properties: map[string]spec.Schema{
 					"ytt": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateYtt"),
+							Description: "Use ytt to template configuration",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateYtt"),
 						},
 					},
 					"kbld": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateKbld"),
+							Description: "Use kbld to resolve image references to use digests",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateKbld"),
 						},
 					},
 					"helmTemplate": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateHelmTemplate"),
+							Description: "Use helm template command to render helm chart",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateHelmTemplate"),
 						},
 					},
 					"kustomize": {
@@ -1030,7 +1041,8 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplate(ref common.ReferenceCallback)
 					},
 					"sops": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSops"),
+							Description: "Use sops to decrypt *.sops.yml files (optional; v0.11.0+)",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSops"),
 						},
 					},
 				},
@@ -1049,25 +1061,29 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateHelmTemplate(ref common.Refere
 				Properties: map[string]spec.Schema{
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Set name explicitly, default is App CR's name (optional; v0.13.0+)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"namespace": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Set namespace explicitly, default is App CR's namespace (optional; v0.13.0+)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Path to chart (optional; v0.13.0+)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"valuesFrom": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "One or more secrets, config maps, paths that provide values (optional)",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -1140,12 +1156,14 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSops(ref common.ReferenceCallb
 				Properties: map[string]spec.Schema{
 					"pgp": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPGP"),
+							Description: "Use PGP to decrypt files (required)",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPGP"),
 						},
 					},
 					"paths": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Lists paths to decrypt explicitly (optional; v0.13.0+)",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -1178,7 +1196,8 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSopsAge(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"privateKeysSecretRef": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef"),
+							Description: "Secret with private armored PGP private keys (required)",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef"),
 						},
 					},
 				},
@@ -1197,7 +1216,8 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSopsPGP(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"privateKeysSecretRef": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef"),
+							Description: "Secret with private armored PGP private keys (required)",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef"),
 						},
 					},
 				},
@@ -1282,24 +1302,28 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateYtt(ref common.ReferenceCallba
 				Properties: map[string]spec.Schema{
 					"ignoreUnknownComments": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
+							Description: "Ignores comments that ytt doesn't recognize (optional; default=false)",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 					"strict": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
+							Description: "Forces strict mode https://github.com/k14s/ytt/blob/develop/docs/strict.md (optional; default=false)",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 					"inline": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline"),
+							Description: "Specify additional files, including data values (optional)",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline"),
 						},
 					},
 					"paths": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Lists paths to provide to ytt explicitly (optional)",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -1313,7 +1337,8 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateYtt(ref common.ReferenceCallba
 					},
 					"fileMarks": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Control metadata about input files passed to ytt (optional; v0.18.0+) see https://carvel.dev/ytt/docs/latest/file-marks/ for more details",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -1327,7 +1352,8 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateYtt(ref common.ReferenceCallba
 					},
 					"valuesFrom": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Provide values via ytt's --data-values-file (optional; v0.19.0-alpha.9)",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
