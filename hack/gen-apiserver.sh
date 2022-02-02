@@ -5,7 +5,6 @@ set -o nounset
 set -o pipefail
 set -o xtrace
 
-export GOPATH=$(cd ../../../../; pwd)
 KC_PKG="github.com/vmware-tanzu/carvel-kapp-controller"
 
 # Following patch allows us to name gen-s with a name Package
@@ -65,9 +64,6 @@ go run vendor/k8s.io/code-generator/cmd/openapi-gen/main.go \
 
 # Undo naming change
 git checkout vendor/k8s.io/gengo/namer/namer.go
-
-# Below protogen is configured to work without GOPATH var set
-unset GOPATH
 
 # Install protoc binary as directed by https://github.com/gogo/protobuf#installation
 # (Chosen: https://github.com/protocolbuffers/protobuf/releases/download/v3.0.2/protoc-3.0.2-osx-x86_64.zip)
