@@ -2,9 +2,7 @@
 
 set -e
 
-./hack/build.sh
-./hack/gen.sh
-./hack/gen-apiserver.sh
+./hack/build-and-all-gen.sh
 
 if ! git diff --exit-code >/dev/null; then
   echo "Error: Running ./hack/verify-no-dirty-files.sh resulted in non zero exit code from git diff."
