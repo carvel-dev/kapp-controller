@@ -25,6 +25,7 @@ WORKDIR /go/src/github.com/vmware-tanzu/carvel-kapp-controller/
 
 # carvel
 COPY ./hack/install-deps.sh .
+COPY ./hack/dependencies.yml .
 RUN ./install-deps.sh
 
 # [DEPRECATED] Helm V2

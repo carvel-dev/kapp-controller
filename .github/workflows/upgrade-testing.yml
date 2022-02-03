@@ -26,13 +26,7 @@ jobs:
         with:
           path: src/github.com/${{ github.repository }}
       - name: Install Carvel Tools
-        uses: vmware-tanzu/carvel-setup-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          only: ytt, kapp, kbld
-          ytt: v0.38.0
-          kapp: v0.45.0
-          kbld: v0.32.0
+        run: ./hack/install-deps.sh
       - name: Run Upgrade Test
         run: |
           set -e -x
