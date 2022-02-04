@@ -6,22 +6,35 @@ package v1alpha1
 
 // +k8s:openapi-gen=true
 type AppTemplate struct {
-	Ytt          *AppTemplateYtt          `json:"ytt,omitempty" protobuf:"bytes,1,opt,name=ytt"`
-	Kbld         *AppTemplateKbld         `json:"kbld,omitempty" protobuf:"bytes,2,opt,name=kbld"`
+	// Use ytt to template configuration
+	Ytt *AppTemplateYtt `json:"ytt,omitempty" protobuf:"bytes,1,opt,name=ytt"`
+	// Use kbld to resolve image references to use digests
+	Kbld *AppTemplateKbld `json:"kbld,omitempty" protobuf:"bytes,2,opt,name=kbld"`
+	// Use helm template command to render helm chart
 	HelmTemplate *AppTemplateHelmTemplate `json:"helmTemplate,omitempty" protobuf:"bytes,3,opt,name=helmTemplate"`
 	Kustomize    *AppTemplateKustomize    `json:"kustomize,omitempty" protobuf:"bytes,4,opt,name=kustomize"`
 	Jsonnet      *AppTemplateJsonnet      `json:"jsonnet,omitempty" protobuf:"bytes,5,opt,name=jsonnet"`
-	Sops         *AppTemplateSops         `json:"sops,omitempty" protobuf:"bytes,6,opt,name=sops"`
+	// Use sops to decrypt *.sops.yml files (optional; v0.11.0+)
+	Sops *AppTemplateSops `json:"sops,omitempty" protobuf:"bytes,6,opt,name=sops"`
 }
 
 // +k8s:openapi-gen=true
 type AppTemplateYtt struct {
-	IgnoreUnknownComments bool                      `json:"ignoreUnknownComments,omitempty" protobuf:"varint,1,opt,name=ignoreUnknownComments"`
-	Strict                bool                      `json:"strict,omitempty" protobuf:"varint,2,opt,name=strict"`
-	Inline                *AppFetchInline           `json:"inline,omitempty" protobuf:"bytes,3,opt,name=inline"`
-	Paths                 []string                  `json:"paths,omitempty" protobuf:"bytes,4,rep,name=paths"`
-	FileMarks             []string                  `json:"fileMarks,omitempty" protobuf:"bytes,5,rep,name=fileMarks"`
-	ValuesFrom            []AppTemplateValuesSource `json:"valuesFrom,omitempty" protobuf:"bytes,6,rep,name=valuesFrom"`
+	// Ignores comments that ytt doesn't recognize
+	// (optional; default=false)
+	IgnoreUnknownComments bool `json:"ignoreUnknownComments,omitempty" protobuf:"varint,1,opt,name=ignoreUnknownComments"`
+	// Forces strict mode https://github.com/k14s/ytt/blob/develop/docs/strict.md
+	// (optional; default=false)
+	Strict bool `json:"strict,omitempty" protobuf:"varint,2,opt,name=strict"`
+	// Specify additional files, including data values (optional)
+	Inline *AppFetchInline `json:"inline,omitempty" protobuf:"bytes,3,opt,name=inline"`
+	// Lists paths to provide to ytt explicitly (optional)
+	Paths []string `json:"paths,omitempty" protobuf:"bytes,4,rep,name=paths"`
+	// Control metadata about input files passed to ytt (optional; v0.18.0+)
+	// see https://carvel.dev/ytt/docs/latest/file-marks/ for more details
+	FileMarks []string `json:"fileMarks,omitempty" protobuf:"bytes,5,rep,name=fileMarks"`
+	// Provide values via ytt's --data-values-file (optional; v0.19.0-alpha.9)
+	ValuesFrom []AppTemplateValuesSource `json:"valuesFrom,omitempty" protobuf:"bytes,6,rep,name=valuesFrom"`
 }
 
 // +k8s:openapi-gen=true
@@ -31,9 +44,13 @@ type AppTemplateKbld struct {
 
 // +k8s:openapi-gen=true
 type AppTemplateHelmTemplate struct {
-	Name       string                    `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
-	Namespace  string                    `json:"namespace,omitempty" protobuf:"bytes,2,opt,name=namespace"`
-	Path       string                    `json:"path,omitempty" protobuf:"bytes,3,opt,name=path"`
+	// Set name explicitly, default is App CR's name (optional; v0.13.0+)
+	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
+	// Set namespace explicitly, default is App CR's namespace (optional; v0.13.0+)
+	Namespace string `json:"namespace,omitempty" protobuf:"bytes,2,opt,name=namespace"`
+	// Path to chart (optional; v0.13.0+)
+	Path string `json:"path,omitempty" protobuf:"bytes,3,opt,name=path"`
+	// One or more secrets, config maps, paths that provide values (optional)
 	ValuesFrom []AppTemplateValuesSource `json:"valuesFrom,omitempty" protobuf:"bytes,4,rep,name=valuesFrom"`
 }
 
@@ -59,18 +76,22 @@ type AppTemplateJsonnet struct{}
 
 // +k8s:openapi-gen=true
 type AppTemplateSops struct {
-	PGP   *AppTemplateSopsPGP `json:"pgp,omitempty" protobuf:"bytes,1,opt,name=pgp"`
+	// Use PGP to decrypt files (required)
+	PGP *AppTemplateSopsPGP `json:"pgp,omitempty" protobuf:"bytes,1,opt,name=pgp"`
+	// Lists paths to decrypt explicitly (optional; v0.13.0+)
 	Paths []string            `json:"paths,omitempty" protobuf:"bytes,2,rep,name=paths"`
 	Age   *AppTemplateSopsAge `json:"age,omitempty" protobuf:"bytes,3,opt,name=age"`
 }
 
 // +k8s:openapi-gen=true
 type AppTemplateSopsPGP struct {
+	// Secret with private armored PGP private keys (required)
 	PrivateKeysSecretRef *AppTemplateSopsPrivateKeysSecretRef `json:"privateKeysSecretRef,omitempty" protobuf:"bytes,1,opt,name=privateKeysSecretRef"`
 }
 
 // +k8s:openapi-gen=true
 type AppTemplateSopsAge struct {
+	// Secret with private armored PGP private keys (required)
 	PrivateKeysSecretRef *AppTemplateSopsPrivateKeysSecretRef `json:"privateKeysSecretRef,omitempty" protobuf:"bytes,1,opt,name=privateKeysSecretRef"`
 }
 

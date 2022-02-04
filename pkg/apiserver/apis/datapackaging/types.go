@@ -11,6 +11,8 @@ import (
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// Package Metadata are attributes of a single package that do not change frequently and that are shared across multiple versions of a single package.
+// It contains information similar to a project’s README.md.
 type PackageMetadata struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -23,6 +25,8 @@ type PackageMetadata struct {
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// A package is a combination of configuration metadata and OCI images that informs the package manager what software it holds and how to install itself onto a Kubernetes cluster.
+// For example, an nginx-ingress package would instruct the package manager where to download the nginx container image, how to configure the associated Deployment, and install it into a cluster.
 type Package struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -58,14 +62,27 @@ type PackageMetadataList struct {
 }
 
 type PackageSpec struct {
-	RefName  string   `json:"refName,omitempty"`
-	Version  string   `json:"version,omitempty"`
+	// The name of the PackageMetadata associated with this version
+	// Must be a valid PackageMetadata name (see PackageMetadata CR for details)
+	// Cannot be empty
+	RefName string `json:"refName,omitempty"`
+	// Package version; Referenced by PackageInstall;
+	// Must be valid semver (required)
+	// Cannot be empty
+	Version string `json:"version,omitempty"`
+	// Description of the licenses that apply to the package software
+	// (optional; Array of strings)
 	Licenses []string `json:"licenses,omitempty"`
+	// Timestamp of release (iso8601 formatted string; optional)
 	// +optional
 	// +nullable
-	ReleasedAt                      metav1.Time `json:"releasedAt,omitempty"`
-	CapactiyRequirementsDescription string      `json:"capacityRequirementsDescription,omitempty"`
-	ReleaseNotes                    string      `json:"releaseNotes,omitempty"`
+	ReleasedAt metav1.Time `json:"releasedAt,omitempty"`
+	// System requirements needed to install the package.
+	// Note: these requirements will not be verified by kapp-controller on
+	// installation. (optional; string)
+	CapactiyRequirementsDescription string `json:"capacityRequirementsDescription,omitempty"`
+	// Version release notes (optional; string)
+	ReleaseNotes string `json:"releaseNotes,omitempty"`
 
 	Template AppTemplateSpec `json:"template,omitempty"`
 
@@ -77,14 +94,23 @@ type PackageSpec struct {
 }
 
 type PackageMetadataSpec struct {
-	DisplayName        string       `json:"displayName,omitempty"`
-	LongDescription    string       `json:"longDescription,omitempty"`
-	ShortDescription   string       `json:"shortDescription,omitempty"`
-	IconSVGBase64      string       `json:"iconSVGBase64,omitempty"`
-	ProviderName       string       `json:"providerName,omitempty"`
-	Maintainers        []Maintainer `json:"maintainers,omitempty"`
-	Categories         []string     `json:"categories,omitempty"`
-	SupportDescription string       `json:"supportDescription,omitempty"`
+	// Human friendly name of the package (optional; string)
+	DisplayName string `json:"displayName,omitempty"`
+	// Long description of the package (optional; string)
+	LongDescription string `json:"longDescription,omitempty"`
+	// Short desription of the package (optional; string)
+	ShortDescription string `json:"shortDescription,omitempty"`
+	// Base64 encoded icon (optional; string)
+	IconSVGBase64 string `json:"iconSVGBase64,omitempty"`
+	// Name of the entity distributing the package (optional; string)
+	ProviderName string `json:"providerName,omitempty"`
+	// List of maintainer info for the package.
+	// Currently only supports the name key. (optional; array of maintner info)
+	Maintainers []Maintainer `json:"maintainers,omitempty"`
+	// Classifiers of the package (optional; Array of strings)
+	Categories []string `json:"categories,omitempty"`
+	// Description of the support available for the package (optional; string)
+	SupportDescription string `json:"supportDescription,omitempty"`
 }
 
 type Maintainer struct {
