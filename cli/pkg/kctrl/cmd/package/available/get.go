@@ -44,8 +44,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 			[]string{"package", "available", "get", "-p", "cert-manager.community.tanzu.vmware.com"},
 		},
 		cmdcore.Example{"Get the values schema for a particular version of the package",
-			[]string{"package", "available", "get", "-p", "cert-manager.community.tanzu.vmware.com", "--values-schema"},
-		})
+			[]string{"package", "available", "get", "-p", "cert-manager.community.tanzu.vmware.com", "--values-schema"}})
 
 	cmd := &cobra.Command{
 		Use:     "get",

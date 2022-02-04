@@ -66,8 +66,7 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 			[]string{"package", "installed", "create", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--values-file", "values.yml"},
 		},
 		cmdcore.Example{"Install package and ask it to use an existing service account",
-			[]string{"package", "installed", "create", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--service-account-name", "existing-sa"},
-		})
+			[]string{"package", "installed", "create", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--service-account-name", "existing-sa"}})
 
 	cmd := &cobra.Command{
 		Use:     "create",

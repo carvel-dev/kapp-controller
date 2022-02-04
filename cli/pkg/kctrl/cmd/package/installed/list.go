@@ -35,8 +35,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 			[]string{"package", "installed", "list"},
 		},
 		cmdcore.Example{"List installed packages in all namespaces",
-			[]string{"package", "installed", "list", "A"},
-		})
+			[]string{"package", "installed", "list", "A"}})
 
 	cmd := &cobra.Command{
 		Use:     "list",

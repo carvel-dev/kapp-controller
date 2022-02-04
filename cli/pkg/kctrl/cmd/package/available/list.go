@@ -52,8 +52,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 			[]string{"package", "available", "list", "-A"},
 		},
 		cmdcore.Example{"List all available versions of a package",
-			[]string{"package", "available", "list", "-p", "cert-manager.community.tanzu.vmware.com"},
-		})
+			[]string{"package", "available", "list", "-p", "cert-manager.community.tanzu.vmware.com"}})
 
 	cmd := &cobra.Command{
 		Use:     "list",
