@@ -38,17 +38,21 @@ func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logg
 }
 
 func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
+	var examples cmdcore.Examples
+	examples = append(examples,
+		cmdcore.Example{"Get details about an available package",
+			[]string{"package", "available", "get", "-p", "cert-manager.community.tanzu.vmware.com"},
+		},
+		cmdcore.Example{"Get the values schema for a particular version of the package",
+			[]string{"package", "available", "get", "-p", "cert-manager.community.tanzu.vmware.com", "--values-schema"},
+		})
+
 	cmd := &cobra.Command{
 		Use:     "get",
 		Aliases: []string{"g"},
 		Short:   "Get details for an available package or the openAPI schema of a package with a specific version",
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
-		Example: `
-# Get details about an available package
-kctrl package available get --package cert-manager.community.tanzu.vmware.com
-
-# Get the values schema for a particular version of the package
-kctrl package available get --package cert-manager.community.tanzu.vmware.com --values-schema`,
+		Example: examples.Description("kctrl", "-p", o.positionalNameArg),
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
