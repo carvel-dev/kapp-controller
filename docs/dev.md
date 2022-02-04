@@ -14,10 +14,6 @@ For windows users, please download the binaries from the respective GitHub repos
 * https://github.com/vmware-tanzu/carvel-kbld
 * https://github.com/vmware-tanzu/carvel-kapp
 
-**NOTE:** It is recommended to have the kapp-controller repository cloned to your `$GOPATH`.
-This is because kapp-controller's [code generator scripts](#code-generation) expect the project
-to be along the `$GOPATH`.
-
 ### Build
 
 To build the kapp-controller project locally, run the following:
@@ -191,9 +187,6 @@ to be checked in.
 #### Prerequisite
 
 Make sure to have [protoc installed](https://grpc.io/docs/protoc-installation/).
-
-It is recommended work with the kapp-controller repository on your `$GOPATH` as this is 
-where the non-CRD generators currently output generated code.
 
 #### Run All Generators at Once
 
