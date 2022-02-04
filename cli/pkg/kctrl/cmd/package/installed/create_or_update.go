@@ -57,22 +57,20 @@ func NewCreateOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger 
 }
 
 func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
-	var examples cmdcore.Examples
-	examples = append(examples,
-		cmdcore.Example{"Install a package",
-			[]string{"package", "installed", "create", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1"},
-		},
-		cmdcore.Example{"Install package with values file",
-			[]string{"package", "installed", "create", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--values-file", "values.yml"},
-		},
-		cmdcore.Example{"Install package and ask it to use an existing service account",
-			[]string{"package", "installed", "create", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--service-account-name", "existing-sa"}})
-
 	cmd := &cobra.Command{
-		Use:     "create",
-		Short:   "Install package",
-		RunE:    func(_ *cobra.Command, args []string) error { return o.RunCreate(args) },
-		Example: examples.Description("kctrl", "-i", o.positionalNameArg),
+		Use:   "create",
+		Short: "Install package",
+		RunE:  func(_ *cobra.Command, args []string) error { return o.RunCreate(args) },
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Install a package",
+				[]string{"package", "installed", "create", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1"},
+			},
+			cmdcore.Example{"Install package with values file",
+				[]string{"package", "installed", "create", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--values-file", "values.yml"},
+			},
+			cmdcore.Example{"Install package and ask it to use an existing service account",
+				[]string{"package", "installed", "create", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--service-account-name", "existing-sa"}},
+		}.Description("kctrl", "-i", o.positionalNameArg),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
@@ -95,23 +93,20 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 }
 
 func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
-	var examples cmdcore.Examples
-	examples = append(examples,
-		cmdcore.Example{"Install a package",
-			[]string{"package", "install", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1"},
-		},
-		cmdcore.Example{"Install package with values file",
-			[]string{"package", "install", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--values-file", "values.yml"},
-		},
-		cmdcore.Example{"Install package and ask it to use an existing service account",
-			[]string{"package", "install", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--service-account-name", "existing-sa"},
-		})
-
 	cmd := &cobra.Command{
-		Use:     "install",
-		Short:   "Install package",
-		RunE:    func(_ *cobra.Command, args []string) error { return o.RunCreate(args) },
-		Example: examples.Description("kctrl", "-i", o.positionalNameArg),
+		Use:   "install",
+		Short: "Install package",
+		RunE:  func(_ *cobra.Command, args []string) error { return o.RunCreate(args) },
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Install a package",
+				[]string{"package", "install", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1"},
+			},
+			cmdcore.Example{"Install package with values file",
+				[]string{"package", "install", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--values-file", "values.yml"},
+			},
+			cmdcore.Example{"Install package and ask it to use an existing service account",
+				[]string{"package", "install", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--service-account-name", "existing-sa"}},
+		}.Description("kctrl", "-i", o.positionalNameArg),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
@@ -134,20 +129,17 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 }
 
 func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
-	var examples cmdcore.Examples
-	examples = append(examples,
-		cmdcore.Example{"Upgrade package install to a newer version",
-			[]string{"package", "installed", "update", "-i", "cert-man", "--version", "1.6.2"},
-		},
-		cmdcore.Example{"Update package install with new values file",
-			[]string{"package", "installed", "update", "-i", "cert-man", "--values-file", "values.yml"},
-		})
-
 	cmd := &cobra.Command{
-		Use:     "update",
-		Short:   "Update package",
-		RunE:    func(_ *cobra.Command, args []string) error { return o.RunUpdate(args) },
-		Example: examples.Description("kctrl", "-i", o.positionalNameArg),
+		Use:   "update",
+		Short: "Update package",
+		RunE:  func(_ *cobra.Command, args []string) error { return o.RunUpdate(args) },
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Upgrade package install to a newer version",
+				[]string{"package", "installed", "update", "-i", "cert-man", "--version", "1.6.2"},
+			},
+			cmdcore.Example{"Update package install with new values file",
+				[]string{"package", "installed", "update", "-i", "cert-man", "--values-file", "values.yml"}},
+		}.Description("kctrl", "-i", o.positionalNameArg),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 

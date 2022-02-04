@@ -31,17 +31,15 @@ func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logg
 }
 
 func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
-	var examples cmdcore.Examples
-	examples = append(examples,
-		cmdcore.Example{"Get details for a package repository",
-			[]string{"package", "repository", "get", "-r", "tce"}})
-
 	cmd := &cobra.Command{
 		Use:     "get",
 		Aliases: []string{"g"},
 		Short:   "Get details for a package repository",
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
-		Example: examples.Description("kctrl", "-r", o.positionalNameArg),
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Get details for a package repository",
+				[]string{"package", "repository", "get", "-r", "tce"}},
+		}.Description("kctrl", "-r", o.positionalNameArg),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 

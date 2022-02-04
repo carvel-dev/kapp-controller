@@ -29,20 +29,18 @@ func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Log
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
-	var examples cmdcore.Examples
-	examples = append(examples,
-		cmdcore.Example{"List installed packages",
-			[]string{"package", "installed", "list"},
-		},
-		cmdcore.Example{"List installed packages in all namespaces",
-			[]string{"package", "installed", "list", "A"}})
-
 	cmd := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"l", "ls"},
 		Short:   "List installed packages in a namespace",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
-		Example: examples.Description("kctrl", "", false),
+		Example: cmdcore.Examples{
+			cmdcore.Example{"List installed packages",
+				[]string{"package", "installed", "list"},
+			},
+			cmdcore.Example{"List installed packages in all namespaces",
+				[]string{"package", "installed", "list", "A"}},
+		}.Description("kctrl", "", false),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List installed packages in all namespaces")

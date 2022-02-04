@@ -37,23 +37,21 @@ func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logg
 }
 
 func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
-	var examples cmdcore.Examples
-	examples = append(examples,
-		cmdcore.Example{"Get details for a package install",
-			[]string{"package", "installed", "get", "-i", "cert-man"},
-		},
-		cmdcore.Example{"View values being used by package install",
-			[]string{"package", "installed", "get", "-i", "cert-man", "--values"},
-		},
-		cmdcore.Example{"Download values being used by package install",
-			[]string{"package", "installed", "get", "-i", "cert-man", "--values-file-output", "values.yml"}})
-
 	cmd := &cobra.Command{
 		Use:     "get",
 		Aliases: []string{"g"},
 		Short:   "Get details for installed package",
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
-		Example: examples.Description("kctrl", "-i", o.positionalNameArg),
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Get details for a package install",
+				[]string{"package", "installed", "get", "-i", "cert-man"},
+			},
+			cmdcore.Example{"View values being used by package install",
+				[]string{"package", "installed", "get", "-i", "cert-man", "--values"},
+			},
+			cmdcore.Example{"Download values being used by package install",
+				[]string{"package", "installed", "get", "-i", "cert-man", "--values-file-output", "values.yml"}},
+		}.Description("kctrl", "-i", o.positionalNameArg),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
