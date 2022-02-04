@@ -45,8 +45,7 @@ func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.L
 func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 
 	example := cmdcore.Example{"Delete package install",
-		[]string{"package", "installed", "delete", "-i", "cert-man"},
-	}
+		[]string{"package", "installed", "delete", "-i", "cert-man"}}
 
 	cmd := &cobra.Command{
 		Use:     "delete",

@@ -46,8 +46,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 			[]string{"package", "installed", "get", "-i", "cert-man", "--values"},
 		},
 		cmdcore.Example{"Download values being used by package install",
-			[]string{"package", "installed", "get", "-i", "cert-man", "--values-file-output", "values.yml"},
-		})
+			[]string{"package", "installed", "get", "-i", "cert-man", "--values-file-output", "values.yml"}})
 
 	cmd := &cobra.Command{
 		Use:     "get",
