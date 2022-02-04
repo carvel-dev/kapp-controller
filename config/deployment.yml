@@ -43,19 +43,25 @@ spec:
         volumeMounts:
         - name: template-fs
           mountPath: /etc/kappctrl-mem-tmp
-        securityContext:
-          runAsUser: 1000
-          runAsGroup: 2000
+        - name: home
+          mountPath: /home/kapp-controller
         ports:
         - containerPort: #@ data.values.api_port
           name: api
           protocol: TCP
-      securityContext:
-        fsGroup: 3000
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - all
       volumes:
       - name: template-fs
         emptyDir:
-          #! https://kubernetes.io/docs/concepts/storage/volumes/#emptydir
+          medium: Memory
+      - name: home
+        emptyDir:
           medium: Memory
 
 #@ if/end data.values.dangerous_enable_pprof:

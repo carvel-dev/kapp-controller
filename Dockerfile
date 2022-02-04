@@ -57,11 +57,10 @@ RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -ldflags="-X 'main.Version=$KC
 # --- run image ---
 FROM photon:4.0
 
-RUN tdnf install -y git openssh-clients shadow-tools sed
+RUN tdnf install -y git openssh-clients sed
 
-RUN groupadd -g 2000 kapp-controller && useradd -r -u 1000 --create-home -g kapp-controller kapp-controller
-RUN chmod g+w /etc/pki/tls/certs/ca-bundle.crt && chgrp kapp-controller /etc/pki/tls/certs/ca-bundle.crt
-USER kapp-controller
+RUN echo "kapp-controller:x:1000:" > /etc/group && \
+    echo "kapp-controller:x:1000:1000::/home/kapp-controller:/usr/sbin/nologin" > /etc/passwd
 
 # fetchers
 COPY --from=0 /helm-v2-unpacked/linux-amd64/helm helmv2
@@ -81,5 +80,6 @@ COPY --from=0 /usr/local/bin/kapp .
 # Name it kapp-controller to identify it easier in process tree
 COPY --from=0 /go/src/github.com/vmware-tanzu/carvel-kapp-controller/controller kapp-controller
 
+USER 1000:1000
 ENV PATH="/:${PATH}"
 ENTRYPOINT ["/kapp-controller"]
