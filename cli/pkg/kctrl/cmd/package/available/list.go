@@ -39,7 +39,7 @@ func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Log
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	var examples cmdcore.Examples
 	examples = append(examples,
-		cmdcore.Example{"List packages available on the cluster", 
+		cmdcore.Example{"List packages available on the cluster",
 			[]string{"package", "available", "list"},
 		},
 		cmdcore.Example{"List packages available on the cluster with their short descriptions",
