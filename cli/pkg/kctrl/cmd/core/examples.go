@@ -10,7 +10,7 @@ type Example struct {
 	Args        []string
 }
 
-func (e Example) AsString(binaryName, nameFlag string, positionalNameArg bool) string {
+func (e Example) asString(binaryName, nameFlag string, positionalNameArg bool) string {
 	command := binaryName
 	for _, arg := range e.Args {
 		if positionalNameArg && arg == nameFlag {
@@ -26,7 +26,7 @@ type Examples []Example
 func (es Examples) Description(binaryName, nameFlag string, positionalNameArg bool) string {
 	var description string
 	for _, example := range es {
-		description += example.AsString(binaryName, nameFlag, positionalNameArg) + "\n\n"
+		description += example.asString(binaryName, nameFlag, positionalNameArg) + "\n\n"
 	}
 	return strings.TrimSuffix(description, "\n\n")
 }
