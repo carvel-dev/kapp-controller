@@ -37,11 +37,12 @@ type AddOrUpdateOptions struct {
 
 	WaitFlags cmdcore.WaitFlags
 
+	binaryName        string
 	positionalNameArg bool
 }
 
-func NewAddOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *AddOrUpdateOptions {
-	return &AddOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
+func NewAddOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, binaryName string, positionalNameArg bool) *AddOrUpdateOptions {
+	return &AddOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger, binaryName: binaryName, positionalNameArg: positionalNameArg}
 }
 
 func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -52,7 +53,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Add a package repository",
 				[]string{"package", "repository", "add", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.1"}},
-		}.Description("kctrl", "-r", o.positionalNameArg),
+		}.Description(o.binaryName, "-r", o.positionalNameArg),
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
@@ -84,7 +85,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Update a package repository with a new URL",
 				[]string{"package", "repository", "update", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.2"}},
-		}.Description("kctrl", "-r", o.positionalNameArg),
+		}.Description(o.binaryName, "-r", o.positionalNameArg),
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

@@ -29,11 +29,12 @@ type ListOptions struct {
 	Summary bool
 	Wide    bool
 
+	binaryName        string
 	positionalNameArg bool
 }
 
-func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *ListOptions {
-	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
+func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, binaryName string, positionalNameArg bool) *ListOptions {
+	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, binaryName: binaryName, positionalNameArg: positionalNameArg}
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -57,7 +58,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 			},
 			cmdcore.Example{"List all available versions of a package",
 				[]string{"package", "available", "list", "-p", "cert-manager.community.tanzu.vmware.com"}},
-		}.Description("kctrl", "-p", o.positionalNameArg),
+		}.Description(o.binaryName, "-p", o.positionalNameArg),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List available packages in all namespaces")

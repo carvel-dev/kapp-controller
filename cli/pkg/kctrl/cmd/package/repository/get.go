@@ -23,11 +23,12 @@ type GetOptions struct {
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
 
+	binaryName        string
 	positionalNameArg bool
 }
 
-func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *GetOptions {
-	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
+func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, binaryName string, positionalNameArg bool) *GetOptions {
+	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, binaryName: binaryName, positionalNameArg: positionalNameArg}
 }
 
 func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -39,7 +40,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Get details for a package repository",
 				[]string{"package", "repository", "get", "-r", "tce"}},
-		}.Description("kctrl", "-r", o.positionalNameArg),
+		}.Description(o.binaryName, "-r", o.positionalNameArg),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 

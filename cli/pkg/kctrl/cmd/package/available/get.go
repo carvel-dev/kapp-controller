@@ -30,11 +30,12 @@ type GetOptions struct {
 
 	ValuesSchema bool
 
+	binaryName        string
 	positionalNameArg bool
 }
 
-func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *GetOptions {
-	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
+func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, binaryName string, positionalNameArg bool) *GetOptions {
+	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, binaryName: binaryName, positionalNameArg: positionalNameArg}
 }
 
 func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -49,7 +50,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 			},
 			cmdcore.Example{"Get the values schema for a particular version of the package",
 				[]string{"package", "available", "get", "-p", "cert-manager.community.tanzu.vmware.com", "--values-schema"}},
-		}.Description("kctrl", "-p", o.positionalNameArg),
+		}.Description(o.binaryName, "-p", o.positionalNameArg),
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

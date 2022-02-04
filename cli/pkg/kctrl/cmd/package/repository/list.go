@@ -23,10 +23,12 @@ type ListOptions struct {
 
 	NamespaceFlags cmdcore.NamespaceFlags
 	AllNamespaces  bool
+
+	binaryName string
 }
 
-func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
-	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, binaryName string) *ListOptions {
+	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, binaryName: binaryName}
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -41,7 +43,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 			},
 			cmdcore.Example{"List package repositories in all namespaces",
 				[]string{"package", "repository", "list", "A"}},
-		}.Description("kctrl", "", false),
+		}.Description(o.binaryName, "", false),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List repositories in all namespaces")
