@@ -29,11 +29,12 @@ type GetOptions struct {
 	valuesFileOutput string
 	values           bool
 
+	binaryName        string
 	positionalNameArg bool
 }
 
-func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *GetOptions {
-	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
+func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, binaryName string, positionalNameArg bool) *GetOptions {
+	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, binaryName: binaryName, positionalNameArg: positionalNameArg}
 }
 
 func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -51,7 +52,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 			},
 			cmdcore.Example{"Download values being used by package install",
 				[]string{"package", "installed", "get", "-i", "cert-man", "--values-file-output", "values.yml"}},
-		}.Description("kctrl", "-i", o.positionalNameArg),
+		}.Description(o.binaryName, "-i", o.positionalNameArg),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 

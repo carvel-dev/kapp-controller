@@ -70,14 +70,16 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 		cmdcore.RestOfCommandsHelpGroup,
 	}))
 
-	SetGlobalFlags(o, cmd, flagsFactory)
+	pkgOpts := PackageCommandTreeOpts{"kctrl", false, true, true}
+
+	SetGlobalFlags(o, cmd, flagsFactory, pkgOpts)
 
 	ConfigurePathResolvers(o, cmd, flagsFactory)
 
 	cmd.AddCommand(NewVersionCmd(NewVersionOptions(o.ui, o.depsFactory), flagsFactory))
 
 	pkgCmd := cmdpkg.NewCmd()
-	AddPackageCommands(o, pkgCmd, flagsFactory, false)
+	AddPackageCommands(o, pkgCmd, flagsFactory, pkgOpts)
 
 	cmd.AddCommand(pkgCmd)
 
@@ -86,8 +88,8 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 	return cmd
 }
 
-func SetGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
-	o.UIFlags.Set(cmd, flagsFactory)
+func SetGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opts PackageCommandTreeOpts) {
+	o.UIFlags.Set(cmd, flagsFactory, opts)
 	o.LoggerFlags.Set(cmd, flagsFactory)
 	o.KubeAPIFlags.Set(cmd, flagsFactory)
 	o.KubeconfigFlags.Set(cmd, flagsFactory)
@@ -128,45 +130,45 @@ func ConfigureGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdc
 	}
 }
 
-func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, positionalNameArg bool) {
+func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opts PackageCommandTreeOpts) {
 	pkgrepoCmd := pkgrepo.NewCmd()
-	pkgrepoCmd.AddCommand(pkgrepo.NewListCmd(pkgrepo.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	pkgrepoCmd.AddCommand(pkgrepo.NewGetCmd(pkgrepo.NewGetOptions(o.ui, o.depsFactory, o.logger, positionalNameArg), flagsFactory))
-	pkgrepoCmd.AddCommand(pkgrepo.NewDeleteCmd(pkgrepo.NewDeleteOptions(o.ui, o.depsFactory, o.logger, positionalNameArg), flagsFactory))
-	pkgrepoCmd.AddCommand(pkgrepo.NewAddCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger, positionalNameArg), flagsFactory))
-	pkgrepoCmd.AddCommand(pkgrepo.NewUpdateCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger, positionalNameArg), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgrepo.NewListCmd(pkgrepo.NewListOptions(o.ui, o.depsFactory, o.logger, opts.BinaryName), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgrepo.NewGetCmd(pkgrepo.NewGetOptions(o.ui, o.depsFactory, o.logger, opts.BinaryName, opts.PositionalArgs), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgrepo.NewDeleteCmd(pkgrepo.NewDeleteOptions(o.ui, o.depsFactory, o.logger, opts.BinaryName, opts.PositionalArgs), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgrepo.NewAddCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts.BinaryName, opts.PositionalArgs), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgrepo.NewUpdateCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts.BinaryName, opts.PositionalArgs), flagsFactory))
 
 	pkgiCmd := pkginst.NewCmd()
-	pkgiCmd.AddCommand(pkginst.NewListCmd(pkginst.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	pkgiCmd.AddCommand(pkginst.NewGetCmd(pkginst.NewGetOptions(o.ui, o.depsFactory, o.logger, positionalNameArg), flagsFactory))
-	pkgiCmd.AddCommand(pkginst.NewCreateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, positionalNameArg), flagsFactory))
-	pkgiCmd.AddCommand(pkginst.NewUpdateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, positionalNameArg), flagsFactory))
-	pkgiCmd.AddCommand(pkginst.NewDeleteCmd(pkginst.NewDeleteOptions(o.ui, o.depsFactory, o.logger, positionalNameArg), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewListCmd(pkginst.NewListOptions(o.ui, o.depsFactory, o.logger, opts.BinaryName), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewGetCmd(pkginst.NewGetOptions(o.ui, o.depsFactory, o.logger, opts.BinaryName, opts.PositionalArgs), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewCreateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts.BinaryName, opts.PositionalArgs), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewUpdateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts.BinaryName, opts.PositionalArgs), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewDeleteCmd(pkginst.NewDeleteOptions(o.ui, o.depsFactory, o.logger, opts.BinaryName, opts.PositionalArgs), flagsFactory))
 
 	pkgaCmd := pkgavail.NewCmd()
-	pkgaCmd.AddCommand(pkgavail.NewListCmd(pkgavail.NewListOptions(o.ui, o.depsFactory, o.logger, positionalNameArg), flagsFactory))
-	pkgaCmd.AddCommand(pkgavail.NewGetCmd(pkgavail.NewGetOptions(o.ui, o.depsFactory, o.logger, positionalNameArg), flagsFactory))
+	pkgaCmd.AddCommand(pkgavail.NewListCmd(pkgavail.NewListOptions(o.ui, o.depsFactory, o.logger, opts.BinaryName, opts.PositionalArgs), flagsFactory))
+	pkgaCmd.AddCommand(pkgavail.NewGetCmd(pkgavail.NewGetOptions(o.ui, o.depsFactory, o.logger, opts.BinaryName, opts.PositionalArgs), flagsFactory))
 
 	cmd.AddCommand(pkgrepoCmd)
 	cmd.AddCommand(pkgiCmd)
 	cmd.AddCommand(pkgaCmd)
-	cmd.AddCommand(pkginst.NewInstallCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, positionalNameArg), flagsFactory))
+	cmd.AddCommand(pkginst.NewInstallCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts.BinaryName, opts.PositionalArgs), flagsFactory))
 }
 
-func AttachGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, positionalNameArg bool) {
-	SetGlobalFlags(o, cmd, flagsFactory)
+func AttachGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opts PackageCommandTreeOpts) {
+	SetGlobalFlags(o, cmd, flagsFactory, opts)
 	ConfigurePathResolvers(o, cmd, flagsFactory)
-	ConfigureGlobalFlags(o, cmd, flagsFactory, positionalNameArg)
+	ConfigureGlobalFlags(o, cmd, flagsFactory, opts.PositionalArgs)
 }
 
-func AttachKctrlPackageCommandTree(cmd *cobra.Command, confUI *ui.ConfUI) {
+func AttachKctrlPackageCommandTree(cmd *cobra.Command, confUI *ui.ConfUI, opts PackageCommandTreeOpts) {
 	configFactory := cmdcore.NewConfigFactoryImpl()
 	depsFactory := cmdcore.NewDepsFactoryImpl(configFactory, confUI)
 	options := NewKctrlOptions(confUI, configFactory, depsFactory)
 	flagsFactory := cmdcore.NewFlagsFactory(configFactory, depsFactory)
 
-	AddPackageCommands(options, cmd, flagsFactory, true)
-	AttachGlobalFlags(options, cmd, flagsFactory, true)
+	AddPackageCommands(options, cmd, flagsFactory, opts)
+	AttachGlobalFlags(options, cmd, flagsFactory, opts)
 }
 
 type uiBlockWriter struct {
@@ -178,4 +180,11 @@ var _ io.Writer = uiBlockWriter{}
 func (w uiBlockWriter) Write(p []byte) (n int, err error) {
 	w.ui.PrintBlock(p)
 	return len(p), nil
+}
+
+type PackageCommandTreeOpts struct {
+	BinaryName     string
+	PositionalArgs bool
+	Color          bool
+	JSON           bool
 }

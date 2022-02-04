@@ -35,11 +35,12 @@ type DeleteOptions struct {
 
 	WaitFlags cmdcore.WaitFlags
 
+	binaryName        string
 	positionalNameArg bool
 }
 
-func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *DeleteOptions {
-	return &DeleteOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
+func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, binaryName string, positionalNameArg bool) *DeleteOptions {
+	return &DeleteOptions{ui: ui, depsFactory: depsFactory, logger: logger, binaryName: binaryName, positionalNameArg: positionalNameArg}
 }
 
 func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -50,7 +51,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Delete package install",
 				[]string{"package", "installed", "delete", "-i", "cert-man"}},
-		}.Description("kctrl", "-i", o.positionalNameArg),
+		}.Description(o.binaryName, "-i", o.positionalNameArg),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
