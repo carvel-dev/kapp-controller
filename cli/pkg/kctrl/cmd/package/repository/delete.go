@@ -38,16 +38,14 @@ func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.L
 }
 
 func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
-	var examples cmdcore.Examples
-	examples = append(examples,
-		cmdcore.Example{"Delete a package repository",
-			[]string{"package", "repository", "delete", "-r", "tce"}})
-
 	cmd := &cobra.Command{
-		Use:     "delete",
-		Short:   "Delete a package repository",
-		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
-		Example: examples.Description("kctrl", "-r", o.positionalNameArg),
+		Use:   "delete",
+		Short: "Delete a package repository",
+		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Delete a package repository",
+				[]string{"package", "repository", "delete", "-r", "tce"}},
+		}.Description("kctrl", "-r", o.positionalNameArg),
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

@@ -37,29 +37,27 @@ func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Log
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
-	var examples cmdcore.Examples
-	examples = append(examples,
-		cmdcore.Example{"List packages available on the cluster",
-			[]string{"package", "available", "list"},
-		},
-		cmdcore.Example{"List packages available on the cluster with their short descriptions",
-			[]string{"package", "available", "list", "--wide"},
-		},
-		cmdcore.Example{"List all available package versions with release dates",
-			[]string{"package", "available", "list", "--summary=false"},
-		},
-		cmdcore.Example{"List packages available in all namespaces",
-			[]string{"package", "available", "list", "-A"},
-		},
-		cmdcore.Example{"List all available versions of a package",
-			[]string{"package", "available", "list", "-p", "cert-manager.community.tanzu.vmware.com"}})
-
 	cmd := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"l", "ls"},
 		Short:   "List available packages in a namespace",
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
-		Example: examples.Description("kctrl", "-p", o.positionalNameArg),
+		Example: cmdcore.Examples{
+			cmdcore.Example{"List packages available on the cluster",
+				[]string{"package", "available", "list"},
+			},
+			cmdcore.Example{"List packages available on the cluster with their short descriptions",
+				[]string{"package", "available", "list", "--wide"},
+			},
+			cmdcore.Example{"List all available package versions with release dates",
+				[]string{"package", "available", "list", "--summary=false"},
+			},
+			cmdcore.Example{"List packages available in all namespaces",
+				[]string{"package", "available", "list", "-A"},
+			},
+			cmdcore.Example{"List all available versions of a package",
+				[]string{"package", "available", "list", "-p", "cert-manager.community.tanzu.vmware.com"}},
+		}.Description("kctrl", "-p", o.positionalNameArg),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List available packages in all namespaces")

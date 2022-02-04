@@ -45,16 +45,14 @@ func NewAddOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger log
 }
 
 func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
-	var examples cmdcore.Examples
-	examples = append(examples,
-		cmdcore.Example{"Add a package repository",
-			[]string{"package", "repository", "add", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.1"}})
-
 	cmd := &cobra.Command{
-		Use:     "add",
-		Short:   "Add a package repository",
-		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
-		Example: examples.Description("kctrl", "-r", o.positionalNameArg),
+		Use:   "add",
+		Short: "Add a package repository",
+		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Add a package repository",
+				[]string{"package", "repository", "add", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.1"}},
+		}.Description("kctrl", "-r", o.positionalNameArg),
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
@@ -79,16 +77,14 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 }
 
 func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
-	var examples cmdcore.Examples
-	examples = append(examples,
-		cmdcore.Example{"Update a package repository with a new URL",
-			[]string{"package", "repository", "update", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.2"}})
-
 	cmd := &cobra.Command{
-		Use:     "update",
-		Short:   "Update a package repository",
-		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
-		Example: examples.Description("kctrl", "-r", o.positionalNameArg),
+		Use:   "update",
+		Short: "Update a package repository",
+		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Update a package repository with a new URL",
+				[]string{"package", "repository", "update", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.2"}},
+		}.Description("kctrl", "-r", o.positionalNameArg),
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
