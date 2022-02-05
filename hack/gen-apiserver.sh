@@ -5,13 +5,15 @@ set -o nounset
 set -o pipefail
 set -o xtrace
 
-export GOPATH=$(cd ../../../../; pwd)
+source hack/utils.sh
+export GOPATH="$(go_mod_gopath_hack)"
+trap "rm -rf ${GOPATH}; git checkout vendor" EXIT
 KC_PKG="github.com/vmware-tanzu/carvel-kapp-controller"
 
 # Following patch allows us to name gen-s with a name Package
 # (without it generated Go code is not valid since word "package" is reserved)
 git checkout vendor/k8s.io/gengo/namer/namer.go
-patch -u vendor/k8s.io/gengo/namer/namer.go ./hack/gen-apiserver-namer.patch
+git apply ./hack/gen-apiserver-namer.patch
 
 rm -rf pkg/apiserver/{client,openapi}
 
@@ -63,12 +65,6 @@ go run vendor/k8s.io/code-generator/cmd/openapi-gen/main.go \
   -O zz_generated.openapi \
   --go-header-file hack/gen-boilerplate.txt
 
-# Undo naming change
-git checkout vendor/k8s.io/gengo/namer/namer.go
-
-# Below protogen is configured to work without GOPATH var set
-unset GOPATH
-
 # Install protoc binary as directed by https://github.com/gogo/protobuf#installation
 # (Chosen: https://github.com/protocolbuffers/protobuf/releases/download/v3.0.2/protoc-3.0.2-osx-x86_64.zip)
 # unzip archive into ./tmp/protoc-dl directory
@@ -85,13 +81,12 @@ export PATH=$PWD/tmp/gen-apiserver-bin/:$PATH
 
 rm -f $(find pkg|grep '\.proto')
 
+# TODO It seems this command messes around with protos in vendor directory
 go run vendor/k8s.io/code-generator/cmd/go-to-protobuf/main.go \
-  --proto-import $PWD/vendor \
-  --output-base $(cd ../../../; pwd) \
+  --proto-import "${GOPATH}/src/${KC_PKG}/vendor" \
   --packages "-github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1,${KC_PKG}/pkg/apis/kappctrl/v1alpha1,${KC_PKG}/pkg/apiserver/apis/datapackaging/v1alpha1" \
+  --vendor-output-base="${GOPATH}/src/${KC_PKG}/vendor" \
   --go-header-file hack/gen-boilerplate.txt
 
-# TODO It seems that above command messes around with protos in vendor directory
-git checkout vendor/
 
 echo "GEN SUCCESS"

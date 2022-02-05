@@ -10,10 +10,8 @@ jobs:
     name: kapp-controller release
     runs-on: ubuntu-latest
     steps:
-      - name: Check out code into the Go module directory
+      - name: Check out code
         uses: actions/checkout@v1
-        with:
-          path: src/github.com/${{ github.repository }}
 
       - name: Install Carvel Tools
         uses: vmware-tanzu/carvel-setup-action@v1
