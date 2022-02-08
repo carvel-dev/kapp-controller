@@ -46,11 +46,7 @@ func NewVersionCmd(o *VersionOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 
 func (o *VersionOptions) Run() error {
 	if o.controllerVersion {
-		err := o.showControllerVersion()
-		if err != nil {
-			return err
-		}
-		return nil
+		return o.showControllerVersion()
 	}
 
 	o.ui.PrintBlock([]byte(fmt.Sprintf("kctrl version %s\n", version.Version)))
@@ -67,7 +63,7 @@ func (o *VersionOptions) showControllerVersion() error {
 	controllerDeployment, err := coreClient.AppsV1().Deployments(kappControllerNamespace).Get(context.Background(), kappControllerDeployment, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return fmt.Errorf("kapp-controller not installed on cluster")
+			return fmt.Errorf("kapp-controller not installed on cluster (or is not present in the default location namespace=kapp-controller deployment=kapp-controller)")
 		}
 
 		return err
