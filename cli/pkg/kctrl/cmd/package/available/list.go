@@ -42,6 +42,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Use:     "list",
 		Aliases: []string{"l", "ls"},
 		Short:   "List available packages in a namespace",
+		Args:    cobra.MaximumNArgs(1),
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: cmdcore.Examples{
 			cmdcore.Example{"List packages available on the cluster",
