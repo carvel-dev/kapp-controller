@@ -42,6 +42,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Use:     "get",
 		Aliases: []string{"g"},
 		Short:   "Get details for installed package",
+		Args:    cobra.ExactArgs(1),
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Get details for a package install",
