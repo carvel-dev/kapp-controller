@@ -1,21 +1,41 @@
 ![logo](docs/CarvelLogo.png)
-
+  
 # kapp-controller
 
-kapp-controller provides a Kubernetes native continuous delivery and package management experience through custom resource definitions.
-Learn more at the [kapp-controller website](https://carvel.dev/kapp-controller/).
+Kubernetes native continuous delivery and package management experience through custom resource definitions.
 
-- Slack: [#carvel in Kubernetes slack](https://slack.kubernetes.io)
-- kapp-controller [documentation](https://carvel.dev/kapp-controller/docs/latest/) .
-- Install: see [install instructions](https://carvel.dev/kapp-controller/docs/latest/install/)
-- Backlog: [See what we're up to](https://app.zenhub.com/workspaces/carvel-backlog-6013063a24147d0011410709/board?repos=220090417). (Note: we use ZenHub which requires GitHub authorization).
+<p>
+<a href="https://carvel.dev/kapp-controller/docs/latest">Documentation</a> ·
+<a href="https://app.zenhub.com/workspaces/carvel-backlog-6013063a24147d0011410709/board?repos=220090417">Backlog</a> ·
+<a href="https://kubernetes.slack.com/archives/CH8KCCKA5">Slack</a> ·
+<a href="https://twitter.com/carvel_dev">Twitter</a>
+</p>
 
-Features:
+## Features
 
+:zap: **Kubernetes Package Management** :zap:
+- [Authoring software packages](https://carvel.dev/kapp-controller/docs/latest/package-authoring/) through `Package` and `PackageMetadata` custom resources
+- [Consuming software packages](https://carvel.dev/kapp-controller/docs/latest/package-consumption/) through `PackageRepository` and `PackageInstall` custom resources
+
+:truck: **Continuous Delivery** :truck:
+  - Declarative installation, management, and upgrading of applications on a Kubernetes cluster using the [App CRD](https://carvel.dev/kapp-controller/docs/latest/app-overview/#app)
+  - [Checkout our tutorial](https://carvel.dev/kapp-controller/docs/latest/walkthrough/)
+
+:octocat: **GitOps** :octocat:
+  - Automated Package management through git repositories
+  - [Checkout our tutorial](https://carvel.dev/kapp-controller/docs/latest/packaging-gitops/)
+
+<!-- 
 - A flexible, declarative API for [continuous delivery](https://carvel.dev/kapp-controller/docs/latest/app-spec/) and [package management](https://carvel.dev/kapp-controller/docs/latest/packaging/) on Kubernetes
-- [Continuous delivery](https://carvel.dev/kapp-controller/docs/latest/walkthrough/) through kapp-controller's App custom resource
-- [Authoring software packages](https://carvel.dev/kapp-controller/docs/latest/package-authoring/) through kapp-controller's Package and PackageMetadata custom resources
-- [Consuming software packages](https://carvel.dev/kapp-controller/docs/latest/package-consumption/) through kapp-controller's PackageRepository and PackageInstall custom resources
+- [Continuous delivery](https://carvel.dev/kapp-controller/docs/latest/walkthrough/) through `App` custom resource
+- [Authoring software packages](https://carvel.dev/kapp-controller/docs/latest/package-authoring/) through `Package` and `PackageMetadata` custom resources
+- [Consuming software packages](https://carvel.dev/kapp-controller/docs/latest/package-consumption/) through `PackageRepository` and `PackageInstall` custom resources -->
+
+## Contribute
+
+Check out our [contributing guidelines](CONTRIBUTING.md).
+
+Detailed instructions on how to setup and test locally can be found in our [developer guide](docs/dev.md).
 
 ### Join the Community and Make Carvel Better
 
