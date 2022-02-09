@@ -75,47 +75,54 @@ jobs:
       - name: Install Trivy
         run: |
           brew install aquasecurity/trivy/trivy
-
-          # download the sarif format template
-          git clone --depth 1 -b "v0.22.0" https://github.com/aquasecurity/trivy
+      - name: Read dismissed CVEs from Github
+        run: |
+          set -o pipefail
+          trap 'on_error' ERR
+          on_error() {
+            echo "the curl reply was:"
+            cat cves.txt
+          }
+          curl https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/code-scanning/alerts \
+            --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' > cves.txt
+          cat cves.txt| jq '.[] | select(.state == "dismissed" or .state == "closed" or .state == "fixed") | .rule.id' | tr -d '"' > .trivyignore
       - name: Run Trivy Reports
         run: |
-          export TRIVY_IGNORE_UNFIXED=true
-          export TRIVY_SEVERITY="MEDIUM,HIGH,CRITICAL"
-          export TRIVY_TEMPLATE="@trivy/contrib/sarif.tpl"
-
+          set -o pipefail
           # kapp-controller binary - output in sarif and json
-          trivy rootfs --format template --output trivy-results-binary.sarif "controller"
-          trivy rootfs --format json --output trivy-results-binary.json "controller"
-
+          trivy rootfs --ignore-unfixed --format sarif --output trivy-results.sarif "controller"
+          trivy rootfs --ignore-unfixed --format json --output trivy-results.json "controller"
+      
           # kapp-controller docker image - output in sarif and json
-          trivy image --format template --output trivy-results-image.sarif "docker.io/carvel/kapp-controller:${{ github.sha }}"
-          trivy image --format json --output trivy-results-image.json "docker.io/carvel/kapp-controller:${{ github.sha }}"
+          trivy image --ignore-unfixed --format sarif --output trivy-results-image.sarif "docker.io/carvel/kapp-controller:${{ github.sha }}"
+          trivy image --ignore-unfixed --format json --output trivy-results-image.json "docker.io/carvel/kapp-controller:${{ github.sha }}"
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v1
         with:
           sarif_file: '.'
-      - name: Check for new Vulnerabilities
+      - name: Create Issues Summary
+        id: cve-summary
         run: |
           set -eo pipefail
-
-          summary="Trivy scan has found new vulnerabilities - check https://github.com/vmware-tanzu/carvel-kapp-controller/security/code-scanning for more"
-
-          vulnCountBinary=$(jq '[ .Results[].Vulnerabilities ] | length' trivy-results-binary.json)
-          vulnCountImage=$(jq '[ .Results[].Vulnerabilities ] | length' trivy-results-image.json)
-          if [ $vulnCountImage -eq 0 && $vulnCountBinary -eq 0 ]; then
-            summary="Trivy Scan has not found any new Security Issues"
+        
+          summary_binary=$(jq '.Results[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results.json | tr -d \\ | tr -d '"')
+          summary_image=$(jq '.Results[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results-image.json | tr -d \\ | tr -d '"')
+          
+          summary="Binary Image Summary:\n$summary_binary\nDocker Image Summary:\n$summary_image"
+          if [[ -n $summary_binary || -n $summary_image ]]
+          then
+            echo "::set-output name=summary::$summary"
+          else
+            echo "No new Issues where found"
           fi
-
-          echo "SUMMARY=$summary" >> "$GITHUB_ENV"
-      - name: Send Slack Notification
-        if: success()
-        uses: slackapi/slack-github-action@v1.15.0
+      - name: Send Slack Notification if Scan Ran Successfully
+        if: steps.cve-summary.outputs.summary != ''
+        uses: slackapi/slack-github-action@v1.16.0
+        with:
+          slack-message: "New CVEs found! Check https://github.com/vmware-tanzu/carvel-kapp-controller/security/code-scanning for details \n ${{ steps.cve-summary.outputs.summary }}"
+          channel-id: G01FTP43JMQ
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-        with:
-          channel-id: G01FTP43JMQ
-          slack-message: "${{ env.SUMMARY }}"
       - name: Send Failure notification
         if: failure()
         uses: slackapi/slack-github-action@v1.15.0
@@ -123,4 +130,4 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
           channel-id: G01FTP43JMQ
-          slack-message: "Trivy scan workflow failed. Please check the latest github action run for trivy scanner."
+          slack-message: "Trivy scan workflow failed. Check: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}."
