@@ -54,6 +54,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 			cmdcore.Example{"Download values being used by package install",
 				[]string{"package", "installed", "get", "-i", "cert-man", "--values-file-output", "values.yml"}},
 		}.Description(o.binaryName, "-i", o.positionalNameArg),
+		SilenceUsage: true,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 

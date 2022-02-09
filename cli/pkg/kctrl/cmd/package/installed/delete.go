@@ -52,6 +52,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 			cmdcore.Example{"Delete package install",
 				[]string{"package", "installed", "delete", "-i", "cert-man"}},
 		}.Description(o.binaryName, "-i", o.positionalNameArg),
+		SilenceUsage: true,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 

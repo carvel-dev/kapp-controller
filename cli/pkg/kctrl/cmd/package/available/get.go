@@ -52,6 +52,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 			cmdcore.Example{"Get the values schema for a particular version of the package",
 				[]string{"package", "available", "get", "-p", "cert-manager.community.tanzu.vmware.com", "--values-schema"}},
 		}.Description(o.binaryName, "-p", o.positionalNameArg),
+		SilenceUsage: true,
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

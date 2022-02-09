@@ -42,6 +42,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 			cmdcore.Example{"Get details for a package repository",
 				[]string{"package", "repository", "get", "-r", "tce"}},
 		}.Description(o.binaryName, "-r", o.positionalNameArg),
+		SilenceUsage: true,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
