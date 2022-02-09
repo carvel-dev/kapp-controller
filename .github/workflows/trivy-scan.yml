@@ -108,7 +108,7 @@ jobs:
           summary_binary=$(jq '.Results[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results.json | tr -d \\ | tr -d '"')
           summary_image=$(jq '.Results[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results-image.json | tr -d \\ | tr -d '"')
           
-          summary="Binary Image Summary:\n$summary_binary\nDocker Image Summary:\n$summary_image"
+          summary=$( echo -e "Binary Image Summary:\n$summary_binary\nDocker Image Summary:\n$summary_image")
           if [[ -n $summary_binary || -n $summary_image ]]
           then
             echo "::set-output name=summary::$summary"
