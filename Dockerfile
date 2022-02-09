@@ -62,6 +62,8 @@ RUN tdnf install -y git openssh-clients sed
 RUN echo "kapp-controller:x:1000:" > /etc/group && \
     echo "kapp-controller:x:1000:1000::/home/kapp-controller:/usr/sbin/nologin" > /etc/passwd
 
+RUN chmod a+w /etc/pki/tls/certs/ca-bundle.crt
+
 # fetchers
 COPY --from=0 /helm-v2-unpacked/linux-amd64/helm helmv2
 COPY --from=0 /helm-unpacked/linux-amd64/helm .

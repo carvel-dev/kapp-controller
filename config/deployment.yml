@@ -51,7 +51,7 @@ spec:
           protocol: TCP
         securityContext:
           allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
+          readOnlyRootFilesystem: false #! TODO(bmo): don't write to the root ca-bundle
           runAsNonRoot: true
           capabilities:
             drop:
