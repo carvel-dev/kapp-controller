@@ -47,6 +47,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 			cmdcore.Example{"Delete a package repository",
 				[]string{"package", "repository", "delete", "-r", "tce"}},
 		}.Description(o.binaryName, "-r", o.positionalNameArg),
+		SilenceUsage: true,
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

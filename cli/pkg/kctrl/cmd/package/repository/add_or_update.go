@@ -54,6 +54,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 			cmdcore.Example{"Add a package repository",
 				[]string{"package", "repository", "add", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.1"}},
 		}.Description(o.binaryName, "-r", o.positionalNameArg),
+		SilenceUsage: true,
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
@@ -88,6 +89,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 			cmdcore.Example{"Update a package repository with a new URL",
 				[]string{"package", "repository", "update", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.2"}},
 		}.Description(o.binaryName, "-r", o.positionalNameArg),
+		SilenceUsage: true,
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

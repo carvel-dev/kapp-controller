@@ -60,6 +60,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 			cmdcore.Example{"List all available versions of a package",
 				[]string{"package", "available", "list", "-p", "cert-manager.community.tanzu.vmware.com"}},
 		}.Description(o.binaryName, "-p", o.positionalNameArg),
+		SilenceUsage: true,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List available packages in all namespaces")
