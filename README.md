@@ -22,7 +22,7 @@ Kubernetes native continuous delivery and package management experience through 
   - [Checkout our tutorial](https://carvel.dev/kapp-controller/docs/latest/walkthrough/)
 
 :octocat: **GitOps** :octocat:
-  - Automated Package management through git repositories
+  - Automated Package management through git
   - [Checkout our tutorial](https://carvel.dev/kapp-controller/docs/latest/packaging-gitops/)
 
 <!-- 
