@@ -47,6 +47,8 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 
 	if !o.positionalNameArg {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
+	} else {
+		cmd.Use = "get REPOSITORY_NAME"
 	}
 
 	return cmd

@@ -65,8 +65,11 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List available packages in all namespaces")
 
 	cmd.Flags().BoolVar(&o.Summary, "summary", true, "Show summarized list of packages")
+
 	if !o.positionalNameArg {
 		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "List all available versions of package")
+	} else {
+		cmd.Use = "list or list PACKAGE_NAME"
 	}
 
 	cmd.Flags().BoolVar(&o.Wide, "wide", false, "Show additional info")
