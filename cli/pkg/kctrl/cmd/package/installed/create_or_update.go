@@ -77,6 +77,8 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 
 	if !o.positionalNameArg {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
+	} else {
+		cmd.Use = "create INSTALLED_PACKAGE_NAME --package-name PACKAGE_NAME --version VERSION"
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
@@ -113,6 +115,8 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 
 	if !o.positionalNameArg {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
+	} else {
+		cmd.Use = "create INSTALLED_PACKAGE_NAME --package-name PACKAGE_NAME --version VERSION"
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
@@ -146,6 +150,8 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 
 	if !o.positionalNameArg {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
+	} else {
+		cmd.Use = "update INSTALLED_PACKAGE_NAME"
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Name of package install to be updated")

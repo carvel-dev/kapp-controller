@@ -58,6 +58,8 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 
 	if !o.positionalNameArg {
 		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name (required)")
+	} else {
+		cmd.Use = "get PACKAGE_NAME or PACKAGE_NAME/VERSION"
 	}
 
 	cmd.Flags().BoolVar(&o.ValuesSchema, "values-schema", false, "Values schema of the package (optional)")
