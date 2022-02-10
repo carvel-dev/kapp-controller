@@ -27,12 +27,6 @@ Kubernetes native continuous delivery and package management experience through 
   - Use a git repository as your single source of truth for Kubernetes Package Management
   - [Checkout our tutorial](https://carvel.dev/kapp-controller/docs/latest/packaging-gitops/)
 
-<!-- 
-- A flexible, declarative API for [continuous delivery](https://carvel.dev/kapp-controller/docs/latest/app-spec/) and [package management](https://carvel.dev/kapp-controller/docs/latest/packaging/) on Kubernetes
-- [Continuous delivery](https://carvel.dev/kapp-controller/docs/latest/walkthrough/) through `App` custom resource
-- [Authoring software packages](https://carvel.dev/kapp-controller/docs/latest/package-authoring/) through `Package` and `PackageMetadata` custom resources
-- [Consuming software packages](https://carvel.dev/kapp-controller/docs/latest/package-consumption/) through `PackageRepository` and `PackageInstall` custom resources -->
-
 ## Contribute
 
 Check out our [contributing guidelines](CONTRIBUTING.md).
