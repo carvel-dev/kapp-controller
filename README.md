@@ -19,10 +19,12 @@ Kubernetes native continuous delivery and package management experience through 
 
 :truck: **Continuous Delivery** :truck:
   - Declarative installation, management, and upgrading of applications on a Kubernetes cluster using the [App CRD](https://carvel.dev/kapp-controller/docs/latest/app-overview/#app)
+  - [Fetchable resources](https://carvel.dev/kapp-controller/docs/latest/app-overview/#specfetch) are continuously monitored and the cluster is updated to reflect any change
   - [Checkout our tutorial](https://carvel.dev/kapp-controller/docs/latest/walkthrough/)
 
 :octocat: **GitOps** :octocat:
-  - Automated Package management through git
+  - Our Continous Delivery mechanism is perfect for GitOps!
+  - Use a git repository as your single source of truth for Kubernetes Package Management
   - [Checkout our tutorial](https://carvel.dev/kapp-controller/docs/latest/packaging-gitops/)
 
 <!-- 
