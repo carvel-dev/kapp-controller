@@ -57,11 +57,14 @@ RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -ldflags="-X 'main.Version=$KC
 # --- run image ---
 FROM photon:4.0
 
-RUN tdnf install -y git openssh-clients shadow-tools sed
+# Install openssh for git
+# TODO(bmo): why do we need sed?
+RUN tdnf install -y git openssh-clients sed
 
-RUN groupadd -g 2000 kapp-controller && useradd -r -u 1000 --create-home -g kapp-controller kapp-controller
-RUN chmod g+w /etc/pki/tls/certs/ca-bundle.crt && chgrp kapp-controller /etc/pki/tls/certs/ca-bundle.crt
-USER kapp-controller
+# Create the kapp-controller user in the root group, the home directory will be mounted as a volume
+RUN echo "kapp-controller:x:1000:0:/home/kapp-controller:/usr/sbin/nologin" > /etc/passwd
+# Give the root group write access to openssh's root bundle so we can append custom roots at runtime
+RUN chmod g+w /etc/pki/tls/certs/ca-bundle.crt
 
 # fetchers
 COPY --from=0 /helm-v2-unpacked/linux-amd64/helm helmv2
@@ -81,5 +84,7 @@ COPY --from=0 /usr/local/bin/kapp .
 # Name it kapp-controller to identify it easier in process tree
 COPY --from=0 /go/src/github.com/vmware-tanzu/carvel-kapp-controller/controller kapp-controller
 
+# Run as kapp-controller by default, will be overriden to a random uid on OpenShift
+USER 1000
 ENV PATH="/:${PATH}"
 ENTRYPOINT ["/kapp-controller"]
