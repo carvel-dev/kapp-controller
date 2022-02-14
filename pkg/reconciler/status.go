@@ -10,7 +10,6 @@ import (
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type Status struct {
@@ -75,6 +74,7 @@ func (s *Status) SetReconciling(meta metav1.ObjectMeta) {
 	})
 
 	s.S.FriendlyDescription = "Reconciling"
+	s.S.UsefulErrorMessage = ""
 
 	s.UpdateFunc(s.S)
 }
@@ -141,11 +141,6 @@ func (s *Status) friendlyErrMsg(errMsg string) string {
 		errMsgPieces[0] += "..."
 	}
 	return errMsgPieces[0]
-}
-
-func (s *Status) WithReconcileCompleted(result reconcile.Result, err error) (reconcile.Result, error) {
-	s.SetReconcileCompleted(err)
-	return result, err
 }
 
 func (s *Status) markObservedLatest(meta metav1.ObjectMeta) {
