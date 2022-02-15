@@ -29,12 +29,11 @@ type ListOptions struct {
 	Summary bool
 	Wide    bool
 
-	binaryName        string
-	positionalNameArg bool
+	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
 
-func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, binaryName string, positionalNameArg bool) *ListOptions {
-	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, binaryName: binaryName, positionalNameArg: positionalNameArg}
+func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *ListOptions {
+	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -59,7 +58,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 			},
 			cmdcore.Example{"List all available versions of a package",
 				[]string{"package", "available", "list", "-p", "cert-manager.community.tanzu.vmware.com"}},
-		}.Description(o.binaryName, "-p", o.positionalNameArg),
+		}.Description("-p", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 		Annotations:  map[string]string{"table": ""},
 	}
@@ -68,7 +67,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 
 	cmd.Flags().BoolVar(&o.Summary, "summary", true, "Show summarized list of packages")
 
-	if !o.positionalNameArg {
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "List all available versions of package")
 	} else {
 		cmd.Use = "list or list PACKAGE_NAME"
@@ -80,7 +79,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 }
 
 func (o *ListOptions) Run(args []string) error {
-	if o.positionalNameArg && len(args) > 0 {
+	if o.pkgCmdTreeOpts.PositionalArgs && len(args) > 0 {
 		o.Name = args[0]
 	}
 

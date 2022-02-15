@@ -24,11 +24,11 @@ type ListOptions struct {
 	NamespaceFlags cmdcore.NamespaceFlags
 	AllNamespaces  bool
 
-	binaryName string
+	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
 
-func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, binaryName string) *ListOptions {
-	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, binaryName: binaryName}
+func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *ListOptions {
+	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -43,7 +43,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 			},
 			cmdcore.Example{"List package repositories in all namespaces",
 				[]string{"package", "repository", "list", "A"}},
-		}.Description(o.binaryName, "", false),
+		}.Description("", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 		Annotations:  map[string]string{"table": ""},
 	}

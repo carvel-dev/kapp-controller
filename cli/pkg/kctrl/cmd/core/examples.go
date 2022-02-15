@@ -8,15 +8,23 @@ import (
 	"strings"
 )
 
+type PackageCommandTreeOpts struct {
+	BinaryName     string
+	PositionalArgs bool
+
+	Color bool
+	JSON  bool
+}
+
 type Example struct {
 	Description string
 	Args        []string
 }
 
-func (e Example) asString(binaryName, nameFlag string, positionalNameArg bool) string {
-	command := binaryName
+func (e Example) asString(nameFlag string, opts PackageCommandTreeOpts) string {
+	command := opts.BinaryName
 	for _, arg := range e.Args {
-		if positionalNameArg && arg == nameFlag {
+		if opts.PositionalArgs && arg == nameFlag {
 			continue
 		}
 		command += " " + arg
@@ -26,10 +34,10 @@ func (e Example) asString(binaryName, nameFlag string, positionalNameArg bool) s
 
 type Examples []Example
 
-func (es Examples) Description(binaryName, nameFlag string, positionalNameArg bool) string {
+func (es Examples) Description(nameFlag string, opts PackageCommandTreeOpts) string {
 	var description string
 	for _, example := range es {
-		description += example.asString(binaryName, nameFlag, positionalNameArg) + "\n\n"
+		description += example.asString(nameFlag, opts) + "\n\n"
 	}
 	return strings.TrimSuffix(description, "\n\n")
 }
