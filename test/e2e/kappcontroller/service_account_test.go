@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
+	"sigs.k8s.io/yaml"
 )
 
 func TestServiceAccountNotAllowed(t *testing.T) {

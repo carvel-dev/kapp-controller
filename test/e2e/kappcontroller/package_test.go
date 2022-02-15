@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
+	"sigs.k8s.io/yaml"
 )
 
 func Test_PackageNameCharacters(t *testing.T) {
