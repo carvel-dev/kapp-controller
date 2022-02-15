@@ -37,12 +37,11 @@ type AddOrUpdateOptions struct {
 
 	WaitFlags cmdcore.WaitFlags
 
-	binaryName        string
-	positionalNameArg bool
+	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
 
-func NewAddOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, binaryName string, positionalNameArg bool) *AddOrUpdateOptions {
-	return &AddOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger, binaryName: binaryName, positionalNameArg: positionalNameArg}
+func NewAddOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *AddOrUpdateOptions {
+	return &AddOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -53,13 +52,13 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Add a package repository",
 				[]string{"package", "repository", "add", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.1"}},
-		}.Description(o.binaryName, "-r", o.positionalNameArg),
+		}.Description("-r", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	if !o.positionalNameArg {
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
 	} else {
 		cmd.Use = "add REPOSITORY_NAME --url REPOSITORY_URL"
@@ -88,13 +87,13 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Update a package repository with a new URL",
 				[]string{"package", "repository", "update", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.2"}},
-		}.Description(o.binaryName, "-r", o.positionalNameArg),
+		}.Description("-r", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	if !o.positionalNameArg {
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
 	} else {
 		cmd.Use = "update REPOSITORY_NAME --url REPOSITORY_URL"
@@ -114,7 +113,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 }
 
 func (o *AddOrUpdateOptions) Run(args []string) error {
-	if o.positionalNameArg {
+	if o.pkgCmdTreeOpts.PositionalArgs {
 		o.Name = args[0]
 	}
 

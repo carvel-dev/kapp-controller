@@ -49,12 +49,11 @@ type CreateOrUpdateOptions struct {
 	NamespaceFlags     cmdcore.NamespaceFlags
 	createdAnnotations *CreatedResourceAnnotations
 
-	binaryName        string
-	positionalNameArg bool
+	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
 
-func NewCreateOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, binaryName string, positionalNameArg bool) *CreateOrUpdateOptions {
-	return &CreateOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger, binaryName: binaryName, positionalNameArg: positionalNameArg}
+func NewCreateOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *CreateOrUpdateOptions {
+	return &CreateOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -71,12 +70,12 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 			},
 			cmdcore.Example{"Install package and ask it to use an existing service account",
 				[]string{"package", "installed", "create", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--service-account-name", "existing-sa"}},
-		}.Description(o.binaryName, "-i", o.positionalNameArg),
+		}.Description("-i", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	if !o.positionalNameArg {
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
 	} else {
 		cmd.Use = "create INSTALLED_PACKAGE_NAME --package-name PACKAGE_NAME --version VERSION"
@@ -110,11 +109,11 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 			},
 			cmdcore.Example{"Install package and ask it to use an existing service account",
 				[]string{"package", "install", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--service-account-name", "existing-sa"}},
-		}.Description(o.binaryName, "-i", o.positionalNameArg),
+		}.Description("-i", o.pkgCmdTreeOpts),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	if !o.positionalNameArg {
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
 	} else {
 		cmd.Use = "create INSTALLED_PACKAGE_NAME --package-name PACKAGE_NAME --version VERSION"
@@ -145,11 +144,11 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 			},
 			cmdcore.Example{"Update package install with new values file",
 				[]string{"package", "installed", "update", "-i", "cert-man", "--values-file", "values.yml"}},
-		}.Description(o.binaryName, "-i", o.positionalNameArg),
+		}.Description("-i", o.pkgCmdTreeOpts),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	if !o.positionalNameArg {
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
 	} else {
 		cmd.Use = "update INSTALLED_PACKAGE_NAME"
@@ -170,7 +169,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 }
 
 func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
-	if o.positionalNameArg {
+	if o.pkgCmdTreeOpts.PositionalArgs {
 		o.Name = args[0]
 	}
 
@@ -250,7 +249,7 @@ func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient kcc
 }
 
 func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
-	if o.positionalNameArg {
+	if o.pkgCmdTreeOpts.PositionalArgs {
 		o.Name = args[0]
 	}
 
