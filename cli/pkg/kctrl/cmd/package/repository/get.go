@@ -23,11 +23,11 @@ type GetOptions struct {
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
 
-	positionalNameArg bool
+	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
 
-func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *GetOptions {
-	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
+func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *GetOptions {
+	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -35,22 +35,28 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Use:     "get",
 		Aliases: []string{"g"},
 		Short:   "Get details for a package repository",
+		Args:    cobra.ExactArgs(1),
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
-		Example: `
-# Get details for a package repository
-kctrl package repository get -r tce`,
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Get details for a package repository",
+				[]string{"package", "repository", "get", "-r", "tce"}},
+		}.Description("-r", o.pkgCmdTreeOpts),
+		SilenceUsage: true,
+		Annotations:  map[string]string{"table": ""},
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	if !o.positionalNameArg {
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
+	} else {
+		cmd.Use = "get REPOSITORY_NAME"
 	}
 
 	return cmd
 }
 
 func (o *GetOptions) Run(args []string) error {
-	if o.positionalNameArg {
+	if o.pkgCmdTreeOpts.PositionalArgs {
 		o.Name = args[0]
 	}
 

@@ -37,11 +37,11 @@ type AddOrUpdateOptions struct {
 
 	WaitFlags cmdcore.WaitFlags
 
-	positionalNameArg bool
+	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
 
-func NewAddOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *AddOrUpdateOptions {
-	return &AddOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
+func NewAddOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *AddOrUpdateOptions {
+	return &AddOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -49,15 +49,19 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 		Use:   "add",
 		Short: "Add a package repository",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
-		Example: `
-# Add a package repository
-kctrl package repository add -r tce --url projects.registry.vmware.com/tce/main:0.9.1`,
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Add a package repository",
+				[]string{"package", "repository", "add", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.1"}},
+		}.Description("-r", o.pkgCmdTreeOpts),
+		SilenceUsage: true,
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	if !o.positionalNameArg {
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
+	} else {
+		cmd.Use = "add REPOSITORY_NAME --url REPOSITORY_URL"
 	}
 
 	// TODO consider how to support other repository types
@@ -80,15 +84,19 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 		Use:   "update",
 		Short: "Update a package repository",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
-		Example: `
-# Update a package repository with a new URL
-kctrl package repository update -r tce --url projects.registry.vmware.com/tce/main:0.9.1`,
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Update a package repository with a new URL",
+				[]string{"package", "repository", "update", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.2"}},
+		}.Description("-r", o.pkgCmdTreeOpts),
+		SilenceUsage: true,
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	if !o.positionalNameArg {
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
+	} else {
+		cmd.Use = "update REPOSITORY_NAME --url REPOSITORY_URL"
 	}
 
 	cmd.Flags().StringVarP(&o.URL, "url", "", "", "OCI registry url for package repository bundle (required)")
@@ -105,7 +113,7 @@ kctrl package repository update -r tce --url projects.registry.vmware.com/tce/ma
 }
 
 func (o *AddOrUpdateOptions) Run(args []string) error {
-	if o.positionalNameArg {
+	if o.pkgCmdTreeOpts.PositionalArgs {
 		o.Name = args[0]
 	}
 

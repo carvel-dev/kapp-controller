@@ -22,10 +22,12 @@ type ListOptions struct {
 
 	NamespaceFlags cmdcore.NamespaceFlags
 	AllNamespaces  bool
+
+	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
 
-func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
-	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *ListOptions {
+	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -34,12 +36,15 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Aliases: []string{"l", "ls"},
 		Short:   "List installed packages in a namespace",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
-		Example: `
-# List installed packages
-kctrl package installed list
-
-# List installed packages in all namespaces
-kctrl package installed list -A`,
+		Example: cmdcore.Examples{
+			cmdcore.Example{"List installed packages",
+				[]string{"package", "installed", "list"},
+			},
+			cmdcore.Example{"List installed packages in all namespaces",
+				[]string{"package", "installed", "list", "A"}},
+		}.Description("", o.pkgCmdTreeOpts),
+		SilenceUsage: true,
+		Annotations:  map[string]string{"table": ""},
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List installed packages in all namespaces")

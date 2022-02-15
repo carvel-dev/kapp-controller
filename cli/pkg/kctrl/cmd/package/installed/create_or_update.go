@@ -6,7 +6,6 @@ package installed
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -50,11 +49,11 @@ type CreateOrUpdateOptions struct {
 	NamespaceFlags     cmdcore.NamespaceFlags
 	createdAnnotations *CreatedResourceAnnotations
 
-	positionalNameArg bool
+	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
 
-func NewCreateOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *CreateOrUpdateOptions {
-	return &CreateOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
+func NewCreateOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *CreateOrUpdateOptions {
+	return &CreateOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -62,20 +61,24 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		Use:   "create",
 		Short: "Install package",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.RunCreate(args) },
-		Example: `
-# Install a package
-kctrl package installed create -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1
-
-# Install package with values file
-kctrl package installed create -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1 --values-file values.yml
-
-# Install package and ask it to use an existing service account
-kctrl package installed create -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1 --service-account-name existing-sa`,
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Install a package",
+				[]string{"package", "installed", "create", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1"},
+			},
+			cmdcore.Example{"Install package with values file",
+				[]string{"package", "installed", "create", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--values-file", "values.yml"},
+			},
+			cmdcore.Example{"Install package and ask it to use an existing service account",
+				[]string{"package", "installed", "create", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--service-account-name", "existing-sa"}},
+		}.Description("-i", o.pkgCmdTreeOpts),
+		SilenceUsage: true,
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	if !o.positionalNameArg {
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
+	} else {
+		cmd.Use = "create INSTALLED_PACKAGE_NAME --package-name PACKAGE_NAME --version VERSION"
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
@@ -97,20 +100,23 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 		Use:   "install",
 		Short: "Install package",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.RunCreate(args) },
-		Example: `
-# Install a package
-kctrl package install -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1
-
-# Install package with values file
-kctrl package install -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1 --values-file values.yml
-
-# Install package and ask it to use an existing service account
-kctrl package install -i cert-man -p cert-manager.community.tanzu.vmware.com --version 1.6.1 --service-account-name existing-sa`,
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Install a package",
+				[]string{"package", "install", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1"},
+			},
+			cmdcore.Example{"Install package with values file",
+				[]string{"package", "install", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--values-file", "values.yml"},
+			},
+			cmdcore.Example{"Install package and ask it to use an existing service account",
+				[]string{"package", "install", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--service-account-name", "existing-sa"}},
+		}.Description("-i", o.pkgCmdTreeOpts),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	if !o.positionalNameArg {
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
+	} else {
+		cmd.Use = "create INSTALLED_PACKAGE_NAME --package-name PACKAGE_NAME --version VERSION"
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
@@ -132,17 +138,20 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		Use:   "update",
 		Short: "Update package",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.RunUpdate(args) },
-		Example: `
-# Upgrade package install to a newer version
-kctrl package installed update -i cert-man --version 1.6.1
-
-#Update package install with new values file
-kctrl package installed update -i <package-intalled-name> --values-file updated-values.yml`,
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Upgrade package install to a newer version",
+				[]string{"package", "installed", "update", "-i", "cert-man", "--version", "1.6.2"},
+			},
+			cmdcore.Example{"Update package install with new values file",
+				[]string{"package", "installed", "update", "-i", "cert-man", "--values-file", "values.yml"}},
+		}.Description("-i", o.pkgCmdTreeOpts),
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	if !o.positionalNameArg {
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
+	} else {
+		cmd.Use = "update INSTALLED_PACKAGE_NAME"
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Name of package install to be updated")
@@ -160,7 +169,7 @@ kctrl package installed update -i <package-intalled-name> --values-file updated-
 }
 
 func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
-	if o.positionalNameArg {
+	if o.pkgCmdTreeOpts.PositionalArgs {
 		o.Name = args[0]
 	}
 
@@ -240,7 +249,7 @@ func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient kcc
 }
 
 func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
-	if o.positionalNameArg {
+	if o.pkgCmdTreeOpts.PositionalArgs {
 		o.Name = args[0]
 	}
 
@@ -449,7 +458,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateDataValuesSecret(client kubernetes
 
 	dataValues := make(map[string][]byte)
 
-	dataValues[valuesFileKey], err = ioutil.ReadFile(o.valuesFile)
+	dataValues[valuesFileKey], err = cmdcore.NewInputFile(o.valuesFile).Bytes()
 	if err != nil {
 		return false, fmt.Errorf("Reading data values file '%s': %s", o.valuesFile, err.Error())
 	}
@@ -652,7 +661,8 @@ func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interfa
 		}
 	}
 
-	if dataValues[dataKey], err = ioutil.ReadFile(o.valuesFile); err != nil {
+	dataValues[dataKey], err = cmdcore.NewInputFile(o.valuesFile).Bytes()
+	if err != nil {
 		return fmt.Errorf("Reading data values file '%s': %s", o.valuesFile, err.Error())
 	}
 	secret := &corev1.Secret{

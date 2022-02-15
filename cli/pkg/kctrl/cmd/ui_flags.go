@@ -18,11 +18,15 @@ type UIFlags struct {
 	Columns        []string
 }
 
-func (f *UIFlags) Set(cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
+func (f *UIFlags) Set(cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opts cmdcore.PackageCommandTreeOpts) {
 	// Default tty to true: https://github.com/vmware-tanzu/carvel-kapp/issues/28
 	cmd.PersistentFlags().BoolVar(&f.TTY, "tty", true, "Force TTY-like output")
-	cmd.PersistentFlags().BoolVar(&f.Color, "color", true, "Set color output")
-	cmd.PersistentFlags().BoolVar(&f.JSON, "json", false, "Output as JSON")
+	if opts.Color {
+		cmd.PersistentFlags().BoolVar(&f.Color, "color", true, "Set color output")
+	}
+	if opts.JSON {
+		cmd.PersistentFlags().BoolVar(&f.JSON, "json", false, "Output as JSON")
+	}
 	cmd.PersistentFlags().BoolVarP(&f.NonInteractive, "yes", "y", false, "Assume yes for any prompt")
 	cmd.PersistentFlags().StringSliceVar(&f.Columns, "column", nil, "Filter to show only given columns")
 }

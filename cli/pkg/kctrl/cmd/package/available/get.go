@@ -30,11 +30,11 @@ type GetOptions struct {
 
 	ValuesSchema bool
 
-	positionalNameArg bool
+	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
 
-func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *GetOptions {
-	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
+func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *GetOptions {
+	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -42,19 +42,25 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Use:     "get",
 		Aliases: []string{"g"},
 		Short:   "Get details for an available package or the openAPI schema of a package with a specific version",
+		Args:    cobra.ExactArgs(1),
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
-		Example: `
-# Get details about an available package
-kctrl package available get --package cert-manager.community.tanzu.vmware.com
-
-# Get the values schema for a particular version of the package
-kctrl package available get --package cert-manager.community.tanzu.vmware.com --values-schema`,
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Get details about an available package",
+				[]string{"package", "available", "get", "-p", "cert-manager.community.tanzu.vmware.com"},
+			},
+			cmdcore.Example{"Get the values schema for a particular version of the package",
+				[]string{"package", "available", "get", "-p", "cert-manager.community.tanzu.vmware.com", "--values-schema"}},
+		}.Description("-p", o.pkgCmdTreeOpts),
+		SilenceUsage: true,
+		Annotations:  map[string]string{"table": ""},
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	if !o.positionalNameArg {
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name (required)")
+	} else {
+		cmd.Use = "get PACKAGE_NAME or PACKAGE_NAME/VERSION"
 	}
 
 	cmd.Flags().BoolVar(&o.ValuesSchema, "values-schema", false, "Values schema of the package (optional)")
@@ -64,7 +70,7 @@ kctrl package available get --package cert-manager.community.tanzu.vmware.com --
 func (o *GetOptions) Run(args []string) error {
 	var pkgName, pkgVersion string
 
-	if o.positionalNameArg {
+	if o.pkgCmdTreeOpts.PositionalArgs {
 		o.Name = args[0]
 	}
 
