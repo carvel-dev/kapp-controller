@@ -53,6 +53,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 				[]string{"package", "available", "get", "-p", "cert-manager.community.tanzu.vmware.com", "--values-schema"}},
 		}.Description(o.binaryName, "-p", o.positionalNameArg),
 		SilenceUsage: true,
+		Annotations:  map[string]string{"table": ""},
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

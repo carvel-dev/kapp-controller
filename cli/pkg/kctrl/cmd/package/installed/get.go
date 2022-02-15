@@ -55,6 +55,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 				[]string{"package", "installed", "get", "-i", "cert-man", "--values-file-output", "values.yml"}},
 		}.Description(o.binaryName, "-i", o.positionalNameArg),
 		SilenceUsage: true,
+		Annotations:  map[string]string{"table": ""},
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
