@@ -6,7 +6,6 @@ package app
 import (
 	"sync"
 
-	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
@@ -14,6 +13,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
+	"sigs.k8s.io/yaml"
 )
 
 type Hooks struct {
