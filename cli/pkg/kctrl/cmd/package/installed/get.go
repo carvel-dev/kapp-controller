@@ -29,11 +29,11 @@ type GetOptions struct {
 	valuesFileOutput string
 	values           bool
 
-	positionalNameArg bool
+	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
 
-func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *GetOptions {
-	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
+func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *GetOptions {
+	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -41,21 +41,27 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Use:     "get",
 		Aliases: []string{"g"},
 		Short:   "Get details for installed package",
+		Args:    cobra.ExactArgs(1),
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
-		Example: `
-# Get details for a package install
-kctrl package installed get -i cert-man
-
-# View values being used by package install
-kctrl package installed get -i cert-man --values
-
-# Download values being used by package install
-kctrl package installed get -i cert-man --values-file-output <path-to-file>`,
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Get details for a package install",
+				[]string{"package", "installed", "get", "-i", "cert-man"},
+			},
+			cmdcore.Example{"View values being used by package install",
+				[]string{"package", "installed", "get", "-i", "cert-man", "--values"},
+			},
+			cmdcore.Example{"Download values being used by package install",
+				[]string{"package", "installed", "get", "-i", "cert-man", "--values-file-output", "values.yml"}},
+		}.Description("-i", o.pkgCmdTreeOpts),
+		SilenceUsage: true,
+		Annotations:  map[string]string{"table": ""},
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
-	if !o.positionalNameArg {
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
+	} else {
+		cmd.Use = "get INSTALLED_PACKAGE_NAME"
 	}
 
 	cmd.Flags().StringVar(&o.valuesFileOutput, "values-file-output", "", "File path for exporting configuration values file")
@@ -64,7 +70,7 @@ kctrl package installed get -i cert-man --values-file-output <path-to-file>`,
 }
 
 func (o *GetOptions) Run(args []string) error {
-	if o.positionalNameArg {
+	if o.pkgCmdTreeOpts.PositionalArgs {
 		o.Name = args[0]
 	}
 

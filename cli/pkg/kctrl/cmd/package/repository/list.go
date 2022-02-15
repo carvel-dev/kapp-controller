@@ -23,10 +23,12 @@ type ListOptions struct {
 
 	NamespaceFlags cmdcore.NamespaceFlags
 	AllNamespaces  bool
+
+	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
 
-func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
-	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *ListOptions {
+	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -35,12 +37,15 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Aliases: []string{"l", "ls"},
 		Short:   "List package repositories in a namespace",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
-		Example: `
-# List package repositories
-kctrl package repository list
-
-# List package repositories in all namespaces
-kctrl package repository list -A`,
+		Example: cmdcore.Examples{
+			cmdcore.Example{"List package repositories",
+				[]string{"package", "repository", "list"},
+			},
+			cmdcore.Example{"List package repositories in all namespaces",
+				[]string{"package", "repository", "list", "A"}},
+		}.Description("", o.pkgCmdTreeOpts),
+		SilenceUsage: true,
+		Annotations:  map[string]string{"table": ""},
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List repositories in all namespaces")

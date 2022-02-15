@@ -29,11 +29,11 @@ type ListOptions struct {
 	Summary bool
 	Wide    bool
 
-	positionalNameArg bool
+	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
 
-func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, positionalNameArg bool) *ListOptions {
-	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, positionalNameArg: positionalNameArg}
+func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *ListOptions {
+	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -41,29 +41,36 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Use:     "list",
 		Aliases: []string{"l", "ls"},
 		Short:   "List available packages in a namespace",
+		Args:    cobra.MaximumNArgs(1),
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
-		Example: `
-# List packages available on the cluster
-kctrl package available list
-
-# List packages available on the cluster with their short descriptions
-kctrl package available list --wide
-
-# List all available package versions with release dates
-kctrl package available list --summary=false
-
-# List packages available in all namespaces
-kctrl package available list -A
-
-# List all available versions of a package
-kctrl package available --package cert-manager.community.tanzu.vmware.com`,
+		Example: cmdcore.Examples{
+			cmdcore.Example{"List packages available on the cluster",
+				[]string{"package", "available", "list"},
+			},
+			cmdcore.Example{"List packages available on the cluster with their short descriptions",
+				[]string{"package", "available", "list", "--wide"},
+			},
+			cmdcore.Example{"List all available package versions with release dates",
+				[]string{"package", "available", "list", "--summary=false"},
+			},
+			cmdcore.Example{"List packages available in all namespaces",
+				[]string{"package", "available", "list", "-A"},
+			},
+			cmdcore.Example{"List all available versions of a package",
+				[]string{"package", "available", "list", "-p", "cert-manager.community.tanzu.vmware.com"}},
+		}.Description("-p", o.pkgCmdTreeOpts),
+		SilenceUsage: true,
+		Annotations:  map[string]string{"table": ""},
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List available packages in all namespaces")
 
 	cmd.Flags().BoolVar(&o.Summary, "summary", true, "Show summarized list of packages")
-	if !o.positionalNameArg {
+
+	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "List all available versions of package")
+	} else {
+		cmd.Use = "list or list PACKAGE_NAME"
 	}
 
 	cmd.Flags().BoolVar(&o.Wide, "wide", false, "Show additional info")
@@ -72,7 +79,7 @@ kctrl package available --package cert-manager.community.tanzu.vmware.com`,
 }
 
 func (o *ListOptions) Run(args []string) error {
-	if o.positionalNameArg && len(args) > 0 {
+	if o.pkgCmdTreeOpts.PositionalArgs && len(args) > 0 {
 		o.Name = args[0]
 	}
 
