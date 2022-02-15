@@ -43,6 +43,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 				[]string{"package", "repository", "get", "-r", "tce"}},
 		}.Description(o.binaryName, "-r", o.positionalNameArg),
 		SilenceUsage: true,
+		Annotations:  map[string]string{"table": ""},
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 
