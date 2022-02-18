@@ -14,7 +14,7 @@ require (
 	github.com/vmware-tanzu/carvel-kapp-controller v0.27.0
 	github.com/vmware-tanzu/carvel-vendir v0.23.0
 	k8s.io/api v0.22.1 // kubernetes-1.22.1
-	k8s.io/apimachinery v0.22.1 // kubernetes-1.22.1
+	k8s.io/apimachinery v0.22.1
 	k8s.io/client-go v0.22.1 // kubernetes-1.22.1
 )
 
