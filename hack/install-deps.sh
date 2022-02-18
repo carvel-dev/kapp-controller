@@ -15,12 +15,6 @@ install() {
 
   dst_dir="${CARVEL_INSTALL_BIN_DIR:-${K14SIO_INSTALL_BIN_DIR:-/usr/local/bin}}"
 
-  if [ -x "$(command -v wget)" ]; then
-    dl_bin="wget -nv -O-"
-  else
-    dl_bin="curl -s -L"
-  fi
-
   if which sha256sum; then
 	  echo "found sha256sum"
   else
@@ -53,35 +47,35 @@ install() {
   echo "Installing ${binary_type} binaries..."
 
   echo "Installing ytt..."
-  $dl_bin https://github.com/vmware-tanzu/carvel-ytt/releases/download/${ytt_version}/ytt-${binary_type} > /tmp/ytt
+  curl -sLo /tmp/ytt https://github.com/vmware-tanzu/carvel-ytt/releases/download/${ytt_version}/ytt-${binary_type}
   echo "${ytt_checksum}  /tmp/ytt" | sha256sum -c -
   mv /tmp/ytt ${dst_dir}/ytt
   chmod +x ${dst_dir}/ytt
   echo "Installed ${dst_dir}/ytt ${ytt_version}"
 
   echo "Installing kbld..."
-  $dl_bin https://github.com/vmware-tanzu/carvel-kbld/releases/download/${kbld_version}/kbld-${binary_type} > /tmp/kbld
+  curl -sLo /tmp/kbld https://github.com/vmware-tanzu/carvel-kbld/releases/download/${kbld_version}/kbld-${binary_type}
   echo "${kbld_checksum}  /tmp/kbld" | sha256sum -c -
   mv /tmp/kbld ${dst_dir}/kbld
   chmod +x ${dst_dir}/kbld
   echo "Installed ${dst_dir}/kbld ${kbld_version}"
 
   echo "Installing kapp..."
-  $dl_bin https://github.com/vmware-tanzu/carvel-kapp/releases/download/${kapp_version}/kapp-${binary_type} > /tmp/kapp
+  curl -sLo /tmp/kapp https://github.com/vmware-tanzu/carvel-kapp/releases/download/${kapp_version}/kapp-${binary_type}
   echo "${kapp_checksum}  /tmp/kapp" | sha256sum -c -
   mv /tmp/kapp ${dst_dir}/kapp
   chmod +x ${dst_dir}/kapp
   echo "Installed ${dst_dir}/kapp ${kapp_version}"
 
   echo "Installing imgpkg..."
-  $dl_bin https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/${imgpkg_version}/imgpkg-${binary_type} > /tmp/imgpkg
+  curl -sLo /tmp/imgpkg https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/${imgpkg_version}/imgpkg-${binary_type}
   echo "${imgpkg_checksum}  /tmp/imgpkg" | sha256sum -c -
   mv /tmp/imgpkg ${dst_dir}/imgpkg
   chmod +x ${dst_dir}/imgpkg
   echo "Installed ${dst_dir}/imgpkg ${imgpkg_version}"
 
   echo "Installing vendir..."
-  $dl_bin https://github.com/vmware-tanzu/carvel-vendir/releases/download/${vendir_version}/vendir-${binary_type} > /tmp/vendir
+  curl -sLo /tmp/vendir https://github.com/vmware-tanzu/carvel-vendir/releases/download/${vendir_version}/vendir-${binary_type}
   echo "${vendir_checksum}  /tmp/vendir" | sha256sum -c -
   mv /tmp/vendir ${dst_dir}/vendir
   chmod +x ${dst_dir}/vendir

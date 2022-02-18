@@ -32,7 +32,7 @@ jobs:
           mkdir /tmp/bin
           export PATH=/tmp/bin:$PATH
 
-          wget -O- https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64 > /tmp/bin/minikube
+          curl -sLo /tmp/bin/minikube https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
           chmod +x /tmp/bin/minikube
           minikube start --driver=docker
           eval $(minikube docker-env --shell=bash)

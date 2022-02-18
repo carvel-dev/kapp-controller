@@ -2,8 +2,6 @@ FROM photon:4.0
 
 ARG KCTRL_VER=development
 
-RUN tdnf install -y tar wget gzip
-
 # adapted from golang docker image
 ENV PATH /usr/local/go/bin:$PATH
 ENV GOLANG_VERSION 1.17.6
@@ -11,7 +9,7 @@ ENV GO_REL_ARCH linux-amd64
 ENV GO_REL_SHA 231654bbf2dab3d86c1619ce799e77b03d96f9b50770297c8f4dff8836fc8ca2
 
 RUN set eux; \
-    wget -O go.tgz "https://golang.org/dl/go${GOLANG_VERSION}.${GO_REL_ARCH}.tar.gz" --progress=dot:giga; \
+    curl -sLo go.tgz "https://golang.org/dl/go${GOLANG_VERSION}.${GO_REL_ARCH}.tar.gz"; \
     echo "${GO_REL_SHA} go.tgz" | sha256sum -c -; \
     tar -C /usr/local -xzf go.tgz; \
     rm go.tgz; \
@@ -30,21 +28,21 @@ RUN ./install-deps.sh
 
 # [DEPRECATED] Helm V2
 # Maintaining two versions of helm until we drop support in a future release
-RUN wget -O- https://get.helm.sh/helm-v2.17.0-linux-amd64.tar.gz > /helm && \
+RUN curl -sLo /helm https://get.helm.sh/helm-v2.17.0-linux-amd64.tar.gz && \
   echo "f3bec3c7c55f6a9eb9e6586b8c503f370af92fe987fcbf741f37707606d70296  /helm" | sha256sum -c - && \
   mkdir /helm-v2-unpacked && tar -C /helm-v2-unpacked -xzvf /helm
 
-RUN wget -O- https://get.helm.sh/helm-v3.8.0-linux-amd64.tar.gz > /helm && \
+RUN curl -sLo /helm https://get.helm.sh/helm-v3.8.0-linux-amd64.tar.gz && \
   echo "8408c91e846c5b9ba15eb6b1a5a79fc22dd4d33ac6ea63388e5698d1b2320c8b  /helm" | sha256sum -c - && \
   mkdir /helm-unpacked && tar -C /helm-unpacked -xzvf /helm
 
 # sops
-RUN wget -O- https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.linux > /usr/local/bin/sops && \
+RUN curl -sLo /usr/local/bin/sops https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.linux && \
   echo "185348fd77fc160d5bdf3cd20ecbc796163504fd3df196d7cb29000773657b74  /usr/local/bin/sops" | sha256sum -c - && \
   chmod +x /usr/local/bin/sops && sops -v
 
 # age (encryption for sops)
-RUN wget -O- https://github.com/FiloSottile/age/releases/download/v1.0.0/age-v1.0.0-linux-amd64.tar.gz > age.tgz && \
+RUN curl -sLo age.tgz https://github.com/FiloSottile/age/releases/download/v1.0.0/age-v1.0.0-linux-amd64.tar.gz && \
   echo "6414f71ce947fbbea1314f6e9786c5d48436ebc76c3fd6167bf018e432b3b669  age.tgz" | sha256sum -c - && \
   tar -xzf age.tgz && cp age/age /usr/local/bin && \
   chmod +x /usr/local/bin/age && age --version
