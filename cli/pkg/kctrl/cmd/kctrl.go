@@ -9,6 +9,7 @@ import (
 	"github.com/cppforlife/cobrautil"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdpkg "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package"
 	pkgavail "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/available"
@@ -82,6 +83,12 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 	AddPackageCommands(o, pkgCmd, flagsFactory, pkgOpts)
 
 	cmd.AddCommand(pkgCmd)
+
+	appCmd := app.NewCmd()
+	appCmd.AddCommand(app.NewGetCmd(app.NewGetOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	appCmd.AddCommand(app.NewListCmd(app.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+
+	cmd.AddCommand(appCmd)
 
 	ConfigureGlobalFlags(o, cmd, flagsFactory, pkgOpts.PositionalArgs)
 
