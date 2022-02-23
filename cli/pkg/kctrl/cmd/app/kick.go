@@ -7,20 +7,27 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type KickOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
+
+	WaitFlags cmdcore.WaitFlags
 
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
@@ -39,6 +46,11 @@ func NewKickCmd(o *KickOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App CR name (required)")
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  1 * time.Second,
+		DefaultTimeout:   5 * time.Minute,
+	})
 
 	return cmd
 }
@@ -101,6 +113,49 @@ func (o *KickOptions) Run() error {
 	_, err = client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
 	if err != nil {
 		return err
+	}
+
+	if o.WaitFlags.Enabled {
+		err = o.waitForAppReconciliation(client)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (o *KickOptions) waitForAppReconciliation(client kcclient.Interface) error {
+	o.ui.PrintLinef("Waiting for PackageInstall reconciliation for '%s'", o.Name)
+	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
+	description := getAppDescription(o.Name, o.NamespaceFlags.Name)
+
+	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
+
+		app, err := client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
+
+		if err != nil {
+			return false, err
+		}
+		if app.Generation != app.Status.ObservedGeneration {
+			// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
+			return false, nil
+		}
+		status := app.Status.GenericStatus
+
+		for _, condition := range status.Conditions {
+			msgsUI.NotifySection("%s: %s", description, condition.Type)
+
+			switch {
+			case condition.Type == kcv1alpha1.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
+				return true, nil
+			case condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue:
+				return false, fmt.Errorf("%s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+			}
+		}
+		return false, nil
+	}); err != nil {
+		return fmt.Errorf("%s: Reconciling: %s", description, err)
 	}
 
 	return nil
