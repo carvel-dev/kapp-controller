@@ -78,6 +78,22 @@ func (o *KickOptions) Run() error {
 			o.Name, o.NamespaceFlags.Name)
 	}
 
+	err = o.triggerReconciliation(client)
+	if err != nil {
+		return err
+	}
+
+	if o.WaitFlags.Enabled {
+		err = o.waitForAppReconciliation(client)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (o *KickOptions) triggerReconciliation(client kcclient.Interface) error {
 	pausePatch := []map[string]interface{}{
 		{
 			"op":    "add",
@@ -113,13 +129,6 @@ func (o *KickOptions) Run() error {
 	_, err = client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
 	if err != nil {
 		return err
-	}
-
-	if o.WaitFlags.Enabled {
-		err = o.waitForAppReconciliation(client)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
