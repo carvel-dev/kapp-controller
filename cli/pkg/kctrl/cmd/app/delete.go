@@ -5,7 +5,6 @@ package app
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -18,11 +17,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-type KickOptions struct {
+type DeleteOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
@@ -33,14 +31,14 @@ type KickOptions struct {
 	Name           string
 }
 
-func NewKickOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *KickOptions {
-	return &KickOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeleteOptions {
+	return &DeleteOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
-func NewKickCmd(o *KickOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
+func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "kick",
-		Short: "Trigger reconciliation for App CR",
+		Use:   "delete",
+		Short: "Delete App CR",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
@@ -55,7 +53,7 @@ func NewKickCmd(o *KickOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	return cmd
 }
 
-func (o *KickOptions) Run() error {
+func (o *DeleteOptions) Run() error {
 	if len(o.Name) == 0 {
 		return fmt.Errorf("Expected App CR name to be non empty")
 	}
@@ -74,17 +72,23 @@ func (o *KickOptions) Run() error {
 	}
 
 	if isOwnedByPackageInstall(app) {
-		return fmt.Errorf("App CR '%s' in namespace '%s' is owned by a PackageInstall.\n(Hint: Try using `kctrl package installed kick` to reconcile PackageInstall)",
+		return fmt.Errorf("App CR '%s' in namespace '%s' is owned by a PackageInstall.\n(Hint: Try using `kctrl package installed delete` to delete PackageInstall)",
 			o.Name, o.NamespaceFlags.Name)
 	}
 
-	err = o.triggerReconciliation(client)
+	o.ui.PrintLinef("Deleting App CR '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+	err = o.ui.AskForConfirmation()
+	if err != nil {
+		return err
+	}
+
+	err = client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Delete(context.Background(), o.Name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
 
 	if o.WaitFlags.Enabled {
-		err = o.waitForAppReconciliation(client)
+		err = o.waitForAppDeletion(client)
 		if err != nil {
 			return err
 		}
@@ -93,57 +97,18 @@ func (o *KickOptions) Run() error {
 	return nil
 }
 
-func (o *KickOptions) triggerReconciliation(client kcclient.Interface) error {
-	pausePatch := []map[string]interface{}{
-		{
-			"op":    "add",
-			"path":  "/spec/paused",
-			"value": true,
-		},
-	}
-
-	patchJSON, err := json.Marshal(pausePatch)
-	if err != nil {
-		return err
-	}
-
-	o.ui.PrintLinef("Triggering reconciliation for App CR '%s' in namespace '%s'...", o.Name, o.NamespaceFlags.Name)
-
-	_, err = client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
-	if err != nil {
-		return err
-	}
-
-	unpausePatch := []map[string]interface{}{
-		{
-			"op":   "remove",
-			"path": "/spec/paused",
-		},
-	}
-
-	patchJSON, err = json.Marshal(unpausePatch)
-	if err != nil {
-		return err
-	}
-
-	_, err = client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (o *KickOptions) waitForAppReconciliation(client kcclient.Interface) error {
-	o.ui.PrintLinef("Waiting for App CR reconciliation for '%s'", o.Name)
+func (o *DeleteOptions) waitForAppDeletion(client kcclient.Interface) error {
+	o.ui.PrintLinef("Waiting for App CR deletion for '%s'", o.Name)
 	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 	description := getAppDescription(o.Name, o.NamespaceFlags.Name)
 
-	err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
-
+	err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (bool, error) {
 		app, err := client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
-
 		if err != nil {
+			if errors.IsNotFound(err) {
+				msgsUI.NotifySection("%s: DeletionSucceeded", description)
+				return true, nil
+			}
 			return false, err
 		}
 		if app.Generation != app.Status.ObservedGeneration {
@@ -152,20 +117,17 @@ func (o *KickOptions) waitForAppReconciliation(client kcclient.Interface) error 
 		}
 		status := app.Status.GenericStatus
 
-		for _, condition := range status.Conditions {
-			msgsUI.NotifySection("%s: %s", description, condition.Type)
+		for _, cond := range status.Conditions {
+			msgsUI.NotifySection("%s: %s", description, cond.Type)
 
-			switch {
-			case condition.Type == kcv1alpha1.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
-				return true, nil
-			case condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue:
-				return false, fmt.Errorf("%s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+			if cond.Type == kcv1alpha1.DeleteFailed && cond.Status == corev1.ConditionTrue {
+				return false, fmt.Errorf("%s: Deleting: %s. %s", description, status.UsefulErrorMessage, status.FriendlyDescription)
 			}
 		}
 		return false, nil
 	})
 	if err != nil {
-		return fmt.Errorf("%s: Reconciling: %s", description, err)
+		return fmt.Errorf("%s: Deleting: %s", description, err)
 	}
 
 	return nil

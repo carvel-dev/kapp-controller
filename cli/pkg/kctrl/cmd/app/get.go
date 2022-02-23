@@ -64,7 +64,7 @@ func (o *GetOptions) Run() error {
 			uitable.NewHeader("Namespace"),
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Service Account"),
-			uitable.NewHeader("Description"),
+			uitable.NewHeader("Status"),
 			uitable.NewHeader("Owner References"),
 			uitable.NewHeader("Conditions"),
 		},
