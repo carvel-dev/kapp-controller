@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -72,6 +73,15 @@ func (o *PauseOptions) Run() error {
 		return nil
 	}
 
+	err = o.pauseApp(client)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o *PauseOptions) pauseApp(client kcclient.Interface) error {
 	pausePatch := []map[string]interface{}{
 		{
 			"op":    "add",
