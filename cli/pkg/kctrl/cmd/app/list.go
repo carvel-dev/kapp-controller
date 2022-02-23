@@ -69,7 +69,7 @@ func (o *ListOptions) Run() error {
 		Header: []uitable.Header{
 			nsHeader,
 			uitable.NewHeader("Name"),
-			uitable.NewHeader("Description"),
+			uitable.NewHeader("Status"),
 			uitable.NewHeader("Since Deploy"),
 			uitable.NewHeader("Age"),
 			uitable.NewHeader("Owned"),
