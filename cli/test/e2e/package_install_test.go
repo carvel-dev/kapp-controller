@@ -175,6 +175,34 @@ spec:
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
 
+	logger.Section("package installed pause", func() {
+
+		_, err := kappCtrl.RunWithOpts([]string{
+			"package", "installed", "pause",
+			"--package-install", pkgiName,
+		}, RunOpts{})
+		require.NoError(t, err)
+
+		out, err := kubectl.RunWithOpts([]string{"get", "app", pkgiName}, RunOpts{})
+		require.NoError(t, err)
+
+		require.Contains(t, out, "Canceled/paused")
+	})
+
+	logger.Section("package installed kick", func() {
+
+		_, err := kappCtrl.RunWithOpts([]string{
+			"package", "installed", "kick",
+			"--package-install", pkgiName,
+		}, RunOpts{})
+		require.NoError(t, err)
+
+		out, err := kubectl.RunWithOpts([]string{"get", "app", pkgiName}, RunOpts{})
+		require.NoError(t, err)
+
+		require.Contains(t, out, "Reconcile succeeded")
+	})
+
 	logger.Section("package install delete", func() {
 		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "delete", "--package-install", pkgiName}, RunOpts{})
 		require.NoError(t, err)
