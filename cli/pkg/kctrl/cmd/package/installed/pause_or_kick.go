@@ -13,9 +13,12 @@ import (
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type PauseOrKickOptions struct {
@@ -131,7 +134,16 @@ func (o *PauseOrKickOptions) Kick() error {
 		return err
 	}
 
-	return o.unpause(client)
+	err = o.unpause(client)
+	if err != nil {
+		return err
+	}
+
+	if o.WaitFlags.Enabled {
+		return o.waitForPackageInstallReconciliation(client)
+	}
+
+	return nil
 }
 
 func (o *PauseOrKickOptions) pause(client kcclient.Interface) error {
@@ -176,6 +188,44 @@ func (o *PauseOrKickOptions) unpause(client kcclient.Interface) error {
 	_, err = client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// waitForPackageInstallReconciliation waits until the package get installed successfully or a failure happen
+// TODO Move reconciliation to a common place for create-or-update and pause-or-kick
+func (o *PauseOrKickOptions) waitForPackageInstallReconciliation(client kcclient.Interface) error {
+	o.ui.PrintLinef("Waiting for PackageInstall reconciliation for '%s'", o.Name)
+	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
+	description := getPackageInstallDescription(o.Name, o.NamespaceFlags.Name)
+
+	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
+
+		resource, err := client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
+		//resource, err := p.kappClient.GetPackageInstall(name, namespace)
+		if err != nil {
+			return false, err
+		}
+		if resource.Generation != resource.Status.ObservedGeneration {
+			// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
+			return false, nil
+		}
+		status := resource.Status.GenericStatus
+
+		for _, condition := range status.Conditions {
+			msgsUI.NotifySection("%s: %s", description, condition.Type)
+
+			switch {
+			case condition.Type == kcv1alpha1.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
+				return true, nil
+			case condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue:
+				return false, fmt.Errorf("%s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+			}
+		}
+		return false, nil
+	}); err != nil {
+		return fmt.Errorf("%s: Reconciling: %s", description, err)
 	}
 
 	return nil
