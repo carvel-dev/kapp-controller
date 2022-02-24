@@ -369,6 +369,14 @@ spec:
                       template:
                         items:
                           properties:
+                            cue:
+                              properties:
+                                paths:
+                                  description: Explicit list of files/directories (optional)
+                                  items:
+                                    type: string
+                                  type: array
+                              type: object
                             helmTemplate:
                               description: Use helm template command to render helm chart
                               properties:
@@ -835,6 +843,14 @@ spec:
               template:
                 items:
                   properties:
+                    cue:
+                      properties:
+                        paths:
+                          description: Explicit list of files/directories (optional)
+                          items:
+                            type: string
+                          type: array
+                      type: object
                     helmTemplate:
                       description: Use helm template command to render helm chart
                       properties:

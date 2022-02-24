@@ -313,6 +313,14 @@ message AppTemplate {
 
   // Use sops to decrypt *.sops.yml files (optional; v0.11.0+)
   optional AppTemplateSops sops = 6;
+
+  optional AppTemplateCue cue = 7;
+}
+
+// +k8s:openapi-gen=true
+message AppTemplateCue {
+  // Explicit list of files/directories (optional)
+  repeated string paths = 1;
 }
 
 // +k8s:openapi-gen=true

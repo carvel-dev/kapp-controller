@@ -16,6 +16,7 @@ type AppTemplate struct {
 	Jsonnet      *AppTemplateJsonnet      `json:"jsonnet,omitempty" protobuf:"bytes,5,opt,name=jsonnet"`
 	// Use sops to decrypt *.sops.yml files (optional; v0.11.0+)
 	Sops *AppTemplateSops `json:"sops,omitempty" protobuf:"bytes,6,opt,name=sops"`
+	Cue  *AppTemplateCue  `json:"cue,omitempty" protobuf:"bytes,7,opt,name=cue"`
 }
 
 // +k8s:openapi-gen=true
@@ -98,4 +99,10 @@ type AppTemplateSopsAge struct {
 // +k8s:openapi-gen=true
 type AppTemplateSopsPrivateKeysSecretRef struct {
 	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
+}
+
+// +k8s:openapi-gen=true
+type AppTemplateCue struct {
+	// Explicit list of files/directories (optional)
+	Paths []string `json:"paths,omitempty" protobuf:"bytes,1,rep,name=paths"`
 }

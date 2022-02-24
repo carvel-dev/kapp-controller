@@ -47,6 +47,10 @@ RUN curl -sLo age.tgz https://github.com/FiloSottile/age/releases/download/v1.0.
   tar -xzf age.tgz && cp age/age /usr/local/bin && \
   chmod +x /usr/local/bin/age && age --version
 
+RUN curl -sLo cue.tgz https://github.com/cue-lang/cue/releases/download/v0.4.2/cue_v0.4.2_linux_amd64.tar.gz && \
+  echo "d43cf77e54f42619d270b8e4c1836aec87304daf243449c503251e6943f7466a cue.tgz" | sha256sum -c - && \
+  tar -xf cue.tgz -C /usr/local/bin cue && cue version
+
 # kapp-controller
 COPY . .
 # helpful ldflags reference: https://www.digitalocean.com/community/tutorials/using-ldflags-to-set-version-information-for-go-applications
@@ -75,6 +79,7 @@ COPY --from=0 /usr/local/bin/ytt .
 COPY --from=0 /usr/local/bin/kbld .
 COPY --from=0 /usr/local/bin/sops .
 COPY --from=0 /usr/local/bin/age .
+COPY --from=0 /usr/local/bin/cue .
 
 # deployers
 COPY --from=0 /usr/local/bin/kapp .
