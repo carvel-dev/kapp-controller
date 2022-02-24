@@ -258,3 +258,68 @@ stringData:
 		}
 	})
 }
+
+func Test_CueTemplate(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
+
+	name := "cue-simple"
+	appYaml := `
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
+  name: foo
+spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
+  fetch:
+    - inline:
+        paths:
+          cm.cue: |
+            package cm
+
+            apiVersion: "v1"
+            kind: "ConfigMap"
+            metadata:
+              name: "cm-result"
+            data:
+              values: "cool"
+  template:
+    - cue: {}
+  deploy:
+    - kapp: {}
+` + sas.ForNamespaceYAML()
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	t.Cleanup(cleanUp)
+
+	logger.Section("deploy", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
+	})
+
+	logger.Section("check ConfigMap exists", func() {
+		out := kubectl.Run([]string{"get", "configmap", "cm-result", "-o", "yaml"})
+
+		var cm corev1.ConfigMap
+
+		err := yaml.Unmarshal([]byte(out), &cm)
+		if err != nil {
+			t.Fatalf("Unmarshaling result config map: %s", err)
+		}
+
+		expectedOut := `cool`
+
+		if cm.Data["values"] != expectedOut {
+			t.Fatalf("Values '%s' does not match expected value", cm.Data["values"])
+		}
+	})
+}

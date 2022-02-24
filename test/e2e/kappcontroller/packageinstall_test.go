@@ -511,7 +511,7 @@ func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
 				ObservedGeneration:  1,
 				FriendlyDescription: "Reconcile succeeded",
 			},
-			Version: "1.0.0",
+			Version:              "1.0.0",
 			LastAttemptedVersion: "1.0.0",
 		}
 
@@ -543,7 +543,7 @@ func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
 				ObservedGeneration:  2,
 				FriendlyDescription: "Reconcile succeeded",
 			},
-			Version: "2.0.0",
+			Version:              "2.0.0",
 			LastAttemptedVersion: "2.0.0",
 		}
 
