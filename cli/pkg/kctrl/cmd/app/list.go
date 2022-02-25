@@ -72,7 +72,7 @@ func (o *ListOptions) Run() error {
 			uitable.NewHeader("Status"),
 			uitable.NewHeader("Since Deploy"),
 			uitable.NewHeader("Age"),
-			uitable.NewHeader("Owned"),
+			uitable.NewHeader("Owner"),
 		},
 
 		SortBy: []uitable.ColumnSort{
@@ -88,7 +88,7 @@ func (o *ListOptions) Run() error {
 			uitable.NewValueString(app.Status.FriendlyDescription),
 			cmdcore.NewValueAge(app.Status.Deploy.UpdatedAt.Time),
 			cmdcore.NewValueAge(app.CreationTimestamp.Time),
-			uitable.NewValueString(o.isOwned(app.OwnerReferences)),
+			uitable.NewValueString(o.owner(app.OwnerReferences)),
 		})
 	}
 
@@ -97,9 +97,9 @@ func (o *ListOptions) Run() error {
 	return nil
 }
 
-func (o *ListOptions) isOwned(references []metav1.OwnerReference) string {
+func (o *ListOptions) owner(references []metav1.OwnerReference) string {
 	if len(references) > 0 {
-		return "true"
+		return fmt.Sprintf("%s/%s", references[0].Kind, references[0].Name)
 	}
-	return "false"
+	return ""
 }
