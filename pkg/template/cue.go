@@ -5,6 +5,7 @@ package template
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	goexec "os/exec"
 
@@ -33,7 +34,7 @@ func (c *cue) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 // TemplateStream works on a stream returning templating result.
 // dirPath is provided for context from which to reference additonal inputs.
 func (c *cue) TemplateStream(stream io.Reader, dirPath string) exec.CmdRunResult {
-	panic("not implemented") // TODO: Implement
+	return exec.NewCmdRunResultWithErr(fmt.Errorf("Templating stream is not supported")) // TODO: Implement
 }
 
 func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
