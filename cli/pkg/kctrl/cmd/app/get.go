@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -57,6 +59,13 @@ func (o *GetOptions) Run() error {
 		return err
 	}
 
+	isFailing := o.isFailing(app.Status.Conditions)
+
+	failingStageHeader := uitable.NewHeader("Failing Stage")
+	failingStageHeader.Hidden = !isFailing
+	errorMessageHeader := uitable.NewHeader("Useful Error Message")
+	errorMessageHeader.Hidden = !isFailing
+
 	table := uitable.Table{
 		Transpose: true,
 
@@ -67,6 +76,8 @@ func (o *GetOptions) Run() error {
 			uitable.NewHeader("Status"),
 			uitable.NewHeader("Owner References"),
 			uitable.NewHeader("Conditions"),
+			failingStageHeader,
+			errorMessageHeader,
 		},
 
 		Rows: [][]uitable.Value{{
@@ -76,6 +87,8 @@ func (o *GetOptions) Run() error {
 			uitable.NewValueString(app.Status.FriendlyDescription),
 			uitable.NewValueInterface(o.formatOwnerReferences(app.OwnerReferences)),
 			uitable.NewValueInterface(app.Status.Conditions),
+			uitable.NewValueString(o.failingStage(app.Status)),
+			uitable.NewValueString(app.Status.UsefulErrorMessage),
 		}},
 	}
 
@@ -92,4 +105,27 @@ func (o *GetOptions) formatOwnerReferences(references []metav1.OwnerReference) [
 	}
 
 	return referenceList
+}
+
+func (o *GetOptions) isFailing(conditions []kcv1alpha1.AppCondition) bool {
+	for _, condition := range conditions {
+		if condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
+
+// TODO: Do we need to check observed generation here?
+func (o *GetOptions) failingStage(status kcv1alpha1.AppStatus) string {
+	if status.Fetch.ExitCode != 0 {
+		return "fetch"
+	}
+	if status.Template.ExitCode != 0 {
+		return "template"
+	}
+	if status.Deploy.ExitCode != 0 {
+		return "deploy"
+	}
+	return ""
 }
