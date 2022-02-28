@@ -8,60 +8,93 @@ spec:
   fetch:
   - inline:
       paths:
-        values.cue: |
-          package main
-
-          _helloMsg: "stranger"
-          _svcPort:  80
-          _appPort:  80
-          _labels: "simple-app": ""
         app.cue: |
-          package main
+            package main
 
-          apiVersion: "v1"
-          kind: "List"
-          items: [_service, _deployment]
+            apiVersion: "v1"
+            kind:       "List"
+            items: [_service, _deployment]
 
-          _service: {
-              apiVersion: "v1"
-              kind:       "Service"
-              metadata: {
-                  namespace: "default"
-                  name:      "simple-app"
-              }
-              spec: {
-                  ports: [{
-                      port:       _svcPort
-                      targetPort: _appPort
-                  }]
-                  selector: _labels
-              }
-          }
-          _deployment: {
-              apiVersion: "apps/v1"
-              kind:       "Deployment"
-              metadata: {
-                  namespace: "default"
-                  name:      "simple-app"
-              }
-              spec: {
-                  selector: matchLabels: _labels
-                  template: {
-                      metadata: labels: _labels
-                      spec: {
-                          containers: [{
-                              name:  "simple-app"
-                              image: "docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0"
-                              env: [{
-                                  name:  "HELLO_MSG"
-                                  value: _helloMsg
-                              }]
-                          }]
-                      }
-                  }
-              }
-          }
+            _labels: [string]: string
+            _labels: app:      string
+
+            _metadata: {
+                name:       string
+                namespace?: string
+                labels:     _labels
+                annotations?: [string]: string
+            }
+
+            _service: {
+                apiVersion: "v1"
+                kind:       "Service"
+                metadata:   _metadata
+                spec: {
+                    ports: [{
+                        port:       int | *80
+                        targetPort: int | *80
+                    }]
+                    selector: _labels
+                }
+            }
+            _deployment: {
+                apiVersion: "apps/v1"
+                kind:       "Deployment"
+                metadata:   _metadata
+                spec: {
+                    selector: matchLabels: {
+                        app: _labels.app
+                    }
+                    template: {
+                        metadata: labels: _labels
+                        spec: {
+                            containers: [{
+                                name:  string | *"simple-app"
+                                image: string | *"docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0"
+                                env: [{
+                                    name:  string | *"HELLO_MSG"
+                                    value: string | *"hello world"
+                                }]
+                            }]
+                        }
+                    }
+                }
+            }
   template:
-  - cue: {}
+  - cue:
+      valuesFrom:
+      - configMapRef:
+          name: cue-values
   deploy:
   - kapp: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cue-values
+data:
+  values.cue: |
+    package main
+
+    _labels: {
+        app: "hello-cue"
+    }
+
+    _metadata: {
+        name:      _labels.app
+        namespace: "default"
+    }
+    _deployment: {
+        spec: {
+            template: {
+                spec: {
+                    containers: [{
+                        name: "hello-cue"
+                        env: [{
+                            value: "hello cue"
+                        }]
+                    }]
+                }
+            }
+        }
+    }

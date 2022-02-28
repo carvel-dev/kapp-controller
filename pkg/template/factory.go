@@ -38,5 +38,5 @@ func (f Factory) NewSops(
 
 // NewCue returns a Cue templater
 func (f Factory) NewCue(opts v1alpha1.AppTemplateCue, genericOpts GenericOpts) Template {
-	return newCue(opts, genericOpts)
+	return newCue(opts, genericOpts, f.coreClient)
 }

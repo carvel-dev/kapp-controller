@@ -321,6 +321,9 @@ message AppTemplate {
 message AppTemplateCue {
   // Explicit list of files/directories (optional)
   repeated string paths = 1;
+
+  // Provide values (optional)
+  repeated AppTemplateValuesSource valuesFrom = 6;
 }
 
 // +k8s:openapi-gen=true
