@@ -105,4 +105,6 @@ type AppTemplateSopsPrivateKeysSecretRef struct {
 type AppTemplateCue struct {
 	// Explicit list of files/directories (optional)
 	Paths []string `json:"paths,omitempty" protobuf:"bytes,1,rep,name=paths"`
+	// Provide values (optional)
+	ValuesFrom []AppTemplateValuesSource `json:"valuesFrom,omitempty" protobuf:"bytes,6,rep,name=valuesFrom"`
 }

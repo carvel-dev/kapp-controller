@@ -376,6 +376,24 @@ spec:
                                   items:
                                     type: string
                                   type: array
+                                valuesFrom:
+                                  description: Provide values (optional)
+                                  items:
+                                    properties:
+                                      configMapRef:
+                                        properties:
+                                          name:
+                                            type: string
+                                        type: object
+                                      path:
+                                        type: string
+                                      secretRef:
+                                        properties:
+                                          name:
+                                            type: string
+                                        type: object
+                                    type: object
+                                  type: array
                               type: object
                             helmTemplate:
                               description: Use helm template command to render helm chart
@@ -849,6 +867,24 @@ spec:
                           description: Explicit list of files/directories (optional)
                           items:
                             type: string
+                          type: array
+                        valuesFrom:
+                          description: Provide values (optional)
+                          items:
+                            properties:
+                              configMapRef:
+                                properties:
+                                  name:
+                                    type: string
+                                type: object
+                              path:
+                                type: string
+                              secretRef:
+                                properties:
+                                  name:
+                                    type: string
+                                type: object
+                            type: object
                           type: array
                       type: object
                     helmTemplate:

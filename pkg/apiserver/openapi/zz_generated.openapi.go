@@ -1107,9 +1107,25 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateCue(ref common.ReferenceCallba
 							},
 						},
 					},
+					"valuesFrom": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Provide values (optional)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource"),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
+		Dependencies: []string{
+			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource"},
 	}
 }
 

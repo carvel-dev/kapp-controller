@@ -8,20 +8,23 @@ import (
 	"fmt"
 	"io"
 	goexec "os/exec"
+	"path/filepath"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"k8s.io/client-go/kubernetes"
 )
 
 type cue struct {
 	opts        v1alpha1.AppTemplateCue
+	coreClient  kubernetes.Interface
 	genericOpts GenericOpts
 }
 
 var _ Template = &cue{}
 
-func newCue(opts v1alpha1.AppTemplateCue, genericOpts GenericOpts) *cue {
-	return &cue{opts: opts, genericOpts: genericOpts}
+func newCue(opts v1alpha1.AppTemplateCue, genericOpts GenericOpts, coreClient kubernetes.Interface) *cue {
+	return &cue{opts: opts, genericOpts: genericOpts, coreClient: coreClient}
 }
 
 // TemplateDir works on directory returning templating result,
@@ -40,7 +43,23 @@ func (c *cue) TemplateStream(stream io.Reader, dirPath string) exec.CmdRunResult
 func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	var stdoutBs, stderrBs bytes.Buffer
 	args := []string{"export", "--out", "yaml"}
-	args = append(args, c.opts.Paths...)
+	if len(c.opts.Paths) == 0 {
+		paths, err := filepath.Glob(filepath.Join(dirPath, "*.cue"))
+		if err != nil {
+			return exec.NewCmdRunResultWithErr(fmt.Errorf("reading files: %w", err))
+		}
+		args = append(args, paths...)
+	} else {
+		args = append(args, c.opts.Paths...)
+	}
+
+	vals := Values{c.opts.ValuesFrom, c.genericOpts, c.coreClient}
+	paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
+	if err != nil {
+		return exec.NewCmdRunResultWithErr(fmt.Errorf("writing values: %w", err))
+	}
+	defer valuesCleanUpFunc()
+	args = append(args, paths...)
 
 	cmd := goexec.Command("cue", args...)
 	cmd.Stdin = input
@@ -48,7 +67,7 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	cmd.Stderr = &stderrBs
 	cmd.Dir = dirPath
 
-	err := cmd.Run()
+	err = cmd.Run()
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),

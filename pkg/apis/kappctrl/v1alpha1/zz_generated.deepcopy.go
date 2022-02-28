@@ -712,6 +712,13 @@ func (in *AppTemplateCue) DeepCopyInto(out *AppTemplateCue) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.ValuesFrom != nil {
+		in, out := &in.ValuesFrom, &out.ValuesFrom
+		*out = make([]AppTemplateValuesSource, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	return
 }
 
