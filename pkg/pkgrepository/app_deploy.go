@@ -30,8 +30,9 @@ func (a *App) deploy(tplOutput string) exec.CmdRunResult {
 			return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 		}
 
-		return kapp.Deploy(tplOutput, a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
+		a.app.Name = a.app.Name + ".pkgr"
 
+		return kapp.Deploy(tplOutput, a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
 	default:
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Unsupported way to deploy"))
 	}

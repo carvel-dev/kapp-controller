@@ -148,7 +148,7 @@ func (a *Kapp) trackCmdOutput(cmd *goexec.Cmd, startedApplyingFunc func(),
 	return liveResult, doneCh
 }
 
-func (a *Kapp) managedName() string { return a.genericOpts.Name + "-ctrl" }
+func (a *Kapp) managedName() string { return a.genericOpts.Name }
 
 func (a *Kapp) addDeployArgs(args []string) ([]string, error) {
 	if len(a.opts.IntoNs) > 0 {

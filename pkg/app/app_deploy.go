@@ -29,6 +29,8 @@ func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec
 			cancelCh, closeCancelCh := a.newCancelCh()
 			defer closeCancelCh()
 
+			a.app.Name = a.app.Name + ".app"
+
 			kapp, err := a.newKapp(*dep.Kapp, cancelCh)
 			if err != nil {
 				return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
