@@ -1121,6 +1121,13 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateCue(ref common.ReferenceCallba
 							},
 						},
 					},
+					"exportExpression": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Cue expression to export, default will export all visible fields (optional)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},

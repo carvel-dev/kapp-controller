@@ -106,5 +106,7 @@ type AppTemplateCue struct {
 	// Explicit list of files/directories (optional)
 	Paths []string `json:"paths,omitempty" protobuf:"bytes,1,rep,name=paths"`
 	// Provide values (optional)
-	ValuesFrom []AppTemplateValuesSource `json:"valuesFrom,omitempty" protobuf:"bytes,6,rep,name=valuesFrom"`
+	ValuesFrom []AppTemplateValuesSource `json:"valuesFrom,omitempty" protobuf:"bytes,2,rep,name=valuesFrom"`
+	// Cue expression to export, default will export all visible fields (optional)
+	ExportExpression string `json:"exportExpression,omitempty" protobuf:"bytes,3,opt,name=exportExpression"`
 }

@@ -371,6 +371,9 @@ spec:
                           properties:
                             cue:
                               properties:
+                                expression:
+                                  description: Cue expression to export, default will export all visible fields (optional)
+                                  type: string
                                 paths:
                                   description: Explicit list of files/directories (optional)
                                   items:
@@ -863,6 +866,9 @@ spec:
                   properties:
                     cue:
                       properties:
+                        expression:
+                          description: Cue expression to export, default will export all visible fields (optional)
+                          type: string
                         paths:
                           description: Explicit list of files/directories (optional)
                           items:

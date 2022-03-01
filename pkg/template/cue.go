@@ -60,6 +60,9 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	}
 	defer valuesCleanUpFunc()
 	args = append(args, paths...)
+	if c.opts.ExportExpression != "" {
+		args = append(args, "-e", c.opts.ExportExpression)
+	}
 
 	cmd := goexec.Command("cue", args...)
 	cmd.Stdin = input
