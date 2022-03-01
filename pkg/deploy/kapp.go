@@ -36,7 +36,29 @@ func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts ProcessedGenericOpts, canc
 	return &Kapp{opts, genericOpts, cancelCh}
 }
 
-func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
+func (a *Kapp) Rename(newName string, tplOutput string, startedApplyingFunc func(),
+	changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
+
+	args := []string{"rename", "--new-name", newName}
+	args, env := a.addGenericArgs(args, a.managedName())
+
+	cmd := goexec.Command("kapp", args...)
+	fmt.Println(cmd.String())
+	cmd.Env = append(os.Environ(), env...)
+	cmd.Stdin = strings.NewReader(tplOutput)
+
+	resultBuf, doneTrackingOutputCh := a.trackCmdOutput(cmd, startedApplyingFunc, changedFunc)
+
+	err := exec.RunWithCancel(cmd, a.cancelCh)
+	close(doneTrackingOutputCh)
+
+	result := resultBuf.Copy()
+	result.AttachErrorf("Renaming: %s", err)
+
+	return result
+}
+
+func (a *Kapp) Deploy(newName string, tplOutput string, startedApplyingFunc func(),
 	changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 
 	args, err := a.addDeployArgs([]string{"deploy", "-f", "-"})
@@ -44,7 +66,7 @@ func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 		return exec.NewCmdRunResultWithErr(err)
 	}
 
-	args, env := a.addGenericArgs(args)
+	args, env := a.addGenericArgs(args, newName)
 
 	cmd := goexec.Command("kapp", args...)
 	cmd.Env = append(os.Environ(), env...)
@@ -67,7 +89,7 @@ func (a *Kapp) Delete(startedApplyingFunc func(), changedFunc func(exec.CmdRunRe
 		return exec.NewCmdRunResultWithErr(err)
 	}
 
-	args, env := a.addGenericArgs(args)
+	args, env := a.addGenericArgs(args, a.genericOpts.Name)
 
 	cmd := goexec.Command("kapp", args...)
 	cmd.Env = append(os.Environ(), env...)
@@ -95,7 +117,7 @@ func (a *Kapp) Inspect() exec.CmdRunResult {
 		return exec.NewCmdRunResultWithErr(err)
 	}
 
-	args, env := a.addGenericArgs(args)
+	args, env := a.addGenericArgs(args, a.genericOpts.Name)
 
 	var stdoutBs, stderrBs bytes.Buffer
 
@@ -148,7 +170,7 @@ func (a *Kapp) trackCmdOutput(cmd *goexec.Cmd, startedApplyingFunc func(),
 	return liveResult, doneCh
 }
 
-func (a *Kapp) managedName() string { return a.genericOpts.Name }
+func (a *Kapp) managedName() string { return a.genericOpts.Name + "-ctrl" }
 
 func (a *Kapp) addDeployArgs(args []string) ([]string, error) {
 	if len(a.opts.IntoNs) > 0 {
@@ -191,8 +213,8 @@ func (a *Kapp) addRawOpts(args []string, opts []string, allowedFlagSet exec.Flag
 	return args, nil
 }
 
-func (a *Kapp) addGenericArgs(args []string) ([]string, []string) {
-	args = append(args, []string{"--app", a.managedName()}...)
+func (a *Kapp) addGenericArgs(args []string, appName string) ([]string, []string) {
+	args = append(args, []string{"--app", appName}...)
 	env := []string{}
 
 	if len(a.genericOpts.Namespace) > 0 {

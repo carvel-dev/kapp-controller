@@ -5,6 +5,7 @@ package app
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	ctldep "github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
@@ -29,14 +30,19 @@ func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec
 			cancelCh, closeCancelCh := a.newCancelCh()
 			defer closeCancelCh()
 
-			a.app.Name = a.app.Name + ".app"
-
 			kapp, err := a.newKapp(*dep.Kapp, cancelCh)
 			if err != nil {
 				return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 			}
 
-			result = kapp.Deploy(tplOutput, a.startFlushingAllStatusUpdates, changedFunc)
+			if strings.HasSuffix(a.app.Name, ".app") {
+				return kapp.Deploy(a.app.Name, tplOutput, a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
+			}
+
+			newName := a.app.Name + ".app"
+			kapp.Rename(newName, tplOutput, a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
+
+			result = kapp.Deploy(newName, tplOutput, a.startFlushingAllStatusUpdates, changedFunc)
 
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to deploy"))

@@ -43,7 +43,9 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 		err = a.reconcileDeploy()
 
 	default:
-		a.log.Info("Reconcile noop")
+		a.log.Info("Reconcile noop - forcing anyways")
+		err = a.reconcileDeploy()
+
 	}
 
 	return reconcile.Result{RequeueAfter: NewReconcileTimer(a.app).DurationUntilReady(err)}, err
