@@ -176,9 +176,14 @@ spec:
 	})
 
 	logger.Section("check PackageMetadata/Packages created", func() {
-		kubectl.Run([]string{"get", "pkgm/pkg.test.carvel.dev"})
-		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"})
-		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"})
+		verify := func(resourceName string) {
+			kctlOutput := kubectl.Run([]string{"get", resourceName, "-o", "yaml"})
+			assert.Contains(t, kctlOutput, "kapp.k14s.io/identity:")
+			assert.Contains(t, kctlOutput, "packaging.carvel.dev/package-repository-ref: kappctrl-test/basic.test.carvel.dev")
+		}
+		verify("pkgm/pkg.test.carvel.dev")
+		verify("pkg/pkg.test.carvel.dev.1.0.0")
+		verify("pkg/pkg.test.carvel.dev.2.0.0")
 	})
 }
 
