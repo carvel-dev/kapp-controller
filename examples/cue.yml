@@ -9,51 +9,58 @@ spec:
   - inline:
       paths:
         app.cue: |
-            package main
-
-            apiVersion: "v1"
-            kind:       "List"
-            items: [_service, _deployment]
-
-            _labels: [string]: string
-            _labels: app:      string
-
-            _metadata: {
-                name:       string
-                namespace?: string
-                labels:     _labels
-                annotations?: [string]: string
+            output: {
+                apiVersion: "v1"
+                kind:       "List"
+                items: [service, deployment]
             }
 
-            _service: {
+            config: {
+                name:        string | *"cue-sample"
+                helloMsg:    string | *"stranger"
+                servicePort: int | *80
+                appPort:     int | *80
+            }
+
+            service: {
                 apiVersion: "v1"
                 kind:       "Service"
-                metadata:   _metadata
+                metadata: {
+                    namespace: "default"
+                    name:      "simple-app"
+                }
                 spec: {
                     ports: [{
-                        port:       int | *80
-                        targetPort: int | *80
+                        port:       config.servicePort
+                        targetPort: config.appPort
                     }]
-                    selector: _labels
+                    selector: Labels
                 }
             }
-            _deployment: {
+            let Labels = labels
+            labels: {
+                "simple-app": ""
+            }
+
+            deployment: {
+
                 apiVersion: "apps/v1"
                 kind:       "Deployment"
-                metadata:   _metadata
+                metadata: {
+                    namespace: "default"
+                    name:      "simple-app"
+                }
                 spec: {
-                    selector: matchLabels: {
-                        app: _labels.app
-                    }
+                    selector: matchLabels: Labels
                     template: {
-                        metadata: labels: _labels
+                        metadata: labels: Labels
                         spec: {
                             containers: [{
-                                name:  string | *"simple-app"
-                                image: string | *"docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0"
+                                name:  "simple-app"
+                                image: "docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0"
                                 env: [{
-                                    name:  string | *"HELLO_MSG"
-                                    value: string | *"hello world"
+                                    name:  "HELLO_MSG"
+                                    value: config.helloMsg
                                 }]
                             }]
                         }
@@ -62,6 +69,7 @@ spec:
             }
   template:
   - cue:
+      expression: "output"
       valuesFrom:
       - configMapRef:
           name: cue-values
@@ -73,28 +81,6 @@ kind: ConfigMap
 metadata:
   name: cue-values
 data:
-  values.cue: |
-    package main
-
-    _labels: {
-        app: "hello-cue"
-    }
-
-    _metadata: {
-        name:      _labels.app
-        namespace: "default"
-    }
-    _deployment: {
-        spec: {
-            template: {
-                spec: {
-                    containers: [{
-                        name: "hello-cue"
-                        env: [{
-                            value: "hello cue"
-                        }]
-                    }]
-                }
-            }
-        }
-    }
+  values.yml: |
+    config:
+      helloMsg: "from cue"
