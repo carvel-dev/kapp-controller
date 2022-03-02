@@ -66,8 +66,8 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Writing values: %w", err))
 	}
 	defer valuesCleanUpFunc()
-	if c.opts.InputField != "" {
-		args = append(args, "--path", fmt.Sprintf("%s:", c.opts.InputField))
+	if c.opts.InputExpression != "" {
+		args = append(args, "--path", c.opts.InputExpression)
 	}
 	args = append(args, paths...)
 	if c.opts.OutputExpression != "" {

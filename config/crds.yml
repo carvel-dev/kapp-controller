@@ -371,8 +371,8 @@ spec:
                           properties:
                             cue:
                               properties:
-                                inputField:
-                                  description: Field under which ValuesFrom will be merged/unified, default will unify into the top-level (optional)
+                                inputExpression:
+                                  description: Cue expression for single path component, can be used to unify ValuesFrom into a given field (optional)
                                   type: string
                                 outputExpression:
                                   description: Cue expression to output, default will export all visible fields (optional)
@@ -869,8 +869,8 @@ spec:
                   properties:
                     cue:
                       properties:
-                        inputField:
-                          description: Field under which ValuesFrom will be merged/unified, default will unify into the top-level (optional)
+                        inputExpression:
+                          description: Cue expression for single path component, can be used to unify ValuesFrom into a given field (optional)
                           type: string
                         outputExpression:
                           description: Cue expression to output, default will export all visible fields (optional)

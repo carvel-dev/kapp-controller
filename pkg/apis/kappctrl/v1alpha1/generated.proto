@@ -325,8 +325,8 @@ message AppTemplateCue {
   // Provide values (optional)
   repeated AppTemplateValuesSource valuesFrom = 2;
 
-  // Field under which ValuesFrom will be merged/unified, default will unify into the top-level (optional)
-  optional string inputField = 3;
+  // Cue expression for single path component, can be used to unify ValuesFrom into a given field (optional)
+  optional string inputExpression = 3;
 
   // Cue expression to output, default will export all visible fields (optional)
   optional string outputExpression = 4;

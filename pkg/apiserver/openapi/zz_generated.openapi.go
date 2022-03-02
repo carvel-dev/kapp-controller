@@ -1121,9 +1121,9 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateCue(ref common.ReferenceCallba
 							},
 						},
 					},
-					"inputField": {
+					"inputExpression": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Field under which ValuesFrom will be merged/unified, default will unify into the top-level (optional)",
+							Description: "Cue expression for single path component, can be used to unify ValuesFrom into a given field (optional)",
 							Type:        []string{"string"},
 							Format:      "",
 						},
