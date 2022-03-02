@@ -10,6 +10,7 @@ import (
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controller"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cmd/controllerinit"
+	"k8s.io/klog/v2"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
@@ -32,9 +33,9 @@ func main() {
 	flag.BoolVar(&ctrlOpts.APIPriorityAndFairness, "enable-api-priority-and-fairness", true, "Enable/disable APIPriorityAndFairness feature gate for apiserver. Recommended to disable for <= k8s 1.19.")
 	flag.Parse()
 
-	log := logf.Log.WithName("kc")
-
-	logf.SetLogger(zap.New(zap.UseDevMode(false)))
+	log := zap.New(zap.UseDevMode(false)).WithName("kc")
+	logf.SetLogger(log)
+	klog.SetLogger(log)
 
 	mainLog := log.WithName("main")
 	mainLog.Info("kapp-controller", "version", Version)
