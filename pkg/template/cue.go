@@ -12,6 +12,7 @@ import (
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -46,17 +47,23 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	if len(c.opts.Paths) == 0 {
 		paths, err := filepath.Glob(filepath.Join(dirPath, "*.cue"))
 		if err != nil {
-			return exec.NewCmdRunResultWithErr(fmt.Errorf("reading files: %w", err))
+			return exec.NewCmdRunResultWithErr(fmt.Errorf("Reading files: %w", err))
 		}
 		args = append(args, paths...)
 	} else {
+		for _, path := range c.opts.Paths {
+			_, err := memdir.ScopedPath(dirPath, path)
+			if err != nil {
+				return exec.NewCmdRunResultWithErr(fmt.Errorf("Checking path: %w", err))
+			}
+		}
 		args = append(args, c.opts.Paths...)
 	}
 
 	vals := Values{c.opts.ValuesFrom, c.genericOpts, c.coreClient}
 	paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
 	if err != nil {
-		return exec.NewCmdRunResultWithErr(fmt.Errorf("writing values: %w", err))
+		return exec.NewCmdRunResultWithErr(fmt.Errorf("Writing values: %w", err))
 	}
 	defer valuesCleanUpFunc()
 	if c.opts.InputField != "" {
