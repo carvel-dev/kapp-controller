@@ -107,6 +107,8 @@ type AppTemplateCue struct {
 	Paths []string `json:"paths,omitempty" protobuf:"bytes,1,rep,name=paths"`
 	// Provide values (optional)
 	ValuesFrom []AppTemplateValuesSource `json:"valuesFrom,omitempty" protobuf:"bytes,2,rep,name=valuesFrom"`
-	// Cue expression to export, default will export all visible fields (optional)
-	ExportExpression string `json:"exportExpression,omitempty" protobuf:"bytes,3,opt,name=exportExpression"`
+	// Field under which ValuesFrom will be merged/unified, default will unify into the top-level (optional)
+	InputField string `json:"inputField,omitempty" protobuf:"bytes,3,opt,name=inputField"`
+	// Cue expression to output, default will export all visible fields (optional)
+	OutputExpression string `json:"outputExpression,omitempty" protobuf:"bytes,4,opt,name=outputExpression"`
 }

@@ -59,9 +59,12 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("writing values: %w", err))
 	}
 	defer valuesCleanUpFunc()
+	if c.opts.InputField != "" {
+		args = append(args, "--path", fmt.Sprintf("%s:", c.opts.InputField))
+	}
 	args = append(args, paths...)
-	if c.opts.ExportExpression != "" {
-		args = append(args, "-e", c.opts.ExportExpression)
+	if c.opts.OutputExpression != "" {
+		args = append(args, "--expression", c.opts.OutputExpression)
 	}
 
 	cmd := goexec.Command("cue", args...)

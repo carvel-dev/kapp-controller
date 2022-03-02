@@ -69,7 +69,8 @@ spec:
             }
   template:
   - cue:
-      expression: "output"
+      inputField: "config"
+      outputExpression: "output"
       valuesFrom:
       - configMapRef:
           name: cue-values
@@ -82,5 +83,4 @@ metadata:
   name: cue-values
 data:
   values.yml: |
-    config:
-      helloMsg: "from cue"
+    helloMsg: "from cue"

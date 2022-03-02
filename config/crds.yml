@@ -371,8 +371,11 @@ spec:
                           properties:
                             cue:
                               properties:
-                                expression:
-                                  description: Cue expression to export, default will export all visible fields (optional)
+                                inputField:
+                                  description: Field under which ValuesFrom will be merged/unified, default will unify into the top-level (optional)
+                                  type: string
+                                outputExpression:
+                                  description: Cue expression to output, default will export all visible fields (optional)
                                   type: string
                                 paths:
                                   description: Explicit list of files/directories (optional)
@@ -866,8 +869,11 @@ spec:
                   properties:
                     cue:
                       properties:
-                        expression:
-                          description: Cue expression to export, default will export all visible fields (optional)
+                        inputField:
+                          description: Field under which ValuesFrom will be merged/unified, default will unify into the top-level (optional)
+                          type: string
+                        outputExpression:
+                          description: Cue expression to output, default will export all visible fields (optional)
                           type: string
                         paths:
                           description: Explicit list of files/directories (optional)
