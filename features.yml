@@ -1,0 +1,18 @@
+# This file is meant to be consumed programmatically
+# to find out when certain kapp-controller features are available.
+
+# features:
+#   registry-auth:
+#     minVersion: "0.24.0"
+#     issues:
+#       some-bug-name:
+#         fixedVersion: "0.32.0"
+#         description: "..."
+
+features:
+  sops-age-encryption:
+    minVersion: "0.28.0"
+  registry-auth:
+    minVersion: "0.24.0"
+  registry-auth-iaas:
+    minVersion: "0.25.0"
