@@ -69,7 +69,7 @@ spec:
             }
   template:
   - cue:
-      inputField: "config"
+      inputExpression: "config:"
       outputExpression: "output"
       valuesFrom:
       - configMapRef:
