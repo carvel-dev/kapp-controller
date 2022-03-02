@@ -2,6 +2,11 @@
 
 set -e -x -u
 
+function dump {
+  kubectl get apps -o yaml
+}
+trap dump ERR
+
 kapp deploy -y -a rbac -f examples/rbac/
 
 time kapp deploy -y -a simple-app -f examples/simple-app-git/1.yml
