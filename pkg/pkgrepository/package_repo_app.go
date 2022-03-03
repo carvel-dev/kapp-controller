@@ -65,18 +65,20 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 		}},
 		Template: []kcv1alpha1.AppTemplate{{
 			Ytt: &kcv1alpha1.AppTemplateYtt{
-				// TODO do not want to interpret packages/**/* as templates
-				// but we cannot apply file mark to both .yml and .yaml without
-				// one of them possibly being 0 (that results in ytt error currently)
 				IgnoreUnknownComments: true,
 				Paths:                 []string{"packages"},
+			},
+		}, {
+			Ytt: &kcv1alpha1.AppTemplateYtt{
+				Paths: []string{"-"},
 
 				Inline: &kcv1alpha1.AppFetchInline{
 					Paths: map[string]string{
-						// This overlay adjusts the contents of the repo including adding annotations and ensuring namespace.
-						// Remove all resources that are not known to this kapp-controller.
-						// It's worth just removing instead of erroring,
-						// since future repo bundles may introduce new kinds.
+						// - Adjust the contents of the repo including adding
+						//   annotations and ensuring namespace.
+						// - Remove all resources that are not known to this kapp-controller.
+						//   It's worth just removing instead of erroring,
+						//   since future repo bundles may introduce new kinds.
 						"kapp-controller-clean-up.yml": fmt.Sprintf(`
 #@ load("@ytt:overlay", "overlay")
 
@@ -100,8 +102,10 @@ metadata:
   annotations:
     #@overlay/match missing_ok=True
     kapp.k14s.io/disable-original: ""
+
     #@overlay/match missing_ok=True
     kapp.k14s.io/disable-wait: ""
+
     #@overlay/match missing_ok=True
     packaging.carvel.dev/package-repository-ref: %s/%s
 `, pkgRepository.Namespace, pkgRepository.Name),
