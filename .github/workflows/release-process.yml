@@ -33,6 +33,9 @@ jobs:
         run: |
           set -e -x
           ./hack/build-release.sh
+          cd cli
+          ./hack/build-binaries.sh
+          shasum -a 256 kctrl-* | tee -a ./tmp/checksums.txt
 
       - name: Create release draft and upload release yaml
         uses: softprops/action-gh-release@17cd0d34deddf848fc0e7d9be5202c148c270a0a
@@ -40,7 +43,9 @@ jobs:
           name: ${{ github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
           body_path: ./tmp/checksums.txt
-          files: ./tmp/release.yml
+          files: |
+            ./cli/kctrl-*
+            ./tmp/release.yml
           draft: true
           prerelease: true
 
@@ -86,7 +91,12 @@ jobs:
               }
             }
             console.log(checksums)
-            return `${checksums['release.yml']}  ./tmp/release.yml`
+            return `${checksums['release.yml']}  ./tmp/release.yml
+            ${checksums['kctrl-darwin-amd64']}  kctrl-darwin-amd64
+            ${checksums['kctrl-darwin-arm64']}  kctrl-darwin-arm64
+            ${checksums['kctrl-linux-amd64']}  kctrl-linux-amd64
+            ${checksums['kctrl-linux-arm64']}  kctrl-linux-arm64
+            ${checksums['kctrl-windows-amd64.exe']}  kctrl-windows-amd64.exe`
 
       - name: Verify uploaded artifacts
         if: startsWith(github.ref, 'refs/tags/')
