@@ -18,7 +18,7 @@ func TestSucceededDurationUntilReady(t *testing.T) {
 		Spec: v1alpha1.AppSpec{
 			SyncPeriod: &metav1.Duration{Duration: syncPeriod},
 		},
-		Status: v1alpha1.AppStatus{
+		Status: &v1alpha1.AppStatus{
 			GenericStatus: v1alpha1.GenericStatus{
 				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileSucceeded}},
 			},
@@ -39,7 +39,7 @@ func TestFailureSyncMathOverflowGuard(t *testing.T) {
 		Spec: v1alpha1.AppSpec{
 			SyncPeriod: &metav1.Duration{Duration: syncPeriod},
 		},
-		Status: v1alpha1.AppStatus{
+		Status: &v1alpha1.AppStatus{
 			ConsecutiveReconcileFailures: 2700, // number so large 2^x will definitely overflow
 			GenericStatus: v1alpha1.GenericStatus{
 				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
@@ -64,7 +64,7 @@ func TestConsecutiveFailuresOverflowGuard(t *testing.T) {
 		Spec: v1alpha1.AppSpec{
 			SyncPeriod: &metav1.Duration{Duration: syncPeriod},
 		},
-		Status: v1alpha1.AppStatus{
+		Status: &v1alpha1.AppStatus{
 			ConsecutiveReconcileFailures: -2, // number so large 2^x will definitely overflow
 			GenericStatus: v1alpha1.GenericStatus{
 				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
@@ -88,7 +88,7 @@ func TestFailedDurationUntilReady(t *testing.T) {
 		Spec: v1alpha1.AppSpec{
 			SyncPeriod: &metav1.Duration{Duration: syncPeriod},
 		},
-		Status: v1alpha1.AppStatus{
+		Status: &v1alpha1.AppStatus{
 			GenericStatus: v1alpha1.GenericStatus{
 				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
 			},
@@ -133,7 +133,7 @@ func TestSucceededIsReadyAt(t *testing.T) {
 		Spec: v1alpha1.AppSpec{
 			SyncPeriod: &metav1.Duration{Duration: syncPeriod},
 		},
-		Status: v1alpha1.AppStatus{
+		Status: &v1alpha1.AppStatus{
 			Fetch: &v1alpha1.AppStatusFetch{
 				UpdatedAt: metav1.Time{Time: timeNow},
 			},
@@ -168,7 +168,7 @@ func TestFailedIsReadyAt(t *testing.T) {
 		Spec: v1alpha1.AppSpec{
 			SyncPeriod: &metav1.Duration{Duration: syncPeriod},
 		},
-		Status: v1alpha1.AppStatus{
+		Status: &v1alpha1.AppStatus{
 			Fetch: &v1alpha1.AppStatusFetch{
 				UpdatedAt: metav1.Time{Time: timeNow},
 			},
@@ -204,7 +204,7 @@ func TestIsReadyAtWithStaleDeployTime(t *testing.T) {
 		Spec: v1alpha1.AppSpec{
 			SyncPeriod: &metav1.Duration{Duration: syncPeriod},
 		},
-		Status: v1alpha1.AppStatus{
+		Status: &v1alpha1.AppStatus{
 			Fetch: &v1alpha1.AppStatusFetch{
 				UpdatedAt: metav1.Time{Time: timeOfReady},
 				Error:     "I've failed you",

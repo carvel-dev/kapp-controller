@@ -45,7 +45,7 @@ spec:
               key: value
   template:
     - ytt: {}
-  deploy:
+  deployP:
     - kapp:
         inspect: {}
         intoNs: does-not-exist`, name) + sas.ForNamespaceYAML()
@@ -62,6 +62,7 @@ spec:
 	})
 
 	out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
+	fmt.Println("got output:\n", out, "\n end of output")
 
 	var cr v1alpha1.App
 	err := yaml.Unmarshal([]byte(out), &cr)

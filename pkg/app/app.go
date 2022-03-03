@@ -51,7 +51,7 @@ func NewApp(app v1alpha1.App, hooks Hooks,
 func (a *App) Name() string      { return a.app.Name }
 func (a *App) Namespace() string { return a.app.Namespace }
 
-func (a *App) Status() v1alpha1.AppStatus { return a.app.Status }
+func (a *App) Status() *v1alpha1.AppStatus { return a.app.Status }
 
 func (a *App) StatusAsYAMLBytes() ([]byte, error) {
 	return yaml.Marshal(a.Status())

@@ -131,7 +131,7 @@ metadata:
 			kcv1alpha1.AppTemplate{Kbld: &kcv1alpha1.AppTemplateKbld{Paths: []string{"-", ".imgpkg/images.yml"}}})
 	}
 
-	desiredApp.Status = kcv1alpha1.AppStatus{
+	desiredApp.Status = &kcv1alpha1.AppStatus{
 		Fetch:                         pkgRepository.Status.Fetch,
 		Template:                      pkgRepository.Status.Template,
 		Deploy:                        pkgRepository.Status.Deploy,

@@ -17,7 +17,11 @@ func (in *App) DeepCopyInto(out *App) {
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	in.Spec.DeepCopyInto(&out.Spec)
-	in.Status.DeepCopyInto(&out.Status)
+	if in.Status != nil {
+		in, out := &in.Status, &out.Status
+		*out = new(AppStatus)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 

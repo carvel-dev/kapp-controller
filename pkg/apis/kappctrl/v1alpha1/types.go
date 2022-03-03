@@ -28,7 +28,7 @@ type App struct {
 
 	Spec AppSpec `json:"spec"`
 	// +optional
-	Status AppStatus `json:"status,omitempty"`
+	Status *AppStatus `json:"status"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
