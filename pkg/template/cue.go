@@ -42,8 +42,8 @@ func (c *cue) TemplateStream(stream io.Reader, dirPath string) exec.CmdRunResult
 }
 
 func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
-	var stdoutBs, stderrBs bytes.Buffer
 	args := []string{"export", "--out", "yaml"}
+
 	if len(c.opts.Paths) == 0 {
 		paths, err := filepath.Glob(filepath.Join(dirPath, "*.cue"))
 		if err != nil {
@@ -52,12 +52,12 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		args = append(args, paths...)
 	} else {
 		for _, path := range c.opts.Paths {
-			_, err := memdir.ScopedPath(dirPath, path)
+			checkedPath, err := memdir.ScopedPath(dirPath, path)
 			if err != nil {
 				return exec.NewCmdRunResultWithErr(fmt.Errorf("Checking path: %w", err))
 			}
+			args = append(args, checkedPath)
 		}
-		args = append(args, c.opts.Paths...)
 	}
 
 	vals := Values{c.opts.ValuesFrom, c.genericOpts, c.coreClient}
@@ -66,6 +66,7 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Writing values: %w", err))
 	}
 	defer valuesCleanUpFunc()
+
 	if c.opts.InputExpression != "" {
 		args = append(args, "--path", c.opts.InputExpression)
 	}
@@ -74,6 +75,7 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		args = append(args, "--expression", c.opts.OutputExpression)
 	}
 
+	var stdoutBs, stderrBs bytes.Buffer
 	cmd := goexec.Command("cue", args...)
 	cmd.Stdin = input
 	cmd.Stdout = &stdoutBs
