@@ -5,6 +5,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -29,6 +31,8 @@ type DeleteOptions struct {
 
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
+
+	IgnoreAssociatedResources bool
 }
 
 func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeleteOptions {
@@ -44,6 +48,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App CR name (required)")
+	cmd.Flags().BoolVar(&o.IgnoreAssociatedResources, "ignore-associated-resources", false, "Ignore resources created by the AppCR and delete the custom resource itself")
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
 		DefaultInterval:  1 * time.Second,
@@ -82,6 +87,13 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
+	if o.IgnoreAssociatedResources {
+		err = o.patchNoopDelete(client)
+		if err != nil {
+			return err
+		}
+	}
+
 	err = client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Delete(context.Background(), o.Name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
@@ -92,6 +104,30 @@ func (o *DeleteOptions) Run() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (o *DeleteOptions) patchNoopDelete(client kcclient.Interface) error {
+	noopDeletePatch := []map[string]interface{}{
+		{
+			"op":    "add",
+			"path":  "/spec/noopDelete",
+			"value": true,
+		},
+	}
+
+	patchJSON, err := json.Marshal(noopDeletePatch)
+	if err != nil {
+		return err
+	}
+
+	o.ui.PrintLinef("Ignoring associated resources for App CR '%s' in namespace '%s'...", o.Name, o.NamespaceFlags.Name)
+
+	_, err = client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
+	if err != nil {
+		return err
 	}
 
 	return nil
