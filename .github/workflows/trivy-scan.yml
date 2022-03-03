@@ -28,7 +28,7 @@ jobs:
         run: |
           set -eo pipefail
 
-          summary="Trivy scan has found new vulnerabilities in ${{steps.latest-sha.outputs.tag}} check https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"
+          summary="Trivy scan has found \"new\" vulnerabilities in ${{steps.latest-sha.outputs.tag}} check https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"
 
           vulnCount=$(jq '[ .Results[].Vulnerabilities ] | length' trivy-results-image-latest.json)
           if [[ $vulnCount -eq 0 ]]; then
