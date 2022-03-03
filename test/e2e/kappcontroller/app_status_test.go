@@ -62,9 +62,9 @@ spec:
 		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml), AllowError: true})
 		// it's supposed to error, but it's also supposed to create the three supporting resources successfully:
 		assert.Error(t, err)
-		assert.Contains(t, out, "ok: reconcile role/kappctrl-e2e-ns-role (rbac.authorization.k8s.io/v1) namespace: kappctrl-test")
-		assert.Contains(t, out, "ok: reconcile rolebinding/kappctrl-e2e-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: kappctrl-test")
-		assert.Contains(t, out, "ok: reconcile serviceaccount/kappctrl-e2e-ns-sa (v1) namespace: kappctrl-test")
+		assert.Contains(t, out, "ok: reconcile role/kappctrl-e2e-ns-role")
+		assert.Contains(t, out, "ok: reconcile rolebinding/kappctrl-e2e-ns-role-binding")
+		assert.Contains(t, out, "ok: reconcile serviceaccount/kappctrl-e2e-ns-sa")
 
 	})
 
