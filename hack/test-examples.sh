@@ -30,6 +30,9 @@ time kapp delete -y -a redis-helm
 time kapp deploy -y -a simple-app-http -f examples/simple-app-http.yml
 time kapp delete -y -a simple-app-http
 
+time kapp deploy -y -a cue -f examples/cue.yml
+time kapp delete -y -a cue
+
 kapp delete -y -a rbac
 
 echo EXTERNAL SUCCESS

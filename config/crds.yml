@@ -369,6 +369,38 @@ spec:
                       template:
                         items:
                           properties:
+                            cue:
+                              properties:
+                                inputExpression:
+                                  description: Cue expression for single path component, can be used to unify ValuesFrom into a given field (optional)
+                                  type: string
+                                outputExpression:
+                                  description: Cue expression to output, default will export all visible fields (optional)
+                                  type: string
+                                paths:
+                                  description: Explicit list of files/directories (optional)
+                                  items:
+                                    type: string
+                                  type: array
+                                valuesFrom:
+                                  description: Provide values (optional)
+                                  items:
+                                    properties:
+                                      configMapRef:
+                                        properties:
+                                          name:
+                                            type: string
+                                        type: object
+                                      path:
+                                        type: string
+                                      secretRef:
+                                        properties:
+                                          name:
+                                            type: string
+                                        type: object
+                                    type: object
+                                  type: array
+                              type: object
                             helmTemplate:
                               description: Use helm template command to render helm chart
                               properties:
@@ -835,6 +867,38 @@ spec:
               template:
                 items:
                   properties:
+                    cue:
+                      properties:
+                        inputExpression:
+                          description: Cue expression for single path component, can be used to unify ValuesFrom into a given field (optional)
+                          type: string
+                        outputExpression:
+                          description: Cue expression to output, default will export all visible fields (optional)
+                          type: string
+                        paths:
+                          description: Explicit list of files/directories (optional)
+                          items:
+                            type: string
+                          type: array
+                        valuesFrom:
+                          description: Provide values (optional)
+                          items:
+                            properties:
+                              configMapRef:
+                                properties:
+                                  name:
+                                    type: string
+                                type: object
+                              path:
+                                type: string
+                              secretRef:
+                                properties:
+                                  name:
+                                    type: string
+                                type: object
+                            type: object
+                          type: array
+                      type: object
                     helmTemplate:
                       description: Use helm template command to render helm chart
                       properties:

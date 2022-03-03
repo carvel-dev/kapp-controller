@@ -33,6 +33,8 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 			template = a.templateFactory.NewHelmTemplate(*tpl.HelmTemplate, genericOpts)
 		case tpl.Sops != nil:
 			template = a.templateFactory.NewSops(*tpl.Sops, genericOpts)
+		case tpl.Cue != nil:
+			template = a.templateFactory.NewCue(*tpl.Cue, genericOpts)
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to template"))
 			return result

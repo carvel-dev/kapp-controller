@@ -16,6 +16,7 @@ type AppTemplate struct {
 	Jsonnet      *AppTemplateJsonnet      `json:"jsonnet,omitempty" protobuf:"bytes,5,opt,name=jsonnet"`
 	// Use sops to decrypt *.sops.yml files (optional; v0.11.0+)
 	Sops *AppTemplateSops `json:"sops,omitempty" protobuf:"bytes,6,opt,name=sops"`
+	Cue  *AppTemplateCue  `json:"cue,omitempty" protobuf:"bytes,7,opt,name=cue"`
 }
 
 // +k8s:openapi-gen=true
@@ -98,4 +99,16 @@ type AppTemplateSopsAge struct {
 // +k8s:openapi-gen=true
 type AppTemplateSopsPrivateKeysSecretRef struct {
 	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
+}
+
+// +k8s:openapi-gen=true
+type AppTemplateCue struct {
+	// Explicit list of files/directories (optional)
+	Paths []string `json:"paths,omitempty" protobuf:"bytes,1,rep,name=paths"`
+	// Provide values (optional)
+	ValuesFrom []AppTemplateValuesSource `json:"valuesFrom,omitempty" protobuf:"bytes,2,rep,name=valuesFrom"`
+	// Cue expression for single path component, can be used to unify ValuesFrom into a given field (optional)
+	InputExpression string `json:"inputExpression,omitempty" protobuf:"bytes,3,opt,name=inputExpression"`
+	// Cue expression to output, default will export all visible fields (optional)
+	OutputExpression string `json:"outputExpression,omitempty" protobuf:"bytes,4,opt,name=outputExpression"`
 }
