@@ -1,0 +1,86 @@
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: cue-app
+  namespace: default
+spec:
+  serviceAccountName: default-ns-sa
+  fetch:
+  - inline:
+      paths:
+        app.cue: |
+            output: {
+                apiVersion: "v1"
+                kind:       "List"
+                items: [service, deployment]
+            }
+
+            config: {
+                name:        string | *"cue-sample"
+                helloMsg:    string | *"stranger"
+                servicePort: int | *80
+                appPort:     int | *80
+            }
+
+            service: {
+                apiVersion: "v1"
+                kind:       "Service"
+                metadata: {
+                    namespace: "default"
+                    name:      "simple-app"
+                }
+                spec: {
+                    ports: [{
+                        port:       config.servicePort
+                        targetPort: config.appPort
+                    }]
+                    selector: Labels
+                }
+            }
+            let Labels = labels
+            labels: {
+                "simple-app": ""
+            }
+
+            deployment: {
+
+                apiVersion: "apps/v1"
+                kind:       "Deployment"
+                metadata: {
+                    namespace: "default"
+                    name:      "simple-app"
+                }
+                spec: {
+                    selector: matchLabels: Labels
+                    template: {
+                        metadata: labels: Labels
+                        spec: {
+                            containers: [{
+                                name:  "simple-app"
+                                image: "docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0"
+                                env: [{
+                                    name:  "HELLO_MSG"
+                                    value: config.helloMsg
+                                }]
+                            }]
+                        }
+                    }
+                }
+            }
+  template:
+  - cue:
+      inputExpression: "config:"
+      outputExpression: "output"
+      valuesFrom:
+      - configMapRef:
+          name: cue-values
+  deploy:
+  - kapp: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cue-values
+data:
+  values.yml: |
+    helloMsg: "from cue"
