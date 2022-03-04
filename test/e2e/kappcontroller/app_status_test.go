@@ -65,7 +65,6 @@ spec:
 		assert.Contains(t, out, "ok: reconcile role/kappctrl-e2e-ns-role")
 		assert.Contains(t, out, "ok: reconcile rolebinding/kappctrl-e2e-ns-role-binding")
 		assert.Contains(t, out, "ok: reconcile serviceaccount/kappctrl-e2e-ns-sa")
-
 	})
 
 	out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
