@@ -16,6 +16,7 @@ func NewAppUpdateStatus() *AppUpdateStatus {
 	return &AppUpdateStatus{appsToUpdateStatus: map[RefKey]struct{}{}}
 }
 
+// MarkNeedsUpdate creates an entry (mark) to update the provided RefKey
 func (a *AppUpdateStatus) MarkNeedsUpdate(appKey RefKey) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
@@ -23,6 +24,7 @@ func (a *AppUpdateStatus) MarkNeedsUpdate(appKey RefKey) {
 	a.appsToUpdateStatus[appKey] = struct{}{}
 }
 
+// IsUpdateNeeded returns true iff the provided RefKey has a mark indicating it needs an update
 func (a *AppUpdateStatus) IsUpdateNeeded(appKey RefKey) bool {
 	a.lock.Lock()
 	defer a.lock.Unlock()
@@ -31,6 +33,7 @@ func (a *AppUpdateStatus) IsUpdateNeeded(appKey RefKey) bool {
 	return keyExists
 }
 
+// MarkUpdated removes any existing "needs update" mark
 func (a *AppUpdateStatus) MarkUpdated(appKey RefKey) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
