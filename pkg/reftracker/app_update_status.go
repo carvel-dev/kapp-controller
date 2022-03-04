@@ -16,14 +16,14 @@ func NewAppUpdateStatus() *AppUpdateStatus {
 	return &AppUpdateStatus{appsToUpdateStatus: map[RefKey]struct{}{}}
 }
 
-func (a AppUpdateStatus) MarkNeedsUpdate(appKey RefKey) {
+func (a *AppUpdateStatus) MarkNeedsUpdate(appKey RefKey) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
 	a.appsToUpdateStatus[appKey] = struct{}{}
 }
 
-func (a AppUpdateStatus) IsUpdateNeeded(appKey RefKey) bool {
+func (a *AppUpdateStatus) IsUpdateNeeded(appKey RefKey) bool {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
@@ -31,7 +31,7 @@ func (a AppUpdateStatus) IsUpdateNeeded(appKey RefKey) bool {
 	return keyExists
 }
 
-func (a AppUpdateStatus) MarkUpdated(appKey RefKey) {
+func (a *AppUpdateStatus) MarkUpdated(appKey RefKey) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
