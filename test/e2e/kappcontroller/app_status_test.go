@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
@@ -58,10 +59,16 @@ spec:
 	defer cleanUpApp()
 
 	logger.Section("deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml), AllowError: true})
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml), AllowError: true})
+		// it's supposed to error, but it's also supposed to create the three supporting resources successfully:
+		assert.Error(t, err)
+		assert.Contains(t, out, "ok: reconcile role/kappctrl-e2e-ns-role")
+		assert.Contains(t, out, "ok: reconcile rolebinding/kappctrl-e2e-ns-role-binding")
+		assert.Contains(t, out, "ok: reconcile serviceaccount/kappctrl-e2e-ns-sa")
 	})
 
 	out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
+	assert.Greater(t, len(out), 1000) // the output yaml should be non-trivial (observed len ~2.7k)
 
 	var cr v1alpha1.App
 	err := yaml.Unmarshal([]byte(out), &cr)
