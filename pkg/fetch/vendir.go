@@ -351,18 +351,22 @@ func (v *Vendir) configMapBytes(configMapRef vendirconf.DirectoryContentsLocalRe
 // expand this option to other fetch options, we will need to add hostname
 // extraction for those
 func (v *Vendir) shouldSkipTLSVerify(url string) bool {
-	hostname := v.extractImageRefHostname(url)
+	hostname, hostAndPort := v.extractImageRefHostname(url)
 	skip := v.skipTLSConfig.ShouldSkipTLSForDomain(hostname)
+	if !skip && (hostname != hostAndPort) {
+		// sometimes people want to whitelist only a specific port of a host, so we'll try that as a fallback.
+		return v.skipTLSConfig.ShouldSkipTLSForDomain(hostAndPort)
+	}
 	return skip
 }
 
-func (v *Vendir) extractImageRefHostname(ref string) string {
+func (v *Vendir) extractImageRefHostname(ref string) (string, string) {
 	parsedRef, err := name.ParseReference(ref)
 	if err != nil {
-		return ""
+		return "", ""
 	}
 
 	hostnameAndPort := parsedRef.Context().RegistryStr()
 
-	return strings.Split(hostnameAndPort, ":")[0]
+	return strings.Split(hostnameAndPort, ":")[0], hostnameAndPort
 }

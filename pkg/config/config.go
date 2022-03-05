@@ -112,6 +112,9 @@ func (gc *Config) Apply() error {
 	return nil
 }
 
+// ShouldSkipTLSForDomain compares a candidate host against a stored set of allow-listed hosts.
+// the allow-list is built from the user-facing flag `dangerousSkipTLSVerify`.
+// Note that in some cases the allow-list may contain ports, so the function name could also be ShouldSkipTLSForDomainAndPort
 func (gc *Config) ShouldSkipTLSForDomain(candidateDomain string) bool {
 	if !gc.populated {
 		return false
