@@ -122,9 +122,17 @@ func (gc *Config) ShouldSkipTLSForDomain(candidateDomain string) bool {
 		return false
 	}
 
+	domainsMatch := func(spaceyStr, otherStr string) bool {
+		return strings.TrimSpace(spaceyStr) == otherStr
+	}
+
 	for _, domain := range strings.Split(domains, ",") {
 		// in case user gives domains in form "a, b"
-		if strings.TrimSpace(domain) == candidateDomain {
+		if domainsMatch(domain, candidateDomain) {
+			return true
+		}
+		// if the whitelist contains a port we actually need to return true for all ports in that domain since we don't get passed the port here.
+		if strings.Contains(domain, ":") && domainsMatch(strings.Split(domain, ":")[0], candidateDomain) {
 			return true
 		}
 	}
