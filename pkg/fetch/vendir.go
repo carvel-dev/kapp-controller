@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -63,6 +62,11 @@ func (v *Vendir) AddDir(fetch v1alpha1.AppFetch, dirPath string) error {
 	}
 
 	return nil
+}
+
+// Config is just for accessing (a copy of) the internal config for testing; you probably don't want to call this IRL
+func (v *Vendir) Config() vendirconf.Config {
+	return v.config
 }
 
 func (v *Vendir) dir(contents vendirconf.DirectoryContents, dirPath string) vendirconf.Directory {
@@ -351,9 +355,8 @@ func (v *Vendir) configMapBytes(configMapRef vendirconf.DirectoryContentsLocalRe
 // expand this option to other fetch options, we will need to add hostname
 // extraction for those
 func (v *Vendir) shouldSkipTLSVerify(url string) bool {
-	hostname := v.extractImageRefHostname(url)
-	skip := v.skipTLSConfig.ShouldSkipTLSForDomain(hostname)
-	return skip
+	hostAndPort := v.extractImageRefHostname(url)
+	return v.skipTLSConfig.ShouldSkipTLSForAuthority(hostAndPort)
 }
 
 func (v *Vendir) extractImageRefHostname(ref string) string {
@@ -361,8 +364,5 @@ func (v *Vendir) extractImageRefHostname(ref string) string {
 	if err != nil {
 		return ""
 	}
-
-	hostnameAndPort := parsedRef.Context().RegistryStr()
-
-	return strings.Split(hostnameAndPort, ":")[0]
+	return parsedRef.Context().RegistryStr()
 }

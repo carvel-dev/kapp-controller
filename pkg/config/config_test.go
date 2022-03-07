@@ -130,3 +130,31 @@ func Test_KubernetesServiceHost_IsSet(t *testing.T) {
 
 	assert.Equal(t, expected, noProxyActual)
 }
+
+func Test_ShouldSkipTLSForAuthority(t *testing.T) {
+	configMap := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kapp-controller-config",
+			Namespace: "default",
+		},
+		Data: map[string]string{
+			"dangerousSkipTLSVerify": "always.trustworthy.com, selectively.trusted.net:123456, [1fff:0:a88:85a3::ac1f]:8001, 1aaa:0:a88:85a3::ac1f",
+		},
+	}
+	k8scs := k8sfake.NewSimpleClientset(configMap)
+	config, err := kcconfig.GetConfig(k8scs)
+	assert.NoError(t, err)
+
+	assert.False(t, config.ShouldSkipTLSForAuthority("some.random.org"))
+	assert.True(t, config.ShouldSkipTLSForAuthority("always.trustworthy.com"))
+	assert.True(t, config.ShouldSkipTLSForAuthority("always.trustworthy.com:12345"))
+	assert.False(t, config.ShouldSkipTLSForAuthority("selectively.trusted.net"))
+	assert.False(t, config.ShouldSkipTLSForAuthority("selectively.trusted.net:8888"))
+	assert.True(t, config.ShouldSkipTLSForAuthority("selectively.trusted.net:123456"))
+	assert.True(t, config.ShouldSkipTLSForAuthority("[1fff:0:a88:85a3::ac1f]:8001"))
+	assert.False(t, config.ShouldSkipTLSForAuthority("[1fff:0:a88:85a3::ac1f]:8888"))
+	assert.False(t, config.ShouldSkipTLSForAuthority("1fff:0:a88:85a3::ac1f"))
+	assert.True(t, config.ShouldSkipTLSForAuthority("1aaa:0:a88:85a3::ac1f"))
+	assert.True(t, config.ShouldSkipTLSForAuthority("[1aaa:0:a88:85a3::ac1f]:888"))
+
+}

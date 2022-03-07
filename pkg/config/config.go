@@ -6,6 +6,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 
@@ -112,19 +113,35 @@ func (gc *Config) Apply() error {
 	return nil
 }
 
-func (gc *Config) ShouldSkipTLSForDomain(candidateDomain string) bool {
+// ShouldSkipTLSForAuthority compares a candidate host or host:port against a stored set of allow-listed authorities.
+// the allow-list is built from the user-facing flag `dangerousSkipTLSVerify`.
+// Note that in some cases the allow-list may contain ports, so the function name could also be ShouldSkipTLSForDomainAndPort
+// Note that "authority" is defined in: https://www.rfc-editor.org/rfc/rfc3986#section-3 to mean "host and port"
+func (gc *Config) ShouldSkipTLSForAuthority(candidateAuthority string) bool {
 	if !gc.populated {
 		return false
 	}
 
-	domains := gc.skipTLSVerify
-	if len(domains) == 0 {
+	authorities := gc.skipTLSVerify
+	if len(authorities) == 0 {
 		return false
 	}
 
-	for _, domain := range strings.Split(domains, ",") {
+	host, _, err := net.SplitHostPort(candidateAuthority)
+	if err != nil {
+		// SplitHostPort considers it to be an error if there's no port at all, but that's a common case for us.
+		host = candidateAuthority
+	}
+
+	for _, spaceyAuthority := range strings.Split(authorities, ",") {
 		// in case user gives domains in form "a, b"
-		if strings.TrimSpace(domain) == candidateDomain {
+		authority := strings.TrimSpace(spaceyAuthority)
+		// check if the host matches the allowed authority, meaning all ports for that host are allowed
+		if authority == host {
+			return true
+		}
+		// check the full candidate string in case they both have a port and its the same port
+		if authority == candidateAuthority {
 			return true
 		}
 	}

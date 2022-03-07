@@ -9,7 +9,7 @@ import (
 )
 
 type SkipTLSConfig interface {
-	ShouldSkipTLSForDomain(domain string) bool
+	ShouldSkipTLSForAuthority(authority string) bool
 }
 
 type Factory struct {
