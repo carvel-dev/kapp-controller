@@ -50,7 +50,7 @@ func Test_AddDir_skipsTLS(t *testing.T) {
 			"dirpath/0")
 		assert.NoError(t, err)
 
-		vConf := vendir.GetConfig()
+		vConf := vendir.Config()
 		assert.Equal(t, i+1, len(vConf.Directories), "Failed on iteration %d", i)
 		assert.Equal(t, tc.shouldSkipTLS, vConf.Directories[i].Contents[0].Image.DangerousSkipTLSVerify, "Failed with URL %s", tc.URL)
 	}

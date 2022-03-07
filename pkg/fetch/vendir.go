@@ -64,8 +64,8 @@ func (v *Vendir) AddDir(fetch v1alpha1.AppFetch, dirPath string) error {
 	return nil
 }
 
-// GetConfig is just for accessing (a copy of) the internal config for testing; you probably don't want to call this IRL
-func (v *Vendir) GetConfig() vendirconf.Config {
+// Config is just for accessing (a copy of) the internal config for testing; you probably don't want to call this IRL
+func (v *Vendir) Config() vendirconf.Config {
 	return v.config
 }
 
