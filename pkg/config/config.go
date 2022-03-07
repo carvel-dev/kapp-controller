@@ -6,6 +6,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 
@@ -126,13 +127,21 @@ func (gc *Config) ShouldSkipTLSForAuthority(candidateAuthority string) bool {
 		return false
 	}
 
+	host, _, err := net.SplitHostPort(candidateAuthority)
+	if err != nil {
+		// SplitHostPort considers it to be an error if there's no port at all, but that's a common case for us.
+		host = candidateAuthority
+	}
+
 	for _, spaceyAuthority := range strings.Split(authorities, ",") {
 		// in case user gives domains in form "a, b"
 		authority := strings.TrimSpace(spaceyAuthority)
-		if authority == candidateAuthority {
+		// check if the host matches the allowed authority, meaning all ports for that host are allowed
+		if authority == host {
 			return true
 		}
-		if strings.Contains(candidateAuthority, ":") && authority == strings.Split(candidateAuthority, ":")[0] {
+		// check the full candidate string in case they both have a port and its the same port
+		if authority == candidateAuthority {
 			return true
 		}
 	}

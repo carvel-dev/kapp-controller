@@ -362,7 +362,6 @@ func (v *Vendir) shouldSkipTLSVerify(url string) bool {
 func (v *Vendir) extractImageRefHostname(ref string) string {
 	parsedRef, err := name.ParseReference(ref)
 	if err != nil {
-		fmt.Println("error extracting image ref hostname: ", err)
 		return ""
 	}
 	return parsedRef.Context().RegistryStr()

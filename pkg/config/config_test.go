@@ -138,7 +138,7 @@ func Test_ShouldSkipTLSForAuthority(t *testing.T) {
 			Namespace: "default",
 		},
 		Data: map[string]string{
-			"dangerousSkipTLSVerify": "always.trustworthy.com, selectively.trusted.net:123456",
+			"dangerousSkipTLSVerify": "always.trustworthy.com, selectively.trusted.net:123456, [1fff:0:a88:85a3::ac1f]:8001, 1aaa:0:a88:85a3::ac1f",
 		},
 	}
 	k8scs := k8sfake.NewSimpleClientset(configMap)
@@ -147,6 +147,14 @@ func Test_ShouldSkipTLSForAuthority(t *testing.T) {
 
 	assert.False(t, config.ShouldSkipTLSForAuthority("some.random.org"))
 	assert.True(t, config.ShouldSkipTLSForAuthority("always.trustworthy.com"))
+	assert.True(t, config.ShouldSkipTLSForAuthority("always.trustworthy.com:12345"))
 	assert.False(t, config.ShouldSkipTLSForAuthority("selectively.trusted.net"))
+	assert.False(t, config.ShouldSkipTLSForAuthority("selectively.trusted.net:8888"))
 	assert.True(t, config.ShouldSkipTLSForAuthority("selectively.trusted.net:123456"))
+	assert.True(t, config.ShouldSkipTLSForAuthority("[1fff:0:a88:85a3::ac1f]:8001"))
+	assert.False(t, config.ShouldSkipTLSForAuthority("[1fff:0:a88:85a3::ac1f]:8888"))
+	assert.False(t, config.ShouldSkipTLSForAuthority("1fff:0:a88:85a3::ac1f"))
+	assert.True(t, config.ShouldSkipTLSForAuthority("1aaa:0:a88:85a3::ac1f"))
+	assert.True(t, config.ShouldSkipTLSForAuthority("[1aaa:0:a88:85a3::ac1f]:888"))
+
 }
