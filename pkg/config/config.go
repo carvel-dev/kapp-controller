@@ -112,22 +112,27 @@ func (gc *Config) Apply() error {
 	return nil
 }
 
-// ShouldSkipTLSForDomain compares a candidate host against a stored set of allow-listed hosts.
+// ShouldSkipTLSForAuthority compares a candidate host or host:port against a stored set of allow-listed authorities.
 // the allow-list is built from the user-facing flag `dangerousSkipTLSVerify`.
 // Note that in some cases the allow-list may contain ports, so the function name could also be ShouldSkipTLSForDomainAndPort
-func (gc *Config) ShouldSkipTLSForDomain(candidateDomain string) bool {
+// Note that "authority" is defined in: https://www.rfc-editor.org/rfc/rfc3986#section-3 to mean "host and port"
+func (gc *Config) ShouldSkipTLSForAuthority(candidateAuthority string) bool {
 	if !gc.populated {
 		return false
 	}
 
-	domains := gc.skipTLSVerify
-	if len(domains) == 0 {
+	authorities := gc.skipTLSVerify
+	if len(authorities) == 0 {
 		return false
 	}
 
-	for _, domain := range strings.Split(domains, ",") {
+	for _, spaceyAuthority := range strings.Split(authorities, ",") {
 		// in case user gives domains in form "a, b"
-		if strings.TrimSpace(domain) == candidateDomain {
+		authority := strings.TrimSpace(spaceyAuthority)
+		if authority == candidateAuthority {
+			return true
+		}
+		if strings.Contains(candidateAuthority, ":") && authority == strings.Split(candidateAuthority, ":")[0] {
 			return true
 		}
 	}

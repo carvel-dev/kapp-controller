@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -356,20 +355,15 @@ func (v *Vendir) configMapBytes(configMapRef vendirconf.DirectoryContentsLocalRe
 // expand this option to other fetch options, we will need to add hostname
 // extraction for those
 func (v *Vendir) shouldSkipTLSVerify(url string) bool {
-	hostname, hostAndPort := v.extractImageRefHostname(url)
-	skip := v.skipTLSConfig.ShouldSkipTLSForDomain(hostname)
-	if !skip && (hostname != hostAndPort) {
-		// sometimes people want to whitelist only a specific port of a host, so we'll try that as a fallback.
-		return v.skipTLSConfig.ShouldSkipTLSForDomain(hostAndPort)
-	}
-	return skip
+	hostAndPort := v.extractImageRefHostname(url)
+	return v.skipTLSConfig.ShouldSkipTLSForAuthority(hostAndPort)
 }
 
-func (v *Vendir) extractImageRefHostname(ref string) (string, string) {
+func (v *Vendir) extractImageRefHostname(ref string) string {
 	parsedRef, err := name.ParseReference(ref)
 	if err != nil {
-		return "", ""
+		fmt.Println("error extracting image ref hostname: ", err)
+		return ""
 	}
-	hostnameAndPort := parsedRef.Context().RegistryStr()
-	return strings.Split(hostnameAndPort, ":")[0], hostnameAndPort
+	return parsedRef.Context().RegistryStr()
 }

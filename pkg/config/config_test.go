@@ -131,7 +131,7 @@ func Test_KubernetesServiceHost_IsSet(t *testing.T) {
 	assert.Equal(t, expected, noProxyActual)
 }
 
-func Test_ShouldSkipTLSForDomain(t *testing.T) {
+func Test_ShouldSkipTLSForAuthority(t *testing.T) {
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kapp-controller-config",
@@ -145,8 +145,8 @@ func Test_ShouldSkipTLSForDomain(t *testing.T) {
 	config, err := kcconfig.GetConfig(k8scs)
 	assert.NoError(t, err)
 
-	assert.False(t, config.ShouldSkipTLSForDomain("some.random.org"))
-	assert.True(t, config.ShouldSkipTLSForDomain("always.trustworthy.com"))
-	assert.False(t, config.ShouldSkipTLSForDomain("selectively.trusted.net"))
-	assert.True(t, config.ShouldSkipTLSForDomain("selectively.trusted.net:123456"))
+	assert.False(t, config.ShouldSkipTLSForAuthority("some.random.org"))
+	assert.True(t, config.ShouldSkipTLSForAuthority("always.trustworthy.com"))
+	assert.False(t, config.ShouldSkipTLSForAuthority("selectively.trusted.net"))
+	assert.True(t, config.ShouldSkipTLSForAuthority("selectively.trusted.net:123456"))
 }
