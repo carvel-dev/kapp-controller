@@ -71,7 +71,7 @@ func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
 	}
 
 	// if only one fetch, update dstPath for backwards compatibility
-	if len(a.app.Spec.Fetch) == 1 {
+	if len(a.app.Spec.Fetch) == 1 && a.app.Spec.Fetch[0].Path == "" {
 		dstPath = path.Join(dstPath, "0")
 	}
 

@@ -110,6 +110,10 @@ message AppFetch {
 
   // Pulls imgpkg bundle from Docker/OCI registry (v0.17.0+)
   optional AppFetchImgpkgBundle imgpkgBundle = 6;
+
+  // Relative path to place the fetched artifacts
+  // +optional
+  optional string path = 7;
 }
 
 // +k8s:openapi-gen=true

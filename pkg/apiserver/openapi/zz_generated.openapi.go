@@ -594,6 +594,13 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetch(ref common.ReferenceCallback) co
 							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImgpkgBundle"),
 						},
 					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Relative path to place the fetched artifacts",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},

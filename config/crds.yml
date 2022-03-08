@@ -352,6 +352,9 @@ spec:
                                     type: object
                                   type: array
                               type: object
+                            path:
+                              description: Relative path to place the fetched artifacts
+                              type: string
                           type: object
                         type: array
                       noopDelete:
@@ -850,6 +853,9 @@ spec:
                             type: object
                           type: array
                       type: object
+                    path:
+                      description: Relative path to place the fetched artifacts
+                      type: string
                   type: object
                 type: array
               noopDelete:
