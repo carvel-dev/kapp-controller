@@ -12,6 +12,7 @@ VERSION="${1:-`get_latest_git_tag`}"
 export CGO_ENABLED=0
 LDFLAGS="-X github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/version.Version=$VERSION -buildid="
 
+go version
 go mod vendor
 go mod tidy
 go fmt ./cmd/... ./pkg/... ./test/...
