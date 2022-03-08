@@ -40,13 +40,12 @@ spec:
           file.yml: |
             #@ load("@ytt:assert", "assert")
             #@ load("@ytt:data", "data")
-            #@ files = data.list()
             apiVersion: v1
             kind: ConfigMap
             metadata:
               name: configmap
             data:
-              key: #@ assert.equals(files, ["file.yml", "foo/file.csv"])
+              key: #@ assert.equals(data.list(), ["file.yml", "foo/file.csv"])
   deploy:
   - kapp:
       rawOptions: ["--dangerous-allow-empty-list-of-resources=true"]
@@ -74,13 +73,12 @@ spec:
             file.yml: |
               #@ load("@ytt:assert", "assert")
               #@ load("@ytt:data", "data")
-              #@ files = data.list()
               apiVersion: v1
               kind: ConfigMap
               metadata:
                 name: configmap
               data:
-                key: #@ assert.equals(files, ["file.csv", "file.yml"])
+                key: #@ assert.equals(data.list(), ["file.csv", "file.yml"])
     deploy:
     - kapp: {}
 ` + sas.ForNamespaceYAML()
@@ -111,13 +109,12 @@ spec:
           file.yml: |
             #@ load("@ytt:assert", "assert")
             #@ load("@ytt:data", "data")
-            #@ files = data.list()
             apiVersion: v1
             kind: ConfigMap
             metadata:
               name: configmap
             data:
-              key: #@ assert.equals(files, ["file.yml", "git-dest/README.md", "git-dest/all-in-one.yml", "http-dest/config.yml"])
+              key: #@ assert.equals(data.list(), ["file.yml", "git-dest/README.md", "git-dest/all-in-one.yml", "http-dest/config.yml"])
   deploy:
   - kapp:
       intoNs: %s
@@ -148,13 +145,12 @@ spec:
           file.yml: |
             #@ load("@ytt:assert", "assert")
             #@ load("@ytt:data", "data")
-            #@ files = data.list()
             apiVersion: v1
             kind: ConfigMap
             metadata:
               name: configmap
             data:
-              key: #@ assert.equals(files, ["file.yml", "1/config.yml", "git-dest/README.md", "git-dest/all-in-one.yml"])
+              key: #@ assert.equals(data.list(), ["file.yml", "1/config.yml", "git-dest/README.md", "git-dest/all-in-one.yml"])
   deploy:
   - kapp:
       intoNs: %s
