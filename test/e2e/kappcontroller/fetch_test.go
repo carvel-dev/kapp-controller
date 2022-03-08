@@ -41,13 +41,12 @@ spec:
             #@ load("@ytt:assert", "assert")
             #@ load("@ytt:data", "data")
             #@ files = data.list()
-            #@ expected = "foo/file.csv"
             apiVersion: v1
             kind: ConfigMap
             metadata:
               name: configmap
             data:
-              key:  #@ expected if expected in files else assert.fail(expected + " not found")
+              key: #@ assert.equals(files, ["file.yml", "foo/file.csv"])
   deploy:
   - kapp:
       rawOptions: ["--dangerous-allow-empty-list-of-resources=true"]
@@ -76,13 +75,12 @@ spec:
               #@ load("@ytt:assert", "assert")
               #@ load("@ytt:data", "data")
               #@ files = data.list()
-              #@ expected = "file.csv"
               apiVersion: v1
               kind: ConfigMap
               metadata:
                 name: configmap
               data:
-                key: #@ expected if expected in files else assert.fail(expected + " not found")
+                key: #@ assert.equals(files, ["file.csv", "file.yml"])
     deploy:
     - kapp: {}
 ` + sas.ForNamespaceYAML()
@@ -119,7 +117,7 @@ spec:
             metadata:
               name: configmap
             data:
-              val: #@ assert.equals(files, ["file.yml", "git-dest/README.md", "git-dest/all-in-one.yml", "http-dest/config.yml"])
+              key: #@ assert.equals(files, ["file.yml", "git-dest/README.md", "git-dest/all-in-one.yml", "http-dest/config.yml"])
   deploy:
   - kapp:
       intoNs: %s
@@ -156,7 +154,7 @@ spec:
             metadata:
               name: configmap
             data:
-              val: #@ assert.equals(files, ["file.yml", "1/config.yml", "git-dest/README.md", "git-dest/all-in-one.yml"])
+              key: #@ assert.equals(files, ["file.yml", "1/config.yml", "git-dest/README.md", "git-dest/all-in-one.yml"])
   deploy:
   - kapp:
       intoNs: %s
