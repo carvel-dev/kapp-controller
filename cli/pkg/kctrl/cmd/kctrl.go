@@ -87,6 +87,7 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 	appCmd := app.NewCmd()
 	appCmd.AddCommand(app.NewGetCmd(app.NewGetOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	appCmd.AddCommand(app.NewListCmd(app.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	appCmd.AddCommand(app.NewStatusCmd(app.NewStatusOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	appCmd.AddCommand(app.NewPauseCmd(app.NewPauseOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	appCmd.AddCommand(app.NewKickCmd(app.NewKickOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	appCmd.AddCommand(app.NewDeleteCmd(app.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
