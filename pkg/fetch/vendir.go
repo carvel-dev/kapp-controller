@@ -44,6 +44,10 @@ func NewVendir(nsName string, coreClient kubernetes.Interface, skipTLSConfig Ski
 // AddDir adds a directory to vendir's config for each fetcher that the app spec declares.
 // vendir fetches resources into your filesystem, so the destination directory is a core part of vendir config.
 func (v *Vendir) AddDir(fetch v1alpha1.AppFetch, dirPath string) error {
+	if fetch.Path != "" {
+		dirPath = fetch.Path
+	}
+
 	switch {
 	case fetch.Inline != nil:
 		v.config.Directories = append(v.config.Directories, v.dir(v.inlineConf(*fetch.Inline), dirPath))

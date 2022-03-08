@@ -21,6 +21,9 @@ type AppFetch struct {
 	HelmChart *AppFetchHelmChart `json:"helmChart,omitempty" protobuf:"bytes,5,opt,name=helmChart"`
 	// Pulls imgpkg bundle from Docker/OCI registry (v0.17.0+)
 	ImgpkgBundle *AppFetchImgpkgBundle `json:"imgpkgBundle,omitempty" protobuf:"bytes,6,opt,name=imgpkgBundle"`
+	// Relative path to place the fetched artifacts
+	// +optional
+	Path string `json:"path,omitempty" protobuf:"bytes,7,opt,name=path"`
 }
 
 // +k8s:openapi-gen=true
