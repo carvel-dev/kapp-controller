@@ -43,7 +43,7 @@ func (tw *TranslationWatcher) ResultChan() <-chan watch.Event {
 }
 
 func (tw *TranslationWatcher) Stop() {
-	tw.stopCh <- struct{}{}
+	close(tw.stopCh)
 	tw.proxiedWatcher.Stop()
 }
 
