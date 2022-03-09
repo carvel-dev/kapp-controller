@@ -30,7 +30,7 @@ func (a *App) deploy(tplOutput string) exec.CmdRunResult {
 			return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 		}
 
-		//kapp. "--dangerous-override-ownership-of-existing-resources",
+		fmt.Println("XX Templated output to kapp:\n", tplOutput, "\nXX")
 
 		return kapp.Deploy(appendRebaseRule(tplOutput), a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
 
@@ -52,7 +52,7 @@ rebaseRules:
         #@ load("@ytt:json", "json")
         #@ load("@ytt:overlay", "overlay")
 
-        #@ if/end json.encode(data.values.existing.data) == json.encode(data.values.new.data):
+        #@ if/end json.encode(data.values.existing.spec) == json.encode(data.values.new.spec):
 
         #@overlay/match by=overlay.all
         ---
@@ -62,7 +62,7 @@ rebaseRules:
             #@overlay/match missing_ok=True
             kapp.k14s.io/noop: ""
   resourceMatchers:
-  - apiVersionKindMatcher: {apiVersion: v1, kind: Package}
+  - apiVersionKindMatcher: {apiVersion: data.packaging.carvel.dev/v1alpha1, kind: Package}
 `
 }
 

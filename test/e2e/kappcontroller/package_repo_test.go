@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -175,9 +174,9 @@ func Test_PackageReposWithSamePackagesButTheyreIdentical(t *testing.T) {
 	logger.Section("deploy PackageRepository 2", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"}, e2e.RunOpts{AllowError: true})
 		fmt.Println(kapp.Run([]string{"inspect", "-a", name2}))
-		time.Sleep(1)
 		fmt.Println(kubectl.RunWithOpts([]string{"get", "packagerepository/test-repo2.tanzu.carvel.dev", "-o", "yaml"}, e2e.RunOpts{AllowError: true}))
 		fmt.Println(kubectl.RunWithOpts([]string{"get", "package"}, e2e.RunOpts{AllowError: true}))
+		kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"}, e2e.RunOpts{AllowError: false})
 	})
 
 }
