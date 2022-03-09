@@ -1,0 +1,61 @@
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: test-repo2.tanzu.carvel.dev
+  # Adds it to global namespace (as defined by kapp-controller)
+  # which makes packages available in all namespaces
+  namespace: kapp-controller-packaging-global
+spec:
+  fetch:
+    inline:
+      paths:
+        .imgpkg/images.yml: |
+          ---
+          apiVersion: imgpkg.carvel.dev/v1alpha1
+          images:
+          - annotations:
+              kbld.carvel.dev/id: k8slt/kctrl-example-pkg:v2.0.0
+            image: index.docker.io/k8slt/kctrl-example-pkg@sha256:73713d922b5f561c0db2a7ea5f4f6384f7d2d6289886f8400a8aaf5e8fdf134a
+          kind: ImagesLock
+        packages/pkg.test.carvel.dev/pkg.test.carvel.dev.2.0.0.yml: |
+          ---
+          apiVersion: data.packaging.carvel.dev/v1alpha1
+          kind: Package
+          metadata:
+            name: pkg.test.carvel.dev.2.0.0
+          spec:
+            refName: pkg.test.carvel.dev
+            version: 2.0.0
+            capacityRequirementsDescription: "cpu: 1,RAM: 2, Disk: 3"
+            template:
+              spec:
+                fetch:
+                - imgpkgBundle:
+                    image: k8slt/kctrl-example-pkg:v2.0.0
+                template:
+                - ytt:
+                    paths:
+                    - config-step-2-template
+                    - config-step-2a-overlays
+                - kbld:
+                    paths:
+                    - "-"
+                    - ".imgpkg/images.yml"
+                deploy:
+                - kapp: {}
+            valuesSchema:
+              openAPIv3:
+                properties:
+                  svc_port:
+                    type: integer
+                    description: Service port
+                    default: 80
+                  app_port:
+                    type: integer
+                    description: App port
+                    default: 80
+                  hello_msg:
+                    type: string
+                    description: Hello msg for the app
+                    default: "stranger"
