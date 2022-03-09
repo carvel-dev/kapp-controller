@@ -1,0 +1,22 @@
+---
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+rebaseRules:
+- ytt:
+    overlayContractV1:
+      overlay.yml: |
+        #@ load("@ytt:data", "data")
+        #@ load("@ytt:json", "json")
+        #@ load("@ytt:overlay", "overlay")
+
+        #@ if/end json.encode(data.values.existing.spec) == json.encode(data.values.new.spec):
+
+        #@overlay/match by=overlay.all
+        ---
+        metadata:
+          #@overlay/match missing_ok=True
+          annotations:
+            #@overlay/match missing_ok=True
+            kapp.k14s.io/noop: ""
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: data.packaging.carvel.dev/v1alpha1, kind: Package}
