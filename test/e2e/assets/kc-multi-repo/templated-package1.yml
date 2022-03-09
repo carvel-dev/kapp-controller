@@ -1,0 +1,44 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg.test.carvel.dev.2.0.0
+  annotations:
+    kapp.k14s.io/disable-original: ""
+    kapp.k14s.io/disable-wait: ""
+    packaging.carvel.dev/package-repository-ref: kapp-controller-packaging-global/test-repo2.tanzu.carvel.dev
+spec:
+  refName: pkg.test.carvel.dev
+  version: 2.0.0
+  capacityRequirementsDescription: 'cpu: 1,RAM: 2, Disk: 3'
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v2.0.0
+      template:
+      - ytt:
+          paths:
+          - config-step-2-template
+          - config-step-2a-overlays
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/images.yml
+      deploy:
+      - kapp: {}
+  valuesSchema:
+    openAPIv3:
+      properties:
+        svc_port:
+          type: integer
+          description: Service port
+          default: 80
+        app_port:
+          type: integer
+          description: App port
+          default: 80
+        hello_msg:
+          type: string
+          description: Hello msg for the app
+          default: stranger
+
