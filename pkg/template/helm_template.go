@@ -39,12 +39,22 @@ func NewHelmTemplate(opts v1alpha1.AppTemplateHelmTemplate,
 }
 
 func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
+	return t.template(dirPath, nil), true
+}
+
+// TemplateStream works on a stream returning templating result.
+// dirPath is provided for context from which to reference additonal inputs.
+func (t *HelmTemplate) TemplateStream(stream io.Reader, dirPath string) exec.CmdRunResult {
+	return t.template(dirPath, stream)
+}
+
+func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	chartPath := dirPath
 
 	if len(t.opts.Path) > 0 {
 		checkedPath, err := memdir.ScopedPath(dirPath, t.opts.Path)
 		if err != nil {
-			return exec.NewCmdRunResultWithErr(err), true
+			return exec.NewCmdRunResultWithErr(err)
 		}
 		chartPath = checkedPath
 	}
@@ -63,7 +73,7 @@ func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 	// NOTE: This will be removed once we remove retro-compatibility with Helm V2 binary
 	helmCmdCtx, err := NewHelmTemplateCmdArgs(name, chartPath, namespace)
 	if err != nil {
-		return exec.NewCmdRunResultWithErr(err), true
+		return exec.NewCmdRunResultWithErr(err)
 	}
 
 	// Actual helm template arguments
@@ -74,12 +84,16 @@ func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 
 		paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
 		if err != nil {
-			return exec.NewCmdRunResultWithErr(err), true
+			return exec.NewCmdRunResultWithErr(err)
 		}
 
 		defer valuesCleanUpFunc()
 
 		for _, path := range paths {
+			if path == stdinPath && input == nil {
+				return exec.NewCmdRunResultWithErr(
+					fmt.Errorf("Expected stdin to be available when using it as path, but was not"))
+			}
 			args = append(args, []string{"--values", path}...)
 		}
 	}
@@ -89,6 +103,7 @@ func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 	cmd := goexec.Command(helmCmdCtx.BinaryName, args...)
 	// "Reset" kubernetes vars just in case, even though helm template should not reach out to cluster
 	cmd.Env = append(os.Environ(), "KUBERNETES_SERVICE_HOST=not-real", "KUBERNETES_SERVICE_PORT=not-real")
+	cmd.Stdin = input
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
@@ -100,11 +115,7 @@ func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 	}
 	result.AttachErrorf("Templating helm chart: %s", err)
 
-	return result, true
-}
-
-func (t *HelmTemplate) TemplateStream(_ io.Reader, _ string) exec.CmdRunResult {
-	return exec.NewCmdRunResultWithErr(fmt.Errorf("Templating data is not supported"))
+	return result
 }
 
 // auxiliary struct used for Chart.yaml unmarshalling
