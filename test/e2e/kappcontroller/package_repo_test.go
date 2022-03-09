@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -146,6 +147,39 @@ spec:
 	if !reflect.DeepEqual(expectedStatus, cr.Status) {
 		t.Fatalf("\nstatus is not same:\nExpected:\n%#v\nGot:\n%#v", expectedStatus, cr.Status)
 	}
+}
+
+func Test_PackageReposWithSamePackagesButTheyreIdentical(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kubectl := e2e.Kubectl{t, "kapp-controller-packaging-global", logger}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+
+	name1 := "repo1"
+	cleanUp1 := func() {
+		kapp.Run([]string{"delete", "-a", name1})
+	}
+	defer cleanUp1()
+
+	logger.Section("deploy PackageRepository 1", func() {
+		kapp.Run([]string{"deploy", "-a", name1, "-f", "../assets/kc-multi-repo/inline-repo1.yml"})
+		fmt.Println(kubectl.RunWithOpts([]string{"get", "package", "-n", "kapp-controller-packaging-global"}, e2e.RunOpts{AllowError: true}))
+	})
+
+	name2 := "repo2"
+	cleanUp2 := func() {
+		kapp.Run([]string{"delete", "-a", name2})
+	}
+	defer cleanUp2()
+
+	logger.Section("deploy PackageRepository 2", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"}, e2e.RunOpts{AllowError: true})
+		fmt.Println(kapp.Run([]string{"inspect", "-a", name2}))
+		time.Sleep(1)
+		fmt.Println(kubectl.RunWithOpts([]string{"get", "packagerepository/test-repo2.tanzu.carvel.dev", "-o", "yaml"}, e2e.RunOpts{AllowError: true}))
+		fmt.Println(kubectl.RunWithOpts([]string{"get", "package"}, e2e.RunOpts{AllowError: true}))
+	})
+
 }
 
 func Test_PackageRepoBundle_PackagesAvailable(t *testing.T) {

@@ -30,11 +30,40 @@ func (a *App) deploy(tplOutput string) exec.CmdRunResult {
 			return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 		}
 
-		return kapp.Deploy(tplOutput, a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
+		//kapp. "--dangerous-override-ownership-of-existing-resources",
+
+		return kapp.Deploy(appendRebaseRule(tplOutput), a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
 
 	default:
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Unsupported way to deploy"))
 	}
+}
+
+func appendRebaseRule(tplOutput string) string {
+	return tplOutput + `
+---
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+rebaseRules:
+- ytt:
+    overlayContractV1:
+      overlay.yml: |
+        #@ load("@ytt:data", "data")
+        #@ load("@ytt:json", "json")
+        #@ load("@ytt:overlay", "overlay")
+
+        #@ if/end json.encode(data.values.existing.data) == json.encode(data.values.new.data):
+
+        #@overlay/match by=overlay.all
+        ---
+        metadata:
+          #@overlay/match missing_ok=True
+          annotations:
+            #@overlay/match missing_ok=True
+            kapp.k14s.io/noop: ""
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Package}
+`
 }
 
 func (a *App) delete() exec.CmdRunResult {
@@ -73,5 +102,6 @@ func (a *App) delete() exec.CmdRunResult {
 
 func (a *App) newKapp(kapp v1alpha1.AppDeployKapp, cancelCh chan struct{}) (*ctldep.Kapp, error) {
 	genericOpts := ctldep.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
+	kapp.RawOptions = append(kapp.RawOptions, "--dangerous-override-ownership-of-existing-resources=true")
 	return a.deployFactory.NewKappPrivileged(kapp, genericOpts, cancelCh)
 }
