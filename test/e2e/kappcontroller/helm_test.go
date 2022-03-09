@@ -196,3 +196,79 @@ stringData:
 		})
 	}
 }
+
+func TestHelmValuesOverStdin(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
+
+	name := "test-helm-values-stdin"
+	config := fmt.Sprintf(`
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: test-helm-values-stdin
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
+spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
+  fetch:
+  - helmChart:
+      name: redis
+      version: "12.10.1"
+      repository:
+        url: https://charts.bitnami.com/bitnami
+  - inline:
+      paths:
+        data.yml: |
+          global:
+            redis:
+              password: my-secret-password
+  template:
+  - ytt:
+      paths: ["1/data.yml"]
+  - helmTemplate:
+      path: "0/"
+      valuesFrom:
+      - path: "-"
+  - ytt:
+      inline:
+        paths:
+          check.yml: |
+            #@ load("@ytt:overlay", "overlay")
+            #@ load("@ytt:base64", "base64")
+            #@ load("@ytt:assert", "assert")
+
+            #@ def check_password(l,_):
+            #@   actual_pass = base64.decode(l)
+            #@   if actual_pass != "my-secret-password":
+            #@     assert.fail("Expected password '{}' to == 'my-secret-password'".format(actual_pass))
+            #@   end
+            #@ end
+
+            #@overlay/match by=overlay.subset({"kind":"Secret"})
+            ---
+            data:
+              #@overlay/assert via=check_password
+              redis-password:
+
+            #! to speed up deploy just remove everything
+            #@overlay/match by=overlay.not_op(overlay.subset({"kind":"Secret"})),expects="1+"
+            #@overlay/remove
+            ---
+  deploy:
+  - kapp:
+      intoNs: %s
+`, env.Namespace) + sas.ForNamespaceYAML()
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	// App CR will fail if ytt assertion fails
+	kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+		e2e.RunOpts{StdinReader: strings.NewReader(config)})
+}

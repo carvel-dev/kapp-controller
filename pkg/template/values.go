@@ -55,9 +55,13 @@ func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
 			paths, err = t.writeFromConfigMap(valuesDir.Path(), *source.ConfigMapRef)
 
 		case len(source.Path) > 0:
-			checkedPath, err := memdir.ScopedPath(dirPath, source.Path)
-			if err == nil {
-				paths = append(paths, checkedPath)
+			if source.Path == stdinPath {
+				paths = append(paths, stdinPath)
+			} else {
+				checkedPath, err := memdir.ScopedPath(dirPath, source.Path)
+				if err == nil {
+					paths = append(paths, checkedPath)
+				}
 			}
 
 		default:
