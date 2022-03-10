@@ -222,7 +222,7 @@ func TestPackageVersionUpdateDoesntUpdateGlobal(t *testing.T) {
 	}
 
 	if pkgv.Spec.ReleaseNotes != newReleaseNotes {
-		t.Fatalf("Expected release notes of namespaced pacakge to be updated")
+		t.Fatalf("Expected release notes of namespaced package to be updated")
 	}
 
 	if globalPackageVersion.Spec.ReleaseNotes != originalReleaseNotes {

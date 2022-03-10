@@ -65,7 +65,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 	}
 
 	cmd.Flags().StringVar(&o.valuesFileOutput, "values-file-output", "", "File path for exporting configuration values file")
-	cmd.Flags().BoolVar(&o.values, "values", false, "Get values data for pacakge install")
+	cmd.Flags().BoolVar(&o.values, "values", false, "Get values data for package install")
 	return cmd
 }
 

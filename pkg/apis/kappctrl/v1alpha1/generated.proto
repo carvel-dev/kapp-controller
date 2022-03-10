@@ -278,7 +278,7 @@ message AppSpec {
   // +optional
   repeated AppDeploy deploy = 5;
 
-  // Pauses _future_ reconcilation; does _not_ affect
+  // Pauses _future_ reconciliation; does _not_ affect
   // currently running reconciliation (optional; default=false)
   // +optional
   optional bool paused = 6;
