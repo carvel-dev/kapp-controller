@@ -24,6 +24,12 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 	a.appMetrics.InitMetrics(a.Name(), a.Namespace())
 
 	switch {
+	case a.app.DeletionTimestamp != nil:
+		a.log.Info("Started delete")
+		defer func() { a.log.Info("Completed delete") }()
+
+		err = a.reconcileDelete()
+
 	case a.app.Spec.Canceled || a.app.Spec.Paused:
 		a.log.Info("App is canceled or paused, not reconciling")
 
@@ -31,12 +37,6 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 		a.app.Status.FriendlyDescription = "Canceled/paused"
 
 		err = a.updateStatus("app canceled/paused")
-
-	case a.app.DeletionTimestamp != nil:
-		a.log.Info("Started delete")
-		defer func() { a.log.Info("Completed delete") }()
-
-		err = a.reconcileDelete()
 
 	case force || NewReconcileTimer(a.app).IsReadyAt(time.Now()):
 		a.log.Info("Started deploy")
