@@ -41,6 +41,7 @@ func (a *App) deploy(tplOutput string) exec.CmdRunResult {
 
 func appendRebaseRule(tplOutput string) string {
 	return tplOutput + `
+
 ---
 apiVersion: kapp.k14s.io/v1alpha1
 kind: Config
@@ -62,7 +63,11 @@ rebaseRules:
             #@overlay/match missing_ok=True
             kapp.k14s.io/noop: ""
   resourceMatchers:
-  - apiVersionKindMatcher: {apiVersion: data.packaging.carvel.dev/v1alpha1, kind: Package}
+  - andMatcher:
+      matchers:
+      - apiVersionKindMatcher: {apiVersion: data.packaging.carvel.dev/v1alpha1, kind: Package}
+      - hasAnnotationMatcher:
+          keys: ["packaging.carvel.dev/package-repository-ref"]
 `
 }
 

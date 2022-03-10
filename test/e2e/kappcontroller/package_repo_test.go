@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
@@ -148,7 +149,7 @@ spec:
 	}
 }
 
-func Test_PackageReposWithSamePackagesButTheyreIdentical(t *testing.T) {
+func Test_PackageReposWithSamePackagesButTheyreIdenticalImageBased(t *testing.T) {
 	env := e2e.BuildEnv(t)
 	logger := e2e.Logger{}
 	kubectl := e2e.Kubectl{t, "kapp-controller-packaging-global", logger}
@@ -161,14 +162,17 @@ func Test_PackageReposWithSamePackagesButTheyreIdentical(t *testing.T) {
 	defer cleanUp1()
 
 	logger.Section("deploy PackageRepository 1", func() {
-		kapp.Run([]string{"deploy", "-a", name1, "-f", "../assets/kc-multi-repo/package-repository1.yml"})
+		kapp.RunWithOpts([]string{"deploy", "-a", name1, "-f", "../assets/kc-multi-repo/package-repository1.yml"}, e2e.RunOpts{AllowError: true})
+		fmt.Println(kubectl.RunWithOpts([]string{"get", "packagerepository/e2e-repo1.test.carvel.dev", "-o", "yaml"}, e2e.RunOpts{AllowError: true}))
 		fmt.Println(kubectl.RunWithOpts([]string{"get", "package", "-n", "kapp-controller-packaging-global"}, e2e.RunOpts{AllowError: true}))
 	})
 
 	logger.Section("assert packages were installed", func() {
 		out := kubectl.Run([]string{"get", "packages"})
 		fmt.Println("kubectl get packages output: ", out)
-		assert.Contains(t, out, "pkg.test.carvel.dev")
+		require.Contains(t, out, "pkg.test.carvel.dev.1.0.0")
+		require.Contains(t, out, "pkg.test.carvel.dev.2.0.0")
+		require.Contains(t, out, "pkg.test.carvel.dev.3.0.0-rc.1")
 	})
 
 	name2 := "repo2"

@@ -47,7 +47,7 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 		// We can disable existing check entirely since we do not allow to "take ownership"
 		// of other Package/PackageMetadata and we do not _need_ to adopt Packages that
 		// are not owned by kapp already.
-		"--existing-non-labeled-resources-check=false",
+		// "--existing-non-labeled-resources-check=false", // TODO: this was added for a reason but maybe we'd have to play with concurrency noted below...
 		// ... could in theory just lower concurrency, but decided to turn it off entirely.
 		// (on GKE, 6 was a sweet spot, 10 exhibited hanging behaviour)
 		// "--existing-non-labeled-resources-check-concurrency=6",
