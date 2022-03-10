@@ -161,8 +161,53 @@ func Test_PackageReposWithSamePackagesButTheyreIdentical(t *testing.T) {
 	defer cleanUp1()
 
 	logger.Section("deploy PackageRepository 1", func() {
+		kapp.Run([]string{"deploy", "-a", name1, "-f", "../assets/kc-multi-repo/package-repository1.yml"})
+		fmt.Println(kubectl.RunWithOpts([]string{"get", "package", "-n", "kapp-controller-packaging-global"}, e2e.RunOpts{AllowError: true}))
+	})
+
+	logger.Section("assert packages were installed", func() {
+		out := kubectl.Run([]string{"get", "packages"})
+		fmt.Println("kubectl get packages output: ", out)
+		assert.Contains(t, out, "pkg.test.carvel.dev")
+	})
+
+	name2 := "repo2"
+	cleanUp2 := func() {
+		kapp.Run([]string{"delete", "-a", name2})
+	}
+	defer cleanUp2()
+
+	logger.Section("deploy PackageRepository 2", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/package-repository2.yml"}, e2e.RunOpts{AllowError: true})
+		fmt.Println(kapp.Run([]string{"inspect", "-a", name2}))
+		fmt.Println(kubectl.RunWithOpts([]string{"get", "packagerepository/e2e-repo2.test.carvel.dev", "-o", "yaml"}, e2e.RunOpts{AllowError: true}))
+		fmt.Println(kubectl.RunWithOpts([]string{"get", "package"}, e2e.RunOpts{AllowError: true}))
+		kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/package-repository2.yml"}, e2e.RunOpts{AllowError: false})
+	})
+
+}
+
+func Test_PackageReposWithSamePackagesButTheyreIdenticalAndInline(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kubectl := e2e.Kubectl{t, "kapp-controller-packaging-global", logger}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+
+	name1 := "repo1"
+	cleanUp1 := func() {
+		kapp.Run([]string{"delete", "-a", name1})
+	}
+	defer cleanUp1()
+
+	logger.Section("deploy PackageRepository 1", func() {
 		kapp.Run([]string{"deploy", "-a", name1, "-f", "../assets/kc-multi-repo/inline-repo1.yml"})
 		fmt.Println(kubectl.RunWithOpts([]string{"get", "package", "-n", "kapp-controller-packaging-global"}, e2e.RunOpts{AllowError: true}))
+	})
+
+	logger.Section("assert packages were installed", func() {
+		out := kubectl.Run([]string{"get", "packages"})
+		fmt.Println("kubectl get packages output: ", out)
+		assert.Contains(t, out, "pkg.test.carvel.dev")
 	})
 
 	name2 := "repo2"
