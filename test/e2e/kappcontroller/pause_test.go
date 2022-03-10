@@ -22,10 +22,6 @@ func Test_AppPause(t *testing.T) {
 	name := "app-pause"
 
 	cleanUp := func() {
-		// Need to make sure App is not paused
-		// so need to create as part of deletion.
-		appYaml := appYAML(name, env.Namespace, "original", false)
-		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
 		kapp.Run([]string{"delete", "-a", name})
 	}
 	cleanUp()
