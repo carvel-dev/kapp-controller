@@ -49,6 +49,7 @@ spec:
                   image: busybox
                   command: ['sh', '-c', 'sleep 60']
                 restartPolicy: Never
+                terminationGracePeriodSeconds: 0
   template:
   - ytt: {}
   deploy:
@@ -90,6 +91,7 @@ spec:
                   image: busybox
                   command: ['sh', '-c', 'sleep 60']
                 restartPolicy: Never
+                terminationGracePeriodSeconds: 0
   template:
   - ytt: {}
   deploy:
