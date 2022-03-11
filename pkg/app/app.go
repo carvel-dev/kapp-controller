@@ -88,7 +88,7 @@ func (a *App) flushUpdateStatus(desc string) error {
 	return nil
 }
 
-func (a *App) newCancelCh() (chan struct{}, func()) {
+func (a *App) newCancelCh(conditions ...cancelCondition) (chan struct{}, func()) {
 	var cancelOnce sync.Once
 	cancelCh := make(chan struct{})
 
@@ -98,8 +98,11 @@ func (a *App) newCancelCh() (chan struct{}, func()) {
 	}
 
 	cancelFuncOnApp := func(app v1alpha1.App) {
-		if app.Spec.Canceled {
-			cancelFunc()
+		for _, condition := range conditions {
+			if condition(app) {
+				cancelFunc()
+				return
+			}
 		}
 	}
 
