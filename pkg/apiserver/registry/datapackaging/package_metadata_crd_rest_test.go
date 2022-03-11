@@ -213,7 +213,7 @@ func TestPackageUpdateDoesntUpdateGlobal(t *testing.T) {
 	}
 
 	if pkg.Spec.DisplayName != newDisplayName {
-		t.Fatalf("Expected display name of namespaced pacakge to be updated")
+		t.Fatalf("Expected display name of namespaced package to be updated")
 	}
 
 	if globalPackage.Spec.DisplayName != originalDisplayName {

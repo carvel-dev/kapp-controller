@@ -29,7 +29,7 @@ func (r *ErrReconciler) Reconcile(ctx context.Context, request reconcile.Request
 	case res.Requeue && res.RequeueAfter == 0:
 		log.Info("Requeue immediately", "after", 0)
 
-	// This indicates general reconcilation error such as
+	// This indicates general reconciliation error such as
 	// failing to update status, or fetching necessary k8s resource.
 	// Note, it does not cover cases such as deploy failing.
 	case err != nil:

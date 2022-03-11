@@ -13,7 +13,7 @@ import (
 type UniqueReconciler struct {
 	delegate reconcile.Reconciler
 
-	// Represents currently executing reconcilation requests
+	// Represents currently executing reconciliation requests
 	ongoing    map[string]struct{}
 	ongoingMux sync.Mutex
 

@@ -1007,7 +1007,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppSpec(ref common.ReferenceCallback) com
 					},
 					"paused": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Pauses _future_ reconcilation; does _not_ affect currently running reconciliation (optional; default=false)",
+							Description: "Pauses _future_ reconciliation; does _not_ affect currently running reconciliation (optional; default=false)",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},

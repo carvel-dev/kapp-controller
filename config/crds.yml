@@ -361,7 +361,7 @@ spec:
                         description: Deletion requests for the App will result in the App CR being deleted, but its associated resources will not be deleted (optional; default=false; v0.18.0+)
                         type: boolean
                       paused:
-                        description: Pauses _future_ reconcilation; does _not_ affect currently running reconciliation (optional; default=false)
+                        description: Pauses _future_ reconciliation; does _not_ affect currently running reconciliation (optional; default=false)
                         type: boolean
                       serviceAccountName:
                         description: Specifies that app should be deployed authenticated via given service account, found in this namespace (optional; v0.6.0+)
@@ -862,7 +862,7 @@ spec:
                 description: Deletion requests for the App will result in the App CR being deleted, but its associated resources will not be deleted (optional; default=false; v0.18.0+)
                 type: boolean
               paused:
-                description: Pauses _future_ reconcilation; does _not_ affect currently running reconciliation (optional; default=false)
+                description: Pauses _future_ reconciliation; does _not_ affect currently running reconciliation (optional; default=false)
                 type: boolean
               serviceAccountName:
                 description: Specifies that app should be deployed authenticated via given service account, found in this namespace (optional; v0.6.0+)
