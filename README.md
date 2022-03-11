@@ -23,7 +23,7 @@ Kubernetes native continuous delivery and package management experience through 
   - [Checkout our tutorial](https://carvel.dev/kapp-controller/docs/latest/walkthrough/)
 
 :octocat: **GitOps** :octocat:
-  - Our Continous Delivery mechanism is perfect for GitOps!
+  - Our Continuous Delivery mechanism is perfect for GitOps!
   - Use a git repository as your single source of truth for Kubernetes Package Management
   - [Checkout our tutorial](https://carvel.dev/kapp-controller/docs/latest/packaging-gitops/)
 

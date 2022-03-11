@@ -5,7 +5,7 @@ metadata:
   name: pkg.test.carvel.dev.3.0.0-rc.1
 spec:
   refName: pkg.test.carvel.dev
-  # This is a pre-release, which kapp-contorller will not automatically bump
+  # This is a pre-release, which kapp-controllers will not automatically bump
   # PackageInstalls to unless it explicitly allowed within the PackageInstall
   # version selection.
   version: 3.0.0-rc.1

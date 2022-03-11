@@ -36,7 +36,7 @@ func (c *cue) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 }
 
 // TemplateStream works on a stream returning templating result.
-// dirPath is provided for context from which to reference additonal inputs.
+// dirPath is provided for context from which to reference additional inputs.
 func (c *cue) TemplateStream(stream io.Reader, dirPath string) exec.CmdRunResult {
 	return exec.NewCmdRunResultWithErr(fmt.Errorf("Templating stream is not supported")) // TODO: Implement
 }

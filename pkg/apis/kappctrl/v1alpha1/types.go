@@ -59,7 +59,7 @@ type AppSpec struct {
 	Template []AppTemplate `json:"template,omitempty" protobuf:"bytes,4,rep,name=template"`
 	// +optional
 	Deploy []AppDeploy `json:"deploy,omitempty" protobuf:"bytes,5,rep,name=deploy"`
-	// Pauses _future_ reconcilation; does _not_ affect
+	// Pauses _future_ reconciliation; does _not_ affect
 	// currently running reconciliation (optional; default=false)
 	// +optional
 	Paused bool `json:"paused,omitempty" protobuf:"varint,6,opt,name=paused"`

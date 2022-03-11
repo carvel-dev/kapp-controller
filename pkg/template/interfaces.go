@@ -19,7 +19,7 @@ type Template interface {
 	// should operate on result, or continue operating on the directory
 	TemplateDir(dirPath string) (exec.CmdRunResult, bool)
 	// TemplateStream works on a stream returning templating result.
-	// dirPath is provided for context from which to reference additonal inputs.
+	// dirPath is provided for context from which to reference additional inputs.
 	TemplateStream(stream io.Reader, dirPath string) exec.CmdRunResult
 }
 

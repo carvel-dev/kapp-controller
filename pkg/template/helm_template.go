@@ -43,7 +43,7 @@ func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 }
 
 // TemplateStream works on a stream returning templating result.
-// dirPath is provided for context from which to reference additonal inputs.
+// dirPath is provided for context from which to reference additional inputs.
 func (t *HelmTemplate) TemplateStream(stream io.Reader, dirPath string) exec.CmdRunResult {
 	return t.template(dirPath, stream)
 }

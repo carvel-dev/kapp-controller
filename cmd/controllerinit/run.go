@@ -86,7 +86,7 @@ func configureSystem() error {
 	restConfig := config.GetConfigOrDie()
 	coreClient, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		return fmt.Errorf("Buidling client: %s", err)
+		return fmt.Errorf("Building client: %s", err)
 	}
 
 	globalConfig, err := kcconfig.GetConfig(coreClient)

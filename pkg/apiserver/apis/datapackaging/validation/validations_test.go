@@ -146,7 +146,7 @@ func TestValidatePackageSpecPackageNameValid(t *testing.T) {
 	}
 }
 
-// Searchs for Error in ErrorList by Type + Field, but not details
+// Searches for Error in ErrorList by Type + Field, but not details
 func contains(errList field.ErrorList, expectedErr field.Error) bool {
 	for _, err := range errList {
 		if err.Type == expectedErr.Type && err.Field == expectedErr.Field {
