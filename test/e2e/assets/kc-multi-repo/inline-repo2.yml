@@ -23,6 +23,8 @@ spec:
           apiVersion: data.packaging.carvel.dev/v1alpha1
           kind: Package
           metadata:
+            annotations:
+              packaging.carvel.dev/repo-rev: "3"
             name: pkg.test.carvel.dev.2.0.0
           spec:
             refName: pkg.test.carvel.dev
@@ -58,4 +60,4 @@ spec:
                   hello_msg:
                     type: string
                     description: Hello msg for the app
-                    default: "stranger"
+                    default: "this is rev 3 now"

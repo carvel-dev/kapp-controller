@@ -149,7 +149,7 @@ spec:
 	}
 }
 
-func Test_PackageReposWithSamePackagesButTheyreIdenticalImageBased(t *testing.T) {
+func Test_PackageReposWithSamePackagesButTheyreIdentical(t *testing.T) {
 	env := e2e.BuildEnv(t)
 	logger := e2e.Logger{}
 	kubectl := e2e.Kubectl{t, "kapp-controller-packaging-global", logger}
@@ -163,13 +163,13 @@ func Test_PackageReposWithSamePackagesButTheyreIdenticalImageBased(t *testing.T)
 
 	logger.Section("deploy PackageRepository 1", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name1, "-f", "../assets/kc-multi-repo/package-repository1.yml"}, e2e.RunOpts{AllowError: true})
-		fmt.Println(kubectl.RunWithOpts([]string{"get", "packagerepository/e2e-repo1.test.carvel.dev", "-o", "yaml"}, e2e.RunOpts{AllowError: true}))
-		fmt.Println(kubectl.RunWithOpts([]string{"get", "package", "-n", "kapp-controller-packaging-global"}, e2e.RunOpts{AllowError: true}))
+		// fmt.Println(kubectl.RunWithOpts([]string{"get", "packagerepository/e2e-repo1.test.carvel.dev", "-o", "yaml"}, e2e.RunOpts{AllowError: true}))
+		// fmt.Println(kubectl.RunWithOpts([]string{"get", "package", "-n", "kapp-controller-packaging-global"}, e2e.RunOpts{AllowError: true}))
 	})
 
 	logger.Section("assert packages were installed", func() {
 		out := kubectl.Run([]string{"get", "packages"})
-		fmt.Println("kubectl get packages output: ", out)
+		// fmt.Println("kubectl get packages output: ", out)
 		require.Contains(t, out, "pkg.test.carvel.dev.1.0.0")
 		require.Contains(t, out, "pkg.test.carvel.dev.2.0.0")
 		require.Contains(t, out, "pkg.test.carvel.dev.3.0.0-rc.1")
@@ -182,50 +182,112 @@ func Test_PackageReposWithSamePackagesButTheyreIdenticalImageBased(t *testing.T)
 	defer cleanUp2()
 
 	logger.Section("deploy PackageRepository 2", func() {
-		kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/package-repository2.yml"}, e2e.RunOpts{AllowError: true})
-		fmt.Println(kapp.Run([]string{"inspect", "-a", name2}))
-		fmt.Println(kubectl.RunWithOpts([]string{"get", "packagerepository/e2e-repo2.test.carvel.dev", "-o", "yaml"}, e2e.RunOpts{AllowError: true}))
-		fmt.Println(kubectl.RunWithOpts([]string{"get", "package"}, e2e.RunOpts{AllowError: true}))
+		// kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/package-repository2.yml"}, e2e.RunOpts{AllowError: true})
+		// fmt.Println(kapp.Run([]string{"inspect", "-a", name2}))
+		// fmt.Println(kubectl.RunWithOpts([]string{"get", "packagerepository/e2e-repo2.test.carvel.dev", "-o", "yaml"}, e2e.RunOpts{AllowError: true}))
+		// fmt.Println(kubectl.RunWithOpts([]string{"get", "package"}, e2e.RunOpts{AllowError: true}))
 		kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/package-repository2.yml"}, e2e.RunOpts{AllowError: false})
 	})
 
 }
 
-func Test_PackageReposWithSamePackagesButTheyreIdenticalAndInline(t *testing.T) {
+// TODO: add a test that actually tests the "package without a repo creates a conflict" case
+
+func Test_PackageReposWithSamePackagesButTheNewOneHasHigherRev(t *testing.T) {
+}
+func Test_PackageReposWithSamePackageAsStandalonePackage(t *testing.T) {
 	env := e2e.BuildEnv(t)
 	logger := e2e.Logger{}
 	kubectl := e2e.Kubectl{t, "kapp-controller-packaging-global", logger}
 	kapp := e2e.Kapp{t, env.Namespace, logger}
 
-	name1 := "repo1"
+	name1 := "standalonepkg"
 	cleanUp1 := func() {
 		kapp.Run([]string{"delete", "-a", name1})
 	}
 	defer cleanUp1()
 
-	logger.Section("deploy PackageRepository 1", func() {
-		kapp.Run([]string{"deploy", "-a", name1, "-f", "../assets/kc-multi-repo/inline-repo1.yml"})
-		fmt.Println(kubectl.RunWithOpts([]string{"get", "package", "-n", "kapp-controller-packaging-global"}, e2e.RunOpts{AllowError: true}))
-	})
-
-	logger.Section("assert packages were installed", func() {
+	logger.Section("deploy Standalone Package", func() {
+		kapp.Run([]string{"deploy", "-a", name1, "-f", "../assets/kc-multi-repo/non-repo-package.yml"})
+		// fmt.Println(kapp.Run([]string{"inspect", "-a", name1}))
 		out := kubectl.Run([]string{"get", "packages"})
-		fmt.Println("kubectl get packages output: ", out)
-		assert.Contains(t, out, "pkg.test.carvel.dev")
+		// fmt.Println("kubectl get packages: ", out)
+		require.Contains(t, out, "pkg.test.carvel.dev.2.0.0")
 	})
 
-	name2 := "repo2"
+	name2 := "pkgr-with-conflicting-pkg"
 	cleanUp2 := func() {
 		kapp.Run([]string{"delete", "-a", name2})
 	}
 	defer cleanUp2()
 
 	logger.Section("deploy PackageRepository 2", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"}, e2e.RunOpts{AllowError: true})
+		// fmt.Println("output of kapp deploy of pkgr2: ", out)
+		// fmt.Println("error from kapp deploy of pkgr2: ", err)
+		assert.Error(t, err)
+		assert.Contains(t, out, "Reconcile failed:  (message: Deploying: Error")
+	})
+
+	/*
+
+		// TODO: i thought this would be cute to show causality of like, "look if you fake the package being in a repo then it works" but tbh it's very hard to tell why it isn't working.
+
+		logger.Section("annotate package to make it look like it came from a repo", func() {
+			kubectl.Run([]string{"annotate", "pkg", "pkg.test.carvel.dev.2.0.0", "packaging.carvel.dev/package-repository-ref=foo/bar.tanzu.carvel.dev"})
+		})
+
+		logger.Section("deploy PackageRepository 2 but this time it works", func() {
+			out, err := kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"}, e2e.RunOpts{AllowError: true})
+			fmt.Println("output of kapp deploy of pkgr2: ", out)
+			fmt.Println("error from kapp deploy of pkgr2: ", err)
+			fmt.Println(kubectl.Run([]string{"get", "pkgr", "-A", "-o", "yaml"}))
+			kapp.Run([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"})
+		})
+	*/
+}
+
+func Test_PackageReposWithSamePackagesButTheOldOneHasHigherRev(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kubectl := e2e.Kubectl{t, "kapp-controller-packaging-global", logger}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+
+	name1 := "repo2"
+	cleanUp1 := func() {
+		kapp.Run([]string{"delete", "-a", name1})
+	}
+	defer cleanUp1()
+
+	logger.Section("deploy PackageRepository 2", func() {
+		kapp.Run([]string{"deploy", "-a", name1, "-f", "../assets/kc-multi-repo/inline-repo2.yml"})
+		// fmt.Println(kubectl.RunWithOpts([]string{"get", "package", "-n", "kapp-controller-packaging-global"}, e2e.RunOpts{AllowError: true}))
+	})
+
+	logger.Section("assert packages were installed", func() {
+		out := kubectl.Run([]string{"get", "packages", "-o", "yaml"})
+		// fmt.Println("kubectl get packages output: ", out)
+		require.Contains(t, out, "pkg.test.carvel.dev")
+		require.Contains(t, out, "this is rev 3 now")
+	})
+
+	name2 := "repo1"
+	cleanUp2 := func() {
+		kapp.Run([]string{"delete", "-a", name2})
+	}
+	defer cleanUp2()
+
+	logger.Section("deploy PackageRepository 1 should result in keeping the existing package but with no error message", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"}, e2e.RunOpts{AllowError: true})
 		fmt.Println(kapp.Run([]string{"inspect", "-a", name2}))
 		fmt.Println(kubectl.RunWithOpts([]string{"get", "packagerepository/test-repo2.tanzu.carvel.dev", "-o", "yaml"}, e2e.RunOpts{AllowError: true}))
 		fmt.Println(kubectl.RunWithOpts([]string{"get", "package"}, e2e.RunOpts{AllowError: true}))
 		kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"}, e2e.RunOpts{AllowError: false})
+
+		out := kubectl.Run([]string{"get", "packages", "-o", "yaml"})
+		// fmt.Println("kubectl get packages output: ", out)
+		require.Contains(t, out, "pkg.test.carvel.dev")
+		require.Contains(t, out, "this is rev 3 now")
 	})
 
 }
