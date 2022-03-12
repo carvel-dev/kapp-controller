@@ -41,6 +41,8 @@ func (a *App) deploy(tplOutput string) exec.CmdRunResult {
 
 func appendRebaseRule(tplOutput string) string {
 	return tplOutput + `
+
+---
 apiVersion: kapp.k14s.io/v1alpha1
 kind: Config
 rebaseRules:
