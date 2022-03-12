@@ -41,8 +41,6 @@ func (a *App) deploy(tplOutput string) exec.CmdRunResult {
 
 func appendRebaseRule(tplOutput string) string {
 	return tplOutput + `
-
----
 apiVersion: kapp.k14s.io/v1alpha1
 kind: Config
 rebaseRules:
@@ -53,8 +51,15 @@ rebaseRules:
         #@ load("@ytt:json", "json")
         #@ load("@ytt:overlay", "overlay")
 
-        #@ if/end json.encode(data.values.existing.spec) == json.encode(data.values.new.spec):
+        #@ def get_rev(annotations):
+        #@  if hasattr(annotations, "packaging.carvel.dev/repo-rev"):
+        #@    return int(annotations["packaging.carvel.dev/repo-rev"])
+        #@  else:
+        #@    return -1
+        #@  end
+        #@ end
 
+        #@ if json.encode(data.values.existing.spec) == json.encode(data.values.new.spec):
         #@overlay/match by=overlay.all
         ---
         metadata:
@@ -62,6 +67,17 @@ rebaseRules:
           annotations:
             #@overlay/match missing_ok=True
             kapp.k14s.io/noop: ""
+        #@ elif get_rev(data.values.existing.metadata.annotations) > get_rev(data.values.new.metadata.annotations):
+        #@overlay/match by=overlay.all
+        ---
+        metadata:
+          #@overlay/match missing_ok=True
+          annotations:
+            #@overlay/match missing_ok=True
+            kapp.k14s.io/noop: ""
+        #@ elif get_rev(data.values.existing.metadata.annotations) < get_rev(data.values.new.metadata.annotations):
+        #@ print("replacing existing older rev with newer rev")
+        #@ end
   resourceMatchers:
   - andMatcher:
       matchers:

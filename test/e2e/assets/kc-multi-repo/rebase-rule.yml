@@ -25,9 +25,15 @@ rebaseRules:
             #@overlay/match missing_ok=True
             kapp.k14s.io/noop: ""
         #@ elif get_rev(data.values.existing.metadata.annotations) > get_rev(data.values.new.metadata.annotations):
-        #@ data.values.existing
+        #@overlay/match by=overlay.all
+        ---
+        metadata:
+          #@overlay/match missing_ok=True
+          annotations:
+            #@overlay/match missing_ok=True
+            kapp.k14s.io/noop: ""
         #@ elif get_rev(data.values.existing.metadata.annotations) < get_rev(data.values.new.metadata.annotations):
-        #@ data.values.new
+        #@ print("replacing existing older rev with newer rev")
         #@ end
   resourceMatchers:
   - andMatcher:

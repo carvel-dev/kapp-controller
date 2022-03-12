@@ -2,10 +2,10 @@ apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
   name: pkg.test.carvel.dev.2.0.0
+  namespace: kapp-controller-packaging-global
   annotations:
     kapp.k14s.io/disable-original: ""
     kapp.k14s.io/disable-wait: ""
-    packaging.carvel.dev/package-repository-ref: kapp-controller-packaging-global/test-repo2.tanzu.carvel.dev
 spec:
   refName: pkg.test.carvel.dev
   version: 2.0.0
