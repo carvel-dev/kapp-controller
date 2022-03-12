@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -194,7 +195,46 @@ func Test_PackageReposWithSamePackagesButTheyreIdentical(t *testing.T) {
 // TODO: add a test that actually tests the "package without a repo creates a conflict" case
 
 func Test_PackageReposWithSamePackagesButTheNewOneHasHigherRev(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kubectl := e2e.Kubectl{t, "kapp-controller-packaging-global", logger}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+
+	name1 := "repo1"
+	cleanUp1 := func() {
+		kapp.Run([]string{"delete", "-a", name1})
+	}
+	defer cleanUp1()
+
+	logger.Section("deploy PackageRepository 1", func() {
+		kapp.Run([]string{"deploy", "-a", name1, "-f", "../assets/kc-multi-repo/inline-repo1.yml"})
+		// fmt.Println(kubectl.RunWithOpts([]string{"get", "package", "-n", "kapp-controller-packaging-global"}, e2e.RunOpts{AllowError: true}))
+	})
+
+	logger.Section("assert packages were installed", func() {
+		out := kubectl.Run([]string{"get", "packages", "-o", "yaml"})
+		// fmt.Println("kubectl get packages output: ", out)
+		require.Contains(t, out, "pkg.test.carvel.dev")
+		require.Contains(t, out, "stranger")
+	})
+
+	name2 := "repo2"
+	cleanUp2 := func() {
+		kapp.Run([]string{"delete", "-a", name2})
+	}
+	defer cleanUp2()
+
+	logger.Section("deploy PackageRepository 2 should result in upgrading the package bc it's higher rev", func() {
+		kapp.Run([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"})
+
+		out := kubectl.Run([]string{"get", "packages", "-o", "yaml"})
+		// fmt.Println("kubectl get packages output: ", out)
+		require.Contains(t, out, "pkg.test.carvel.dev")
+		require.Contains(t, out, "this is rev 3 now")
+	})
+
 }
+
 func Test_PackageReposWithSamePackageAsStandalonePackage(t *testing.T) {
 	env := e2e.BuildEnv(t)
 	logger := e2e.Logger{}
@@ -211,7 +251,7 @@ func Test_PackageReposWithSamePackageAsStandalonePackage(t *testing.T) {
 		kapp.Run([]string{"deploy", "-a", name1, "-f", "../assets/kc-multi-repo/non-repo-package.yml"})
 		// fmt.Println(kapp.Run([]string{"inspect", "-a", name1}))
 		out := kubectl.Run([]string{"get", "packages"})
-		fmt.Println(kubectl.Run([]string{"get", "packages", "-o", "yaml"}))
+		// fmt.Println(kubectl.Run([]string{"get", "packages", "-o", "yaml"}))
 		require.Contains(t, out, "pkg.test.carvel.dev.2.0.0")
 	})
 
@@ -222,13 +262,15 @@ func Test_PackageReposWithSamePackageAsStandalonePackage(t *testing.T) {
 	defer cleanUp2()
 
 	logger.Section("deploy PackageRepository 2", func() {
-		out, err := kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"}, e2e.RunOpts{AllowError: true})
+		_, err := kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"}, e2e.RunOpts{AllowError: true})
 		//	fmt.Println("\nBBBB output of kapp deploy of pkgr2: ", out)
 		//	fmt.Println("\nBBBB error from kapp deploy of pkgr2: ", err)
-		fmt.Println(kubectl.Run([]string{"get", "packages", "-o", "yaml"}))
+		// 	fmt.Println(kubectl.Run([]string{"get", "packages", "-o", "yaml"}))
+		// require.Contains(t, out, "Reconcile failed:  (message: Deploying: Error") // ideally you'd assert that the kapp output failed but really you have to poll i think. the output isn't consistent.
 		assert.Error(t, err)
-		assert.Contains(t, out, "cannot overwrite package pkg.test.carvel.dev.2.0.0 because it was not created by a package repository")
-		require.Contains(t, out, "Reconcile failed:  (message: Deploying: Error")
+		time.Sleep(2 * time.Second) // TODO - there's a race here if the pkgr hasn't reconciled yet so for a real test we'd need retries
+		out := kubectl.Run([]string{"get", "pkgr", "-o", "yaml"})
+		require.Contains(t, out, "cannot overwrite package pkg.test.carvel.dev.2.0.0 because it was not created by a package repository")
 	})
 
 	// TODO: i thought this would be cute to show causality of like, "look if you fake the package being in a repo then it works" but tbh it's very hard to tell why it isn't working.
