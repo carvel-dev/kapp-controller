@@ -61,6 +61,12 @@ rebaseRules:
         #@  end
         #@ end
 
+        #@ if not hasattr(data.values.existing.metadata.annotations, "packaging.carvel.dev/package-repository-ref"):
+        #@   msg = "Error: cannot overwrite package " + data.values.existing.metadata.name + " because it was not created by a package repository."
+        #@   print(msg)
+        #@   fail(msg)
+        #@ end
+
         #@ if json.encode(data.values.existing.spec) == json.encode(data.values.new.spec):
         #@overlay/match by=overlay.all
         ---
@@ -81,11 +87,7 @@ rebaseRules:
         #@ print("replacing existing older rev with newer rev")
         #@ end
   resourceMatchers:
-  - andMatcher:
-      matchers:
-      - apiVersionKindMatcher: {apiVersion: data.packaging.carvel.dev/v1alpha1, kind: Package}
-      - hasAnnotationMatcher:
-          keys: ["packaging.carvel.dev/package-repository-ref"]
+  - apiVersionKindMatcher: {apiVersion: data.packaging.carvel.dev/v1alpha1, kind: Package}
 `
 }
 

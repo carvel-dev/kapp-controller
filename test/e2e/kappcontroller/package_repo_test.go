@@ -211,7 +211,7 @@ func Test_PackageReposWithSamePackageAsStandalonePackage(t *testing.T) {
 		kapp.Run([]string{"deploy", "-a", name1, "-f", "../assets/kc-multi-repo/non-repo-package.yml"})
 		// fmt.Println(kapp.Run([]string{"inspect", "-a", name1}))
 		out := kubectl.Run([]string{"get", "packages"})
-		// fmt.Println("kubectl get packages: ", out)
+		fmt.Println(kubectl.Run([]string{"get", "packages", "-o", "yaml"}))
 		require.Contains(t, out, "pkg.test.carvel.dev.2.0.0")
 	})
 
@@ -223,24 +223,25 @@ func Test_PackageReposWithSamePackageAsStandalonePackage(t *testing.T) {
 
 	logger.Section("deploy PackageRepository 2", func() {
 		out, err := kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"}, e2e.RunOpts{AllowError: true})
-		// fmt.Println("output of kapp deploy of pkgr2: ", out)
-		// fmt.Println("error from kapp deploy of pkgr2: ", err)
+		//	fmt.Println("\nBBBB output of kapp deploy of pkgr2: ", out)
+		//	fmt.Println("\nBBBB error from kapp deploy of pkgr2: ", err)
+		fmt.Println(kubectl.Run([]string{"get", "packages", "-o", "yaml"}))
 		assert.Error(t, err)
-		assert.Contains(t, out, "Reconcile failed:  (message: Deploying: Error")
+		assert.Contains(t, out, "cannot overwrite package pkg.test.carvel.dev.2.0.0 because it was not created by a package repository")
+		require.Contains(t, out, "Reconcile failed:  (message: Deploying: Error")
 	})
 
+	// TODO: i thought this would be cute to show causality of like, "look if you fake the package being in a repo then it works" but tbh it's very hard to tell why it isn't working.
 	/*
-
-		// TODO: i thought this would be cute to show causality of like, "look if you fake the package being in a repo then it works" but tbh it's very hard to tell why it isn't working.
-
 		logger.Section("annotate package to make it look like it came from a repo", func() {
 			kubectl.Run([]string{"annotate", "pkg", "pkg.test.carvel.dev.2.0.0", "packaging.carvel.dev/package-repository-ref=foo/bar.tanzu.carvel.dev"})
+			fmt.Println(kubectl.Run([]string{"get", "pkg", "-A", "-o", "yaml"}))
 		})
 
 		logger.Section("deploy PackageRepository 2 but this time it works", func() {
-			out, err := kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"}, e2e.RunOpts{AllowError: true})
-			fmt.Println("output of kapp deploy of pkgr2: ", out)
-			fmt.Println("error from kapp deploy of pkgr2: ", err)
+			kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"}, e2e.RunOpts{AllowError: true})
+			//fmt.Println("output of kapp deploy of pkgr2: ", out)
+			//fmt.Println("error from kapp deploy of pkgr2: ", err)
 			fmt.Println(kubectl.Run([]string{"get", "pkgr", "-A", "-o", "yaml"}))
 			kapp.Run([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"})
 		})
