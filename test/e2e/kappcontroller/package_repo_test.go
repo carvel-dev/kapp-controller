@@ -278,11 +278,11 @@ func Test_PackageReposWithSamePackagesButTheOldOneHasHigherRev(t *testing.T) {
 	defer cleanUp2()
 
 	logger.Section("deploy PackageRepository 1 should result in keeping the existing package but with no error message", func() {
-		kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"}, e2e.RunOpts{AllowError: true})
-		fmt.Println(kapp.Run([]string{"inspect", "-a", name2}))
-		fmt.Println(kubectl.RunWithOpts([]string{"get", "packagerepository/test-repo2.tanzu.carvel.dev", "-o", "yaml"}, e2e.RunOpts{AllowError: true}))
-		fmt.Println(kubectl.RunWithOpts([]string{"get", "package"}, e2e.RunOpts{AllowError: true}))
-		kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo2.yml"}, e2e.RunOpts{AllowError: false})
+		kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo1.yml"}, e2e.RunOpts{AllowError: true})
+		// fmt.Println(kapp.Run([]string{"inspect", "-a", name2}))
+		// fmt.Println(kubectl.RunWithOpts([]string{"get", "packagerepository/test-repo1.tanzu.carvel.dev", "-o", "yaml"}, e2e.RunOpts{AllowError: true}))
+		// fmt.Println(kubectl.RunWithOpts([]string{"get", "package"}, e2e.RunOpts{AllowError: true}))
+		kapp.RunWithOpts([]string{"deploy", "-a", name2, "-f", "../assets/kc-multi-repo/inline-repo1.yml"}, e2e.RunOpts{AllowError: false})
 
 		out := kubectl.Run([]string{"get", "packages", "-o", "yaml"})
 		// fmt.Println("kubectl get packages output: ", out)
