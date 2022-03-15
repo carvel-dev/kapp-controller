@@ -9,6 +9,8 @@ spec:
   - inline:
       paths:
         app.cue: |
+            package app
+
             output: {
                 apiVersion: "v1"
                 kind:       "List"
