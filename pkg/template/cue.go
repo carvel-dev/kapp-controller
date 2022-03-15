@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	goexec "os/exec"
-	"path/filepath"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
@@ -45,11 +44,7 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	var stdoutBs, stderrBs bytes.Buffer
 	args := []string{"export", "--out", "yaml"}
 	if len(c.opts.Paths) == 0 {
-		paths, err := filepath.Glob(filepath.Join(dirPath, "*.cue"))
-		if err != nil {
-			return exec.NewCmdRunResultWithErr(fmt.Errorf("Reading files: %w", err))
-		}
-		args = append(args, paths...)
+		args = append(args, ".")
 	} else {
 		for _, path := range c.opts.Paths {
 			_, err := memdir.ScopedPath(dirPath, path)

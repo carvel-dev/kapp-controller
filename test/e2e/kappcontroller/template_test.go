@@ -288,11 +288,23 @@ spec:
             metadata:
               name: "cm-result"
             data:
-              values: "cool"
+              value: "cool"
   template:
-    - cue: {}
+  - cue:
+      inputExpression: "data:"
+      valuesFrom:
+      - secretRef:
+          name: secret-values
   deploy:
     - kapp: {}
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: secret-values
+stringData:
+  password.yaml: |
+    password: "wow"
 ` + sas.ForNamespaceYAML()
 
 	cleanUp := func() {
@@ -316,10 +328,11 @@ spec:
 			t.Fatalf("Unmarshaling result config map: %s", err)
 		}
 
-		expectedOut := `cool`
-
-		if cm.Data["values"] != expectedOut {
-			t.Fatalf("Values '%s' does not match expected value", cm.Data["values"])
+		if cm.Data["value"] != "cool" {
+			t.Fatalf("Value '%s' does not match expected value", cm.Data["value"])
+		}
+		if cm.Data["password"] != "wow" {
+			t.Fatalf("Password '%s' does not match expected value", cm.Data["password"])
 		}
 	})
 }
