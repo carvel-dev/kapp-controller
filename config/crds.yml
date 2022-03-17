@@ -95,6 +95,18 @@ spec:
               capacityRequirementsDescription:
                 description: 'System requirements needed to install the package. Note: these requirements will not be verified by kapp-controller on installation. (optional; string)'
                 type: string
+              includedSoftware:
+                description: IncludedSoftware can be used to show the software contents of a Package. This is especially useful if the underlying versions do not match the Package version
+                items:
+                  properties:
+                    description:
+                      type: string
+                    name:
+                      type: string
+                    version:
+                      type: string
+                  type: object
+                type: array
               licenses:
                 description: Description of the licenses that apply to the package software (optional; Array of strings)
                 items:
