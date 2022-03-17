@@ -17,6 +17,7 @@ message AppTemplateSpec {
   optional github.com.vmware_tanzu.carvel_kapp_controller.pkg.apis.kappctrl.v1alpha1.AppSpec spec = 1;
 }
 
+// Underlying Software Contents of a Package
 message IncludedSoftware {
   optional string name = 1;
 
