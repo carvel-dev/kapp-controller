@@ -70,6 +70,41 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 	}
 }
 
+func Test_PackageRefWithPrerelease_DoesNotRequirePrereleaseMarker(t *testing.T) {
+	expectedPackageVersion := datapkgingv1alpha1.Package{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "pkg.test.carvel.dev",
+		},
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "pkg.test.carvel.dev",
+			Version: "3.0.0-rc.1",
+		},
+	}
+
+	fakePkgClient := fakeapiserver.NewSimpleClientset(&expectedPackageVersion)
+
+	ip := PackageInstallCR{
+		model: &pkgingv1alpha1.PackageInstall{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "instl-pkg-prerelease",
+			},
+			Spec: pkgingv1alpha1.PackageInstallSpec{
+				PackageRef: &pkgingv1alpha1.PackageRef{
+					RefName: "pkg.test.carvel.dev",
+					VersionSelection: &versions.VersionSelectionSemver{
+						Constraints: "3.0.0-rc.1",
+					},
+				},
+			},
+		},
+		pkgclient: fakePkgClient,
+	}
+
+	out, err := ip.referencedPkgVersion()
+	require.NoError(t, err)
+	require.Equal(t, out, expectedPackageVersion)
+}
+
 func Test_PackageRefUsesName(t *testing.T) {
 	// PackageMetadata with prerelease version
 	expectedPackageVersion := datapkgingv1alpha1.Package{
