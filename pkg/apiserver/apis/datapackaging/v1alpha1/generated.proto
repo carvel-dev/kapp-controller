@@ -17,6 +17,14 @@ message AppTemplateSpec {
   optional github.com.vmware_tanzu.carvel_kapp_controller.pkg.apis.kappctrl.v1alpha1.AppSpec spec = 1;
 }
 
+message IncludedSoftware {
+  optional string name = 1;
+
+  optional string version = 2;
+
+  optional string description = 3;
+}
+
 message Maintainer {
   optional string name = 1;
 }
@@ -101,6 +109,11 @@ message PackageSpec {
   // in an OpenAPI schema format.
   // +optional
   optional ValuesSchema valuesSchema = 8;
+
+  // IncludedSoftware can be used to show the software contents of a Package.
+  // This is especially useful if the underlying versions do not match the Package version
+  // +optional
+  repeated IncludedSoftware includedSoftware = 9;
 }
 
 message ValuesSchema {
