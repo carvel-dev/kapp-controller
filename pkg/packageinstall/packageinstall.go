@@ -210,6 +210,16 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 		}
 	}
 
+	// If constraint is a single specified version, then we
+	// do not want to force user to manually set prereleases={}
+	if len(semverConfig.Constraints) > 0 && semverConfig.Prereleases == nil {
+		// Will error if it's not a single version
+		singleVer, err := versions.NewSemver(semverConfig.Constraints)
+		if err == nil && len(singleVer.Pre) > 0 {
+			semverConfig.Prereleases = &verv1alpha1.VersionSelectionSemverPrereleases{}
+		}
+	}
+
 	verConfig := verv1alpha1.VersionSelection{Semver: semverConfig}
 
 	selectedVersion, err := versions.HighestConstrainedVersion(versionStrs, verConfig)
