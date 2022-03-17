@@ -6,7 +6,6 @@ package app
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"strconv"
@@ -37,13 +36,13 @@ func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
 		}
 	}
 
-	confReader, err := vendir.ConfigReader()
+	conf, err := vendir.ConfigBytes()
 	if err != nil {
 		result.AttachErrorf("Fetching: %v", err)
 		return "", result
 	}
 
-	result = a.runVendir(confReader, dstPath)
+	result = a.runVendir(conf, dstPath)
 	// retry if error occurs before reporting failure.
 	// This is mainly done to support private registry
 	// authentication for images/bundles since placeholder
@@ -55,12 +54,16 @@ func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
 			// Sleep for 2 seconds to allow secretgen-controller
 			// to update placeholder secret(s).
 			time.Sleep(2 * time.Second)
-			confReader, err = vendir.ConfigReader()
+			newConf, err := vendir.ConfigBytes()
 			if err != nil {
 				result.AttachErrorf("Fetching: %v", err)
 				return "", result
 			}
-			result = a.runVendir(confReader, dstPath)
+			if bytes.Equal(conf, newConf) {
+				// no secrets/configmaps have changed, no point in retrying
+				continue
+			}
+			result = a.runVendir(newConf, dstPath)
 			if result.Error == nil {
 				break
 			}
@@ -78,11 +81,11 @@ func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
 	return dstPath, result
 }
 
-func (a *App) runVendir(confReader io.Reader, workingDir string) exec.CmdRunResult {
+func (a *App) runVendir(conf []byte, workingDir string) exec.CmdRunResult {
 	var stdoutBs, stderrBs bytes.Buffer
 	cmd := goexec.Command("vendir", "sync", "-f", "-", "--lock-file", os.DevNull)
 	cmd.Dir = workingDir
-	cmd.Stdin = confReader
+	cmd.Stdin = bytes.NewReader(conf)
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
