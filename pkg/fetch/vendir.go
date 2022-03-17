@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -194,10 +193,10 @@ func (v *Vendir) localRefConf(ref *v1alpha1.AppFetchLocalRef) *vendirconf.Direct
 	}
 }
 
-// ConfigReader generates config yaml bytes and wraps them in a bytes.Reader.
-// These bytes could be written to a file and then passed to vendir
-// but can also be mapped to stdin of the vendir process.
-func (v *Vendir) ConfigReader() (io.Reader, error) {
+// ConfigBytes fetches all the referenced Secrets & ConfigMaps and returns the
+// multi-document YAML-encoded config that vendir consumes.
+// https://github.com/vmware-tanzu/carvel-vendir/blob/develop/examples/secrets/vendir.yml
+func (v *Vendir) ConfigBytes() ([]byte, error) {
 	var resourcesYaml [][]byte
 	for _, dir := range v.config.Directories {
 		for _, contents := range dir.Contents {
@@ -217,7 +216,7 @@ func (v *Vendir) ConfigReader() (io.Reader, error) {
 
 	finalConfig := bytes.Join(append(resourcesYaml, vendirConfBytes), []byte("---\n"))
 
-	return bytes.NewReader(finalConfig), nil
+	return finalConfig, nil
 }
 
 func (v *Vendir) requiredResourcesYaml(contents vendirconf.DirectoryContents) ([][]byte, error) {
