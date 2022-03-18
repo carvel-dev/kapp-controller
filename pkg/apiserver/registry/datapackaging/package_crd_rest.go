@@ -307,14 +307,7 @@ func (r *PackageCRDREST) ConvertToTable(ctx context.Context, obj runtime.Object,
 		table.Rows = append(table.Rows, metav1.TableRow{
 			Cells: []interface{}{
 				pkg.Name, pkg.Spec.RefName,
-				pkg.Spec.Version, time.Since(pkg.ObjectMeta.CreationTimestamp.Time).Round(1 * time.Second).String(), func() []string {
-					var result []string
-
-					for _, v := range pkg.Spec.IncludedSoftware {
-						result = append(result, fmt.Sprintf("%s.%s", v.Name, v.Version))
-					}
-					return result
-				}(),
+				pkg.Spec.Version, time.Since(pkg.ObjectMeta.CreationTimestamp.Time).Round(1 * time.Second).String(),
 			},
 			Object: runtime.RawExtension{Object: obj},
 		})
@@ -347,7 +340,6 @@ func (r *PackageCRDREST) ConvertToTable(ctx context.Context, obj runtime.Object,
 			{Name: "PackageMetadata Name", Type: "string", Format: "name", Description: "Associated PackageMetadata name"},
 			{Name: "Version", Type: "string", Description: "Version"},
 			{Name: "Age", Type: "date", Description: "Time since resource creation"},
-			{Name: "Included Software", Type: "array", Description: "Software Included in Package"},
 		}
 	}
 	return &table, nil
