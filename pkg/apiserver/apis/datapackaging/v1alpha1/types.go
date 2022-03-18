@@ -107,7 +107,7 @@ type ValuesSchema struct {
 	OpenAPIv3 runtime.RawExtension `json:"openAPIv3,omitempty" protobuf:"bytes,1,opt,name=openAPIv3"`
 }
 
-// Underlying Software Contents of a Package
+// IncludedSoftware contains the underlying Software Contents of a Package
 type IncludedSoftware struct {
 	Name        string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
 	Version     string `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
