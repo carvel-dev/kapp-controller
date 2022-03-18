@@ -1494,7 +1494,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_IncludedSoftware(ref common.Re
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Underlying Software Contents of a Package",
+				Description: "IncludedSoftware contains the underlying Software Contents of a Package",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"name": {

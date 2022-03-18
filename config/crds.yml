@@ -98,7 +98,7 @@ spec:
               includedSoftware:
                 description: IncludedSoftware can be used to show the software contents of a Package. This is especially useful if the underlying versions do not match the Package version
                 items:
-                  description: Underlying Software Contents of a Package
+                  description: IncludedSoftware contains the underlying Software Contents of a Package
                   properties:
                     description:
                       type: string
