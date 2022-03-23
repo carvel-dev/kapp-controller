@@ -8,7 +8,7 @@ import (
 )
 
 type Deploy interface {
-	Deploy(newName string, tplOutput string, startedApplyingFunc func(),
+	Deploy(tplOutput string, appName string, startedApplyingFunc func(),
 		changedFunc func(exec.CmdRunResult)) exec.CmdRunResult
 
 	Delete(startedApplyingFunc func(),

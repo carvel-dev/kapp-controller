@@ -31,19 +31,12 @@ func (a *App) deploy(tplOutput string) exec.CmdRunResult {
 			return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 		}
 
-		if strings.HasSuffix(a.app.Name, ".pkgr") {
-			return kapp.Deploy(a.app.Name, tplOutput, a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
+		appName := a.app.Name
+		if !strings.HasSuffix(appName, ".app") {
+			appName += ".pkgr"
 		}
 
-		newName := a.app.Name + ".pkgr"
-		e := kapp.Rename(newName, tplOutput, a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
-		if e.Error != nil {
-			fmt.Println("ERR")
-			fmt.Println(e.Error.Error())
-			// return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", e.Error))
-		}
-
-		return kapp.Deploy(newName, tplOutput, a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
+		return kapp.Deploy(tplOutput, appName, a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
 	default:
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Unsupported way to deploy"))
 	}
