@@ -15,15 +15,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type AppStage string
-
-const (
-	fetchStage    AppStage = "fetch"
-	templateStage AppStage = "template"
-	deployStage   AppStage = "deploy"
-	reconciled    AppStage = "reconciled"
-)
-
 type StatusOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
@@ -32,7 +23,6 @@ type StatusOptions struct {
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
 
-	Follow          bool
 	IgnoreNotExists bool
 }
 
@@ -50,8 +40,7 @@ func NewStatusCmd(o *StatusOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App CR name (required)")
-	cmd.Flags().BoolVarP(&o.Follow, "follow", "f", false, "Follow changes in the App CRs status")
-	cmd.Flags().BoolVar(&o.IgnoreNotExists, "ignore-not-exists", false, "Keep following AppCR if it does not exist")
+	//cmd.Flags().BoolVar(&o.IgnoreNotExists, "ignore-not-exists", false, "Keep following AppCR if it does not exist")
 
 	return cmd
 }
@@ -59,10 +48,6 @@ func NewStatusCmd(o *StatusOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 func (o *StatusOptions) Run() error {
 	if len(o.Name) == 0 {
 		return fmt.Errorf("Expected App CR name to be non empty")
-	}
-
-	if o.IgnoreNotExists && !o.Follow {
-		return fmt.Errorf("'--ignore-not-exists' can only be used while following")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
@@ -75,22 +60,15 @@ func (o *StatusOptions) Run() error {
 		if !(errors.IsNotFound(err) && o.IgnoreNotExists) {
 			return err
 		}
-		o.ui.PrintLinef("AppCR '' in namespace '' does not exist...")
+		o.ui.PrintLinef("AppCR '%s' in namespace '%s' does not exist...", o.Name, o.NamespaceFlags)
 	}
 
-	appWatcher := NewAppWatcher(o.NamespaceFlags.Name, o.Name, o.Follow, o.IgnoreNotExists, o.ui, client)
+	appWatcher := NewAppWatcher(o.NamespaceFlags.Name, o.Name, o.IgnoreNotExists, o.ui, client)
+	appWatcher.PrintInfo(*app)
 
-	if o.Follow {
-		err = appWatcher.FollowApp(app)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-
-	_, err = appWatcher.PrintTillCurrent(app.Status)
-	if err != nil && !o.Follow {
-		return err
+	err = appWatcher.TailAppStatus(app)
+	if err != nil {
+		return fmt.Errorf("App reconciliation failed")
 	}
 
 	return nil
