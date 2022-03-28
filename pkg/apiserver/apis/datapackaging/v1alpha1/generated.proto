@@ -19,7 +19,7 @@ message AppTemplateSpec {
 
 // IncludedSoftware contains the underlying Software Contents of a Package
 message IncludedSoftware {
-  optional string name = 1;
+  optional string displayName = 1;
 
   optional string version = 2;
 
