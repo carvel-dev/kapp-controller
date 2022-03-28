@@ -109,7 +109,7 @@ type ValuesSchema struct {
 
 // IncludedSoftware contains the underlying Software Contents of a Package
 type IncludedSoftware struct {
-	Name        string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
+	DisplayName string `json:"name,omitempty" protobuf:"bytes,1,opt,name=displayName"`
 	Version     string `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
 	Description string `json:"description,omitempty" protobuf:"bytes,3,opt,name=description"`
 }

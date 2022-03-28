@@ -145,7 +145,7 @@ func Convert_datapackaging_AppTemplateSpec_To_v1alpha1_AppTemplateSpec(in *datap
 }
 
 func autoConvert_v1alpha1_IncludedSoftware_To_datapackaging_IncludedSoftware(in *IncludedSoftware, out *datapackaging.IncludedSoftware, s conversion.Scope) error {
-	out.Name = in.Name
+	out.DisplayName = in.DisplayName
 	out.Version = in.Version
 	out.Description = in.Description
 	return nil
@@ -157,7 +157,7 @@ func Convert_v1alpha1_IncludedSoftware_To_datapackaging_IncludedSoftware(in *Inc
 }
 
 func autoConvert_datapackaging_IncludedSoftware_To_v1alpha1_IncludedSoftware(in *datapackaging.IncludedSoftware, out *IncludedSoftware, s conversion.Scope) error {
-	out.Name = in.Name
+	out.DisplayName = in.DisplayName
 	out.Version = in.Version
 	out.Description = in.Description
 	return nil
