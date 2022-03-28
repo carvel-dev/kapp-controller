@@ -118,6 +118,26 @@ func Run(opts Options, runLog logr.Logger) error {
 	refTracker := reftracker.NewAppRefTracker()
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
 
+	{ // add controller for config
+		reconciler := kcconfig.NewReconciler(coreClient, runLog.WithName("config"))
+
+		ctrl, err := controller.New("Config", mgr, controller.Options{
+			Reconciler: NewUniqueReconciler(&ErrReconciler{
+				delegate: reconciler,
+				log:      runLog.WithName("er"),
+			}),
+			MaxConcurrentReconciles: 1,
+		})
+		if err != nil {
+			return fmt.Errorf("Setting up Config reconciler: %s", err)
+		}
+
+		err = reconciler.AttachWatches(ctrl)
+		if err != nil {
+			return fmt.Errorf("Setting up Config reconciler watches: %s", err)
+		}
+	}
+
 	{ // add controller for apps
 		appFactory := app.CRDAppFactory{coreClient, kcClient, kcConfig, appMetrics}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
