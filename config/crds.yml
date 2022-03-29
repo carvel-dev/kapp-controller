@@ -102,7 +102,7 @@ spec:
                   properties:
                     description:
                       type: string
-                    name:
+                    displayName:
                       type: string
                     version:
                       type: string
