@@ -4,7 +4,9 @@
 package core
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/cppforlife/cobrautil"
 	"github.com/spf13/cobra"
@@ -17,26 +19,30 @@ type KubeconfigFlags struct {
 	YAML    *KubeconfigYAMLFlag
 }
 
-func (f *KubeconfigFlags) Set(cmd *cobra.Command, flagsFactory FlagsFactory) {
-	f.Path = NewKubeconfigPathFlag()
-	cmd.PersistentFlags().Var(f.Path, "kubeconfig", "Path to the kubeconfig file ($KCTRL_KUBECONFIG)")
+func (f *KubeconfigFlags) Set(cmd *cobra.Command, flagsFactory FlagsFactory, opts PackageCommandTreeOpts) {
+	kubeconfigEnvVariableKey := fmt.Sprintf("%s_KUBECONFIG", strings.ToUpper(opts.BinaryName))
+	f.Path = NewKubeconfigPathFlag(kubeconfigEnvVariableKey)
+	cmd.PersistentFlags().Var(f.Path, "kubeconfig", fmt.Sprintf("Path to the kubeconfig file ($%s)", kubeconfigEnvVariableKey))
 
-	f.Context = NewKubeconfigContextFlag()
-	cmd.PersistentFlags().Var(f.Context, "kubeconfig-context", "Kubeconfig context override ($KCTRL_KUBECONFIG_CONTEXT)")
+	kubeconfigContextEnvVariableKey := fmt.Sprintf("%s_KUBECONFIG_CONTEXT", strings.ToUpper(opts.BinaryName))
+	f.Context = NewKubeconfigContextFlag(kubeconfigContextEnvVariableKey)
+	cmd.PersistentFlags().Var(f.Context, "kubeconfig-context", fmt.Sprintf("Kubeconfig context override ($%s)", kubeconfigContextEnvVariableKey))
 
-	f.YAML = NewKubeconfigYAMLFlag()
-	cmd.PersistentFlags().Var(f.YAML, "kubeconfig-yaml", "Kubeconfig contents as YAML ($KCTRL_KUBECONFIG_YAML)")
+	kubeconfigYamlEnvVariableKey := fmt.Sprintf("%s_KUBECONFIG_YAML", strings.ToUpper(opts.BinaryName))
+	f.YAML = NewKubeconfigYAMLFlag(kubeconfigYamlEnvVariableKey)
+	cmd.PersistentFlags().Var(f.YAML, "kubeconfig-yaml", fmt.Sprintf("Kubeconfig contents as YAML ($%s)", kubeconfigYamlEnvVariableKey))
 }
 
 type KubeconfigPathFlag struct {
-	value string
+	value          string
+	envVariableKey string
 }
 
 var _ pflag.Value = &KubeconfigPathFlag{}
 var _ cobrautil.ResolvableFlag = &KubeconfigPathFlag{}
 
-func NewKubeconfigPathFlag() *KubeconfigPathFlag {
-	return &KubeconfigPathFlag{}
+func NewKubeconfigPathFlag(envVariableKey string) *KubeconfigPathFlag {
+	return &KubeconfigPathFlag{envVariableKey: envVariableKey}
 }
 
 func (s *KubeconfigPathFlag) Set(val string) error {
@@ -67,7 +73,7 @@ func (s *KubeconfigPathFlag) Resolve() error {
 }
 
 func (s *KubeconfigPathFlag) resolveValue() string {
-	path := os.Getenv("KCTRL_KUBECONFIG")
+	path := os.Getenv(s.envVariableKey)
 	if len(path) > 0 {
 		return path
 	}
@@ -76,14 +82,15 @@ func (s *KubeconfigPathFlag) resolveValue() string {
 }
 
 type KubeconfigContextFlag struct {
-	value string
+	value          string
+	envVariableKey string
 }
 
 var _ pflag.Value = &KubeconfigContextFlag{}
 var _ cobrautil.ResolvableFlag = &KubeconfigPathFlag{}
 
-func NewKubeconfigContextFlag() *KubeconfigContextFlag {
-	return &KubeconfigContextFlag{}
+func NewKubeconfigContextFlag(envVariableKey string) *KubeconfigContextFlag {
+	return &KubeconfigContextFlag{envVariableKey: envVariableKey}
 }
 
 func (s *KubeconfigContextFlag) Set(val string) error {
@@ -108,20 +115,21 @@ func (s *KubeconfigContextFlag) Resolve() error {
 		return nil
 	}
 
-	s.value = os.Getenv("KCTRL_KUBECONFIG_CONTEXT")
+	s.value = os.Getenv(s.envVariableKey)
 
 	return nil
 }
 
 type KubeconfigYAMLFlag struct {
-	value string
+	value          string
+	envVariableKey string
 }
 
 var _ pflag.Value = &KubeconfigYAMLFlag{}
 var _ cobrautil.ResolvableFlag = &KubeconfigPathFlag{}
 
-func NewKubeconfigYAMLFlag() *KubeconfigYAMLFlag {
-	return &KubeconfigYAMLFlag{}
+func NewKubeconfigYAMLFlag(envVariableKey string) *KubeconfigYAMLFlag {
+	return &KubeconfigYAMLFlag{envVariableKey: envVariableKey}
 }
 
 func (s *KubeconfigYAMLFlag) Set(val string) error {
@@ -146,7 +154,7 @@ func (s *KubeconfigYAMLFlag) Resolve() error {
 		return nil
 	}
 
-	s.value = os.Getenv("KCTRL_KUBECONFIG_YAML")
+	s.value = os.Getenv(s.envVariableKey)
 
 	return nil
 }
