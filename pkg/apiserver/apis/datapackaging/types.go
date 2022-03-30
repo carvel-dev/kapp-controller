@@ -91,6 +91,11 @@ type PackageSpec struct {
 	// in an OpenAPI schema format.
 	// +optional
 	ValuesSchema ValuesSchema `json:"valuesSchema,omitempty"`
+
+	// IncludedSoftware can be used to show the software contents of a Package.
+	// This is especially useful if the underlying versions do not match the Package version
+	// +optional
+	IncludedSoftware []IncludedSoftware `json:"includedSoftware,omitempty"`
 }
 
 type PackageMetadataSpec struct {
@@ -126,4 +131,11 @@ type ValuesSchema struct {
 	// +nullable
 	// +kubebuilder:pruning:PreserveUnknownFields
 	OpenAPIv3 runtime.RawExtension `json:"openAPIv3,omitempty"`
+}
+
+// IncludedSoftware contains the underlying Software Contents of a Package
+type IncludedSoftware struct {
+	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,1,opt,name=displayName"`
+	Version     string `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
+	Description string `json:"description,omitempty" protobuf:"bytes,3,opt,name=description"`
 }
