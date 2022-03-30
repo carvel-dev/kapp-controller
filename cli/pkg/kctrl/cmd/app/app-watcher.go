@@ -42,38 +42,38 @@ func NewAppWatcher(namespace string, name string, ignoreIfExists bool, ui ui.UI,
 func (o *AppWatcher) printTillCurrent(status kcv1alpha1.AppStatus) error {
 	if status.Fetch != nil {
 		if status.Fetch.ExitCode != 0 && status.Fetch.UpdatedAt.Unix() >= status.Fetch.StartedAt.Unix() {
-			o.printLogLine("Fetch failed", status.Fetch.Stderr, true, nil)
+			o.printLogLine("Fetch failed", status.Fetch.Stderr, true, status.Fetch.UpdatedAt.Time)
 			return fmt.Errorf(status.Fetch.Stderr)
 		}
 		if status.Fetch.StartedAt.After(status.Fetch.UpdatedAt.Time) {
-			o.printLogLine("Fetch started", "", false, &status.Fetch.StartedAt.Time)
+			o.printLogLine("Fetch started", "", false, status.Fetch.StartedAt.Time)
 			return nil
 		}
-		o.printLogLine("Fetch succeeded", status.Fetch.Stdout, false, &status.Fetch.UpdatedAt.Time)
+		o.printLogLine("Fetch succeeded", status.Fetch.Stdout, false, status.Fetch.UpdatedAt.Time)
 	}
 
 	if status.Template != nil {
 		if status.Template.ExitCode != 0 && status.Fetch.StartedAt.Unix() < status.Template.UpdatedAt.Unix() {
-			o.printLogLine("Template failed", status.Template.Stderr, true, &status.Template.UpdatedAt.Time)
+			o.printLogLine("Template failed", status.Template.Stderr, true, status.Template.UpdatedAt.Time)
 			return fmt.Errorf(status.Template.Stderr)
 		}
 		if status.Fetch.StartedAt.After(status.Template.UpdatedAt.Time) {
-			o.printLogLine("Template started", "", false, nil)
+			o.printLogLine("Template started", "", false, status.Template.UpdatedAt.Time)
 			return nil
 		}
-		o.printLogLine("Template succeeded", "", false, &status.Template.UpdatedAt.Time)
+		o.printLogLine("Template succeeded", "", false, status.Template.UpdatedAt.Time)
 	}
 
 	if status.Deploy != nil {
 		if status.Deploy.ExitCode != 0 && status.Deploy.StartedAt.Unix() < status.Deploy.UpdatedAt.Unix() {
-			o.printLogLine("Deploy failed", status.Deploy.Stderr, true, nil)
+			o.printLogLine("Deploy failed", status.Deploy.Stderr, true, status.Deploy.UpdatedAt.Time)
 			return fmt.Errorf(status.Deploy.Error)
 		}
 		if o.hasReconciled(status) {
-			o.printLogLine("Deploy succeeded", status.Deploy.Stdout, false, &status.Deploy.UpdatedAt.Time)
+			o.printLogLine("Deploy succeeded", status.Deploy.Stdout, false, status.Deploy.UpdatedAt.Time)
 			return nil
 		}
-		o.printLogLine("Deploy started", status.Deploy.Stdout, false, &status.Deploy.StartedAt.Time)
+		o.printLogLine("Deploy started", status.Deploy.Stdout, false, status.Deploy.StartedAt.Time)
 	}
 
 	return nil
@@ -82,43 +82,43 @@ func (o *AppWatcher) printTillCurrent(status kcv1alpha1.AppStatus) error {
 func (o *AppWatcher) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alpha1.AppStatus) {
 	if status.Fetch != nil {
 		if oldStatus.Fetch == nil || (!oldStatus.Fetch.StartedAt.Equal(&status.Fetch.StartedAt) && status.Fetch.UpdatedAt.Unix() <= status.Fetch.StartedAt.Unix()) {
-			o.printLogLine("Fetch started", "", false, nil)
+			o.printLogLine("Fetch started", "", false, status.Fetch.StartedAt.Time)
 		}
 		if oldStatus.Fetch == nil || !oldStatus.Fetch.UpdatedAt.Equal(&status.Fetch.UpdatedAt) {
 			if status.Fetch.ExitCode != 0 && status.Fetch.UpdatedAt.Unix() >= status.Fetch.StartedAt.Unix() {
-				o.printLogLine("Fetch failed", status.Template.Stderr, true, nil)
+				o.printLogLine("Fetch failed", status.Template.Stderr, true, status.Fetch.UpdatedAt.Time)
 				o.stopWatch(true)
 				return
 			}
-			o.printLogLine("Fetching", status.Fetch.Stdout, false, nil)
-			o.printLogLine("Fetch succeeded", "", false, nil)
+			o.printLogLine("Fetching", status.Fetch.Stdout, false, status.Fetch.UpdatedAt.Time)
+			o.printLogLine("Fetch succeeded", "", false, status.Fetch.UpdatedAt.Time)
 		}
 	}
 	if status.Template != nil {
 		if oldStatus.Template == nil || !oldStatus.Template.UpdatedAt.Equal(&status.Template.UpdatedAt) {
 			if status.Template.ExitCode != 0 {
-				o.printLogLine("Template failed", status.Template.Stderr, true, nil)
+				o.printLogLine("Template failed", status.Template.Stderr, true, status.Template.UpdatedAt.Time)
 				o.stopWatch(true)
 				return
 			}
-			o.printLogLine("Template succeeded", "", false, nil)
+			o.printLogLine("Template succeeded", "", false, status.Template.UpdatedAt.Time)
 		}
 	}
 	if status.Deploy != nil {
 		if oldStatus.Deploy == nil || !oldStatus.Deploy.StartedAt.Equal(&status.Deploy.StartedAt) {
-			o.printLogLine("Deploy started", "", false, nil)
+			o.printLogLine("Deploy started", "", false, status.Deploy.StartedAt.Time)
 		}
 		if oldStatus.Deploy == nil || !oldStatus.Deploy.UpdatedAt.Equal(&status.Deploy.UpdatedAt) {
 			if status.Template.ExitCode != 0 && status.Deploy.Finished {
-				o.printLogLine("Deploy failed", status.Deploy.Stderr, true, nil)
+				o.printLogLine("Deploy failed", status.Deploy.Stderr, true, status.Deploy.UpdatedAt.Time)
 				o.stopWatch(true)
 				return
 			}
-			o.printDeployStdout(status.Deploy.Stdout)
+			o.printDeployStdout(status.Deploy.Stdout, status.Deploy.UpdatedAt.Time)
 		}
 	}
 	if o.hasReconciled(status) {
-		o.printLogLine("App reconciled", "", false, nil)
+		o.printLogLine("App reconciled", "", false, status.Deploy.UpdatedAt.Time)
 		o.stopWatch(false)
 	}
 }
@@ -234,12 +234,12 @@ func (o *AppWatcher) udpateEventHandler(oldObj interface{}, newObj interface{}) 
 	o.printUpdate(oldApp.Status, newApp.Status)
 }
 
-func (o *AppWatcher) printLogLine(message string, messageBlock string, errorBlock bool, startTime *time.Time) {
+func (o *AppWatcher) printLogLine(message string, messageBlock string, errorBlock bool, startTime time.Time) {
 	messageAge := ""
-	if startTime != nil {
-		messageAge = fmt.Sprintf("(%s ago)", duration.ShortHumanDuration(time.Since(*startTime)))
+	if time.Since(startTime) > 1*time.Second {
+		messageAge = fmt.Sprintf("(%s ago)", duration.ShortHumanDuration(time.Since(startTime)))
 	}
-	o.ui.BeginLinef("%s: %s %s\n", time.Now().Format("3:04:05PM"), message, messageAge)
+	o.ui.BeginLinef("%s: %s %s\n", startTime.Format("3:04:05PM"), message, messageAge)
 	if len(messageBlock) > 0 {
 		o.ui.PrintBlock([]byte(o.indentMessageBlock(messageBlock, errorBlock)))
 	}
@@ -261,10 +261,10 @@ func (o *AppWatcher) indentMessageBlock(messageBlock string, errored bool) strin
 	return indentedBlock
 }
 
-func (o *AppWatcher) printDeployStdout(stdout string) {
+func (o *AppWatcher) printDeployStdout(stdout string, timestamp time.Time) {
 	if o.lastSeenDeployStdout == "" {
 		o.lastSeenDeployStdout = stdout
-		o.printLogLine("Deploying", stdout, false, nil)
+		o.printLogLine("Deploying", stdout, false, timestamp)
 		return
 	}
 
