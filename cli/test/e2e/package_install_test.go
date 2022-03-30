@@ -142,7 +142,7 @@ spec:
 			"name":                 "testpkgi",
 			"package_name":         "test-pkg.carvel.dev",
 			"package_version":      "1.0.0",
-			"description":          "Reconcile succeeded",
+			"status":               "Reconcile succeeded",
 			"useful_error_message": "",
 		}}
 
@@ -170,7 +170,7 @@ spec:
 			"name":                 "testpkgi",
 			"package_name":         "test-pkg.carvel.dev",
 			"package_version":      "2.0.0",
-			"description":          "Reconcile succeeded",
+			"status":               "Reconcile succeeded",
 			"useful_error_message": "",
 		}}
 

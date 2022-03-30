@@ -113,7 +113,7 @@ func (o *GetOptions) Run(args []string) error {
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Package name"),
 			uitable.NewHeader("Package version"),
-			uitable.NewHeader("Description"),
+			uitable.NewHeader("Status"),
 			uitable.NewHeader("Conditions"),
 			uitable.NewHeader("Useful error message"),
 		},
