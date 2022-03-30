@@ -82,7 +82,7 @@ func (o *GetOptions) Run(args []string) error {
 			uitable.NewHeader("Namespace"),
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Source"),
-			uitable.NewHeader("Description"),
+			uitable.NewHeader("Status"),
 			uitable.NewHeader("Conditions"),
 			uitable.NewHeader("Useful error message"),
 		},
