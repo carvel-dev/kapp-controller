@@ -73,7 +73,7 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		}.Description("-i", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 	}
-	o.NamespaceFlags.Set(cmd, flagsFactory)
+	o.NamespaceFlags.Set(cmd, flagsFactory, o.pkgCmdTreeOpts)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
@@ -111,7 +111,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 				[]string{"package", "install", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--service-account-name", "existing-sa"}},
 		}.Description("-i", o.pkgCmdTreeOpts),
 	}
-	o.NamespaceFlags.Set(cmd, flagsFactory)
+	o.NamespaceFlags.Set(cmd, flagsFactory, o.pkgCmdTreeOpts)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
@@ -146,7 +146,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 				[]string{"package", "installed", "update", "-i", "cert-man", "--values-file", "values.yml"}},
 		}.Description("-i", o.pkgCmdTreeOpts),
 	}
-	o.NamespaceFlags.Set(cmd, flagsFactory)
+	o.NamespaceFlags.Set(cmd, flagsFactory, o.pkgCmdTreeOpts)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
