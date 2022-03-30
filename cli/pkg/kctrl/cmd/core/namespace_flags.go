@@ -6,6 +6,7 @@ package core
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/cppforlife/cobrautil"
 	"github.com/spf13/cobra"
@@ -16,21 +17,24 @@ type NamespaceFlags struct {
 	Name string
 }
 
-func (s *NamespaceFlags) Set(cmd *cobra.Command, flagsFactory FlagsFactory) {
-	name := flagsFactory.NewNamespaceNameFlag(&s.Name)
-	cmd.Flags().VarP(name, "namespace", "n", "Specified namespace ($KCTRL_NAMESPACE or default from kubeconfig)")
+func (s *NamespaceFlags) Set(cmd *cobra.Command, flagsFactory FlagsFactory, opts PackageCommandTreeOpts) {
+	namespaceEnvVariableKey := fmt.Sprintf("%s_NAMESPACE", strings.ToUpper(opts.BinaryName))
+	name := flagsFactory.NewNamespaceNameFlag(&s.Name, namespaceEnvVariableKey)
+
+	cmd.Flags().VarP(name, "namespace", "n", fmt.Sprintf("Specified namespace ($%s or default from kubeconfig)", namespaceEnvVariableKey))
 }
 
 type NamespaceNameFlag struct {
-	value         *string
-	configFactory ConfigFactory
+	value          *string
+	configFactory  ConfigFactory
+	envVariableKey string
 }
 
 var _ pflag.Value = &NamespaceNameFlag{}
 var _ cobrautil.ResolvableFlag = &NamespaceNameFlag{}
 
-func NewNamespaceNameFlag(value *string, configFactory ConfigFactory) *NamespaceNameFlag {
-	return &NamespaceNameFlag{value, configFactory}
+func NewNamespaceNameFlag(value *string, configFactory ConfigFactory, envVariableKey string) *NamespaceNameFlag {
+	return &NamespaceNameFlag{value, configFactory, envVariableKey}
 }
 
 func (s *NamespaceNameFlag) Set(val string) error {
@@ -57,7 +61,7 @@ func (s *NamespaceNameFlag) resolveValue() (string, error) {
 		return *s.value, nil
 	}
 
-	envVal := os.Getenv("KCTRL_NAMESPACE")
+	envVal := os.Getenv(s.envVariableKey)
 	if len(envVal) > 0 {
 		return envVal, nil
 	}

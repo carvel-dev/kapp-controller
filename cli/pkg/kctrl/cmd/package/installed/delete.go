@@ -53,7 +53,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		}.Description("-i", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 	}
-	o.NamespaceFlags.Set(cmd, flagsFactory)
+	o.NamespaceFlags.Set(cmd, flagsFactory, o.pkgCmdTreeOpts)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")

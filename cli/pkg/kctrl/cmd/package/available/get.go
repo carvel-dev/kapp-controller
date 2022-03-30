@@ -55,7 +55,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Annotations:  map[string]string{"table": ""},
 	}
 
-	o.NamespaceFlags.Set(cmd, flagsFactory)
+	o.NamespaceFlags.Set(cmd, flagsFactory, o.pkgCmdTreeOpts)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name (required)")
