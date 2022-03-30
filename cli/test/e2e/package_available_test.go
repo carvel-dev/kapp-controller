@@ -100,14 +100,10 @@ spec:
 	})
 
 	logger.Section("getting a nonexisting package", func() {
-		out := kappCtrl.Run([]string{"package", "available", "get", "-p", packageName, "--json"})
-
-		output := uitest.JSONUIFromBytes(t, []byte(out))
-
-		expectedOutputRows := []map[string]string{{
-			"name": packageName,
-		}}
-		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
+		_, err := kappCtrl.RunWithOpts([]string{"package", "available", "get", "-p", packageName, "--json"}, RunOpts{
+			AllowError: true,
+		})
+		require.Error(t, err, "Expected to get an error")
 	})
 
 	logger.Section("listing packages", func() {
