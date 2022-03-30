@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -108,6 +109,8 @@ func (o *GetOptions) show(client pkgclient.Interface, pkgName, pkgVersion string
 	headers := []uitable.Header{uitable.NewHeader("Name")}
 	row := []uitable.Value{uitable.NewValueString(pkgName)}
 
+	var pkgList *v1alpha1.PackageList
+
 	pkgMetadata, err := client.DataV1alpha1().PackageMetadatas(
 		o.NamespaceFlags.Name).Get(context.Background(), pkgName, metav1.GetOptions{})
 	if err != nil {
@@ -167,6 +170,21 @@ func (o *GetOptions) show(client pkgclient.Interface, pkgName, pkgVersion string
 			uitable.NewValueString(wordwrap.WrapString(pkg.Spec.ReleaseNotes, 80)),
 			uitable.NewValueStrings(pkg.Spec.Licenses),
 		}...)
+	} else {
+		listOpts := metav1.ListOptions{}
+		if len(o.Name) > 0 {
+			listOpts.FieldSelector = fields.Set{"spec.refName": o.Name}.String()
+		}
+
+		pkgList, err = client.DataV1alpha1().Packages(
+			o.NamespaceFlags.Name).List(context.Background(), listOpts)
+		if err != nil {
+			return err
+		}
+
+		if pkgMetadata == nil && len(pkgList.Items) == 0 {
+			return fmt.Errorf("Package '%s' not found in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+		}
 	}
 
 	table := uitable.Table{
@@ -178,24 +196,13 @@ func (o *GetOptions) show(client pkgclient.Interface, pkgName, pkgVersion string
 	o.ui.PrintTable(table)
 
 	if pkgVersion == "" {
-		return o.showVersions(client)
+		return o.showVersions(pkgList)
 	}
 
 	return nil
 }
 
-func (o *GetOptions) showVersions(client pkgclient.Interface) error {
-	listOpts := metav1.ListOptions{}
-	if len(o.Name) > 0 {
-		listOpts.FieldSelector = fields.Set{"spec.refName": o.Name}.String()
-	}
-
-	pkgList, err := client.DataV1alpha1().Packages(
-		o.NamespaceFlags.Name).List(context.Background(), listOpts)
-	if err != nil {
-		return err
-	}
-
+func (o *GetOptions) showVersions(pkgList *v1alpha1.PackageList) error {
 	table := uitable.Table{
 		Header: []uitable.Header{
 			uitable.NewHeader("Version"),
