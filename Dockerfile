@@ -26,12 +26,6 @@ COPY ./hack/install-deps.sh .
 COPY ./hack/dependencies.yml .
 RUN ./install-deps.sh
 
-# [DEPRECATED] Helm V2
-# Maintaining two versions of helm until we drop support in a future release
-RUN curl -sLo /helm https://get.helm.sh/helm-v2.17.0-linux-amd64.tar.gz && \
-  echo "f3bec3c7c55f6a9eb9e6586b8c503f370af92fe987fcbf741f37707606d70296  /helm" | sha256sum -c - && \
-  mkdir /helm-v2-unpacked && tar -C /helm-v2-unpacked -xzvf /helm
-
 RUN curl -sLo /helm https://get.helm.sh/helm-v3.8.0-linux-amd64.tar.gz && \
   echo "8408c91e846c5b9ba15eb6b1a5a79fc22dd4d33ac6ea63388e5698d1b2320c8b  /helm" | sha256sum -c - && \
   mkdir /helm-unpacked && tar -C /helm-unpacked -xzvf /helm
@@ -69,7 +63,6 @@ RUN echo "kapp-controller:x:1000:0:/home/kapp-controller:/usr/sbin/nologin" > /e
 RUN chmod g+w /etc/pki/tls/certs/ca-bundle.crt
 
 # fetchers
-COPY --from=0 /helm-v2-unpacked/linux-amd64/helm helmv2
 COPY --from=0 /helm-unpacked/linux-amd64/helm .
 COPY --from=0 /usr/local/bin/imgpkg .
 COPY --from=0 /usr/local/bin/vendir .

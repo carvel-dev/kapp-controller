@@ -17,7 +17,6 @@ fi
 tail -n +$run_image_start Dockerfile | \
   sed 's/COPY.*kapp-controller/COPY controller-linux-amd64 kapp-controller/' | \
    sed "s/from=0/from=$kc_latest_image/g" | \
-   sed 's/helm-v2-unpacked\/linux-amd64\/helm/helmv2/' | \
    sed 's/helm-unpacked\/linux-amd64\/helm/helm/' | \
    sed 's/usr\/local\/bin\///' \
    >> Dockerfile.dev

@@ -47,43 +47,6 @@ func TestHelm(t *testing.T) {
 		ConsecutiveReconcileSuccesses: 1,
 	}
 
-	helmV2YAML := fmt.Sprintf(`
-apiVersion: kappctrl.k14s.io/v1alpha1
-kind: App
-metadata:
-  name: test-helm-v2
-  annotations:
-    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
-spec:
-  serviceAccountName: kappctrl-e2e-ns-sa
-  fetch:
-  - helmChart:
-      name: redis
-      # Chart version v1, DEPRECATED 
-      version: "11.3.4"
-      repository:
-        url: https://charts.bitnami.com/bitnami
-  template:
-  - helmTemplate:
-      valuesFrom:
-      - secretRef:
-          name: test-helm-values
-  deploy:
-  - kapp:
-      inspect: {}
-      intoNs: %s
-      delete:
-        rawOptions: ["--apply-ignored=true"]
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: test-helm-values
-stringData:
-  data.yml: |
-    password: "1234567891234"
-`, env.Namespace) + sas.ForNamespaceYAML()
-
 	helmV3YAML := fmt.Sprintf(`
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
@@ -126,12 +89,6 @@ stringData:
 		deploymentYAML string
 		expectedStatus *v1alpha1.AppStatus
 	}{
-		{
-			"Helm v2 (chart spec v1) deployment",
-			"test-helm-v2",
-			helmV2YAML,
-			expectedStatus,
-		},
 		{
 			"Helm v3 (chart spec v2) deployment",
 			"test-helm",
