@@ -148,6 +148,16 @@ contributors for their additions to kapp-controller in the release notes.
 Once the release notes are ready, clicking the `Publish release` button in the GitHub UI to 
 make the release available to users.
 
+#### LTS Releases
+
+We want our releases to be sorted in semver order, but github only sorts on
+semver order for releases on the same day (otherwise it sorts preferentially by
+date). So we use sneaky post-dated annotated tags for LTS releases to pin them
+to the date of the original release. For example:
+```
+ GIT_COMMITTER_DATE="2022-02-25 2:00" git tag -a -m "v0.30.2" "v0.30.2"
+ ```
+
 #### Release development process 
 
 If you are making changes to the release process and want to test the process, it is recommended 
