@@ -116,7 +116,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
 	} else {
-		cmd.Use = "create INSTALLED_PACKAGE_NAME --package-name PACKAGE_NAME --version VERSION"
+		cmd.Use = "install INSTALLED_PACKAGE_NAME --package-name PACKAGE_NAME --version VERSION"
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
