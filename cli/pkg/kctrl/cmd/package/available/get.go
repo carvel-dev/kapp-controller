@@ -6,6 +6,7 @@ package available
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -29,7 +30,8 @@ type GetOptions struct {
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
 
-	ValuesSchema bool
+	ValuesSchema      bool
+	DefaultValuesFile string
 
 	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
@@ -65,6 +67,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 	}
 
 	cmd.Flags().BoolVar(&o.ValuesSchema, "values-schema", false, "Values schema of the package (optional)")
+	cmd.Flags().StringVar(&o.DefaultValuesFile, "default-values-file-output", "", "File path to save default values (optional)")
 	return cmd
 }
 
@@ -155,6 +158,10 @@ func (o *GetOptions) show(client pkgclient.Interface, pkgName, pkgVersion string
 			return err
 		}
 
+		if len(o.DefaultValuesFile) > 0 {
+			o.saveDefaultValuesFileOutput(pkg)
+		}
+
 		headers = append(headers, []uitable.Header{
 			uitable.NewHeader("Version"),
 			uitable.NewHeader("Released at"),
@@ -171,6 +178,9 @@ func (o *GetOptions) show(client pkgclient.Interface, pkgName, pkgVersion string
 			uitable.NewValueStrings(pkg.Spec.Licenses),
 		}...)
 	} else {
+		if len(o.DefaultValuesFile) > 0 {
+			return fmt.Errorf("Package version is required when --default-values-file-output flag is declared")
+		}
 		listOpts := metav1.ListOptions{}
 		if len(o.Name) > 0 {
 			listOpts.FieldSelector = fields.Set{"spec.refName": o.Name}.String()
@@ -275,4 +285,26 @@ func (o *GetOptions) showValuesSchema(client pkgclient.Interface, pkgName, pkgVe
 	o.ui.PrintTable(table)
 
 	return err
+}
+
+func (o *GetOptions) saveDefaultValuesFileOutput(pkg *v1alpha1.Package) error {
+	if len(pkg.Spec.ValuesSchema.OpenAPIv3.Raw) == 0 {
+		o.ui.PrintLinef("Package '%s/%s' does not have any user configurable values in the '%s' namespace", pkg.Spec.RefName, pkg.Spec.Version, o.NamespaceFlags.Name)
+		return nil
+	}
+
+	s := PackageSchema{pkg.Spec.ValuesSchema.OpenAPIv3.Raw}
+	defaultValues, err := s.DefaultValues()
+	if err != nil {
+		return err
+	}
+
+	os.WriteFile(o.DefaultValuesFile, defaultValues, 0600)
+	if err != nil {
+		return fmt.Errorf("Writing default values: %s", err)
+	}
+
+	o.ui.PrintLinef("Created default values file at %s", o.DefaultValuesFile)
+
+	return nil
 }
