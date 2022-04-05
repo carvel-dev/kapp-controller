@@ -281,5 +281,7 @@ func (o *AppWatcher) printDeployStdout(stdout string, timestamp time.Time) {
 	}
 
 	o.lastSeenDeployStdout = stdout
-	o.ui.BeginLinef(o.indentMessageBlock(strings.Join(lines, "\n"), false))
+	if len(lines) > 0 {
+		o.ui.BeginLinef(o.indentMessageBlock(strings.Join(lines, "\n"), false))
+	}
 }
