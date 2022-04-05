@@ -6,6 +6,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -154,8 +155,24 @@ func (gc *Config) addTrustedCerts(certChain string) (err error) {
 		return nil
 	}
 
-	var file *os.File
-	file, err = os.OpenFile(systemCertsFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	src, err := os.OpenFile(systemCertsFile+".orig", os.O_RDONLY, os.ModeExclusive)
+	if err != nil {
+		return fmt.Errorf("Opening original certs file: %s", err)
+	}
+	defer src.Close()
+
+	dst, err := os.OpenFile(systemCertsFile, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModeExclusive)
+	if err != nil {
+		return fmt.Errorf("Opening certs file: %s", err)
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, src)
+	if err != nil {
+		return fmt.Errorf("Copying certs file: %s", err)
+	}
+
+	file, err := os.OpenFile(systemCertsFile, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
 		return fmt.Errorf("Opening certs file: %s", err)
 	}
