@@ -7,7 +7,7 @@ create_packaging_namespace: true
 #! clusters version 1.19 and below should disable APIPriorityAndFairness by setting the below to false
 enable_api_priority_and_fairness: true
 
-dangerous_enable_pprof: false
+dangerous_enable_pprof: true
 
 push_images: false
 image_cache: true
@@ -15,3 +15,4 @@ image_repo: docker.io/k14stest/kapp-controller-test
 
 api_port: 10350
 kapp_controller_version: "develop"
+image: kapp-controller

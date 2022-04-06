@@ -21,7 +21,7 @@ spec:
       serviceAccount: kapp-controller-sa
       containers:
       - name: kapp-controller
-        image: kapp-controller
+        image: #@ data.values.image
         args:
         - #@ "-packaging-global-namespace={}".format(data.values.packaging_global_namespace)
         #@ if/end data.values.dangerous_enable_pprof:
