@@ -181,6 +181,13 @@ func (a *App) SecretRefs() map[reftracker.RefKey]struct{} {
 					secrets[refKey] = struct{}{}
 				}
 			}
+		case tpl.Cue != nil && tpl.Cue.ValuesFrom != nil:
+			for _, valsFrom := range tpl.Cue.ValuesFrom {
+				if valsFrom.SecretRef != nil {
+					refKey := reftracker.NewSecretKey(valsFrom.SecretRef.Name, a.app.Namespace)
+					secrets[refKey] = struct{}{}
+				}
+			}
 		default:
 		}
 	}
@@ -226,6 +233,13 @@ func (a *App) ConfigMapRefs() map[reftracker.RefKey]struct{} {
 			}
 		case tpl.HelmTemplate != nil && tpl.HelmTemplate.ValuesFrom != nil:
 			for _, valsFrom := range tpl.HelmTemplate.ValuesFrom {
+				if valsFrom.ConfigMapRef != nil {
+					refKey := reftracker.NewConfigMapKey(valsFrom.ConfigMapRef.Name, a.app.Namespace)
+					configMaps[refKey] = struct{}{}
+				}
+			}
+		case tpl.Cue != nil && tpl.Cue.ValuesFrom != nil:
+			for _, valsFrom := range tpl.Cue.ValuesFrom {
 				if valsFrom.ConfigMapRef != nil {
 					refKey := reftracker.NewConfigMapKey(valsFrom.ConfigMapRef.Name, a.app.Namespace)
 					configMaps[refKey] = struct{}{}
