@@ -46,7 +46,6 @@ type Config struct {
 	httpsProxy    string
 	noProxy       string
 	skipTLSVerify string
-	populated     bool
 }
 
 // findExternalConfig will populate exactly one of its return values and the others will be nil.
@@ -100,10 +99,6 @@ func GetConfig(client kubernetes.Interface) (*Config, error) {
 }
 
 func (gc *Config) Apply() error {
-	if !gc.populated {
-		return nil
-	}
-
 	err := gc.addTrustedCerts(gc.caCerts)
 	if err != nil {
 		return fmt.Errorf("Adding trusted certs: %s", err)
@@ -119,10 +114,6 @@ func (gc *Config) Apply() error {
 // Note that in some cases the allow-list may contain ports, so the function name could also be ShouldSkipTLSForDomainAndPort
 // Note that "authority" is defined in: https://www.rfc-editor.org/rfc/rfc3986#section-3 to mean "host and port"
 func (gc *Config) ShouldSkipTLSForAuthority(candidateAuthority string) bool {
-	if !gc.populated {
-		return false
-	}
-
 	authorities := gc.skipTLSVerify
 	if len(authorities) == 0 {
 		return false
@@ -151,10 +142,6 @@ func (gc *Config) ShouldSkipTLSForAuthority(candidateAuthority string) bool {
 }
 
 func (gc *Config) addTrustedCerts(certChain string) (err error) {
-	if certChain == "" {
-		return nil
-	}
-
 	src, err := os.OpenFile(systemCertsFile+".orig", os.O_RDONLY, os.ModeExclusive)
 	if err != nil {
 		return fmt.Errorf("Opening original certs file: %s", err)
@@ -172,6 +159,10 @@ func (gc *Config) addTrustedCerts(certChain string) (err error) {
 		return fmt.Errorf("Copying certs file: %s", err)
 	}
 
+	if certChain == "" {
+		return nil
+	}
+
 	file, err := os.OpenFile(systemCertsFile, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
 		return fmt.Errorf("Opening certs file: %s", err)
@@ -187,21 +178,15 @@ func (gc *Config) addTrustedCerts(certChain string) (err error) {
 }
 
 func (gc *Config) configureProxies() {
-	if gc.httpProxy != "" {
-		os.Setenv(httpProxyEnvVar, gc.httpProxy)
-		os.Setenv(strings.ToUpper(httpProxyEnvVar), gc.httpProxy)
-	}
+	os.Setenv(httpProxyEnvVar, gc.httpProxy)
+	os.Setenv(strings.ToUpper(httpProxyEnvVar), gc.httpProxy)
 
-	if gc.httpsProxy != "" {
-		os.Setenv(httpsProxyEnvVar, gc.httpsProxy)
-		os.Setenv(strings.ToUpper(httpsProxyEnvVar), gc.httpsProxy)
-	}
+	os.Setenv(httpsProxyEnvVar, gc.httpsProxy)
+	os.Setenv(strings.ToUpper(httpsProxyEnvVar), gc.httpsProxy)
 
-	if gc.noProxy != "" {
-		gc.addKubernetesServiceHostInNoProxy()
-		os.Setenv(noProxyEnvVar, gc.noProxy)
-		os.Setenv(strings.ToUpper(noProxyEnvVar), gc.noProxy)
-	}
+	gc.addKubernetesServiceHostInNoProxy()
+	os.Setenv(noProxyEnvVar, gc.noProxy)
+	os.Setenv(strings.ToUpper(noProxyEnvVar), gc.noProxy)
 }
 
 func (gc *Config) addKubernetesServiceHostInNoProxy() {
@@ -230,5 +215,4 @@ func (gc *Config) addDataToConfig(data map[string]string) {
 	gc.httpsProxy = data[httpsProxyKey]
 	gc.noProxy = data[noProxyKey]
 	gc.skipTLSVerify = data[skipTLSVerifyKey]
-	gc.populated = true
 }
