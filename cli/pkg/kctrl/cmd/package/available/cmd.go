@@ -11,7 +11,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "available",
 		Aliases: []string{"a"},
-		Short:   "Available packages",
+		Short:   "Manage available packages",
 	}
 	return cmd
 }

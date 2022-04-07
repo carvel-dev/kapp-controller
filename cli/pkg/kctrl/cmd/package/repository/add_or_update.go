@@ -62,6 +62,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
 	} else {
 		cmd.Use = "add REPOSITORY_NAME --url REPOSITORY_URL"
+		cmd.Args = cobra.ExactArgs(1)
 	}
 
 	// TODO consider how to support other repository types
@@ -97,6 +98,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
 	} else {
 		cmd.Use = "update REPOSITORY_NAME --url REPOSITORY_URL"
+		cmd.Args = cobra.ExactArgs(1)
 	}
 
 	cmd.Flags().StringVarP(&o.URL, "url", "", "", "OCI registry url for package repository bundle (required)")

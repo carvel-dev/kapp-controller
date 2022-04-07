@@ -11,7 +11,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "repository",
 		Aliases: []string{"repo", "r"},
-		Short:   "Package repositories",
+		Short:   "Manage package repositories",
 	}
 	return cmd
 }
