@@ -71,6 +71,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "List all available versions of package")
 	} else {
 		cmd.Use = "list or list PACKAGE_NAME"
+		cmd.Args = cobra.MaximumNArgs(1)
 	}
 
 	cmd.Flags().BoolVar(&o.Wide, "wide", false, "Show additional info")

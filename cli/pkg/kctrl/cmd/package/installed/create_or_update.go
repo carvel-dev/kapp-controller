@@ -78,7 +78,8 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
 	} else {
-		cmd.Use = "create INSTALLED_PACKAGE_NAME --package-name PACKAGE_NAME --version VERSION"
+		cmd.Use = "create INSTALLED_PACKAGE_NAME --package PACKAGE_NAME --version VERSION"
+		cmd.Args = cobra.ExactArgs(1)
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
@@ -116,7 +117,8 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
 	} else {
-		cmd.Use = "install INSTALLED_PACKAGE_NAME --package-name PACKAGE_NAME --version VERSION"
+		cmd.Use = "install INSTALLED_PACKAGE_NAME --package PACKAGE_NAME --version VERSION"
+		cmd.Args = cobra.ExactArgs(1)
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
@@ -152,6 +154,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
 	} else {
 		cmd.Use = "update INSTALLED_PACKAGE_NAME"
+		cmd.Args = cobra.ExactArgs(1)
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Name of package install to be updated")
@@ -571,7 +574,7 @@ func (o *CreateOrUpdateOptions) preparePackageInstallForUpdate(pkgInstall *kcpkg
 		return nil, false, err
 	}
 
-	// If o.PackageName is provided by the user (via --package-name flag), verify that the package name in PackageInstall matches it.
+	// If o.PackageName is provided by the user (via --package flag), verify that the package name in PackageInstall matches it.
 	// This will prevent the users from accidentally overwriting an installed package with another package content due to choosing a pre-existing name for the package isntall.
 	// Otherwise if o.PackageName is not provided, fill it from the installed package spec
 	if o.packageName != "" && updatedPkgInstall.Spec.PackageRef.RefName != o.packageName {

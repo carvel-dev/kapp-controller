@@ -64,6 +64,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name (required)")
 	} else {
 		cmd.Use = "get PACKAGE_NAME or PACKAGE_NAME/VERSION"
+		cmd.Args = cobra.ExactArgs(1)
 	}
 
 	cmd.Flags().BoolVar(&o.ValuesSchema, "values-schema", false, "Values schema of the package (optional)")
@@ -299,7 +300,7 @@ func (o *GetOptions) saveDefaultValuesFileOutput(pkg *v1alpha1.Package) error {
 		return err
 	}
 
-	os.WriteFile(o.DefaultValuesFile, defaultValues, 0600)
+	err = os.WriteFile(o.DefaultValuesFile, defaultValues, 0600)
 	if err != nil {
 		return fmt.Errorf("Writing default values: %s", err)
 	}
