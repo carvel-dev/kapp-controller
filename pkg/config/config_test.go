@@ -41,6 +41,7 @@ func Test_GetConfig_ReturnsSecret_WhenBothConfigMapAndSecretExist(t *testing.T) 
 
 	config, err := kcconfig.GetConfig(k8scs)
 	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
+	config.SkipCertCheck = true
 
 	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
 
@@ -67,6 +68,7 @@ func Test_GetConfig_ReturnsConfigMap_WhenOnlyConfigMapExists(t *testing.T) {
 
 	config, err := kcconfig.GetConfig(k8scs)
 	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
+	config.SkipCertCheck = true
 
 	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
 
@@ -93,6 +95,7 @@ func Test_GetConfig_ReturnsSecret_WhenOnlySecretExists(t *testing.T) {
 
 	config, err := kcconfig.GetConfig(k8scs)
 	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
+	config.SkipCertCheck = true
 
 	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
 
@@ -122,6 +125,7 @@ func Test_KubernetesServiceHost_IsSet(t *testing.T) {
 
 	config, err := kcconfig.GetConfig(k8scs)
 	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
+	config.SkipCertCheck = true
 
 	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
 
@@ -144,6 +148,7 @@ func Test_ShouldSkipTLSForAuthority(t *testing.T) {
 	k8scs := k8sfake.NewSimpleClientset(configMap)
 	config, err := kcconfig.GetConfig(k8scs)
 	assert.NoError(t, err)
+	config.SkipCertCheck = true
 
 	assert.False(t, config.ShouldSkipTLSForAuthority("some.random.org"))
 	assert.True(t, config.ShouldSkipTLSForAuthority("always.trustworthy.com"))

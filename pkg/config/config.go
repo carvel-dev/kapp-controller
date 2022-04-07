@@ -46,6 +46,7 @@ type Config struct {
 	httpsProxy    string
 	noProxy       string
 	skipTLSVerify string
+	SkipCertCheck bool
 }
 
 // findExternalConfig will populate exactly one of its return values and the others will be nil.
@@ -142,6 +143,10 @@ func (gc *Config) ShouldSkipTLSForAuthority(candidateAuthority string) bool {
 }
 
 func (gc *Config) addTrustedCerts(certChain string) (err error) {
+	if gc.SkipCertCheck {
+		return nil
+	}
+
 	src, err := os.OpenFile(systemCertsFile+".orig", os.O_RDONLY, os.ModeExclusive)
 	if err != nil {
 		return fmt.Errorf("Opening original certs file: %s", err)
