@@ -22,8 +22,9 @@ import (
 const (
 	kcConfigName = "kapp-controller-config"
 
-	caCertsKey      = "caCerts"
-	systemCertsFile = "/etc/pki/tls/certs/ca-bundle.crt"
+	caCertsKey            = "caCerts"
+	systemCertsFile       = "/etc/pki/tls/certs/ca-bundle.crt"
+	backupSystemCertsFile = "/etc/pki/tls/certs/ca-bundle.crt.orig"
 
 	httpProxyKey     = "httpProxy"
 	httpsProxyKey    = "httpsProxy"
@@ -41,12 +42,13 @@ const (
 // Config is populated from the cluster's Secret or ConfigMap and sets behavior of kapp-controller.
 // NOTE because config may be populated from a Secret use caution if you're tempted to serialize.
 type Config struct {
-	caCerts       string
-	httpProxy     string
-	httpsProxy    string
-	noProxy       string
-	skipTLSVerify string
-	SkipCertCheck bool
+	caCerts            string
+	httpProxy          string
+	httpsProxy         string
+	noProxy            string
+	skipTLSVerify      string
+	BackupCaBundlePath string
+	SystemCaBundlePath string
 }
 
 // findExternalConfig will populate exactly one of its return values and the others will be nil.
@@ -143,17 +145,21 @@ func (gc *Config) ShouldSkipTLSForAuthority(candidateAuthority string) bool {
 }
 
 func (gc *Config) addTrustedCerts(certChain string) (err error) {
-	if gc.SkipCertCheck {
-		return nil
+	backupCertsFilePath := backupSystemCertsFile
+	systemCertsFilePath := systemCertsFile
+
+	if gc.BackupCaBundlePath != "" && gc.SystemCaBundlePath != "" {
+		backupCertsFilePath = gc.BackupCaBundlePath
+		systemCertsFilePath = gc.SystemCaBundlePath
 	}
 
-	src, err := os.OpenFile(systemCertsFile+".orig", os.O_RDONLY, os.ModeExclusive)
+	src, err := os.OpenFile(backupCertsFilePath, os.O_RDONLY, os.ModeExclusive)
 	if err != nil {
 		return fmt.Errorf("Opening original certs file: %s", err)
 	}
 	defer src.Close()
 
-	dst, err := os.OpenFile(systemCertsFile, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModeExclusive)
+	dst, err := os.OpenFile(systemCertsFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModeExclusive)
 	if err != nil {
 		return fmt.Errorf("Opening certs file: %s", err)
 	}
@@ -168,7 +174,7 @@ func (gc *Config) addTrustedCerts(certChain string) (err error) {
 		return nil
 	}
 
-	file, err := os.OpenFile(systemCertsFile, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	file, err := os.OpenFile(systemCertsFilePath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
 		return fmt.Errorf("Opening certs file: %s", err)
 	}
