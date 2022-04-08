@@ -4,15 +4,12 @@
 package app
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type StatusOptions struct {
@@ -40,7 +37,7 @@ func NewStatusCmd(o *StatusOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App CR name (required)")
-	//cmd.Flags().BoolVar(&o.IgnoreNotExists, "ignore-not-exists", false, "Keep following AppCR if it does not exist")
+	cmd.Flags().BoolVar(&o.IgnoreNotExists, "ignore-not-exists", false, "Keep following AppCR if it does not exist")
 
 	return cmd
 }
@@ -55,18 +52,13 @@ func (o *StatusOptions) Run() error {
 		return err
 	}
 
-	app, err := client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
-	if err != nil {
-		if !(errors.IsNotFound(err) && o.IgnoreNotExists) {
-			return err
-		}
-		o.ui.PrintLinef("AppCR '%s' in namespace '%s' does not exist...", o.Name, o.NamespaceFlags)
-	}
+	appWatcher := NewAppWatcher(o.NamespaceFlags.Name, o.Name, o.ui, client, AppWatcherOpts{
+		IgnoreNotExists:   o.IgnoreNotExists,
+		PrintMetadata:     true,
+		PrintCurrentState: true,
+	})
 
-	appWatcher := NewAppWatcher(o.NamespaceFlags.Name, o.Name, o.IgnoreNotExists, o.ui, client)
-	appWatcher.PrintInfo(*app)
-
-	err = appWatcher.TailAppStatus(app)
+	err = appWatcher.TailAppStatus()
 	if err != nil {
 		return fmt.Errorf("App reconciliation failed")
 	}
