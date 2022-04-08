@@ -4,6 +4,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -16,27 +17,34 @@ import (
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcexternalversions "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/duration"
 	"k8s.io/client-go/tools/cache"
 )
 
 type AppWatcher struct {
-	Namespace       string
-	Name            string
-	IgnoreNotExists bool
+	Namespace string
+	Name      string
 
 	ui     ui.UI
 	client kcclient.Interface
 
 	stopperChan       chan struct{}
 	erroredWhileWatch bool
+	opts              AppWatcherOpts
 
 	lastSeenDeployStdout string
 }
 
-func NewAppWatcher(namespace string, name string, ignoreIfExists bool, ui ui.UI, client kcclient.Interface) *AppWatcher {
-	return &AppWatcher{Namespace: namespace, Name: name, IgnoreNotExists: ignoreIfExists, ui: ui, client: client}
+type AppWatcherOpts struct {
+	IgnoreNotExists   bool
+	PrintMetadata     bool
+	PrintCurrentState bool
+}
+
+func NewAppWatcher(namespace string, name string, ui ui.UI, client kcclient.Interface, opts AppWatcherOpts) *AppWatcher {
+	return &AppWatcher{Namespace: namespace, Name: name, opts: opts, ui: ui, client: client}
 }
 
 func (o *AppWatcher) printTillCurrent(status kcv1alpha1.AppStatus) error {
@@ -109,7 +117,7 @@ func (o *AppWatcher) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alph
 			o.printLogLine("Deploy started", "", false, status.Deploy.StartedAt.Time)
 		}
 		if oldStatus.Deploy == nil || !oldStatus.Deploy.UpdatedAt.Equal(&status.Deploy.UpdatedAt) {
-			if status.Template.ExitCode != 0 && status.Deploy.Finished {
+			if status.Deploy.ExitCode != 0 && status.Deploy.Finished {
 				o.printLogLine("Deploy failed", status.Deploy.Stderr, true, status.Deploy.UpdatedAt.Time)
 				o.stopWatch(true)
 				return
@@ -191,14 +199,28 @@ func (o *AppWatcher) hasReconciled(status kcv1alpha1.AppStatus) bool {
 	return false
 }
 
-func (o *AppWatcher) TailAppStatus(app *kcv1alpha1.App) error {
-	err := o.printTillCurrent(app.Status)
+func (o *AppWatcher) TailAppStatus() error {
+	app, err := o.client.KappctrlV1alpha1().Apps(o.Namespace).Get(context.Background(), o.Name, metav1.GetOptions{})
 	if err != nil {
-		return err
+		if !(errors.IsNotFound(err) && o.opts.IgnoreNotExists) {
+			return err
+		}
+		o.ui.PrintLinef("AppCR '%s' in namespace '%s' does not exist...", o.Name, o.Namespace)
 	}
 
-	if o.hasReconciled(app.Status) {
-		return nil
+	if o.opts.PrintMetadata {
+		o.PrintInfo(*app)
+	}
+
+	if o.opts.PrintCurrentState {
+		err = o.printTillCurrent(app.Status)
+		if err != nil {
+			return err
+		}
+
+		if o.hasReconciled(app.Status) {
+			return nil
+		}
 	}
 
 	informerFactory := kcexternalversions.NewFilteredSharedInformerFactory(o.client, 30*time.Minute, o.Namespace, func(opts *metav1.ListOptions) {
@@ -282,6 +304,9 @@ func (o *AppWatcher) printDeployStdout(stdout string, timestamp time.Time) {
 
 	o.lastSeenDeployStdout = stdout
 	if len(lines) > 0 {
-		o.ui.BeginLinef(o.indentMessageBlock(strings.Join(lines, "\n"), false))
+		for _, line := range lines {
+			o.ui.BeginLinef("\t    | %s\n", line)
+			time.Sleep(50 * time.Millisecond)
+		}
 	}
 }
