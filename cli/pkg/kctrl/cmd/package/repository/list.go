@@ -47,7 +47,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		SilenceUsage: true,
 		Annotations:  map[string]string{"table": ""},
 	}
-	o.NamespaceFlags.Set(cmd, flagsFactory)
+	o.NamespaceFlags.Set(cmd, flagsFactory, o.pkgCmdTreeOpts)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List repositories in all namespaces")
 	return cmd
 }
@@ -113,7 +113,8 @@ func NewSourceValue(pkgr v1alpha1.PackageRepository) uitable.Value {
 		switch {
 		case pkgr.Spec.Fetch.ImgpkgBundle != nil:
 			source = "(imgpkg) " + pkgr.Spec.Fetch.ImgpkgBundle.Image
-			if pkgr.Spec.Fetch.ImgpkgBundle.TagSelection != nil && pkgr.Spec.Fetch.ImgpkgBundle.TagSelection.Semver != nil {
+			if pkgr.Spec.Fetch.ImgpkgBundle.TagSelection != nil && pkgr.Spec.Fetch.ImgpkgBundle.TagSelection.Semver != nil &&
+				pkgr.Spec.Fetch.ImgpkgBundle.TagSelection.Semver.Constraints != "" {
 				source += fmt.Sprintf(" (%s)", pkgr.Spec.Fetch.ImgpkgBundle.TagSelection.Semver.Constraints)
 			}
 		default:

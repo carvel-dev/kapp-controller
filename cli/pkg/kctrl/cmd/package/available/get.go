@@ -6,6 +6,7 @@ package available
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -14,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,7 +30,8 @@ type GetOptions struct {
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
 
-	ValuesSchema bool
+	ValuesSchema      bool
+	DefaultValuesFile string
 
 	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
@@ -55,15 +58,17 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Annotations:  map[string]string{"table": ""},
 	}
 
-	o.NamespaceFlags.Set(cmd, flagsFactory)
+	o.NamespaceFlags.Set(cmd, flagsFactory, o.pkgCmdTreeOpts)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name (required)")
 	} else {
 		cmd.Use = "get PACKAGE_NAME or PACKAGE_NAME/VERSION"
+		cmd.Args = cobra.ExactArgs(1)
 	}
 
 	cmd.Flags().BoolVar(&o.ValuesSchema, "values-schema", false, "Values schema of the package (optional)")
+	cmd.Flags().StringVar(&o.DefaultValuesFile, "default-values-file-output", "", "File path to save default values (optional)")
 	return cmd
 }
 
@@ -107,6 +112,8 @@ func (o *GetOptions) show(client pkgclient.Interface, pkgName, pkgVersion string
 	// Name is always present
 	headers := []uitable.Header{uitable.NewHeader("Name")}
 	row := []uitable.Value{uitable.NewValueString(pkgName)}
+
+	var pkgList *v1alpha1.PackageList
 
 	pkgMetadata, err := client.DataV1alpha1().PackageMetadatas(
 		o.NamespaceFlags.Name).Get(context.Background(), pkgName, metav1.GetOptions{})
@@ -152,6 +159,10 @@ func (o *GetOptions) show(client pkgclient.Interface, pkgName, pkgVersion string
 			return err
 		}
 
+		if len(o.DefaultValuesFile) > 0 {
+			o.saveDefaultValuesFileOutput(pkg)
+		}
+
 		headers = append(headers, []uitable.Header{
 			uitable.NewHeader("Version"),
 			uitable.NewHeader("Released at"),
@@ -167,6 +178,24 @@ func (o *GetOptions) show(client pkgclient.Interface, pkgName, pkgVersion string
 			uitable.NewValueString(wordwrap.WrapString(pkg.Spec.ReleaseNotes, 80)),
 			uitable.NewValueStrings(pkg.Spec.Licenses),
 		}...)
+	} else {
+		if len(o.DefaultValuesFile) > 0 {
+			return fmt.Errorf("Package version is required when --default-values-file-output flag is declared")
+		}
+		listOpts := metav1.ListOptions{}
+		if len(o.Name) > 0 {
+			listOpts.FieldSelector = fields.Set{"spec.refName": o.Name}.String()
+		}
+
+		pkgList, err = client.DataV1alpha1().Packages(
+			o.NamespaceFlags.Name).List(context.Background(), listOpts)
+		if err != nil {
+			return err
+		}
+
+		if pkgMetadata == nil && len(pkgList.Items) == 0 {
+			return fmt.Errorf("Package '%s' not found in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+		}
 	}
 
 	table := uitable.Table{
@@ -178,24 +207,13 @@ func (o *GetOptions) show(client pkgclient.Interface, pkgName, pkgVersion string
 	o.ui.PrintTable(table)
 
 	if pkgVersion == "" {
-		return o.showVersions(client)
+		return o.showVersions(pkgList)
 	}
 
 	return nil
 }
 
-func (o *GetOptions) showVersions(client pkgclient.Interface) error {
-	listOpts := metav1.ListOptions{}
-	if len(o.Name) > 0 {
-		listOpts.FieldSelector = fields.Set{"spec.refName": o.Name}.String()
-	}
-
-	pkgList, err := client.DataV1alpha1().Packages(
-		o.NamespaceFlags.Name).List(context.Background(), listOpts)
-	if err != nil {
-		return err
-	}
-
+func (o *GetOptions) showVersions(pkgList *v1alpha1.PackageList) error {
 	table := uitable.Table{
 		Header: []uitable.Header{
 			uitable.NewHeader("Version"),
@@ -268,4 +286,26 @@ func (o *GetOptions) showValuesSchema(client pkgclient.Interface, pkgName, pkgVe
 	o.ui.PrintTable(table)
 
 	return err
+}
+
+func (o *GetOptions) saveDefaultValuesFileOutput(pkg *v1alpha1.Package) error {
+	if len(pkg.Spec.ValuesSchema.OpenAPIv3.Raw) == 0 {
+		o.ui.PrintLinef("Package '%s/%s' does not have any user configurable values in the '%s' namespace", pkg.Spec.RefName, pkg.Spec.Version, o.NamespaceFlags.Name)
+		return nil
+	}
+
+	s := PackageSchema{pkg.Spec.ValuesSchema.OpenAPIv3.Raw}
+	defaultValues, err := s.DefaultValues()
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(o.DefaultValuesFile, defaultValues, 0600)
+	if err != nil {
+		return fmt.Errorf("Writing default values: %s", err)
+	}
+
+	o.ui.PrintLinef("Created default values file at %s", o.DefaultValuesFile)
+
+	return nil
 }

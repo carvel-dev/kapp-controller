@@ -82,7 +82,7 @@ func TestPackageRepository(t *testing.T) {
 
 		expectedOutputRows := []map[string]string{{
 			"conditions":           "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
-			"description":          "Reconcile succeeded",
+			"status":               "Reconcile succeeded",
 			"namespace":            env.Namespace,
 			"name":                 pkgrName,
 			"source":               fmt.Sprintf("(imgpkg) %s", pkgrURL),
@@ -113,7 +113,7 @@ func TestPackageRepository(t *testing.T) {
 
 		expectedOutputRows := []map[string]string{{
 			"conditions":           "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
-			"description":          "Reconcile succeeded",
+			"status":               "Reconcile succeeded",
 			"namespace":            env.Namespace,
 			"name":                 pkgrName,
 			"source":               fmt.Sprintf("(imgpkg) %s", pkgrURL),

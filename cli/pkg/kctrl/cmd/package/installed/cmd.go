@@ -11,7 +11,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "installed",
 		Aliases: []string{"i"},
-		Short:   "Installed packages",
+		Short:   "Manage installed packages",
 	}
 	return cmd
 }

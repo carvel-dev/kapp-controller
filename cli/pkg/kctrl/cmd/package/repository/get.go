@@ -44,12 +44,13 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		SilenceUsage: true,
 		Annotations:  map[string]string{"table": ""},
 	}
-	o.NamespaceFlags.Set(cmd, flagsFactory)
+	o.NamespaceFlags.Set(cmd, flagsFactory, o.pkgCmdTreeOpts)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
 	} else {
 		cmd.Use = "get REPOSITORY_NAME"
+		cmd.Args = cobra.ExactArgs(1)
 	}
 
 	return cmd
@@ -82,7 +83,7 @@ func (o *GetOptions) Run(args []string) error {
 			uitable.NewHeader("Namespace"),
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Source"),
-			uitable.NewHeader("Description"),
+			uitable.NewHeader("Status"),
 			uitable.NewHeader("Conditions"),
 			uitable.NewHeader("Useful error message"),
 		},
