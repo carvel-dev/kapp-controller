@@ -32,7 +32,7 @@ func NewCmdCompletion() *cobra.Command {
   source <(kctrl completion zsh)
 
   # zsh on osx / oh-my-zsh
-  kctrl completion zsh > "${fpath[1]}/kctrl"
+  kctrl completion zsh > "${fpath[1]}/_kctrl"
 
   # fish:
   kctrl completion fish | source
