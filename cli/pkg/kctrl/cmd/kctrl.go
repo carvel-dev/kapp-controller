@@ -92,7 +92,7 @@ func SetGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.Fl
 	o.UIFlags.Set(cmd, flagsFactory, opts)
 	o.LoggerFlags.Set(cmd, flagsFactory)
 	o.KubeAPIFlags.Set(cmd, flagsFactory)
-	o.KubeconfigFlags.Set(cmd, flagsFactory)
+	o.KubeconfigFlags.Set(cmd, flagsFactory, opts)
 }
 
 func ConfigurePathResolvers(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {

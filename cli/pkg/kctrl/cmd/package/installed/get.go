@@ -56,12 +56,13 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		SilenceUsage: true,
 		Annotations:  map[string]string{"table": ""},
 	}
-	o.NamespaceFlags.Set(cmd, flagsFactory)
+	o.NamespaceFlags.Set(cmd, flagsFactory, o.pkgCmdTreeOpts)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
 	} else {
 		cmd.Use = "get INSTALLED_PACKAGE_NAME"
+		cmd.Args = cobra.ExactArgs(1)
 	}
 
 	cmd.Flags().StringVar(&o.valuesFileOutput, "values-file-output", "", "File path for exporting configuration values file")
@@ -113,7 +114,7 @@ func (o *GetOptions) Run(args []string) error {
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Package name"),
 			uitable.NewHeader("Package version"),
-			uitable.NewHeader("Description"),
+			uitable.NewHeader("Status"),
 			uitable.NewHeader("Conditions"),
 			uitable.NewHeader("Useful error message"),
 		},

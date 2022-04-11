@@ -12,6 +12,6 @@ func NewFlagsFactory(configFactory ConfigFactory, depsFactory DepsFactory) Flags
 	return FlagsFactory{configFactory, depsFactory}
 }
 
-func (f FlagsFactory) NewNamespaceNameFlag(str *string) *NamespaceNameFlag {
-	return NewNamespaceNameFlag(str, f.configFactory)
+func (f FlagsFactory) NewNamespaceNameFlag(str *string, envVariableKey string) *NamespaceNameFlag {
+	return NewNamespaceNameFlag(str, f.configFactory, envVariableKey)
 }
