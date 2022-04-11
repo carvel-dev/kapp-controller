@@ -5,7 +5,9 @@ package available
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
@@ -47,7 +49,7 @@ func (s PackageSchema) DefaultValues() ([]byte, error) {
 		return nil, err
 	}
 
-	return b.Bytes(), nil
+	return s.commentDefaultValues(b), nil
 }
 
 // schemaDefault does defaulting of x depending on default values in s.
@@ -150,4 +152,13 @@ func (s PackageSchema) createDefault(structural *structuralschema.Structural, b 
 	b = append(b, false)
 
 	return b
+}
+
+func (s PackageSchema) commentDefaultValues(defaultValues bytes.Buffer) []byte {
+	var commentedDefaultValues string
+	for _, line := range strings.Split(strings.TrimSuffix(defaultValues.String(), "\n"), "\n") {
+		line = fmt.Sprintf("# %s\n", line)
+		commentedDefaultValues += line
+	}
+	return []byte(commentedDefaultValues)
 }
