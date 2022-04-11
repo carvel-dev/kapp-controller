@@ -85,6 +85,8 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 
 	ConfigureGlobalFlags(o, cmd, flagsFactory, pkgOpts.PositionalArgs)
 
+	cmd.AddCommand(NewCmdCompletion())
+
 	return cmd
 }
 
