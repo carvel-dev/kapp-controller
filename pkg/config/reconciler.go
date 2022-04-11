@@ -10,6 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -33,12 +34,19 @@ var _ reconcile.Reconciler = &Reconciler{}
 
 // AttachWatches configures watches needed for reconciler to reconcile the kapp-controller Config.
 func (r *Reconciler) AttachWatches(controller controller.Controller) error {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	kubeConf := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
+	namespace, _, err := kubeConf.Namespace()
+	if err != nil {
+		return fmt.Errorf("Getting namespace from kubeconfig: %s", err)
+	}
+
 	// only reconcile on the KC's config
 	p := predicate.NewPredicateFuncs(func(o client.Object) bool {
-		return o.GetNamespace() == "kapp-controller" && o.GetName() == kcConfigName
+		return o.GetNamespace() == namespace && o.GetName() == kcConfigName
 	})
 
-	err := controller.Watch(&source.Kind{Type: &v1.ConfigMap{}}, &handler.EnqueueRequestForObject{}, p)
+	err = controller.Watch(&source.Kind{Type: &v1.ConfigMap{}}, &handler.EnqueueRequestForObject{}, p)
 	if err != nil {
 		return fmt.Errorf("Watching Configmaps: %s", err)
 	}
