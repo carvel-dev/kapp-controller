@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-// Reconciler is responsible for reconciling Apps.
+// Reconciler is responsible for reconciling Kapp-controllers config.
 type Reconciler struct {
 	coreClient kubernetes.Interface
 	log        logr.Logger
@@ -31,11 +31,11 @@ func NewReconciler(coreClient kubernetes.Interface, log logr.Logger) *Reconciler
 
 var _ reconcile.Reconciler = &Reconciler{}
 
-// AttachWatches configures watches needed for reconciler to reconcile Apps.
+// AttachWatches configures watches needed for reconciler to reconcile the kapp-controller Config.
 func (r *Reconciler) AttachWatches(controller controller.Controller) error {
 	// only reconcile on the KC's config
 	p := predicate.NewPredicateFuncs(func(o client.Object) bool {
-		return o.GetName() == kcConfigName
+		return o.GetNamespace() == "kapp-controller" && o.GetName() == kcConfigName
 	})
 
 	err := controller.Watch(&source.Kind{Type: &v1.ConfigMap{}}, &handler.EnqueueRequestForObject{}, p)
@@ -51,7 +51,7 @@ func (r *Reconciler) AttachWatches(controller controller.Controller) error {
 	return nil
 }
 
-// nolint: revive
+// Reconcile gets the current config from the cluster and applies any changes.
 func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 

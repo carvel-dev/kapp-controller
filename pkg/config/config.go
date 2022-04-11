@@ -153,21 +153,27 @@ func (gc *Config) addTrustedCerts(certChain string) (err error) {
 		systemCertsFilePath = gc.SystemCaBundlePath
 	}
 
-	src, err := os.OpenFile(backupCertsFilePath, os.O_RDONLY, os.ModeExclusive)
+	src, err := os.Open(backupCertsFilePath)
 	if err != nil {
 		return fmt.Errorf("Opening original certs file: %s", err)
 	}
-	defer src.Close()
 
-	dst, err := os.OpenFile(systemCertsFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModeExclusive)
+	dst, err := os.OpenFile(systemCertsFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0600)
 	if err != nil {
 		return fmt.Errorf("Opening certs file: %s", err)
 	}
-	defer dst.Close()
 
 	_, err = io.Copy(dst, src)
 	if err != nil {
 		return fmt.Errorf("Copying certs file: %s", err)
+	}
+
+	if err = src.Close(); err != nil {
+		return err
+	}
+
+	if err = dst.Close(); err != nil {
+		return err
 	}
 
 	if certChain == "" {
@@ -189,15 +195,30 @@ func (gc *Config) addTrustedCerts(certChain string) (err error) {
 }
 
 func (gc *Config) configureProxies() {
-	os.Setenv(httpProxyEnvVar, gc.httpProxy)
-	os.Setenv(strings.ToUpper(httpProxyEnvVar), gc.httpProxy)
+	if httpProxyEnvVar == "" {
+		os.Unsetenv(httpProxyEnvVar)
+		os.Unsetenv(strings.ToUpper(httpProxyEnvVar))
+	} else {
+		os.Setenv(httpProxyEnvVar, gc.httpProxy)
+		os.Setenv(strings.ToUpper(httpProxyEnvVar), gc.httpProxy)
+	}
 
-	os.Setenv(httpsProxyEnvVar, gc.httpsProxy)
-	os.Setenv(strings.ToUpper(httpsProxyEnvVar), gc.httpsProxy)
+	if httpsProxyEnvVar == "" {
+		os.Unsetenv(httpsProxyEnvVar)
+		os.Unsetenv(strings.ToUpper(httpsProxyEnvVar))
+	} else {
+		os.Setenv(httpsProxyEnvVar, gc.httpsProxy)
+		os.Setenv(strings.ToUpper(httpsProxyEnvVar), gc.httpsProxy)
+	}
 
-	gc.addKubernetesServiceHostInNoProxy()
-	os.Setenv(noProxyEnvVar, gc.noProxy)
-	os.Setenv(strings.ToUpper(noProxyEnvVar), gc.noProxy)
+	if noProxyEnvVar == "" {
+		os.Unsetenv(noProxyEnvVar)
+		os.Unsetenv(strings.ToUpper(noProxyEnvVar))
+	} else {
+		gc.addKubernetesServiceHostInNoProxy()
+		os.Setenv(noProxyEnvVar, gc.noProxy)
+		os.Setenv(strings.ToUpper(noProxyEnvVar), gc.noProxy)
+	}
 }
 
 func (gc *Config) addKubernetesServiceHostInNoProxy() {

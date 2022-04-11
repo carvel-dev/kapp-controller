@@ -122,10 +122,7 @@ func Run(opts Options, runLog logr.Logger) error {
 		reconciler := kcconfig.NewReconciler(coreClient, runLog.WithName("config"))
 
 		ctrl, err := controller.New("Config", mgr, controller.Options{
-			Reconciler: NewUniqueReconciler(&ErrReconciler{
-				delegate: reconciler,
-				log:      runLog.WithName("er"),
-			}),
+			Reconciler:              reconciler,
 			MaxConcurrentReconciles: 1,
 		})
 		if err != nil {
