@@ -30,7 +30,6 @@ require (
 
 require (
 	github.com/go-logr/logr v0.4.0
-	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.9.0
 )
 
