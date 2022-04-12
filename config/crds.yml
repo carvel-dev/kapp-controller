@@ -593,7 +593,6 @@ spec:
   group: kappctrl.k14s.io
   names:
     categories:
-    - all
     - carvel
     kind: App
     listKind: AppList
@@ -1177,7 +1176,6 @@ spec:
   group: packaging.carvel.dev
   names:
     categories:
-    - all
     - carvel
     kind: PackageInstall
     listKind: PackageInstallList
@@ -1337,7 +1335,6 @@ spec:
   group: packaging.carvel.dev
   names:
     categories:
-    - all
     - carvel
     kind: PackageRepository
     listKind: PackageRepositoryList
