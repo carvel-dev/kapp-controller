@@ -157,11 +157,13 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 					}
 				} else {
 					for _, value := range pkgInstall.Spec.Values {
-						templateStep.Ytt.ValuesFrom = append(templateStep.Ytt.ValuesFrom, kcv1alpha1.AppTemplateValuesSource{
-							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								Name: value.SecretRef.Name,
-							},
-						})
+						if value.SecretRef != nil {
+							templateStep.Ytt.ValuesFrom = append(templateStep.Ytt.ValuesFrom, kcv1alpha1.AppTemplateValuesSource{
+								SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
+									Name: value.SecretRef.Name,
+								},
+							})
+						}
 					}
 				}
 			}
