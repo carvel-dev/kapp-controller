@@ -48,6 +48,10 @@ func NewAppWatcher(namespace string, name string, ui ui.UI, client kcclient.Inte
 }
 
 func (o *AppWatcher) printTillCurrent(status kcv1alpha1.AppStatus) error {
+	if o.isDeleting(status) {
+		return nil
+	}
+
 	if status.Fetch != nil {
 		if status.Fetch.ExitCode != 0 && status.Fetch.UpdatedAt.Unix() >= status.Fetch.StartedAt.Unix() {
 			o.printLogLine("Fetch failed", status.Fetch.Stderr, true, status.Fetch.UpdatedAt.Time)
@@ -113,8 +117,13 @@ func (o *AppWatcher) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alph
 		}
 	}
 	if status.Deploy != nil {
+		isDeleting := o.isDeleting(status)
 		if oldStatus.Deploy == nil || !oldStatus.Deploy.StartedAt.Equal(&status.Deploy.StartedAt) {
-			o.printLogLine("Deploy started", "", false, status.Deploy.StartedAt.Time)
+			msg := "Deploy started"
+			if isDeleting {
+				msg = "Delete started"
+			}
+			o.printLogLine(msg, "", false, status.Deploy.StartedAt.Time)
 		}
 		if oldStatus.Deploy == nil || !oldStatus.Deploy.UpdatedAt.Equal(&status.Deploy.UpdatedAt) {
 			if status.Deploy.ExitCode != 0 && status.Deploy.Finished {
@@ -122,7 +131,7 @@ func (o *AppWatcher) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alph
 				o.stopWatch(true)
 				return
 			}
-			o.printDeployStdout(status.Deploy.Stdout, status.Deploy.UpdatedAt.Time)
+			o.printDeployStdout(status.Deploy.Stdout, status.Deploy.UpdatedAt.Time, isDeleting)
 		}
 	}
 	if o.hasReconciled(status) {
@@ -199,6 +208,15 @@ func (o *AppWatcher) hasReconciled(status kcv1alpha1.AppStatus) bool {
 	return false
 }
 
+func (o *AppWatcher) isDeleting(status kcv1alpha1.AppStatus) bool {
+	for _, condition := range status.Conditions {
+		if condition.Type == kcv1alpha1.Deleting && condition.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
+
 func (o *AppWatcher) TailAppStatus() error {
 	app, err := o.client.KappctrlV1alpha1().Apps(o.Namespace).Get(context.Background(), o.Name, metav1.GetOptions{})
 	if err != nil {
@@ -230,6 +248,7 @@ func (o *AppWatcher) TailAppStatus() error {
 	o.stopperChan = make(chan struct{})
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: o.udpateEventHandler,
+		DeleteFunc: o.deleteEventHandler,
 	})
 
 	go informer.Run(o.stopperChan)
@@ -254,6 +273,11 @@ func (o *AppWatcher) udpateEventHandler(oldObj interface{}, newObj interface{}) 
 	oldApp, _ := oldObj.(*kcv1alpha1.App)
 
 	o.printUpdate(oldApp.Status, newApp.Status)
+}
+
+func (o *AppWatcher) deleteEventHandler(oldObj interface{}) {
+	o.printLogLine(fmt.Sprintf("App '%s' in namespace '%s' deleted", o.Name, o.Namespace), "", false, time.Now())
+	close(o.stopperChan)
 }
 
 func (o *AppWatcher) printLogLine(message string, messageBlock string, errorBlock bool, startTime time.Time) {
@@ -283,10 +307,14 @@ func (o *AppWatcher) indentMessageBlock(messageBlock string, errored bool) strin
 	return indentedBlock
 }
 
-func (o *AppWatcher) printDeployStdout(stdout string, timestamp time.Time) {
+func (o *AppWatcher) printDeployStdout(stdout string, timestamp time.Time, isDeleting bool) {
 	if o.lastSeenDeployStdout == "" {
 		o.lastSeenDeployStdout = stdout
-		o.printLogLine("Deploying", stdout, false, timestamp)
+		msg := "Deploying"
+		if isDeleting {
+			msg = "Deleting"
+		}
+		o.printLogLine(msg, stdout, false, timestamp)
 		return
 	}
 
