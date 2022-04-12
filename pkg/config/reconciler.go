@@ -65,13 +65,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 
 	kcConfig, err := GetConfig(r.coreClient)
 	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("getting kapp-controller config: %s", err)
+		log.Error(err, "getting kapp-controller config")
+		return reconcile.Result{}, nil // no re-queue
 	}
 
 	log.Info("Applying new config")
 	err = kcConfig.Apply()
 	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("Applying configuration: %s", err)
+		log.Error(err, "applying kapp-controller config")
+		return reconcile.Result{}, nil // no re-queue
 	}
 
 	return reconcile.Result{}, nil
