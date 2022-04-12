@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -92,6 +93,15 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 
 	modelStatus.SetReconciling(pi.model.ObjectMeta)
 
+	var fieldErrors field.ErrorList
+	for i, value := range pi.model.Spec.Values {
+		if value.SecretRef == nil {
+			fieldErrors = append(fieldErrors, field.Required(field.NewPath("spec", "values").Index(i).Child("secretRef"), ""))
+		}
+	}
+	if len(fieldErrors) > 0 {
+		return reconcile.Result{}, fmt.Errorf("Invalid fields: %w", fieldErrors.ToAggregate())
+	}
 	pkg, err := pi.referencedPkgVersion()
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
