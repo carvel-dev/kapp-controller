@@ -153,45 +153,39 @@ func (gc *Config) addTrustedCerts(certChain string) (err error) {
 		systemCertsFilePath = gc.SystemCaBundlePath
 	}
 
-	src, err := os.Open(backupCertsFilePath)
+	backupFile, err := os.Open(backupCertsFilePath)
 	if err != nil {
 		return fmt.Errorf("Opening original certs file: %s", err)
 	}
 
-	dst, err := os.OpenFile(systemCertsFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0600)
+	tmpFile, err := os.CreateTemp("/tmp", "tmp-ca-bundle-")
 	if err != nil {
-		return fmt.Errorf("Opening certs file: %s", err)
+		return fmt.Errorf("Creating tmp certs file: %s", err)
 	}
 
-	_, err = io.Copy(dst, src)
+	_, err = io.Copy(tmpFile, backupFile)
 	if err != nil {
 		return fmt.Errorf("Copying certs file: %s", err)
 	}
 
-	if err = src.Close(); err != nil {
-		return err
-	}
-
-	if err = dst.Close(); err != nil {
-		return err
-	}
-
-	if certChain == "" {
-		return nil
-	}
-
-	file, err := os.OpenFile(systemCertsFilePath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	_, err = tmpFile.Write([]byte("\n" + certChain))
 	if err != nil {
-		return fmt.Errorf("Opening certs file: %s", err)
-	}
-
-	_, err = file.Write([]byte("\n" + certChain))
-	if err != nil {
-		_ = file.Close()
+		_ = backupFile.Close()
+		_ = tmpFile.Close()
 		return err
 	}
 
-	return file.Close()
+	err = os.Rename(tmpFile.Name(), systemCertsFilePath)
+	if err != nil {
+		return fmt.Errorf("renaming certs file: %s", err)
+	}
+
+	err = backupFile.Close()
+	if err != nil {
+		return err
+	}
+
+	return tmpFile.Close()
 }
 
 func (gc *Config) configureProxies() {
