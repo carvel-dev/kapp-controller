@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-logr/logr"
 	kcinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/install"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
 	datapkginginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/install"
@@ -21,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/util/wait"
 	genericopenapi "k8s.io/apiserver/pkg/endpoints/openapi"
 	apirest "k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -29,7 +31,6 @@ import (
 	"k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/klog"
 	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	aggregatorclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 )
@@ -70,6 +71,7 @@ type APIServer struct {
 	server    *genericapiserver.GenericAPIServer
 	stopCh    chan struct{}
 	aggClient aggregatorclient.Interface
+	logger    logr.Logger
 }
 
 // NewAPIServerOpts is a collection of scalar arguments for the NewAPIServer function
@@ -82,6 +84,8 @@ type NewAPIServerOpts struct {
 	// EnableAPIPriorityAndFairness sets a featuregate to allow us backwards compatibility with
 	// v1.19 and earlier clusters - our libraries use the beta version of those APIs but they used to be alpha.
 	EnableAPIPriorityAndFairness bool
+
+	Logger logr.Logger
 }
 
 func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, opts NewAPIServerOpts) (*APIServer, error) { //nolint
@@ -90,7 +94,7 @@ func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kc
 		return nil, fmt.Errorf("building aggregation client: %v", err)
 	}
 
-	config, err := newServerConfig(aggClient, opts.BindPort, opts.EnableAPIPriorityAndFairness)
+	config, err := newServerConfig(aggClient, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -114,28 +118,22 @@ func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kc
 		return nil, err
 	}
 
-	return &APIServer{server, make(chan struct{}), aggClient}, nil
+	return &APIServer{server, make(chan struct{}), aggClient, opts.Logger}, nil
 }
 
 // Run spawns a go routine that exits when apiserver is stopped.
 func (as *APIServer) Run() error {
-	const (
-		retries = 60
-	)
-	go as.server.PrepareRun().Run(as.stopCh)
-
-	for i := 0; i < retries; i++ {
-		ready, err := as.isReady()
+	go func() {
+		err := as.server.PrepareRun().Run(as.stopCh)
 		if err != nil {
-			return fmt.Errorf("checking readiness: %v", err)
+			as.logger.Error(err, "API service stopped")
 		}
+	}()
 
-		if ready {
-			return nil
-		}
-		time.Sleep(1 * time.Second)
-	}
-	return fmt.Errorf("timed out after %s waiting for api server to become healthy. Check the status by running `kubectl get apiservices v1alpha1.data.packaging.carvel.dev -o yaml`", retries*time.Second)
+	return wait.PollInfinite(time.Second, func() (bool, error) {
+		as.logger.Info("waiting for API service to become ready. Check the status by running `kubectl get apiservices v1alpha1.data.packaging.carvel.dev -o yaml`")
+		return as.isReady()
+	})
 }
 
 func (as *APIServer) Stop() {
@@ -157,7 +155,7 @@ func (as *APIServer) isReady() (bool, error) {
 	return false, nil
 }
 
-func newServerConfig(aggClient aggregatorclient.Interface, bindPort int, enableAPIPriorityAndFairness bool) (*genericapiserver.RecommendedConfig, error) {
+func newServerConfig(aggClient aggregatorclient.Interface, opts NewAPIServerOpts) (*genericapiserver.RecommendedConfig, error) {
 	recommendedOptions := genericoptions.NewRecommendedOptions("", Codecs.LegacyCodec(v1alpha1.SchemeGroupVersion))
 	recommendedOptions.Etcd = nil
 
@@ -166,10 +164,10 @@ func newServerConfig(aggClient aggregatorclient.Interface, bindPort int, enableA
 	recommendedOptions.SecureServing.ServerCert.PairName = "kapp-controller"
 
 	// ports below 1024 are probably the wrong port, see https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Well-known_ports
-	if bindPort < 1024 {
-		return nil, fmt.Errorf("error initializing API Port to %v - try passing a port above 1023", bindPort)
+	if opts.BindPort < 1024 {
+		return nil, fmt.Errorf("error initializing API Port to %v - try passing a port above 1023", opts.BindPort)
 	}
-	recommendedOptions.SecureServing.BindPort = bindPort
+	recommendedOptions.SecureServing.BindPort = opts.BindPort
 
 	if err := recommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts("kapp-controller", []string{apiServiceEndoint()}, []net.IP{net.ParseIP("127.0.0.1")}); err != nil {
 		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
@@ -180,11 +178,11 @@ func newServerConfig(aggClient aggregatorclient.Interface, bindPort int, enableA
 		return nil, fmt.Errorf("error reading self-signed CA certificate: %v", err)
 	}
 
-	if err := updateAPIService(aggClient, caContentProvider); err != nil {
+	if err := updateAPIService(opts.Logger, aggClient, caContentProvider); err != nil {
 		return nil, fmt.Errorf("error updating api service with generated certs: %v", err)
 	}
 
-	if !enableAPIPriorityAndFairness {
+	if !opts.EnableAPIPriorityAndFairness {
 		// this feature gate was not enabled in k8s <=1.19 as the
 		// APIs it relies on were in alpha.
 		// the apiserver library hardcodes the beta version of the resource
@@ -207,8 +205,8 @@ func newServerConfig(aggClient aggregatorclient.Interface, bindPort int, enableA
 	return serverConfig, nil
 }
 
-func updateAPIService(client aggregatorclient.Interface, caProvider dynamiccertificates.CAContentProvider) error {
-	klog.Info("Syncing CA certificate with APIServices")
+func updateAPIService(logger logr.Logger, client aggregatorclient.Interface, caProvider dynamiccertificates.CAContentProvider) error {
+	logger.Info("Syncing CA certificate with APIServices")
 	apiService, err := client.ApiregistrationV1().APIServices().Get(context.TODO(), apiServiceName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("error getting APIService %s: %v", apiServiceName, err)

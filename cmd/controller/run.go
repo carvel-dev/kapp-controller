@@ -101,7 +101,11 @@ func Run(opts Options, runLog logr.Logger) error {
 	}
 
 	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, apiserver.NewAPIServerOpts{
-		GlobalNamespace: opts.PackagingGloablNS, BindPort: bindPort, EnableAPIPriorityAndFairness: opts.APIPriorityAndFairness})
+		GlobalNamespace:              opts.PackagingGloablNS,
+		BindPort:                     bindPort,
+		EnableAPIPriorityAndFairness: opts.APIPriorityAndFairness,
+		Logger:                       runLog.WithName("apiserver"),
+	})
 	if err != nil {
 		return fmt.Errorf("Building API server: %s", err)
 	}
