@@ -121,7 +121,7 @@ func Run(opts Options, runLog logr.Logger) error {
 	{ // add controller for config
 		reconciler := kcconfig.NewReconciler(coreClient, runLog.WithName("config"))
 
-		ctrl, err := controller.New("Config", mgr, controller.Options{
+		ctrl, err := controller.New("config", mgr, controller.Options{
 			Reconciler:              reconciler,
 			MaxConcurrentReconciles: 1,
 		})
