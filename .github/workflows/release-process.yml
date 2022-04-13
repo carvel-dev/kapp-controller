@@ -55,7 +55,7 @@ jobs:
           prerelease: true
 
       - name: Get uploaded release YAML checksum
-        uses: actions/github-script@v4
+        uses: actions/github-script@v6
         id: get-checksums-from-draft-release
         if: startsWith(github.ref, 'refs/tags/')
         with:
@@ -66,7 +66,7 @@ jobs:
             const { owner, repo } = context.repo;
             // https://docs.github.com/en/rest/reference/repos#list-releases
             // https://octokit.github.io/rest.js/v18#repos-list-releases
-            var releases = await github.repos.listReleases({
+            var releases = await github.rest.repos.listReleases({
               owner: owner,
               repo: repo
             });
@@ -78,7 +78,7 @@ jobs:
             for (const r of releases["data"]) {
               if (r.draft && `refs/tags/${r.tag_name}` == "${{ github.ref }}") {
                 for (const asset of r.assets) {
-                  var release_asset = await github.repos.getReleaseAsset({ headers: {accept: `application/octet-stream`}, accept: `application/octet-stream`, owner: owner, repo: repo, asset_id: asset.id });
+                  var release_asset = await github.rest.repos.getReleaseAsset({ headers: {accept: `application/octet-stream`}, accept: `application/octet-stream`, owner: owner, repo: repo, asset_id: asset.id });
                   const hash = crypto.createHash('sha256');
                   let http_promise = new Promise((resolve, reject) => {
                     https.get(release_asset.url, (stream) => {
