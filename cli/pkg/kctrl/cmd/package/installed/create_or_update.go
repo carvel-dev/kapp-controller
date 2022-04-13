@@ -14,6 +14,7 @@ import (
 	cmdapp "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
@@ -23,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -704,43 +706,51 @@ func (o *CreateOrUpdateOptions) addCreatedResourceAnnotations(meta *metav1.Objec
 // waitForResourceInstallation waits until the package get installed successfully or a failure happens
 func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace string, pollInterval, pollTimeout time.Duration, client kcclient.Interface) error {
 	o.ui.BeginLinef("%s: Waiting for PackageInstall reconciliation for '%s'\n", time.Now().Format("3:04:05PM"), name)
-	// msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
-	// description := getPackageInstallDescription(o.Name, o.NamespaceFlags.Name)
+	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
+	description := getPackageInstallDescription(o.Name, o.NamespaceFlags.Name)
 
-	// if err := wait.Poll(pollInterval, pollTimeout, func() (done bool, err error) {
+	appStatusTailErrored := false
+	tailAppStatusOutput := func(tailErrored *bool) {
+		appWatcher := cmdapp.NewAppWatcher(o.NamespaceFlags.Name, o.Name, o.ui, client, cmdapp.AppWatcherOpts{
+			IgnoreNotExists: true,
+		})
 
-	// 	resource, err := client.PackagingV1alpha1().PackageInstalls(namespace).Get(context.Background(), name, metav1.GetOptions{})
-	// 	//resource, err := p.kappClient.GetPackageInstall(name, namespace)
-	// 	if err != nil {
-	// 		return false, err
-	// 	}
-	// 	if resource.Generation != resource.Status.ObservedGeneration {
-	// 		// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
-	// 		return false, nil
-	// 	}
-	// 	status := resource.Status.GenericStatus
+		err := appWatcher.TailAppStatus()
+		if err != nil {
+			o.ui.BeginLinef("%s: Error tailing app: %s", time.Now().Format("3:04:05PM"), err.Error())
+			*tailErrored = true
+		}
+	}
+	go tailAppStatusOutput(&appStatusTailErrored)
 
-	// 	for _, condition := range status.Conditions {
-	// 		msgsUI.NotifySection("%s: %s", description, condition.Type)
+	if err := wait.Poll(pollInterval, pollTimeout, func() (done bool, err error) {
 
-	// 		switch {
-	// 		case condition.Type == kcv1alpha1.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
-	// 			return true, nil
-	// 		case condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue:
-	// 			return false, fmt.Errorf("%s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
-	// 		}
-	// 	}
-	// 	return false, nil
-	// }); err != nil {
-	// 	return fmt.Errorf("%s: Reconciling: %s", description, err)
-	// }
+		resource, err := client.PackagingV1alpha1().PackageInstalls(namespace).Get(context.Background(), name, metav1.GetOptions{})
+		//resource, err := p.kappClient.GetPackageInstall(name, namespace)
+		if err != nil {
+			return false, err
+		}
+		if resource.Generation != resource.Status.ObservedGeneration {
+			// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
+			return false, nil
+		}
+		status := resource.Status.GenericStatus
 
-	appWatcher := cmdapp.NewAppWatcher(o.NamespaceFlags.Name, o.Name, o.ui, client, cmdapp.AppWatcherOpts{
-		IgnoreNotExists: true,
-	})
-	err := appWatcher.TailAppStatus()
-	if err != nil {
-		return err
+		for _, condition := range status.Conditions {
+			if appStatusTailErrored {
+				msgsUI.NotifySection("%s: %s", description, condition.Type)
+			}
+
+			switch {
+			case condition.Type == kcv1alpha1.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
+				return true, nil
+			case condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue:
+				return false, fmt.Errorf("%s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
+			}
+		}
+		return false, nil
+	}); err != nil {
+		return fmt.Errorf("%s: Reconciling: %s", description, err)
 	}
 
 	return nil

@@ -132,37 +132,6 @@ func (o *DeleteOptions) patchNoopDelete(client kcclient.Interface) error {
 
 func (o *DeleteOptions) waitForAppDeletion(client kcclient.Interface) error {
 	o.ui.BeginLinef("%s: Waiting for App CR deletion for '%s'\n", time.Now().Format("3:04:05PM"), o.Name)
-	// msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
-	// description := getAppDescription(o.Name, o.NamespaceFlags.Name)
-
-	// err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (bool, error) {
-	// 	app, err := client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
-	// 	if err != nil {
-	// 		if errors.IsNotFound(err) {
-	// 			msgsUI.NotifySection("%s: DeletionSucceeded", description)
-	// 			return true, nil
-	// 		}
-	// 		return false, err
-	// 	}
-	// 	if app.Generation != app.Status.ObservedGeneration {
-	// 		// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
-	// 		return false, nil
-	// 	}
-	// 	status := app.Status.GenericStatus
-
-	// 	for _, cond := range status.Conditions {
-	// 		msgsUI.NotifySection("%s: %s", description, cond.Type)
-
-	// 		if cond.Type == kcv1alpha1.DeleteFailed && cond.Status == corev1.ConditionTrue {
-	// 			return false, fmt.Errorf("%s: Deleting: %s. %s", description, status.UsefulErrorMessage, status.FriendlyDescription)
-	// 		}
-	// 	}
-	// 	return false, nil
-	// })
-	// if err != nil {
-	// 	return fmt.Errorf("%s: Deleting: %s", description, err)
-	// }
-
 	appWatcher := NewAppWatcher(o.NamespaceFlags.Name, o.Name, o.ui, client, AppWatcherOpts{})
 	err := appWatcher.TailAppStatus()
 	if err != nil {
