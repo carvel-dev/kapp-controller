@@ -59,8 +59,9 @@ RUN tdnf install -y git openssh-clients sed
 
 # Create the kapp-controller user in the root group, the home directory will be mounted as a volume
 RUN echo "kapp-controller:x:1000:0:/home/kapp-controller:/usr/sbin/nologin" > /etc/passwd
-# Give the root group write access to openssh's root bundle so we can append custom roots at runtime
-RUN chmod g+w /etc/pki/tls/certs/ca-bundle.crt
+# Give the root group write access to the openssh's root bundle directory
+# so we can rename the certs file with our dynamic config, and append custom roots at runtime
+RUN chmod g+w /etc/pki/tls/certs
 
 # fetchers
 COPY --from=0 /helm-unpacked/linux-amd64/helm .

@@ -129,7 +129,12 @@ func Run(opts Options, runLog logr.Logger) error {
 			return fmt.Errorf("Setting up Config reconciler: %s", err)
 		}
 
-		err = reconciler.AttachWatches(ctrl)
+		ns := os.Getenv("KAPPCTRL_SYSTEM_NAMESPACE")
+		if ns == "" {
+			return fmt.Errorf("Cannot get kapp-controller namespace")
+		}
+
+		err = reconciler.AttachWatches(ctrl, ns)
 		if err != nil {
 			return fmt.Errorf("Setting up Config reconciler watches: %s", err)
 		}

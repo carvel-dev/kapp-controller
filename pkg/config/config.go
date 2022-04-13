@@ -180,12 +180,7 @@ func (gc *Config) addTrustedCerts(certChain string) (err error) {
 		return fmt.Errorf("renaming certs file: %s", err)
 	}
 
-	err = backupFile.Close()
-	if err != nil {
-		return err
-	}
-
-	return os.Remove(tmpFile.Name())
+	return backupFile.Close()
 }
 
 func (gc *Config) configureProxies() {
