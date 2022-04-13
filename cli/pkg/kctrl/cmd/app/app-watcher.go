@@ -88,6 +88,11 @@ func (o *AppWatcher) printTillCurrent(status kcv1alpha1.AppStatus) error {
 		o.printLogLine("Deploy started", status.Deploy.Stdout, false, status.Deploy.StartedAt.Time)
 	}
 
+	failed, errMsg := o.hasFailed(status)
+	if failed {
+		return fmt.Errorf(errMsg)
+	}
+
 	return nil
 }
 
@@ -134,9 +139,15 @@ func (o *AppWatcher) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alph
 			o.printDeployStdout(status.Deploy.Stdout, status.Deploy.UpdatedAt.Time, isDeleting)
 		}
 	}
+
 	if o.hasReconciled(status) {
 		o.printLogLine("App reconciled", "", false, status.Deploy.UpdatedAt.Time)
 		o.stopWatch(false)
+	}
+	failed, errMsg := o.hasFailed(status)
+	if failed {
+		o.printLogLine(errMsg, "", true, time.Now())
+		o.stopWatch(true)
 	}
 }
 
@@ -206,6 +217,18 @@ func (o *AppWatcher) hasReconciled(status kcv1alpha1.AppStatus) bool {
 		}
 	}
 	return false
+}
+
+func (o *AppWatcher) hasFailed(status kcv1alpha1.AppStatus) (bool, string) {
+	for _, condition := range status.Conditions {
+		if condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue {
+			return true, color.RedString(fmt.Sprintf("%s: %s", kcv1alpha1.ReconcileFailed, status.UsefulErrorMessage))
+		}
+		if condition.Type == kcv1alpha1.DeleteFailed && condition.Status == corev1.ConditionTrue {
+			return true, color.RedString(fmt.Sprintf("%s: %s", kcv1alpha1.DeleteFailed, status.UsefulErrorMessage))
+		}
+	}
+	return false, ""
 }
 
 func (o *AppWatcher) isDeleting(status kcv1alpha1.AppStatus) bool {
