@@ -98,7 +98,7 @@ func (o *AppWatcher) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alph
 		}
 		if oldStatus.Fetch == nil || !oldStatus.Fetch.UpdatedAt.Equal(&status.Fetch.UpdatedAt) {
 			if status.Fetch.ExitCode != 0 && status.Fetch.UpdatedAt.Unix() >= status.Fetch.StartedAt.Unix() {
-				o.printLogLine("Fetch failed", status.Template.Stderr, true, status.Fetch.UpdatedAt.Time)
+				o.printLogLine("Fetch failed", status.Fetch.Stderr, true, status.Fetch.UpdatedAt.Time)
 				o.stopWatch(true)
 				return
 			}
@@ -223,7 +223,7 @@ func (o *AppWatcher) TailAppStatus() error {
 		if !(errors.IsNotFound(err) && o.opts.IgnoreNotExists) {
 			return err
 		}
-		o.ui.PrintLinef("AppCR '%s' in namespace '%s' does not exist...", o.Name, o.Namespace)
+		o.printLogLine(fmt.Sprintf("Waiting for app '%s' in namespace '%s' to be created", o.Name, o.Namespace), "", false, time.Now())
 	}
 
 	if o.opts.PrintMetadata {
@@ -271,6 +271,11 @@ func (o *AppWatcher) stopWatch(failing bool) {
 func (o *AppWatcher) udpateEventHandler(oldObj interface{}, newObj interface{}) {
 	newApp, _ := newObj.(*kcv1alpha1.App)
 	oldApp, _ := oldObj.(*kcv1alpha1.App)
+
+	if newApp.Generation != newApp.Status.ObservedGeneration {
+		o.printLogLine(fmt.Sprintf("Waiting for generation %d to be observed", newApp.Generation), "", false, time.Now())
+		return
+	}
 
 	o.printUpdate(oldApp.Status, newApp.Status)
 }
@@ -334,7 +339,7 @@ func (o *AppWatcher) printDeployStdout(stdout string, timestamp time.Time, isDel
 	if len(lines) > 0 {
 		for _, line := range lines {
 			o.ui.BeginLinef("\t    | %s\n", line)
-			time.Sleep(50 * time.Millisecond)
+			time.Sleep(10 * time.Millisecond)
 		}
 	}
 }
