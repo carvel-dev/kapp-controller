@@ -60,7 +60,7 @@ func (o *StatusOptions) Run() error {
 
 	err = appWatcher.TailAppStatus()
 	if err != nil {
-		return fmt.Errorf("App reconciliation failed")
+		return err
 	}
 
 	return nil
