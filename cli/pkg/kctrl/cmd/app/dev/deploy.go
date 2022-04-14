@@ -14,11 +14,14 @@ import (
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	fakedpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	fakekc "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	// fakecore "k8s.io/client-go/kubernetes/fake"
 	// corev1 "k8s.io/api/core/v1"
@@ -65,20 +68,47 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeployOptions) Run() error {
-	appRes, secrets, configMaps, err := NewConfigFromFiles(o.Files)
+	configs, err := NewConfigFromFiles(o.Files)
 	if err != nil {
 		return fmt.Errorf("Reading App CR configuration files: %s", err)
 	}
 
-	if len(o.Name) > 0 {
-		appRes.Name = o.Name
+	var objs []runtime.Object
+	var appRes kcv1alpha1.App
+
+	if len(configs.Apps) > 0 {
+		appRes = configs.Apps[0]
+		if len(o.Name) > 0 {
+			appRes.Name = o.Name
+		}
+		// Prefer namespace specified in the configuration
+		if len(appRes.Namespace) == 0 {
+			appRes.Namespace = o.NamespaceFlags.Name
+		}
+		if o.Delete {
+			appRes.DeletionTimestamp = &metav1.Time{time.Now()}
+		}
+		objs = append(objs, &appRes)
 	}
-	// Prefer namespace specified in the configuration
-	if len(appRes.Namespace) == 0 {
-		appRes.Namespace = o.NamespaceFlags.Name
-	}
-	if o.Delete {
-		appRes.DeletionTimestamp = &metav1.Time{time.Now()}
+
+	if len(configs.PkgInstalls) > 0 {
+		pkgiRes := configs.PkgInstalls[0]
+		if len(o.Name) > 0 {
+			pkgiRes.Name = o.Name
+		}
+		// Prefer namespace specified in the configuration
+		if len(pkgiRes.Namespace) == 0 {
+			pkgiRes.Namespace = o.NamespaceFlags.Name
+		}
+		// TODO delete does not delete because App CR does not exist in memory
+		if o.Delete {
+			pkgiRes.DeletionTimestamp = &metav1.Time{time.Now()}
+		}
+		objs = append(objs, &pkgiRes)
+
+		// Specifies underlying app resource
+		appRes.Name = pkgiRes.Name
+		appRes.Namespace = pkgiRes.Namespace
 	}
 
 	coreClient, err := o.depsFactory.CoreClient()
@@ -87,13 +117,14 @@ func (o *DeployOptions) Run() error {
 	}
 	minCoreClient := &MinCoreClient{
 		client:          coreClient,
-		localSecrets:    secrets,
-		localConfigMaps: configMaps,
+		localSecrets:    configs.Secrets,
+		localConfigMaps: configs.ConfigMaps,
 	}
-	kcClient := fakekc.NewSimpleClientset(&appRes)
-	reconciler := o.newReconciler(minCoreClient, kcClient)
+	kcClient := fakekc.NewSimpleClientset(objs...)
+	dpkgClient := fakedpkg.NewSimpleClientset(configs.PkgsAsObjects()...)
+	appReconciler, pkgiReconciler := o.newReconcilers(minCoreClient, kcClient, dpkgClient)
 
-	err = o.printAppRes(appRes, kcClient)
+	err = o.printRs(appRes.ObjectMeta, kcClient)
 	if err != nil {
 		return err
 	}
@@ -101,7 +132,8 @@ func (o *DeployOptions) Run() error {
 	o.ui.PrintLinef("Reconciling in-memory app/%s (namespace: %s) ...", appRes.Name, appRes.Namespace)
 
 	go func() {
-		appWatcher := cmdapp.NewAppTailer(appRes.Namespace, appRes.Name, o.ui, kcClient, cmdapp.AppTailerOpts{})
+		appWatcher := cmdapp.NewAppTailer(appRes.Namespace, appRes.Name,
+			o.ui, kcClient, cmdapp.AppTailerOpts{IgnoreNotExists: true})
 
 		err := appWatcher.TailAppStatus()
 		if err != nil {
@@ -109,17 +141,38 @@ func (o *DeployOptions) Run() error {
 		}
 	}()
 
+	if len(configs.PkgInstalls) > 0 {
+		_, reconcileErr := pkgiReconciler.Reconcile(context.TODO(), reconcile.Request{
+			NamespacedName: types.NamespacedName{
+				Name:      configs.PkgInstalls[0].Name,
+				Namespace: configs.PkgInstalls[0].Namespace,
+			},
+		})
+		_ = reconcileErr
+	}
+
 	// TODO is there a better way to deal with service accounts?
 	// TODO do anything with reconcile result?
-	_, reconcileErr := reconciler.Reconcile(context.TODO(), reconcile.Request{
+	_, reconcileErr := appReconciler.Reconcile(context.TODO(), reconcile.Request{
 		NamespacedName: types.NamespacedName{
 			Name:      appRes.Name,
 			Namespace: appRes.Namespace,
 		},
 	})
 
+	// One more time to get successful or failed status
+	if len(configs.PkgInstalls) > 0 {
+		_, reconcileErr := pkgiReconciler.Reconcile(context.TODO(), reconcile.Request{
+			NamespacedName: types.NamespacedName{
+				Name:      configs.PkgInstalls[0].Name,
+				Namespace: configs.PkgInstalls[0].Namespace,
+			},
+		})
+		_ = reconcileErr
+	}
+
 	if o.Debug {
-		err := o.printAppRes(appRes, kcClient)
+		err := o.printRs(appRes.ObjectMeta, kcClient)
 		if err != nil {
 			return err
 		}
@@ -128,24 +181,33 @@ func (o *DeployOptions) Run() error {
 	return reconcileErr
 }
 
-func (o *DeployOptions) printAppRes(app kcv1alpha1.App, kcClient *fakekc.Clientset) error {
-	updatedApp, err := kcClient.KappctrlV1alpha1().Apps(app.Namespace).Get(context.Background(), app.Name, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("Fetching App CR: %s", err)
+func (o *DeployOptions) printRs(nsName metav1.ObjectMeta, kcClient *fakekc.Clientset) error {
+	app, err := kcClient.KappctrlV1alpha1().Apps(nsName.Namespace).Get(context.Background(), nsName.Name, metav1.GetOptions{})
+	if err == nil {
+		bs, err := yaml.Marshal(app)
+		if err != nil {
+			return fmt.Errorf("Marshaling App CR: %s", err)
+		}
+
+		o.ui.PrintBlock(bs)
 	}
 
-	bs, err := yaml.Marshal(updatedApp)
-	if err != nil {
-		return fmt.Errorf("Marshaling App CR: %s", err)
-	}
+	pkgi, err := kcClient.PackagingV1alpha1().PackageInstalls(nsName.Namespace).Get(context.Background(), nsName.Name, metav1.GetOptions{})
+	if err == nil {
+		bs, err := yaml.Marshal(pkgi)
+		if err != nil {
+			return fmt.Errorf("Marshaling PackageInstall CR: %s", err)
+		}
 
-	o.ui.PrintBlock(bs)
+		o.ui.PrintBlock(bs)
+	}
 
 	return nil
 }
 
-func (o *DeployOptions) newReconciler(
-	coreClient kubernetes.Interface, kcClient *fakekc.Clientset) *app.Reconciler {
+func (o *DeployOptions) newReconcilers(
+	coreClient kubernetes.Interface, kcClient *fakekc.Clientset,
+	pkgClient *fakedpkg.Clientset) (*app.Reconciler, *packageinstall.Reconciler) {
 
 	runLog := logf.Log.WithName("deploy")
 	if o.Debug {
@@ -162,5 +224,15 @@ func (o *DeployOptions) newReconciler(
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
 
 	appFactory := app.CRDAppFactory{coreClient, kcClient, kcConfig, appMetrics}
-	return app.NewReconciler(kcClient, runLog, appFactory, refTracker, updateStatusTracker)
+	appReconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
+		appFactory, refTracker, updateStatusTracker)
+
+	pkgiReconciler := packageinstall.NewReconciler(
+		kcClient, pkgClient, coreClient,
+		// TODO do not need this in the constructor of Reconciler
+		(*packageinstall.PackageInstallVersionHandler)(nil),
+		runLog.WithName("pkgi"),
+	)
+
+	return appReconciler, pkgiReconciler
 }
