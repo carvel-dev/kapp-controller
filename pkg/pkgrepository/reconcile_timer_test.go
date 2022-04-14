@@ -20,7 +20,7 @@ func TestSucceededDurationUntilReady(t *testing.T) {
 		},
 		Status: v1alpha1.AppStatus{
 			GenericStatus: v1alpha1.GenericStatus{
-				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileSucceeded}},
+				Conditions: []v1alpha1.Condition{{Type: v1alpha1.ReconcileSucceeded}},
 			},
 		},
 	}
@@ -42,7 +42,7 @@ func TestFailureSyncMathOverflowGuard(t *testing.T) {
 		Status: v1alpha1.AppStatus{
 			ConsecutiveReconcileFailures: 2700, // number so large 2^x will definitely overflow
 			GenericStatus: v1alpha1.GenericStatus{
-				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+				Conditions: []v1alpha1.Condition{{Type: v1alpha1.ReconcileFailed}},
 			},
 		},
 	}
@@ -67,7 +67,7 @@ func TestConsecutiveFailuresOverflowGuard(t *testing.T) {
 		Status: v1alpha1.AppStatus{
 			ConsecutiveReconcileFailures: -2, // number so large 2^x will definitely overflow
 			GenericStatus: v1alpha1.GenericStatus{
-				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+				Conditions: []v1alpha1.Condition{{Type: v1alpha1.ReconcileFailed}},
 			},
 		},
 	}
@@ -90,7 +90,7 @@ func TestFailedDurationUntilReady(t *testing.T) {
 		},
 		Status: v1alpha1.AppStatus{
 			GenericStatus: v1alpha1.GenericStatus{
-				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+				Conditions: []v1alpha1.Condition{{Type: v1alpha1.ReconcileFailed}},
 			},
 		},
 	}
@@ -138,7 +138,7 @@ func TestSucceededIsReadyAt(t *testing.T) {
 				UpdatedAt: metav1.Time{Time: timeNow},
 			},
 			GenericStatus: v1alpha1.GenericStatus{
-				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileSucceeded}},
+				Conditions: []v1alpha1.Condition{{Type: v1alpha1.ReconcileSucceeded}},
 			},
 		},
 	}
@@ -173,7 +173,7 @@ func TestFailedIsReadyAt(t *testing.T) {
 				UpdatedAt: metav1.Time{Time: timeNow},
 			},
 			GenericStatus: v1alpha1.GenericStatus{
-				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+				Conditions: []v1alpha1.Condition{{Type: v1alpha1.ReconcileFailed}},
 			},
 			ConsecutiveReconcileFailures: 1,
 		},
@@ -214,7 +214,7 @@ func TestIsReadyAtWithStaleDeployTime(t *testing.T) {
 			},
 			ConsecutiveReconcileFailures: 1,
 			GenericStatus: v1alpha1.GenericStatus{
-				Conditions: []v1alpha1.AppCondition{{Type: v1alpha1.ReconcileFailed}},
+				Conditions: []v1alpha1.Condition{{Type: v1alpha1.ReconcileFailed}},
 			},
 		},
 	}

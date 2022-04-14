@@ -78,7 +78,7 @@ func (s *Status) SetReconciling(meta metav1.ObjectMeta) {
 	s.markObservedLatest(meta)
 	s.removeAllConditions()
 
-	s.S.Conditions = append(s.S.Conditions, kcv1alpha1.AppCondition{
+	s.S.Conditions = append(s.S.Conditions, kcv1alpha1.Condition{
 		Type:   kcv1alpha1.Reconciling,
 		Status: corev1.ConditionTrue,
 	})
@@ -93,7 +93,7 @@ func (s *Status) SetDeleting(meta metav1.ObjectMeta) {
 	s.markObservedLatest(meta)
 	s.removeAllConditions()
 
-	s.S.Conditions = append(s.S.Conditions, kcv1alpha1.AppCondition{
+	s.S.Conditions = append(s.S.Conditions, kcv1alpha1.Condition{
 		Type:   kcv1alpha1.Deleting,
 		Status: corev1.ConditionTrue,
 	})
@@ -107,14 +107,14 @@ func (s *Status) SetReconcileCompleted(err error) {
 	s.removeAllConditions()
 
 	if err != nil {
-		s.S.Conditions = append(s.S.Conditions, kcv1alpha1.AppCondition{
+		s.S.Conditions = append(s.S.Conditions, kcv1alpha1.Condition{
 			Type:    kcv1alpha1.ReconcileFailed,
 			Status:  corev1.ConditionTrue,
 			Message: err.Error(),
 		})
 		s.S.FriendlyDescription = s.friendlyErrMsg(fmt.Sprintf("Reconcile failed: %s", err.Error()))
 	} else {
-		s.S.Conditions = append(s.S.Conditions, kcv1alpha1.AppCondition{
+		s.S.Conditions = append(s.S.Conditions, kcv1alpha1.Condition{
 			Type:    kcv1alpha1.ReconcileSucceeded,
 			Status:  corev1.ConditionTrue,
 			Message: "",
@@ -130,7 +130,7 @@ func (s *Status) SetReconcileCompleted(err error) {
 func (s *Status) SetPackageRevoked(meta metav1.ObjectMeta, reason string) {
 	s.markObservedLatest(meta)
 
-	s.S.Conditions = append(s.S.Conditions, kcv1alpha1.AppCondition{
+	s.S.Conditions = append(s.S.Conditions, kcv1alpha1.Condition{
 		Type:   kcv1alpha1.PackageRevoked,
 		Status: corev1.ConditionTrue,
 		Reason: reason,
@@ -148,7 +148,7 @@ func (s *Status) SetDeleteCompleted(err error) {
 	s.removeAllConditions()
 
 	if err != nil {
-		s.S.Conditions = append(s.S.Conditions, kcv1alpha1.AppCondition{
+		s.S.Conditions = append(s.S.Conditions, kcv1alpha1.Condition{
 			Type:    kcv1alpha1.DeleteFailed,
 			Status:  corev1.ConditionTrue,
 			Message: err.Error(),
@@ -179,7 +179,7 @@ func (s *Status) removeAllConditions() {
 	s.S.Conditions = nil
 }
 
-func (s *Status) removeConditionByType(c kcv1alpha1.AppConditionType) {
+func (s *Status) removeConditionByType(c kcv1alpha1.ConditionType) {
 	for i, cond := range s.S.Conditions {
 		if cond.Type == c {
 			s.S.Conditions = append(s.S.Conditions[:i], s.S.Conditions[i+1:]...)

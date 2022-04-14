@@ -53,7 +53,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	// since the app deployment was not attempted
 	expectedStatus := v1alpha1.AppStatus{
 		GenericStatus: v1alpha1.GenericStatus{
-			Conditions: []v1alpha1.AppCondition{{
+			Conditions: []v1alpha1.Condition{{
 				Type:    v1alpha1.ReconcileFailed,
 				Status:  corev1.ConditionTrue,
 				Message: "Fetching resources: Error (see .status.usefulErrorMessage for details)",
@@ -119,7 +119,7 @@ func Test_NoInspectReconcile_IfInspectNotEnabled(t *testing.T) {
 	// since it's not enabled
 	expectedStatus := v1alpha1.AppStatus{
 		GenericStatus: v1alpha1.GenericStatus{
-			Conditions: []v1alpha1.AppCondition{{
+			Conditions: []v1alpha1.Condition{{
 				Type:    v1alpha1.ReconcileFailed,
 				Status:  corev1.ConditionTrue,
 				Message: "Blocking for deploy: Updating app: apps.kappctrl.k14s.io \"simple-app\" not found",
@@ -190,7 +190,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	// since the app deployment was not attempted
 	expectedStatus := v1alpha1.AppStatus{
 		GenericStatus: v1alpha1.GenericStatus{
-			Conditions: []v1alpha1.AppCondition{{
+			Conditions: []v1alpha1.Condition{{
 				Type:    v1alpha1.ReconcileFailed,
 				Status:  corev1.ConditionTrue,
 				Message: "Templating dir: Error (see .status.usefulErrorMessage for details)",

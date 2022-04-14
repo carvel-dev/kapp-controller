@@ -66,7 +66,7 @@ spec:
 
 		expectedStatus := v1alpha1.AppStatus{
 			GenericStatus: v1alpha1.GenericStatus{
-				Conditions: []v1alpha1.AppCondition{{
+				Conditions: []v1alpha1.Condition{{
 					Type:   v1alpha1.ReconcileSucceeded,
 					Status: corev1.ConditionTrue,
 				}},
@@ -183,7 +183,7 @@ spec:
 
 		expectedStatus := v1alpha1.AppStatus{
 			GenericStatus: v1alpha1.GenericStatus{
-				Conditions: []v1alpha1.AppCondition{{
+				Conditions: []v1alpha1.Condition{{
 					Type:   v1alpha1.ReconcileSucceeded,
 					Status: corev1.ConditionTrue,
 				}},
