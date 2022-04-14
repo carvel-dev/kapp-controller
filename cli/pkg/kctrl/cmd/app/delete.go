@@ -39,13 +39,13 @@ func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.L
 func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete",
-		Short: "Delete App CR",
+		Short: "Delete App",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App CR name (required)")
-	cmd.Flags().BoolVar(&o.IgnoreAssociatedResources, "ignore-associated-resources", false, "Ignore resources created by the AppCR and delete the custom resource itself")
+	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App name (required)")
+	cmd.Flags().BoolVar(&o.IgnoreAssociatedResources, "ignore-associated-resources", false, "Ignore resources created by the App and delete the custom resource itself")
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
 		DefaultInterval:  1 * time.Second,
@@ -57,7 +57,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 
 func (o *DeleteOptions) Run() error {
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected App CR name to be non empty")
+		return fmt.Errorf("Expected App name to be non empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
@@ -68,17 +68,16 @@ func (o *DeleteOptions) Run() error {
 	app, err := client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return fmt.Errorf("App CR '%s' does not exist in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+			return fmt.Errorf("App '%s' does not exist in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 		}
 		return err
 	}
 
 	if isOwnedByPackageInstall(app) {
-		return fmt.Errorf("App CR '%s' in namespace '%s' is owned by a PackageInstall.\n(Hint: Try using `kctrl package installed delete` to delete PackageInstall)",
-			o.Name, o.NamespaceFlags.Name)
+		o.ui.BeginLinef("App '%s' is owned by '%s'\n(The App will be created again when the package installation reconciles)\n", o.Name, fmt.Sprintf("%s/%s", app.OwnerReferences[0].Kind, app.OwnerReferences[0].Name))
 	}
 
-	o.ui.PrintLinef("Deleting App CR '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+	o.ui.BeginLinef("Deleting App '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 	err = o.ui.AskForConfirmation()
 	if err != nil {
 		return err

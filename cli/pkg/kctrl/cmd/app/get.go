@@ -35,19 +35,19 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 	cmd := &cobra.Command{
 		Use:     "get",
 		Aliases: []string{"g"},
-		Short:   "Get details for App CR",
+		Short:   "Get details for App",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App CR name (required)")
+	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App name (required)")
 
 	return cmd
 }
 
 func (o *GetOptions) Run() error {
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected App CR name to be non empty")
+		return fmt.Errorf("Expected App name to be non empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()

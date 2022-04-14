@@ -32,24 +32,24 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	cmd := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"g"},
-		Short:   "List App CRs",
+		Short:   "List Apps",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List App CRs in all namespaces")
+	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List Apps in all namespaces")
 
 	return cmd
 }
 
 func (o *ListOptions) Run() error {
-	tableTitle := fmt.Sprintf("Available App CRs in namespace '%s'", o.NamespaceFlags.Name)
+	tableTitle := fmt.Sprintf("Available Apps in namespace '%s'", o.NamespaceFlags.Name)
 	nsHeader := uitable.NewHeader("Namespace")
 	nsHeader.Hidden = true
 
 	if o.AllNamespaces {
 		o.NamespaceFlags.Name = ""
-		tableTitle = "Available App CRs in all namespaces"
+		tableTitle = "Available Apps in all namespaces"
 		nsHeader.Hidden = false
 	}
 

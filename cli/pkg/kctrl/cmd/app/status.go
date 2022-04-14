@@ -31,20 +31,20 @@ func NewStatusCmd(o *StatusOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	cmd := &cobra.Command{
 		Use:     "status",
 		Aliases: []string{"s"},
-		Short:   "View status of App CR",
+		Short:   "View status of App",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App CR name (required)")
-	cmd.Flags().BoolVar(&o.IgnoreNotExists, "ignore-not-exists", false, "Keep following AppCR if it does not exist")
+	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App name (required)")
+	cmd.Flags().BoolVar(&o.IgnoreNotExists, "ignore-not-exists", false, "Keep following App if it does not exist")
 
 	return cmd
 }
 
 func (o *StatusOptions) Run() error {
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected App CR name to be non empty")
+		return fmt.Errorf("Expected App name to be non empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
