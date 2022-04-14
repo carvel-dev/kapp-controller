@@ -28,6 +28,40 @@ type Configs struct {
 	ConfigMaps  []corev1.ConfigMap
 }
 
+func (c *Configs) ApplyNamespace(ns string) {
+	// Prefer namespace specified in the configuration
+	for i, res := range c.Apps {
+		if len(res.Namespace) == 0 {
+			res.Namespace = ns
+			c.Apps[i] = res
+		}
+	}
+	for i, res := range c.PkgInstalls {
+		if len(res.Namespace) == 0 {
+			res.Namespace = ns
+			c.PkgInstalls[i] = res
+		}
+	}
+	for i, res := range c.Pkgs {
+		if len(res.Namespace) == 0 {
+			res.Namespace = ns
+			c.Pkgs[i] = res
+		}
+	}
+	for i, res := range c.Secrets {
+		if len(res.Namespace) == 0 {
+			res.Namespace = ns
+			c.Secrets[i] = res
+		}
+	}
+	for i, res := range c.ConfigMaps {
+		if len(res.Namespace) == 0 {
+			res.Namespace = ns
+			c.ConfigMaps[i] = res
+		}
+	}
+}
+
 func (c *Configs) PkgsAsObjects() []runtime.Object {
 	var result []runtime.Object
 	for _, pkg := range c.Pkgs {
