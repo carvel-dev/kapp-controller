@@ -12,15 +12,33 @@ import (
 	"os"
 
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	dpv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	kyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/yaml"
 )
 
-func NewConfigFromFiles(paths []string) (kcv1alpha1.App, []corev1.Secret, []corev1.ConfigMap, error) {
-	var apps []kcv1alpha1.App
-	var secrets []corev1.Secret
-	var configMaps []corev1.ConfigMap
+type Configs struct {
+	Apps        []kcv1alpha1.App
+	PkgInstalls []pkgv1alpha1.PackageInstall
+	Pkgs        []dpv1alpha1.Package
+	Secrets     []corev1.Secret
+	ConfigMaps  []corev1.ConfigMap
+}
+
+func (c *Configs) PkgsAsObjects() []runtime.Object {
+	var result []runtime.Object
+	for _, pkg := range c.Pkgs {
+		pkg := pkg.DeepCopy()
+		result = append(result, pkg)
+	}
+	return result
+}
+
+func NewConfigFromFiles(paths []string) (Configs, error) {
+	var configs Configs
 
 	err := parseResources(paths, func(docBytes []byte) error {
 		var res resource
@@ -37,7 +55,7 @@ func NewConfigFromFiles(paths []string) (kcv1alpha1.App, []corev1.Secret, []core
 			if err != nil {
 				return fmt.Errorf("Unmarshaling secret: %s", err)
 			}
-			secrets = append(secrets, secret)
+			configs.Secrets = append(configs.Secrets, secret)
 
 		case res.APIVersion == "v1" && res.Kind == "ConfigMap":
 			var cm corev1.ConfigMap
@@ -45,7 +63,7 @@ func NewConfigFromFiles(paths []string) (kcv1alpha1.App, []corev1.Secret, []core
 			if err != nil {
 				return fmt.Errorf("Unmarshaling config map: %s", err)
 			}
-			configMaps = append(configMaps, cm)
+			configs.ConfigMaps = append(configs.ConfigMaps, cm)
 
 		case res.APIVersion == "kappctrl.k14s.io/v1alpha1" && res.Kind == "App":
 			var app kcv1alpha1.App
@@ -53,7 +71,26 @@ func NewConfigFromFiles(paths []string) (kcv1alpha1.App, []corev1.Secret, []core
 			if err != nil {
 				return fmt.Errorf("Unmarshaling App: %s", err)
 			}
-			apps = append(apps, app)
+			configs.Apps = append(configs.Apps, app)
+
+		case res.APIVersion == "data.packaging.carvel.dev/v1alpha1" && res.Kind == "Package":
+			var pkg dpv1alpha1.Package
+			err := yaml.Unmarshal(docBytes, &pkg)
+			if err != nil {
+				return fmt.Errorf("Unmarshaling Package: %s", err)
+			}
+			configs.Pkgs = append(configs.Pkgs, pkg)
+
+		case res.APIVersion == "data.packaging.carvel.dev/v1alpha1" && res.Kind == "PackageMetadata":
+			// ignore
+
+		case res.APIVersion == "packaging.carvel.dev/v1alpha1" && res.Kind == "PackageInstall":
+			var pkgi pkgv1alpha1.PackageInstall
+			err := yaml.Unmarshal(docBytes, &pkgi)
+			if err != nil {
+				return fmt.Errorf("Unmarshaling PackageInstall: %s", err)
+			}
+			configs.PkgInstalls = append(configs.PkgInstalls, pkgi)
 
 		default:
 			return fmt.Errorf("Unknown apiVersion '%s' or kind '%s' for resource",
@@ -62,17 +99,17 @@ func NewConfigFromFiles(paths []string) (kcv1alpha1.App, []corev1.Secret, []core
 		return nil
 	})
 	if err != nil {
-		return kcv1alpha1.App{}, nil, nil, err
+		return configs, err
 	}
 
-	if len(apps) == 0 {
-		return kcv1alpha1.App{}, nil, nil, fmt.Errorf("Expected to find at least one App, but found none")
+	if len(configs.Apps) == 0 && len(configs.PkgInstalls) == 0 {
+		return configs, fmt.Errorf("Expected to find at least one App or PackageInstall, but found none")
 	}
-	if len(apps) > 1 {
-		return kcv1alpha1.App{}, nil, nil, fmt.Errorf("Expected to find exactly one App, but found multiple")
+	if len(configs.Apps) > 1 || len(configs.PkgInstalls) > 1 {
+		return configs, fmt.Errorf("Expected to find exactly one App or PackageInstall, but found multiple")
 	}
 
-	return apps[0], secrets, configMaps, nil
+	return configs, nil
 }
 
 type resource struct {
