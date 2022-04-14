@@ -60,9 +60,25 @@ import (
 	rest "k8s.io/client-go/rest"
 )
 
+type localSecrets struct {
+	Secrets []corev1api.Secret
+}
+
+func (localSecrets) SecretWithData(sec corev1api.Secret) corev1api.Secret {
+	sec = *sec.DeepCopy()
+	if len(sec.StringData) > 0 {
+		sec.Data = map[string][]byte{}
+		for k, v := range sec.StringData {
+			sec.Data[k] = []byte(v)
+		}
+		sec.StringData = nil
+	}
+	return sec
+}
+
 type MinCoreClient struct {
 	client          kubernetes.Interface
-	localSecrets    []corev1api.Secret
+	localSecrets    *localSecrets
 	localConfigMaps []corev1api.ConfigMap
 }
 
@@ -222,7 +238,7 @@ func (*MinCoreClient) StorageV1alpha1() storagev1alpha1.StorageV1alpha1Interface
 
 type MinCoreV1Client struct {
 	client          corev1.CoreV1Interface
-	localSecrets    []corev1api.Secret
+	localSecrets    *localSecrets
 	localConfigMaps []corev1api.ConfigMap
 }
 
@@ -336,14 +352,15 @@ func (*ConfigMaps) Apply(ctx context.Context, configMap *aplcorev1.ConfigMapAppl
 type Secrets struct {
 	namespace    string
 	client       corev1.SecretInterface
-	localSecrets []corev1api.Secret
+	localSecrets *localSecrets
 }
 
 var _ corev1.SecretInterface = &Secrets{}
 
-func (*Secrets) Create(ctx context.Context, secret *corev1api.Secret, opts metav1.CreateOptions) (*corev1api.Secret, error) {
-	panic("Not implemented")
-	return nil, nil
+func (sec *Secrets) Create(ctx context.Context, secret *corev1api.Secret, opts metav1.CreateOptions) (*corev1api.Secret, error) {
+	// TODO ignore creation (kapp-controller will create secretgen friendly secret)
+	sec.localSecrets.Secrets = append(sec.localSecrets.Secrets, *secret.DeepCopy())
+	return secret.DeepCopy(), nil
 }
 func (*Secrets) Update(ctx context.Context, secret *corev1api.Secret, opts metav1.UpdateOptions) (*corev1api.Secret, error) {
 	panic("Not implemented")
@@ -358,10 +375,10 @@ func (*Secrets) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions,
 	return nil
 }
 func (sec *Secrets) Get(ctx context.Context, name string, opts metav1.GetOptions) (*corev1api.Secret, error) {
-	for _, secret := range sec.localSecrets {
+	for _, secret := range sec.localSecrets.Secrets {
 		if secret.Name == name && secret.Namespace == sec.namespace {
-			secretCopy := secret
-			return &secretCopy, nil
+			secCopy := sec.localSecrets.SecretWithData(secret)
+			return &secCopy, nil
 		}
 	}
 	return sec.client.Get(ctx, name, opts)

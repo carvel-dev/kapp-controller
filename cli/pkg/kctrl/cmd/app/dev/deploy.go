@@ -39,7 +39,6 @@ type DeployOptions struct {
 	logger      logger.Logger
 
 	NamespaceFlags cmdcore.NamespaceFlags
-	Name           string
 
 	Files  []string
 	Delete bool
@@ -58,7 +57,6 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App CR name (required)")
 	cmd.Flags().StringSliceVarP(&o.Files, "file", "f", nil, "Set App CR file (required)")
 
 	cmd.Flags().BoolVar(&o.Delete, "delete", false, "Delete deployed app")
@@ -73,18 +71,13 @@ func (o *DeployOptions) Run() error {
 		return fmt.Errorf("Reading App CR configuration files: %s", err)
 	}
 
+	configs.ApplyNamespace(o.NamespaceFlags.Name)
+
 	var objs []runtime.Object
 	var appRes kcv1alpha1.App
 
 	if len(configs.Apps) > 0 {
 		appRes = configs.Apps[0]
-		if len(o.Name) > 0 {
-			appRes.Name = o.Name
-		}
-		// Prefer namespace specified in the configuration
-		if len(appRes.Namespace) == 0 {
-			appRes.Namespace = o.NamespaceFlags.Name
-		}
 		if o.Delete {
 			appRes.DeletionTimestamp = &metav1.Time{time.Now()}
 		}
@@ -93,13 +86,6 @@ func (o *DeployOptions) Run() error {
 
 	if len(configs.PkgInstalls) > 0 {
 		pkgiRes := configs.PkgInstalls[0]
-		if len(o.Name) > 0 {
-			pkgiRes.Name = o.Name
-		}
-		// Prefer namespace specified in the configuration
-		if len(pkgiRes.Namespace) == 0 {
-			pkgiRes.Namespace = o.NamespaceFlags.Name
-		}
 		// TODO delete does not delete because App CR does not exist in memory
 		if o.Delete {
 			pkgiRes.DeletionTimestamp = &metav1.Time{time.Now()}
@@ -117,7 +103,7 @@ func (o *DeployOptions) Run() error {
 	}
 	minCoreClient := &MinCoreClient{
 		client:          coreClient,
-		localSecrets:    configs.Secrets,
+		localSecrets:    &localSecrets{configs.Secrets},
 		localConfigMaps: configs.ConfigMaps,
 	}
 	kcClient := fakekc.NewSimpleClientset(objs...)
@@ -137,23 +123,24 @@ func (o *DeployOptions) Run() error {
 
 		err := appWatcher.TailAppStatus()
 		if err != nil {
-			o.ui.PrintLinef("tailing error: %s", err)
+			o.ui.PrintLinef("App tailing error: %s", err)
 		}
 	}()
 
+	var reconcileErr error
+
 	if len(configs.PkgInstalls) > 0 {
-		_, reconcileErr := pkgiReconciler.Reconcile(context.TODO(), reconcile.Request{
+		_, reconcileErr = pkgiReconciler.Reconcile(context.TODO(), reconcile.Request{
 			NamespacedName: types.NamespacedName{
 				Name:      configs.PkgInstalls[0].Name,
 				Namespace: configs.PkgInstalls[0].Namespace,
 			},
 		})
-		_ = reconcileErr
 	}
 
 	// TODO is there a better way to deal with service accounts?
 	// TODO do anything with reconcile result?
-	_, reconcileErr := appReconciler.Reconcile(context.TODO(), reconcile.Request{
+	_, reconcileErr = appReconciler.Reconcile(context.TODO(), reconcile.Request{
 		NamespacedName: types.NamespacedName{
 			Name:      appRes.Name,
 			Namespace: appRes.Namespace,
@@ -162,13 +149,12 @@ func (o *DeployOptions) Run() error {
 
 	// One more time to get successful or failed status
 	if len(configs.PkgInstalls) > 0 {
-		_, reconcileErr := pkgiReconciler.Reconcile(context.TODO(), reconcile.Request{
+		_, reconcileErr = pkgiReconciler.Reconcile(context.TODO(), reconcile.Request{
 			NamespacedName: types.NamespacedName{
 				Name:      configs.PkgInstalls[0].Name,
 				Namespace: configs.PkgInstalls[0].Namespace,
 			},
 		})
-		_ = reconcileErr
 	}
 
 	if o.Debug {
@@ -177,6 +163,9 @@ func (o *DeployOptions) Run() error {
 			return err
 		}
 	}
+
+	// TODO app watcher needs a little time to run; should block ideally
+	time.Sleep(100 * time.Millisecond)
 
 	return reconcileErr
 }
