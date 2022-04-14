@@ -157,30 +157,36 @@ func (gc *Config) addTrustedCerts(certChain string) (err error) {
 	if err != nil {
 		return fmt.Errorf("Opening original certs file: %s", err)
 	}
+	defer backupFile.Close()
 
 	tmpFile, err := os.CreateTemp(os.TempDir(), "tmp-ca-bundle-")
 	if err != nil {
 		return fmt.Errorf("Creating tmp certs file: %s", err)
 	}
+	defer os.Remove(tmpFile.Name())
 
 	_, err = io.Copy(tmpFile, backupFile)
 	if err != nil {
+		_ = tmpFile.Close()
 		return fmt.Errorf("Copying certs file: %s", err)
 	}
 
 	_, err = tmpFile.Write([]byte("\n" + certChain))
 	if err != nil {
-		_ = backupFile.Close()
-		_ = os.Remove(tmpFile.Name())
+		_ = tmpFile.Close()
+		return err
+	}
+
+	if err = tmpFile.Close(); err != nil {
 		return err
 	}
 
 	err = os.Rename(tmpFile.Name(), systemCertsFilePath)
 	if err != nil {
-		return fmt.Errorf("renaming certs file: %s", err)
+		return fmt.Errorf("Renaming certs file: %s", err)
 	}
 
-	return backupFile.Close()
+	return nil
 }
 
 func (gc *Config) configureProxies() {
