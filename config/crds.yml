@@ -124,6 +124,12 @@ spec:
                 format: date-time
                 nullable: true
                 type: string
+              revoked:
+                description: Revoked indicates that this package is no longer recommended for use This package likely contains unsupported software, a CVE or a critical bug.
+                properties:
+                  reason:
+                    type: string
+                type: object
               template:
                 properties:
                   spec:

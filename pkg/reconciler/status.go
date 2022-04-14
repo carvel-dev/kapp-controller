@@ -64,6 +64,16 @@ func (s *Status) IsDeleteFailed() bool {
 	return false
 }
 
+// IsPackageRevoked checks the status.conditions for the presence of the PackageRevoked condition
+func (s *Status) IsPackageRevoked() bool {
+	for _, cond := range s.S.Conditions {
+		if cond.Type == kcv1alpha1.PackageRevoked {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *Status) SetReconciling(meta metav1.ObjectMeta) {
 	s.markObservedLatest(meta)
 	s.removeAllConditions()
@@ -116,6 +126,24 @@ func (s *Status) SetReconcileCompleted(err error) {
 	s.UpdateFunc(s.S)
 }
 
+// SetPackageRevoked appends a new condition to indicate a package is revoked
+func (s *Status) SetPackageRevoked(meta metav1.ObjectMeta, reason string) {
+	s.markObservedLatest(meta)
+
+	s.S.Conditions = append(s.S.Conditions, kcv1alpha1.AppCondition{
+		Type:   kcv1alpha1.PackageRevoked,
+		Status: corev1.ConditionTrue,
+		Reason: reason,
+	})
+
+	s.UpdateFunc(s.S)
+}
+
+// UnsetPackageRevoked removes the PackageRevoked status from the conditions
+func (s *Status) UnsetPackageRevoked(meta metav1.ObjectMeta) {
+	s.removeConditionByType(kcv1alpha1.PackageRevoked)
+}
+
 func (s *Status) SetDeleteCompleted(err error) {
 	s.removeAllConditions()
 
@@ -149,6 +177,15 @@ func (s *Status) markObservedLatest(meta metav1.ObjectMeta) {
 
 func (s *Status) removeAllConditions() {
 	s.S.Conditions = nil
+}
+
+func (s *Status) removeConditionByType(c kcv1alpha1.AppConditionType) {
+	for i, cond := range s.S.Conditions {
+		if cond.Type == c {
+			s.S.Conditions = append(s.S.Conditions[:i], s.S.Conditions[i+1:]...)
+			break
+		}
+	}
 }
 
 func (s *Status) SetUsefulErrorMessage(errMsg string) {

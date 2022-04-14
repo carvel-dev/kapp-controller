@@ -115,6 +115,16 @@ message PackageSpec {
   // This is especially useful if the underlying versions do not match the Package version
   // +optional
   repeated IncludedSoftware includedSoftware = 9;
+
+  // Revoked indicates that this package is no longer recommended for use
+  // This package likely contains unsupported software, a CVE or a critical bug.
+  // +optional
+  optional Revoked revoked = 10;
+}
+
+// Revoked contains the reason for the package revokation
+message Revoked {
+  optional string reason = 1;
 }
 
 message ValuesSchema {

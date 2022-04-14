@@ -454,3 +454,100 @@ func Test_PlaceHolderSecretCreated_WhenPackageInstallUpdated(t *testing.T) {
 
 	assert.Equal(t, "instl-pkg-fetch-0", app.Spec.Fetch[0].ImgpkgBundle.SecretRef.Name)
 }
+
+func Test_CreatePackage_RevokedStatus(t *testing.T) {
+	log := logf.Log.WithName("kc")
+	expectedReason := "testing-reason"
+
+	pkgi := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "instl-pkg",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			PackageRef: &pkgingv1alpha1.PackageRef{
+				RefName: "expected-pkg",
+				VersionSelection: &versions.VersionSelectionSemver{
+					Constraints: "1.0.0",
+				},
+			},
+		},
+		Status: pkgingv1alpha1.PackageInstallStatus{
+			LastAttemptedVersion: "1.0.0",
+		},
+	}
+
+	tests := []struct {
+		name               string
+		pkg                *datapkgingv1alpha1.Package
+		expectedConditions []v1alpha1.AppCondition
+	}{
+		{
+			name: "revoked status is shown",
+			pkg: &datapkgingv1alpha1.Package{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "expected-pkg.1.0.0",
+				},
+				Spec: datapkgingv1alpha1.PackageSpec{
+					RefName: "expected-pkg",
+					Version: "1.0.0",
+					Revoked: datapkgingv1alpha1.Revoked{
+						Reason: expectedReason,
+					},
+					Template: datapkgingv1alpha1.AppTemplateSpec{
+						Spec: &v1alpha1.AppSpec{
+							Fetch: []v1alpha1.AppFetch{{
+								ImgpkgBundle: &v1alpha1.AppFetchImgpkgBundle{Image: "ver-1.0.0"},
+							}},
+						},
+					},
+				},
+			},
+			expectedConditions: []v1alpha1.AppCondition{{
+				Type:   v1alpha1.Reconciling,
+				Status: corev1.ConditionTrue,
+			}, {
+				Type:   v1alpha1.PackageRevoked,
+				Status: corev1.ConditionTrue,
+				Reason: expectedReason,
+			}},
+		},
+		{
+			name: "revoked status is not shown when not set",
+			pkg: &datapkgingv1alpha1.Package{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "expected-pkg.1.0.0",
+				},
+				Spec: datapkgingv1alpha1.PackageSpec{
+					RefName: "expected-pkg",
+					Version: "1.0.0",
+					Template: datapkgingv1alpha1.AppTemplateSpec{
+						Spec: &v1alpha1.AppSpec{
+							Fetch: []v1alpha1.AppFetch{{
+								ImgpkgBundle: &v1alpha1.AppFetchImgpkgBundle{Image: "ver-1.0.0"},
+							}},
+						},
+					},
+				},
+			},
+			expectedConditions: []v1alpha1.AppCondition{{
+				Type:   v1alpha1.Reconciling,
+				Status: corev1.ConditionTrue,
+			}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fakePkgClient := fakeapiserver.NewSimpleClientset(tt.pkg)
+			fakekctrl := fakekappctrl.NewSimpleClientset(pkgi)
+			fakek8s := fake.NewSimpleClientset()
+
+			ip := NewPackageInstallCR(pkgi, log, fakekctrl, fakePkgClient, fakek8s)
+
+			_, err := ip.Reconcile()
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expectedConditions, getPackageInstall(t, fakekctrl, "instl-pkg").Status.GenericStatus.Conditions, "Status does not correctly shown the Revoked state")
+		})
+	}
+}

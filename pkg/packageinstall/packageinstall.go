@@ -97,6 +97,10 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 		return reconcile.Result{Requeue: true}, err
 	}
 
+	if pkg.Spec.Revoked.Reason != "" {
+		modelStatus.SetPackageRevoked(pi.model.ObjectMeta, pkg.Spec.Revoked.Reason)
+	}
+
 	// Set new desired version before checking if it's not applicable
 	pi.model.Status.Version = pkg.Spec.Version
 
@@ -146,6 +150,11 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 	case appStatus.IsReconcileFailed():
 		modelStatus.SetUsefulErrorMessage(existingApp.Status.UsefulErrorMessage)
 		modelStatus.SetReconcileCompleted(fmt.Errorf("Error (see .status.usefulErrorMessage for details)"))
+	}
+
+	// remove package revoked status if removed on update
+	if pkg.Spec.Revoked.Reason != "" && modelStatus.IsPackageRevoked() {
+		modelStatus.UnsetPackageRevoked(pi.model.ObjectMeta)
 	}
 
 	return pi.reconcileAppWithPackage(existingApp, pkg)

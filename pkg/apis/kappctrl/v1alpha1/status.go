@@ -30,6 +30,8 @@ const (
 
 	Deleting     AppConditionType = "Deleting"
 	DeleteFailed AppConditionType = "DeleteFailed"
+
+	PackageRevoked AppConditionType = "PackageRevoked"
 )
 
 // TODO rename to Condition
