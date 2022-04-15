@@ -42,6 +42,9 @@ func Test_GetConfig_ReturnsSecret_WhenBothConfigMapAndSecretExist(t *testing.T) 
 	config, err := kcconfig.GetConfig(k8scs)
 	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
 
+	err = stubTrustedCerts(t, config)
+	assert.NoError(t, err)
+
 	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
 
 	expected := "proxy-svc.proxy-server.svc.cluster.local:80"
@@ -68,6 +71,9 @@ func Test_GetConfig_ReturnsConfigMap_WhenOnlyConfigMapExists(t *testing.T) {
 	config, err := kcconfig.GetConfig(k8scs)
 	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
 
+	err = stubTrustedCerts(t, config)
+	assert.NoError(t, err)
+
 	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
 
 	expected := "proxy-svc.proxy-server.svc.cluster.local:80"
@@ -93,6 +99,9 @@ func Test_GetConfig_ReturnsSecret_WhenOnlySecretExists(t *testing.T) {
 
 	config, err := kcconfig.GetConfig(k8scs)
 	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
+
+	err = stubTrustedCerts(t, config)
+	assert.NoError(t, err)
 
 	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
 
@@ -122,6 +131,9 @@ func Test_KubernetesServiceHost_IsSet(t *testing.T) {
 
 	config, err := kcconfig.GetConfig(k8scs)
 	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
+
+	err = stubTrustedCerts(t, config)
+	assert.NoError(t, err)
 
 	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
 
@@ -156,5 +168,132 @@ func Test_ShouldSkipTLSForAuthority(t *testing.T) {
 	assert.False(t, config.ShouldSkipTLSForAuthority("1fff:0:a88:85a3::ac1f"))
 	assert.True(t, config.ShouldSkipTLSForAuthority("1aaa:0:a88:85a3::ac1f"))
 	assert.True(t, config.ShouldSkipTLSForAuthority("[1aaa:0:a88:85a3::ac1f]:888"))
+}
 
+func Test_TrustedCertsCreateConfig(t *testing.T) {
+	configMap := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kapp-controller-config",
+			Namespace: "default",
+		},
+		Data: map[string]string{
+			"caCerts": "cert-42",
+		},
+	}
+	k8scs := k8sfake.NewSimpleClientset(configMap)
+	config, err := kcconfig.GetConfig(k8scs)
+	assert.NoError(t, err)
+
+	backup, certs, close, err := createCertTempFiles(t)
+	assert.NoError(t, err)
+	defer close()
+
+	config.BackupCaBundlePath = backup.Name()
+	config.SystemCaBundlePath = certs.Name()
+
+	assert.NoError(t, config.Apply(), "unexpected error after running config.Apply()")
+
+	contents, err := os.ReadFile(config.SystemCaBundlePath)
+	assert.NoError(t, err)
+
+	assert.Contains(t, string(contents), "cert-42")
+}
+
+func Test_TrustedCertsUpdateConfig(t *testing.T) {
+	configMap := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kapp-controller-config",
+			Namespace: "default",
+		},
+		Data: map[string]string{
+			"caCerts": "cert-42",
+		},
+	}
+	k8scs := k8sfake.NewSimpleClientset(configMap)
+	config, err := kcconfig.GetConfig(k8scs)
+	assert.NoError(t, err)
+
+	backup, certs, close, err := createCertTempFiles(t)
+	assert.NoError(t, err)
+	defer close()
+
+	config.BackupCaBundlePath = backup.Name()
+	config.SystemCaBundlePath = certs.Name()
+
+	assert.NoError(t, config.Apply(), "unexpected error after running config.Apply()")
+
+	contents, err := os.ReadFile(config.SystemCaBundlePath)
+	assert.NoError(t, err)
+	assert.Contains(t, string(contents), "cert-42")
+
+	// update config
+	configMap.Data["caCerts"] = "cert-43"
+
+	k8scs = k8sfake.NewSimpleClientset(configMap)
+	config, err = kcconfig.GetConfig(k8scs)
+	assert.NoError(t, err)
+
+	config.BackupCaBundlePath = backup.Name()
+	config.SystemCaBundlePath = certs.Name()
+
+	assert.NoError(t, config.Apply(), "unexpected error after running config.Apply()")
+
+	contents, err = os.ReadFile(config.SystemCaBundlePath)
+	assert.NoError(t, err)
+
+	assert.Contains(t, string(contents), "cert-43")
+}
+
+func Test_TrustedCertsDeleteConfig(t *testing.T) {
+	backup, certs, close, err := createCertTempFiles(t)
+	assert.NoError(t, err)
+	defer close()
+
+	backup.Write([]byte("this-is-the-old-content"))
+
+	// no config found
+	k8scs := k8sfake.NewSimpleClientset()
+	config, err := kcconfig.GetConfig(k8scs)
+	assert.NoError(t, err)
+
+	config.BackupCaBundlePath = backup.Name()
+	config.SystemCaBundlePath = certs.Name()
+
+	assert.NoError(t, config.Apply(), "unexpected error after running config.Apply()")
+
+	contents, err := os.ReadFile(config.SystemCaBundlePath)
+	assert.NoError(t, err)
+
+	// restored to the backup without any additional data
+	assert.Contains(t, string(contents), "this-is-the-old-content")
+}
+
+func stubTrustedCerts(t *testing.T, gc *kcconfig.Config) error {
+	backup, certs, close, err := createCertTempFiles(t)
+	if err != nil {
+		return err
+	}
+	defer close()
+
+	gc.BackupCaBundlePath = backup.Name()
+	gc.SystemCaBundlePath = certs.Name()
+
+	return nil
+}
+
+func createCertTempFiles(t *testing.T) (backup *os.File, certs *os.File, close func(), err error) {
+	backup, err = os.CreateTemp("", "backup.crt")
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	certs, err = os.CreateTemp("", "certs.crt")
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return backup, certs, func() {
+		backup.Close()
+		certs.Close()
+	}, nil
 }

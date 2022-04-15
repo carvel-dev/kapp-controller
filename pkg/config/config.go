@@ -6,6 +6,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -21,8 +22,9 @@ import (
 const (
 	kcConfigName = "kapp-controller-config"
 
-	caCertsKey      = "caCerts"
-	systemCertsFile = "/etc/pki/tls/certs/ca-bundle.crt"
+	caCertsKey            = "caCerts"
+	systemCertsFile       = "/etc/pki/tls/certs/ca-bundle.crt"
+	backupSystemCertsFile = "/etc/pki/tls/certs/ca-bundle.crt.orig"
 
 	httpProxyKey     = "httpProxy"
 	httpsProxyKey    = "httpsProxy"
@@ -40,12 +42,13 @@ const (
 // Config is populated from the cluster's Secret or ConfigMap and sets behavior of kapp-controller.
 // NOTE because config may be populated from a Secret use caution if you're tempted to serialize.
 type Config struct {
-	caCerts       string
-	httpProxy     string
-	httpsProxy    string
-	noProxy       string
-	skipTLSVerify string
-	populated     bool
+	caCerts            string
+	httpProxy          string
+	httpsProxy         string
+	noProxy            string
+	skipTLSVerify      string
+	BackupCaBundlePath string
+	SystemCaBundlePath string
 }
 
 // findExternalConfig will populate exactly one of its return values and the others will be nil.
@@ -99,10 +102,6 @@ func GetConfig(client kubernetes.Interface) (*Config, error) {
 }
 
 func (gc *Config) Apply() error {
-	if !gc.populated {
-		return nil
-	}
-
 	err := gc.addTrustedCerts(gc.caCerts)
 	if err != nil {
 		return fmt.Errorf("Adding trusted certs: %s", err)
@@ -118,10 +117,6 @@ func (gc *Config) Apply() error {
 // Note that in some cases the allow-list may contain ports, so the function name could also be ShouldSkipTLSForDomainAndPort
 // Note that "authority" is defined in: https://www.rfc-editor.org/rfc/rfc3986#section-3 to mean "host and port"
 func (gc *Config) ShouldSkipTLSForAuthority(candidateAuthority string) bool {
-	if !gc.populated {
-		return false
-	}
-
 	authorities := gc.skipTLSVerify
 	if len(authorities) == 0 {
 		return false
@@ -150,37 +145,71 @@ func (gc *Config) ShouldSkipTLSForAuthority(candidateAuthority string) bool {
 }
 
 func (gc *Config) addTrustedCerts(certChain string) (err error) {
-	if certChain == "" {
-		return nil
+	backupCertsFilePath := backupSystemCertsFile
+	systemCertsFilePath := systemCertsFile
+
+	if gc.BackupCaBundlePath != "" && gc.SystemCaBundlePath != "" {
+		backupCertsFilePath = gc.BackupCaBundlePath
+		systemCertsFilePath = gc.SystemCaBundlePath
 	}
 
-	var file *os.File
-	file, err = os.OpenFile(systemCertsFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	backupFile, err := os.Open(backupCertsFilePath)
 	if err != nil {
-		return fmt.Errorf("Opening certs file: %s", err)
+		return fmt.Errorf("Opening original certs file: %s", err)
+	}
+	defer backupFile.Close()
+
+	tmpFile, err := os.CreateTemp(os.TempDir(), "tmp-ca-bundle-")
+	if err != nil {
+		return fmt.Errorf("Creating tmp certs file: %s", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	_, err = io.Copy(tmpFile, backupFile)
+	if err != nil {
+		_ = tmpFile.Close()
+		return fmt.Errorf("Copying certs file: %s", err)
 	}
 
-	_, err = file.Write([]byte("\n" + certChain))
+	_, err = tmpFile.Write([]byte("\n" + certChain))
 	if err != nil {
-		_ = file.Close()
+		_ = tmpFile.Close()
 		return err
 	}
 
-	return file.Close()
+	if err = tmpFile.Close(); err != nil {
+		return err
+	}
+
+	err = os.Rename(tmpFile.Name(), systemCertsFilePath)
+	if err != nil {
+		return fmt.Errorf("Renaming certs file: %s", err)
+	}
+
+	return nil
 }
 
 func (gc *Config) configureProxies() {
-	if gc.httpProxy != "" {
+	if httpProxyEnvVar == "" {
+		os.Unsetenv(httpProxyEnvVar)
+		os.Unsetenv(strings.ToUpper(httpProxyEnvVar))
+	} else {
 		os.Setenv(httpProxyEnvVar, gc.httpProxy)
 		os.Setenv(strings.ToUpper(httpProxyEnvVar), gc.httpProxy)
 	}
 
-	if gc.httpsProxy != "" {
+	if httpsProxyEnvVar == "" {
+		os.Unsetenv(httpsProxyEnvVar)
+		os.Unsetenv(strings.ToUpper(httpsProxyEnvVar))
+	} else {
 		os.Setenv(httpsProxyEnvVar, gc.httpsProxy)
 		os.Setenv(strings.ToUpper(httpsProxyEnvVar), gc.httpsProxy)
 	}
 
-	if gc.noProxy != "" {
+	if noProxyEnvVar == "" {
+		os.Unsetenv(noProxyEnvVar)
+		os.Unsetenv(strings.ToUpper(noProxyEnvVar))
+	} else {
 		gc.addKubernetesServiceHostInNoProxy()
 		os.Setenv(noProxyEnvVar, gc.noProxy)
 		os.Setenv(strings.ToUpper(noProxyEnvVar), gc.noProxy)
@@ -213,5 +242,4 @@ func (gc *Config) addDataToConfig(data map[string]string) {
 	gc.httpsProxy = data[httpsProxyKey]
 	gc.noProxy = data[noProxyKey]
 	gc.skipTLSVerify = data[skipTLSVerifyKey]
-	gc.populated = true
 }
