@@ -123,7 +123,7 @@ stringData:
 
 	expectedStatus := v1alpha1.AppStatus{
 		GenericStatus: v1alpha1.GenericStatus{
-			Conditions: []v1alpha1.AppCondition{{
+			Conditions: []v1alpha1.Condition{{
 				Type:   v1alpha1.ReconcileSucceeded,
 				Status: corev1.ConditionTrue,
 			}},
@@ -504,7 +504,7 @@ func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
 
 		expectedStatus := pkgingv1alpha1.PackageInstallStatus{
 			GenericStatus: v1alpha1.GenericStatus{
-				Conditions: []v1alpha1.AppCondition{{
+				Conditions: []v1alpha1.Condition{{
 					Type:   v1alpha1.ReconcileSucceeded,
 					Status: corev1.ConditionTrue,
 				}},
@@ -536,7 +536,7 @@ func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
 
 		expectedStatus := pkgingv1alpha1.PackageInstallStatus{
 			GenericStatus: v1alpha1.GenericStatus{
-				Conditions: []v1alpha1.AppCondition{{
+				Conditions: []v1alpha1.Condition{{
 					Type:   v1alpha1.ReconcileSucceeded,
 					Status: corev1.ConditionTrue,
 				}},
