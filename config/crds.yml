@@ -1072,7 +1072,6 @@ spec:
             properties:
               conditions:
                 items:
-                  description: TODO rename to Condition
                   properties:
                     message:
                       description: Human-readable message indicating details about last transition.
@@ -1291,7 +1290,6 @@ spec:
             properties:
               conditions:
                 items:
-                  description: TODO rename to Condition
                   properties:
                     message:
                       description: Human-readable message indicating details about last transition.
@@ -1543,7 +1541,6 @@ spec:
             properties:
               conditions:
                 items:
-                  description: TODO rename to Condition
                   properties:
                     message:
                       description: Human-readable message indicating details about last transition.
