@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - develop
+  pull_request:
+    types: [opened, reopened, synchronize]
   workflow_dispatch:
 
 # see https://github.com/benchmark-action/github-action-benchmark
