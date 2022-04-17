@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - develop
-  pull_request:
-    types: [opened, reopened, synchronize]
   workflow_dispatch:
 
 # see https://github.com/benchmark-action/github-action-benchmark
@@ -15,10 +13,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-go@v1
+      - uses: actions/setup-go@v1 # default version of go is 1.10
+        with:
+          go-version: "1.17.6"
+      - name: Install Carvel Tools
+        run: ./hack/install-deps.sh
       # Run benchmark with `go test -bench` and stores the output to a file
-      - name: Run benchmark
-        run: go test ./test/bench/... -bench. | tee output.txt
+      - name: Setup k8s and Run benchmark
+        run: |
+          set -e -x
+          mkdir /tmp/bin
+          export PATH=/tmp/bin:$PATH
+          curl -sLo /tmp/bin/minikube https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
+          chmod +x /tmp/bin/minikube
+          minikube start --driver=docker
+          eval $(minikube docker-env --shell=bash)
+
+          ./hack/deploy-test.sh
+
+          go test ./test/bench/... -bench=. | tee output.txt
       # Download previous benchmark result from cache (if exists)
       - name: Download previous benchmark data
         uses: actions/cache@v1
