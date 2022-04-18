@@ -64,9 +64,18 @@ func (s *Status) IsDeleteFailed() bool {
 	return false
 }
 
+// IsPackageYanked checks the status.conditions for the presence of the PackageYanked condition
+func (s *Status) IsPackageYanked() bool {
+	for _, cond := range s.S.Conditions {
+		if cond.Type == kcv1alpha1.PackageYanked {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *Status) SetReconciling(meta metav1.ObjectMeta) {
 	s.markObservedLatest(meta)
-	s.removeAllConditions()
 
 	s.S.Conditions = append(s.S.Conditions, kcv1alpha1.Condition{
 		Type:   kcv1alpha1.Reconciling,
@@ -75,13 +84,10 @@ func (s *Status) SetReconciling(meta metav1.ObjectMeta) {
 
 	s.S.FriendlyDescription = "Reconciling"
 	s.S.UsefulErrorMessage = ""
-
-	s.UpdateFunc(s.S)
 }
 
 func (s *Status) SetDeleting(meta metav1.ObjectMeta) {
 	s.markObservedLatest(meta)
-	s.removeAllConditions()
 
 	s.S.Conditions = append(s.S.Conditions, kcv1alpha1.Condition{
 		Type:   kcv1alpha1.Deleting,
@@ -89,12 +95,10 @@ func (s *Status) SetDeleting(meta metav1.ObjectMeta) {
 	})
 
 	s.S.FriendlyDescription = "Deleting"
-
-	s.UpdateFunc(s.S)
 }
 
 func (s *Status) SetReconcileCompleted(err error) {
-	s.removeAllConditions()
+	s.RemoveReconciling()
 
 	if err != nil {
 		s.S.Conditions = append(s.S.Conditions, kcv1alpha1.Condition{
@@ -112,13 +116,24 @@ func (s *Status) SetReconcileCompleted(err error) {
 		s.S.FriendlyDescription = "Reconcile succeeded"
 		s.S.UsefulErrorMessage = ""
 	}
+}
 
+// FlushConditions sets the conditions on the kubernetes cluster
+func (s *Status) FlushConditions() {
 	s.UpdateFunc(s.S)
 }
 
-func (s *Status) SetDeleteCompleted(err error) {
-	s.removeAllConditions()
+// SetPackageYanked appends a new condition to indicate a package is yanked
+func (s *Status) SetPackageYanked(meta metav1.ObjectMeta, reason string) {
+	s.S.Conditions = append(s.S.Conditions, kcv1alpha1.Condition{
+		Type:   kcv1alpha1.PackageYanked,
+		Status: corev1.ConditionTrue,
+		Reason: reason,
+	})
+}
 
+// SetDeleteCompleted updates the status after finishing deletion
+func (s *Status) SetDeleteCompleted(err error) {
 	if err != nil {
 		s.S.Conditions = append(s.S.Conditions, kcv1alpha1.Condition{
 			Type:    kcv1alpha1.DeleteFailed,
@@ -129,8 +144,6 @@ func (s *Status) SetDeleteCompleted(err error) {
 	} else {
 		// assume resource will be deleted, hence nothing to update
 	}
-
-	s.UpdateFunc(s.S)
 }
 
 func (s *Status) friendlyErrMsg(errMsg string) string {
@@ -147,8 +160,18 @@ func (s *Status) markObservedLatest(meta metav1.ObjectMeta) {
 	s.S.ObservedGeneration = meta.Generation
 }
 
-func (s *Status) removeAllConditions() {
+// RemoveAllConditions deletes all conditions of status
+func (s *Status) RemoveAllConditions() {
 	s.S.Conditions = nil
+}
+
+// RemoveReconciling removes the Reconciling condition from Status
+func (s *Status) RemoveReconciling() {
+	for i, cond := range s.S.Conditions {
+		if cond.Type == kcv1alpha1.Reconciling {
+			s.S.Conditions = append(s.S.Conditions[:i], s.S.Conditions[i+1:]...)
+		}
+	}
 }
 
 func (s *Status) SetUsefulErrorMessage(errMsg string) {

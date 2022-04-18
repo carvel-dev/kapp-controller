@@ -79,6 +79,11 @@ type PackageSpec struct {
 	// This is especially useful if the underlying versions do not match the Package version
 	// +optional
 	IncludedSoftware []IncludedSoftware `json:"includedSoftware,omitempty" protobuf:"bytes,9,opt,name=includedSoftware"`
+
+	// Yanked indicates that this package is no longer recommended for use.
+	// This package likely contains unsupported software, a CVE or a critical bug.
+	// +optional
+	Yanked *Yanked `json:"yanked,omitempty" protobuf:"bytes,10,opt,name=yanked"`
 }
 
 type PackageMetadataSpec struct {
@@ -112,4 +117,10 @@ type IncludedSoftware struct {
 	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,1,opt,name=displayName"`
 	Version     string `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
 	Description string `json:"description,omitempty" protobuf:"bytes,3,opt,name=description"`
+}
+
+// Yanked contains details of the rationale of why this version was yanked
+type Yanked struct {
+	Reason string      `json:"reason,omitempty" protobuf:"bytes,1,opt,name=reason"`
+	At     metav1.Time `json:"at,omitempty" protobuf:"bytes,2,opt,name=at"`
 }

@@ -60,6 +60,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataSpec":  schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataSpec(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageSpec":          schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema":         schema_apiserver_apis_datapackaging_v1alpha1_ValuesSchema(ref),
+		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Yanked":               schema_apiserver_apis_datapackaging_v1alpha1_Yanked(ref),
 		"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection":                           schema_pkg_vendir_versions_v1alpha1_VersionSelection(ref),
 		"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver":                     schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemver(ref),
 		"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases":          schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemverPrereleases(ref),
@@ -1934,11 +1935,17 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref common.Referen
 							},
 						},
 					},
+					"yanked": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Yanked indicates that this package is no longer recommended for use. This package likely contains unsupported software, a CVE or a critical bug.",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Yanked"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Yanked", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
 	}
 }
 
@@ -1959,6 +1966,33 @@ func schema_apiserver_apis_datapackaging_v1alpha1_ValuesSchema(ref common.Refere
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/runtime.RawExtension"},
+	}
+}
+
+func schema_apiserver_apis_datapackaging_v1alpha1_Yanked(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Yanked contains details of the rationale of why this version was yanked",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"at": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
 	}
 }
 
