@@ -4,7 +4,16 @@ on:
   push:
     branches:
       - develop
+  pull_request:
+    types: [opened, reopened, synchronize]
   workflow_dispatch:
+
+permissions:
+  # deployments permission to deploy GitHub pages website
+  deployments: write
+  # contents permission to update benchmark contents in gh-pages branch
+  contents: write
+
 
 # see https://github.com/benchmark-action/github-action-benchmark
 jobs:
@@ -54,3 +63,11 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           # Enable alert commit comment
           comment-on-alert: true
+      - name: store benchmark into github pages
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'go'
+          output-file-path: output.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Push and deploy GitHub pages branch automatically
+          auto-push: true
