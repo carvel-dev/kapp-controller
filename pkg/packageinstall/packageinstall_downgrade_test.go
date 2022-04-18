@@ -97,7 +97,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			LastAttemptedVersion: "1.0.0",
 			GenericStatus: v1alpha1.GenericStatus{
 				ObservedGeneration: 0,
-				Conditions: []v1alpha1.AppCondition{{
+				Conditions: []v1alpha1.Condition{{
 					Type:   "Reconciling",
 					Status: "True",
 				}},
@@ -139,7 +139,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			LastAttemptedVersion: "2.0.0",
 			GenericStatus: v1alpha1.GenericStatus{
 				ObservedGeneration: 0,
-				Conditions: []v1alpha1.AppCondition{{
+				Conditions: []v1alpha1.Condition{{
 					Type:   "Reconciling",
 					Status: "True",
 				}},
@@ -181,7 +181,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			LastAttemptedVersion: "2.0.0",
 			GenericStatus: v1alpha1.GenericStatus{
 				ObservedGeneration: 0,
-				Conditions: []v1alpha1.AppCondition{{
+				Conditions: []v1alpha1.Condition{{
 					Type:    "ReconcileFailed",
 					Status:  "True",
 					Reason:  "",
@@ -229,7 +229,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			LastAttemptedVersion: "1.0.0",
 			GenericStatus: v1alpha1.GenericStatus{
 				ObservedGeneration: 0,
-				Conditions: []v1alpha1.AppCondition{{
+				Conditions: []v1alpha1.Condition{{
 					Type:   "Reconciling",
 					Status: "True",
 				}},

@@ -35,24 +35,6 @@ message AppClusterKubeconfigSecretRef {
   optional string key = 2;
 }
 
-// TODO rename to Condition
-// +k8s:openapi-gen=true
-message AppCondition {
-  optional string type = 1;
-
-  optional string status = 2;
-
-  // Unique, this should be a short, machine understandable string that gives the reason
-  // for condition's last transition. If it reports "ResizeStarted" that means the underlying
-  // persistent volume is being resized.
-  // +optional
-  optional string reason = 3;
-
-  // Human-readable message indicating details about last transition.
-  // +optional
-  optional string message = 4;
-}
-
 // +k8s:openapi-gen=true
 message AppDeploy {
   // Use kapp to deploy resources
@@ -432,6 +414,23 @@ message AppTemplateYtt {
   repeated AppTemplateValuesSource valuesFrom = 6;
 }
 
+// +k8s:openapi-gen=true
+message Condition {
+  optional string type = 1;
+
+  optional string status = 2;
+
+  // Unique, this should be a short, machine understandable string that gives the reason
+  // for condition's last transition. If it reports "ResizeStarted" that means the underlying
+  // persistent volume is being resized.
+  // +optional
+  optional string reason = 3;
+
+  // Human-readable message indicating details about last transition.
+  // +optional
+  optional string message = 4;
+}
+
 message GenericStatus {
   // Populated based on metadata.generation when controller
   // observes a change to the resource; if this value is
@@ -440,7 +439,7 @@ message GenericStatus {
   optional int64 observedGeneration = 1;
 
   // +optional
-  repeated AppCondition conditions = 2;
+  repeated Condition conditions = 2;
 
   // +optional
   optional string friendlyDescription = 3;

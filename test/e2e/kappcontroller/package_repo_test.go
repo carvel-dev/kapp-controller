@@ -39,7 +39,7 @@ spec:
 			Error:    "Fetching resources: Error (see .status.usefulErrorMessage for details)",
 		},
 		GenericStatus: kcv1alpha1.GenericStatus{
-			Conditions: []kcv1alpha1.AppCondition{{
+			Conditions: []kcv1alpha1.Condition{{
 				Type:    kcv1alpha1.ReconcileFailed,
 				Status:  corev1.ConditionTrue,
 				Message: "Fetching resources: Error (see .status.usefulErrorMessage for details)",
@@ -120,7 +120,7 @@ spec:
 		ConsecutiveReconcileSuccesses: 1,
 		ConsecutiveReconcileFailures:  0,
 		GenericStatus: kcv1alpha1.GenericStatus{
-			Conditions: []kcv1alpha1.AppCondition{{
+			Conditions: []kcv1alpha1.Condition{{
 				Type:    kcv1alpha1.ReconcileSucceeded,
 				Status:  corev1.ConditionTrue,
 				Message: "",

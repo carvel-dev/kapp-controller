@@ -139,7 +139,7 @@ data: {}
 	})
 
 	logger.Section("verify canceled status", func() {
-		expectedConditions := []v1alpha1.AppCondition{{
+		expectedConditions := []v1alpha1.Condition{{
 			Type:    v1alpha1.ReconcileFailed,
 			Status:  "True",
 			Message: "Deploying: Process was canceled",

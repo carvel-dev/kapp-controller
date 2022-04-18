@@ -182,7 +182,7 @@ func (a *App) markObservedLatest() {
 func (a *App) setReconciling() {
 	a.removeAllConditions()
 
-	a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
+	a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.Condition{
 		Type:   v1alpha1.Reconciling,
 		Status: corev1.ConditionTrue,
 	})
@@ -194,7 +194,7 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 	a.removeAllConditions()
 
 	if result.Error != nil {
-		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
+		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.Condition{
 			Type:    v1alpha1.ReconcileFailed,
 			Status:  corev1.ConditionTrue,
 			Message: result.ErrorStr(),
@@ -204,7 +204,7 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 		a.app.Status.FriendlyDescription = fmt.Sprintf("Reconcile failed: %s", result.ErrorStr())
 		a.setUsefulErrorMessage(result)
 	} else {
-		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
+		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.Condition{
 			Type:    v1alpha1.ReconcileSucceeded,
 			Status:  corev1.ConditionTrue,
 			Message: "",
@@ -219,7 +219,7 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 func (a *App) setDeleting() {
 	a.removeAllConditions()
 
-	a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
+	a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.Condition{
 		Type:   v1alpha1.Deleting,
 		Status: corev1.ConditionTrue,
 	})
@@ -231,7 +231,7 @@ func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
 	a.removeAllConditions()
 
 	if result.Error != nil {
-		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.AppCondition{
+		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.Condition{
 			Type:    v1alpha1.DeleteFailed,
 			Status:  corev1.ConditionTrue,
 			Message: result.ErrorStr(),
