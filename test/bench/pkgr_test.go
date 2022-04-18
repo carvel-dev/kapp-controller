@@ -8,8 +8,17 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+)
+
+// we'll assert against these thresholds below; maps represent "for x packages, what's the max allowed seconds to deploy or delete"?
+// thresholds set by observing runs locally, rounding, multiplying by 1.25, and rounding:
+var (
+	deploySecondsForPackageCount = map[int]float64{50: 7, 100: 11, 500: 39}
+	deleteSecondsForPackageCount = map[int]float64{50: 13, 100: 20, 500: 81}
 )
 
 func Benchmark_pkgr_with_500_packages(b *testing.B) {
@@ -35,8 +44,9 @@ func runWithPkgsAndVersions(b *testing.B, numPackages int, numVersionsPerPackage
 	cleanup()
 	defer cleanup()
 
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		deployAndDeletePkgr(b, pkgrFileName)
+		deployAndDeletePkgr(b, pkgrFileName, numPackages*numVersionsPerPackage)
 	}
 }
 
@@ -45,14 +55,25 @@ func appName(fileName string) string {
 	return fileName[:len(fileName)-5]
 }
 
-func deployAndDeletePkgr(b *testing.B, pkgrFileName string) {
+func deployAndDeletePkgr(b *testing.B, pkgrFileName string, totalPackages int) {
+	t1 := time.Now()
 	cmd := exec.Command("kapp", "deploy", "-f", pkgrFileName, "-a", appName(pkgrFileName), "-y")
 	output, err := cmd.Output()
 	require.NoError(b, err, string(output))
+	t2 := time.Now()
 
 	cmd = exec.Command("kapp", "delete", "-a", appName(pkgrFileName), "-y")
 	output, err = cmd.Output()
 	require.NoError(b, err, string(output))
+	t3 := time.Now()
+
+	deployTime := t2.Sub(t1).Seconds()
+	deleteTime := t3.Sub(t2).Seconds()
+
+	assert.Less(b, deployTime, deploySecondsForPackageCount[totalPackages], "Seconds deploying were too slow for a pkgr with ", totalPackages, " packages.")
+	assert.Less(b, deleteTime, deleteSecondsForPackageCount[totalPackages], "Seconds deleting were too slow for a pkgr with ", totalPackages, " packages.")
+	b.ReportMetric(deployTime, "DeploySeconds")
+	b.ReportMetric(deleteTime, "DeleteSeconds")
 }
 
 func writePkgr(b *testing.B, numPackages int, numVersions int) string {

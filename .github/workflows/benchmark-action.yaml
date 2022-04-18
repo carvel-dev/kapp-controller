@@ -48,7 +48,7 @@ jobs:
           output-file-path: output.txt
           # Where the previous data file is stored
           external-data-json-path: ./cache/benchmark-data.json
-          # Workflow will fail when an alert happens
+          alert-threshold: '125%'
           fail-on-alert: true
           # GitHub API token to make a commit comment
           github-token: ${{ secrets.GITHUB_TOKEN }}
