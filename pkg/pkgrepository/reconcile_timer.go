@@ -83,7 +83,7 @@ func (rt ReconcileTimer) failureSyncPeriod() time.Duration {
 	return rt.syncPeriod()
 }
 
-func (rt ReconcileTimer) hasReconcileStatus(c v1alpha1.AppConditionType) bool {
+func (rt ReconcileTimer) hasReconcileStatus(c v1alpha1.ConditionType) bool {
 	for _, cond := range rt.app.Status.Conditions {
 		if cond.Type == c {
 			return true

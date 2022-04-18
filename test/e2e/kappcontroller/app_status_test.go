@@ -78,7 +78,7 @@ spec:
 
 	expectedStatus := v1alpha1.AppStatus{
 		GenericStatus: v1alpha1.GenericStatus{
-			Conditions: []v1alpha1.AppCondition{{
+			Conditions: []v1alpha1.Condition{{
 				Type:    v1alpha1.ReconcileFailed,
 				Status:  corev1.ConditionTrue,
 				Message: "Deploying: Error (see .status.usefulErrorMessage for details)",
