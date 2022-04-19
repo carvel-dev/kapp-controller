@@ -279,7 +279,7 @@ func (o *AppTailer) printLogLine(message string, messageBlock string, errorBlock
 	if time.Since(startTime) > 1*time.Second {
 		messageAge = fmt.Sprintf("(%s ago)", duration.ShortHumanDuration(time.Since(startTime)))
 	}
-	o.ui.BeginLinef("%s: %s %s\n", startTime.Format("3:04:05PM"), message, messageAge)
+	o.ui.BeginLinef("%s: %s %s\n", startTime.Local().Format("3:04:05PM"), message, messageAge)
 	if len(messageBlock) > 0 {
 		o.ui.PrintBlock([]byte(o.indentMessageBlock(messageBlock, errorBlock)))
 	}
