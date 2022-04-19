@@ -64,5 +64,13 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           # Enable alert commit comment
           comment-on-alert: true
+      # I don't fully understand but the two storage options are mutually exclusive if they're in the same block
+      - name: Store Result into Github Pages
+        uses: benchmark-action/github-action-benchmark@v1
+        if: github.ref == 'refs/heads/develop'
+        with:
+          tool: 'go'
+          output-file-path: output.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           # Push and deploy GitHub pages branch automatically
           auto-push: true
