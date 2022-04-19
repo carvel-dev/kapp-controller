@@ -23,7 +23,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-type AppWatcher struct {
+type AppTailer struct {
 	Namespace string
 	Name      string
 
@@ -32,78 +32,45 @@ type AppWatcher struct {
 
 	stopperChan       chan struct{}
 	erroredWhileWatch bool
-	opts              AppWatcherOpts
+	failureMessage    string
+	opts              AppTailerOpts
 
 	lastSeenDeployStdout string
 }
 
-type AppWatcherOpts struct {
+type AppTailerOpts struct {
 	IgnoreNotExists   bool
 	PrintMetadata     bool
 	PrintCurrentState bool
 }
 
-func NewAppWatcher(namespace string, name string, ui ui.UI, client kcclient.Interface, opts AppWatcherOpts) *AppWatcher {
-	return &AppWatcher{Namespace: namespace, Name: name, opts: opts, ui: ui, client: client}
+func NewAppTailer(namespace string, name string, ui ui.UI, client kcclient.Interface, opts AppTailerOpts) *AppTailer {
+	return &AppTailer{Namespace: namespace, Name: name, opts: opts, ui: ui, client: client}
 }
 
-func (o *AppWatcher) printTillCurrent(status kcv1alpha1.AppStatus) error {
+func (o *AppTailer) printTillCurrent(status kcv1alpha1.AppStatus) error {
 	if o.isDeleting(status) {
 		return nil
 	}
 
-	if status.Fetch != nil {
-		if status.Fetch.ExitCode != 0 && status.Fetch.UpdatedAt.Unix() >= status.Fetch.StartedAt.Unix() {
-			o.printLogLine("Fetch failed", status.Fetch.Stderr, true, status.Fetch.UpdatedAt.Time)
-			return fmt.Errorf(status.Fetch.Stderr)
-		}
-		if status.Fetch.StartedAt.After(status.Fetch.UpdatedAt.Time) {
-			o.printLogLine("Fetch started", "", false, status.Fetch.StartedAt.Time)
-			return nil
-		}
-		o.printLogLine("Fetch succeeded", status.Fetch.Stdout, false, status.Fetch.UpdatedAt.Time)
-	}
+	o.printUpdate(kcv1alpha1.AppStatus{}, status)
 
-	if status.Template != nil {
-		if status.Template.ExitCode != 0 && status.Fetch.StartedAt.Unix() < status.Template.UpdatedAt.Unix() {
-			o.printLogLine("Template failed", status.Template.Stderr, true, status.Template.UpdatedAt.Time)
-			return fmt.Errorf(status.Template.Stderr)
-		}
-		if status.Fetch.StartedAt.After(status.Template.UpdatedAt.Time) {
-			o.printLogLine("Template started", "", false, status.Template.UpdatedAt.Time)
-			return nil
-		}
-		o.printLogLine("Template succeeded", "", false, status.Template.UpdatedAt.Time)
+	if o.erroredWhileWatch {
+		return fmt.Errorf("Reconciling app: %s", o.failureMessage)
 	}
-
-	if status.Deploy != nil {
-		if status.Deploy.ExitCode != 0 && status.Deploy.StartedAt.Unix() < status.Deploy.UpdatedAt.Unix() {
-			o.printLogLine("Deploy failed", status.Deploy.Stderr, true, status.Deploy.UpdatedAt.Time)
-			return fmt.Errorf(status.Deploy.Error)
-		}
-		if o.hasReconciled(status) {
-			o.printLogLine("Deploy succeeded", status.Deploy.Stdout, false, status.Deploy.UpdatedAt.Time)
-			return nil
-		}
-		o.printLogLine("Deploy started", status.Deploy.Stdout, false, status.Deploy.StartedAt.Time)
-	}
-
-	failed, errMsg := o.hasFailed(status)
-	if failed {
-		return fmt.Errorf(errMsg)
-	}
-
 	return nil
 }
 
-func (o *AppWatcher) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alpha1.AppStatus) {
+func (o *AppTailer) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alpha1.AppStatus) {
 	if status.Fetch != nil {
 		if oldStatus.Fetch == nil || (!oldStatus.Fetch.StartedAt.Equal(&status.Fetch.StartedAt) && status.Fetch.UpdatedAt.Unix() <= status.Fetch.StartedAt.Unix()) {
 			o.printLogLine("Fetch started", "", false, status.Fetch.StartedAt.Time)
 		}
 		if oldStatus.Fetch == nil || !oldStatus.Fetch.UpdatedAt.Equal(&status.Fetch.UpdatedAt) {
 			if status.Fetch.ExitCode != 0 && status.Fetch.UpdatedAt.Unix() >= status.Fetch.StartedAt.Unix() {
-				o.printLogLine("Fetch failed", status.Fetch.Stderr, true, status.Fetch.UpdatedAt.Time)
+				msg := "Fetch failed"
+				o.printLogLine(msg, status.Fetch.Stderr, true, status.Fetch.UpdatedAt.Time)
+				o.failureMessage = msg
 				o.stopWatch(true)
 				return
 			}
@@ -114,7 +81,9 @@ func (o *AppWatcher) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alph
 	if status.Template != nil {
 		if oldStatus.Template == nil || !oldStatus.Template.UpdatedAt.Equal(&status.Template.UpdatedAt) {
 			if status.Template.ExitCode != 0 {
-				o.printLogLine("Template failed", status.Template.Stderr, true, status.Template.UpdatedAt.Time)
+				msg := "Template failed"
+				o.printLogLine(msg, status.Template.Stderr, true, status.Template.UpdatedAt.Time)
+				o.failureMessage = msg
 				o.stopWatch(true)
 				return
 			}
@@ -123,16 +92,19 @@ func (o *AppWatcher) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alph
 	}
 	if status.Deploy != nil {
 		isDeleting := o.isDeleting(status)
+		ongoingOp := "Deploy"
+		if isDeleting {
+			ongoingOp = "Delete"
+		}
 		if oldStatus.Deploy == nil || !oldStatus.Deploy.StartedAt.Equal(&status.Deploy.StartedAt) {
-			msg := "Deploy started"
-			if isDeleting {
-				msg = "Delete started"
-			}
+			msg := fmt.Sprintf("%s started", ongoingOp)
 			o.printLogLine(msg, "", false, status.Deploy.StartedAt.Time)
 		}
 		if oldStatus.Deploy == nil || !oldStatus.Deploy.UpdatedAt.Equal(&status.Deploy.UpdatedAt) {
 			if status.Deploy.ExitCode != 0 && status.Deploy.Finished {
-				o.printLogLine("Deploy failed", status.Deploy.Stderr, true, status.Deploy.UpdatedAt.Time)
+				msg := fmt.Sprintf("Deploy failed")
+				o.printLogLine(msg, status.Deploy.Stderr, true, status.Deploy.UpdatedAt.Time)
+				o.failureMessage = msg
 				o.stopWatch(true)
 				return
 			}
@@ -151,11 +123,7 @@ func (o *AppWatcher) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alph
 	}
 }
 
-func (o *AppWatcher) PrintTillCurrent(status kcv1alpha1.AppStatus) error {
-	return o.printTillCurrent(status)
-}
-
-func (o *AppWatcher) PrintInfo(app kcv1alpha1.App) {
+func (o *AppTailer) printInfo(app kcv1alpha1.App) {
 	table := uitable.Table{
 		Transpose: true,
 
@@ -178,7 +146,7 @@ func (o *AppWatcher) PrintInfo(app kcv1alpha1.App) {
 	o.ui.PrintTable(table)
 }
 
-func (o *AppWatcher) metricString(status kcv1alpha1.AppStatus) string {
+func (o *AppTailer) metricString(status kcv1alpha1.AppStatus) string {
 	if status.ConsecutiveReconcileFailures != 0 {
 		return fmt.Sprintf("%d consecutive failures", status.ConsecutiveReconcileFailures)
 	} else if status.ConsecutiveReconcileSuccesses != 0 {
@@ -188,29 +156,28 @@ func (o *AppWatcher) metricString(status kcv1alpha1.AppStatus) string {
 	}
 }
 
-// Needs to be ait tight
-func (o *AppWatcher) statusString(status kcv1alpha1.AppStatus) string {
+func (o *AppTailer) statusString(status kcv1alpha1.AppStatus) string {
 	if len(status.Conditions) < 1 {
 		return ""
 	}
-
-	switch status.Conditions[0].Type {
-	case kcv1alpha1.Reconciling:
-		return "Reconciling"
-	case kcv1alpha1.ReconcileSucceeded:
-		return color.GreenString("Reconcile succeeded")
-	case kcv1alpha1.ReconcileFailed:
-		return color.RedString("Reconcile failed")
-	case kcv1alpha1.Deleting:
-		return "Deleting"
-	case kcv1alpha1.DeleteFailed:
-		return color.RedString("Deletion failed")
-	default:
-		return status.FriendlyDescription
+	for _, condition := range status.Conditions {
+		switch condition.Type {
+		case kcv1alpha1.ReconcileFailed:
+			return color.RedString("Reconcile failed")
+		case kcv1alpha1.ReconcileSucceeded:
+			return color.GreenString("Reconcile succeeded")
+		case kcv1alpha1.DeleteFailed:
+			return color.RedString("Deletion failed")
+		case kcv1alpha1.Reconciling:
+			return "Reconciling"
+		case kcv1alpha1.Deleting:
+			return "Deleting"
+		}
 	}
+	return status.FriendlyDescription
 }
 
-func (o *AppWatcher) hasReconciled(status kcv1alpha1.AppStatus) bool {
+func (o *AppTailer) hasReconciled(status kcv1alpha1.AppStatus) bool {
 	for _, condition := range status.Conditions {
 		if condition.Type == kcv1alpha1.ReconcileSucceeded && condition.Status == corev1.ConditionTrue {
 			return true
@@ -219,7 +186,7 @@ func (o *AppWatcher) hasReconciled(status kcv1alpha1.AppStatus) bool {
 	return false
 }
 
-func (o *AppWatcher) hasFailed(status kcv1alpha1.AppStatus) (bool, string) {
+func (o *AppTailer) hasFailed(status kcv1alpha1.AppStatus) (bool, string) {
 	for _, condition := range status.Conditions {
 		if condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue {
 			return true, color.RedString(fmt.Sprintf("%s: %s", kcv1alpha1.ReconcileFailed, status.UsefulErrorMessage))
@@ -231,7 +198,7 @@ func (o *AppWatcher) hasFailed(status kcv1alpha1.AppStatus) (bool, string) {
 	return false, ""
 }
 
-func (o *AppWatcher) isDeleting(status kcv1alpha1.AppStatus) bool {
+func (o *AppTailer) isDeleting(status kcv1alpha1.AppStatus) bool {
 	for _, condition := range status.Conditions {
 		if condition.Type == kcv1alpha1.Deleting && condition.Status == corev1.ConditionTrue {
 			return true
@@ -240,17 +207,17 @@ func (o *AppWatcher) isDeleting(status kcv1alpha1.AppStatus) bool {
 	return false
 }
 
-func (o *AppWatcher) TailAppStatus() error {
+func (o *AppTailer) TailAppStatus() error {
+	o.stopperChan = make(chan struct{})
 	app, err := o.client.KappctrlV1alpha1().Apps(o.Namespace).Get(context.Background(), o.Name, metav1.GetOptions{})
 	if err != nil {
 		if !(errors.IsNotFound(err) && o.opts.IgnoreNotExists) {
 			return err
 		}
-		o.printLogLine(fmt.Sprintf("Waiting for app '%s' in namespace '%s' to be created", o.Name, o.Namespace), "", false, time.Now())
 	}
 
 	if o.opts.PrintMetadata {
-		o.PrintInfo(*app)
+		o.printInfo(*app)
 	}
 
 	if o.opts.PrintCurrentState {
@@ -268,7 +235,6 @@ func (o *AppWatcher) TailAppStatus() error {
 		opts.FieldSelector = fmt.Sprintf("metadata.name=%s", o.Name)
 	})
 	informer := informerFactory.Kappctrl().V1alpha1().Apps().Informer()
-	o.stopperChan = make(chan struct{})
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: o.udpateEventHandler,
 		DeleteFunc: o.deleteEventHandler,
@@ -281,17 +247,17 @@ func (o *AppWatcher) TailAppStatus() error {
 
 	<-o.stopperChan
 	if o.erroredWhileWatch {
-		return fmt.Errorf("App reconciliation failed")
+		return fmt.Errorf("Reconciling app: %s", o.failureMessage)
 	}
 	return nil
 }
 
-func (o *AppWatcher) stopWatch(failing bool) {
+func (o *AppTailer) stopWatch(failing bool) {
 	o.erroredWhileWatch = failing
 	close(o.stopperChan)
 }
 
-func (o *AppWatcher) udpateEventHandler(oldObj interface{}, newObj interface{}) {
+func (o *AppTailer) udpateEventHandler(oldObj interface{}, newObj interface{}) {
 	newApp, _ := newObj.(*kcv1alpha1.App)
 	oldApp, _ := oldObj.(*kcv1alpha1.App)
 
@@ -303,12 +269,12 @@ func (o *AppWatcher) udpateEventHandler(oldObj interface{}, newObj interface{}) 
 	o.printUpdate(oldApp.Status, newApp.Status)
 }
 
-func (o *AppWatcher) deleteEventHandler(oldObj interface{}) {
+func (o *AppTailer) deleteEventHandler(oldObj interface{}) {
 	o.printLogLine(fmt.Sprintf("App '%s' in namespace '%s' deleted", o.Name, o.Namespace), "", false, time.Now())
-	close(o.stopperChan)
+	o.stopWatch(false)
 }
 
-func (o *AppWatcher) printLogLine(message string, messageBlock string, errorBlock bool, startTime time.Time) {
+func (o *AppTailer) printLogLine(message string, messageBlock string, errorBlock bool, startTime time.Time) {
 	messageAge := ""
 	if time.Since(startTime) > 1*time.Second {
 		messageAge = fmt.Sprintf("(%s ago)", duration.ShortHumanDuration(time.Since(startTime)))
@@ -319,7 +285,7 @@ func (o *AppWatcher) printLogLine(message string, messageBlock string, errorBloc
 	}
 }
 
-func (o *AppWatcher) indentMessageBlock(messageBlock string, errored bool) string {
+func (o *AppTailer) indentMessageBlock(messageBlock string, errored bool) string {
 	lines := strings.Split(messageBlock, "\n")
 	for ind := range lines {
 		if errored {
@@ -335,7 +301,7 @@ func (o *AppWatcher) indentMessageBlock(messageBlock string, errored bool) strin
 	return indentedBlock
 }
 
-func (o *AppWatcher) printDeployStdout(stdout string, timestamp time.Time, isDeleting bool) {
+func (o *AppTailer) printDeployStdout(stdout string, timestamp time.Time, isDeleting bool) {
 	if o.lastSeenDeployStdout == "" {
 		o.lastSeenDeployStdout = stdout
 		msg := "Deploying"
