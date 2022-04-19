@@ -131,7 +131,7 @@ func (o *DeleteOptions) patchNoopDelete(client kcclient.Interface) error {
 
 func (o *DeleteOptions) waitForAppDeletion(client kcclient.Interface) error {
 	o.ui.BeginLinef("%s: Waiting for App CR deletion for '%s'\n", time.Now().Format("3:04:05PM"), o.Name)
-	appWatcher := NewAppWatcher(o.NamespaceFlags.Name, o.Name, o.ui, client, AppWatcherOpts{})
+	appWatcher := NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, AppTailerOpts{})
 	err := appWatcher.TailAppStatus()
 	if err != nil {
 		return err

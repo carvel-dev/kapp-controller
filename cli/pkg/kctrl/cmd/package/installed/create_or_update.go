@@ -711,7 +711,7 @@ func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace stri
 
 	appStatusTailErrored := false
 	tailAppStatusOutput := func(tailErrored *bool) {
-		appWatcher := cmdapp.NewAppWatcher(o.NamespaceFlags.Name, o.Name, o.ui, client, cmdapp.AppWatcherOpts{
+		appWatcher := cmdapp.NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, cmdapp.AppTailerOpts{
 			IgnoreNotExists: true,
 		})
 

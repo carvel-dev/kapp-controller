@@ -138,7 +138,7 @@ func (o *KickOptions) triggerReconciliation(client kcclient.Interface) error {
 
 func (o *KickOptions) waitForAppReconciliation(client kcclient.Interface) error {
 	o.ui.BeginLinef("%s: Waiting for App reconciliation for '%s'\n", time.Now().Format("3:04:05PM"), o.Name)
-	appWatcher := NewAppWatcher(o.NamespaceFlags.Name, o.Name, o.ui, client, AppWatcherOpts{})
+	appWatcher := NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, AppTailerOpts{})
 
 	err := appWatcher.TailAppStatus()
 	if err != nil {

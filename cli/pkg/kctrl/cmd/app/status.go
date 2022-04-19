@@ -52,7 +52,7 @@ func (o *StatusOptions) Run() error {
 		return err
 	}
 
-	appWatcher := NewAppWatcher(o.NamespaceFlags.Name, o.Name, o.ui, client, AppWatcherOpts{
+	appWatcher := NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, AppTailerOpts{
 		IgnoreNotExists:   o.IgnoreNotExists,
 		PrintMetadata:     true,
 		PrintCurrentState: true,
