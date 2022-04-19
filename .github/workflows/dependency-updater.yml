@@ -13,7 +13,7 @@ jobs:
         tool: ['ytt', 'kapp', 'kbld', 'imgpkg', 'vendir']
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.0.1
         with:
           fetch-depth: 0
       - name: Get Current Release Version
