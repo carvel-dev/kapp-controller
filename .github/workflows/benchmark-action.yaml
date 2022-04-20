@@ -50,7 +50,7 @@ jobs:
       # Run `github-action-benchmark` action
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@3d3bca03e83647895ef4f911fa57de3c7a391aaf
-        # if: github.ref == 'refs/heads/develop'
+        if: github.ref == 'refs/heads/develop'
         with:
           # What benchmark tool the output.txt came from
           tool: 'go'
@@ -67,7 +67,7 @@ jobs:
       # I don't fully understand but the two storage options are mutually exclusive if they're in the same block
       - name: Store Result into Github Pages
         uses: benchmark-action/github-action-benchmark@3d3bca03e83647895ef4f911fa57de3c7a391aaf
-        # if: github.ref == 'refs/heads/develop'
+        if: github.ref == 'refs/heads/develop'
         with:
           tool: 'go'
           output-file-path: output.txt
