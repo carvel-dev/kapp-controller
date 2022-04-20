@@ -13,6 +13,7 @@ import (
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdpkg "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package"
 	pkgavail "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/available"
+	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder"
 	pkginst "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
 	pkgrepo "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
@@ -151,6 +152,7 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 	pkgrepoCmd.AddCommand(pkgrepo.NewAddCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgrepoCmd.AddCommand(pkgrepo.NewUpdateCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 
+
 	pkgiCmd := pkginst.NewCmd()
 	pkgiCmd.AddCommand(pkginst.NewListCmd(pkginst.NewListOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgiCmd.AddCommand(pkginst.NewGetCmd(pkginst.NewGetOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
@@ -165,10 +167,14 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 	pkgaCmd.AddCommand(pkgavail.NewListCmd(pkgavail.NewListOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgaCmd.AddCommand(pkgavail.NewGetCmd(pkgavail.NewGetOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 
+	pkgbCmd := pkgbuilder.NewCmd()
+	pkgbCmd.AddCommand(pkgbuilder.NewCreateCmd(pkgbuilder.NewCreateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
+
 	cmd.AddCommand(pkgrepoCmd)
 	cmd.AddCommand(pkgiCmd)
 	cmd.AddCommand(pkgaCmd)
 	cmd.AddCommand(pkginst.NewInstallCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
+	cmd.AddCommand(pkgbCmd)
 }
 
 func AttachGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opts cmdcore.PackageCommandTreeOpts) {
