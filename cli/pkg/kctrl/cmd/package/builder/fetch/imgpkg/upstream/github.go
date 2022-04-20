@@ -72,8 +72,17 @@ func (g GithubStep) getVersion() (string, error) {
 }
 
 func (g *GithubStep) Run() error {
-	g.PreInteract()
-	g.Interact()
-	g.PostInteract()
+	err := g.PreInteract()
+	if err != nil {
+		return err
+	}
+	err = g.Interact()
+	if err != nil {
+		return err
+	}
+	err = g.PostInteract()
+	if err != nil {
+		return err
+	}
 	return nil
 }

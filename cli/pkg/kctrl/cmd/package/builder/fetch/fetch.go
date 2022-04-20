@@ -15,19 +15,15 @@ const (
 var fetchTypeNames = []string{"Imgpkg(recommended)", "HelmChart", "Inline"}
 
 type FetchStep struct {
-	Ui       ui.UI `yaml:"_"`
-	PkgName  string
+	Ui          ui.UI
 	PkgLocation string
-	PkgVersionLocation string
-	AppFetch []v1alpha1.AppFetch
+	AppFetch    []v1alpha1.AppFetch
 }
 
-func NewFetchStep(ui ui.UI, pkgName string, pkgLocation string, pkgVersionLocation string) *FetchStep {
+func NewFetchStep(ui ui.UI, pkgLocation string) *FetchStep {
 	fetchStep := FetchStep{
-		Ui:      ui,
-		PkgName: pkgName,
+		Ui:          ui,
 		PkgLocation: pkgLocation,
-		PkgVersionLocation: pkgVersionLocation,
 	}
 	return &fetchStep
 }
@@ -49,8 +45,11 @@ func (fetch *FetchStep) Interact() error {
 	//TODO Rohit This is error prone. How can we make it better
 	switch fetchOptionSelected {
 	case Imgpkg:
-		imgpkgStep := imgpkg.NewImgPkgStep(fetch.Ui, fetch.PkgName, fetch.PkgLocation, fetch.PkgVersionLocation)
-		imgpkgStep.Run()
+		imgpkgStep := imgpkg.NewImgPkgStep(fetch.Ui, fetch.PkgLocation)
+		err := imgpkgStep.Run()
+		if err != nil {
+			return err
+		}
 		appFetchList = append(appFetchList, v1alpha1.AppFetch{
 			ImgpkgBundle: &imgpkgStep.ImgpkgBundle})
 	}
@@ -64,8 +63,17 @@ func (fetch FetchStep) PostInteract() error {
 }
 
 func (fetch *FetchStep) Run() error {
-	fetch.PreInteract()
-	fetch.Interact()
-	fetch.PostInteract()
+	err := fetch.PreInteract()
+	if err != nil {
+		return err
+	}
+	err = fetch.Interact()
+	if err != nil {
+		return err
+	}
+	err = fetch.PostInteract()
+	if err != nil {
+		return err
+	}
 	return nil
 }

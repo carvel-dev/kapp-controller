@@ -3,7 +3,6 @@ package builder
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/util"
 	"os"
 	"strings"
 	"time"
@@ -15,7 +14,8 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/template"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
-	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/util"
+	kappctrlapis "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,11 +36,11 @@ type CreateOptions struct {
 	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
 
-func NewCreateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *CreateOptions {
+func NewCreateOptions(ui ui.UI, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *CreateOptions {
 	return &CreateOptions{ui: ui, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
-func NewCreateCmd(o *CreateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
+func NewCreateCmd(o *CreateOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "create",
 		Aliases: []string{"g"},
@@ -49,54 +49,69 @@ func NewCreateCmd(o *CreateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Create a package",
-				[]string{"package", "builder", "create", "-p", "pkg-a"},
+				[]string{"package", "builder", "create"},
 			},
-		}.Description("-p", o.pkgCmdTreeOpts),
+		}.Description("", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 		Annotations:  map[string]string{"table": ""},
 	}
 
-	o.NamespaceFlags.Set(cmd, flagsFactory, o.pkgCmdTreeOpts)
-
-	if !o.pkgCmdTreeOpts.PositionalArgs {
-		cmd.Flags().StringVarP(&o.Name, "package", "p", "", "Set package name (required)")
-	} else {
-		//TODO Rohit - Revisit this
-		cmd.Use = "get PACKAGE_NAME or PACKAGE_NAME/VERSION"
-		cmd.Args = cobra.ExactArgs(1)
-	}
 	return cmd
 }
 
-func (create CreateStep) getStartBlock() []byte {
-	str := fmt.Sprintf(`
-# Lets start on the package creation for %s
-# First we need a directory to store all configurations
-# Creating directory %s
-# mkdir -p %s
-`, create.PkgName, create.PkgLocation, create.PkgLocation)
-	return []byte(str)
+func (o *CreateOptions) Run(args []string) error {
+	//TODO Rohit Should we provide an option to give pkg location?
+	pkgLocation := GetPkgLocation()
+	createStep := NewCreateStep(o.ui, pkgLocation)
+	err := createStep.Run()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type CreateStep struct {
-	Ui                 ui.UI
-	PkgLocation        string
-	PkgVersionLocation string
-	PkgVersion         string
-	PkgName            string
-	FqName             string
-	ValuesSchema       v1alpha1.ValuesSchema
-	Fetch              fetch.FetchStep
-	Template           template.TemplateStep
-	Maintainers        []v1alpha1.Maintainer
+	Ui           ui.UI
+	PkgLocation  string
+	PkgVersion   string
+	FqName       string
+	ValuesSchema v1alpha1.ValuesSchema
+	Fetch        fetch.FetchStep
+	Template     template.TemplateStep
+	Maintainers  []v1alpha1.Maintainer
 }
 
-func NewCreateStep(ui ui.UI, pkgName string, pkgLocation string) *CreateStep {
+func NewCreateStep(ui ui.UI, pkgLocation string) *CreateStep {
 	return &CreateStep{
 		Ui:          ui,
-		PkgName:     pkgName,
 		PkgLocation: pkgLocation,
 	}
+}
+
+func (createStep *CreateStep) Run() error {
+	err := createStep.PreInteract()
+	if err != nil {
+		return err
+	}
+	err = createStep.Interact()
+	if err != nil {
+		return err
+	}
+	err = createStep.PostInteract()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (createStep CreateStep) getStartBlock() []byte {
+	str := fmt.Sprintf(`
+# Lets start on the package creation process.
+# First we need a directory to store all configurations
+# Creating directory %s
+# 	$ mkdir -p %s
+`, createStep.PkgLocation, createStep.PkgLocation)
+	return []byte(str)
 }
 
 func (create CreateStep) PreInteract() error {
@@ -112,15 +127,14 @@ func (create CreateStep) PreInteract() error {
 
 func (create *CreateStep) getPkgVersionBlock() []byte {
 	str := `
-# A package can have multiple versions. These versions are used by PackageInstall to install specific version of the package into the Kubernetes cluster. 
-`
+# A package can have multiple versions. These versions are used by PackageInstall to install specific version of the package into the Kubernetes cluster.`
 	return []byte(str)
 }
 
 func (create *CreateStep) getFQPkgNameBlock() []byte {
 	str := `# A package name must be a fully qualified name. 
 # It must consist of at least three segments separated by a '.'
-# Fully Qualified Name cannot have a trailing '.' e.g. Valid input: samplePackage.corp.com`
+# Fully Qualified Name cannot have a trailing '.' e.g. samplePackage.corp.com`
 	return []byte(str)
 }
 
@@ -128,47 +142,33 @@ func (create *CreateStep) Interact() error {
 	//Get Package Version
 	create.Ui.PrintBlock(create.getPkgVersionBlock())
 	pkgVersion, err := create.Ui.AskForText("Enter the package version")
+	//TODO Rohit any validation needed here
 	if err != nil {
 		return err
 	}
 	create.PkgVersion = pkgVersion
-	pkgVersionLocation := fmt.Sprintf("%s/%s", create.PkgLocation, create.PkgVersion)
-	str := fmt.Sprintf(`# All the files related to this version will be stored in the following location: %s
-# Let's create this directory.
-# mkdir -p %s`, pkgVersionLocation, pkgVersionLocation)
-	create.Ui.PrintLinef(str)
-	output, err := util.Execute("mkdir", []string{"-p", pkgVersionLocation})
-	if err != nil {
-		return err
-	}
-	create.Ui.PrintBlock([]byte(output))
-	create.PkgVersionLocation = pkgVersionLocation
 	//Get Fully Qualified Name of the Package
 	create.Ui.PrintBlock(create.getFQPkgNameBlock())
-	defaultFQName := fmt.Sprintf("%s.corp.com", create.PkgName)
-	fqName, err := create.Ui.AskForText(fmt.Sprintf("Enter the fully qualified package name(default: %s)", defaultFQName))
-	//TODO Rohit should we perform the validation
+	fqName, err := create.Ui.AskForText("Enter the fully qualified package name")
+	//TODO Rohit validateFQName format
 	if err != nil {
 		return err
-	}
-	if fqName == "" {
-		fqName = defaultFQName
 	}
 	create.FqName = fqName
-
-	fetchConfiguration := fetch.NewFetchStep(create.Ui, create.PkgName, create.PkgLocation, create.PkgVersionLocation)
-	fetchConfiguration.Run()
-	create.Fetch = *fetchConfiguration
-
-	templateConfiguration := template.NewTemplateStep(create.Ui)
-	templateConfiguration.Run()
-	create.Template = *templateConfiguration
-
-	valuesSchema, err := create.getValueSchema()
+	err = create.configureFetchSection()
 	if err != nil {
 		return err
 	}
-	create.ValuesSchema = valuesSchema
+	/*err = create.configureTemplateSection()
+	if err != nil {
+		return err
+	}
+	err = create.configureValuesSchema()
+	if err != nil {
+		return err
+	}
+
+	*/
 
 	maintainerNames, err := create.Ui.AskForText("Enter the Maintainer's Name. Multiple names can be provided by comma separated values")
 	if err != nil {
@@ -179,6 +179,35 @@ func (create *CreateStep) Interact() error {
 		maintainers = append(maintainers, v1alpha1.Maintainer{Name: maintainerName})
 	}
 	create.Maintainers = maintainers
+	return nil
+}
+
+func (create *CreateStep) configureFetchSection() error {
+	fetchConfiguration := fetch.NewFetchStep(create.Ui, create.PkgLocation)
+	err := fetchConfiguration.Run()
+	if err != nil {
+		return err
+	}
+	create.Fetch = *fetchConfiguration
+	return nil
+}
+
+func (create *CreateStep) configureTemplateSection() error {
+	templateConfiguration := template.NewTemplateStep(create.Ui)
+	err := templateConfiguration.Run()
+	if err != nil {
+		return err
+	}
+	create.Template = *templateConfiguration
+	return nil
+}
+
+func (create *CreateStep) configureValuesSchema() error {
+	valuesSchema, err := create.getValueSchema()
+	if err != nil {
+		return err
+	}
+	create.ValuesSchema = valuesSchema
 	return nil
 }
 
@@ -229,13 +258,45 @@ func readDataFromFile(fileLocation string) ([]byte, error) {
 	return data, nil
 }
 
-func (create CreateStep) PostInteract() error {
-	err := create.createAndPrintPackageCR()
+func (createStep CreateStep) PostInteract() error {
+	err := createStep.createPackageBuilder()
 	if err != nil {
 		return err
 	}
-	err = create.createAndPrintPackageMetadataCR()
+	err = createStep.createAndPrintPackageCR()
 	if err != nil {
+		return err
+	}
+	err = createStep.createAndPrintPackageMetadataCR()
+	if err != nil {
+		return err
+	}
+	str := fmt.Sprintf(`
+# Both the files can be accessed from the following location: %s
+`, createStep.PkgLocation)
+	createStep.Ui.PrintBlock([]byte(str))
+
+	return nil
+}
+
+func (create CreateStep) createPackageBuilder() error {
+	pkgBuilder := create.populatePkgBuilder()
+	jsonPackageData, err := json.Marshal(&pkgBuilder)
+	if err != nil {
+		return err
+	}
+	yaml.JSONToYAML(jsonPackageData)
+	packageData, err := yaml.JSONToYAML(jsonPackageData)
+	if err != nil {
+		return err
+	}
+	pkgFileLocation := create.PkgLocation + "/pkgBuilder.yml"
+	if err != nil {
+		return err
+	}
+	err = writeToFile(pkgFileLocation, packageData)
+	if err != nil {
+		create.Ui.ErrorLinef("Unable to create package file. %s", err.Error())
 		return err
 	}
 	return nil
@@ -244,20 +305,31 @@ func (create CreateStep) PostInteract() error {
 func (create CreateStep) createAndPrintPackageCR() error {
 	str := `# Great, we have all the data needed to builder the package.yml and packageMetadata.yml. 
 # This is how the package.yml will look like
-# cat package.yaml
+# 	$ cat package.yml
 `
 	create.Ui.PrintBlock([]byte(str))
+	//TODO we should start getting the data from pkgBuilder rather than create
 	pkg := create.populatePkgFromCreate()
 
 	//TODO: remove this comment. Marshal will make yaml/json
 	jsonPackageData, err := json.Marshal(&pkg)
-	yaml.JSONToYAML(jsonPackageData)
-	packageData, err := yaml.JSONToYAML(jsonPackageData)
-	pkgFileLocation := create.PkgVersionLocation + "/package.yaml"
 	if err != nil {
 		return err
 	}
-	writeToFile(pkgFileLocation, packageData)
+	yaml.JSONToYAML(jsonPackageData)
+	packageData, err := yaml.JSONToYAML(jsonPackageData)
+	if err != nil {
+		return err
+	}
+	pkgFileLocation := create.PkgLocation + "/package.yml"
+	if err != nil {
+		return err
+	}
+	err = writeToFile(pkgFileLocation, packageData)
+	if err != nil {
+		create.Ui.ErrorLinef("Unable to create package file. %s", err.Error())
+		return err
+	}
 
 	output, err := util.Execute("cat", []string{pkgFileLocation})
 	if err != nil {
@@ -270,17 +342,28 @@ func (create CreateStep) createAndPrintPackageCR() error {
 func (create CreateStep) createAndPrintPackageMetadataCR() error {
 	str := `
 # This is how the packageMetadata.yml will look like
-# cat packageMetadata.yaml
+# 	$ cat packageMetadata.yml
 `
 	create.Ui.PrintBlock([]byte(str))
+	//TODO we should start getting the data from pkgBuilder rather than create
 	pkgMetadata := create.populatePkgMetadataFromCreate()
 	jsonPackageMetadataData, err := json.Marshal(&pkgMetadata)
-	packageMetadataData, err := yaml.JSONToYAML(jsonPackageMetadataData)
-	pkgMetadataFileLocation := create.PkgVersionLocation + "/packageMetadata.yaml"
 	if err != nil {
 		return err
 	}
-	writeToFile(pkgMetadataFileLocation, packageMetadataData)
+	packageMetadataData, err := yaml.JSONToYAML(jsonPackageMetadataData)
+	if err != nil {
+		return err
+	}
+	pkgMetadataFileLocation := create.PkgLocation + "/packageMetadata.yml"
+	if err != nil {
+		return err
+	}
+	err = writeToFile(pkgMetadataFileLocation, packageMetadataData)
+	if err != nil {
+		create.Ui.ErrorLinef("Unable to create package metadata file. %s", err.Error())
+		return err
+	}
 
 	output, err := util.Execute("cat", []string{pkgMetadataFileLocation})
 	if err != nil {
@@ -288,9 +371,6 @@ func (create CreateStep) createAndPrintPackageMetadataCR() error {
 	}
 
 	create.Ui.PrintBlock([]byte(output))
-	str = fmt.Sprintf(`# Both the files can be accessed from the following location: %s
-`, create.PkgVersionLocation)
-	create.Ui.PrintBlock([]byte(str))
 	return nil
 }
 
@@ -307,7 +387,7 @@ func (create CreateStep) populatePkgMetadataFromCreate() v1alpha1.PackageMetadat
 		TypeMeta:   v1.TypeMeta{Kind: "PackageMetadata", APIVersion: "data.packaging.carvel.dev/v1alpha1"},
 		ObjectMeta: v1.ObjectMeta{Name: create.FqName},
 		Spec: v1alpha1.PackageMetadataSpec{
-			DisplayName:      create.PkgName,
+			DisplayName:      strings.Split(create.FqName, ".")[0],
 			LongDescription:  "A long description",
 			ShortDescription: "A short description",
 			ProviderName:     "VMWare",
@@ -328,13 +408,15 @@ func (create CreateStep) populatePkgFromCreate() v1alpha1.Package {
 			ReleasedAt:                      v1.Time{time.Now()},
 			CapactiyRequirementsDescription: "",
 			ReleaseNotes:                    "",
-			Template: v1alpha1.AppTemplateSpec{Spec: &v1alpha12.AppSpec{
+			Template: v1alpha1.AppTemplateSpec{Spec: &kappctrlapis.AppSpec{
 				ServiceAccountName: "",
 				Cluster:            nil,
 				Fetch:              create.Fetch.AppFetch,
-				Template:           create.Template.AppTemplate,
-				Deploy: []v1alpha12.AppDeploy{
-					v1alpha12.AppDeploy{Kapp: &v1alpha12.AppDeployKapp{}},
+				Template: []kappctrlapis.AppTemplate{
+					kappctrlapis.AppTemplate{Ytt: &kappctrlapis.AppTemplateYtt{}},
+				},
+				Deploy: []kappctrlapis.AppDeploy{
+					kappctrlapis.AppDeploy{Kapp: &kappctrlapis.AppDeployKapp{}},
 				},
 				Paused:     false,
 				Canceled:   false,
@@ -349,18 +431,20 @@ func (create CreateStep) populatePkgFromCreate() v1alpha1.Package {
 	return packageContent
 }
 
-func (o *CreateOptions) Run(args []string) error {
-	//TODO Rohit Should we provide an option to give pkg location?
-	pkgLocation := GetPkgLocation(o.Name)
-	createPkg := NewCreateStep(o.ui, o.Name, pkgLocation)
-	createPkg.PreInteract()
-	createPkg.Interact()
-	createPkg.PostInteract()
-	return nil
+func (createStep CreateStep) populatePkgBuilder() PkgBuilder {
+	pkgBuilder := PkgBuilder{
+		TypeMeta: v1.TypeMeta{Kind: "PackageBuilder", APIVersion: "kctrl.carvel.dev/v1alpha1"},
+		Config: Config{
+			Pkg:         createStep.populatePkgFromCreate(),
+			PkgMetadata: createStep.populatePkgMetadataFromCreate(),
+		},
+	}
+	return pkgBuilder
 }
 
-func GetPkgLocation(pkgName string) string {
+func GetPkgLocation() string {
 	var pkgLocation string
-	pkgLocation, _ = os.UserHomeDir()
-	return pkgLocation + "/.kctrl/" + pkgName
+	cwd, _ := os.Getwd()
+	return cwd + "/pkgBuilder"
+	return pkgLocation
 }

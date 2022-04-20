@@ -1,15 +1,15 @@
 package template
 
 import (
+	"strings"
+
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"strings"
 )
 
 const (
 	YttFilesLocation int = iota
 	Inline
-	ValuesFromConfigMapOrSecret
 )
 
 type YttTemplateStep struct {
@@ -24,7 +24,7 @@ func NewYttTemplateStep(ui ui.UI) *YttTemplateStep {
 }
 
 func (y YttTemplateStep) PreInteract() error {
-	str := `# We need to provide the values to ytt. They can be done in three different ways:
+	str := `# We need to provide the values to ytt. They can be done in two different ways:
 # 1. We can specify the files(including data values) to be used via ytt. Multiple paths can be provided with comma separated values.
 # 2. We can enter the values directly i.e. inline`
 	y.Ui.PrintBlock([]byte(str))
@@ -36,7 +36,7 @@ func (y YttTemplateStep) PostInteract() error {
 }
 
 func (y *YttTemplateStep) Interact() error {
-	input, err := y.Ui.AskForChoice("Enter how do you prefer to provide values to ytt", []string{"ytt files location(recommended)", "inline", "valuesFrom configMap or secret"})
+	input, err := y.Ui.AskForChoice("Enter how do you prefer to provide values to ytt", []string{"ytt files location(recommended)", "inline"})
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,6 @@ func (y *YttTemplateStep) Interact() error {
 		y.appTemplateYtt = v1alpha1.AppTemplateYtt{Paths: strings.Split(paths, ",")}
 	case Inline:
 
-	case ValuesFromConfigMapOrSecret:
 	}
 	return nil
 }

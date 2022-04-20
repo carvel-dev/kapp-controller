@@ -23,16 +23,18 @@ func (createImgpkg CreateImgPkgStep) PopulateRegistryAuthDetails() (RegistryAuth
 		if err != nil {
 			return RegistryAuthDetails{}, err
 		}
-		username, err := createImgpkg.Ui.AskForText("Registry UserName")
-		if err != nil {
-			return RegistryAuthDetails{}, err
-		}
-		password, err := createImgpkg.Ui.AskForPassword("Registry Password")
-		if err != nil {
-			return RegistryAuthDetails{}, err
-		}
+		/*
+			username, err := createImgpkg.Ui.AskForText("Registry UserName")
+			if err != nil {
+				return RegistryAuthDetails{}, err
+			}
+			password, err := createImgpkg.Ui.AskForPassword("Registry Password")
+			if err != nil {
+				return RegistryAuthDetails{}, err
+			}
+		*/
 
-		return RegistryAuthDetails{RegistryURL: registryURL, Username: username, Password: password}, nil
+		return RegistryAuthDetails{RegistryURL: registryURL, Username: "", Password: ""}, nil
 	}
 	return RegistryAuthDetails{}, nil
 }
