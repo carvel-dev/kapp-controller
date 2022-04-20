@@ -11,6 +11,7 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
+	cmdapp "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -110,6 +111,12 @@ func (o *PauseOrKickOptions) Pause() error {
 		return err
 	}
 
+	o.ui.PrintLinef("Pausing reconciliation for package install '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+	err = o.ui.AskForConfirmation()
+	if err != nil {
+		return err
+	}
+
 	return o.pause(client)
 }
 
@@ -125,6 +132,12 @@ func (o *PauseOrKickOptions) Kick() error {
 
 	_, err = client.PackagingV1alpha1().PackageInstalls(
 		o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	o.ui.PrintLinef("Triggering reconciliation for package install '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+	err = o.ui.AskForConfirmation()
 	if err != nil {
 		return err
 	}
@@ -160,8 +173,6 @@ func (o *PauseOrKickOptions) pause(client kcclient.Interface) error {
 		return err
 	}
 
-	o.ui.PrintLinef("Pausing reconciliation for package install '%s' in namespace '%s'...", o.Name, o.NamespaceFlags.Name)
-
 	_, err = client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
 	if err != nil {
 		return err
@@ -183,8 +194,6 @@ func (o *PauseOrKickOptions) unpause(client kcclient.Interface) error {
 		return err
 	}
 
-	o.ui.PrintLinef("Triggering reconciliation for package install '%s' in namespace '%s'...", o.Name, o.NamespaceFlags.Name)
-
 	_, err = client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
 	if err != nil {
 		return err
@@ -196,9 +205,23 @@ func (o *PauseOrKickOptions) unpause(client kcclient.Interface) error {
 // waitForPackageInstallReconciliation waits until the package get installed successfully or a failure happen
 // TODO Move reconciliation to a common place for create-or-update and pause-or-kick
 func (o *PauseOrKickOptions) waitForPackageInstallReconciliation(client kcclient.Interface) error {
-	o.ui.PrintLinef("Waiting for PackageInstall reconciliation for '%s'", o.Name)
+	o.ui.BeginLinef("%s: Waiting for PackageInstall reconciliation for '%s'", time.Now().Format("3:04:05PM"), o.Name)
 	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 	description := getPackageInstallDescription(o.Name, o.NamespaceFlags.Name)
+
+	appStatusTailErrored := false
+	tailAppStatusOutput := func(tailErrored *bool) {
+		appWatcher := cmdapp.NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, cmdapp.AppTailerOpts{
+			IgnoreNotExists: true,
+		})
+
+		err := appWatcher.TailAppStatus()
+		if err != nil {
+			o.ui.BeginLinef("%s: Error tailing app: %s", time.Now().Format("3:04:05PM"), err.Error())
+			*tailErrored = true
+		}
+	}
+	go tailAppStatusOutput(&appStatusTailErrored)
 
 	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
 
@@ -214,7 +237,9 @@ func (o *PauseOrKickOptions) waitForPackageInstallReconciliation(client kcclient
 		status := resource.Status.GenericStatus
 
 		for _, condition := range status.Conditions {
-			msgsUI.NotifySection("%s: %s", description, condition.Type)
+			if appStatusTailErrored {
+				msgsUI.NotifySection("%s: %s", description, condition.Type)
+			}
 
 			switch {
 			case condition.Type == kcv1alpha1.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
