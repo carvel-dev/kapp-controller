@@ -102,8 +102,8 @@ func Run(opts Options, runLog logr.Logger) error {
 
 	// to facilitate creation of many packages at once from a larger PKGR
 	pkgRestConfig := config.GetConfigOrDie()
-	pkgRestConfig.QPS = 100
-	pkgRestConfig.Burst = 100
+	pkgRestConfig.QPS = 60
+	pkgRestConfig.Burst = 90
 	pkgKcClient, err := kcclient.NewForConfig(pkgRestConfig)
 	if err != nil {
 		return fmt.Errorf("Building pkg kappctrl client: %s", err)
