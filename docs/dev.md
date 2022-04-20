@@ -88,6 +88,15 @@ The `hack/test-e2e.sh` script (also run by `test-all`) will tee its output
 to both your stdout and the (gitignored) file `tmp/e2eoutput.txt` so that you
 can more easily grep/search/parse the output.
 
+#### Benchmark Testing
+
+Benchmark tests are run via github action. They can also be run locally via go
+toolchain `go test ./test/bench/... -bench=.`
+
+Benchmarks run on develop branch are
+graphed in [github
+pages](https://vmware-tanzu.github.io/carvel-kapp-controller/dev/bench/index.html).
+
 ### Profiling
 1.) Enable profiling by editing config/values.yaml and setting `dangerous_enable_pprof`
 to true
