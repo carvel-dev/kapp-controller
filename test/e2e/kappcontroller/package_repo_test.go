@@ -8,8 +8,10 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
@@ -82,6 +84,7 @@ func Test_PackageRepoStatus_Success(t *testing.T) {
 	env := e2e.BuildEnv(t)
 	logger := e2e.Logger{}
 	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
 	name := "test-repo-status-success"
 
 	repoYml := `---
@@ -102,8 +105,13 @@ spec:
 	defer cleanUp()
 
 	logger.Section("deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			e2e.RunOpts{StdinReader: strings.NewReader(repoYml)})
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			e2e.RunOpts{StdinReader: strings.NewReader(repoYml), AllowError: true})
+		// if pkgrs are failing to deploy, it's helpful to see the .usefulErrorMessage at this juncture:
+		if err != nil {
+			fmt.Println(kubectl.Run([]string{"get", "pkgr", "-oyaml"}))
+		}
+		require.NoError(t, err)
 	})
 
 	expectedStatus := v1alpha1.PackageRepositoryStatus{
@@ -131,21 +139,44 @@ spec:
 		},
 	}
 
-	// fetch repo
-	out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=PackageRepository"})
-
 	var cr v1alpha1.PackageRepository
-	err := yaml.Unmarshal([]byte(out), &cr)
-	if err != nil {
-		t.Fatalf("failed to unmarshal: %s", err)
+
+	populateCrStatus := func() {
+		// fetch repo
+		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=PackageRepository"})
+
+		err := yaml.Unmarshal([]byte(out), &cr)
+		if err != nil {
+			t.Fatalf("failed to unmarshal: %s", err)
+		}
+		cleanupStatusForAssertion(&cr)
 	}
 
-	cleanupStatusForAssertion(&cr)
-
+	populateCrStatus()
 	// assert on expectedStatus
 	if !reflect.DeepEqual(expectedStatus, cr.Status) {
 		t.Fatalf("\nstatus is not same:\nExpected:\n%#v\nGot:\n%#v", expectedStatus, cr.Status)
 	}
+
+	logger.Section("force a second reconcile and see if it all still works", func() {
+		resourceVersion1 := kubectl.Run([]string{"get", "pkgr", "-o=jsonpath='{.items[0].metadata.resourceVersion}'"})
+		kubectl.Run([]string{"annotate", "pkgr", "basic.test.carvel.dev", "foo=value"})
+
+		var out string
+		resourceVersion2 := resourceVersion1
+		for i := 1; i < 5; i++ {
+			out = kubectl.Run([]string{"get", "pkgr", "basic.test.carvel.dev", "-oyaml"})
+
+			// if you can tell that the resourceVersion has incremented, that means the reconciler ran and we can exit the loop
+			resourceVersion2 = kubectl.Run([]string{"get", "pkgr", "-o=jsonpath='{.items[0].metadata.resourceVersion}'"})
+			if resourceVersion2 != resourceVersion1 {
+				break
+			}
+			time.Sleep(time.Duration(i) * time.Second)
+		}
+		assert.NotEqual(t, resourceVersion1, resourceVersion2, "failed to observe a second reconciliation of the PKGR")
+		assert.Contains(t, out, "Reconcile succeeded")
+	})
 }
 
 func Test_PackageRepoBundle_PackagesAvailable(t *testing.T) {
@@ -285,6 +316,763 @@ spec:
 	if !strings.Contains(out, "DESCRIPTION") && !strings.Contains(out, "Reconcile failed") {
 		t.Fatalf("output did not contain DESCRIPTION column from kubectl get.\nGot:\n%s", out)
 	}
+}
+
+func Test_PackageReposWithOverlappingPackages_identicalPackagesWithUpdates(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+
+	pkgName := "pkg0.test.carvel.dev.0.0.0"
+	pkgrTemplate := `
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: %[1]s.tankyu.carvel.dev
+spec:
+  fetch:
+    inline:
+      paths:
+        packages/pkg.test.carvel.dev/pkg0.test.carvel.dev.0.0.0.yml: |
+          ---
+          apiVersion: data.packaging.carvel.dev/v1alpha1
+          kind: Package
+          metadata:
+            name: %[2]s.%[3]s
+          spec:
+            refName: %[2]s
+            version: %[3]s
+            template:
+              spec:
+                fetch:
+                - imgpkgBundle:
+                    image: k8slt/kctrl-example-pkg:v1.0.0
+                template:
+                - ytt:
+                    paths:
+                    - config/
+                - kbld:
+                    paths:
+                    - "-"
+                    - ".imgpkg/images.yml"
+                deploy:
+                - kapp: {}`
+
+	pkgr1Name := "repo1"
+	pkgr2Name := "repo2"
+	pkgr1 := fmt.Sprintf(pkgrTemplate, pkgr1Name, "pkg0.test.carvel.dev", "0.0.0")
+	pkgr2 := fmt.Sprintf(pkgrTemplate, pkgr2Name, "pkg0.test.carvel.dev", "0.0.0")
+
+	assertPkgOwnedBy1 := func() {
+		out := kubectl.Run([]string{"get", "package", pkgName, "-oyaml"})
+		expectedOwnership := fmt.Sprintf("packaging.carvel.dev/package-repository-ref: %s/%s", env.Namespace, pkgr1Name)
+		assert.Contains(t, out, expectedOwnership,
+			"\n========\n Package Ownership Check Failed: expected ", expectedOwnership, "\n=======")
+	}
+
+	appName1 := "pkgr-1"
+	appName2 := "pkgr-2"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", appName1})
+		kapp.Run([]string{"delete", "-a", appName2})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy pkgr1", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), AllowError: true})
+		if err != nil {
+			fmt.Println(out)
+			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
+		}
+		assert.NoError(t, err)
+
+		out, err = kubectl.RunWithOpts([]string{"get", "packages", "-A"}, e2e.RunOpts{NoNamespace: true})
+		require.Contains(t, out, "pkg0.test.carvel.dev.0.0.0")
+
+		out = kapp.Run([]string{"inspect", "-a", appName1, "--json"})
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy1()
+	})
+
+	logger.Section("deploy pkgr2 successfully, but pkg is still owned by pkgr1", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), AllowError: true})
+		if err != nil {
+			fmt.Println(out)
+			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
+		}
+		assert.NoError(t, err)
+
+		out = kapp.Run([]string{"inspect", "-a", appName2, "--json"})
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy1()
+	})
+	pkgrUpdate := `
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: %[1]s.tankyu.carvel.dev
+spec:
+  fetch:
+    inline:
+      paths:
+        packages/pkg.test.carvel.dev/pkg0.test.carvel.dev.0.0.0.yml: |
+          ---
+          apiVersion: data.packaging.carvel.dev/v1alpha1
+          kind: Package
+          metadata:
+            name: %[2]s.%[3]s
+          spec:
+            refName: %[2]s
+            version: %[3]s
+            releaseNotes: "this update just adds release notes without bumping the revision."
+            template:
+              spec:
+                fetch:
+                - imgpkgBundle:
+                    image: k8slt/kctrl-example-pkg:v1.0.0
+                template:
+                - ytt:
+                    paths:
+                    - config/
+                - kbld:
+                    paths:
+                    - "-"
+                    - ".imgpkg/images.yml"
+                deploy:
+                - kapp: {}`
+
+	pkgr1u := fmt.Sprintf(pkgrUpdate, pkgr1Name, "pkg0.test.carvel.dev", "0.0.0")
+	pkgr2u := fmt.Sprintf(pkgrUpdate, pkgr2Name, "pkg0.test.carvel.dev", "0.0.0")
+
+	logger.Section("updated pkgr1", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1u), AllowError: true})
+		if err != nil {
+			fmt.Println(out)
+			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
+		}
+		assert.NoError(t, err)
+
+		out = kapp.Run([]string{"inspect", "-a", appName1, "--json"})
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy1()
+
+		out = kubectl.Run([]string{"get", "pkg", pkgName, "-oyaml"})
+		assert.Contains(t, out, "releaseNotes")
+	})
+
+	logger.Section("update pkgr2 successfully, but pkg is still owned by pkgr1", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2u), AllowError: true})
+		if err != nil {
+			fmt.Println(out)
+			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
+		}
+		assert.NoError(t, err)
+
+		out = kapp.Run([]string{"inspect", "-a", appName2, "--json"})
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy1()
+	})
+}
+
+func Test_PackageReposWithOverlappingPackages_identicalPackagesReconcile(t *testing.T) {
+	pkgName := "pkg0.test.carvel.dev.0.0.0"
+	pkgrTemplate := `
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: %s.tankyu.carvel.dev
+spec:
+  fetch:
+    inline:
+      paths:
+
+        packages/pkg.test.carvel.dev/pkg0.test.carvel.dev.0.0.0.yml: |
+          ---
+          apiVersion: data.packaging.carvel.dev/v1alpha1
+          kind: Package
+          metadata:
+            name: %s
+          spec:
+            refName: pkg0.test.carvel.dev
+            version: 0.0.0
+            template:
+              spec: {}
+`
+	pkgr1Name := "repo1"
+	pkgr2Name := "repo2"
+	pkgr1 := fmt.Sprintf(pkgrTemplate, pkgr1Name, pkgName)
+	pkgr2 := fmt.Sprintf(pkgrTemplate, pkgr2Name, pkgName)
+
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+
+	appName1 := "pkgr-1"
+	appName2 := "pkgr-2"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", appName1})
+		kapp.Run([]string{"delete", "-a", appName2})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	assertPkgOwnedBy := func(pkgrName string) {
+		out := kubectl.Run([]string{"get", "package", pkgName, "-oyaml"})
+
+		expectedOwnership := fmt.Sprintf("packaging.carvel.dev/package-repository-ref: %s/%s", env.Namespace, pkgrName)
+		assert.Contains(t, out, expectedOwnership,
+			"\n========\n Package Ownership Check Failed: expected ", expectedOwnership, "\n=======")
+	}
+
+	logger.Section("deploy pkgr1", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), AllowError: true})
+		if err != nil {
+			fmt.Println(out)
+			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
+		}
+		assert.NoError(t, err)
+
+		out, err = kubectl.RunWithOpts([]string{"get", "packages", "-A"}, e2e.RunOpts{NoNamespace: true})
+		require.Contains(t, out, "pkg0.test.carvel.dev.0.0.0")
+
+		out = kapp.Run([]string{"inspect", "-a", appName1, "--json"})
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy(pkgr1Name)
+	})
+
+	logger.Section("deploy pkgr2 successfully, but pkg is still owned by pkgr1", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), AllowError: true})
+		if err != nil {
+			fmt.Println(out)
+			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
+		}
+		assert.NoError(t, err)
+
+		out = kapp.Run([]string{"inspect", "-a", appName2, "--json"})
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy(pkgr1Name)
+	})
+
+	// test cases where the two packages aren't quite identical so there's still an error
+	logger.Section("deploy pkgr3 but it fails because the annotations are different", func() {
+		pkgr3Name := "repo3"
+		pkgNameAndAnn := fmt.Sprintf("%s\n            annotations: {some.co.internal.ann: value}", pkgName)
+		pkgr3 := fmt.Sprintf(pkgrTemplate, pkgr3Name, pkgNameAndAnn)
+		appName3 := "pkgr-3"
+
+		defer func() {
+			kapp.Run([]string{"delete", "-a", appName3})
+		}()
+
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName3},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr3), AllowError: true})
+		assert.Error(t, err)
+		if err != nil {
+			out := string(kubectl.Run([]string{"get", "pkgr", fmt.Sprintf("%s.tankyu.carvel.dev", pkgr3Name), "-oyaml"}))
+			assert.Contains(t, out, "is already present but not identical (mismatch in metadata.annotations)")
+		}
+	})
+	logger.Section("deploy pkgr4 but it fails because the labels are different", func() {
+		pkgr4Name := "repo4"
+		pkgNameAndLabel := fmt.Sprintf("%s\n            labels: {some.co.internal.label: label-value}", pkgName)
+		pkgr4 := fmt.Sprintf(pkgrTemplate, pkgr4Name, pkgNameAndLabel)
+		appName4 := "pkgr-4"
+
+		defer func() {
+			kapp.Run([]string{"delete", "-a", appName4})
+		}()
+
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName4},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr4), AllowError: true})
+		assert.Error(t, err)
+		if err != nil {
+			out := string(kubectl.Run([]string{"get", "pkgr", fmt.Sprintf("%s.tankyu.carvel.dev", pkgr4Name), "-oyaml"}))
+			assert.Contains(t, out, "is already present but not identical (mismatch in metadata.labels)")
+		}
+	})
+	logger.Section("deploy pkgr5 but it fails because the specs are different", func() {
+		pkgr5Name := "repo5"
+		pkgr5 := strings.Replace(fmt.Sprintf(pkgrTemplate, pkgr5Name, pkgName),
+			`
+              spec: {}
+`,
+			`
+              spec:
+                fetch:
+                - imgpkgBundle:
+                    image: k8slt/kctrl-example-pkg:v1.0.0
+`,
+			-1)
+		appName5 := "pkgr-5"
+
+		defer func() {
+			kapp.Run([]string{"delete", "-a", appName5})
+		}()
+
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName5},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr5), AllowError: true})
+		assert.Error(t, err)
+		if err != nil {
+			out := string(kubectl.Run([]string{"get", "pkgr", fmt.Sprintf("%s.tankyu.carvel.dev", pkgr5Name), "-oyaml"}))
+			assert.Contains(t, out, "is already present but not identical (mismatch in spec.template)")
+		}
+	})
+}
+
+func Test_PackageReposWithOverlappingPackages_localAndGlobalNS(t *testing.T) {
+	pkgName := "pkg0.test.carvel.dev.0.0.0"
+	pkgrTemplate := `
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: %s.tankyu.carvel.dev
+  namespace: %s
+spec:
+  fetch:
+    inline:
+      paths:
+
+        packages/pkg.test.carvel.dev/pkg0.test.carvel.dev.0.0.0.yml: |
+          ---
+          apiVersion: data.packaging.carvel.dev/v1alpha1
+          kind: Package
+          metadata:
+            name: %s
+          spec:
+            refName: pkg0.test.carvel.dev
+            version: 0.0.0
+            template:
+              spec: {}
+`
+	pkgr1Name := "repo1"
+	pkgr2Name := "repo2"
+	env := e2e.BuildEnv(t)
+	pkgr1NS := env.Namespace
+	pkgr2NS := env.PackagingGlobalNS
+	pkgr1 := fmt.Sprintf(pkgrTemplate, pkgr1Name, pkgr1NS, pkgName)
+	pkgr2 := fmt.Sprintf(pkgrTemplate, pkgr2Name, pkgr2NS, pkgName)
+
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+
+	nsApp := `
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dest-ns`
+	nsAppName := "dest-ns-app"
+	pkgi := `
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: pkg0-install.test.carvel.dev.0.0.0
+  namespace: dest-ns
+spec:
+  packageRef:
+    refName: pkg0.test.carvel.dev
+    versionSelection:
+      constraints: 0.0.0`
+
+	appName1 := "pkgr-1"
+	appName2 := "pkgr-2"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", appName1})
+		kapp.RunWithOpts([]string{"delete", "-a", appName2, "-n", pkgr2NS}, e2e.RunOpts{NoNamespace: true})
+		kapp.Run([]string{"delete", "-a", nsAppName})
+		kubectl.RunWithOpts([]string{"delete", "pkgi", "pkg0-install.test.carvel.dev.0.0.0"}, e2e.RunOpts{AllowError: true})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	assertPkgOwnedBy := func(pkgrName string, ns string) {
+		out, _ := kubectl.RunWithOpts(
+			[]string{"get", "package", pkgName, "-oyaml", "-n", ns},
+			e2e.RunOpts{NoNamespace: true})
+
+		expectedOwnership := fmt.Sprintf("packaging.carvel.dev/package-repository-ref: %s/%s", ns, pkgrName)
+		assert.Contains(t, out, expectedOwnership,
+			"\n========\n Package Ownership Check Failed: expected ", expectedOwnership, "\n=======")
+	}
+
+	logger.Section("deploy pkgr1", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1, "-n", pkgr1NS},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), AllowError: true, NoNamespace: true})
+		fmt.Println(out)
+		if err != nil {
+			fmt.Println(out)
+			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
+		}
+		assert.NoError(t, err)
+
+		out, err = kubectl.RunWithOpts([]string{"get", "packages", "-A"}, e2e.RunOpts{NoNamespace: true})
+		require.NoError(t, err)
+		require.Contains(t, out, "pkg0.test.carvel.dev.0.0.0")
+
+		out, err = kapp.RunWithOpts([]string{"inspect", "-a", appName1, "--json", "-n", pkgr1NS}, e2e.RunOpts{NoNamespace: true})
+		require.NoError(t, err)
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy(pkgr1Name, pkgr1NS)
+	})
+
+	logger.Section("deploy the pkgi app but it fails bc namespace restrictions", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", nsAppName}, e2e.RunOpts{StdinReader: strings.NewReader(nsApp)})
+		require.NoError(t, err)
+		kubectl.RunWithOpts([]string{"apply", "-f", "-"},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgi), NoNamespace: true})
+		out, _ := kubectl.RunWithOpts([]string{"get", "pkgi", "-n", "dest-ns"}, e2e.RunOpts{NoNamespace: true})
+		// annoyingly we need to retry this a little...
+		for i := 1; i < 5; i++ {
+			if strings.Contains(out, "Reconcile failed") {
+				break
+			}
+			time.Sleep(time.Duration(i) * time.Millisecond)
+			out, _ = kubectl.RunWithOpts([]string{"get", "pkgi", "-n", "dest-ns"}, e2e.RunOpts{NoNamespace: true})
+		}
+		assert.Contains(t, out, "Reconcile failed: Expected to find at least one version")
+		assert.NotContains(t, out, "Expected at least one fetch option") // it shouldn't contain this error message until the pkg is in an ns we can see.
+	})
+
+	logger.Section("deploy pkgr2 successfully, but pkg is still owned by pkgr1", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2, "-n", pkgr2NS},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), AllowError: true, NoNamespace: true})
+		if err != nil {
+			fmt.Println(out)
+			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
+		}
+		assert.NoError(t, err)
+
+		out, err = kapp.RunWithOpts([]string{"inspect", "-a", appName2, "--json", "-n", pkgr2NS}, e2e.RunOpts{NoNamespace: true})
+		assert.NoError(t, err)
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy(pkgr1Name, pkgr1NS)
+	})
+
+	logger.Section("deploy the pkgi app but it fails after trying to install an empty package", func() {
+		out, _ := kubectl.RunWithOpts([]string{"apply", "-f", "-"},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgi), NoNamespace: true})
+		out, _ = kubectl.RunWithOpts([]string{"get", "pkgi", "-n", "dest-ns", "-oyaml"}, e2e.RunOpts{NoNamespace: true})
+		// in my observation this second one hasn't actually needed a retry, but i do hate flaky tests as I hate all montagues...
+		for i := 1; i < 5; i++ {
+			if strings.Contains(out, "Reconcile failed") {
+				break
+			}
+			time.Sleep(time.Duration(i) * time.Millisecond)
+			out, _ = kubectl.RunWithOpts([]string{"get", "pkgi", "-n", "dest-ns"}, e2e.RunOpts{NoNamespace: true})
+		}
+
+		assert.Contains(t, out, "see .status.usefulErrorMessage for details")
+		assert.Contains(t, out, "Expected at least one fetch option")
+	})
+}
+
+func Test_PackageReposWithOverlappingPackages_packagesHaveDifferentRevisions(t *testing.T) {
+	pkgName := "pkg0.test.carvel.dev.0.0.0"
+	pkgrTemplate := `
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: %s.tankyu.carvel.dev
+spec:
+  fetch:
+    inline:
+      paths:
+
+        packages/pkg.test.carvel.dev/pkg0.test.carvel.dev.0.0.0.yml: |
+          ---
+          apiVersion: data.packaging.carvel.dev/v1alpha1
+          kind: Package
+          metadata:
+            name: %s
+            annotations:
+              packaging.carvel.dev/revision: "%d"
+          spec:
+            refName: pkg0.test.carvel.dev
+            version: 0.0.0
+            template:
+              spec: {}
+`
+	pkgr1Name := "repo1"
+	pkgr2Name := "repo2"
+	pkgr1 := fmt.Sprintf(pkgrTemplate, pkgr1Name, pkgName, 1)
+	pkgr2 := fmt.Sprintf(pkgrTemplate, pkgr2Name, pkgName, 2)
+
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+
+	appName1 := "pkgr-1"
+	appName2 := "pkgr-2"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", appName1})
+		kapp.Run([]string{"delete", "-a", appName2})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	assertPkgOwnedBy := func(pkgrName string) {
+		out := kubectl.Run([]string{"get", "package", pkgName, "-oyaml"})
+		expectedOwnership := fmt.Sprintf("packaging.carvel.dev/package-repository-ref: %s/%s", env.Namespace, pkgrName)
+		assert.Contains(t, out, expectedOwnership,
+			"\n========\n Package Ownership Check Failed: expected ", expectedOwnership, "\n=======")
+	}
+
+	logger.Section("deploy pkgr1", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), AllowError: true})
+		if err != nil {
+			fmt.Println(out)
+			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
+		}
+		assert.NoError(t, err)
+
+		out, err = kubectl.RunWithOpts([]string{"get", "packages", "-A"}, e2e.RunOpts{NoNamespace: true})
+		require.Contains(t, out, "pkg0.test.carvel.dev.0.0.0")
+
+		out = kapp.Run([]string{"inspect", "-a", appName1, "--json"})
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy(pkgr1Name)
+	})
+
+	logger.Section("deploy pkgr2 successfully, and it overrides bc it has higher rev", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), AllowError: true})
+		if err != nil {
+			fmt.Println(out)
+			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
+		}
+		assert.NoError(t, err)
+
+		out = kapp.Run([]string{"inspect", "-a", appName2, "--json"})
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy(pkgr2Name)
+	})
+
+	logger.Section("uninstall and reinstall pkgr1 but it never takes ownership of the pkg bc it has lower rev", func() {
+		kapp.Run([]string{"delete", "-a", appName1})
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), AllowError: true})
+		if err != nil {
+			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
+		}
+		assert.NoError(t, err)
+
+		out = kapp.Run([]string{"inspect", "-a", appName1, "--json"})
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy(pkgr2Name)
+	})
+}
+
+func Test_PackageReposWithOverlappingPackages_NonTrivialPackages(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+
+	pkgrPreamble := `
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: repo-%d.tankyu.carvel.dev
+spec:
+  fetch:
+    inline:
+      paths:
+`
+	pkgTemplate := `
+        packages/pkg.test.carvel.dev/%[1]s.%[2]s.yml: |
+          ---
+          apiVersion: data.packaging.carvel.dev/v1alpha1
+          kind: Package
+          metadata:
+            name: %[1]s.%[2]s
+          spec:
+            refName: %[1]s
+            version: %[2]s
+            template:
+              spec:
+                fetch:
+                - imgpkgBundle:
+                    image: k8slt/kctrl-example-pkg:v1.0.0
+                template:
+                - ytt:
+                    paths:
+                    - config/
+                - kbld:
+                    paths:
+                    - "-"
+                    - ".imgpkg/images.yml"
+                deploy:
+                - kapp: {}`
+	pkgMetadataTemplate := `
+        packages/pkg.test.carvel.dev/metadata.%[1]s.yml: |
+          ---
+          apiVersion: data.packaging.carvel.dev/v1alpha1
+          kind: PackageMetadata
+          metadata:
+            name: %[1]s
+          spec:
+            displayName: %[2]s
+            shortDescription: %[3]s
+            providerName: myCorp`
+	pkgr1 := fmt.Sprintf(
+		"%s%s%s%s%s%s",
+		fmt.Sprintf(pkgrPreamble, 1),
+		fmt.Sprintf(pkgTemplate, "shirt-mgr.co.uk", "5.5.5"),
+		fmt.Sprintf(pkgTemplate, "shirt-mgr.co.uk", "5.6.0"),
+		fmt.Sprintf(pkgTemplate, "coredino.co.uk", "32.76.7"),
+		fmt.Sprintf(pkgMetadataTemplate, "shirt-mgr.co.uk", "shirt manager", "get your shirts to work for you"),
+		fmt.Sprintf(pkgMetadataTemplate, "coredino.co.uk", "Core Dino", "i dunno its a coreDNS joke"),
+	)
+
+	assertPkgOwnedBy := func(pkgrName string, pkgName string) {
+		out := kubectl.Run([]string{"get", "package", pkgName, "-oyaml"})
+		expectedOwnership := fmt.Sprintf("packaging.carvel.dev/package-repository-ref: %s/%s", env.Namespace, pkgrName)
+		assert.Contains(t, out, expectedOwnership,
+			"\n========\n Package Ownership Check Failed: expected ", expectedOwnership, "\n=======")
+	}
+
+	appName1 := "pkgrapp1"
+	pkgr1Name := "repo-1.tankyu.carvel.dev"
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", appName1})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy pkgr1", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), AllowError: true})
+		if err != nil {
+			fmt.Println(out)
+			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
+		}
+		assert.NoError(t, err)
+
+		out, err = kubectl.RunWithOpts([]string{"get", "packages", "-A"}, e2e.RunOpts{NoNamespace: true})
+		require.Contains(t, out, "shirt-mgr.co.uk.5.5.5")
+		require.Contains(t, out, "shirt-mgr.co.uk.5.6.0")
+		require.Contains(t, out, "coredino.co.uk.32.76.7")
+
+		out = kapp.Run([]string{"inspect", "-a", appName1, "--json"})
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy(pkgr1Name, "shirt-mgr.co.uk.5.5.5")
+		assertPkgOwnedBy(pkgr1Name, "shirt-mgr.co.uk.5.6.0")
+		assertPkgOwnedBy(pkgr1Name, "coredino.co.uk.32.76.7")
+	})
+
+	pkgr2 := fmt.Sprintf(
+		"%s%s%s",
+		fmt.Sprintf(pkgrPreamble, 2),
+		fmt.Sprintf(pkgTemplate, "shirt-mgr.co.uk", "5.5.5"),
+		fmt.Sprintf(pkgTemplate, "contooor.co.uk", "0.22.0"))
+	appName2 := "pkgrapp2"
+	pkgr2Name := "repo-2.tankyu.carvel.dev"
+
+	cleanUp2 := func() {
+		kapp.Run([]string{"delete", "-a", appName2})
+	}
+	cleanUp2()
+	defer cleanUp2()
+
+	logger.Section("deploy and check pkgr2", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), AllowError: true})
+		if err != nil {
+			fmt.Println(out)
+			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
+		}
+		assert.NoError(t, err)
+
+		out = kapp.Run([]string{"inspect", "-a", appName2, "--json"})
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy(pkgr1Name, "shirt-mgr.co.uk.5.5.5")
+		assertPkgOwnedBy(pkgr2Name, "contooor.co.uk.0.22.0")
+	})
+
+	// pkgr3 should fail to reconcile because the contooor package will conflict in the spec
+	pkgr3 := fmt.Sprintf(
+		"%s%s%s",
+		fmt.Sprintf(pkgrPreamble, 3),
+		fmt.Sprintf(pkgTemplate, "shirt-mgr.co.uk", "5.5.5"),
+		strings.Replace(fmt.Sprintf(pkgTemplate, "contooor.co.uk", "0.22.0"), "k8slt/kctrl-example-pkg:v1.0.0", "k8slt/some-other-image:latest", -1))
+	appName3 := "pkgrapp3"
+	pkgr3Name := "repo-3.tankyu.carvel.dev"
+
+	cleanUp3 := func() {
+		kapp.Run([]string{"delete", "-a", appName3})
+	}
+	cleanUp3()
+	defer cleanUp3()
+
+	logger.Section("deploy and check pkgr3", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName3},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr3), AllowError: true})
+		if err != nil {
+			out := string(kubectl.Run([]string{"get", "pkgr", pkgr3Name, "-oyaml"}))
+			assert.Contains(t, out, "Conflicting Resources: Package/contooor.co.uk.0.22.0 is already present but not identical (mismatch in spec.template)")
+		}
+		assert.Error(t, err)
+
+		out := kapp.Run([]string{"inspect", "-a", appName3, "--json"})
+		assert.Contains(t, out, `"reconcile_state": "fail"`)
+
+		assertPkgOwnedBy(pkgr1Name, "shirt-mgr.co.uk.5.5.5")
+		assertPkgOwnedBy(pkgr2Name, "contooor.co.uk.0.22.0")
+	})
+
+	// pkgr4 will fail because of PackageMetadatas conflict
+	pkgr4 := fmt.Sprintf(
+		"%s%s%s",
+		fmt.Sprintf(pkgrPreamble, 4),
+		fmt.Sprintf(pkgTemplate, "shirt-mgr.co.uk", "5.6.0"),
+		fmt.Sprintf(pkgMetadataTemplate, "shirt-mgr.co.uk", "shirt manager", "now with dress shirts"),
+	)
+	appName4 := "pkgrapp4"
+	pkgr4Name := "repo-4.tankyu.carvel.dev"
+
+	cleanUp4 := func() {
+		kapp.Run([]string{"delete", "-a", appName4})
+	}
+	cleanUp4()
+	defer cleanUp4()
+
+	logger.Section("deploy and check pkgr4", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName4},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr4), AllowError: true})
+		if err != nil {
+			out := string(kubectl.Run([]string{"get", "pkgr", pkgr4Name, "-oyaml"}))
+			assert.Contains(t, out, " Conflicting Resources: PackageMetadata/shirt-mgr.co.uk is already present but not identical (mismatch in spec.shortDescription)")
+		}
+		assert.Error(t, err)
+
+		out := kapp.Run([]string{"inspect", "-a", appName4, "--json"})
+		assert.Contains(t, out, `"reconcile_state": "fail"`)
+	})
 }
 
 func cleanupStatusForAssertion(pkgr *v1alpha1.PackageRepository) {
