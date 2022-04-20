@@ -1,0 +1,76 @@
+name: benchmarks
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+
+permissions:
+  # deployments permission to deploy GitHub pages website
+  deployments: write
+  # contents permission to update benchmark contents in gh-pages branch
+  contents: write
+
+
+# see https://github.com/benchmark-action/github-action-benchmark
+jobs:
+  benchmark:
+    name: Performance regression check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v1 # default version of go is 1.10
+        with:
+          go-version: "1.17.6"
+      - name: Install Carvel Tools
+        run: ./hack/install-deps.sh
+      # Run benchmark with `go test -bench` and stores the output to a file
+      - name: Setup k8s and Run benchmark
+        run: |
+          set -e -x
+          mkdir /tmp/bin
+          export PATH=/tmp/bin:$PATH
+          curl -sLo /tmp/bin/minikube https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
+          chmod +x /tmp/bin/minikube
+          minikube start --driver=docker
+          eval $(minikube docker-env --shell=bash)
+
+          ./hack/deploy-test.sh
+
+          go test ./test/bench/... -bench=. | tee output.txt
+      # Download previous benchmark result from cache (if exists)
+      - name: Download previous benchmark data
+        uses: actions/cache@v1
+        with:
+          path: ./cache
+          key: ${{ runner.os }}-benchmark
+      # Run `github-action-benchmark` action
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@3d3bca03e83647895ef4f911fa57de3c7a391aaf
+        if: github.ref == 'refs/heads/develop'
+        with:
+          # What benchmark tool the output.txt came from
+          tool: 'go'
+          # Where the output from the benchmark tool is stored
+          output-file-path: output.txt
+          # Where the previous data file is stored
+          external-data-json-path: ./cache/benchmark-data.json
+          alert-threshold: '125%'
+          fail-on-alert: true
+          # GitHub API token to make a commit comment
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Enable alert commit comment
+          comment-on-alert: true
+      # I don't fully understand but the two storage options are mutually exclusive if they're in the same block
+      - name: Store Result into Github Pages
+        uses: benchmark-action/github-action-benchmark@3d3bca03e83647895ef4f911fa57de3c7a391aaf
+        if: github.ref == 'refs/heads/develop'
+        with:
+          tool: 'go'
+          output-file-path: output.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Push and deploy GitHub pages branch automatically
+          auto-push: true
