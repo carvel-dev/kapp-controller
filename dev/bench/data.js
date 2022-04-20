@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650324814449,
+  "lastUpdate": 1650479551687,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -37,6 +37,44 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 14601909907,
             "unit": "ns/op\t         9.418 DeleteSeconds\t         5.148 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "vmware-tanzu",
+            "username": "vmware-tanzu"
+          },
+          "committer": {
+            "name": "vmware-tanzu",
+            "username": "vmware-tanzu"
+          },
+          "id": "3281853ec58c6c619bdcd0fe5ff2fe5f87db2848",
+          "message": "pkgr benchmark test",
+          "timestamp": "2022-04-20T16:56:42Z",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/pull/629/commits/3281853ec58c6c619bdcd0fe5ff2fe5f87db2848"
+        },
+        "date": 1650479550694,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 95229929395,
+            "unit": "ns/op\t        64.36 DeleteSeconds\t        30.83 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 23808474566,
+            "unit": "ns/op\t        15.56 DeleteSeconds\t         8.203 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 14629206009,
+            "unit": "ns/op\t         9.420 DeleteSeconds\t         5.170 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
