@@ -3,7 +3,8 @@ module github.com/vmware-tanzu/carvel-kapp-controller/cli
 go 1.17
 
 require (
-	github.com/cppforlife/cobrautil v0.0.0-20220411122935-c28a9f274a4e
+	github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72
+	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
 	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
 	github.com/getkin/kin-openapi v0.81.0
 	github.com/google/go-containerregistry v0.1.2
@@ -33,7 +34,6 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
-	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect

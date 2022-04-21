@@ -71,8 +71,8 @@ func (o *ListOptions) Run() error {
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Status"),
 			uitable.NewHeader("Since Deploy"),
-			uitable.NewHeader("Age"),
 			uitable.NewHeader("Owner"),
+			uitable.NewHeader("Age"),
 		},
 
 		SortBy: []uitable.ColumnSort{
@@ -87,8 +87,8 @@ func (o *ListOptions) Run() error {
 			uitable.NewValueString(app.Name),
 			uitable.NewValueString(app.Status.FriendlyDescription),
 			cmdcore.NewValueAge(app.Status.Deploy.UpdatedAt.Time),
-			cmdcore.NewValueAge(app.CreationTimestamp.Time),
 			uitable.NewValueString(o.owner(app.OwnerReferences)),
+			cmdcore.NewValueAge(app.CreationTimestamp.Time),
 		})
 	}
 
