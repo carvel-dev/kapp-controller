@@ -60,13 +60,6 @@ func (o *GetOptions) Run() error {
 		return err
 	}
 
-	isFailing := o.isFailing(app.Status.Conditions)
-
-	failingStageHeader := uitable.NewHeader("Failing Stage")
-	failingStageHeader.Hidden = !isFailing
-	errorMessageHeader := uitable.NewHeader("Useful Error Message")
-	errorMessageHeader.Hidden = !isFailing
-
 	table := uitable.Table{
 		Transpose: true,
 
@@ -74,11 +67,9 @@ func (o *GetOptions) Run() error {
 			uitable.NewHeader("Namespace"),
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Service Account"),
-			uitable.NewHeader("Status"),
+			uitable.NewHeader("Description"),
 			uitable.NewHeader("Owner References"),
 			uitable.NewHeader("Conditions"),
-			failingStageHeader,
-			errorMessageHeader,
 		},
 
 		Rows: [][]uitable.Value{{
