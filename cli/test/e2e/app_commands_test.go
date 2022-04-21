@@ -80,7 +80,7 @@ spec:
 	})
 
 	logger.Section("get app", func() {
-		out := kappCtrl.Run([]string{"app", "get", "-a", "kctrl-test-app", "--json"})
+		out := kappCtrl.Run([]string{"app", "get", "-a", name, "--json"})
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expectedOutputRows := []map[string]string{{
@@ -94,12 +94,20 @@ spec:
 		require.Exactly(t, expectedOutputRows, replaceAgeAndSinceDeployed(output.Tables[0].Rows))
 	})
 
+	logger.Section("get app status", func() {
+		out := kappCtrl.Run([]string{"app", "status", "-a", name})
+
+		require.Contains(t, out, "Fetch succeeded")
+		require.Contains(t, out, "Template succeeded")
+		require.Contains(t, out, "App reconciled")
+	})
+
 	logger.Section("pause app", func() {
-		kappCtrl.Run([]string{"app", "pause", "-a", "kctrl-test-app"})
+		kappCtrl.Run([]string{"app", "pause", "-a", name})
 	})
 
 	logger.Section("get app", func() {
-		out := kappCtrl.Run([]string{"app", "get", "-a", "kctrl-test-app", "--json"})
+		out := kappCtrl.Run([]string{"app", "get", "-a", name, "--json"})
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expectedOutputRows := []map[string]string{{
@@ -114,11 +122,11 @@ spec:
 	})
 
 	logger.Section("kick app", func() {
-		kappCtrl.Run([]string{"app", "kick", "-a", "kctrl-test-app"})
+		kappCtrl.Run([]string{"app", "kick", "-a", name})
 	})
 
 	logger.Section("get app", func() {
-		out := kappCtrl.Run([]string{"app", "get", "-a", "kctrl-test-app", "--json"})
+		out := kappCtrl.Run([]string{"app", "get", "-a", name, "--json"})
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expectedOutputRows := []map[string]string{{
@@ -133,7 +141,7 @@ spec:
 	})
 
 	logger.Section("delete app", func() {
-		kappCtrl.Run([]string{"app", "delete", "-a", "kctrl-test-app"})
+		kappCtrl.Run([]string{"app", "delete", "-a", name})
 	})
 
 	logger.Section("list apps", func() {
