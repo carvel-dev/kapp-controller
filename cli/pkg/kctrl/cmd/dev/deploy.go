@@ -6,6 +6,7 @@ package dev
 import (
 	"context"
 	"fmt"
+	gourl "net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -111,6 +112,12 @@ func (o *DeployOptions) Run() error {
 	if err != nil {
 		return fmt.Errorf("Getting core client: %s", err)
 	}
+
+	err = o.hackyConfigureKubernetesDst()
+	if err != nil {
+		return err
+	}
+
 	minCoreClient := &MinCoreClient{
 		client:          coreClient,
 		localSecrets:    &localSecrets{configs.Secrets},
@@ -189,6 +196,24 @@ func (o *DeployOptions) Run() error {
 	time.Sleep(100 * time.Millisecond)
 
 	return reconcileErr
+}
+
+// hackyConfigureKubernetesDst configures environment variables for kapp.
+// This would not be necessary if kapp was using default kubeconfig; however,
+// right now kapp will use configuration based on configured serviceAccount within
+// PackageInstall or App CR. However, we still need to configure it to know where to connect.
+func (o *DeployOptions) hackyConfigureKubernetesDst() error {
+	host, err := o.depsFactory.RESTHost()
+	if err != nil {
+		return fmt.Errorf("Getting host: %s", err)
+	}
+	hostURL, err := gourl.Parse(host)
+	if err != nil {
+		return fmt.Errorf("Parsing host: %s", err)
+	}
+	os.Setenv("KUBERNETES_SERVICE_HOST", hostURL.Hostname())
+	os.Setenv("KUBERNETES_SERVICE_PORT", hostURL.Port())
+	return nil
 }
 
 func (o *DeployOptions) printRs(nsName metav1.ObjectMeta, kcClient *fakekc.Clientset) error {
