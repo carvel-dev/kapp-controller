@@ -36,8 +36,8 @@ func NewStatusCmd(o *StatusOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App name (required)")
-	cmd.Flags().BoolVar(&o.IgnoreNotExists, "ignore-not-exists", false, "Keep following App if it does not exist")
+	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App CR name (required)")
+	//cmd.Flags().BoolVar(&o.IgnoreNotExists, "ignore-not-exists", false, "Keep following AppCR if it does not exist")
 
 	return cmd
 }
