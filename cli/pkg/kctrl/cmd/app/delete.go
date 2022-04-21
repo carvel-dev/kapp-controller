@@ -29,7 +29,7 @@ type DeleteOptions struct {
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
 
-	IgnoreAssociatedResources bool
+	NoOp bool
 }
 
 func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeleteOptions {
@@ -45,7 +45,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App name (required)")
-	cmd.Flags().BoolVar(&o.IgnoreAssociatedResources, "ignore-associated-resources", false, "Ignore resources created by the App and delete the custom resource itself")
+	cmd.Flags().BoolVar(&o.NoOp, "noop", false, "Ignore resources created by the App and delete the custom resource itself")
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
 		DefaultInterval:  1 * time.Second,
@@ -83,7 +83,7 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	if o.IgnoreAssociatedResources {
+	if o.NoOp {
 		err = o.patchNoopDelete(client)
 		if err != nil {
 			return err
