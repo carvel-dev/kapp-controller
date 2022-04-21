@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650545215979,
+  "lastUpdate": 1650551539089,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -159,6 +159,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 14610827937,
             "unit": "ns/op\t         9.433 DeleteSeconds\t         5.141 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86852107+joe-kimmel-vmw@users.noreply.github.com",
+            "name": "Joe Kimmel",
+            "username": "joe-kimmel-vmw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3f6d2325258ac8a15e3fbfe8ff6959b44b13a0dd",
+          "message": "apiserver: custom QPS and Burst to allow high throughput of packages (#635)\n\n* apiserver: custom QPS and Burst to allow high throughput of packages\r\n\r\n* updating benchmark test upper bounds to reflect our speedy new reality\r\n\r\n* smallest numbers that have the same effect",
+          "timestamp": "2022-04-21T10:22:06-04:00",
+          "tree_id": "1f247d50501b2429ae43ebba8639373800197c51",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/3f6d2325258ac8a15e3fbfe8ff6959b44b13a0dd"
+        },
+        "date": 1650551538244,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36448166003,
+            "unit": "ns/op\t        18.93 DeleteSeconds\t        17.49 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9521619928,
+            "unit": "ns/op\t         5.280 DeleteSeconds\t         4.207 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6424466071,
+            "unit": "ns/op\t         4.247 DeleteSeconds\t         2.142 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
