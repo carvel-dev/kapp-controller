@@ -6,6 +6,10 @@ package dev
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -21,9 +25,10 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
+	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -38,9 +43,11 @@ type DeployOptions struct {
 
 	NamespaceFlags cmdcore.NamespaceFlags
 
-	Files  []string
-	Delete bool
-	Debug  bool
+	Files     []string
+	Local     bool
+	KbldBuild bool
+	Delete    bool
+	Debug     bool
 }
 
 func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeployOptions {
@@ -57,6 +64,8 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().StringSliceVarP(&o.Files, "file", "f", nil, "Set App CR file (required)")
 
+	cmd.Flags().BoolVarP(&o.Local, "local", "l", false, "Use local fetch source")
+	cmd.Flags().BoolVarP(&o.KbldBuild, "kbld-build", "b", false, "Allow kbld build")
 	cmd.Flags().BoolVar(&o.Delete, "delete", false, "Delete deployed app")
 	cmd.Flags().BoolVar(&o.Debug, "debug", false, "Show kapp-controller logs")
 
@@ -73,9 +82,11 @@ func (o *DeployOptions) Run() error {
 
 	var objs []runtime.Object
 	var appRes kcv1alpha1.App
+	var primaryAnns map[string]string
 
 	if len(configs.Apps) > 0 {
 		appRes = configs.Apps[0]
+		primaryAnns = appRes.Annotations
 		if o.Delete {
 			appRes.DeletionTimestamp = &metav1.Time{time.Now()}
 		}
@@ -84,6 +95,7 @@ func (o *DeployOptions) Run() error {
 
 	if len(configs.PkgInstalls) > 0 {
 		pkgiRes := configs.PkgInstalls[0]
+		primaryAnns = pkgiRes.Annotations
 		// TODO delete does not delete because App CR does not exist in memory
 		if o.Delete {
 			pkgiRes.DeletionTimestamp = &metav1.Time{time.Now()}
@@ -106,7 +118,18 @@ func (o *DeployOptions) Run() error {
 	}
 	kcClient := fakekc.NewSimpleClientset(objs...)
 	dpkgClient := fakedpkg.NewSimpleClientset(configs.PkgsAsObjects()...)
-	appReconciler, pkgiReconciler := o.newReconcilers(minCoreClient, kcClient, dpkgClient)
+
+	var vendirConfigHook func(conf vendirconf.Config) vendirconf.Config
+	if o.Local {
+		vendirConf, err := newLocalVendirConf(primaryAnns)
+		if err != nil {
+			return fmt.Errorf("Calculating local vendir changes: %s", err)
+		}
+		vendirConfigHook = vendirConf.Adjust
+	}
+
+	appReconciler, pkgiReconciler := o.newReconcilers(
+		minCoreClient, kcClient, dpkgClient, vendirConfigHook)
 
 	err = o.printRs(appRes.ObjectMeta, kcClient)
 	if err != nil {
@@ -193,8 +216,8 @@ func (o *DeployOptions) printRs(nsName metav1.ObjectMeta, kcClient *fakekc.Clien
 }
 
 func (o *DeployOptions) newReconcilers(
-	coreClient kubernetes.Interface, kcClient *fakekc.Clientset,
-	pkgClient *fakedpkg.Clientset) (*app.Reconciler, *packageinstall.Reconciler) {
+	coreClient kubernetes.Interface, kcClient *fakekc.Clientset, pkgClient *fakedpkg.Clientset,
+	vendirConfigHook func(vendirconf.Config) vendirconf.Config) (*app.Reconciler, *packageinstall.Reconciler) {
 
 	runLog := logf.Log.WithName("deploy")
 	if o.Debug {
@@ -210,7 +233,14 @@ func (o *DeployOptions) newReconcilers(
 	refTracker := reftracker.NewAppRefTracker()
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
 
-	appFactory := app.CRDAppFactory{coreClient, kcClient, kcConfig, appMetrics}
+	appFactory := app.CRDAppFactory{
+		CoreClient:       coreClient,
+		AppClient:        kcClient,
+		KcConfig:         kcConfig,
+		AppMetrics:       appMetrics,
+		VendirConfigHook: vendirConfigHook,
+		KbldAllowBuild:   o.KbldBuild, // only for CLI mode
+	}
 	appReconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 		appFactory, refTracker, updateStatusTracker)
 
@@ -222,4 +252,50 @@ func (o *DeployOptions) newReconcilers(
 	)
 
 	return appReconciler, pkgiReconciler
+}
+
+type localVendirConf struct {
+	// Indexed by numeric fetch index
+	localPaths map[int]string
+}
+
+func newLocalVendirConf(resAnnotations map[string]string) (localVendirConf, error) {
+	cwdPath, err := os.Getwd()
+	if err != nil {
+		return localVendirConf{}, err
+	}
+
+	const (
+		prefix = "kctrl.carvel.dev/local-fetch-"
+	)
+
+	localPaths := map[int]string{}
+
+	for key, val := range resAnnotations {
+		if strings.HasPrefix(key, prefix) {
+			fetchIdx, err := strconv.Atoi(strings.TrimPrefix(key, prefix))
+			if err != nil {
+				return localVendirConf{}, err
+			}
+			localPaths[fetchIdx] = filepath.Join(cwdPath, val)
+		}
+	}
+
+	return localVendirConf{localPaths}, nil
+}
+
+func (c localVendirConf) Adjust(conf vendirconf.Config) vendirconf.Config {
+	for fetchIdx, localPath := range c.localPaths {
+		if fetchIdx >= len(conf.Directories) {
+			// Ignore invalid indexes
+			continue
+		}
+		conf.Directories[fetchIdx].Contents[0] = vendirconf.DirectoryContents{
+			Path: conf.Directories[fetchIdx].Contents[0].Path,
+			Directory: &vendirconf.DirectoryContentsDirectory{
+				Path: localPath,
+			},
+		}
+	}
+	return conf
 }
