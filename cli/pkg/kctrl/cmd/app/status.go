@@ -7,15 +7,21 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
-	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
-	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+type AppStage string
+
+const (
+	fetchStage    AppStage = "fetch"
+	templateStage AppStage = "template"
+	deployStage   AppStage = "deploy"
+	reconciled    AppStage = "reconciled"
 )
 
 type StatusOptions struct {
@@ -55,6 +61,10 @@ func (o *StatusOptions) Run() error {
 		return fmt.Errorf("Expected App CR name to be non empty")
 	}
 
+	if o.IgnoreNotExists && !o.Follow {
+		return fmt.Errorf("'--ignore-not-exists' can only be used while following")
+	}
+
 	client, err := o.depsFactory.KappCtrlClient()
 	if err != nil {
 		return err
@@ -62,112 +72,26 @@ func (o *StatusOptions) Run() error {
 
 	app, err := client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 	if err != nil {
-		return err
+		if !(errors.IsNotFound(err) && o.IgnoreNotExists) {
+			return err
+		}
+		o.ui.PrintLinef("AppCR '' in namespace '' does not exist...")
 	}
 
+	appWatcher := NewAppWatcher(o.NamespaceFlags.Name, o.Name, o.Follow, o.IgnoreNotExists, o.ui, client)
+
 	if o.Follow {
-		o.ui.PrintLinef("Unimplemented")
+		err = appWatcher.FollowApp(app)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 
-	o.printStatus(app.Status)
+	_, err = appWatcher.PrintTillCurrent(app.Status)
+	if err != nil && !o.Follow {
+		return err
+	}
 
 	return nil
-}
-
-func (o *StatusOptions) printStatus(status kcv1alpha1.AppStatus) {
-	if status.Fetch != nil {
-		o.printHeader("Fetch")
-		o.printStageMetadata(&status.Fetch.StartedAt, &status.Fetch.UpdatedAt)
-		if status.Fetch.ExitCode != 0 && (status.Fetch.StartedAt.Before(&status.Fetch.UpdatedAt)) {
-			o.ui.PrintBlock([]byte(color.RedString(status.Fetch.Error)))
-			return
-		}
-		o.ui.PrintBlock([]byte(status.Fetch.Stdout))
-		if status.Fetch.StartedAt.After(status.Fetch.UpdatedAt.Time) {
-			o.printOngoing()
-			return
-		}
-		o.printFinished()
-	}
-
-	if status.Template != nil {
-		o.printHeader("Template")
-		o.printStageMetadata(nil, &status.Template.UpdatedAt)
-		if status.Template.ExitCode != 0 && (status.Fetch.StartedAt.Before(&status.Template.UpdatedAt)) {
-			o.ui.PrintBlock([]byte(color.RedString(status.Template.Error)))
-			return
-		}
-		if status.Fetch.StartedAt.After(status.Template.UpdatedAt.Time) {
-			o.printOngoing()
-			return
-		}
-		o.printFinished()
-	}
-
-	if status.Deploy != nil {
-		o.printHeader("Deploy")
-		o.printStageMetadata(&status.Deploy.StartedAt, &status.Deploy.UpdatedAt)
-		if status.Deploy.ExitCode != 0 && (status.Deploy.StartedAt.Before(&status.Deploy.UpdatedAt)) {
-			o.ui.PrintBlock([]byte(color.RedString(status.Fetch.Error)))
-			return
-		}
-		o.ui.PrintBlock([]byte(status.Deploy.Stdout))
-		if o.hasReconciled(status) {
-			o.printFinished()
-			return
-		}
-		o.printOngoing()
-	}
-}
-
-func (o *StatusOptions) printHeader(header string) {
-	o.ui.PrintLinef(color.New(color.Bold).Sprintf("-------------------%s-------------------", header))
-}
-
-func (o *StatusOptions) printStageMetadata(startedAt *metav1.Time, updatedAt *metav1.Time) {
-	startedAtHeader := uitable.NewHeader("Started At")
-	startedAtHeader.Hidden = (startedAt == nil)
-
-	rows := []uitable.Value{
-		nil,
-		uitable.NewValueTime(updatedAt.Time),
-	}
-
-	if startedAt != nil {
-		rows = []uitable.Value{
-			uitable.NewValueTime(startedAt.Time),
-			uitable.NewValueTime(updatedAt.Time),
-		}
-	}
-
-	table := uitable.Table{
-		Transpose: true,
-
-		Header: []uitable.Header{
-			startedAtHeader,
-			uitable.NewHeader("Updated At"),
-		},
-
-		Rows: [][]uitable.Value{rows},
-	}
-
-	o.ui.PrintTable(table)
-}
-
-func (o *StatusOptions) hasReconciled(status kcv1alpha1.AppStatus) bool {
-	for _, condition := range status.Conditions {
-		if condition.Type == kcv1alpha1.ReconcileSucceeded && condition.Status == corev1.ConditionTrue {
-			return true
-		}
-	}
-	return false
-}
-
-func (o *StatusOptions) printFinished() {
-	o.ui.PrintLinef(color.GreenString("Finished"))
-}
-
-func (o *StatusOptions) printOngoing() {
-	o.ui.PrintLinef(color.YellowString("Ongoing"))
 }
