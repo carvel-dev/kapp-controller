@@ -148,6 +148,14 @@ spec:
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
 
+	logger.Section("package installed status", func() {
+		out := kappCtrl.Run([]string{"package", "installed", "status", "-i", pkgiName})
+
+		require.Contains(t, out, "Fetch succeeded")
+		require.Contains(t, out, "Template succeeded")
+		require.Contains(t, out, "App reconciled")
+	})
+
 	logger.Section("package installed update", func() {
 
 		_, err := kappCtrl.RunWithOpts([]string{

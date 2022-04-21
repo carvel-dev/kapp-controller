@@ -37,19 +37,19 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List Apps in all namespaces")
+	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List apps in all namespaces")
 
 	return cmd
 }
 
 func (o *ListOptions) Run() error {
-	tableTitle := fmt.Sprintf("Available Apps in namespace '%s'", o.NamespaceFlags.Name)
+	tableTitle := fmt.Sprintf("Available apps in namespace '%s'", o.NamespaceFlags.Name)
 	nsHeader := uitable.NewHeader("Namespace")
 	nsHeader.Hidden = true
 
 	if o.AllNamespaces {
 		o.NamespaceFlags.Name = ""
-		tableTitle = "Available Apps in all namespaces"
+		tableTitle = "Available apps in all namespaces"
 		nsHeader.Hidden = false
 	}
 
