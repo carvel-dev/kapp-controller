@@ -39,13 +39,13 @@ func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.L
 func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete",
-		Short: "Delete App",
+		Short: "Delete app",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App name (required)")
-	cmd.Flags().BoolVar(&o.NoOp, "noop", false, "Ignore resources created by the App and delete the custom resource itself")
+	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set app name (required)")
+	cmd.Flags().BoolVar(&o.NoOp, "noop", false, "Ignore resources created by the app and delete the custom resource itself")
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
 		DefaultInterval:  1 * time.Second,
@@ -57,7 +57,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 
 func (o *DeleteOptions) Run() error {
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected App name to be non empty")
+		return fmt.Errorf("Expected app name to be non empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
@@ -74,10 +74,10 @@ func (o *DeleteOptions) Run() error {
 	}
 
 	if isOwnedByPackageInstall(app) {
-		o.ui.BeginLinef("App '%s' is owned by '%s'\n(The App will be created again when the package installation reconciles)\n", o.Name, fmt.Sprintf("%s/%s", app.OwnerReferences[0].Kind, app.OwnerReferences[0].Name))
+		o.ui.BeginLinef("App '%s' is owned by '%s'\n(The app will be created again when the package installation reconciles)\n", o.Name, fmt.Sprintf("%s/%s", app.OwnerReferences[0].Kind, app.OwnerReferences[0].Name))
 	}
 
-	o.ui.BeginLinef("Deleting App '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+	o.ui.BeginLinef("Deleting app '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 	err = o.ui.AskForConfirmation()
 	if err != nil {
 		return err
@@ -119,7 +119,7 @@ func (o *DeleteOptions) patchNoopDelete(client kcclient.Interface) error {
 		return err
 	}
 
-	o.ui.PrintLinef("Ignoring associated resources for App CR '%s' in namespace '%s'...", o.Name, o.NamespaceFlags.Name)
+	o.ui.PrintLinef("Ignoring associated resources for app '%s' in namespace '%s'...", o.Name, o.NamespaceFlags.Name)
 
 	_, err = client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
 	if err != nil {
@@ -130,7 +130,7 @@ func (o *DeleteOptions) patchNoopDelete(client kcclient.Interface) error {
 }
 
 func (o *DeleteOptions) waitForAppDeletion(client kcclient.Interface) error {
-	o.ui.BeginLinef("%s: Waiting for App CR deletion for '%s'\n", time.Now().Format("3:04:05PM"), o.Name)
+	o.ui.BeginLinef("%s: Waiting for app deletion for '%s'\n", time.Now().Format("3:04:05PM"), o.Name)
 	appWatcher := NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, AppTailerOpts{})
 	err := appWatcher.TailAppStatus()
 	if err != nil {

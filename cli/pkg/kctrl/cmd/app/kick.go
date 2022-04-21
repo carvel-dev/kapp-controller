@@ -37,12 +37,12 @@ func NewKickOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Log
 func NewKickCmd(o *KickOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kick",
-		Short: "Trigger reconciliation for App",
+		Short: "Trigger reconciliation for app",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App name (required)")
+	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set app name (required)")
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
 		DefaultInterval:  1 * time.Second,
@@ -54,7 +54,7 @@ func NewKickCmd(o *KickOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 
 func (o *KickOptions) Run() error {
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected App name to be non empty")
+		return fmt.Errorf("Expected app name to be non empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
@@ -74,7 +74,7 @@ func (o *KickOptions) Run() error {
 		o.ui.BeginLinef("App '%s' is owned by '%s'\n", o.Name, fmt.Sprintf("%s/%s", app.OwnerReferences[0].Kind, app.OwnerReferences[0].Name))
 	}
 
-	o.ui.BeginLinef("Triggering reconciliation for App '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+	o.ui.BeginLinef("Triggering reconciliation for app '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 	err = o.ui.AskForConfirmation()
 	if err != nil {
 		return err
@@ -109,7 +109,7 @@ func (o *KickOptions) triggerReconciliation(client kcclient.Interface) error {
 		return err
 	}
 
-	o.ui.BeginLinef("%s: Triggering reconciliation for App '%s' in namespace '%s'\n", time.Now().Format("3:04:05PM"), o.Name, o.NamespaceFlags.Name)
+	o.ui.BeginLinef("%s: Triggering reconciliation for app '%s' in namespace '%s'\n", time.Now().Format("3:04:05PM"), o.Name, o.NamespaceFlags.Name)
 
 	_, err = client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
 	if err != nil {
@@ -137,7 +137,7 @@ func (o *KickOptions) triggerReconciliation(client kcclient.Interface) error {
 }
 
 func (o *KickOptions) waitForAppReconciliation(client kcclient.Interface) error {
-	o.ui.BeginLinef("%s: Waiting for App reconciliation for '%s'\n", time.Now().Format("3:04:05PM"), o.Name)
+	o.ui.BeginLinef("%s: Waiting for app reconciliation for '%s'\n", time.Now().Format("3:04:05PM"), o.Name)
 	appWatcher := NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, AppTailerOpts{})
 
 	err := appWatcher.TailAppStatus()

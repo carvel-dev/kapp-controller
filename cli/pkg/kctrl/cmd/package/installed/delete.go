@@ -275,7 +275,7 @@ func (o *DeleteOptions) waitForResourceDelete(kcClient kcclient.Interface) error
 
 		err := appWatcher.TailAppStatus()
 		if err != nil {
-			o.ui.BeginLinef("%s: Error tailing app: %s", time.Now().Format("3:04:05PM"), err.Error())
+			o.ui.BeginLinef("%s: Error tailing or reconciling app: %s\n", time.Now().Format("3:04:05PM"), err.Error())
 			*tailErrored = true
 		}
 	}
