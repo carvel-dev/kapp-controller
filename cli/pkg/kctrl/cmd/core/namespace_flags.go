@@ -17,10 +17,14 @@ type NamespaceFlags struct {
 	Name string
 }
 
-func (s *NamespaceFlags) Set(cmd *cobra.Command, flagsFactory FlagsFactory, opts PackageCommandTreeOpts) {
+func (s *NamespaceFlags) Set(cmd *cobra.Command, flagsFactory FlagsFactory) {
+	name := flagsFactory.NewNamespaceNameFlag(&s.Name, "KCTRL_NAMESPACE")
+	cmd.Flags().VarP(name, "namespace", "n", "Specified namespace ($KCTRL_NAMESPACE or default from kubeconfig)")
+}
+
+func (s *NamespaceFlags) SetWithPackageCommandTreeOpts(cmd *cobra.Command, flagsFactory FlagsFactory, opts PackageCommandTreeOpts) {
 	namespaceEnvVariableKey := fmt.Sprintf("%s_NAMESPACE", strings.ToUpper(opts.BinaryName))
 	name := flagsFactory.NewNamespaceNameFlag(&s.Name, namespaceEnvVariableKey)
-
 	cmd.Flags().VarP(name, "namespace", "n", fmt.Sprintf("Specified namespace ($%s or default from kubeconfig)", namespaceEnvVariableKey))
 }
 

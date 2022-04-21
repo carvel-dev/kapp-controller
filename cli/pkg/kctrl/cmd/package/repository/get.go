@@ -44,7 +44,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		SilenceUsage: true,
 		Annotations:  map[string]string{"table": ""},
 	}
-	o.NamespaceFlags.Set(cmd, flagsFactory, o.pkgCmdTreeOpts)
+	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")

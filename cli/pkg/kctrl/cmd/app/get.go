@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	"github.com/spf13/cobra"
@@ -88,7 +89,7 @@ func (o *GetOptions) Run() error {
 			uitable.NewValueInterface(o.formatOwnerReferences(app.OwnerReferences)),
 			uitable.NewValueInterface(app.Status.Conditions),
 			uitable.NewValueString(o.failingStage(app.Status)),
-			uitable.NewValueString(app.Status.UsefulErrorMessage),
+			uitable.NewValueString(color.RedString(app.Status.UsefulErrorMessage)),
 		}},
 	}
 
