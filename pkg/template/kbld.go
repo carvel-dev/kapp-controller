@@ -17,12 +17,20 @@ import (
 type Kbld struct {
 	opts        v1alpha1.AppTemplateKbld
 	genericOpts GenericOpts
+	additionalOpts KbldOpts
+}
+
+type KbldOpts struct {
+	// Do not want to allow building within kapp-controller pod
+	AllowBuild bool
 }
 
 var _ Template = &Kbld{}
 
-func NewKbld(opts v1alpha1.AppTemplateKbld, genericOpts GenericOpts) *Kbld {
-	return &Kbld{opts, genericOpts}
+func NewKbld(opts v1alpha1.AppTemplateKbld,
+	genericOpts GenericOpts, additionalOpts KbldOpts) *Kbld {
+
+	return &Kbld{opts, genericOpts, additionalOpts}
 }
 
 func (t *Kbld) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
@@ -39,7 +47,9 @@ func (t *Kbld) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		return exec.NewCmdRunResultWithErr(err)
 	}
 
-	args = append(args, "--build=false")
+	if !t.additionalOpts.AllowBuild {
+		args = append(args, "--build=false")
+	}
 
 	var stdoutBs, stderrBs bytes.Buffer
 

@@ -23,21 +23,30 @@ const (
 )
 
 type Vendir struct {
-	nsName        string
-	coreClient    kubernetes.Interface
-	config        vendirconf.Config
-	skipTLSConfig SkipTLSConfig
+	nsName     string
+	coreClient kubernetes.Interface
+	config     vendirconf.Config
+	opts       VendirOpts
 }
 
-func NewVendir(nsName string, coreClient kubernetes.Interface, skipTLSConfig SkipTLSConfig) *Vendir {
+type VendirOpts struct {
+	HookFunc      func(vendirconf.Config) vendirconf.Config
+	SkipTLSConfig SkipTLSConfig
+}
+
+func NewVendir(nsName string, coreClient kubernetes.Interface, opts VendirOpts) *Vendir {
+	if opts.HookFunc == nil {
+		opts.HookFunc = func(conf vendirconf.Config) vendirconf.Config { return conf }
+	}
 	return &Vendir{
-		nsName:        nsName,
-		coreClient:    coreClient,
-		skipTLSConfig: skipTLSConfig,
+		nsName:     nsName,
+		coreClient: coreClient,
+		opts:       opts,
 		config: vendirconf.Config{
 			APIVersion: "vendir.k14s.io/v1alpha1", // TODO: use constant from vendir package
 			Kind:       "Config",                  // TODO: use constant from vendir package
-		}}
+		},
+	}
 }
 
 // AddDir adds a directory to vendir's config for each fetcher that the app spec declares.
@@ -209,7 +218,7 @@ func (v *Vendir) ConfigBytes() ([]byte, error) {
 		}
 	}
 
-	vendirConfBytes, err := v.config.AsBytes()
+	vendirConfBytes, err := v.opts.HookFunc(v.config).AsBytes()
 	if err != nil {
 		return nil, err
 	}
@@ -359,7 +368,7 @@ func (v *Vendir) configMapBytes(configMapRef vendirconf.DirectoryContentsLocalRe
 // extraction for those
 func (v *Vendir) shouldSkipTLSVerify(url string) bool {
 	hostAndPort := v.extractImageRefHostname(url)
-	return v.skipTLSConfig.ShouldSkipTLSForAuthority(hostAndPort)
+	return v.opts.SkipTLSConfig.ShouldSkipTLSForAuthority(hostAndPort)
 }
 
 func (v *Vendir) extractImageRefHostname(ref string) string {

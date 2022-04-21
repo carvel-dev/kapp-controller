@@ -149,7 +149,12 @@ func Run(opts Options, runLog logr.Logger) error {
 	}
 
 	{ // add controller for apps
-		appFactory := app.CRDAppFactory{coreClient, kcClient, kcConfig, appMetrics}
+		appFactory := app.CRDAppFactory{
+			CoreClient: coreClient,
+			AppClient:  kcClient,
+			KcConfig:   kcConfig,
+			AppMetrics: appMetrics,
+		}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 			appFactory, refTracker, updateStatusTracker)
 

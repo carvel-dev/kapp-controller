@@ -13,12 +13,12 @@ type SkipTLSConfig interface {
 }
 
 type Factory struct {
-	coreClient    kubernetes.Interface
-	skipTLSConfig SkipTLSConfig
+	coreClient kubernetes.Interface
+	vendirOpts VendirOpts
 }
 
-func NewFactory(coreClient kubernetes.Interface, skipTLSConfig SkipTLSConfig) Factory {
-	return Factory{coreClient, skipTLSConfig}
+func NewFactory(coreClient kubernetes.Interface, vendirOpts VendirOpts) Factory {
+	return Factory{coreClient, vendirOpts}
 }
 
 func (f Factory) NewInline(opts v1alpha1.AppFetchInline, nsName string) *Inline {
@@ -27,5 +27,5 @@ func (f Factory) NewInline(opts v1alpha1.AppFetchInline, nsName string) *Inline 
 
 // TODO: pass v1alpha1.Vendir opts here once api is exapnded
 func (f Factory) NewVendir(nsName string) *Vendir {
-	return NewVendir(nsName, f.coreClient, f.skipTLSConfig)
+	return NewVendir(nsName, f.coreClient, f.vendirOpts)
 }
