@@ -17,8 +17,8 @@ import (
 // we'll assert against these thresholds below; maps represent "for x packages, what's the max allowed seconds to deploy or delete"?
 // thresholds set by observing runs locally, rounding, multiplying by 1.25, and rounding:
 var (
-	deploySecondsForPackageCount = map[int]float64{50: 7, 100: 11, 500: 39}
-	deleteSecondsForPackageCount = map[int]float64{50: 13, 100: 20, 500: 81}
+	deploySecondsForPackageCount = map[int]float64{50: 5, 100: 7, 500: 22.5}
+	deleteSecondsForPackageCount = map[int]float64{50: 7, 100: 8, 500: 25}
 )
 
 func Benchmark_pkgr_with_500_packages(b *testing.B) {
