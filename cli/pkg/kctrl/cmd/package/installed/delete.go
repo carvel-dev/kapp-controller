@@ -11,6 +11,7 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
+	cmdapp "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -53,7 +54,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		}.Description("-i", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 	}
-	o.NamespaceFlags.Set(cmd, flagsFactory, o.pkgCmdTreeOpts)
+	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
@@ -110,7 +111,7 @@ func (o *DeleteOptions) Run(args []string) error {
 		return o.cleanUpIfInstallNotFound(dynamicClient)
 	}
 
-	o.ui.PrintLinef("Deleting package install '%s' from namespace '%s'", o.Name, o.NamespaceFlags.Name)
+	o.ui.BeginLinef("%s: Deleting package install '%s' from namespace '%s'\n", time.Now().Format("3:04:05PM"), o.Name, o.NamespaceFlags.Name)
 
 	err = kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Delete(
 		context.Background(), o.Name, metav1.DeleteOptions{})
@@ -118,7 +119,7 @@ func (o *DeleteOptions) Run(args []string) error {
 		return err
 	}
 
-	o.ui.PrintLinef("Waiting for deletion of package install '%s' from namespace '%s'", o.Name, o.NamespaceFlags.Name)
+	o.ui.BeginLinef("%s: Waiting for deletion of package install '%s' from namespace '%s'\n", time.Now().Format("3:04:05PM"), o.Name, o.NamespaceFlags.Name)
 
 	err = o.waitForResourceDelete(kcClient)
 	if err != nil {
@@ -161,7 +162,7 @@ func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.
 			namespace = o.NamespaceFlags.Name
 		}
 
-		o.ui.PrintLinef("Deleting '%s': %s", resourceKind, resourceName)
+		o.ui.BeginLinef("%s: Deleting '%s': %s\n", time.Now().Format("3:04:05PM"), resourceKind, resourceName)
 
 		err := o.deleteResourceUsingGVR(schema.GroupVersionResource{
 			Group:    apiGroup,
@@ -266,6 +267,20 @@ func (o *DeleteOptions) waitForResourceDelete(kcClient kcclient.Interface) error
 	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 	description := getPackageInstallDescription(o.Name, o.NamespaceFlags.Name)
 
+	appStatusTailErrored := false
+	tailAppStatusOutput := func(tailErrored *bool) {
+		appWatcher := cmdapp.NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, kcClient, cmdapp.AppTailerOpts{
+			IgnoreNotExists: true,
+		})
+
+		err := appWatcher.TailAppStatus()
+		if err != nil {
+			o.ui.BeginLinef("%s: Error tailing app: %s", time.Now().Format("3:04:05PM"), err.Error())
+			*tailErrored = true
+		}
+	}
+	go tailAppStatusOutput(&appStatusTailErrored)
+
 	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (bool, error) {
 		resource, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
 			context.Background(), o.Name, metav1.GetOptions{},
@@ -284,7 +299,9 @@ func (o *DeleteOptions) waitForResourceDelete(kcClient kcclient.Interface) error
 		status := resource.Status.GenericStatus
 
 		for _, cond := range status.Conditions {
-			msgsUI.NotifySection("%s: %s", description, cond.Type)
+			if appStatusTailErrored {
+				msgsUI.NotifySection("%s: %s", description, cond.Type)
+			}
 
 			if cond.Type == kcv1alpha1.DeleteFailed && cond.Status == corev1.ConditionTrue {
 				return false, fmt.Errorf("%s: Deleting: %s. %s", description, status.UsefulErrorMessage, status.FriendlyDescription)

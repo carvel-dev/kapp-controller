@@ -137,13 +137,12 @@ spec:
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expectedOutputRows := []map[string]string{{
-			"conditions":           "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
-			"namespace":            env.Namespace,
-			"name":                 "testpkgi",
-			"package_name":         "test-pkg.carvel.dev",
-			"package_version":      "1.0.0",
-			"status":               "Reconcile succeeded",
-			"useful_error_message": "",
+			"conditions":      "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
+			"namespace":       env.Namespace,
+			"name":            "testpkgi",
+			"package_name":    "test-pkg.carvel.dev",
+			"package_version": "1.0.0",
+			"status":          "Reconcile succeeded",
 		}}
 
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
@@ -165,13 +164,12 @@ spec:
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expectedOutputRows := []map[string]string{{
-			"conditions":           "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
-			"namespace":            env.Namespace,
-			"name":                 "testpkgi",
-			"package_name":         "test-pkg.carvel.dev",
-			"package_version":      "2.0.0",
-			"status":               "Reconcile succeeded",
-			"useful_error_message": "",
+			"conditions":      "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
+			"namespace":       env.Namespace,
+			"name":            "testpkgi",
+			"package_name":    "test-pkg.carvel.dev",
+			"package_version": "2.0.0",
+			"status":          "Reconcile succeeded",
 		}}
 
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)

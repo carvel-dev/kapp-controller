@@ -3,10 +3,13 @@ module github.com/vmware-tanzu/carvel-kapp-controller/cli
 go 1.17
 
 require (
-	github.com/cppforlife/cobrautil v0.0.0-20220411122935-c28a9f274a4e
+	github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72
+	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
 	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
 	github.com/getkin/kin-openapi v0.81.0
 	github.com/google/go-containerregistry v0.1.2
+	github.com/google/gofuzz v1.2.0 // indirect
+	github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
@@ -14,7 +17,7 @@ require (
 	github.com/vmware-tanzu/carvel-kapp-controller v0.27.0
 	github.com/vmware-tanzu/carvel-vendir v0.23.0
 	k8s.io/api v0.22.1 // kubernetes-1.22.1
-	k8s.io/apimachinery v0.22.1 // kubernetes-1.22.1
+	k8s.io/apimachinery v0.22.1
 	k8s.io/client-go v0.22.1 // kubernetes-1.22.1
 )
 
@@ -33,7 +36,6 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
-	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
@@ -45,7 +47,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.5 // indirect
-	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/imdario/mergo v0.3.10 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect

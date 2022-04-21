@@ -180,9 +180,8 @@ github.com/coreos/go-systemd v0.0.0-20190620071333-e64a0ec8b42a/go.mod h1:F5haX7
 github.com/coreos/pkg v0.0.0-20160727233714-3ac0863d7acf/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
 github.com/coreos/pkg v0.0.0-20180108230652-97fdf19511ea/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
 github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
+github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72 h1:rPWcUBgMb1ox2eCohCuZ8gsZVe0aB5qBbYaBpdoxfCE=
 github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72/go.mod h1:2w+qxVu2KSGW78Ex/XaIqfh/OvBgjEsmN53S4T8vEyA=
-github.com/cppforlife/cobrautil v0.0.0-20220411122935-c28a9f274a4e h1:4AxO89dwbgA957M8DX5AV/KsOmxDyAB1BES0INY+A/0=
-github.com/cppforlife/cobrautil v0.0.0-20220411122935-c28a9f274a4e/go.mod h1:2w+qxVu2KSGW78Ex/XaIqfh/OvBgjEsmN53S4T8vEyA=
 github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835 h1:mYQweUIBD+TBRjIeQnJmXr0GSVMpI6O0takyb/aaOgo=
 github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835/go.mod h1:dYeVsKp1vvK8XjdTPR1gF+uk+9doxKeO3hqQTOCr7T4=
 github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f h1:yVW0v4zDXzJo1i8G9G3vtvNpyzhvtLalO34BsN/K88E=
@@ -430,6 +429,7 @@ github.com/google/rpmpack v0.0.0-20191226140753-aa36bfddb3a0/go.mod h1:RaTPr0KUf
 github.com/google/subcommands v1.0.1/go.mod h1:ZjhPrFU+Olkh9WazFPsl27BQ4UPiG37m3yTrtFlrHVk=
 github.com/google/uuid v1.0.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/google/uuid v1.1.2 h1:EVhdT+1Kseyi1/pUmXKaFxYsDNy9RQYkMWRH68J/W7Y=
 github.com/google/uuid v1.1.2/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/wire v0.3.0/go.mod h1:i1DMg/Lu8Sz5yYl25iOdmc5CT5qusaa+zmRWs16741s=
 github.com/google/wire v0.4.0/go.mod h1:ngWDr9Qvq3yZA10YrxfyGELY/AFWGVpy9c1LTRi1EoU=
@@ -526,6 +526,8 @@ github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1
 github.com/jstemmer/go-junit-report v0.9.1/go.mod h1:Brl9GWCQeLvo8nXZwPNNblvFj/XSXhF0NWZEnDohbsk=
 github.com/jtolds/gls v4.20.0+incompatible/go.mod h1:QJZ7F/aHp+rZTRtaJ1ow/lLfFfVYBRgL+9YlvaHOwJU=
 github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
+github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57 h1:CwBRArr+BWBopnUJhDjJw86rPL/jGbEjfHWKzTasSqE=
+github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57/go.mod h1:B0xN2MiNBGWOWi9CcfAo9LBI8IU4J1utlbOIJCsmKr4=
 github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115 h1:wKSifC/VbCaQMqXYn6/gSFqle82OX4bE3KYALDU9FlU=
 github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115/go.mod h1:mGrnmO5qnhJIaSiwMo05cvRL6Ww9ccYbTgNFcm6RHZQ=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=

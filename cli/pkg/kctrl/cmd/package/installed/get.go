@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	"github.com/spf13/cobra"
@@ -56,7 +57,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		SilenceUsage: true,
 		Annotations:  map[string]string{"table": ""},
 	}
-	o.NamespaceFlags.Set(cmd, flagsFactory, o.pkgCmdTreeOpts)
+	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
@@ -106,6 +107,9 @@ func (o *GetOptions) Run(args []string) error {
 		return nil
 	}
 
+	errorMessageHeader := uitable.NewHeader("Useful Error Message")
+	errorMessageHeader.Hidden = len(pkgi.Status.UsefulErrorMessage) == 0
+
 	table := uitable.Table{
 		Transpose: true,
 
@@ -116,7 +120,7 @@ func (o *GetOptions) Run(args []string) error {
 			uitable.NewHeader("Package version"),
 			uitable.NewHeader("Status"),
 			uitable.NewHeader("Conditions"),
-			uitable.NewHeader("Useful error message"),
+			errorMessageHeader,
 		},
 
 		Rows: [][]uitable.Value{{
@@ -126,7 +130,7 @@ func (o *GetOptions) Run(args []string) error {
 			uitable.NewValueString(pkgi.Status.Version),
 			uitable.NewValueString(pkgi.Status.FriendlyDescription),
 			uitable.NewValueInterface(pkgi.Status.Conditions),
-			uitable.NewValueString(pkgi.Status.UsefulErrorMessage),
+			uitable.NewValueString(color.RedString(pkgi.Status.UsefulErrorMessage)),
 		}},
 	}
 
