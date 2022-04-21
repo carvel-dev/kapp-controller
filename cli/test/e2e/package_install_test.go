@@ -142,7 +142,7 @@ spec:
 			"name":            "testpkgi",
 			"package_name":    "test-pkg.carvel.dev",
 			"package_version": "1.0.0",
-			"description":     "Reconcile succeeded",
+			"status":          "Reconcile succeeded",
 		}}
 
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
@@ -169,7 +169,7 @@ spec:
 			"name":            "testpkgi",
 			"package_name":    "test-pkg.carvel.dev",
 			"package_version": "2.0.0",
-			"description":     "Reconcile succeeded",
+			"status":          "Reconcile succeeded",
 		}}
 
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
