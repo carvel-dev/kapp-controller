@@ -100,7 +100,15 @@ func Run(opts Options, runLog logr.Logger) error {
 		return fmt.Errorf("Expected to find %s env var", kappctrlAPIPORTEnvKey)
 	}
 
-	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, apiserver.NewAPIServerOpts{
+	// to facilitate creation of many packages at once from a larger PKGR
+	pkgRestConfig := config.GetConfigOrDie()
+	pkgRestConfig.QPS = 60
+	pkgRestConfig.Burst = 90
+	pkgKcClient, err := kcclient.NewForConfig(pkgRestConfig)
+	if err != nil {
+		return fmt.Errorf("Building pkg kappctrl client: %s", err)
+	}
+	server, err := apiserver.NewAPIServer(pkgRestConfig, coreClient, pkgKcClient, apiserver.NewAPIServerOpts{
 		GlobalNamespace:              opts.PackagingGloablNS,
 		BindPort:                     bindPort,
 		EnableAPIPriorityAndFairness: opts.APIPriorityAndFairness,
