@@ -265,6 +265,7 @@ func (o *DeployOptions) newReconcilers(
 		AppMetrics:       appMetrics,
 		VendirConfigHook: vendirConfigHook,
 		KbldAllowBuild:   o.KbldBuild, // only for CLI mode
+		CmdRunner:        NewDetailedCmdRunner(os.Stdout, o.Debug),
 	}
 	appReconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 		appFactory, refTracker, updateStatusTracker)
