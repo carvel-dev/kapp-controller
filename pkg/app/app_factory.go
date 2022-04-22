@@ -9,6 +9,7 @@ import (
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
@@ -24,15 +25,17 @@ type CRDAppFactory struct {
 	AppMetrics     *metrics.AppMetrics
 	VendirHookFunc func(vendirconf.Config) vendirconf.Config
 	KbldAllowBuild bool
+	CmdRunner      exec.CmdRunner
 }
 
 // NewCRDApp creates a CRDApp injecting necessary dependencies.
 func (f *CRDAppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *CRDApp {
-	fetchFactory := fetch.NewFactory(f.CoreClient, fetch.VendirOpts{
+	vendirOpts := fetch.VendirOpts{
 		SkipTLSConfig: f.KcConfig,
 		HookFunc:      f.VendirHookFunc,
-	})
-	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, f.KbldAllowBuild)
-	deployFactory := deploy.NewFactory(f.CoreClient)
+	}
+	fetchFactory := fetch.NewFactory(f.CoreClient, vendirOpts, f.CmdRunner)
+	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, f.KbldAllowBuild, f.CmdRunner)
+	deployFactory := deploy.NewFactory(f.CoreClient, f.CmdRunner)
 	return NewCRDApp(app, log, f.AppMetrics, f.AppClient, fetchFactory, templateFactory, deployFactory)
 }

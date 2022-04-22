@@ -25,6 +25,7 @@ type Kapp struct {
 	opts        v1alpha1.AppDeployKapp
 	genericOpts ProcessedGenericOpts
 	cancelCh    chan struct{}
+	cmdRunner   exec.CmdRunner
 }
 
 var _ Deploy = &Kapp{}
@@ -32,8 +33,10 @@ var _ Deploy = &Kapp{}
 // NewKapp takes the kapp yaml from spec.deploy.kapp as arg kapp,
 // additional info from the larger app resource (e.g. service account, name, namespace) as genericOpts,
 // and a cancel channel that gets passed through to the exec call that runs kapp.
-func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts ProcessedGenericOpts, cancelCh chan struct{}) *Kapp {
-	return &Kapp{opts, genericOpts, cancelCh}
+func NewKapp(opts v1alpha1.AppDeployKapp, genericOpts ProcessedGenericOpts,
+	cancelCh chan struct{}, cmdRunner exec.CmdRunner) *Kapp {
+
+	return &Kapp{opts, genericOpts, cancelCh, cmdRunner}
 }
 
 func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
@@ -52,7 +55,7 @@ func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 
 	resultBuf, doneTrackingOutputCh := a.trackCmdOutput(cmd, startedApplyingFunc, changedFunc)
 
-	err = exec.RunWithCancel(cmd, a.cancelCh)
+	err = a.cmdRunner.RunWithCancel(cmd, a.cancelCh)
 	close(doneTrackingOutputCh)
 
 	result := resultBuf.Copy()
@@ -74,7 +77,7 @@ func (a *Kapp) Delete(startedApplyingFunc func(), changedFunc func(exec.CmdRunRe
 
 	resultBuf, doneTrackingOutputCh := a.trackCmdOutput(cmd, startedApplyingFunc, changedFunc)
 
-	err = exec.RunWithCancel(cmd, a.cancelCh)
+	err = a.cmdRunner.RunWithCancel(cmd, a.cancelCh)
 	close(doneTrackingOutputCh)
 
 	result := resultBuf.Copy()
@@ -104,7 +107,7 @@ func (a *Kapp) Inspect() exec.CmdRunResult {
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
-	err = exec.RunWithCancel(cmd, a.cancelCh)
+	err = a.cmdRunner.RunWithCancel(cmd, a.cancelCh)
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),

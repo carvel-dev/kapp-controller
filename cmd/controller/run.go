@@ -17,6 +17,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
@@ -154,6 +155,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			AppClient:  kcClient,
 			KcConfig:   kcConfig,
 			AppMetrics: appMetrics,
+			CmdRunner:  exec.NewPlainCmdRunner(),
 		}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 			appFactory, refTracker, updateStatusTracker)
