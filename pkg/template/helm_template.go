@@ -20,6 +20,7 @@ type HelmTemplate struct {
 	opts        v1alpha1.AppTemplateHelmTemplate
 	genericOpts GenericOpts
 	coreClient  kubernetes.Interface
+	cmdRunner   exec.CmdRunner
 }
 
 // HelmTemplateCmdArgs represents the binary and arguments used during templating
@@ -31,8 +32,10 @@ type HelmTemplateCmdArgs struct {
 var _ Template = &HelmTemplate{}
 
 func NewHelmTemplate(opts v1alpha1.AppTemplateHelmTemplate,
-	genericOpts GenericOpts, coreClient kubernetes.Interface) *HelmTemplate {
-	return &HelmTemplate{opts, genericOpts, coreClient}
+	genericOpts GenericOpts, coreClient kubernetes.Interface,
+	cmdRunner exec.CmdRunner) *HelmTemplate {
+
+	return &HelmTemplate{opts, genericOpts, coreClient, cmdRunner}
 }
 
 func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
@@ -96,7 +99,7 @@ func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResu
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
-	err := cmd.Run()
+	err := t.cmdRunner.Run(cmd)
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),

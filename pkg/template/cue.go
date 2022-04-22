@@ -19,12 +19,16 @@ type cue struct {
 	opts        v1alpha1.AppTemplateCue
 	coreClient  kubernetes.Interface
 	genericOpts GenericOpts
+	cmdRunner   exec.CmdRunner
 }
 
 var _ Template = &cue{}
 
-func newCue(opts v1alpha1.AppTemplateCue, genericOpts GenericOpts, coreClient kubernetes.Interface) *cue {
-	return &cue{opts: opts, genericOpts: genericOpts, coreClient: coreClient}
+func newCue(opts v1alpha1.AppTemplateCue, genericOpts GenericOpts,
+	coreClient kubernetes.Interface, cmdRunner exec.CmdRunner) *cue {
+
+	return &cue{opts: opts, genericOpts: genericOpts,
+		coreClient: coreClient, cmdRunner: cmdRunner}
 }
 
 // TemplateDir works on directory returning templating result,
@@ -75,7 +79,7 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	cmd.Stderr = &stderrBs
 	cmd.Dir = dirPath
 
-	err = cmd.Run()
+	err = c.cmdRunner.Run(cmd)
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),

@@ -12,6 +12,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
@@ -41,9 +42,9 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 
 	k8scs := k8sfake.NewSimpleClientset()
 	kappcs := fake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs, nil)
-	tmpFac := template.NewFactory(k8scs, fetchFac)
-	deployFac := deploy.NewFactory(k8scs)
+	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
+	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner())
 
 	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
@@ -107,9 +108,9 @@ func Test_NoInspectReconcile_IfInspectNotEnabled(t *testing.T) {
 
 	k8scs := k8sfake.NewSimpleClientset()
 	kappcs := fake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs, nil)
-	tmpFac := template.NewFactory(k8scs, fetchFac)
-	deployFac := deploy.NewFactory(k8scs)
+	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
+	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner())
 
 	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
@@ -178,9 +179,9 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 
 	k8scs := k8sfake.NewSimpleClientset()
 	kappcs := fake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs, nil)
-	tmpFac := template.NewFactory(k8scs, fetchFac)
-	deployFac := deploy.NewFactory(k8scs)
+	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
+	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner())
 
 	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)

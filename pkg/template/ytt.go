@@ -21,13 +21,15 @@ type Ytt struct {
 	genericOpts  GenericOpts
 	coreClient   kubernetes.Interface
 	fetchFactory fetch.Factory
+	cmdRunner    exec.CmdRunner
 }
 
 var _ Template = &Ytt{}
 
 func NewYtt(opts v1alpha1.AppTemplateYtt, genericOpts GenericOpts,
-	coreClient kubernetes.Interface, fetchFactory fetch.Factory) *Ytt {
-	return &Ytt{opts, genericOpts, coreClient, fetchFactory}
+	coreClient kubernetes.Interface, fetchFactory fetch.Factory, cmdRunner exec.CmdRunner) *Ytt {
+
+	return &Ytt{opts, genericOpts, coreClient, fetchFactory, cmdRunner}
 }
 
 func (t *Ytt) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
@@ -78,7 +80,7 @@ func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
-	err = cmd.Run()
+	err = t.cmdRunner.Run(cmd)
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),
