@@ -119,7 +119,7 @@ func (o *DeleteOptions) patchNoopDelete(client kcclient.Interface) error {
 		return err
 	}
 
-	o.ui.PrintLinef("Ignoring associated resources for app '%s' in namespace '%s'...", o.Name, o.NamespaceFlags.Name)
+	o.ui.BeginLinef("%s: Ignoring associated resources for app '%s' in namespace '%s'\n", time.Now().Format("3:04:05PM"), o.Name, o.NamespaceFlags.Name)
 
 	_, err = client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
 	if err != nil {

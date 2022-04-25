@@ -5,6 +5,7 @@ package installed
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -22,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 )
@@ -33,6 +35,8 @@ type DeleteOptions struct {
 
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
+
+	NoOp bool
 
 	WaitFlags cmdcore.WaitFlags
 
@@ -58,6 +62,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
+		cmd.Flags().BoolVar(&o.NoOp, "noop", false, "Ignore resources created by the package install and delete the custom resource itself")
 	} else {
 		cmd.Use = "delete INSTALLED_PACKAGE_NAME"
 		cmd.Args = cobra.ExactArgs(1)
@@ -113,6 +118,13 @@ func (o *DeleteOptions) Run(args []string) error {
 
 	o.ui.BeginLinef("%s: Deleting package install '%s' from namespace '%s'\n", time.Now().Format("3:04:05PM"), o.Name, o.NamespaceFlags.Name)
 
+	if o.NoOp {
+		err = o.patchNoopDelete(kcClient)
+		if err != nil {
+			return err
+		}
+	}
+
 	err = kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Delete(
 		context.Background(), o.Name, metav1.DeleteOptions{})
 	if err != nil {
@@ -127,6 +139,30 @@ func (o *DeleteOptions) Run(args []string) error {
 	}
 
 	return o.deleteInstallCreatedResources(pkgi, dynamicClient)
+}
+
+func (o *DeleteOptions) patchNoopDelete(client kcclient.Interface) error {
+	noopDeletePatch := []map[string]interface{}{
+		{
+			"op":    "add",
+			"path":  "/spec/noopDelete",
+			"value": true,
+		},
+	}
+
+	patchJSON, err := json.Marshal(noopDeletePatch)
+	if err != nil {
+		return err
+	}
+
+	o.ui.BeginLinef("%s: Ignoring associated resources for package install '%s' in namespace '%s'\n", time.Now().Format("3:04:05PM"), o.Name, o.NamespaceFlags.Name)
+
+	_, err = client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // deletePkgPluginCreatedResources deletes the associated resources which were installed upon installation of the PackageInstall CR
