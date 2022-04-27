@@ -128,7 +128,7 @@ func (o *GetOptions) Run(args []string) error {
 			uitable.NewValueString(pkgi.Name),
 			uitable.NewValueString(pkgi.Spec.PackageRef.RefName),
 			uitable.NewValueString(pkgi.Status.Version),
-			uitable.NewValueString(pkgi.Status.FriendlyDescription),
+			uitable.NewValueString(packageInstallStatus(pkgi)),
 			uitable.NewValueInterface(pkgi.Status.Conditions),
 			uitable.NewValueString(color.RedString(pkgi.Status.UsefulErrorMessage)),
 		}},
