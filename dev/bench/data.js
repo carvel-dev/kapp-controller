@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651084112356,
+  "lastUpdate": 1651090655787,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -579,6 +579,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6635186613,
             "unit": "ns/op\t         4.405 DeleteSeconds\t         2.184 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "43367ce2d476bd35b7c59d72bfc23d03fbcc159c",
+          "message": "Merge pull request #637 from vmware-tanzu/kctrl-package\n\n`kctrl`: Adding commands kick, status and pause to `kctrl package installed` command tree",
+          "timestamp": "2022-04-28T01:35:57+05:30",
+          "tree_id": "8cd69bac23e54d56a58a882e4491dcdf84037578",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/43367ce2d476bd35b7c59d72bfc23d03fbcc159c"
+        },
+        "date": 1651090654964,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36856125340,
+            "unit": "ns/op\t        19.21 DeleteSeconds\t        17.60 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9703534569,
+            "unit": "ns/op\t         5.411 DeleteSeconds\t         4.243 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6601508858,
+            "unit": "ns/op\t         4.404 DeleteSeconds\t         2.153 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
