@@ -82,14 +82,28 @@ func (o *ListOptions) Run() error {
 	}
 
 	for _, app := range appList.Items {
-		table.Rows = append(table.Rows, []uitable.Value{
-			cmdcore.NewValueNamespace(app.Namespace),
-			uitable.NewValueString(app.Name),
-			uitable.NewValueString(app.Status.FriendlyDescription),
-			cmdcore.NewValueAge(app.Status.Deploy.UpdatedAt.Time),
-			uitable.NewValueString(o.owner(app.OwnerReferences)),
-			cmdcore.NewValueAge(app.CreationTimestamp.Time),
-		})
+		// Display since deploy only if deploy has occurred
+		if app.Status.Deploy != nil {
+			table.Rows = append(table.Rows, []uitable.Value{
+				cmdcore.NewValueNamespace(app.Namespace),
+				uitable.NewValueString(app.Name),
+				uitable.NewValueString(app.Status.FriendlyDescription),
+				cmdcore.NewValueAge(app.Status.Deploy.UpdatedAt.Time),
+				uitable.NewValueString(o.owner(app.OwnerReferences)),
+				cmdcore.NewValueAge(app.CreationTimestamp.Time),
+			})
+
+		} else {
+			table.Rows = append(table.Rows, []uitable.Value{
+				cmdcore.NewValueNamespace(app.Namespace),
+				uitable.NewValueString(app.Name),
+				uitable.NewValueString(app.Status.FriendlyDescription),
+				uitable.NewValueString(""),
+				uitable.NewValueString(o.owner(app.OwnerReferences)),
+				cmdcore.NewValueAge(app.CreationTimestamp.Time),
+			})
+		}
+
 	}
 
 	o.ui.PrintTable(table)
