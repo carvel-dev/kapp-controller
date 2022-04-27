@@ -24,6 +24,7 @@ import (
 
 type PauseOrKickOptions struct {
 	ui          ui.UI
+	statusUI    cmdcore.StatusLoggingUI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
@@ -36,7 +37,7 @@ type PauseOrKickOptions struct {
 }
 
 func NewPauseOrKickOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *PauseOrKickOptions {
-	return &PauseOrKickOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
+	return &PauseOrKickOptions{ui: ui, statusUI: cmdcore.NewStatusLoggingUI(ui), depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewPauseCmd(o *PauseOrKickOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -205,7 +206,7 @@ func (o *PauseOrKickOptions) unpause(client kcclient.Interface) error {
 // waitForPackageInstallReconciliation waits until the package get installed successfully or a failure happen
 // TODO Move reconciliation to a common place for create-or-update and pause-or-kick
 func (o *PauseOrKickOptions) waitForPackageInstallReconciliation(client kcclient.Interface) error {
-	o.ui.BeginLinef("%s: Waiting for PackageInstall reconciliation for '%s'", time.Now().Format("3:04:05PM"), o.Name)
+	o.statusUI.PrintMessagef("Waiting for PackageInstall reconciliation for '%s'", o.Name)
 	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 	description := getPackageInstallDescription(o.Name, o.NamespaceFlags.Name)
 
@@ -217,7 +218,7 @@ func (o *PauseOrKickOptions) waitForPackageInstallReconciliation(client kcclient
 
 		err := appWatcher.TailAppStatus()
 		if err != nil {
-			o.ui.BeginLinef("%s: Error tailing or reconciling app: %s\n", time.Now().Format("3:04:05PM"), err.Error())
+			o.statusUI.PrintMessagef("Error tailing or reconciling app: %s", err.Error())
 			*tailErrored = true
 		}
 	}

@@ -34,6 +34,7 @@ const (
 
 type CreateOrUpdateOptions struct {
 	ui          ui.UI
+	statusUI    cmdcore.StatusLoggingUI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
@@ -54,7 +55,7 @@ type CreateOrUpdateOptions struct {
 }
 
 func NewCreateOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *CreateOrUpdateOptions {
-	return &CreateOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
+	return &CreateOrUpdateOptions{ui: ui, statusUI: cmdcore.NewStatusLoggingUI(ui), depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -238,7 +239,7 @@ func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient kcc
 		return err
 	}
 
-	o.ui.BeginLinef("%s: Creating package install resource\n", time.Now().Format("3:04:05PM"))
+	o.statusUI.PrintMessagef("Creating package install resource")
 	if err = o.createPackageInstall(isServiceAccountCreated, isSecretCreated, kcClient); err != nil {
 		return err
 	}
@@ -269,7 +270,7 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 
 	o.createdAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
 
-	o.ui.BeginLinef("%s: Getting package install for '%s'\n", time.Now().Format("3:04:05PM"), o.Name)
+	o.statusUI.PrintMessagef("Getting package install for '%s'", o.Name)
 	pkgInstall, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
 		context.Background(), o.Name, metav1.GetOptions{},
 	)
@@ -280,7 +281,7 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 		if !o.install {
 			return fmt.Errorf("Package not installed")
 		}
-		o.ui.BeginLinef("%s: Installing package '%s'\n", time.Now().Format("3:04:05PM"), o.Name)
+		o.statusUI.PrintMessagef("Installing package '%s'", o.Name)
 
 		err = o.create(client, kcClient)
 		if err != nil {
@@ -313,7 +314,7 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		return err
 	}
 
-	o.ui.BeginLinef("%s: Updating package install for '%s'\n", time.Now().Format("3:04:05PM"), o.Name)
+	o.statusUI.PrintMessagef("Updating package install for '%s'", o.Name)
 	o.addCreatedResourceAnnotations(&updatedPkgInstall.ObjectMeta, false, isSecretCreated)
 	_, err = kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Update(
 		context.Background(), updatedPkgInstall, metav1.UpdateOptions{},
@@ -341,17 +342,17 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 
 	if o.serviceAccountName == "" {
 
-		o.ui.BeginLinef("%s: Creating service account '%s'\n", time.Now().Format("3:04:05PM"), o.createdAnnotations.ServiceAccountAnnValue())
+		o.statusUI.PrintMessagef("Creating service account '%s'", o.createdAnnotations.ServiceAccountAnnValue())
 		if isServiceAccountCreated, err = o.createOrUpdateServiceAccount(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
 
-		o.ui.BeginLinef("%s: Creating cluster admin role '%s'\n", time.Now().Format("3:04:05PM"), o.createdAnnotations.ClusterRoleAnnValue())
+		o.statusUI.PrintMessagef("Creating cluster admin role '%s'", o.createdAnnotations.ClusterRoleAnnValue())
 		if err := o.createOrUpdateClusterAdminRole(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
 
-		o.ui.BeginLinef("%s: Creating cluster role binding '%s'\n", time.Now().Format("3:04:05PM"), o.createdAnnotations.ClusterRoleBindingAnnValue())
+		o.statusUI.PrintMessagef("Creating cluster role binding '%s'", o.createdAnnotations.ClusterRoleBindingAnnValue())
 		if err := o.createOrUpdateClusterRoleBinding(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
@@ -382,7 +383,7 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 	}
 
 	if o.valuesFile != "" {
-		o.ui.BeginLinef("%s: Creating secret '%s'\n", time.Now().Format("3:04:05PM"), o.createdAnnotations.SecretAnnValue())
+		o.statusUI.PrintMessagef("Creating secret '%s'", o.createdAnnotations.SecretAnnValue())
 		if isSecretCreated, err = o.createOrUpdateDataValuesSecret(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
 		}
@@ -616,7 +617,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *k
 
 	if len(pkgInstallToUpdate.Spec.Values) == 1 && pkgInstallToUpdate.Spec.Values[0].SecretRef.Name != "" {
 		secretName = pkgInstallToUpdate.Spec.Values[0].SecretRef.Name
-		o.ui.BeginLinef("%s: Updating secret '%s'\n", time.Now().Format("3:04:05PM"), secretName)
+		o.statusUI.PrintMessagef("Updating secret '%s'", secretName)
 		err := o.updateDataValuesSecret(client, secretName)
 		if err != nil {
 			return false, fmt.Errorf("Failed to update manually referenced secret based on values file: %s", err.Error())
@@ -627,12 +628,12 @@ func (o *CreateOrUpdateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *k
 	// Second condition supports older versions of Tanzu CLI. To be deprecated
 	if secretName == pkgInstallToUpdate.GetAnnotations()[KctrlPkgAnnotation+"-"+KindSecret.AsString()] ||
 		secretName == pkgInstallToUpdate.GetAnnotations()[TanzuPkgAnnotation+"-"+KindSecret.AsString()] {
-		o.ui.BeginLinef("%s: Updating secret '%s'\n", time.Now().Format("3:04:05PM"), secretName)
+		o.statusUI.PrintMessagef("Updating secret '%s'", secretName)
 		if err = o.updateDataValuesSecret(client, secretName); err != nil {
 			return false, fmt.Errorf("Failed to update secret based on values file: %s", err.Error())
 		}
 	} else {
-		o.ui.BeginLinef("%s: Creating secret '%s'\n", time.Now().Format("3:04:05PM"), secretName)
+		o.statusUI.PrintMessagef("Creating secret '%s'", secretName)
 		if secretCreated, err = o.createOrUpdateDataValuesSecret(client); err != nil {
 			return secretCreated, fmt.Errorf("Failed to create secret based on values file: %s", err.Error())
 		}
@@ -705,7 +706,7 @@ func (o *CreateOrUpdateOptions) addCreatedResourceAnnotations(meta *metav1.Objec
 
 // waitForResourceInstallation waits until the package get installed successfully or a failure happens
 func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace string, pollInterval, pollTimeout time.Duration, client kcclient.Interface) error {
-	o.ui.BeginLinef("%s: Waiting for PackageInstall reconciliation for '%s'\n", time.Now().Format("3:04:05PM"), name)
+	o.statusUI.PrintMessagef("Waiting for PackageInstall reconciliation for '%s'", name)
 	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 	description := getPackageInstallDescription(o.Name, o.NamespaceFlags.Name)
 
@@ -717,7 +718,7 @@ func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace stri
 
 		err := appWatcher.TailAppStatus()
 		if err != nil {
-			o.ui.BeginLinef("%s: Error tailing app: %s\n", time.Now().Format("3:04:05PM"), err.Error())
+			o.statusUI.PrintMessagef("Error tailing app: %s\n", err.Error())
 			*tailErrored = true
 		}
 	}
@@ -726,7 +727,6 @@ func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace stri
 	if err := wait.Poll(pollInterval, pollTimeout, func() (done bool, err error) {
 
 		resource, err := client.PackagingV1alpha1().PackageInstalls(namespace).Get(context.Background(), name, metav1.GetOptions{})
-		//resource, err := p.kappClient.GetPackageInstall(name, namespace)
 		if err != nil {
 			return false, err
 		}

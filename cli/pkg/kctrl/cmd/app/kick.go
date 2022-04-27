@@ -21,6 +21,7 @@ import (
 
 type KickOptions struct {
 	ui          ui.UI
+	statusUI    cmdcore.StatusLoggingUI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
@@ -31,7 +32,7 @@ type KickOptions struct {
 }
 
 func NewKickOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *KickOptions {
-	return &KickOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+	return &KickOptions{ui: ui, statusUI: cmdcore.NewStatusLoggingUI(ui), depsFactory: depsFactory, logger: logger}
 }
 
 func NewKickCmd(o *KickOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -109,7 +110,7 @@ func (o *KickOptions) triggerReconciliation(client kcclient.Interface) error {
 		return err
 	}
 
-	o.ui.BeginLinef("%s: Triggering reconciliation for app '%s' in namespace '%s'\n", time.Now().Format("3:04:05PM"), o.Name, o.NamespaceFlags.Name)
+	o.statusUI.PrintMessagef("Triggering reconciliation for app '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 
 	_, err = client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
 	if err != nil {
@@ -137,7 +138,7 @@ func (o *KickOptions) triggerReconciliation(client kcclient.Interface) error {
 }
 
 func (o *KickOptions) waitForAppReconciliation(client kcclient.Interface) error {
-	o.ui.BeginLinef("%s: Waiting for app reconciliation for '%s'\n", time.Now().Format("3:04:05PM"), o.Name)
+	o.statusUI.PrintMessagef("Waiting for app reconciliation for '%s'", o.Name)
 	appWatcher := NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, AppTailerOpts{})
 
 	err := appWatcher.TailAppStatus()
