@@ -20,8 +20,8 @@ require (
 	k8s.io/apimachinery v0.22.9
 	k8s.io/apiserver v0.22.9
 	k8s.io/client-go v0.22.9
-	k8s.io/code-generator v0.22.4
-	k8s.io/kube-aggregator v0.22.4
+	k8s.io/code-generator v0.22.9
+	k8s.io/kube-aggregator v0.22.9
 	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65
 	sigs.k8s.io/controller-runtime v0.10.3
 	sigs.k8s.io/controller-tools v0.7.0
