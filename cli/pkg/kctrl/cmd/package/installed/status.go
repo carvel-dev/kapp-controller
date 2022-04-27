@@ -62,7 +62,7 @@ func (o *StatusOptions) Run() error {
 	}
 
 	if app.OwnerReferences[0].Kind != "PackageInstall" || app.OwnerReferences[0].Name != o.Name {
-		return fmt.Errorf("Could not find app associated with app '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+		return fmt.Errorf("Could not find app associated with package install '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 	}
 
 	appWatcher := cmdapp.NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, cmdapp.AppTailerOpts{

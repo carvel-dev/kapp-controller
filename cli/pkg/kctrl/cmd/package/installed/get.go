@@ -207,3 +207,13 @@ func (o *GetOptions) showValuesData(pkgi *kcpkgv1alpha1.PackageInstall) error {
 
 	return nil
 }
+
+func packageInstallStatus(pkgi *kcpkgv1alpha1.PackageInstall) string {
+	if pkgi.Spec.Canceled {
+		return "Canceled"
+	}
+	if pkgi.Spec.Paused {
+		return "Paused"
+	}
+	return pkgi.Status.FriendlyDescription
+}
