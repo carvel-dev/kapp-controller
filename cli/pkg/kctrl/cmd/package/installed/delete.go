@@ -5,6 +5,7 @@ package installed
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -22,17 +23,21 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 )
 
 type DeleteOptions struct {
 	ui          ui.UI
+	statusUI    cmdcore.StatusLoggingUI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
+
+	NoOp bool
 
 	WaitFlags cmdcore.WaitFlags
 
@@ -40,7 +45,7 @@ type DeleteOptions struct {
 }
 
 func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *DeleteOptions {
-	return &DeleteOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
+	return &DeleteOptions{ui: ui, statusUI: cmdcore.NewStatusLoggingUI(ui), depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -58,6 +63,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
+		cmd.Flags().BoolVar(&o.NoOp, "noop", false, "Ignore resources created by the package install and delete the custom resource itself")
 	} else {
 		cmd.Use = "delete INSTALLED_PACKAGE_NAME"
 		cmd.Args = cobra.ExactArgs(1)
@@ -111,7 +117,14 @@ func (o *DeleteOptions) Run(args []string) error {
 		return o.cleanUpIfInstallNotFound(dynamicClient)
 	}
 
-	o.ui.BeginLinef("%s: Deleting package install '%s' from namespace '%s'\n", time.Now().Format("3:04:05PM"), o.Name, o.NamespaceFlags.Name)
+	o.statusUI.PrintMessagef("Deleting package install '%s' from namespace '%s'", o.Name, o.NamespaceFlags.Name)
+
+	if o.NoOp {
+		err = o.patchNoopDelete(kcClient)
+		if err != nil {
+			return err
+		}
+	}
 
 	err = kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Delete(
 		context.Background(), o.Name, metav1.DeleteOptions{})
@@ -119,7 +132,7 @@ func (o *DeleteOptions) Run(args []string) error {
 		return err
 	}
 
-	o.ui.BeginLinef("%s: Waiting for deletion of package install '%s' from namespace '%s'\n", time.Now().Format("3:04:05PM"), o.Name, o.NamespaceFlags.Name)
+	o.statusUI.PrintMessagef("Waiting for deletion of package install '%s' from namespace '%s'", o.Name, o.NamespaceFlags.Name)
 
 	err = o.waitForResourceDelete(kcClient)
 	if err != nil {
@@ -127,6 +140,30 @@ func (o *DeleteOptions) Run(args []string) error {
 	}
 
 	return o.deleteInstallCreatedResources(pkgi, dynamicClient)
+}
+
+func (o *DeleteOptions) patchNoopDelete(client kcclient.Interface) error {
+	noopDeletePatch := []map[string]interface{}{
+		{
+			"op":    "add",
+			"path":  "/spec/noopDelete",
+			"value": true,
+		},
+	}
+
+	patchJSON, err := json.Marshal(noopDeletePatch)
+	if err != nil {
+		return err
+	}
+
+	o.statusUI.PrintMessagef("Ignoring associated resources for package install '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+
+	_, err = client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // deletePkgPluginCreatedResources deletes the associated resources which were installed upon installation of the PackageInstall CR
@@ -162,7 +199,7 @@ func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.
 			namespace = o.NamespaceFlags.Name
 		}
 
-		o.ui.BeginLinef("%s: Deleting '%s': %s\n", time.Now().Format("3:04:05PM"), resourceKind, resourceName)
+		o.statusUI.PrintMessagef("Deleting '%s': %s", resourceKind, resourceName)
 
 		err := o.deleteResourceUsingGVR(schema.GroupVersionResource{
 			Group:    apiGroup,
@@ -275,7 +312,7 @@ func (o *DeleteOptions) waitForResourceDelete(kcClient kcclient.Interface) error
 
 		err := appWatcher.TailAppStatus()
 		if err != nil {
-			o.ui.BeginLinef("%s: Error tailing app: %s", time.Now().Format("3:04:05PM"), err.Error())
+			o.statusUI.PrintMessagef("Error tailing or reconciling app: %s", err.Error())
 			*tailErrored = true
 		}
 	}

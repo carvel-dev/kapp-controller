@@ -96,7 +96,7 @@ func (o *ListOptions) Run() error {
 			uitable.NewValueString(pkgi.Name),
 			uitable.NewValueString(pkgi.Spec.PackageRef.RefName),
 			uitable.NewValueString(pkgi.Status.Version),
-			uitable.NewValueString(pkgi.Status.FriendlyDescription),
+			uitable.NewValueString(packageInstallStatus(&pkgi)),
 		})
 	}
 
