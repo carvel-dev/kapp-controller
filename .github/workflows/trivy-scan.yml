@@ -97,7 +97,7 @@ jobs:
           trivy image --ignore-unfixed --format sarif --output trivy-results-image.sarif "docker.io/carvel/kapp-controller:${{ github.sha }}"
           trivy image --ignore-unfixed --format json --output trivy-results-image.json "docker.io/carvel/kapp-controller:${{ github.sha }}"
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
+        uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: '.'
       - name: Create Issues Summary
