@@ -6,20 +6,18 @@ package app
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
-	"github.com/k14s/difflib"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcexternalversions "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/duration"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -27,8 +25,9 @@ type AppTailer struct {
 	Namespace string
 	Name      string
 
-	ui     ui.UI
-	client kcclient.Interface
+	ui       ui.UI
+	statusUI cmdcore.StatusLoggingUI
+	client   kcclient.Interface
 
 	stopperChan       chan struct{}
 	erroredWhileWatch bool
@@ -45,7 +44,7 @@ type AppTailerOpts struct {
 }
 
 func NewAppTailer(namespace string, name string, ui ui.UI, client kcclient.Interface, opts AppTailerOpts) *AppTailer {
-	return &AppTailer{Namespace: namespace, Name: name, opts: opts, ui: ui, client: client}
+	return &AppTailer{Namespace: namespace, Name: name, opts: opts, ui: ui, statusUI: cmdcore.NewStatusLoggingUI(ui), client: client}
 }
 
 func (o *AppTailer) printTillCurrent(status kcv1alpha1.AppStatus) error {
@@ -64,30 +63,30 @@ func (o *AppTailer) printTillCurrent(status kcv1alpha1.AppStatus) error {
 func (o *AppTailer) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alpha1.AppStatus) {
 	if status.Fetch != nil {
 		if oldStatus.Fetch == nil || (!oldStatus.Fetch.StartedAt.Equal(&status.Fetch.StartedAt) && status.Fetch.UpdatedAt.Unix() <= status.Fetch.StartedAt.Unix()) {
-			o.printLogLine("Fetch started", "", false, status.Fetch.StartedAt.Time)
+			o.statusUI.PrintLogLine("Fetch started", "", false, status.Fetch.StartedAt.Time)
 		}
 		if oldStatus.Fetch == nil || !oldStatus.Fetch.UpdatedAt.Equal(&status.Fetch.UpdatedAt) {
 			if status.Fetch.ExitCode != 0 && status.Fetch.UpdatedAt.Unix() >= status.Fetch.StartedAt.Unix() {
 				msg := "Fetch failed"
-				o.printLogLine(msg, status.Fetch.Stderr, true, status.Fetch.UpdatedAt.Time)
+				o.statusUI.PrintLogLine(msg, status.Fetch.Stderr, true, status.Fetch.UpdatedAt.Time)
 				o.failureMessage = msg
 				o.stopWatch(true)
 				return
 			}
-			o.printLogLine("Fetching", status.Fetch.Stdout, false, status.Fetch.UpdatedAt.Time)
-			o.printLogLine("Fetch succeeded", "", false, status.Fetch.UpdatedAt.Time)
+			o.statusUI.PrintLogLine("Fetching", status.Fetch.Stdout, false, status.Fetch.UpdatedAt.Time)
+			o.statusUI.PrintLogLine("Fetch succeeded", "", false, status.Fetch.UpdatedAt.Time)
 		}
 	}
 	if status.Template != nil {
 		if oldStatus.Template == nil || !oldStatus.Template.UpdatedAt.Equal(&status.Template.UpdatedAt) {
 			if status.Template.ExitCode != 0 {
 				msg := "Template failed"
-				o.printLogLine(msg, status.Template.Stderr, true, status.Template.UpdatedAt.Time)
+				o.statusUI.PrintLogLine(msg, status.Template.Stderr, true, status.Template.UpdatedAt.Time)
 				o.failureMessage = msg
 				o.stopWatch(true)
 				return
 			}
-			o.printLogLine("Template succeeded", "", false, status.Template.UpdatedAt.Time)
+			o.statusUI.PrintLogLine("Template succeeded", "", false, status.Template.UpdatedAt.Time)
 		}
 	}
 	if status.Deploy != nil {
@@ -98,12 +97,12 @@ func (o *AppTailer) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alpha
 		}
 		if oldStatus.Deploy == nil || !oldStatus.Deploy.StartedAt.Equal(&status.Deploy.StartedAt) {
 			msg := fmt.Sprintf("%s started", ongoingOp)
-			o.printLogLine(msg, "", false, status.Deploy.StartedAt.Time)
+			o.statusUI.PrintLogLine(msg, "", false, status.Deploy.StartedAt.Time)
 		}
 		if oldStatus.Deploy == nil || !oldStatus.Deploy.UpdatedAt.Equal(&status.Deploy.UpdatedAt) {
 			if status.Deploy.ExitCode != 0 && status.Deploy.Finished {
 				msg := fmt.Sprintf("Deploy failed")
-				o.printLogLine(msg, status.Deploy.Stderr, true, status.Deploy.UpdatedAt.Time)
+				o.statusUI.PrintLogLine(msg, status.Deploy.Stderr, true, status.Deploy.UpdatedAt.Time)
 				o.failureMessage = msg
 				o.stopWatch(true)
 				return
@@ -113,12 +112,12 @@ func (o *AppTailer) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alpha
 	}
 
 	if o.hasReconciled(status) {
-		o.printLogLine("App reconciled", "", false, status.Deploy.UpdatedAt.Time)
+		o.statusUI.PrintLogLine("App reconciled", "", false, status.Deploy.UpdatedAt.Time)
 		o.stopWatch(false)
 	}
 	failed, errMsg := o.hasFailed(status)
 	if failed {
-		o.printLogLine(errMsg, "", true, time.Now())
+		o.statusUI.PrintLogLine(errMsg, "", true, time.Now())
 		o.stopWatch(true)
 	}
 }
@@ -262,7 +261,7 @@ func (o *AppTailer) udpateEventHandler(oldObj interface{}, newObj interface{}) {
 	oldApp, _ := oldObj.(*kcv1alpha1.App)
 
 	if newApp.Generation != newApp.Status.ObservedGeneration {
-		o.printLogLine(fmt.Sprintf("Waiting for generation %d to be observed", newApp.Generation), "", false, time.Now())
+		o.statusUI.PrintLogLine(fmt.Sprintf("Waiting for generation %d to be observed", newApp.Generation), "", false, time.Now())
 		return
 	}
 
@@ -270,35 +269,8 @@ func (o *AppTailer) udpateEventHandler(oldObj interface{}, newObj interface{}) {
 }
 
 func (o *AppTailer) deleteEventHandler(oldObj interface{}) {
-	o.printLogLine(fmt.Sprintf("App '%s' in namespace '%s' deleted", o.Name, o.Namespace), "", false, time.Now())
+	o.statusUI.PrintLogLine(fmt.Sprintf("App '%s' in namespace '%s' deleted", o.Name, o.Namespace), "", false, time.Now())
 	o.stopWatch(false)
-}
-
-func (o *AppTailer) printLogLine(message string, messageBlock string, errorBlock bool, startTime time.Time) {
-	messageAge := ""
-	if time.Since(startTime) > 1*time.Second {
-		messageAge = fmt.Sprintf("(%s ago)", duration.ShortHumanDuration(time.Since(startTime)))
-	}
-	o.ui.BeginLinef("%s: %s %s\n", startTime.Local().Format("3:04:05PM"), message, messageAge)
-	if len(messageBlock) > 0 {
-		o.ui.PrintBlock([]byte(o.indentMessageBlock(messageBlock, errorBlock)))
-	}
-}
-
-func (o *AppTailer) indentMessageBlock(messageBlock string, errored bool) string {
-	lines := strings.Split(messageBlock, "\n")
-	for ind := range lines {
-		if errored {
-			lines[ind] = color.RedString(lines[ind])
-		}
-		lines[ind] = fmt.Sprintf("\t    | %s", lines[ind])
-	}
-
-	indentedBlock := strings.Join(lines, "\n")
-	if strings.LastIndex(indentedBlock, "\n") != (len(indentedBlock) - 1) {
-		indentedBlock += "\n"
-	}
-	return indentedBlock
 }
 
 func (o *AppTailer) printDeployStdout(stdout string, timestamp time.Time, isDeleting bool) {
@@ -308,27 +280,11 @@ func (o *AppTailer) printDeployStdout(stdout string, timestamp time.Time, isDele
 		if isDeleting {
 			msg = "Deleting"
 		}
-		o.printLogLine(msg, stdout, false, timestamp)
+		o.statusUI.PrintLogLine(msg, stdout, false, timestamp)
 		return
 	}
 
-	oldLines := strings.Split(o.lastSeenDeployStdout, "\n")
-	newLines := strings.Split(stdout, "\n")
-	diff := difflib.Diff(oldLines, newLines)
-
-	var lines []string
-	for _, diffLine := range diff {
-		switch diffLine.Delta {
-		case difflib.RightOnly:
-			lines = append(lines, diffLine.Payload)
-		}
-	}
+	o.statusUI.PrintMessageBlockDiff(o.lastSeenDeployStdout, stdout, timestamp)
 
 	o.lastSeenDeployStdout = stdout
-	if len(lines) > 0 {
-		for _, line := range lines {
-			o.ui.BeginLinef("\t    | %s\n", line)
-			time.Sleep(10 * time.Millisecond)
-		}
-	}
 }

@@ -157,6 +157,9 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 	pkgiCmd.AddCommand(pkginst.NewCreateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgiCmd.AddCommand(pkginst.NewUpdateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgiCmd.AddCommand(pkginst.NewDeleteCmd(pkginst.NewDeleteOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewPauseCmd(pkginst.NewPauseOrKickOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewKickCmd(pkginst.NewPauseOrKickOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewStatusCmd(pkginst.NewStatusOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 
 	pkgaCmd := pkgavail.NewCmd()
 	pkgaCmd.AddCommand(pkgavail.NewListCmd(pkgavail.NewListOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))

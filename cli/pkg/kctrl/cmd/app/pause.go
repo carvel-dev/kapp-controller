@@ -35,19 +35,19 @@ func NewPauseCmd(o *PauseOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 	cmd := &cobra.Command{
 		Use:     "pause",
 		Aliases: []string{"p"},
-		Short:   "Pause reconciliation for App",
+		Short:   "Pause reconciliation for app",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set App name (required)")
+	cmd.Flags().StringVarP(&o.Name, "app", "a", "", "Set app name (required)")
 
 	return cmd
 }
 
 func (o *PauseOptions) Run() error {
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected App name to be non empty")
+		return fmt.Errorf("Expected app name to be non empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()

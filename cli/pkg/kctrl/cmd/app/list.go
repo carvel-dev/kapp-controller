@@ -6,6 +6,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
@@ -37,19 +38,19 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List Apps in all namespaces")
+	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List apps in all namespaces")
 
 	return cmd
 }
 
 func (o *ListOptions) Run() error {
-	tableTitle := fmt.Sprintf("Available Apps in namespace '%s'", o.NamespaceFlags.Name)
+	tableTitle := fmt.Sprintf("Available apps in namespace '%s'", o.NamespaceFlags.Name)
 	nsHeader := uitable.NewHeader("Namespace")
 	nsHeader.Hidden = true
 
 	if o.AllNamespaces {
 		o.NamespaceFlags.Name = ""
-		tableTitle = "Available Apps in all namespaces"
+		tableTitle = "Available apps in all namespaces"
 		nsHeader.Hidden = false
 	}
 
@@ -82,11 +83,16 @@ func (o *ListOptions) Run() error {
 	}
 
 	for _, app := range appList.Items {
+		sinceDeployAge := cmdcore.NewValueAge(time.Time{})
+		if app.Status.Deploy != nil {
+			sinceDeployAge = cmdcore.NewValueAge(app.Status.Deploy.UpdatedAt.Time)
+		}
+
 		table.Rows = append(table.Rows, []uitable.Value{
 			cmdcore.NewValueNamespace(app.Namespace),
 			uitable.NewValueString(app.Name),
 			uitable.NewValueString(app.Status.FriendlyDescription),
-			cmdcore.NewValueAge(app.Status.Deploy.UpdatedAt.Time),
+			sinceDeployAge,
 			uitable.NewValueString(o.owner(app.OwnerReferences)),
 			cmdcore.NewValueAge(app.CreationTimestamp.Time),
 		})

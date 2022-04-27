@@ -128,7 +128,7 @@ func (o *GetOptions) Run(args []string) error {
 			uitable.NewValueString(pkgi.Name),
 			uitable.NewValueString(pkgi.Spec.PackageRef.RefName),
 			uitable.NewValueString(pkgi.Status.Version),
-			uitable.NewValueString(pkgi.Status.FriendlyDescription),
+			uitable.NewValueString(packageInstallStatus(pkgi)),
 			uitable.NewValueInterface(pkgi.Status.Conditions),
 			uitable.NewValueString(color.RedString(pkgi.Status.UsefulErrorMessage)),
 		}},
@@ -206,4 +206,14 @@ func (o *GetOptions) showValuesData(pkgi *kcpkgv1alpha1.PackageInstall) error {
 	o.ui.PrintBlock(data)
 
 	return nil
+}
+
+func packageInstallStatus(pkgi *kcpkgv1alpha1.PackageInstall) string {
+	if pkgi.Spec.Canceled {
+		return "Canceled"
+	}
+	if pkgi.Spec.Paused {
+		return "Paused"
+	}
+	return pkgi.Status.FriendlyDescription
 }
