@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651082397499,
+  "lastUpdate": 1651082410611,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -495,6 +495,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6531480074,
             "unit": "ns/op\t         4.351 DeleteSeconds\t         2.135 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "distinct": true,
+          "id": "3b02b556f3de6ef9fa794d37768321559f99a918",
+          "message": "Bump github.com/stretchr/testify from 1.7.0 to 1.7.1\n\nBumps [github.com/stretchr/testify](https://github.com/stretchr/testify) from 1.7.0 to 1.7.1.\n- [Release notes](https://github.com/stretchr/testify/releases)\n- [Commits](https://github.com/stretchr/testify/compare/v1.7.0...v1.7.1)\n\n---\nupdated-dependencies:\n- dependency-name: github.com/stretchr/testify\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2022-04-27T17:49:43Z",
+          "tree_id": "7aa3cf4117765d721d29ece644bfdf9ed7abf61f",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/3b02b556f3de6ef9fa794d37768321559f99a918"
+        },
+        "date": 1651082409903,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36606529854,
+            "unit": "ns/op\t        19.00 DeleteSeconds\t        17.55 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9577952833,
+            "unit": "ns/op\t         5.336 DeleteSeconds\t         4.198 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6475583865,
+            "unit": "ns/op\t         4.276 DeleteSeconds\t         2.157 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
