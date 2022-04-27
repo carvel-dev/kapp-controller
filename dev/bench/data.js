@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651080576919,
+  "lastUpdate": 1651080738686,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -411,6 +411,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6413889991,
             "unit": "ns/op\t         4.250 DeleteSeconds\t         2.122 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "benm@vmware.com",
+            "name": "Ben Moss",
+            "username": "benmoss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "42274fbe2fac7c99477516c93044417d464c0840",
+          "message": "Merge pull request #645 from vmware-tanzu/dependabot-stops-ignoring-patch-1",
+          "timestamp": "2022-04-27T13:20:31-04:00",
+          "tree_id": "ac764e65af343900ee067396ce497fd9db69218e",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/42274fbe2fac7c99477516c93044417d464c0840"
+        },
+        "date": 1651080737833,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36899294340,
+            "unit": "ns/op\t        19.18 DeleteSeconds\t        17.66 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9643019379,
+            "unit": "ns/op\t         5.410 DeleteSeconds\t         4.181 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6524449138,
+            "unit": "ns/op\t         4.316 DeleteSeconds\t         2.163 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
