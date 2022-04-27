@@ -16,10 +16,10 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.5
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	k8s.io/api v0.22.4
-	k8s.io/apimachinery v0.22.4
-	k8s.io/apiserver v0.22.4
-	k8s.io/client-go v0.22.4
+	k8s.io/api v0.22.9
+	k8s.io/apimachinery v0.22.9
+	k8s.io/apiserver v0.22.9
+	k8s.io/client-go v0.22.9
 	k8s.io/code-generator v0.22.4
 	k8s.io/kube-aggregator v0.22.4
 	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65
@@ -97,7 +97,7 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.19.0 // indirect
 	golang.org/x/mod v0.4.2 // indirect
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
+	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20211110154304-99a53858aa08 // indirect
@@ -113,11 +113,11 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/apiextensions-apiserver v0.22.2 // indirect
-	k8s.io/component-base v0.22.4 // indirect
+	k8s.io/component-base v0.22.9 // indirect
 	k8s.io/gengo v0.0.0-20210813121822-485abfe95c7c // indirect
-	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a // indirect
-	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.22 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
+	k8s.io/utils v0.0.0-20211116205334-6203023598ed // indirect
+	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.30 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 )
 
 replace cloud.google.com/go => cloud.google.com/go v0.60.0
