@@ -6,6 +6,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
@@ -82,28 +83,19 @@ func (o *ListOptions) Run() error {
 	}
 
 	for _, app := range appList.Items {
-		// Display since deploy only if deploy has occurred
+		sinceDeployAge := cmdcore.NewValueAge(time.Time{})
 		if app.Status.Deploy != nil {
-			table.Rows = append(table.Rows, []uitable.Value{
-				cmdcore.NewValueNamespace(app.Namespace),
-				uitable.NewValueString(app.Name),
-				uitable.NewValueString(app.Status.FriendlyDescription),
-				cmdcore.NewValueAge(app.Status.Deploy.UpdatedAt.Time),
-				uitable.NewValueString(o.owner(app.OwnerReferences)),
-				cmdcore.NewValueAge(app.CreationTimestamp.Time),
-			})
-
-		} else {
-			table.Rows = append(table.Rows, []uitable.Value{
-				cmdcore.NewValueNamespace(app.Namespace),
-				uitable.NewValueString(app.Name),
-				uitable.NewValueString(app.Status.FriendlyDescription),
-				uitable.NewValueString(""),
-				uitable.NewValueString(o.owner(app.OwnerReferences)),
-				cmdcore.NewValueAge(app.CreationTimestamp.Time),
-			})
+			sinceDeployAge = cmdcore.NewValueAge(app.Status.Deploy.UpdatedAt.Time)
 		}
 
+		table.Rows = append(table.Rows, []uitable.Value{
+			cmdcore.NewValueNamespace(app.Namespace),
+			uitable.NewValueString(app.Name),
+			uitable.NewValueString(app.Status.FriendlyDescription),
+			sinceDeployAge,
+			uitable.NewValueString(o.owner(app.OwnerReferences)),
+			cmdcore.NewValueAge(app.CreationTimestamp.Time),
+		})
 	}
 
 	o.ui.PrintTable(table)

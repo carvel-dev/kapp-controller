@@ -225,9 +225,7 @@ func (o *PauseOrKickOptions) waitForPackageInstallReconciliation(client kcclient
 	go tailAppStatusOutput(&appStatusTailErrored)
 
 	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
-
 		resource, err := client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
-		//resource, err := p.kappClient.GetPackageInstall(name, namespace)
 		if err != nil {
 			return false, err
 		}
