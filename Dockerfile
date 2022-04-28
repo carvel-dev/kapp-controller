@@ -1,25 +1,7 @@
-FROM photon:4.0
+FROM golang:1.17.9 AS deps
 
 ARG KCTRL_VER=development
-
-# adapted from golang docker image
-ENV PATH /usr/local/go/bin:$PATH
-ENV GOLANG_VERSION 1.17.6
-ENV GO_REL_ARCH linux-amd64
-ENV GO_REL_SHA 231654bbf2dab3d86c1619ce799e77b03d96f9b50770297c8f4dff8836fc8ca2
-
-RUN set eux; \
-    curl -sLo go.tgz "https://golang.org/dl/go${GOLANG_VERSION}.${GO_REL_ARCH}.tar.gz"; \
-    echo "${GO_REL_SHA} go.tgz" | sha256sum -c -; \
-    tar -C /usr/local -xzf go.tgz; \
-    rm go.tgz; \
-    go version
-
-ENV GOPATH /go
-ENV PATH $GOPATH/bin:$PATH
-RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
-
-WORKDIR /go/src/github.com/vmware-tanzu/carvel-kapp-controller/
+WORKDIR /workspace
 
 # carvel
 COPY ./hack/install-deps.sh .
@@ -64,22 +46,22 @@ RUN echo "kapp-controller:x:1000:0:/home/kapp-controller:/usr/sbin/nologin" > /e
 RUN chmod g+w /etc/pki/tls/certs
 
 # fetchers
-COPY --from=0 /helm-unpacked/linux-amd64/helm .
-COPY --from=0 /usr/local/bin/imgpkg .
-COPY --from=0 /usr/local/bin/vendir .
+COPY --from=deps /helm-unpacked/linux-amd64/helm .
+COPY --from=deps /usr/local/bin/imgpkg .
+COPY --from=deps /usr/local/bin/vendir .
 
 # templaters
-COPY --from=0 /usr/local/bin/ytt .
-COPY --from=0 /usr/local/bin/kbld .
-COPY --from=0 /usr/local/bin/sops .
-COPY --from=0 /usr/local/bin/age .
-COPY --from=0 /usr/local/bin/cue .
+COPY --from=deps /usr/local/bin/ytt .
+COPY --from=deps /usr/local/bin/kbld .
+COPY --from=deps /usr/local/bin/sops .
+COPY --from=deps /usr/local/bin/age .
+COPY --from=deps /usr/local/bin/cue .
 
 # deployers
-COPY --from=0 /usr/local/bin/kapp .
+COPY --from=deps /usr/local/bin/kapp .
 
 # Name it kapp-controller to identify it easier in process tree
-COPY --from=0 /go/src/github.com/vmware-tanzu/carvel-kapp-controller/controller kapp-controller
+COPY --from=deps /workspace/controller kapp-controller
 
 # Copy the ca-bundle so we have an original
 RUN cp /etc/pki/tls/certs/ca-bundle.crt /etc/pki/tls/certs/ca-bundle.crt.orig
