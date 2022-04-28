@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651154644076,
+  "lastUpdate": 1651158253374,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -705,6 +705,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6502862443,
             "unit": "ns/op\t         4.290 DeleteSeconds\t         2.168 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "benm@vmware.com",
+            "name": "Ben Moss",
+            "username": "benmoss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9a85c5cc179ab086fa0f205debb289c64ba5e3a7",
+          "message": "Build / download deps in golang image (#651)",
+          "timestamp": "2022-04-28T10:53:35-04:00",
+          "tree_id": "d3e50d0bf89094f05fcde1d46cde76d262250ab0",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/9a85c5cc179ab086fa0f205debb289c64ba5e3a7"
+        },
+        "date": 1651158252212,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36638681748,
+            "unit": "ns/op\t        19.00 DeleteSeconds\t        17.60 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9522305217,
+            "unit": "ns/op\t         5.317 DeleteSeconds\t         4.167 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6488986384,
+            "unit": "ns/op\t         4.298 DeleteSeconds\t         2.139 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
