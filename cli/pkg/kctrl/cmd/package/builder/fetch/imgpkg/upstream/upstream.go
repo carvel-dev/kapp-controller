@@ -3,6 +3,7 @@ package upstream
 import (
 	"fmt"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/util"
+	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,9 +14,9 @@ import (
 )
 
 const (
-	GithubRelease int = iota
-	HelmChart
-	Image
+	vendirAPIVersion             = "vendir.k14s.io/v1alpha1"
+	vendirKind                   = "Config"
+	vendirMinimumRequiredVersion = "0.12.0"
 )
 
 type Content struct {
@@ -28,13 +29,11 @@ type Directory struct {
 	Path     string    `json:"path"`
 	Contents []Content `json:"contents"`
 }
+
 type UpstreamStep struct {
-	ApiVersion             string      `json:"apiVersion"`
-	Kind                   string      `json:"kind"`
-	MinimumRequiredVersion string      `json:"minimumRequiredVersion"`
-	Directories            []Directory `json:"directories"`
-	ui                     ui.UI       `json:"-"`
-	PkgLocation            string      `json:"-"`
+	VendirConfig vendirconf.Config
+	ui           ui.UI
+	PkgLocation  string
 }
 
 func NewUpstreamStep(ui ui.UI, pkgLocation string) *UpstreamStep {
@@ -49,6 +48,41 @@ func (upstreamStep *UpstreamStep) PreInteract() error {
 In Carvel, An upstream source is the location from where we want to sync the software configuration.
 Different types of upstream available are`
 	upstreamStep.ui.BeginLinef(str)
+	return nil
+}
+
+func (upstreamStep *UpstreamStep) Interact() error {
+	upstreamOptions := []string{"Github Release", "HelmChart", "Image"}
+	upstreamTypeSelected, err := upstreamStep.ui.AskForChoice("Enter the upstream type", upstreamOptions)
+	if err != nil {
+		//TODO Rohit error handling
+	}
+	contents := []vendirconf.DirectoryContents{}
+
+	switch upstreamOptions[upstreamTypeSelected] {
+	case "Github Release":
+		content := vendirconf.DirectoryContents{}
+		githubStep := NewGithubStep(upstreamStep.ui)
+		err := githubStep.Run()
+		if err != nil {
+			return err
+		}
+		includedPaths, err := upstreamStep.getIncludedPaths()
+		if err != nil {
+			return err
+		}
+		content.IncludePaths = includedPaths
+		content.Path = "."
+		content.GithubRelease = githubStep.GithubRelease
+		contents = append(contents, content)
+	}
+
+	directory := vendirconf.Directory{
+		Path:     "config",
+		Contents: contents,
+	}
+	directories := []vendirconf.Directory{}
+	upstreamStep.VendirConfig.Directories = append(directories, directory)
 	return nil
 }
 
@@ -78,7 +112,7 @@ func (upstreamStep *UpstreamStep) createVendirFile() error {
 Lets build vendir.yml file with above inputs.
 `
 	upstreamStep.ui.BeginLinef(str)
-	data, err := yaml.Marshal(&upstreamStep)
+	data, err := yaml.Marshal(&upstreamStep.VendirConfig)
 	vendirFileLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "vendir.yml")
 	if err != nil {
 		fmt.Errorf("Unable to build vendir.yml")
@@ -116,9 +150,9 @@ func (upstreamStep *UpstreamStep) printVendirFile() error {
 }
 
 func (upstreamStep *UpstreamStep) populateUpstreamMetadata() {
-	upstreamStep.ApiVersion = "vendir.k14s.io/v1alpha1"
-	upstreamStep.Kind = "Config"
-	upstreamStep.MinimumRequiredVersion = "0.12.0"
+	upstreamStep.VendirConfig.APIVersion = vendirAPIVersion
+	upstreamStep.VendirConfig.Kind = vendirKind
+	upstreamStep.VendirConfig.MinimumRequiredVersion = vendirMinimumRequiredVersion
 }
 
 func (upstreamStep *UpstreamStep) printVendirLockFile() error {
@@ -161,41 +195,6 @@ Next step is to run vendir to sync the data from upstream.
 		return err
 	}
 	upstreamStep.ui.BeginLinef(output)
-	return nil
-}
-
-func (upstreamStep *UpstreamStep) Interact() error {
-	upstreamTypeSelected, err := upstreamStep.ui.AskForChoice("Enter the upstream type", []string{"Github Release", "HelmChart", "Image"})
-	if err != nil {
-		//TODO Rohit error handling
-	}
-	var content Content
-	switch upstreamTypeSelected {
-	case GithubRelease:
-		githubStep := NewGithubStep(upstreamStep.ui)
-		err := githubStep.Run()
-		if err != nil {
-			return err
-		}
-		content.GithubRelease = *githubStep
-	}
-
-	includedPaths, err := upstreamStep.getIncludedPaths()
-	if err != nil {
-		return err
-	}
-	content.IncludePaths = includedPaths
-	content.Path = "."
-
-	upstreamStep.Directories = []Directory{
-		Directory{
-			Path: "config",
-			Contents: []Content{
-				content,
-			},
-		},
-	}
-
 	return nil
 }
 

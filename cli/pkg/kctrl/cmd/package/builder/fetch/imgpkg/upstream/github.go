@@ -3,13 +3,12 @@ package upstream
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
+	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
 type GithubStep struct {
-	RepoSlug                      string `json:"slug"`
-	ReleaseTag                    string `json:"tag"`
-	ui                            ui.UI  `json:"-"`
-	DisableAutoChecksumValidation bool   `json:"disableAutoChecksumValidation"`
+	ui            ui.UI
+	GithubRelease *vendirconf.DirectoryContentsGithubRelease `json:"githubRelease,omitempty"`
 }
 
 func NewGithubStep(ui ui.UI) *GithubStep {
@@ -31,13 +30,18 @@ func (g *GithubStep) Interact() error {
 	if err != nil {
 		return err
 	}
-	g.RepoSlug = repoSlug
+	//g.RepoSlug = repoSlug
 	releaseTag, err := g.getVersion()
 	if err != nil {
 		return err
 	}
-	g.ReleaseTag = releaseTag
-	g.DisableAutoChecksumValidation = true
+	//g.ReleaseTag = releaseTag
+	directoryContentsGithubRelease := vendirconf.DirectoryContentsGithubRelease{
+		Slug:                          repoSlug,
+		Tag:                           releaseTag,
+		DisableAutoChecksumValidation: true,
+	}
+	g.GithubRelease = &directoryContentsGithubRelease
 	return nil
 }
 

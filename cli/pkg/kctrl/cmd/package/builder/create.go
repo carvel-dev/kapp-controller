@@ -3,7 +3,6 @@ package builder
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/util"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/template"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/util"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kappctrlapis "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -50,7 +50,6 @@ func NewCreateCmd(o *CreateOptions) *cobra.Command {
 			},
 		}.Description("", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
-		Annotations:  map[string]string{"table": ""},
 	}
 
 	return cmd
@@ -136,14 +135,6 @@ Fully Qualified Name cannot have a trailing '.' e.g. samplePackage.corp.com`
 }
 
 func (create *CreateStep) Interact() error {
-	//Get Package Version
-	create.ui.BeginLinef(create.getPkgVersionBlock())
-	pkgVersion, err := create.ui.AskForText("Enter the package version")
-	//TODO Rohit any validation needed here
-	if err != nil {
-		return err
-	}
-	create.pkgVersion = pkgVersion
 	//Get Fully Qualified Name of the Package
 	create.ui.BeginLinef(create.getFQPkgNameBlock())
 	fqName, err := create.ui.AskForText("Enter the fully qualified package name")
@@ -152,6 +143,16 @@ func (create *CreateStep) Interact() error {
 		return err
 	}
 	create.fqName = fqName
+
+	//Get Package Version
+	create.ui.BeginLinef(create.getPkgVersionBlock())
+	pkgVersion, err := create.ui.AskForText("Enter the package version")
+	//TODO Rohit any validation needed here
+	if err != nil {
+		return err
+	}
+	create.pkgVersion = pkgVersion
+
 	err = create.configureFetchSection()
 	if err != nil {
 		return err
@@ -445,9 +446,7 @@ func (createStep CreateStep) populatePkgBuilder() PackageBuild {
 }
 
 func GetPkgLocation() string {
-	var pkgLocation string
 	pwd, _ := os.Getwd()
 	//TODO Rohit what should we call the folder name
 	return filepath.Join(pwd, "pkgBuilder")
-	return pkgLocation
 }
