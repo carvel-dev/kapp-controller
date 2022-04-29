@@ -2,7 +2,7 @@ package imgpkg
 
 import (
 	"fmt"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/util"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/util"
 	"path/filepath"
 	"strings"
 
