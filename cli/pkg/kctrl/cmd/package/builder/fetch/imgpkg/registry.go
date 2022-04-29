@@ -12,14 +12,14 @@ type RegistryAuthDetails struct {
 }
 
 func (createImgpkg CreateImgPkgStep) PopulateRegistryAuthDetails() (RegistryAuthDetails, error) {
-	registry, err := createImgpkg.Ui.AskForChoice("Where do you want to push the bundle", []string{"DockerHub", "Private Registry"})
+	registry, err := createImgpkg.ui.AskForChoice("Where do you want to push the bundle", []string{"DockerHub", "Private Registry"})
 	if err != nil {
 		return RegistryAuthDetails{}, err
 	}
 	switch registry {
 	case DockerHub:
 	case PrivateRegistry:
-		registryURL, err := createImgpkg.Ui.AskForText("Enter the registry URL")
+		registryURL, err := createImgpkg.ui.AskForText("Enter the registry URL")
 		if err != nil {
 			return RegistryAuthDetails{}, err
 		}

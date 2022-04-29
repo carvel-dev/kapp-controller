@@ -8,13 +8,13 @@ import (
 type GithubStep struct {
 	RepoSlug                      string `json:"slug"`
 	ReleaseTag                    string `json:"tag"`
-	Ui                            ui.UI  `json:"-"`
+	ui                            ui.UI  `json:"-"`
 	DisableAutoChecksumValidation bool   `json:"disableAutoChecksumValidation"`
 }
 
 func NewGithubStep(ui ui.UI) *GithubStep {
 	return &GithubStep{
-		Ui: ui,
+		ui: ui,
 	}
 }
 
@@ -27,7 +27,7 @@ func (g *GithubStep) PostInteract() error {
 }
 
 func (g *GithubStep) Interact() error {
-	repoSlug, err := g.Ui.AskForText("Enter slug for repository(org/repo)")
+	repoSlug, err := g.ui.AskForText("Enter slug for repository(org/repo)")
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (g *GithubStep) Interact() error {
 func (g GithubStep) getVersion() (string, error) {
 	var useLatestVersion bool
 	for {
-		input, err := g.Ui.AskForText("Do you want to use the latest released version(y/n)")
+		input, err := g.ui.AskForText("Do you want to use the latest released version(y/n)")
 		if err != nil {
 			return "", err
 		}
@@ -53,7 +53,7 @@ func (g GithubStep) getVersion() (string, error) {
 		if isValidInput {
 			break
 		} else {
-			input, _ = g.Ui.AskForText("Invalid input. (must be 'y','n','Y','N')")
+			input, _ = g.ui.AskForText("Invalid input. (must be 'y','n','Y','N')")
 		}
 	}
 
@@ -61,8 +61,8 @@ func (g GithubStep) getVersion() (string, error) {
 	if useLatestVersion {
 
 	} else {
-		g.Ui.PrintBlock([]byte("# Ok. Then we have to mention the specific release tag which makes up the package configuration"))
-		releaseTag, err := g.Ui.AskForText("Enter the release tag")
+		g.ui.BeginLinef("Ok. Then we have to mention the specific release tag which makes up the package configuration")
+		releaseTag, err := g.ui.AskForText("Enter the release tag")
 		if err != nil {
 			return "", err
 		}

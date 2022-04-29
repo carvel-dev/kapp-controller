@@ -5,13 +5,23 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type PkgBuilder struct {
+type PackageBuild struct {
 	metav1.TypeMeta `json:",inline"`
-	Config          Config `json:"config, omitempty"`
+	Spec            Spec `json:"spec, omitempty"`
 }
 
-type Config struct {
+type Spec struct {
 	Pkg         v1alpha1.Package         `json:"package"`
 	PkgMetadata v1alpha1.PackageMetadata `json:"packageMetadata"`
 	//Pending Add imgpkgConfiguration
+}
+
+func (pkgBuilder PackageBuild) GetPackageMetadata() v1alpha1.PackageMetadata {
+	//TODO we should start getting the data from pkgBuilder rather than create
+	return pkgBuilder.Spec.PkgMetadata
+}
+
+func (pkgBuilder PackageBuild) GetPackage() v1alpha1.Package {
+	//TODO we should start getting the data from pkgBuilder rather than create
+	return pkgBuilder.Spec.Pkg
 }

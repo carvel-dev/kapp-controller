@@ -2,12 +2,13 @@ package upstream
 
 import (
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/util"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/util"
 	"sigs.k8s.io/yaml"
 )
 
@@ -32,22 +33,22 @@ type UpstreamStep struct {
 	Kind                   string      `json:"kind"`
 	MinimumRequiredVersion string      `json:"minimumRequiredVersion"`
 	Directories            []Directory `json:"directories"`
-	Ui                     ui.UI       `json:"-"`
+	ui                     ui.UI       `json:"-"`
 	PkgLocation            string      `json:"-"`
 }
 
 func NewUpstreamStep(ui ui.UI, pkgLocation string) *UpstreamStep {
 	return &UpstreamStep{
-		Ui:          ui,
+		ui:          ui,
 		PkgLocation: pkgLocation,
 	}
 }
 
 func (upstreamStep *UpstreamStep) PreInteract() error {
 	str := `
-# In Carvel, An upstream source is the location from where we want to sync the software configuration.
-# Different types of upstream available are`
-	upstreamStep.Ui.PrintBlock([]byte(str))
+In Carvel, An upstream source is the location from where we want to sync the software configuration.
+Different types of upstream available are`
+	upstreamStep.ui.BeginLinef(str)
 	return nil
 }
 
@@ -73,12 +74,12 @@ func (upstreamStep *UpstreamStep) PostInteract() error {
 }
 
 func (upstreamStep *UpstreamStep) createVendirFile() error {
-	str := `# We have all the information needed to sync the upstream.
-# Lets build vendir.yml file with above inputs.
+	str := `We have all the information needed to sync the upstream.
+Lets build vendir.yml file with above inputs.
 `
-	upstreamStep.Ui.PrintBlock([]byte(str))
+	upstreamStep.ui.BeginLinef(str)
 	data, err := yaml.Marshal(&upstreamStep)
-	vendirFileLocation := upstreamStep.PkgLocation + "/bundle/vendir.yml"
+	vendirFileLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "vendir.yml")
 	if err != nil {
 		fmt.Errorf("Unable to build vendir.yml")
 		return err
@@ -101,16 +102,16 @@ func (upstreamStep *UpstreamStep) createVendirFile() error {
 }
 
 func (upstreamStep *UpstreamStep) printVendirFile() error {
-	vendirFileLocation := upstreamStep.PkgLocation + "/bundle/vendir.yml"
-	str := `#	$ cat vendir.yml`
-	upstreamStep.Ui.PrintBlock([]byte(str))
+	vendirFileLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "vendir.yml")
+	str := `	$ cat vendir.yml`
+	upstreamStep.ui.BeginLinef(str)
 	fmt.Println()
 	resp, err := util.Execute("cat", []string{vendirFileLocation})
 	if err != nil {
 		fmt.Println("Unable to read vendir.yaml file")
 		return err
 	}
-	upstreamStep.Ui.PrintBlock([]byte(resp))
+	upstreamStep.ui.PrintBlock([]byte(resp))
 	return nil
 }
 
@@ -121,58 +122,57 @@ func (upstreamStep *UpstreamStep) populateUpstreamMetadata() {
 }
 
 func (upstreamStep *UpstreamStep) printVendirLockFile() error {
-	vendirLockFileLocation := upstreamStep.PkgLocation + "/bundle/vendir.lock.yml"
+	vendirLockFileLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "vendir.lock.yml")
 	str := fmt.Sprintf(`
-# After running vendir sync, there is one more file created i.e. bundle/vendir.lock.yml
-# This lock file resolves the release tag to the specific GitHub release and declares that the config is the synchronization target path.
-# Lets see its content
-# 	$ cat %s
+After running vendir sync, there is one more file created i.e. bundle/vendir.lock.yml
+This lock file resolves the release tag to the specific GitHub release and declares that the config is the synchronization target path.
+Lets see its content
+	$ cat %s
 ---
 `, vendirLockFileLocation)
-	upstreamStep.Ui.PrintBlock([]byte(str))
+	upstreamStep.ui.BeginLinef(str)
 	output, err := util.Execute("cat", []string{vendirLockFileLocation})
 	if err != nil {
 		return err
 	}
-	upstreamStep.Ui.PrintBlock([]byte(output))
+	upstreamStep.ui.PrintBlock([]byte(output))
 	return nil
 }
 
 func (upstreamStep *UpstreamStep) syncDataFromUpstream() error {
-	bundleLocation := upstreamStep.PkgLocation + "/bundle"
+	bundleLocation := filepath.Join(upstreamStep.PkgLocation, "bundle")
 	str := fmt.Sprintf(`
-# Next step is to run vendir to sync the data from upstream.
-#	$ vendir sync --chdir %s
+Next step is to run vendir to sync the data from upstream.
+	$ vendir sync --chdir %s
 `, bundleLocation)
-	upstreamStep.Ui.PrintBlock([]byte(str))
+	upstreamStep.ui.BeginLinef(str)
 	_, err := util.Execute("vendir", []string{"sync", "--chdir", bundleLocation})
 	if err != nil {
 		fmt.Printf("Error while running vendir sync. Error is: %s", err.Error())
 		return err
 	}
-	//upstreamStep.Ui.PrintBlock([]byte(resp))
-	configLocation := upstreamStep.PkgLocation + "/bundle/config"
-	str = fmt.Sprintf(`# To ensure that data has been synced, lets do
-# 	$ ls -l %s
+	configLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "config")
+	str = fmt.Sprintf(`To ensure that data has been synced, lets do
+	$ ls -l %s
 `, configLocation)
-	upstreamStep.Ui.PrintBlock([]byte(str))
+	upstreamStep.ui.BeginLinef(str)
 	output, err := util.Execute("ls", []string{"-l", configLocation})
 	if err != nil {
 		return err
 	}
-	upstreamStep.Ui.PrintBlock([]byte(output))
+	upstreamStep.ui.BeginLinef(output)
 	return nil
 }
 
 func (upstreamStep *UpstreamStep) Interact() error {
-	upstreamTypeSelected, err := upstreamStep.Ui.AskForChoice("Enter the upstream type", []string{"Github Release", "HelmChart", "Image"})
+	upstreamTypeSelected, err := upstreamStep.ui.AskForChoice("Enter the upstream type", []string{"Github Release", "HelmChart", "Image"})
 	if err != nil {
-
+		//TODO Rohit error handling
 	}
 	var content Content
 	switch upstreamTypeSelected {
 	case GithubRelease:
-		githubStep := NewGithubStep(upstreamStep.Ui)
+		githubStep := NewGithubStep(upstreamStep.ui)
 		err := githubStep.Run()
 		if err != nil {
 			return err
@@ -201,14 +201,14 @@ func (upstreamStep *UpstreamStep) Interact() error {
 
 func (upstreamStep UpstreamStep) getIncludedPaths() ([]string, error) {
 	var includeEverything bool
-	input, _ := upstreamStep.Ui.AskForText("Does your package needs to include everything from the upstream(y/n)")
+	input, _ := upstreamStep.ui.AskForText("Does your package needs to include everything from the upstream(y/n)")
 	for {
 		var isValidInput bool
 		includeEverything, isValidInput = common.ValidateInputYesOrNo(input)
 		if isValidInput {
 			break
 		} else {
-			input, _ = upstreamStep.Ui.AskForText("Invalid input. (must be 'y','n','Y','N')")
+			input, _ = upstreamStep.ui.AskForText("Invalid input. (must be 'y','n','Y','N')")
 		}
 	}
 	var paths []string
@@ -225,10 +225,10 @@ func (upstreamStep UpstreamStep) getIncludedPaths() ([]string, error) {
 }
 
 func (upstreamStep UpstreamStep) getPaths() ([]string, error) {
-	str := `# Now, we need to enter the specific paths which we want to include as package content. More than one paths can be added with comma separator.`
-	upstreamStep.Ui.PrintBlock([]byte(str))
+	str := `Now, we need to enter the specific paths which we want to include as package content. More than one paths can be added with comma separator.`
+	upstreamStep.ui.BeginLinef(str)
 
-	path, err := upstreamStep.Ui.AskForText("Enter the paths which needs to be included as part of this package")
+	path, err := upstreamStep.ui.AskForText("Enter the paths which needs to be included as part of this package")
 	if err != nil {
 		return nil, err
 	}
