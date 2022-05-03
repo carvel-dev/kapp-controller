@@ -11,7 +11,7 @@
       arm64: c5d2f033b375ee87414b51d16c324d7a441de2f256865b5c774c4d5aea30ef60
   dev: true
   name: ytt
-  pattern: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
+  urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
   version: v0.40.1
 - autoupdate:
     checksums:
@@ -26,7 +26,7 @@
       arm64: ac02649e0037ae957b3d18af1f1563fcf2672ea5aa8d8e9da88ea5de6b705897
   dev: true
   name: kbld
-  pattern: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
+  urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
   version: v0.33.0
 - autoupdate:
     checksums:
@@ -41,7 +41,7 @@
       arm64: f40cf819f170ce50632bcb683098a05711d0a2a7110b72eb2754a7fc651eb2f3
   dev: true
   name: kapp
-  pattern: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
+  urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
   version: v0.46.0
 - autoupdate:
     checksums:
@@ -56,7 +56,7 @@
       arm64: 53ea4a9eec4bb1ff6adb701018da9978aad45bdee161d68e08bc69d84459f2c8
   dev: true
   name: imgpkg
-  pattern: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
+  urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
   version: v0.28.0
 - autoupdate:
     checksums:
@@ -71,7 +71,7 @@
       arm64: 015977ae54d85bf2366d7affb0d582fecf79737f0eb80fa8a66de9f66e877b61
   dev: true
   name: vendir
-  pattern: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
+  urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
   version: v0.27.0
 - checksums:
     linux:
@@ -79,7 +79,7 @@
       arm64: 57875be56f981d11957205986a57c07432e54d0b282624d68b1aeac16be70704
   dev: false
   name: helm
-  pattern: https://get.helm.sh/helm-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
+  urlTemplate: https://get.helm.sh/helm-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
   tarballSubpath: '{{.OS}}-{{.Arch}}/helm'
   version: v3.7.1
 - checksums:
@@ -88,7 +88,7 @@
       arm64: 86a6c48ec64255bd317d7cd52c601dc62e81be68ca07cdeb21a1e0809763647f
   dev: false
   name: sops
-  pattern: https://github.com/mozilla/sops/releases/download/{{.Version}}/sops-{{.Version}}.{{.OS}}.{{.Arch}}
+  urlTemplate: https://github.com/mozilla/sops/releases/download/{{.Version}}/sops-{{.Version}}.{{.OS}}.{{.Arch}}
   version: v3.7.2
 - checksums:
     linux:
@@ -96,7 +96,7 @@
       arm64: 6c82aa1d406e5a401ec3bb344cd406626478be74d5ae628f192d907cd78af981
   dev: false
   name: age
-  pattern: https://github.com/FiloSottile/age/releases/download/{{.Version}}/age-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
+  urlTemplate: https://github.com/FiloSottile/age/releases/download/{{.Version}}/age-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
   tarballSubpath: age/age
   version: v1.0.0
 - autoupdate:
@@ -109,6 +109,6 @@
       arm64: 6515c1f1b6fc09d083be533019416b28abd91e5cdd8ef53cd0719a4b4b0cd1c7
   dev: false
   name: cue
-  pattern: https://github.com/cue-lang/cue/releases/download/{{.Version}}/cue_{{.Version}}_{{.OS}}_{{.Arch}}.tar.gz
+  urlTemplate: https://github.com/cue-lang/cue/releases/download/{{.Version}}/cue_{{.Version}}_{{.OS}}_{{.Arch}}.tar.gz
   tarballSubpath: cue
   version: v0.4.2

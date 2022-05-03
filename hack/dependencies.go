@@ -35,13 +35,17 @@ var (
 )
 
 type dependency struct {
-	Name           string                        `json:"name"`
-	Version        string                        `json:"version"`
-	Pattern        string                        `json:"pattern"`
-	AutoUpdate     *autoUpdate                   `json:"autoupdate,omitempty"`
-	Dev            bool                          `json:"dev"`
-	Checksums      map[string]map[string]*string `json:"checksums"`
-	TarballSubpath *string                       `json:"tarballSubpath,omitempty"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	// Template for the download URL of the artifact
+	URLTemplate string `json:"urlTemplate"`
+	// Whether this should be installed by the --dev flag
+	Dev bool `json:"dev"`
+	// Optional ways of configuring how we check for updates
+	AutoUpdate *autoUpdate `json:"autoupdate,omitempty"`
+	// map["linux"]map["amd64"] => "sha256"
+	Checksums      map[string]map[string]string `json:"checksums"`
+	TarballSubpath *string                      `json:"tarballSubpath,omitempty"`
 }
 
 type autoUpdate struct {
@@ -108,13 +112,19 @@ func (c *installCommand) Install() error {
 	return g.Wait()
 }
 
+// downloads the dependency by its url template, verifies the checksum, and
+// optionally extracts the executable from the tarball
 func (c *installCommand) downloadAndVerify(dep *dependency) error {
-	checksum := dep.Checksums[c.os][c.arch]
-	if checksum == nil {
+	arches, ok := dep.Checksums[c.os]
+	if !ok {
+		return fmt.Errorf("%s not supported on os %s", dep.Name, c.os)
+	}
+	checksum, ok := arches[c.arch]
+	if !ok {
 		return fmt.Errorf("%s not supported on platform %s/%s", dep.Name, c.os, c.arch)
 	}
 
-	urlTpl, err := template.New(dep.Name).Parse(dep.Pattern)
+	urlTpl, err := template.New(dep.Name).Parse(dep.URLTemplate)
 	if err != nil {
 		return err
 	}
@@ -144,8 +154,8 @@ func (c *installCommand) downloadAndVerify(dep *dependency) error {
 		return err
 	}
 	actual := hex.EncodeToString(hasher.Sum(nil))
-	if actual != *checksum {
-		return fmt.Errorf("%s: wrong checksum, expected: %s, got: %s", dep.Name, *checksum, actual)
+	if actual != checksum {
+		return fmt.Errorf("%s: wrong checksum, expected: %s, got: %s", dep.Name, checksum, actual)
 	}
 	log.Printf("%s validated", dep.Name)
 
@@ -226,6 +236,7 @@ func newUpdateCommand() *cobra.Command {
 	}
 }
 
+// updates the version of the dependency to the one GitHub considers latest and updates checksums
 func update(dep *dependency) error {
 	resp, err := client.Get(fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", dep.AutoUpdate.Github))
 	if err != nil {
@@ -239,6 +250,8 @@ func update(dep *dependency) error {
 	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
 		return err
 	}
+
+	// ParseTolerant allows the "v" prefix in the version string
 	current, err := semver.ParseTolerant(dep.Version)
 	if err != nil {
 		return fmt.Errorf("err parsing semver from version %q: %w", dep.Version, err)
@@ -247,11 +260,15 @@ func update(dep *dependency) error {
 	if err != nil {
 		return fmt.Errorf("err parsing semver from version %q: %w", release.TagName, err)
 	}
+
+	// short-circuit if we're already at latest
 	if latest.LTE(current) {
 		log.Printf("%s is already at latest version %s", dep.Name, latest.String())
 		return nil
 	}
 	log.Printf("Updating %s to %s", dep.Name, latest.String())
+
+	// add the "v" prefix back
 	dep.Version = "v" + latest.String()
 
 	return updateChecksums(dep, &release)
@@ -283,6 +300,8 @@ func newSyncChecksums() *cobra.Command {
 		},
 	}
 }
+
+// get the release specified by the current version of this dependency
 func getRelease(dep *dependency) (*githubRelease, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/tags/%s", dep.AutoUpdate.Github, dep.Version)
 	resp, err := client.Get(url)
@@ -300,15 +319,18 @@ func getRelease(dep *dependency) (*githubRelease, error) {
 	return &release, nil
 }
 
+// update the checksums of this dependency to those in the github release
 func updateChecksums(dep *dependency, release *githubRelease) error {
-	urlTpl, err := template.New(dep.Name).Parse(dep.Pattern)
+	urlTpl, err := template.New(dep.Name).Parse(dep.URLTemplate)
 	if err != nil {
 		return err
 	}
-
+	// map of filenames => checksums
 	checksums := map[string]string{}
+	// get checksums from a checksums.txt file
 	if dep.AutoUpdate.Checksums.File != nil {
 		var checksumFile []byte
+		// look for the checksum file in the release assets
 		for _, asset := range release.Assets {
 			if asset.Name == *dep.AutoUpdate.Checksums.File {
 				resp, err := client.Get(asset.BrowserDownloadURL)
@@ -327,6 +349,7 @@ func updateChecksums(dep *dependency, release *githubRelease) error {
 		if len(checksumFile) == 0 {
 			return fmt.Errorf("did not find checksums file in release assets")
 		}
+		// extract checksums to the map
 		scanner := bufio.NewScanner(bytes.NewReader(checksumFile))
 		for scanner.Scan() {
 			split := strings.Fields(scanner.Text())
@@ -337,29 +360,37 @@ func updateChecksums(dep *dependency, release *githubRelease) error {
 			checksums[filename] = split[0]
 		}
 	}
+
+	// get checksums from release notes: https://regex101.com/r/8DbUbt/1
 	if dep.AutoUpdate.Checksums.ReleaseNotes != nil && *dep.AutoUpdate.Checksums.ReleaseNotes {
 		regex := regexp.MustCompile(`(?m)([a-z0-9]{64})[\s./]+([a-zA-Z0-9-.]*)`)
 		allMatches := regex.FindAllStringSubmatch(release.Body, -1)
 		for _, matches := range allMatches {
 			if len(matches) != 3 {
-				log.Fatalf("weird: %v", matches)
+				// full match, checksum, filename
+				log.Fatalf("expected 3 matches in release notes: %v", matches)
 			}
 			checksums[matches[2]] = matches[1]
 		}
 	}
+	// TODO: figure out how to get checksums for helm, sops, age
 
 	for os, arches := range dep.Checksums {
 		for arch := range arches {
 			var url bytes.Buffer
+			// generate the URL
 			if err := urlTpl.Execute(&url, fields{Name: dep.Name, Version: dep.Version, OS: os, Arch: arch}); err != nil {
 				log.Fatal(err)
 			}
+			// get just the filename
 			filename := path.Base(url.String())
+			// find the checksum for this file
 			checksum, ok := checksums[filename]
 			if !ok {
 				return fmt.Errorf("no checksum found for filename %s", filename)
 			}
-			arches[arch] = &checksum
+			// update the checksum in the dependency
+			arches[arch] = checksum
 		}
 	}
 	return nil
@@ -381,6 +412,7 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	client = &http.Client{
+		// try to use a Github API token from the environment to avoid rate-limiting
 		Transport: newGithubTransport(),
 	}
 	var rootCmd = &cobra.Command{Use: "dependencies"}
