@@ -96,7 +96,7 @@ func (upstreamStep *UpstreamStep) PostInteract() error {
 	if err != nil {
 		return err
 	}
-	err = upstreamStep.syncDataFromUpstream()
+	err = upstreamStep.runVendirSync()
 	if err != nil {
 		return err
 	}
@@ -173,18 +173,18 @@ Lets see its content
 	return nil
 }
 
-func (upstreamStep *UpstreamStep) syncDataFromUpstream() error {
+func (upstreamStep *UpstreamStep) runVendirSync() error {
 	bundleLocation := filepath.Join(upstreamStep.PkgLocation, "bundle")
 	str := fmt.Sprintf(`
 Next step is to run vendir to sync the data from upstream.
 	$ vendir sync --chdir %s
 `, bundleLocation)
 	upstreamStep.ui.BeginLinef(str)
-	_, err := util.Execute("vendir", []string{"sync", "--chdir", bundleLocation})
+	/*_, err := util.Execute("vendir", []string{"sync", "--chdir", bundleLocation})
 	if err != nil {
 		fmt.Printf("Error while running vendir sync. Error is: %s", err.Error())
 		return err
-	}
+	}*/
 	configLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "config")
 	str = fmt.Sprintf(`To ensure that data has been synced, lets do
 	$ ls -l %s
@@ -213,7 +213,7 @@ func (upstreamStep UpstreamStep) getIncludedPaths() ([]string, error) {
 	var paths []string
 	var err error
 	if includeEverything {
-
+		return []string{}, nil
 	} else {
 		paths, err = upstreamStep.getPaths()
 		if err != nil {

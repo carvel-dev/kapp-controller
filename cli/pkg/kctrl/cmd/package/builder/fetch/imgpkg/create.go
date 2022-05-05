@@ -174,6 +174,7 @@ Running cat %s
 
 func (createImgPkgStep CreateImgPkgStep) pushImgpkgBundleToRegistry(bundleLoc string) (string, error) {
 	registryAuthDetails, err := createImgPkgStep.PopulateRegistryAuthDetails()
+	createImgPkgStep.ui.BeginLinef("To push the image onto registry, ensure that `docker login` is done onto `%s`. If not done, open a separate tab and run `docker login %s` and enter the valid credentials to login successfully.", registryAuthDetails.RegistryURL, registryAuthDetails.RegistryURL)
 	if err != nil {
 		return "", err
 	}

@@ -5,6 +5,11 @@ const (
 	PrivateRegistry
 )
 
+const (
+	DockerHubBaseURL string = "index.docker.io"
+	URLSeparator     string = "/"
+)
+
 type RegistryAuthDetails struct {
 	RegistryURL string
 	Username    string
@@ -18,6 +23,11 @@ func (createImgpkg CreateImgPkgStep) PopulateRegistryAuthDetails() (RegistryAuth
 	}
 	switch registry {
 	case DockerHub:
+		username, err := createImgpkg.ui.AskForText("Enter the username on the docker hub")
+		if err != nil {
+			return RegistryAuthDetails{}, err
+		}
+		return RegistryAuthDetails{RegistryURL: DockerHubBaseURL + URLSeparator + username}, nil
 	case PrivateRegistry:
 		registryURL, err := createImgpkg.ui.AskForText("Enter the registry URL")
 		if err != nil {

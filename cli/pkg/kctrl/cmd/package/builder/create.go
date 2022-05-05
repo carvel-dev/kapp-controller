@@ -103,7 +103,6 @@ func (createStep *CreateStep) Run() error {
 func (createStep CreateStep) getStartBlock() string {
 	str := fmt.Sprintf(`
 Lets start on the package creation process.
-First we need a directory to store all configurations
 Creating directory %s
 	$ mkdir -p %s
 `, createStep.pkgLocation, createStep.pkgLocation)

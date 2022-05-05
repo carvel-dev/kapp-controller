@@ -2,6 +2,7 @@ package builder
 
 import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -10,10 +11,20 @@ type PackageBuild struct {
 	Spec            Spec `json:"spec, omitempty"`
 }
 
+type Imgpkg struct {
+	metav1.TypeMeta  `json:",inline"`
+	RegistryURL      string `json:"registryUrl"`
+	RegistryUserName string `json:"registryUserName"`
+	RegistryPassword string `json:"registryPassword"`
+	RepoName         string `json:"repoName"`
+	Tag              string `json:"tag"`
+}
+
 type Spec struct {
 	Pkg         v1alpha1.Package         `json:"package"`
 	PkgMetadata v1alpha1.PackageMetadata `json:"packageMetadata"`
-	//Pending Add imgpkgConfiguration
+	Vendir      vendirconf.Config        `json:"vendir"`
+	Imgpkg      Imgpkg                   `json:"imgpkg"`
 }
 
 func (pkgBuilder PackageBuild) GetPackageMetadata() v1alpha1.PackageMetadata {

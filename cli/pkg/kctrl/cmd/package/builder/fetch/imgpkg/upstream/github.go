@@ -6,6 +6,10 @@ import (
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
+const (
+	latestVersion = "latest"
+)
+
 type GithubStep struct {
 	ui            ui.UI
 	GithubRelease *vendirconf.DirectoryContentsGithubRelease `json:"githubRelease,omitempty"`
@@ -30,15 +34,23 @@ func (g *GithubStep) Interact() error {
 	if err != nil {
 		return err
 	}
-	//g.RepoSlug = repoSlug
-	releaseTag, err := g.getVersion()
+	var releaseTag string
+	var latest bool
+
+	releaseVersion, err := g.getVersion()
+	if releaseVersion == latestVersion {
+		latest = true
+	} else {
+		releaseTag = releaseVersion
+	}
 	if err != nil {
 		return err
 	}
-	//g.ReleaseTag = releaseTag
+	//TODO Rohit getting the releaseTag even though it is empty bcoz we dont have omitEmpty in the json representation. Might be have to create PR on imgpkg
 	directoryContentsGithubRelease := vendirconf.DirectoryContentsGithubRelease{
 		Slug:                          repoSlug,
 		Tag:                           releaseTag,
+		Latest:                        latest,
 		DisableAutoChecksumValidation: true,
 	}
 	g.GithubRelease = &directoryContentsGithubRelease
@@ -47,8 +59,10 @@ func (g *GithubStep) Interact() error {
 
 func (g GithubStep) getVersion() (string, error) {
 	var useLatestVersion bool
+	input, err := g.ui.AskForText("Do you want to use the latest released version(y/n)")
+	//TODO Rohit check when you press ctrl-C, does it generate an error
+
 	for {
-		input, err := g.ui.AskForText("Do you want to use the latest released version(y/n)")
 		if err != nil {
 			return "", err
 		}
@@ -57,13 +71,12 @@ func (g GithubStep) getVersion() (string, error) {
 		if isValidInput {
 			break
 		} else {
-			input, _ = g.ui.AskForText("Invalid input. (must be 'y','n','Y','N')")
+			input, err = g.ui.AskForText("Invalid input. (must be 'y','n','Y','N')")
 		}
 	}
 
-	//if useLatestVersion {
 	if useLatestVersion {
-
+		return latestVersion, nil
 	} else {
 		g.ui.BeginLinef("Ok. Then we have to mention the specific release tag which makes up the package configuration")
 		releaseTag, err := g.ui.AskForText("Enter the release tag")
