@@ -15,7 +15,7 @@ go build -ldflags="-buildid=" -trimpath -mod=vendor -o controller ./cmd/main.go
 ls -la ./controller
 
 ./hack/gen-crds.sh
-ytt -f config/ >/dev/null
+ytt -f config/ -v image=foo >/dev/null
 
 # compile tests, but do not run them: https://github.com/golang/go/issues/15513#issuecomment-839126426
 go test --exec=echo ./... >/dev/null

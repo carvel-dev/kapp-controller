@@ -21,5 +21,10 @@ tail -n +$run_image_start Dockerfile | \
    sed 's/usr\/local\/bin\///' \
    >> Dockerfile.dev
 
-ytt -f config/ -f config-dev-deploy/ | kbld -f- | kapp deploy -a kc -f- -c -y
+image="${KC_IMG:-carvel/kapp-controller:dev}"
+docker build -t "${image}" Dockerfile.dev
+if [ -n "${KC_IMG_PUSH}" ]; then
+  docker push -t "${image}"
+fi
 
+ytt -f config/ -v "${image}" | kapp deploy -a kc -f- -c -y
