@@ -2,6 +2,7 @@ package upstream
 
 import (
 	"fmt"
+	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/util"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	"os"
@@ -9,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
 	"sigs.k8s.io/yaml"
 )
 
@@ -34,12 +34,14 @@ type UpstreamStep struct {
 	VendirConfig vendirconf.Config
 	ui           ui.UI
 	PkgLocation  string
+	pkgBuild     *pkgbuilder.PackageBuild
 }
 
-func NewUpstreamStep(ui ui.UI, pkgLocation string) *UpstreamStep {
+func NewUpstreamStep(ui ui.UI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *UpstreamStep {
 	return &UpstreamStep{
 		ui:          ui,
 		PkgLocation: pkgLocation,
+		pkgBuild:    pkgBuild,
 	}
 }
 
@@ -88,6 +90,7 @@ func (upstreamStep *UpstreamStep) Interact() error {
 
 func (upstreamStep *UpstreamStep) PostInteract() error {
 	upstreamStep.populateUpstreamMetadata()
+	upstreamStep.pkgBuild.Spec.Vendir = upstreamStep.VendirConfig
 	err := upstreamStep.createVendirFile()
 	if err != nil {
 		return err
@@ -108,18 +111,21 @@ func (upstreamStep *UpstreamStep) PostInteract() error {
 }
 
 func (upstreamStep *UpstreamStep) createVendirFile() error {
-	str := `We have all the information needed to sync the upstream.
-Lets build vendir.yml file with above inputs.
-`
+	vendirFileLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "vendir.yml")
+	str := fmt.Sprintf(`We have all the information needed to sync the upstream.
+To create an imgpkg bundle, data has to be synced from upstream to local. 
+To sync the data from upstream to local, we will use vendir.
+Vendir allows to declaratively state what should be in a directory and sync any number of data sources into it.
+Lets use our inputs to create vendir.yml file.
+Creating vendir.yml file in directory %s
+`, vendirFileLocation)
 	upstreamStep.ui.BeginLinef(str)
 	data, err := yaml.Marshal(&upstreamStep.VendirConfig)
-	vendirFileLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "vendir.yml")
 	if err != nil {
-		fmt.Errorf("Unable to build vendir.yml")
+		upstreamStep.ui.ErrorLinef("Unable to create vendir.yml")
 		return err
 	}
 	f, err := os.Create(vendirFileLocation)
-
 	if err != nil {
 		//TODO Rohit how are you sure that this is the error.
 		fmt.Println("File already exist")
@@ -137,7 +143,8 @@ Lets build vendir.yml file with above inputs.
 
 func (upstreamStep *UpstreamStep) printVendirFile() error {
 	vendirFileLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "vendir.yml")
-	str := `	$ cat vendir.yml`
+	str := `Our vendir.yml is created. This file looks like this
+	$ cat vendir.yml`
 	upstreamStep.ui.BeginLinef(str)
 	fmt.Println()
 	resp, err := util.Execute("cat", []string{vendirFileLocation})
@@ -176,15 +183,15 @@ Lets see its content
 func (upstreamStep *UpstreamStep) runVendirSync() error {
 	bundleLocation := filepath.Join(upstreamStep.PkgLocation, "bundle")
 	str := fmt.Sprintf(`
-Next step is to run vendir to sync the data from upstream.
+Next step is to run vendir to sync the data from upstream. Running 'vendir sync'
 	$ vendir sync --chdir %s
 `, bundleLocation)
 	upstreamStep.ui.BeginLinef(str)
-	/*_, err := util.Execute("vendir", []string{"sync", "--chdir", bundleLocation})
+	_, err := util.Execute("vendir", []string{"sync", "--chdir", bundleLocation})
 	if err != nil {
 		fmt.Printf("Error while running vendir sync. Error is: %s", err.Error())
 		return err
-	}*/
+	}
 	configLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "config")
 	str = fmt.Sprintf(`To ensure that data has been synced, lets do
 	$ ls -l %s
@@ -199,37 +206,15 @@ Next step is to run vendir to sync the data from upstream.
 }
 
 func (upstreamStep UpstreamStep) getIncludedPaths() ([]string, error) {
-	var includeEverything bool
-	input, _ := upstreamStep.ui.AskForText("Does your package needs to include everything from the upstream(y/n)")
-	for {
-		var isValidInput bool
-		includeEverything, isValidInput = common.ValidateInputYesOrNo(input)
-		if isValidInput {
-			break
-		} else {
-			input, _ = upstreamStep.ui.AskForText("Invalid input. (must be 'y','n','Y','N')")
-		}
-	}
-	var paths []string
-	var err error
-	if includeEverything {
-		return []string{}, nil
-	} else {
-		paths, err = upstreamStep.getPaths()
-		if err != nil {
-			return nil, err
-		}
-	}
-	return paths, nil
-}
-
-func (upstreamStep UpstreamStep) getPaths() ([]string, error) {
-	str := `Now, we need to enter the specific paths which we want to include as package content. More than one paths can be added with comma separator.`
+	str := `Now, we need to enter the specific paths which we want to include as package content. More than one paths can be added with comma separator. 
+To include everything from the upstream, leave it empty`
 	upstreamStep.ui.BeginLinef(str)
-
-	path, err := upstreamStep.ui.AskForText("Enter the paths which needs to be included as part of this package")
+	path, err := upstreamStep.ui.AskForText("Enter the paths which need to be included as part of this package")
 	if err != nil {
 		return nil, err
+	}
+	if len(path) == 0 {
+		return []string{}, nil
 	}
 	paths := strings.Split(path, ",")
 	return paths, nil

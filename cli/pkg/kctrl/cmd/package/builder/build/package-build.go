@@ -1,4 +1,4 @@
-package builder
+package build
 
 import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -14,8 +14,8 @@ type PackageBuild struct {
 type Imgpkg struct {
 	metav1.TypeMeta  `json:",inline"`
 	RegistryURL      string `json:"registryUrl"`
-	RegistryUserName string `json:"registryUserName"`
-	RegistryPassword string `json:"registryPassword"`
+	RegistryUserName string `json:"registryUserName,omitempty"`
+	RegistryPassword string `json:"registryPassword,omitempty"`
 	RepoName         string `json:"repoName"`
 	Tag              string `json:"tag"`
 }

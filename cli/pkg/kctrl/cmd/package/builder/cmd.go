@@ -9,7 +9,7 @@ import (
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "builder",
+		Use:     "build",
 		Aliases: []string{"b"},
 		Short:   "Create packages",
 	}

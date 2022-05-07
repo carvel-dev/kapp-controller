@@ -2,6 +2,7 @@ package fetch
 
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/fetch/imgpkg"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
@@ -18,19 +19,22 @@ type FetchStep struct {
 	ui          ui.UI
 	pkgLocation string
 	AppFetch    []v1alpha1.AppFetch
+	pkgBuild    *build.PackageBuild
 }
 
-func NewFetchStep(ui ui.UI, pkgLocation string) *FetchStep {
+func NewFetchStep(ui ui.UI, pkgLocation string, pkgBuild *build.PackageBuild) *FetchStep {
 	fetchStep := FetchStep{
 		ui:          ui,
 		pkgLocation: pkgLocation,
+		pkgBuild:    pkgBuild,
 	}
 	return &fetchStep
 }
 
 func (fetch FetchStep) PreInteract() error {
 	str := `Now, we have to add the configuration which makes up the package for distribution. 
-Configuration can be fetched from different types of sources.`
+Configuration can be fetched from different types of sources.
+Imgpkg is a tool to package, distribute, and relocate Kubernetes configuration and dependent OCI images as one OCI artifact: a bundle.`
 	fetch.ui.BeginLinef(str)
 	return nil
 }
@@ -45,7 +49,7 @@ func (fetch *FetchStep) Interact() error {
 	//TODO Rohit This is error prone. How can we make it better. Option: Switch over the list items e.g. fetchTypeNames[fetchOptionSelected]
 	switch fetchOptionSelected {
 	case Imgpkg:
-		imgpkgStep := imgpkg.NewImgPkgStep(fetch.ui, fetch.pkgLocation)
+		imgpkgStep := imgpkg.NewImgPkgStep(fetch.ui, fetch.pkgLocation, fetch.pkgBuild)
 		err := imgpkgStep.Run()
 		if err != nil {
 			return err

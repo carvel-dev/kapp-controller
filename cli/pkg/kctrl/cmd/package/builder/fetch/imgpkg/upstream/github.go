@@ -2,7 +2,6 @@ package upstream
 
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
@@ -58,34 +57,15 @@ func (g *GithubStep) Interact() error {
 }
 
 func (g GithubStep) getVersion() (string, error) {
-	var useLatestVersion bool
-	input, err := g.ui.AskForText("Do you want to use the latest released version(y/n)")
 	//TODO Rohit check when you press ctrl-C, does it generate an error
-
-	for {
-		if err != nil {
-			return "", err
-		}
-		var isValidInput bool
-		useLatestVersion, isValidInput = common.ValidateInputYesOrNo(input)
-		if isValidInput {
-			break
-		} else {
-			input, err = g.ui.AskForText("Invalid input. (must be 'y','n','Y','N')")
-		}
+	releaseTag, err := g.ui.AskForText("Enter the release tag to be used. Leave empty to use the latest version")
+	if err != nil {
+		return "", err
 	}
-
-	if useLatestVersion {
+	if len(releaseTag) == 0 {
 		return latestVersion, nil
-	} else {
-		g.ui.BeginLinef("Ok. Then we have to mention the specific release tag which makes up the package configuration")
-		releaseTag, err := g.ui.AskForText("Enter the release tag")
-		if err != nil {
-			return "", err
-		}
-		return releaseTag, nil
 	}
-	return "", nil
+	return releaseTag, nil
 }
 
 func (g *GithubStep) Run() error {

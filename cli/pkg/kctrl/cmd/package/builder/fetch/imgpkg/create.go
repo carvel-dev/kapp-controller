@@ -2,7 +2,9 @@ package imgpkg
 
 import (
 	"fmt"
+	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/util"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path/filepath"
 	"strings"
 
@@ -13,15 +15,20 @@ import (
 )
 
 type CreateImgPkgStep struct {
-	ui          ui.UI
-	image       string
-	pkgLocation string
+	ui                  ui.UI
+	image               string
+	pkgLocation         string
+	pkgBuild            *pkgbuilder.PackageBuild
+	repoName            string
+	repoTag             string
+	RegistryAuthDetails RegistryAuthDetails
 }
 
-func NewCreateImgPkgStep(ui ui.UI, pkgLocation string) *CreateImgPkgStep {
+func NewCreateImgPkgStep(ui ui.UI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *CreateImgPkgStep {
 	return &CreateImgPkgStep{
 		ui:          ui,
 		pkgLocation: pkgLocation,
+		pkgBuild:    pkgBuild,
 	}
 }
 
@@ -42,11 +49,15 @@ func (createImgPkgStep *CreateImgPkgStep) Run() error {
 }
 
 func (createImgPkgStep CreateImgPkgStep) PreInteract() error {
-	err := createImgPkgStep.createBundleConfigDir()
+	createImgPkgStep.ui.BeginLinef("We have to first create the imgpkg bundle.")
+	err := createImgPkgStep.createBundleDir()
 	if err != nil {
 		return err
 	}
-
+	err = createImgPkgStep.createBundleConfigDir()
+	if err != nil {
+		return err
+	}
 	err = createImgPkgStep.createBundleDotImgpkgDir()
 	if err != nil {
 		return err
@@ -54,10 +65,28 @@ func (createImgPkgStep CreateImgPkgStep) PreInteract() error {
 	return nil
 }
 
+func (createImgPkgStep CreateImgPkgStep) createBundleDir() error {
+	bundleLocation := filepath.Join(createImgPkgStep.pkgLocation, "bundle")
+	str := fmt.Sprintf(` 
+Bundle directory will act as a parent directory which will contain all the artifacts which makes up our imgpkg bundle.
+Creating directory %s.
+	$ mkdir -p %s
+`, bundleLocation, bundleLocation)
+	createImgPkgStep.ui.BeginLinef(str)
+	output, err := util.Execute("mkdir", []string{"-p", bundleLocation})
+	if err != nil {
+		return err
+	}
+	createImgPkgStep.ui.BeginLinef(output)
+	return nil
+	return nil
+}
+
 func (createImgPkgStep CreateImgPkgStep) createBundleConfigDir() error {
 	bundleConfigLocation := filepath.Join(createImgPkgStep.pkgLocation, "bundle", "config")
-	str := fmt.Sprintf(`Cool, lets create the imgpkg bundle first
-Creating directory %s
+	str := fmt.Sprintf(`
+Config directory will contain package contents such as Kubernetes YAML configuration, ytt templates, Helm templates, etc.
+Creating directory %s. 
 	$ mkdir -p %s
 `, bundleConfigLocation, bundleConfigLocation)
 	createImgPkgStep.ui.BeginLinef(str)
@@ -72,7 +101,8 @@ Creating directory %s
 func (createImgPkgStep CreateImgPkgStep) createBundleDotImgpkgDir() error {
 	bundleDotImgPkgLocation := filepath.Join(createImgPkgStep.pkgLocation, "bundle", ".imgpkg")
 	str := fmt.Sprintf(`
-Creating directory %s
+.imgpkg directory will contain the bundle’s lock file. A bundle lock file has the mapping of images(referenced in the package contents such as K8s YAML configurations, etc)to its sha256 digest.
+Creating directory %s. 
 	$ mkdir -p %s
 `, bundleDotImgPkgLocation, bundleDotImgPkgLocation)
 	createImgPkgStep.ui.BeginLinef(str)
@@ -85,7 +115,7 @@ Creating directory %s
 }
 
 func (createImgPkgStep CreateImgPkgStep) Interact() error {
-	upstreamStep := upstream.NewUpstreamStep(createImgPkgStep.ui, createImgPkgStep.pkgLocation)
+	upstreamStep := upstream.NewUpstreamStep(createImgPkgStep.ui, createImgPkgStep.pkgLocation, createImgPkgStep.pkgBuild)
 	err := upstreamStep.Run()
 	if err != nil {
 		return err
@@ -174,19 +204,22 @@ Running cat %s
 
 func (createImgPkgStep CreateImgPkgStep) pushImgpkgBundleToRegistry(bundleLoc string) (string, error) {
 	registryAuthDetails, err := createImgPkgStep.PopulateRegistryAuthDetails()
-	createImgPkgStep.ui.BeginLinef("To push the image onto registry, ensure that `docker login` is done onto `%s`. If not done, open a separate tab and run `docker login %s` and enter the valid credentials to login successfully.", registryAuthDetails.RegistryURL, registryAuthDetails.RegistryURL)
 	if err != nil {
 		return "", err
 	}
+	createImgPkgStep.RegistryAuthDetails = registryAuthDetails
+	createImgPkgStep.ui.BeginLinef("To push the image onto registry, ensure that `docker login` is done onto `%s`. If not done, open a separate tab and run `docker login %s` and enter the valid credentials to login successfully.", registryAuthDetails.RegistryURL, registryAuthDetails.RegistryURL)
 	//Can repoName be empty?
 	repoName, err := createImgPkgStep.ui.AskForText("Provide the repository name to which this bundle belong")
 	if err != nil {
 		return "", err
 	}
-	tagName, err := createImgPkgStep.ui.AskForText("Enter the tag for bundle")
+	createImgPkgStep.repoName = repoName
+	tagName, err := createImgPkgStep.ui.AskForText("Enter tag for the bundle")
 	if err != nil {
 		return "", err
 	}
+	createImgPkgStep.repoTag = tagName
 	pushURL := registryAuthDetails.RegistryURL + "/" + repoName + ":" + tagName
 	str := fmt.Sprintf(`Running imgpkg to push the bundle directory and indicate what project name and tag to give it.
  	$ imgpkg push --bundle %s --file %s --json
@@ -200,7 +233,24 @@ func (createImgPkgStep CreateImgPkgStep) pushImgpkgBundleToRegistry(bundleLoc st
 	}
 	createImgPkgStep.ui.BeginLinef(output)
 	bundleURL := getBundleURL(output)
+	createImgPkgStep.populateImgpkgInPkgBuild()
 	return bundleURL, nil
+}
+
+func (createImgPkgStep CreateImgPkgStep) populateImgpkgInPkgBuild() {
+	imgpkgConf := pkgbuilder.Imgpkg{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Config",
+			APIVersion: "imgpkg.carvel.dev/v1alpha1",
+		},
+		RegistryURL:      createImgPkgStep.RegistryAuthDetails.RegistryURL,
+		RegistryUserName: "",
+		RegistryPassword: "",
+		RepoName:         createImgPkgStep.repoName,
+		Tag:              createImgPkgStep.repoTag,
+	}
+	createImgPkgStep.pkgBuild.Spec.Imgpkg = imgpkgConf
+	return
 }
 
 type ImgpkgPushOutput struct {
