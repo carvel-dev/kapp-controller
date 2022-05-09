@@ -42,7 +42,7 @@ jobs:
           yq eval ".${{ matrix.tool }}_checksum_darwin = \"${new_darwin_amd64_sha}\"" -i ./hack/dependencies.yml
           yq eval ".${{ matrix.tool }}_checksum_linux = \"${new_linux_amd64_sha}\"" -i ./hack/dependencies.yml          
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@bd72e1b7922d417764d27d30768117ad7da78a0e
+        uses: peter-evans/create-pull-request@f094b77505fb89581e68a1163fbd2fffece39da1
         with:
           token: ${{ secrets.CARVEL_BOT_ACCESS_TOKEN }}
           committer: Carvel Bot <svc.bot.carvel@vmware.com>
