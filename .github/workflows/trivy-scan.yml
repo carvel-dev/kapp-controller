@@ -38,7 +38,7 @@ jobs:
           echo "SUMMARY=$summary" >> "$GITHUB_ENV"
       - name: Send Slack Notification
         if: success()
-        uses: slackapi/slack-github-action@v1.18.0
+        uses: slackapi/slack-github-action@v1.19.0
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
@@ -46,7 +46,7 @@ jobs:
           slack-message: "${{ env.SUMMARY }}"
       - name: Send Failure notification
         if: failure()
-        uses: slackapi/slack-github-action@v1.18.0
+        uses: slackapi/slack-github-action@v1.19.0
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
@@ -117,7 +117,7 @@ jobs:
           fi
       - name: Send Slack Notification if Scan Ran Successfully
         if: steps.cve-summary.outputs.summary != ''
-        uses: slackapi/slack-github-action@v1.18.0
+        uses: slackapi/slack-github-action@v1.19.0
         with:
           slack-message: "New CVEs found! Check https://github.com/vmware-tanzu/carvel-kapp-controller/security/code-scanning for details \n ${{ steps.cve-summary.outputs.summary }}"
           channel-id: G01FTP43JMQ
@@ -125,7 +125,7 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
       - name: Send Failure notification
         if: failure()
-        uses: slackapi/slack-github-action@v1.18.0
+        uses: slackapi/slack-github-action@v1.19.0
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
