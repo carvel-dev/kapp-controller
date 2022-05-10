@@ -12,7 +12,7 @@ VERSION="${1:-`get_latest_git_tag`}"
 
 # makes builds reproducible
 export CGO_ENABLED=0
-LDFLAGS="-X github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/version.Version=$VERSION -buildid="
+LDFLAGS="-X github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/version.Version=$VERSION"
 
 GOOS=darwin GOARCH=amd64 go build -ldflags="$LDFLAGS" -trimpath -o kctrl-darwin-amd64 ./cmd/kctrl/...
 GOOS=darwin GOARCH=arm64 go build -ldflags="$LDFLAGS" -trimpath -o kctrl-darwin-arm64 ./cmd/kctrl/...
