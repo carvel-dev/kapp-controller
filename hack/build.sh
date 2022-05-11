@@ -9,8 +9,7 @@ go mod vendor
 go mod tidy
 go fmt ./cmd/... ./pkg/...
 
-# we set empty buildid and pass -trimpath for reproducible builds; see https://github.com/golang/go/issues/34186
-go build -ldflags="-buildid=" -trimpath -mod=vendor -o controller ./cmd/main.go
+go build -trimpath -mod=vendor -o controller ./cmd/main.go
 
 ls -la ./controller
 
