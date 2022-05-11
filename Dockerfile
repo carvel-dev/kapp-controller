@@ -30,7 +30,7 @@ RUN curl -sLo cue.tgz https://github.com/cue-lang/cue/releases/download/v0.4.2/c
 # kapp-controller
 COPY . .
 # helpful ldflags reference: https://www.digitalocean.com/community/tutorials/using-ldflags-to-set-version-information-for-go-applications
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -ldflags="-X 'main.Version=$KCTRL_VER' -buildid=" -trimpath -o controller ./cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -ldflags="-X 'main.Version=$KCTRL_VER'" -trimpath -o controller ./cmd/main.go
 
 # --- run image ---
 FROM photon:4.0
