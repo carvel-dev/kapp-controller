@@ -68,8 +68,6 @@ spec:
 
 	yaml := packageMetadata + "\n" + packageCR1 + "\n" + packageCR2
 
-	//TODO: Add test with data values. Let --values-file
-
 	cleanUp := func() {
 		// TODO: Check for error while uninstalling in cleanup?
 		kappCtrl.Run([]string{"package", "installed", "delete", "--package-install", pkgiName})
