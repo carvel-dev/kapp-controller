@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1652135950097,
+  "lastUpdate": 1652272217445,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -999,6 +999,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6687331107,
             "unit": "ns/op\t         4.437 DeleteSeconds\t         2.177 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "benm@vmware.com",
+            "name": "Ben Moss",
+            "username": "benmoss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "89922ea418c31e052e06cecddf42102b8e41e82c",
+          "message": "Remove buildid= workaround (#681)\n\nfixed in go 1.14 https://github.com/golang/go/commit/aa680c0c49b55722a72ad3772e590cd2f9af541d",
+          "timestamp": "2022-05-11T08:16:45-04:00",
+          "tree_id": "637acb3794b9c066367397686397cf95afe3ad4c",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/89922ea418c31e052e06cecddf42102b8e41e82c"
+        },
+        "date": 1652272215803,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37184159402,
+            "unit": "ns/op\t        19.41 DeleteSeconds\t        17.70 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9678717440,
+            "unit": "ns/op\t         5.400 DeleteSeconds\t         4.227 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6752736702,
+            "unit": "ns/op\t         4.485 DeleteSeconds\t         2.212 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
