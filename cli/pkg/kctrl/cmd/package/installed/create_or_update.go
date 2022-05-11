@@ -43,6 +43,7 @@ type CreateOrUpdateOptions struct {
 	packageName        string
 	version            string
 	valuesFile         string
+	dropValuesFile     bool
 	serviceAccountName string
 
 	install bool
@@ -162,6 +163,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Name of package install to be updated")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
+	cmd.Flags().BoolVar(&o.dropValuesFile, "drop-values-file", false, "Drop values file and remove reference from installation if values are not supplied, optional")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -299,7 +301,7 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		return err
 	}
 
-	if o.valuesFile == "" && !changed {
+	if o.valuesFile == "" && !changed && !o.dropValuesFile {
 		return err
 	}
 
@@ -308,8 +310,22 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		return err
 	}
 
-	o.statusUI.PrintMessagef("Updating package install for '%s'", o.Name)
-	o.addCreatedResourceAnnotations(&updatedPkgInstall.ObjectMeta, false, isSecretCreated)
+	isSecretDeleted := false
+	if o.dropValuesFile && o.valuesFile == "" {
+		isSecretDeleted, err = o.dropValuesSecret(client)
+		if err != nil {
+			return err
+		}
+
+		if isSecretDeleted {
+			o.statusUI.PrintMessagef("Removing values secret reference from package install '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+			o.removeValuesSecretReference(updatedPkgInstall)
+			changed = true
+		}
+	}
+
+	o.statusUI.PrintMessagef("Updating package install for '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+	o.addCreatedResourceAnnotations(&updatedPkgInstall.ObjectMeta, false, isSecretCreated, isSecretDeleted)
 	_, err = kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Update(
 		context.Background(), updatedPkgInstall, metav1.UpdateOptions{},
 	)
@@ -325,6 +341,48 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 	}
 
 	return nil
+}
+
+func (o *CreateOrUpdateOptions) dropValuesSecret(client kubernetes.Interface) (bool, error) {
+	secretName := o.createdAnnotations.SecretAnnValue()
+	pkgiIdentifier := o.createdAnnotations.PackageAnnValue()
+
+	valuesSecret, err := client.CoreV1().Secrets(o.NamespaceFlags.Name).Get(context.Background(), secretName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			o.statusUI.PrintMessagef("Values secret '%s' not found", secretName)
+			return true, nil
+		}
+		return false, fmt.Errorf("Getting values secret: %s", err.Error())
+	}
+
+	// Do not delete secrets not created by kctrl
+	// TODO: Should we not error out and continue with the rest of the changes?
+	annotations := valuesSecret.GetAnnotations()
+	val, found := annotations[KctrlPkgAnnotation]
+	if !found || val != pkgiIdentifier {
+		// To support older version of Tanzu CLI. To be deprecated
+		val, found = annotations[TanzuPkgAnnotation]
+		if !found || val != pkgiIdentifier {
+			return false, fmt.Errorf("Deleting values secret: Secret was not created by kctrl")
+		}
+	}
+
+	o.statusUI.PrintMessagef("Deleting values secret '%s'", secretName)
+	err = client.CoreV1().Secrets(o.NamespaceFlags.Name).Delete(context.Background(), secretName, metav1.DeleteOptions{})
+	if err != nil {
+		return false, fmt.Errorf("Deleting values secret: %s", err.Error())
+	}
+
+	return true, nil
+}
+
+func (o *CreateOrUpdateOptions) removeValuesSecretReference(pkgi *kcpkgv1alpha1.PackageInstall) {
+	for i, valueRef := range pkgi.Spec.Values {
+		if valueRef.SecretRef.Name == o.createdAnnotations.SecretAnnValue() {
+			pkgi.Spec.Values = append(pkgi.Spec.Values[:i], pkgi.Spec.Values[i+1:]...)
+		}
+	}
 }
 
 func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interface) (bool, bool, error) {
@@ -520,7 +578,7 @@ func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secr
 		}
 	}
 
-	o.addCreatedResourceAnnotations(&packageInstall.ObjectMeta, serviceAccountCreated, secretCreated)
+	o.addCreatedResourceAnnotations(&packageInstall.ObjectMeta, serviceAccountCreated, secretCreated, false)
 
 	_, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Create(context.Background(), packageInstall, metav1.CreateOptions{})
 	if err != nil {
@@ -676,7 +734,7 @@ func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interfa
 	return nil
 }
 
-func (o *CreateOrUpdateOptions) addCreatedResourceAnnotations(meta *metav1.ObjectMeta, createdSvcAccount, createdSecret bool) {
+func (o *CreateOrUpdateOptions) addCreatedResourceAnnotations(meta *metav1.ObjectMeta, createdSvcAccount, createdSecret bool, deletedSecret bool) {
 	if meta.Annotations == nil {
 		meta.Annotations = make(map[string]string)
 	}
@@ -695,6 +753,13 @@ func (o *CreateOrUpdateOptions) addCreatedResourceAnnotations(meta *metav1.Objec
 
 		// To support older versions of Tanzu CLI. To be deprecated
 		meta.Annotations[TanzuPkgAnnotation+"-"+KindSecret.AsString()] = o.createdAnnotations.SecretAnnValue()
+	}
+
+	if deletedSecret {
+		delete(meta.Annotations, KctrlPkgAnnotation+"-"+KindSecret.AsString())
+
+		// To support older versions of Tanzu CLI. To be deprecated
+		delete(meta.Annotations, TanzuPkgAnnotation+"-"+KindSecret.AsString())
 	}
 }
 
