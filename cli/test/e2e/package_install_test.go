@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/require"
@@ -190,6 +191,9 @@ spec:
 			"--package-install", pkgiName,
 		}, RunOpts{})
 		require.NoError(t, err)
+
+		// Sleep for 1 second as it takes time for the underlying app cr to be paused
+		time.Sleep(1 * time.Second)
 
 		out, err := kubectl.RunWithOpts([]string{"get", "app", pkgiName}, RunOpts{})
 		require.NoError(t, err)
