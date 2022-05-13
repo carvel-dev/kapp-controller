@@ -257,6 +257,14 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 		o.Name = args[0]
 	}
 
+	if len(o.Name) == 0 {
+		return fmt.Errorf("Expected package install to be non-empty")
+	}
+
+	if len(o.version) == 0 && len(o.valuesFile) == 0 {
+		return fmt.Errorf("Expected either package version or values file to update the package")
+	}
+
 	client, err := o.depsFactory.CoreClient()
 	if err != nil {
 		return err
