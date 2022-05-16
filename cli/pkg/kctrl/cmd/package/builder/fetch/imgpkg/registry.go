@@ -1,50 +1,16 @@
 package imgpkg
 
-const (
-	DockerHub int = iota
-	PrivateRegistry
-)
-
-const (
-	DockerHubBaseURL string = "index.docker.io"
-	URLSeparator     string = "/"
-)
-
-type RegistryAuthDetails struct {
+type RegistryDetails struct {
 	RegistryURL string
-	Username    string
-	Password    string
 }
 
-func (createImgpkg CreateImgPkgStep) PopulateRegistryAuthDetails() (RegistryAuthDetails, error) {
-	registry, err := createImgpkg.ui.AskForChoice("Where do you want to push the bundle", []string{"DockerHub", "Private Registry"})
+func (createImgpkg CreateImgPkgStep) PopulateRegistryAuthDetails() (RegistryDetails, error) {
+	//TODO Rohit have to add example for both docker hub as well as private registry.
+	imgpkgPushURL, err := createImgpkg.ui.AskForText("Enter the registry url to push the bundle content")
 	if err != nil {
-		return RegistryAuthDetails{}, err
+		return RegistryDetails{}, err
 	}
-	switch registry {
-	case DockerHub:
-		username, err := createImgpkg.ui.AskForText("Enter the username on the docker hub")
-		if err != nil {
-			return RegistryAuthDetails{}, err
-		}
-		return RegistryAuthDetails{RegistryURL: DockerHubBaseURL + URLSeparator + username}, nil
-	case PrivateRegistry:
-		registryURL, err := createImgpkg.ui.AskForText("Enter the registry URL")
-		if err != nil {
-			return RegistryAuthDetails{}, err
-		}
-		/*
-			username, err := createImgpkg.Ui.AskForText("Registry UserName")
-			if err != nil {
-				return RegistryAuthDetails{}, err
-			}
-			password, err := createImgpkg.Ui.AskForPassword("Registry Password")
-			if err != nil {
-				return RegistryAuthDetails{}, err
-			}
-		*/
+	return RegistryDetails{RegistryURL: imgpkgPushURL}, nil
 
-		return RegistryAuthDetails{RegistryURL: registryURL, Username: "", Password: ""}, nil
-	}
-	return RegistryAuthDetails{}, nil
+	return RegistryDetails{}, nil
 }

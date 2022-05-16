@@ -29,17 +29,7 @@ func (imgpkg ImgpkgStep) PreInteract() error {
 
 func (imgpkg *ImgpkgStep) Interact() error {
 	var isImgpkgBundleCreated bool
-	input, _ := imgpkg.ui.AskForText("Is the imgpkg bundle already created(y/n)")
-
-	for {
-		var isValidInput bool
-		isImgpkgBundleCreated, isValidInput = common.ValidateInputYesOrNo(input)
-		if isValidInput {
-			break
-		} else {
-			input, _ = imgpkg.ui.AskForText("Invalid input (must be 'y','n','Y','N')")
-		}
-	}
+	isImgpkgBundleCreated = false
 
 	if isImgpkgBundleCreated {
 		//TODO Rohit should we add some information here.
@@ -51,7 +41,7 @@ func (imgpkg *ImgpkgStep) Interact() error {
 		imgpkg.ImgpkgBundle.Image = image
 	} else {
 		createImgPkgStep := NewCreateImgPkgStep(imgpkg.ui, imgpkg.pkgLocation, imgpkg.pkgBuild)
-		err := createImgPkgStep.Run()
+		err := common.Run(createImgPkgStep)
 		if err != nil {
 			return err
 		}
@@ -61,21 +51,5 @@ func (imgpkg *ImgpkgStep) Interact() error {
 }
 
 func (imgpkg ImgpkgStep) PostInteract() error {
-	return nil
-}
-
-func (imgpkg *ImgpkgStep) Run() error {
-	err := imgpkg.PreInteract()
-	if err != nil {
-		return err
-	}
-	err = imgpkg.Interact()
-	if err != nil {
-		return err
-	}
-	err = imgpkg.PostInteract()
-	if err != nil {
-		return err
-	}
 	return nil
 }

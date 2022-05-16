@@ -2,15 +2,14 @@ package imgpkg
 
 import (
 	"fmt"
-	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/util"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path/filepath"
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
+	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/fetch/imgpkg/upstream"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/util"
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
@@ -21,7 +20,7 @@ type CreateImgPkgStep struct {
 	pkgBuild            *pkgbuilder.PackageBuild
 	repoName            string
 	repoTag             string
-	RegistryAuthDetails RegistryAuthDetails
+	RegistryAuthDetails RegistryDetails
 }
 
 func NewCreateImgPkgStep(ui ui.UI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *CreateImgPkgStep {
@@ -30,22 +29,6 @@ func NewCreateImgPkgStep(ui ui.UI, pkgLocation string, pkgBuild *pkgbuilder.Pack
 		pkgLocation: pkgLocation,
 		pkgBuild:    pkgBuild,
 	}
-}
-
-func (createImgPkgStep *CreateImgPkgStep) Run() error {
-	err := createImgPkgStep.PreInteract()
-	if err != nil {
-		return err
-	}
-	err = createImgPkgStep.Interact()
-	if err != nil {
-		return err
-	}
-	err = createImgPkgStep.PostInteract()
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (createImgPkgStep CreateImgPkgStep) PreInteract() error {
@@ -65,6 +48,15 @@ func (createImgPkgStep CreateImgPkgStep) PreInteract() error {
 	return nil
 }
 
+func (createImgPkgStep CreateImgPkgStep) createDirectory(dirPath string) error {
+	result := util.Execute("mkdir", []string{"-p", dirPath})
+	if result.Error != nil {
+		createImgPkgStep.ui.ErrorLinef("Error creating package directory.Error is: %s", result.ErrorStr())
+		return result.Error
+	}
+	return nil
+}
+
 func (createImgPkgStep CreateImgPkgStep) createBundleDir() error {
 	bundleLocation := filepath.Join(createImgPkgStep.pkgLocation, "bundle")
 	str := fmt.Sprintf(` 
@@ -73,12 +65,10 @@ Creating directory %s.
 	$ mkdir -p %s
 `, bundleLocation, bundleLocation)
 	createImgPkgStep.ui.BeginLinef(str)
-	output, err := util.Execute("mkdir", []string{"-p", bundleLocation})
+	err := createImgPkgStep.createDirectory(bundleLocation)
 	if err != nil {
 		return err
 	}
-	createImgPkgStep.ui.BeginLinef(output)
-	return nil
 	return nil
 }
 
@@ -90,11 +80,10 @@ Creating directory %s.
 	$ mkdir -p %s
 `, bundleConfigLocation, bundleConfigLocation)
 	createImgPkgStep.ui.BeginLinef(str)
-	output, err := util.Execute("mkdir", []string{"-p", bundleConfigLocation})
+	err := createImgPkgStep.createDirectory(bundleConfigLocation)
 	if err != nil {
 		return err
 	}
-	createImgPkgStep.ui.BeginLinef(output)
 	return nil
 }
 
@@ -106,17 +95,17 @@ Creating directory %s.
 	$ mkdir -p %s
 `, bundleDotImgPkgLocation, bundleDotImgPkgLocation)
 	createImgPkgStep.ui.BeginLinef(str)
-	output, err := util.Execute("mkdir", []string{"-p", bundleDotImgPkgLocation})
+	err := createImgPkgStep.createDirectory(bundleDotImgPkgLocation)
 	if err != nil {
 		return err
 	}
-	createImgPkgStep.ui.BeginLinef(output)
 	return nil
+
 }
 
 func (createImgPkgStep CreateImgPkgStep) Interact() error {
 	upstreamStep := upstream.NewUpstreamStep(createImgPkgStep.ui, createImgPkgStep.pkgLocation, createImgPkgStep.pkgBuild)
-	err := upstreamStep.Run()
+	err := common.Run(upstreamStep)
 	if err != nil {
 		return err
 	}
@@ -164,7 +153,7 @@ This mapping will then be placed into an images.yml lock file in your bundle/.im
 	$ kbld --file %s --imgpkg-lock-output %s`, bundleLocation, imagesFileLocation)
 	createImgPkgStep.ui.BeginLinef(str)
 
-	output, err := util.Execute("kbld", []string{"--file", bundleLocation, "--imgpkg-lock-output", imagesFileLocation})
+	err := createImgPkgStep.runkbld(bundleLocation, imagesFileLocation)
 	if err != nil {
 		createImgPkgStep.ui.BeginLinef(err.Error())
 		return err
@@ -175,30 +164,34 @@ Lets see how the images.yml file looks like:
 Running cat %s
 `, imagesFileLocation)
 	createImgPkgStep.ui.BeginLinef(str)
-	output, err = util.Execute("cat", []string{imagesFileLocation})
+	err = createImgPkgStep.printFile(imagesFileLocation)
 	if err != nil {
 		return err
 	}
-	createImgPkgStep.ui.BeginLinef(output)
+	bundleURL, err := createImgPkgStep.pushImgpkgBundleToRegistry(bundleLocation)
+	if err != nil {
+		return err
+	}
+	createImgPkgStep.image = bundleURL
+	return nil
+}
 
-	var pushBundle bool
-	for {
-		input, _ := createImgPkgStep.ui.AskForText("Do you want to push the bundle to the registry(y/n)")
-		var isValidInput bool
-		pushBundle, isValidInput = common.ValidateInputYesOrNo(input)
-		if isValidInput {
-			break
-		} else {
-			input, _ = createImgPkgStep.ui.AskForText("Invalid input (must be 'y','n','Y','N')")
-		}
+func (createImgPkgStep CreateImgPkgStep) runkbld(bundleLocation, imagesFileLocation string) error {
+	result := util.Execute("kbld", []string{"--file", bundleLocation, "--imgpkg-lock-output", imagesFileLocation})
+	if result.Error != nil {
+		createImgPkgStep.ui.ErrorLinef("Error running kbld.Error is: %s", result.ErrorStr())
+		return result.Error
 	}
-	if pushBundle {
-		bundleURL, err := createImgPkgStep.pushImgpkgBundleToRegistry(bundleLocation)
-		if err != nil {
-			return err
-		}
-		createImgPkgStep.image = bundleURL
+	return nil
+}
+
+func (createImgPkgStep CreateImgPkgStep) printFile(filePath string) error {
+	result := util.Execute("cat", []string{filePath})
+	if result.Error != nil {
+		createImgPkgStep.ui.ErrorLinef("Error printing file %s.Error is: %s", filePath, result.ErrorStr())
+		return result.Error
 	}
+	createImgPkgStep.ui.PrintBlock([]byte(result.Stdout))
 	return nil
 }
 
@@ -226,30 +219,24 @@ func (createImgPkgStep CreateImgPkgStep) pushImgpkgBundleToRegistry(bundleLoc st
 `, pushURL, bundleLoc)
 	createImgPkgStep.ui.BeginLinef(str)
 
-	//TODO Rohit It is not showing the actual error
-	output, err := util.Execute("imgpkg", []string{"push", "--bundle", pushURL, "--file", bundleLoc, "--registry-username", registryAuthDetails.Username, "--registry-password", registryAuthDetails.Password, "--json"})
-	if err != nil {
+	//TODO Rohit it is not showing the actual error
+	result := util.Execute("imgpkg", []string{"push", "--bundle", pushURL, "--file", bundleLoc, "--registry-username", "--json"})
+	if result.Error != nil {
 		return "", err
 	}
-	createImgPkgStep.ui.BeginLinef(output)
-	bundleURL := getBundleURL(output)
+	createImgPkgStep.ui.BeginLinef(result.Stdout)
+	bundleURL := getBundleURL(result.Stdout)
 	createImgPkgStep.populateImgpkgInPkgBuild()
 	return bundleURL, nil
 }
 
 func (createImgPkgStep CreateImgPkgStep) populateImgpkgInPkgBuild() {
 	imgpkgConf := pkgbuilder.Imgpkg{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Config",
-			APIVersion: "imgpkg.carvel.dev/v1alpha1",
-		},
-		RegistryURL:      createImgPkgStep.RegistryAuthDetails.RegistryURL,
-		RegistryUserName: "",
-		RegistryPassword: "",
-		RepoName:         createImgPkgStep.repoName,
-		Tag:              createImgPkgStep.repoTag,
+		RegistryURL: createImgPkgStep.RegistryAuthDetails.RegistryURL,
+		RepoName:    createImgPkgStep.repoName,
+		Tag:         createImgPkgStep.repoTag,
 	}
-	createImgPkgStep.pkgBuild.Spec.Imgpkg = imgpkgConf
+	createImgPkgStep.pkgBuild.Spec.Imgpkg = &imgpkgConf
 	return
 }
 

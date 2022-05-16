@@ -53,10 +53,3 @@ func (t *TemplateStep) Interact() error {
 	}
 	return nil
 }
-
-func (t *TemplateStep) Run() error {
-	t.PreInteract()
-	t.Interact()
-	t.PostInteract()
-	return nil
-}

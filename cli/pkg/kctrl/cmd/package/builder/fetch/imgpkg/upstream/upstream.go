@@ -2,12 +2,14 @@ package upstream
 
 import (
 	"fmt"
-	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/util"
-	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	"os"
 	"path/filepath"
 	"strings"
+
+	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/util"
+	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"sigs.k8s.io/yaml"
@@ -65,7 +67,7 @@ func (upstreamStep *UpstreamStep) Interact() error {
 	case "Github Release":
 		content := vendirconf.DirectoryContents{}
 		githubStep := NewGithubStep(upstreamStep.ui)
-		err := githubStep.Run()
+		err := common.Run(githubStep)
 		if err != nil {
 			return err
 		}
@@ -90,7 +92,7 @@ func (upstreamStep *UpstreamStep) Interact() error {
 
 func (upstreamStep *UpstreamStep) PostInteract() error {
 	upstreamStep.populateUpstreamMetadata()
-	upstreamStep.pkgBuild.Spec.Vendir = upstreamStep.VendirConfig
+	upstreamStep.pkgBuild.Spec.Vendir = &upstreamStep.VendirConfig
 	err := upstreamStep.createVendirFile()
 	if err != nil {
 		return err
@@ -147,12 +149,21 @@ func (upstreamStep *UpstreamStep) printVendirFile() error {
 	$ cat vendir.yml`
 	upstreamStep.ui.BeginLinef(str)
 	fmt.Println()
-	resp, err := util.Execute("cat", []string{vendirFileLocation})
+	err := upstreamStep.printFile(vendirFileLocation)
 	if err != nil {
 		fmt.Println("Unable to read vendir.yaml file")
 		return err
 	}
-	upstreamStep.ui.PrintBlock([]byte(resp))
+	return nil
+}
+
+func (upstreamStep *UpstreamStep) printFile(filePath string) error {
+	result := util.Execute("cat", []string{filePath})
+	if result.Error != nil {
+		upstreamStep.ui.ErrorLinef("Error printing file %s.Error is: %s", filePath, result.ErrorStr())
+		return result.Error
+	}
+	upstreamStep.ui.PrintBlock([]byte(result.Stdout))
 	return nil
 }
 
@@ -172,11 +183,10 @@ Lets see its content
 ---
 `, vendirLockFileLocation)
 	upstreamStep.ui.BeginLinef(str)
-	output, err := util.Execute("cat", []string{vendirLockFileLocation})
+	err := upstreamStep.printFile(vendirLockFileLocation)
 	if err != nil {
 		return err
 	}
-	upstreamStep.ui.PrintBlock([]byte(output))
 	return nil
 }
 
@@ -187,21 +197,30 @@ Next step is to run vendir to sync the data from upstream. Running 'vendir sync'
 	$ vendir sync --chdir %s
 `, bundleLocation)
 	upstreamStep.ui.BeginLinef(str)
-	_, err := util.Execute("vendir", []string{"sync", "--chdir", bundleLocation})
-	if err != nil {
-		fmt.Printf("Error while running vendir sync. Error is: %s", err.Error())
-		return err
+	result := util.Execute("vendir", []string{"sync", "--chdir", bundleLocation})
+	if result.Error != nil {
+		upstreamStep.ui.ErrorLinef("Error while running vendir sync. Error is: %s", result.ErrorStr())
+		return result.Error
 	}
 	configLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "config")
 	str = fmt.Sprintf(`To ensure that data has been synced, lets do
 	$ ls -l %s
 `, configLocation)
 	upstreamStep.ui.BeginLinef(str)
-	output, err := util.Execute("ls", []string{"-l", configLocation})
+	err := upstreamStep.listFiles(configLocation)
 	if err != nil {
 		return err
 	}
-	upstreamStep.ui.BeginLinef(output)
+	return nil
+}
+
+func (upstreamStep UpstreamStep) listFiles(dir string) error {
+	result := util.Execute("ls", []string{"-l", dir})
+	if result.Error != nil {
+		upstreamStep.ui.ErrorLinef("Error while listing files. Error is: %s", result.ErrorStr())
+		return result.Error
+	}
+	upstreamStep.ui.PrintBlock([]byte(result.Stdout))
 	return nil
 }
 
@@ -218,20 +237,4 @@ To include everything from the upstream, leave it empty`
 	}
 	paths := strings.Split(path, ",")
 	return paths, nil
-}
-
-func (upstreamStep *UpstreamStep) Run() error {
-	err := upstreamStep.PreInteract()
-	if err != nil {
-		return err
-	}
-	err = upstreamStep.Interact()
-	if err != nil {
-		return err
-	}
-	err = upstreamStep.PostInteract()
-	if err != nil {
-		return err
-	}
-	return nil
 }

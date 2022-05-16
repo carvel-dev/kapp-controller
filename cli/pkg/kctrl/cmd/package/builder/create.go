@@ -3,9 +3,6 @@ package builder
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
-	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +11,7 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/template"
@@ -62,7 +60,7 @@ func (o *CreateOptions) Run(args []string) error {
 	//TODO Rohit Should we provide an option to give pkg location?
 	pkgLocation := GetPkgLocation()
 	createStep := NewCreateStep(o.ui, pkgLocation)
-	err := createStep.Run()
+	err := common.Run(createStep)
 	if err != nil {
 		return err
 	}
@@ -85,24 +83,10 @@ func NewCreateStep(ui ui.UI, pkgLocation string) *CreateStep {
 	return &CreateStep{
 		ui:          ui,
 		pkgLocation: pkgLocation,
-		pkgBuild:    &build.PackageBuild{},
+		pkgBuild: &build.PackageBuild{
+			TypeMeta: v1.TypeMeta{Kind: "PackageBuild", APIVersion: "kctrl.carvel.dev/v1alpha1"},
+		},
 	}
-}
-
-func (createStep *CreateStep) Run() error {
-	err := createStep.PreInteract()
-	if err != nil {
-		return err
-	}
-	err = createStep.Interact()
-	if err != nil {
-		return err
-	}
-	err = createStep.PostInteract()
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (createStep CreateStep) getStartBlock() string {
@@ -114,23 +98,31 @@ Creating directory %s
 	return str
 }
 
-func (create CreateStep) PreInteract() error {
-	create.ui.BeginLinef(create.getStartBlock())
-	output, err := util.Execute("mkdir", []string{"-p", create.pkgLocation})
+func (createStep CreateStep) PreInteract() error {
+
+	createStep.ui.BeginLinef(createStep.getStartBlock())
+	err := createStep.createDirectory(createStep.pkgLocation)
 	if err != nil {
-		create.ui.ErrorLinef("Error creating package directory.Error is: %s", err.Error())
 		return err
 	}
-	create.ui.BeginLinef(output)
 	return nil
 }
 
-func (create *CreateStep) getPkgVersionBlock() string {
+func (createStep CreateStep) createDirectory(dirPath string) error {
+	result := util.Execute("mkdir", []string{"-p", dirPath})
+	if result.Error != nil {
+		createStep.ui.ErrorLinef("Error creating package directory.Error is: %s", result.ErrorStr())
+		return result.Error
+	}
+	return nil
+}
+
+func (createStep *CreateStep) getPkgVersionBlock() string {
 	str := `A package can have multiple versions. These versions are used by PackageInstall to install specific version of the package into the Kubernetes cluster.`
 	return str
 }
 
-func (create *CreateStep) getFQPkgNameBlock() string {
+func (createStep *CreateStep) getFQPkgNameBlock() string {
 	str := `
 A package name must be a fully qualified name. 
 It must consist of at least three segments separated by a '.'
@@ -138,36 +130,12 @@ Fully Qualified Name cannot have a trailing '.' e.g. samplepackage.corp.com`
 	return str
 }
 
-//TODO should we use the same validation used in kapp controller. But that accepts other parameter. ValidatePackageMetadataName in validations.go file
-func validateFQName(name string) error {
-	if len(name) == 0 {
-		return fmt.Errorf("Fully Qualified Name of a package cannot be empty")
-	}
-	if errs := validation.IsDNS1123Subdomain(name); len(errs) > 0 {
-		return fmt.Errorf(strings.Join(errs, ","))
-	}
-	if len(strings.Split(name, ".")) < 3 {
-		return fmt.Errorf("should be a fully qualified name with at least three segments separated by dots")
-	}
-	return nil
-}
-
-func validatePackageSpecVersion(version string) error {
-	if version == "" {
-		return fmt.Errorf("Version cannot be empty")
-	}
-	if _, err := versions.NewSemver(version); err != nil {
-		return fmt.Errorf("must be valid semver: %v", err)
-	}
-	return nil
-}
-
-func (create *CreateStep) Interact() error {
+func (createStep *CreateStep) Interact() error {
 	//Get Fully Qualified Name of the Package
-	create.ui.BeginLinef(create.getFQPkgNameBlock())
+	createStep.ui.BeginLinef(createStep.getFQPkgNameBlock())
 	var fqName string
 	for {
-		fqName, err := create.ui.AskForText("Enter the fully qualified package name")
+		fqName, err := createStep.ui.AskForText("Enter the fully qualified package name")
 		if err != nil {
 			return err
 		}
@@ -175,17 +143,15 @@ func (create *CreateStep) Interact() error {
 		if err == nil {
 			break
 		}
-		create.ui.ErrorLinef("Invalid Package Name. %s", err.Error())
+		createStep.ui.ErrorLinef("Invalid Package Name. %s", err.Error())
 	}
-	//TODO Rohit validateFQName format
-
-	create.fqName = fqName
+	createStep.fqName = fqName
 
 	//Get Package Version
-	create.ui.BeginLinef(create.getPkgVersionBlock())
+	createStep.ui.BeginLinef(createStep.getPkgVersionBlock())
 	var pkgVersion string
 	for {
-		pkgVersion, err := create.ui.AskForText("Enter the package version")
+		pkgVersion, err := createStep.ui.AskForText("Enter the package version")
 		if err != nil {
 			return err
 		}
@@ -193,11 +159,11 @@ func (create *CreateStep) Interact() error {
 		if err == nil {
 			break
 		}
-		create.ui.ErrorLinef("Invalid package version. %s", err.Error())
+		createStep.ui.ErrorLinef("Invalid package version. %s", err.Error())
 	}
-	create.pkgVersion = pkgVersion
+	createStep.pkgVersion = pkgVersion
 
-	err := create.configureFetchSection()
+	err := createStep.configureFetchSection()
 	if err != nil {
 		return err
 	}
@@ -212,74 +178,57 @@ func (create *CreateStep) Interact() error {
 
 	*/
 
-	err = create.configureMaintainers()
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
-func (create *CreateStep) configureMaintainers() error {
-	maintainerNames, err := create.ui.AskForText("Enter the Maintainer's Name. Multiple names can be provided by comma-separated values")
+func (createStep *CreateStep) configureFetchSection() error {
+	fetchConfiguration := fetch.NewFetchStep(createStep.ui, createStep.pkgLocation, createStep.pkgBuild)
+	err := common.Run(fetchConfiguration)
 	if err != nil {
 		return err
 	}
-	var maintainers []v1alpha1.Maintainer
-	for _, maintainerName := range strings.Split(maintainerNames, ",") {
-		maintainers = append(maintainers, v1alpha1.Maintainer{Name: maintainerName})
-	}
-	create.maintainers = maintainers
+	createStep.fetch = *fetchConfiguration
 	return nil
 }
 
-func (create *CreateStep) configureFetchSection() error {
-	fetchConfiguration := fetch.NewFetchStep(create.ui, create.pkgLocation, create.pkgBuild)
-	err := fetchConfiguration.Run()
+func (createStep *CreateStep) configureTemplateSection() error {
+	templateConfiguration := template.NewTemplateStep(createStep.ui)
+	err := common.Run(templateConfiguration)
 	if err != nil {
 		return err
 	}
-	create.fetch = *fetchConfiguration
+	createStep.template = *templateConfiguration
 	return nil
 }
 
-func (create *CreateStep) configureTemplateSection() error {
-	templateConfiguration := template.NewTemplateStep(create.ui)
-	err := templateConfiguration.Run()
+func (createStep *CreateStep) configureValuesSchema() error {
+	valuesSchema, err := createStep.getValueSchema()
 	if err != nil {
 		return err
 	}
-	create.template = *templateConfiguration
+	createStep.valuesSchema = valuesSchema
 	return nil
 }
 
-func (create *CreateStep) configureValuesSchema() error {
-	valuesSchema, err := create.getValueSchema()
-	if err != nil {
-		return err
-	}
-	create.valuesSchema = valuesSchema
-	return nil
-}
-
-func (create CreateStep) getValueSchema() (v1alpha1.ValuesSchema, error) {
+func (createStep CreateStep) getValueSchema() (v1alpha1.ValuesSchema, error) {
 	valuesSchema := v1alpha1.ValuesSchema{}
 	var isValueSchemaSpecified bool
 	var isValidInput bool
-	input, err := create.ui.AskForText("Do you want to specify the values Schema(y/n)")
+	input, err := createStep.ui.AskForText("Do you want to specify the values Schema(y/n)")
 	if err != nil {
 		return valuesSchema, err
 	}
 	for {
 		isValueSchemaSpecified, isValidInput = common.ValidateInputYesOrNo(input)
 		if !isValidInput {
-			input, err = create.ui.AskForText("Invalid input. (must be 'y','n','Y','N')")
+			input, err = createStep.ui.AskForText("Invalid input. (must be 'y','n','Y','N')")
 			if err != nil {
 				return valuesSchema, err
 			}
 			continue
 		}
 		if isValueSchemaSpecified {
-			valuesSchemaFileLocation, err := create.ui.AskForText("Enter the values schema file location")
+			valuesSchemaFileLocation, err := createStep.ui.AskForText("Enter the values schema file location")
 			if err != nil {
 				return valuesSchema, err
 			}
@@ -353,12 +302,12 @@ func (createStep CreateStep) createPackageBuilder() (*build.PackageBuild, error)
 	return createStep.pkgBuild, nil
 }
 
-func (create CreateStep) printPackageCR(pkg v1alpha1.Package) error {
+func (createStep CreateStep) printPackageCR(pkg v1alpha1.Package) error {
 	str := `Great, we have all the data needed to builder the package.yml and package-metadata.yml. 
 This is how the package.yml will look like
 	$ cat package.yml
 `
-	create.ui.PrintBlock([]byte(str))
+	createStep.ui.PrintBlock([]byte(str))
 
 	//TODO: remove this comment. Marshal will make yaml/json
 	jsonPackageData, err := json.Marshal(&pkg)
@@ -370,21 +319,30 @@ This is how the package.yml will look like
 	if err != nil {
 		return err
 	}
-	pkgFileLocation := filepath.Join(create.pkgLocation, "package.yml")
+	pkgFileLocation := filepath.Join(createStep.pkgLocation, "package.yml")
 	if err != nil {
 		return err
 	}
 	err = writeToFile(pkgFileLocation, packageData)
 	if err != nil {
-		create.ui.ErrorLinef("Unable to create package file. %s", err.Error())
+		createStep.ui.ErrorLinef("Unable to create package file. %s", err.Error())
 		return err
 	}
 
-	output, err := util.Execute("cat", []string{pkgFileLocation})
+	err = createStep.printFile(pkgFileLocation)
 	if err != nil {
 		return err
 	}
-	create.ui.PrintBlock([]byte(output))
+	return nil
+}
+
+func (createStep CreateStep) printFile(filePath string) error {
+	result := util.Execute("cat", []string{filePath})
+	if result.Error != nil {
+		createStep.ui.ErrorLinef("Error printing file %s.Error is: %s", filePath, result.ErrorStr())
+		return result.Error
+	}
+	createStep.ui.PrintBlock([]byte(result.Stdout))
 	return nil
 }
 
@@ -412,12 +370,10 @@ This is how the packageMetadata.yml will look like
 		return err
 	}
 
-	output, err := util.Execute("cat", []string{pkgMetadataFileLocation})
+	err = createStep.printFile(pkgMetadataFileLocation)
 	if err != nil {
 		return err
 	}
-
-	createStep.ui.PrintBlock([]byte(output))
 	return nil
 }
 
@@ -429,28 +385,28 @@ func writeToFile(path string, data []byte) error {
 	return nil
 }
 
-func (create CreateStep) populatePkgMetadataSection() v1alpha1.PackageMetadata {
+func (createStep CreateStep) populatePkgMetadataSection() *v1alpha1.PackageMetadata {
 	packageMetadataContent := v1alpha1.PackageMetadata{
 		TypeMeta:   v1.TypeMeta{Kind: "PackageMetadata", APIVersion: "data.packaging.carvel.dev/v1alpha1"},
-		ObjectMeta: v1.ObjectMeta{Name: create.fqName},
+		ObjectMeta: v1.ObjectMeta{Name: createStep.fqName},
 		Spec: v1alpha1.PackageMetadataSpec{
-			DisplayName:      strings.Split(create.fqName, ".")[0],
+			DisplayName:      strings.Split(createStep.fqName, ".")[0],
 			LongDescription:  "A long description",
 			ShortDescription: "A short description",
 			ProviderName:     "",
-			Maintainers:      create.maintainers,
+			Maintainers:      createStep.maintainers,
 		},
 	}
-	return packageMetadataContent
+	return &packageMetadataContent
 }
 
-func (create CreateStep) populatePkgSection() v1alpha1.Package {
+func (createStep CreateStep) populatePkgSection() *v1alpha1.Package {
 	packageContent := v1alpha1.Package{
 		TypeMeta:   v1.TypeMeta{Kind: "Package", APIVersion: "data.packaging.carvel.dev/v1alpha1"},
-		ObjectMeta: v1.ObjectMeta{Namespace: "default", Name: create.fqName + "." + create.pkgVersion},
+		ObjectMeta: v1.ObjectMeta{Namespace: "default", Name: createStep.fqName + "." + createStep.pkgVersion},
 		Spec: v1alpha1.PackageSpec{
-			RefName:                         create.fqName,
-			Version:                         create.pkgVersion,
+			RefName:                         createStep.fqName,
+			Version:                         createStep.pkgVersion,
 			Licenses:                        []string{"Apache 2.0", "MIT"},
 			ReleasedAt:                      v1.Time{time.Now()},
 			CapactiyRequirementsDescription: "",
@@ -458,7 +414,7 @@ func (create CreateStep) populatePkgSection() v1alpha1.Package {
 			Template: v1alpha1.AppTemplateSpec{Spec: &kappctrlapis.AppSpec{
 				ServiceAccountName: "",
 				Cluster:            nil,
-				Fetch:              create.fetch.AppFetch,
+				Fetch:              createStep.fetch.AppFetch,
 				Template: []kappctrlapis.AppTemplate{
 					kappctrlapis.AppTemplate{Ytt: &kappctrlapis.AppTemplateYtt{}},
 				},
@@ -473,19 +429,7 @@ func (create CreateStep) populatePkgSection() v1alpha1.Package {
 			ValuesSchema: v1alpha1.ValuesSchema{},
 		},
 	}
-	return packageContent
-}
-
-func (createStep CreateStep) populatePkgBuilder() build.PackageBuild {
-	pkgBuilder := build.PackageBuild{
-		//TODO Rohit what should we call it. I think PackageBuild
-		TypeMeta: v1.TypeMeta{Kind: "PackageBuild", APIVersion: "kctrl.carvel.dev/v1alpha1"},
-		Spec: build.Spec{
-			Pkg:         createStep.populatePkgSection(),
-			PkgMetadata: createStep.populatePkgMetadataSection(),
-		},
-	}
-	return pkgBuilder
+	return &packageContent
 }
 
 func GetPkgLocation() string {

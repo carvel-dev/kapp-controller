@@ -3,6 +3,7 @@ package fetch
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/fetch/imgpkg"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
@@ -50,7 +51,7 @@ func (fetch *FetchStep) Interact() error {
 	switch fetchOptionSelected {
 	case Imgpkg:
 		imgpkgStep := imgpkg.NewImgPkgStep(fetch.ui, fetch.pkgLocation, fetch.pkgBuild)
-		err := imgpkgStep.Run()
+		err := common.Run(imgpkgStep)
 		if err != nil {
 			return err
 		}
@@ -63,21 +64,5 @@ func (fetch *FetchStep) Interact() error {
 }
 
 func (fetch FetchStep) PostInteract() error {
-	return nil
-}
-
-func (fetch *FetchStep) Run() error {
-	err := fetch.PreInteract()
-	if err != nil {
-		return err
-	}
-	err = fetch.Interact()
-	if err != nil {
-		return err
-	}
-	err = fetch.PostInteract()
-	if err != nil {
-		return err
-	}
 	return nil
 }

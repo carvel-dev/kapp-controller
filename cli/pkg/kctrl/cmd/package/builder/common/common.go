@@ -4,7 +4,6 @@ type Step interface {
 	PreInteract() error
 	PostInteract() error
 	Interact() error
-	Run() error
 }
 
 func ValidateInputYesOrNo(input string) (bool, bool) {
@@ -14,4 +13,20 @@ func ValidateInputYesOrNo(input string) (bool, bool) {
 		return false, true
 	}
 	return false, false
+}
+
+func Run(step Step) error {
+	err := step.PreInteract()
+	if err != nil {
+		return err
+	}
+	err = step.Interact()
+	if err != nil {
+		return err
+	}
+	err = step.PostInteract()
+	if err != nil {
+		return err
+	}
+	return nil
 }

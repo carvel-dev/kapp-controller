@@ -12,27 +12,24 @@ type PackageBuild struct {
 }
 
 type Imgpkg struct {
-	metav1.TypeMeta  `json:",inline"`
-	RegistryURL      string `json:"registryUrl"`
-	RegistryUserName string `json:"registryUserName,omitempty"`
-	RegistryPassword string `json:"registryPassword,omitempty"`
-	RepoName         string `json:"repoName"`
-	Tag              string `json:"tag"`
+	RegistryURL string `json:"registryUrl"`
+	RepoName    string `json:"repoName"`
+	Tag         string `json:"tag"`
 }
 
 type Spec struct {
-	Pkg         v1alpha1.Package         `json:"package"`
-	PkgMetadata v1alpha1.PackageMetadata `json:"packageMetadata"`
-	Vendir      vendirconf.Config        `json:"vendir"`
-	Imgpkg      Imgpkg                   `json:"imgpkg"`
+	Pkg         *v1alpha1.Package         `json:"package, omitempty"`
+	PkgMetadata *v1alpha1.PackageMetadata `json:"packageMetadata, omitempty"`
+	Vendir      *vendirconf.Config        `json:"vendir, omitempty"`
+	Imgpkg      *Imgpkg                   `json:"imgpkg, omitempty"`
 }
 
 func (pkgBuilder PackageBuild) GetPackageMetadata() v1alpha1.PackageMetadata {
 	//TODO we should start getting the data from pkgBuilder rather than create
-	return pkgBuilder.Spec.PkgMetadata
+	return *pkgBuilder.Spec.PkgMetadata
 }
 
 func (pkgBuilder PackageBuild) GetPackage() v1alpha1.Package {
 	//TODO we should start getting the data from pkgBuilder rather than create
-	return pkgBuilder.Spec.Pkg
+	return *pkgBuilder.Spec.Pkg
 }
