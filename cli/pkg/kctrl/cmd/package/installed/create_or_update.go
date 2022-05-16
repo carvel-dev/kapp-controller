@@ -43,7 +43,7 @@ type CreateOrUpdateOptions struct {
 	packageName        string
 	version            string
 	valuesFile         string
-	withValues         bool
+	values             bool
 	serviceAccountName string
 
 	install bool
@@ -89,6 +89,7 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version (required)")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
+	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -128,6 +129,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version (required)")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
+	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -165,7 +167,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Name of package install to be updated")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
-	cmd.Flags().BoolVar(&o.withValues, "with-values", true, "Add or keep values supplied to package install, optional")
+	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -265,7 +267,7 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 		return fmt.Errorf("Expected package install to be non-empty")
 	}
 
-	if len(o.version) == 0 && len(o.valuesFile) == 0 {
+	if len(o.version) == 0 && len(o.valuesFile) == 0 && o.values {
 		return fmt.Errorf("Expected either package version or values file to update the package")
 	}
 
@@ -301,17 +303,19 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		return err
 	}
 
-	if o.valuesFile == "" && !changed && o.withValues {
+	if o.valuesFile == "" && !changed && o.values {
+		o.statusUI.PrintMessagef("No changes to package install '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 		return nil
 	}
 
 	isSecretCreated, err := o.createOrUpdateValuesSecret(updatedPkgInstall, client)
 	if err != nil {
+		o.statusUI.PrintMessagef("", o.Name)
 		return err
 	}
 
 	isSecretDeleted := false
-	if !o.withValues && len(updatedPkgInstall.Spec.Values) > 0 {
+	if !o.values && len(updatedPkgInstall.Spec.Values) > 0 {
 		isSecretDeleted, err = o.dropValuesSecret(client)
 		if err != nil {
 			return err
@@ -322,8 +326,11 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 			o.removeValuesSecretReference(updatedPkgInstall)
 			changed = true
 		}
-	} else if !o.withValues && len(updatedPkgInstall.Spec.Values) == 0 {
+	} else if !o.values && len(updatedPkgInstall.Spec.Values) == 0 {
 		o.statusUI.PrintMessagef("No values have been supplied to installation '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+		if !changed {
+			return nil
+		}
 	}
 
 	o.statusUI.PrintMessagef("Updating package install for '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
@@ -436,7 +443,7 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 		}
 	}
 
-	if o.valuesFile != "" {
+	if o.valuesFile != "" && o.values {
 		o.statusUI.PrintMessagef("Creating secret '%s'", o.createdAnnotations.SecretAnnValue())
 		if isSecretCreated, err = o.createOrUpdateDataValuesSecret(client); err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
