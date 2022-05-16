@@ -96,6 +96,20 @@ foo: bar
 		require.Contains(t, out, secretName)
 	})
 
+	// TODO: Add check for ensuring that we wait for reconciliation when secrets are updated
+	// When https://github.com/vmware-tanzu/carvel-kapp-controller/issues/670 is resolved
+
+	logger.Section("Updating values config for test package", func() {
+		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "update", "--package-install", pkgiName, "--values-file", "-"}, RunOpts{StdinReader: strings.NewReader(valuesFile)})
+		require.NoError(t, err)
+
+		// Check that ownership annotations are intact
+		secretName := fmt.Sprintf("%s-%s-values", pkgiName, env.Namespace)
+		out, err := kubectl.RunWithOpts([]string{"get", "secret", secretName, "-o", "yaml"}, RunOpts{})
+		require.NoError(t, err)
+		require.Contains(t, out, pkgiName+"-"+"kctrl-test")
+	})
+
 	logger.Section("Dropping consumed values file", func() {
 		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "update", "--package-install", pkgiName, "--drop-values-file"}, RunOpts{})
 		require.NoError(t, err)
