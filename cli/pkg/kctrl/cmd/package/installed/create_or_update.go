@@ -43,7 +43,7 @@ type CreateOrUpdateOptions struct {
 	packageName        string
 	version            string
 	valuesFile         string
-	dropValuesFile     bool
+	withValues         bool
 	serviceAccountName string
 
 	install bool
@@ -149,6 +149,8 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 			},
 			cmdcore.Example{"Update package install with new values file",
 				[]string{"package", "installed", "update", "-i", "cert-man", "--values-file", "values.yml"}},
+			cmdcore.Example{"Update package install to stop consuming supplied values",
+				[]string{"package", "installed", "update", "-i", "cert-man", "--with-values", "false"}},
 		}.Description("-i", o.pkgCmdTreeOpts),
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
@@ -163,7 +165,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Name of package install to be updated")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
-	cmd.Flags().BoolVar(&o.dropValuesFile, "drop-values-file", false, "Drop values file and remove reference from installation if values are not supplied, optional")
+	cmd.Flags().BoolVar(&o.withValues, "with-values", true, "Add or keep values supplied to package install, optional")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -278,8 +280,6 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 	}
 
 	o.createdAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
-
-	o.statusUI.PrintMessagef("Getting package install for '%s'", o.Name)
 	pkgInstall, err := kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
 		context.Background(), o.Name, metav1.GetOptions{},
 	)
@@ -301,8 +301,8 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		return err
 	}
 
-	if o.valuesFile == "" && !changed && !o.dropValuesFile {
-		return err
+	if o.valuesFile == "" && !changed && o.withValues {
+		return nil
 	}
 
 	isSecretCreated, err := o.createOrUpdateValuesSecret(updatedPkgInstall, client)
@@ -311,7 +311,7 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 	}
 
 	isSecretDeleted := false
-	if o.dropValuesFile && o.valuesFile == "" {
+	if !o.withValues && len(updatedPkgInstall.Spec.Values) > 0 {
 		isSecretDeleted, err = o.dropValuesSecret(client)
 		if err != nil {
 			return err
@@ -322,6 +322,8 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 			o.removeValuesSecretReference(updatedPkgInstall)
 			changed = true
 		}
+	} else if !o.withValues && len(updatedPkgInstall.Spec.Values) == 0 {
+		o.statusUI.PrintMessagef("No values have been supplied to installation '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 	}
 
 	o.statusUI.PrintMessagef("Updating package install for '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
