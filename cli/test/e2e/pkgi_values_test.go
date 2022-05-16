@@ -111,7 +111,7 @@ foo: bar
 	})
 
 	logger.Section("Dropping consumed values file", func() {
-		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "update", "--package-install", pkgiName, "--drop-values-file"}, RunOpts{})
+		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "update", "--package-install", pkgiName, "--with-values=false"}, RunOpts{})
 		require.NoError(t, err)
 
 		// Check for owned value secret
