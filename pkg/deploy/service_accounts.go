@@ -54,13 +54,7 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 	// 	return "", fmt.Errorf("Getting service account: %s", err)
 	// }
 
-	treq := &authenticationv1.TokenRequest{
-		Spec: authenticationv1.TokenRequestSpec{
-			Audiences: []string{"api"},
-		},
-	}
-
-	t, err := s.coreClient.CoreV1().ServiceAccounts(nsName).CreateToken(context.Background(), saName, treq, metav1.CreateOptions{})
+	t, err := s.coreClient.CoreV1().ServiceAccounts(nsName).CreateToken(context.Background(), saName, &authenticationv1.TokenRequest{}, metav1.CreateOptions{})
 	if err != nil {
 		return "", fmt.Errorf("failed to create token: %s", err)
 	}
