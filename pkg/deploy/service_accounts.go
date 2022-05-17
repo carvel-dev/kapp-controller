@@ -8,7 +8,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	corev1 "k8s.io/api/core/v1"
+	authenticationv1 "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -49,42 +49,60 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 		return "", fmt.Errorf("Internal inconsistency: Expected service account name to not be empty")
 	}
 
-	sa, err := s.coreClient.CoreV1().ServiceAccounts(nsName).Get(context.Background(), saName, metav1.GetOptions{})
+	// sa, err := s.coreClient.CoreV1().ServiceAccounts(nsName).Get(context.Background(), saName, metav1.GetOptions{})
+	// if err != nil {
+	// 	return "", fmt.Errorf("Getting service account: %s", err)
+	// }
+
+	treq := &authenticationv1.TokenRequest{
+		Spec: authenticationv1.TokenRequestSpec{
+			Audiences: []string{"api"},
+		},
+	}
+
+	t, err := s.coreClient.CoreV1().ServiceAccounts(nsName).CreateToken(context.Background(), saName, treq, metav1.CreateOptions{})
 	if err != nil {
-		return "", fmt.Errorf("Getting service account: %s", err)
+		return "", fmt.Errorf("failed to create token: %s", err)
 	}
 
-	for _, secretRef := range sa.Secrets {
-		secret, err := s.coreClient.CoreV1().Secrets(nsName).Get(context.Background(), secretRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return "", fmt.Errorf("Getting service account secret: %s", err)
-		}
-
-		if secret.Type != corev1.SecretTypeServiceAccountToken {
-			continue
-		}
-
-		return s.buildKubeconfig(secret)
+	c, err := s.coreClient.CoreV1().ConfigMaps(nsName).Get(context.Background(), "kube-root-ca.crt", metav1.GetOptions{})
+	if err != nil {
+		return "", fmt.Errorf("failed to get 'kube-root-ca.crt' configmap: %s", err)
 	}
 
-	return "", fmt.Errorf("Expected to find one service account token secret, but found none")
+	return s.buildKubeconfig(t.Status.Token, nsName, c.Data["ca.crt"])
+
+	// for _, secretRef := range sa.Secrets {
+	// 	secret, err := s.coreClient.CoreV1().Secrets(nsName).Get(context.Background(), secretRef.Name, metav1.GetOptions{})
+	// 	if err != nil {
+	// 		return "", fmt.Errorf("Getting service account secret: %s", err)
+	// 	}
+
+	// 	if secret.Type != corev1.SecretTypeServiceAccountToken {
+	// 		continue
+	// 	}
+
+	// 	return s.buildKubeconfig(secret, []byte(t.Status.Token))
+	// }
+
+	// return "", fmt.Errorf("Expected to find one service account token secret, but found none")
 }
 
-func (s *ServiceAccounts) buildKubeconfig(secret *corev1.Secret) (string, error) {
-	caBytes, found := secret.Data[corev1.ServiceAccountRootCAKey]
-	if !found {
-		return "", fmt.Errorf("Expected to find service account token ca")
-	}
+func (s *ServiceAccounts) buildKubeconfig(token string, nsBytes string, caCert string) (string, error) {
+	// caBytes, found := secret.Data[corev1.ServiceAccountRootCAKey]
+	// if !found {
+	// 	return "", fmt.Errorf("Expected to find service account token ca")
+	// }
 
-	tokenBytes, found := secret.Data[corev1.ServiceAccountTokenKey]
-	if !found {
-		return "", fmt.Errorf("Expected to find service account token value")
-	}
+	// tokenBytes, found := secret.Data[corev1.ServiceAccountTokenKey]
+	// if !found {
+	// 	return "", fmt.Errorf("Expected to find service account token value")
+	// }
 
-	nsBytes, found := secret.Data[corev1.ServiceAccountNamespaceKey]
-	if !found {
-		return "", fmt.Errorf("Expected to find service account token namespace")
-	}
+	// nsBytes, found := secret.Data[corev1.ServiceAccountNamespaceKey]
+	// if !found {
+	// 	return "", fmt.Errorf("Expected to find service account token namespace")
+	// }
 
 	const kubeconfigYAMLTpl = `
 apiVersion: v1
@@ -107,9 +125,9 @@ contexts:
 current-context: dst-ctx
 `
 
-	caB64Encoded := base64.StdEncoding.EncodeToString(caBytes)
+	caB64Encoded := base64.StdEncoding.EncodeToString([]byte(caCert))
 
-	return fmt.Sprintf(kubeconfigYAMLTpl, caB64Encoded, tokenBytes, nsBytes), nil
+	return fmt.Sprintf(kubeconfigYAMLTpl, caB64Encoded, []byte(token), []byte(nsBytes)), nil
 }
 
 /*
