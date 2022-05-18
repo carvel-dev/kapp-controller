@@ -2,6 +2,7 @@ package upstream
 
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
+	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
@@ -10,21 +11,20 @@ const (
 )
 
 type GithubStep struct {
-	ui            ui.UI
-	GithubRelease *vendirconf.DirectoryContentsGithubRelease `json:"githubRelease,omitempty"`
+	ui          ui.UI
+	pkgBuild    *pkgbuilder.PackageBuild
+	pkgLocation string
 }
 
-func NewGithubStep(ui ui.UI) *GithubStep {
+func NewGithubStep(ui ui.UI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *GithubStep {
 	return &GithubStep{
-		ui: ui,
+		ui:          ui,
+		pkgLocation: pkgLocation,
+		pkgBuild:    pkgBuild,
 	}
 }
 
 func (g *GithubStep) PreInteract() error {
-	return nil
-}
-
-func (g *GithubStep) PostInteract() error {
 	return nil
 }
 
@@ -52,7 +52,8 @@ func (g *GithubStep) Interact() error {
 		Latest:                        latest,
 		DisableAutoChecksumValidation: true,
 	}
-	g.GithubRelease = &directoryContentsGithubRelease
+	g.pkgBuild.Spec.Vendir.Directories[0].Contents[0].GithubRelease = &directoryContentsGithubRelease
+	g.pkgBuild.WriteToFile(g.pkgLocation)
 	return nil
 }
 
@@ -66,4 +67,8 @@ func (g GithubStep) getVersion() (string, error) {
 		return latestVersion, nil
 	}
 	return releaseTag, nil
+}
+
+func (g *GithubStep) PostInteract() error {
+	return nil
 }

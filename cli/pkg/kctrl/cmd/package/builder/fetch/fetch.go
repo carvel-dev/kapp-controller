@@ -8,18 +8,9 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
-const (
-	Imgpkg int = iota
-	HelmChart
-	Inline
-)
-
-var fetchTypeNames = []string{"Imgpkg(recommended)", "HelmChart", "Inline"}
-
 type FetchStep struct {
 	ui          ui.UI
 	pkgLocation string
-	AppFetch    []v1alpha1.AppFetch
 	pkgBuild    *build.PackageBuild
 }
 
@@ -41,28 +32,34 @@ Imgpkg is a tool to package, distribute, and relocate Kubernetes configuration a
 }
 
 func (fetch *FetchStep) Interact() error {
-	var appFetchList []v1alpha1.AppFetch
+	fetchSection := fetch.pkgBuild.Spec.Pkg.Spec.Template.Spec.Fetch
+	if len(fetchSection) == 0 {
+		fetch.initializeFetchSection()
+	}
 	var fetchOptionSelected int
+	var fetchTypeNames = []string{"Imgpkg(recommended)", "HelmChart", "Inline"}
+	//TODO while reading we have to dissect fetch section and see what was the configuration used and make that as default.
 	fetchOptionSelected, err := fetch.ui.AskForChoice("Enter the fetch configuration type", fetchTypeNames)
 	if err != nil {
 		return err
 	}
-	//TODO Rohit This is error prone. How can we make it better. Option: Switch over the list items e.g. fetchTypeNames[fetchOptionSelected]
-	switch fetchOptionSelected {
-	case Imgpkg:
+	switch fetchTypeNames[fetchOptionSelected] {
+	case "Imgpkg(recommended)":
 		imgpkgStep := imgpkg.NewImgPkgStep(fetch.ui, fetch.pkgLocation, fetch.pkgBuild)
 		err := common.Run(imgpkgStep)
 		if err != nil {
 			return err
 		}
-		appFetchList = append(appFetchList, v1alpha1.AppFetch{
-			ImgpkgBundle: &imgpkgStep.ImgpkgBundle})
 	}
-
-	fetch.AppFetch = appFetchList
 	return nil
 }
 
 func (fetch FetchStep) PostInteract() error {
 	return nil
+}
+
+func (fetch FetchStep) initializeFetchSection() {
+	var appFetchList []v1alpha1.AppFetch
+	appFetchList = append(appFetchList, v1alpha1.AppFetch{})
+	fetch.pkgBuild.Spec.Pkg.Spec.Template.Spec.Fetch = appFetchList
 }

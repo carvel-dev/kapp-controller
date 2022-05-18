@@ -6,37 +6,18 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cppforlife/go-cli-ui/ui"
 	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/util"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
-
-	"github.com/cppforlife/go-cli-ui/ui"
 	"sigs.k8s.io/yaml"
 )
 
-const (
-	vendirAPIVersion             = "vendir.k14s.io/v1alpha1"
-	vendirKind                   = "Config"
-	vendirMinimumRequiredVersion = "0.12.0"
-)
-
-type Content struct {
-	Path          string     `json:"path"`
-	GithubRelease GithubStep `json:"githubRelease,omitempty"`
-	IncludePaths  []string   `json:"includePaths"`
-}
-
-type Directory struct {
-	Path     string    `json:"path"`
-	Contents []Content `json:"contents"`
-}
-
 type UpstreamStep struct {
-	VendirConfig vendirconf.Config
-	ui           ui.UI
-	PkgLocation  string
-	pkgBuild     *pkgbuilder.PackageBuild
+	ui          ui.UI
+	PkgLocation string
+	pkgBuild    *pkgbuilder.PackageBuild
 }
 
 func NewUpstreamStep(ui ui.UI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *UpstreamStep {
@@ -56,43 +37,51 @@ Different types of upstream available are`
 }
 
 func (upstreamStep *UpstreamStep) Interact() error {
+	vendirDirectories := upstreamStep.pkgBuild.Spec.Vendir.Directories
+	if len(vendirDirectories) == 0 {
+		upstreamStep.initializeVendirDirectoryConf()
+	}
+
 	upstreamOptions := []string{"Github Release", "HelmChart", "Image"}
 	upstreamTypeSelected, err := upstreamStep.ui.AskForChoice("Enter the upstream type", upstreamOptions)
 	if err != nil {
 		//TODO Rohit error handling
 	}
-	contents := []vendirconf.DirectoryContents{}
 
 	switch upstreamOptions[upstreamTypeSelected] {
 	case "Github Release":
-		content := vendirconf.DirectoryContents{}
-		githubStep := NewGithubStep(upstreamStep.ui)
+		githubStep := NewGithubStep(upstreamStep.ui, upstreamStep.PkgLocation, upstreamStep.pkgBuild)
+
 		err := common.Run(githubStep)
 		if err != nil {
 			return err
 		}
-		includedPaths, err := upstreamStep.getIncludedPaths()
-		if err != nil {
-			return err
-		}
-		content.IncludePaths = includedPaths
-		content.Path = "."
-		content.GithubRelease = githubStep.GithubRelease
-		contents = append(contents, content)
-	}
 
-	directory := vendirconf.Directory{
-		Path:     "config",
-		Contents: contents,
 	}
-	directories := []vendirconf.Directory{}
-	upstreamStep.VendirConfig.Directories = append(directories, directory)
+	includedPaths, err := upstreamStep.getIncludedPaths()
+	if err != nil {
+		return err
+	}
+	upstreamStep.pkgBuild.Spec.Vendir.Directories[0].Contents[0].IncludePaths = includedPaths
+	upstreamStep.pkgBuild.WriteToFile(upstreamStep.PkgLocation)
 	return nil
 }
 
+func (upstreamStep *UpstreamStep) initializeVendirDirectoryConf() {
+	var directory vendirconf.Directory
+	directory = vendirconf.Directory{
+		Path: "config",
+		Contents: []vendirconf.DirectoryContents{
+			{
+				Path: ".",
+			},
+		},
+	}
+	directories := []vendirconf.Directory{}
+	upstreamStep.pkgBuild.Spec.Vendir.Directories = append(directories, directory)
+}
+
 func (upstreamStep *UpstreamStep) PostInteract() error {
-	upstreamStep.populateUpstreamMetadata()
-	upstreamStep.pkgBuild.Spec.Vendir = &upstreamStep.VendirConfig
 	err := upstreamStep.createVendirFile()
 	if err != nil {
 		return err
@@ -122,7 +111,7 @@ Lets use our inputs to create vendir.yml file.
 Creating vendir.yml file in directory %s
 `, vendirFileLocation)
 	upstreamStep.ui.BeginLinef(str)
-	data, err := yaml.Marshal(&upstreamStep.VendirConfig)
+	data, err := yaml.Marshal(&upstreamStep.pkgBuild.Spec.Vendir)
 	if err != nil {
 		upstreamStep.ui.ErrorLinef("Unable to create vendir.yml")
 		return err
@@ -167,12 +156,6 @@ func (upstreamStep *UpstreamStep) printFile(filePath string) error {
 	return nil
 }
 
-func (upstreamStep *UpstreamStep) populateUpstreamMetadata() {
-	upstreamStep.VendirConfig.APIVersion = vendirAPIVersion
-	upstreamStep.VendirConfig.Kind = vendirKind
-	upstreamStep.VendirConfig.MinimumRequiredVersion = vendirMinimumRequiredVersion
-}
-
 func (upstreamStep *UpstreamStep) printVendirLockFile() error {
 	vendirLockFileLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "vendir.lock.yml")
 	str := fmt.Sprintf(`
@@ -199,7 +182,7 @@ Next step is to run vendir to sync the data from upstream. Running 'vendir sync'
 	upstreamStep.ui.BeginLinef(str)
 	result := util.Execute("vendir", []string{"sync", "--chdir", bundleLocation})
 	if result.Error != nil {
-		upstreamStep.ui.ErrorLinef("Error while running vendir sync. Error is: %s", result.ErrorStr())
+		upstreamStep.ui.ErrorLinef("Error while running vendir sync. Error is: %s", result.Stderr)
 		return result.Error
 	}
 	configLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "config")

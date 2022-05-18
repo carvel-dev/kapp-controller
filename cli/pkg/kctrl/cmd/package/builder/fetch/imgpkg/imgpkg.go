@@ -8,10 +8,9 @@ import (
 )
 
 type ImgpkgStep struct {
-	ui           ui.UI
-	pkgLocation  string
-	ImgpkgBundle v1alpha1.AppFetchImgpkgBundle
-	pkgBuild     *build.PackageBuild
+	ui          ui.UI
+	pkgLocation string
+	pkgBuild    *build.PackageBuild
 }
 
 func NewImgPkgStep(ui ui.UI, pkgLocation string, pkgBuild *build.PackageBuild) *ImgpkgStep {
@@ -30,22 +29,26 @@ func (imgpkg ImgpkgStep) PreInteract() error {
 func (imgpkg *ImgpkgStep) Interact() error {
 	var isImgpkgBundleCreated bool
 	isImgpkgBundleCreated = false
+	existingImgPkgBundleConf := imgpkg.pkgBuild.Spec.Pkg.Spec.Template.Spec.Fetch[0].ImgpkgBundle
+	if existingImgPkgBundleConf == nil {
+		imgpkg.pkgBuild.Spec.Pkg.Spec.Template.Spec.Fetch[0].ImgpkgBundle = &v1alpha1.AppFetchImgpkgBundle{}
+	}
 
 	if isImgpkgBundleCreated {
 		//TODO Rohit should we add some information here.
 		//imgpkg.ui.BeginLinef("")
 		image, err := imgpkg.ui.AskForText("Enter the imgpkg bundle url")
+		imgpkg.pkgBuild.Spec.Pkg.Spec.Template.Spec.Fetch[0].ImgpkgBundle.Image = image
+		imgpkg.pkgBuild.WriteToFile(imgpkg.pkgLocation)
 		if err != nil {
 			return err
 		}
-		imgpkg.ImgpkgBundle.Image = image
 	} else {
 		createImgPkgStep := NewCreateImgPkgStep(imgpkg.ui, imgpkg.pkgLocation, imgpkg.pkgBuild)
 		err := common.Run(createImgPkgStep)
 		if err != nil {
 			return err
 		}
-		imgpkg.ImgpkgBundle.Image = createImgPkgStep.image
 	}
 	return nil
 }
