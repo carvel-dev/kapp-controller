@@ -7,10 +7,15 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"os"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+)
+
+const (
+	caCertPath = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 )
 
 type ServiceAccounts struct {
@@ -59,12 +64,19 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 		return "", fmt.Errorf("failed to create token: %s", err)
 	}
 
-	c, err := s.coreClient.CoreV1().ConfigMaps(nsName).Get(context.Background(), "kube-root-ca.crt", metav1.GetOptions{})
+	cert, err := os.ReadFile(caCertPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to get 'kube-root-ca.crt' configmap: %s", err)
+		panic("")
 	}
 
-	return s.buildKubeconfig(t.Status.Token, nsName, c.Data["ca.crt"])
+	fmt.Println("TOKEN:" + t.Status.Token)
+
+	// c, err := s.coreClient.CoreV1().ConfigMaps(nsName).Get(context.Background(), "kube-root-ca.crt", metav1.GetOptions{})
+	// if err != nil {
+	// 	return "", fmt.Errorf("failed to get 'kube-root-ca.crt' configmap: %s", err)
+	// }
+
+	return s.buildKubeconfig(t.Status.Token, nsName, cert)
 
 	// for _, secretRef := range sa.Secrets {
 	// 	secret, err := s.coreClient.CoreV1().Secrets(nsName).Get(context.Background(), secretRef.Name, metav1.GetOptions{})
@@ -82,7 +94,7 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 	// return "", fmt.Errorf("Expected to find one service account token secret, but found none")
 }
 
-func (s *ServiceAccounts) buildKubeconfig(token string, nsBytes string, caCert string) (string, error) {
+func (s *ServiceAccounts) buildKubeconfig(token string, nsBytes string, caCert []byte) (string, error) {
 	// caBytes, found := secret.Data[corev1.ServiceAccountRootCAKey]
 	// if !found {
 	// 	return "", fmt.Errorf("Expected to find service account token ca")
@@ -119,7 +131,7 @@ contexts:
 current-context: dst-ctx
 `
 
-	caB64Encoded := base64.StdEncoding.EncodeToString([]byte(caCert))
+	caB64Encoded := base64.StdEncoding.EncodeToString(caCert)
 
 	return fmt.Sprintf(kubeconfigYAMLTpl, caB64Encoded, []byte(token), []byte(nsBytes)), nil
 }
