@@ -10,6 +10,7 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app"
+	appdev "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/dev"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdpkg "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package"
 	pkgavail "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/available"
@@ -91,6 +92,10 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 	appCmd.AddCommand(app.NewPauseCmd(app.NewPauseOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	appCmd.AddCommand(app.NewKickCmd(app.NewKickOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	appCmd.AddCommand(app.NewDeleteCmd(app.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+
+	appDevCmd := appdev.NewCmd()
+	appDevCmd.AddCommand(appdev.NewDeployCmd(appdev.NewDeployOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	appCmd.AddCommand(appDevCmd)
 
 	cmd.AddCommand(appCmd)
 
