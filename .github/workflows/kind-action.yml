@@ -30,4 +30,5 @@ jobs:
           ytt -f config/ -f config-test | kbld -f- > kbld.out 2> kbldmeta.out
           cat kbldmeta.out | tail -n 1 | sed 's/.*final: kapp-controller -> \(.*\)$/\1/p'  | tail -n 1 | xargs kind load docker-image --name kinder
           kapp deploy -a kc -f kbld.out -c -y
+          mkdir tmp
           KAPPCTRL_E2E_NAMESPACE=kappctrl-test eval './hack/test-e2e.sh'
