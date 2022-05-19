@@ -46,8 +46,7 @@ func (fetch *FetchStep) Interact() error {
 	if len(fetchSection) > 1 {
 		//As multiple fetch sections are configured, we dont want to touch them.
 		return nil
-	}
-	if len(fetchSection) == 0 {
+	} else if len(fetchSection) == 0 {
 		//Initialize fetch Section
 		var appFetchList []v1alpha1.AppFetch
 		appFetchList = append(appFetchList, v1alpha1.AppFetch{})
@@ -55,13 +54,16 @@ func (fetch *FetchStep) Interact() error {
 	} else {
 		defaultFetchOptionSelected = getFetchOptionFromPkgBuild(fetch.pkgBuild)
 	}
+
 	var fetchTypeNames = []string{AppFetchImgpkgBundle, AppFetchHelmChart}
 	//defaultFetchOptionIndex := getDefaultFetchOptionIndex(fetchTypeNames, defaultFetchOptionSelected)
 	_ = getDefaultFetchOptionIndex(fetchTypeNames, defaultFetchOptionSelected)
+
 	fetchOptionSelected, err := fetch.ui.AskForChoice("Enter the fetch configuration type", fetchTypeNames)
 	if err != nil {
 		return err
 	}
+
 	switch fetchTypeNames[fetchOptionSelected] {
 	case AppFetchImgpkgBundle:
 		imgpkgStep := imgpkg.NewImgPkgStep(fetch.ui, fetch.pkgLocation, fetch.pkgBuild)

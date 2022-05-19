@@ -237,7 +237,7 @@ func (createStep *CreateStep) configureValuesSchema() error {
 }
 
 func (createStep CreateStep) PostInteract() error {
-	str := `Great, we have all the data needed to builder the package.yml and package-metadata.yml.`
+	str := `Great, we have all the data needed to build the package.yml and package-metadata.yml.`
 	createStep.ui.BeginLinef(str)
 	createStep.printPackageCR(createStep.pkgBuild.GetPackage())
 	createStep.printPackageMetadataCR(createStep.pkgBuild.GetPackageMetadata())
@@ -255,6 +255,7 @@ func (createStep CreateStep) printPackageCR(pkg v1alpha1.Package) error {
 	createStep.ui.PrintBlock([]byte(str))
 
 	//TODO: remove this comment. Marshal will make yaml/json
+
 	jsonPackageData, err := json.Marshal(&pkg)
 	if err != nil {
 		return err
@@ -333,5 +334,5 @@ func writeToFile(path string, data []byte) error {
 func GetPkgLocation() string {
 	pwd, _ := os.Getwd()
 	//TODO Rohit what should we call the folder name
-	return filepath.Join(pwd, "pkgBuilder")
+	return filepath.Join(pwd, "pkgBuild")
 }

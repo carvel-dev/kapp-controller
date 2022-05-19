@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
-	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
+	pkgbuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/fetch/imgpkg/upstream"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/util"
@@ -16,10 +16,10 @@ import (
 type CreateImgPkgStep struct {
 	ui          ui.UI
 	pkgLocation string
-	pkgBuild    *pkgbuilder.PackageBuild
+	pkgBuild    *pkgbuild.PackageBuild
 }
 
-func NewCreateImgPkgStep(ui ui.UI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *CreateImgPkgStep {
+func NewCreateImgPkgStep(ui ui.UI, pkgLocation string, pkgBuild *pkgbuild.PackageBuild) *CreateImgPkgStep {
 	return &CreateImgPkgStep{
 		ui:          ui,
 		pkgLocation: pkgLocation,
@@ -106,12 +106,21 @@ func (createImgPkgStep CreateImgPkgStep) Interact() error {
 	}
 
 	createImgPkgStep.ui.BeginLinef("To push the image onto registry, ensure that `docker login` is done onto registry. If not done, open a separate tab and run `docker login` and enter the valid credentials to login successfully.")
-	registryDetails, err := createImgPkgStep.PopulateRegistryDetails()
+	registryDetails, err := createImgPkgStep.GetRegistryDetails()
 	if err != nil {
 		return err
 	}
 	createImgPkgStep.populateRegistryDetailsInPkgBuild(registryDetails)
 	return nil
+}
+
+func (createImgPkgStep CreateImgPkgStep) populateRegistryDetailsInPkgBuild(registryDetails RegistryDetails) {
+	imgpkgConf := pkgbuild.Imgpkg{
+		RegistryURL: registryDetails.RegistryURL,
+	}
+	createImgPkgStep.pkgBuild.Spec.Imgpkg = &imgpkgConf
+	createImgPkgStep.pkgBuild.WriteToFile(createImgPkgStep.pkgLocation)
+	return
 }
 
 func (createImgPkgStep *CreateImgPkgStep) PostInteract() error {
@@ -185,15 +194,6 @@ func (createImgPkgStep CreateImgPkgStep) pushImgpkgBundleToRegistry(bundleLoc st
 	createImgPkgStep.ui.BeginLinef(result.Stdout)
 	bundleURL := getBundleURL(result.Stdout)
 	return bundleURL, nil
-}
-
-func (createImgPkgStep CreateImgPkgStep) populateRegistryDetailsInPkgBuild(registryDetails RegistryDetails) {
-	imgpkgConf := pkgbuilder.Imgpkg{
-		RegistryURL: registryDetails.RegistryURL,
-	}
-	createImgPkgStep.pkgBuild.Spec.Imgpkg = &imgpkgConf
-	createImgPkgStep.pkgBuild.WriteToFile(createImgPkgStep.pkgLocation)
-	return
 }
 
 type ImgpkgPushOutput struct {
