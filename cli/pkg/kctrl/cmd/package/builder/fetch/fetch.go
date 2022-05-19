@@ -8,6 +8,15 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
+const (
+	AppFetchInline       string = "Inline"
+	AppFetchImage        string = "Image"
+	AppFetchHTTP         string = "HTTP"
+	AppFetchGit          string = "Git"
+	AppFetchHelmChart    string = "HelmChart"
+	AppFetchImgpkgBundle string = "Imgpkg(recommended)"
+)
+
 type FetchStep struct {
 	ui          ui.UI
 	pkgLocation string
@@ -33,18 +42,28 @@ Imgpkg is a tool to package, distribute, and relocate Kubernetes configuration a
 
 func (fetch *FetchStep) Interact() error {
 	fetchSection := fetch.pkgBuild.Spec.Pkg.Spec.Template.Spec.Fetch
-	if len(fetchSection) == 0 {
-		fetch.initializeFetchSection()
+	var defaultFetchOptionSelected string
+	if len(fetchSection) > 1 {
+		//As multiple fetch sections are configured, we dont want to touch them.
+		return nil
 	}
-	var fetchOptionSelected int
-	var fetchTypeNames = []string{"Imgpkg(recommended)", "HelmChart", "Inline"}
-	//TODO while reading we have to dissect fetch section and see what was the configuration used and make that as default.
+	if len(fetchSection) == 0 {
+		//Initialize fetch Section
+		var appFetchList []v1alpha1.AppFetch
+		appFetchList = append(appFetchList, v1alpha1.AppFetch{})
+		fetch.pkgBuild.Spec.Pkg.Spec.Template.Spec.Fetch = appFetchList
+	} else {
+		defaultFetchOptionSelected = getFetchOptionFromPkgBuild(fetch.pkgBuild)
+	}
+	var fetchTypeNames = []string{AppFetchImgpkgBundle, AppFetchHelmChart}
+	//defaultFetchOptionIndex := getDefaultFetchOptionIndex(fetchTypeNames, defaultFetchOptionSelected)
+	_ = getDefaultFetchOptionIndex(fetchTypeNames, defaultFetchOptionSelected)
 	fetchOptionSelected, err := fetch.ui.AskForChoice("Enter the fetch configuration type", fetchTypeNames)
 	if err != nil {
 		return err
 	}
 	switch fetchTypeNames[fetchOptionSelected] {
-	case "Imgpkg(recommended)":
+	case AppFetchImgpkgBundle:
 		imgpkgStep := imgpkg.NewImgPkgStep(fetch.ui, fetch.pkgLocation, fetch.pkgBuild)
 		err := common.Run(imgpkgStep)
 		if err != nil {
@@ -54,12 +73,43 @@ func (fetch *FetchStep) Interact() error {
 	return nil
 }
 
-func (fetch FetchStep) PostInteract() error {
-	return nil
+func getFetchOptionFromPkgBuild(pkgBuild *build.PackageBuild) string {
+	appFetch := pkgBuild.Spec.Pkg.Spec.Template.Spec.Fetch[0]
+	var selectedAppFetch string
+	switch {
+	case appFetch.Inline != nil:
+		selectedAppFetch = AppFetchInline
+	case appFetch.Image != nil:
+		selectedAppFetch = AppFetchImage
+	case appFetch.ImgpkgBundle != nil:
+		selectedAppFetch = AppFetchImgpkgBundle
+	case appFetch.HTTP != nil:
+		selectedAppFetch = AppFetchHTTP
+	case appFetch.Git != nil:
+		selectedAppFetch = AppFetchGit
+	case appFetch.HelmChart != nil:
+		selectedAppFetch = AppFetchHelmChart
+	default:
+		selectedAppFetch = ""
+	}
+	return selectedAppFetch
 }
 
-func (fetch FetchStep) initializeFetchSection() {
-	var appFetchList []v1alpha1.AppFetch
-	appFetchList = append(appFetchList, v1alpha1.AppFetch{})
-	fetch.pkgBuild.Spec.Pkg.Spec.Template.Spec.Fetch = appFetchList
+func getDefaultFetchOptionIndex(fetchTypeNames []string, defaultFetchOptionSelected string) int {
+	var defaultFetchOptionIndex int
+	if defaultFetchOptionSelected == "" {
+		defaultFetchOptionIndex = 0
+	} else {
+		for i, fetchTypeName := range fetchTypeNames {
+			if fetchTypeName == defaultFetchOptionSelected {
+				defaultFetchOptionIndex = i
+				break
+			}
+		}
+	}
+	return defaultFetchOptionIndex
+}
+
+func (fetch FetchStep) PostInteract() error {
+	return nil
 }

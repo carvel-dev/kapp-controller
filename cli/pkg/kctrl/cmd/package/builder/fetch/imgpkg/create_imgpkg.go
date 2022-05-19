@@ -105,6 +105,12 @@ func (createImgPkgStep CreateImgPkgStep) Interact() error {
 		return err
 	}
 
+	createImgPkgStep.ui.BeginLinef("To push the image onto registry, ensure that `docker login` is done onto registry. If not done, open a separate tab and run `docker login` and enter the valid credentials to login successfully.")
+	registryDetails, err := createImgPkgStep.PopulateRegistryDetails()
+	if err != nil {
+		return err
+	}
+	createImgPkgStep.populateRegistryDetailsInPkgBuild(registryDetails)
 	return nil
 }
 
@@ -163,14 +169,8 @@ func (createImgPkgStep CreateImgPkgStep) printFile(filePath string) error {
 }
 
 func (createImgPkgStep CreateImgPkgStep) pushImgpkgBundleToRegistry(bundleLoc string) (string, error) {
-	createImgPkgStep.ui.BeginLinef("To push the image onto registry, ensure that `docker login` is done onto registry. If not done, open a separate tab and run `docker login` and enter the valid credentials to login successfully.")
-	registryDetails, err := createImgPkgStep.PopulateRegistryDetails()
-	if err != nil {
-		return "", err
-	}
-	createImgPkgStep.populateRegistryDetailsInPkgBuild(registryDetails)
 
-	pushURL := registryDetails.RegistryURL
+	pushURL := createImgPkgStep.pkgBuild.Spec.Imgpkg.RegistryURL
 	str := fmt.Sprintf(`Running imgpkg to push the bundle directory and indicate what project name and tag to give it.
  	$ imgpkg push --bundle %s --file %s --json
 `, pushURL, bundleLoc)

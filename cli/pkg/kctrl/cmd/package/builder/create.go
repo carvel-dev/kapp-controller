@@ -149,8 +149,9 @@ func (createStep *CreateStep) Interact() error {
 
 //Get Fully Qualified Name of the Package and store it in package-build.yml
 func (createStep CreateStep) configureFullyQualifiedName() error {
-	createStep.ui.BeginLinef(createStep.getFQPkgNameBlock())
 	var fqName string
+	createStep.ui.BeginLinef(createStep.getFQPkgNameBlock())
+	_ = createStep.pkgBuild.Spec.PkgMetadata.Name
 	var err error
 	for {
 		fqName, err = createStep.ui.AskForText("Enter the fully qualified package name")
@@ -181,8 +182,9 @@ Fully Qualified Name cannot have a trailing '.' e.g. samplepackage.corp.com`
 
 //Get Package Version and store it in package-build.yml
 func (createStep CreateStep) configurePackageVersion() error {
-	createStep.ui.BeginLinef(createStep.getPkgVersionBlock())
 	var pkgVersion string
+	createStep.ui.BeginLinef(createStep.getPkgVersionBlock())
+	_ = createStep.pkgBuild.Spec.Pkg.Spec.Version
 	var err error
 	for {
 		pkgVersion, err = createStep.ui.AskForText("Enter the package version")

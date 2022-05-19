@@ -14,6 +14,19 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const (
+	VendirGitConf           string = "Git"
+	VendirHgConf            string = "Hg"
+	VendirHTTPConf          string = "HTTP"
+	VendirImageConf         string = "Image"
+	VendirImgpkgBundleConf  string = "Imgpkg"
+	VendirGithubReleaseConf string = "GithubRelease(recommended)"
+	VendirHelmChartConf     string = "HelmChart"
+	VendirDirectoryConf     string = "Directory"
+	VendirManualConf        string = "Manual"
+	VendirInlineConf        string = "Inline"
+)
+
 type UpstreamStep struct {
 	ui          ui.UI
 	PkgLocation string
@@ -37,26 +50,40 @@ Different types of upstream available are`
 }
 
 func (upstreamStep *UpstreamStep) Interact() error {
+	var defaultUpstreamOptionSelected string
+
 	vendirDirectories := upstreamStep.pkgBuild.Spec.Vendir.Directories
+	if len(vendirDirectories) > 1 {
+		//As multiple upstream directories are configured, we dont want to touch them.
+		return nil
+	}
 	if len(vendirDirectories) == 0 {
 		upstreamStep.initializeVendirDirectoryConf()
+	} else {
+		directory := vendirDirectories[0]
+		if len(directory.Contents) > 1 {
+			//As multiple content sections are configured, we dont want to touch them.
+			return nil
+		}
+		defaultUpstreamOptionSelected = getUpstreamOptionFromPkgBuild(upstreamStep.pkgBuild)
 	}
+	var upstreamTypeNames = []string{VendirGithubReleaseConf, VendirHelmChartConf}
 
-	upstreamOptions := []string{"Github Release", "HelmChart", "Image"}
-	upstreamTypeSelected, err := upstreamStep.ui.AskForChoice("Enter the upstream type", upstreamOptions)
+	//defaultUpstreamOptionIndex := getDefaultUpstreamOptionIndex(upstreamTypeNames, defaultUpstreamOptionSelected)
+	_ = getDefaultUpstreamOptionIndex(upstreamTypeNames, defaultUpstreamOptionSelected)
+	upstreamTypeSelected, err := upstreamStep.ui.AskForChoice("Enter the upstream type", upstreamTypeNames)
 	if err != nil {
 		//TODO Rohit error handling
 	}
 
-	switch upstreamOptions[upstreamTypeSelected] {
-	case "Github Release":
+	switch upstreamTypeNames[upstreamTypeSelected] {
+	case VendirGithubReleaseConf:
 		githubStep := NewGithubStep(upstreamStep.ui, upstreamStep.PkgLocation, upstreamStep.pkgBuild)
-
 		err := common.Run(githubStep)
 		if err != nil {
 			return err
 		}
-
+	case VendirHelmChartConf:
 	}
 	includedPaths, err := upstreamStep.getIncludedPaths()
 	if err != nil {
@@ -65,6 +92,55 @@ func (upstreamStep *UpstreamStep) Interact() error {
 	upstreamStep.pkgBuild.Spec.Vendir.Directories[0].Contents[0].IncludePaths = includedPaths
 	upstreamStep.pkgBuild.WriteToFile(upstreamStep.PkgLocation)
 	return nil
+}
+
+func getDefaultUpstreamOptionIndex(upstreamTypeNames []string, defaultUpstreamOptionSelected string) interface{} {
+	var defaultUpstreamOptionIndex int
+	if defaultUpstreamOptionSelected == "" {
+		defaultUpstreamOptionIndex = 0
+	} else {
+		for i, upstreamTypeName := range upstreamTypeNames {
+			if upstreamTypeName == defaultUpstreamOptionSelected {
+				defaultUpstreamOptionIndex = i
+				break
+			}
+		}
+	}
+	return defaultUpstreamOptionIndex
+}
+
+func getUpstreamOptionFromPkgBuild(pkgBuild *pkgbuilder.PackageBuild) string {
+	dirContents := pkgBuild.Spec.Vendir.Directories[0].Contents
+	if dirContents == nil {
+		return ""
+	}
+	content := pkgBuild.Spec.Vendir.Directories[0].Contents[0]
+	var selectedUpstreamOption string
+	switch {
+	case content.Git != nil:
+		selectedUpstreamOption = VendirGitConf
+	case content.Hg != nil:
+		selectedUpstreamOption = VendirHgConf
+	case content.HTTP != nil:
+		selectedUpstreamOption = VendirHTTPConf
+	case content.Image != nil:
+		selectedUpstreamOption = VendirImageConf
+	case content.ImgpkgBundle != nil:
+		selectedUpstreamOption = VendirImgpkgBundleConf
+	case content.GithubRelease != nil:
+		selectedUpstreamOption = VendirGithubReleaseConf
+	case content.HelmChart != nil:
+		selectedUpstreamOption = VendirHelmChartConf
+	case content.Directory != nil:
+		selectedUpstreamOption = VendirDirectoryConf
+	case content.Manual != nil:
+		selectedUpstreamOption = VendirManualConf
+	case content.Inline != nil:
+		selectedUpstreamOption = VendirInlineConf
+	default:
+		selectedUpstreamOption = ""
+	}
+	return selectedUpstreamOption
 }
 
 func (upstreamStep *UpstreamStep) initializeVendirDirectoryConf() {
@@ -137,10 +213,8 @@ func (upstreamStep *UpstreamStep) printVendirFile() error {
 	str := `Our vendir.yml is created. This file looks like this
 	$ cat vendir.yml`
 	upstreamStep.ui.BeginLinef(str)
-	fmt.Println()
 	err := upstreamStep.printFile(vendirFileLocation)
 	if err != nil {
-		fmt.Println("Unable to read vendir.yaml file")
 		return err
 	}
 	return nil
