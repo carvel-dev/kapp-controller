@@ -1,4 +1,4 @@
-name: Create Cluster
+name: Kind Cluster E2E tests
 
 on:
   pull_request:
