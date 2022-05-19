@@ -27,8 +27,15 @@ jobs:
       - name: Install kc and run e2e tests on kind
         run: |
           set -e -x
+          kubectl version --short
+
           ytt -f config/ -f config-test | kbld -f- > kbld.out 2> kbldmeta.out
           cat kbldmeta.out | tail -n 1 | sed 's/.*final: kapp-controller -> \(.*\)$/\1/p'  | tail -n 1 | xargs kind load docker-image --name kinder
           kapp deploy -a kc -f kbld.out -c -y
+
+          export KAPPCTRL_E2E_SECRETGEN_CONTROLLER=true
+          source ./hack/secretgen-controller.sh
+          deploy_secretgen-controller
+
           mkdir tmp
           KAPPCTRL_E2E_NAMESPACE=kappctrl-test eval './hack/test-e2e.sh'
