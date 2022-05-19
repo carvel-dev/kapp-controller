@@ -56,6 +56,9 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 	tokenMgr := token.NewManager(s.coreClient)
 
 	t, err := tokenMgr.GetServiceAccountToken(nsName, saName, &authenticationv1.TokenRequest{})
+	if err != nil {
+		return "", fmt.Errorf("Failed to get service account token: %s", err)
+	}
 
 	cert, err := os.ReadFile(caCertPath)
 	if err != nil {
