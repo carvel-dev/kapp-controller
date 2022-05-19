@@ -20,14 +20,12 @@ package token
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/rand"
 	"sync"
 	"time"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -37,42 +35,16 @@ import (
 )
 
 const (
-	maxTTL    = 24 * time.Hour
+	maxTTL    = 5 * time.Minute
 	gcPeriod  = time.Minute
 	maxJitter = 10 * time.Second
 )
 
 // NewManager returns a new token manager.
 func NewManager(c clientset.Interface) *Manager {
-	// check whether the server supports token requests so we can give a more helpful error message
-	supported := false
-	once := &sync.Once{}
-	tokenRequestsSupported := func() bool {
-		once.Do(func() {
-			resources, err := c.Discovery().ServerResourcesForGroupVersion("v1")
-			if err != nil {
-				return
-			}
-			for _, resource := range resources.APIResources {
-				if resource.Name == "serviceaccounts/token" {
-					supported = true
-					return
-				}
-			}
-		})
-		return supported
-	}
-
 	m := &Manager{
 		getToken: func(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
-			if c == nil {
-				return nil, errors.New("cannot use TokenManager when kubelet is in standalone mode")
-			}
-			tokenRequest, err := c.CoreV1().ServiceAccounts(namespace).CreateToken(context.TODO(), name, tr, metav1.CreateOptions{})
-			if apierrors.IsNotFound(err) && !tokenRequestsSupported() {
-				return nil, fmt.Errorf("the API server does not have TokenRequest endpoints enabled")
-			}
-			return tokenRequest, err
+			return c.CoreV1().ServiceAccounts(namespace).CreateToken(context.TODO(), name, tr, metav1.CreateOptions{})
 		},
 		cache: make(map[string]*authenticationv1.TokenRequest),
 		clock: clock.RealClock{},
@@ -187,6 +159,7 @@ func (m *Manager) requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 	if now.After(exp.Add(-1*time.Duration((*tr.Spec.ExpirationSeconds*20)/100)*time.Second - jitter)) {
 		return true
 	}
+
 	return false
 }
 

@@ -55,7 +55,11 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 
 	tokenMgr := token.NewManager(s.coreClient)
 
-	t, err := tokenMgr.GetServiceAccountToken(nsName, saName, &authenticationv1.TokenRequest{})
+	t, err := tokenMgr.GetServiceAccountToken(nsName, saName, &authenticationv1.TokenRequest{
+		Spec: authenticationv1.TokenRequestSpec{
+			ExpirationSeconds: getInt64Point(5000), // 5 minutes
+		},
+	})
 	if err != nil {
 		return "", fmt.Errorf("Failed to get service account token: %s", err)
 	}
@@ -123,3 +127,7 @@ data:
   token: ZXlKaGJ...
 
 */
+
+func getInt64Point(v int64) *int64 {
+	return &v
+}
