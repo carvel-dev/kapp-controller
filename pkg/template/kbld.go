@@ -14,15 +14,28 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 )
 
+// Kbld executes kbld tool.
 type Kbld struct {
-	opts        v1alpha1.AppTemplateKbld
-	genericOpts GenericOpts
+	opts           v1alpha1.AppTemplateKbld
+	genericOpts    GenericOpts
+	additionalOpts KbldOpts
+	cmdRunner      exec.CmdRunner
+}
+
+// KbldOpts allows to configure kbld execution.
+type KbldOpts struct {
+	// Do not want to allow building within kapp-controller pod
+	AllowBuild bool
 }
 
 var _ Template = &Kbld{}
 
-func NewKbld(opts v1alpha1.AppTemplateKbld, genericOpts GenericOpts) *Kbld {
-	return &Kbld{opts, genericOpts}
+// NewKbld returns kbld.
+func NewKbld(opts v1alpha1.AppTemplateKbld,
+	genericOpts GenericOpts, additionalOpts KbldOpts,
+	cmdRunner exec.CmdRunner) *Kbld {
+
+	return &Kbld{opts, genericOpts, additionalOpts, cmdRunner}
 }
 
 func (t *Kbld) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
@@ -39,7 +52,9 @@ func (t *Kbld) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		return exec.NewCmdRunResultWithErr(err)
 	}
 
-	args = append(args, "--build=false")
+	if !t.additionalOpts.AllowBuild {
+		args = append(args, "--build=false")
+	}
 
 	var stdoutBs, stderrBs bytes.Buffer
 
@@ -48,7 +63,7 @@ func (t *Kbld) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
-	err = cmd.Run()
+	err = t.cmdRunner.Run(cmd)
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),

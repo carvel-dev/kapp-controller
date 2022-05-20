@@ -10,6 +10,7 @@ import (
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	"k8s.io/client-go/kubernetes"
@@ -24,8 +25,9 @@ type AppFactory struct {
 
 // NewCRDPackageRepo constructs "hidden" App to reconcile PackageRepository.
 func (f *AppFactory) NewCRDPackageRepo(app *kcv1alpha1.App, pkgr *pkgv1alpha1.PackageRepository, log logr.Logger) *CRDApp {
-	fetchFactory := fetch.NewFactory(f.CoreClient, f.KcConfig)
-	templateFactory := template.NewFactory(f.CoreClient, fetchFactory)
-	deployFactory := deploy.NewFactory(f.CoreClient)
+	cmdRunner := exec.PlainCmdRunner{}
+	fetchFactory := fetch.NewFactory(f.CoreClient, fetch.VendirOpts{SkipTLSConfig: f.KcConfig}, cmdRunner)
+	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, false, cmdRunner)
+	deployFactory := deploy.NewFactory(f.CoreClient, cmdRunner)
 	return NewCRDApp(app, pkgr, log, f.AppClient, fetchFactory, templateFactory, deployFactory)
 }

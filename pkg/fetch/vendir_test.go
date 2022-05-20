@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +30,8 @@ func Test_AddDir_skipsTLS(t *testing.T) {
 	config, err := kcconfig.GetConfig(k8scs)
 	assert.NoError(t, err)
 
-	vendir := fetch.NewVendir("default", k8scs, config)
+	vendir := fetch.NewVendir("default", k8scs,
+		fetch.VendirOpts{SkipTLSConfig: config}, exec.NewPlainCmdRunner())
 
 	type testCase struct {
 		URL           string

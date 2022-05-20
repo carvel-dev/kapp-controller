@@ -6,14 +6,11 @@ package app
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"path"
 	"strconv"
 	"time"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
-
-	goexec "os/exec"
 )
 
 func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
@@ -42,7 +39,8 @@ func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
 		return "", result
 	}
 
-	result = a.runVendir(conf, dstPath)
+	result = vendir.Run(conf, dstPath)
+
 	// retry if error occurs before reporting failure.
 	// This is mainly done to support private registry
 	// authentication for images/bundles since placeholder
@@ -63,7 +61,7 @@ func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
 				// no secrets/configmaps have changed, no point in retrying
 				continue
 			}
-			result = a.runVendir(newConf, dstPath)
+			result = vendir.Run(newConf, dstPath)
 			if result.Error == nil {
 				break
 			}
@@ -79,23 +77,4 @@ func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
 	}
 
 	return dstPath, result
-}
-
-func (a *App) runVendir(conf []byte, workingDir string) exec.CmdRunResult {
-	var stdoutBs, stderrBs bytes.Buffer
-	cmd := goexec.Command("vendir", "sync", "-f", "-", "--lock-file", os.DevNull)
-	cmd.Dir = workingDir
-	cmd.Stdin = bytes.NewReader(conf)
-	cmd.Stdout = &stdoutBs
-	cmd.Stderr = &stderrBs
-
-	err := cmd.Run()
-
-	result := exec.CmdRunResult{
-		Stdout: stdoutBs.String(),
-		Stderr: stderrBs.String(),
-	}
-	result.AttachErrorf("Fetching resources: %s", err)
-
-	return result
 }
