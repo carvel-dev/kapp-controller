@@ -34,7 +34,10 @@ type Vendir struct {
 
 // VendirOpts allows to customize vendir configuration given to vendir.
 type VendirOpts struct {
-	HookFunc      func(vendirconf.Config) vendirconf.Config
+	// ConfigHook provides an opportunity to make changes to vendir configuration
+	// before it's given to vendir for execution. If not provided it will default
+	// to the identity function.
+	ConfigHook    func(vendirconf.Config) vendirconf.Config
 	SkipTLSConfig SkipTLSConfig
 }
 
@@ -42,8 +45,8 @@ type VendirOpts struct {
 func NewVendir(nsName string, coreClient kubernetes.Interface,
 	opts VendirOpts, cmdRunner exec.CmdRunner) *Vendir {
 
-	if opts.HookFunc == nil {
-		opts.HookFunc = func(conf vendirconf.Config) vendirconf.Config { return conf }
+	if opts.ConfigHook == nil {
+		opts.ConfigHook = func(conf vendirconf.Config) vendirconf.Config { return conf }
 	}
 	return &Vendir{
 		nsName:     nsName,
@@ -226,7 +229,7 @@ func (v *Vendir) ConfigBytes() ([]byte, error) {
 		}
 	}
 
-	vendirConfBytes, err := v.opts.HookFunc(v.config).AsBytes()
+	vendirConfBytes, err := v.opts.ConfigHook(v.config).AsBytes()
 	if err != nil {
 		return nil, err
 	}
