@@ -7,9 +7,10 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/token"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/satoken"
 	authenticationv1 "k8s.io/api/authentication/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -19,13 +20,15 @@ const (
 )
 
 type ServiceAccounts struct {
-	coreClient kubernetes.Interface
-	log        logr.Logger
+	coreClient   kubernetes.Interface
+	log          logr.Logger
+	tokenManager *satoken.Manager
 }
 
 // NewServiceAccounts provides access to the ServiceAccount Resource in kubernetes
 func NewServiceAccounts(coreClient kubernetes.Interface, log logr.Logger) *ServiceAccounts {
-	return &ServiceAccounts{coreClient, log}
+	tokenMgr := satoken.NewManager(coreClient, log)
+	return &ServiceAccounts{coreClient, log, tokenMgr}
 }
 
 func (s *ServiceAccounts) Find(genericOpts GenericOpts, saName string) (ProcessedGenericOpts, error) {
@@ -56,20 +59,19 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 		return "", fmt.Errorf("Internal inconsistency: Expected service account name to not be empty")
 	}
 
-	tokenMgr := token.NewManager(s.coreClient, s.log)
-
-	t, err := tokenMgr.GetServiceAccountToken(nsName, saName, &authenticationv1.TokenRequest{
+	expiration := int64(time.Hour.Seconds())
+	t, err := s.tokenManager.GetServiceAccountToken(nsName, saName, &authenticationv1.TokenRequest{
 		Spec: authenticationv1.TokenRequestSpec{
-			ExpirationSeconds: getInt64Point(5000), // 5 minutes
+			ExpirationSeconds: &expiration,
 		},
 	})
 	if err != nil {
-		return "", fmt.Errorf("Failed to get service account token: %s", err)
+		return "", fmt.Errorf("Get service account token: %s", err)
 	}
 
 	cert, err := os.ReadFile(caCertPath)
 	if err != nil {
-		return "", fmt.Errorf("Failed to read ca cert from %s: %s", caCertPath, err)
+		return "", fmt.Errorf("Read ca cert from %s: %s", caCertPath, err)
 	}
 
 	return s.buildKubeconfig(t.Status.Token, nsName, cert)
@@ -130,7 +132,3 @@ data:
   token: ZXlKaGJ...
 
 */
-
-func getInt64Point(v int64) *int64 {
-	return &v
-}

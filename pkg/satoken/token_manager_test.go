@@ -4,7 +4,7 @@
 // This file is a modified version of
 // https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/token/token_manager_test.go
 
-package token
+package satoken
 
 import (
 	"fmt"

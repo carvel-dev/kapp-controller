@@ -4,7 +4,7 @@
 // This file is a modified version of
 // https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/token/token_manager.go
 
-package token
+package satoken
 
 import (
 	"context"
@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	maxTTL    = 5 * time.Minute
+	maxTTL    = 1 * time.Hour
 	gcPeriod  = time.Minute
 	maxJitter = 10 * time.Second
 )
@@ -76,11 +76,11 @@ func (m *Manager) GetServiceAccountToken(namespace, name string, tr *authenticat
 	if err != nil {
 		switch {
 		case !ok:
-			return nil, fmt.Errorf("failed to fetch token: %v", err)
+			return nil, fmt.Errorf("Fetch token: %v", err)
 		case m.expired(ctr):
-			return nil, fmt.Errorf("token %s expired and refresh failed: %v", key, err)
+			return nil, fmt.Errorf("Token %s expired and refresh failed: %v", key, err)
 		default:
-			m.log.Error(err, "Couldn't update token", "cacheKey", key)
+			m.log.Error(err, "Update token", "cacheKey", key)
 			return ctr, nil
 		}
 	}
