@@ -23,12 +23,13 @@ type ServiceAccounts struct {
 	coreClient   kubernetes.Interface
 	log          logr.Logger
 	tokenManager *satoken.Manager
+	caCert       []byte
 }
 
 // NewServiceAccounts provides access to the ServiceAccount Resource in kubernetes
 func NewServiceAccounts(coreClient kubernetes.Interface, log logr.Logger) *ServiceAccounts {
 	tokenMgr := satoken.NewManager(coreClient, log)
-	return &ServiceAccounts{coreClient, log, tokenMgr}
+	return &ServiceAccounts{coreClient: coreClient, log: log, tokenManager: tokenMgr}
 }
 
 func (s *ServiceAccounts) Find(genericOpts GenericOpts, saName string) (ProcessedGenericOpts, error) {
@@ -69,12 +70,14 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 		return "", fmt.Errorf("Get service account token: %s", err)
 	}
 
-	cert, err := os.ReadFile(caCertPath)
-	if err != nil {
-		return "", fmt.Errorf("Read ca cert from %s: %s", caCertPath, err)
+	if len(s.caCert) == 0 {
+		s.caCert, err = os.ReadFile(caCertPath)
+		if err != nil {
+			return "", fmt.Errorf("Read ca cert from %s: %s", caCertPath, err)
+		}
 	}
 
-	return s.buildKubeconfig(t.Status.Token, nsName, cert)
+	return s.buildKubeconfig(t.Status.Token, nsName, s.caCert)
 }
 
 func (s *ServiceAccounts) buildKubeconfig(token string, nsBytes string, caCert []byte) (string, error) {
