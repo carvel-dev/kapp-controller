@@ -10,6 +10,7 @@ go mod tidy
 go fmt ./cmd/... ./pkg/...
 
 go build -trimpath -mod=vendor -o controller ./cmd/main.go
+go build -trimpath -mod=vendor -o controller-sidecarexec ./pkg/sidecarexec/cmd/main.go
 
 ls -la ./controller
 

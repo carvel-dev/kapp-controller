@@ -22,6 +22,7 @@ import (
 	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/sidecarexec"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp" // Initialize gcp client auth plugin
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -155,7 +156,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			AppClient:  kcClient,
 			KcConfig:   kcConfig,
 			AppMetrics: appMetrics,
-			CmdRunner:  exec.NewPlainCmdRunner(),
+			CmdRunner:  sidecarexec.NewClient(exec.NewPlainCmdRunner()),
 		}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 			appFactory, refTracker, updateStatusTracker)
