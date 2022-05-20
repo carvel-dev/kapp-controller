@@ -19,20 +19,20 @@ import (
 
 // CRDAppFactory allows to create CRDApps.
 type CRDAppFactory struct {
-	CoreClient     kubernetes.Interface
-	AppClient      kcclient.Interface
-	KcConfig       *config.Config
-	AppMetrics     *metrics.AppMetrics
-	VendirHookFunc func(vendirconf.Config) vendirconf.Config
-	KbldAllowBuild bool
-	CmdRunner      exec.CmdRunner
+	CoreClient       kubernetes.Interface
+	AppClient        kcclient.Interface
+	KcConfig         *config.Config
+	AppMetrics       *metrics.AppMetrics
+	VendirConfigHook func(vendirconf.Config) vendirconf.Config
+	KbldAllowBuild   bool
+	CmdRunner        exec.CmdRunner
 }
 
 // NewCRDApp creates a CRDApp injecting necessary dependencies.
 func (f *CRDAppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *CRDApp {
 	vendirOpts := fetch.VendirOpts{
 		SkipTLSConfig: f.KcConfig,
-		HookFunc:      f.VendirHookFunc,
+		ConfigHook:    f.VendirConfigHook,
 	}
 	fetchFactory := fetch.NewFactory(f.CoreClient, vendirOpts, f.CmdRunner)
 	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, f.KbldAllowBuild, f.CmdRunner)
