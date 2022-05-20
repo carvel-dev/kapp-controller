@@ -7,11 +7,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	goexec "os/exec"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-
 	// we run vendir by shelling out to it, but we create the vendir configs with help from a vendored copy of vendir.
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -23,21 +25,39 @@ const (
 )
 
 type Vendir struct {
-	nsName        string
-	coreClient    kubernetes.Interface
-	config        vendirconf.Config
-	skipTLSConfig SkipTLSConfig
+	nsName     string
+	coreClient kubernetes.Interface
+	config     vendirconf.Config
+	opts       VendirOpts
+	cmdRunner  exec.CmdRunner
 }
 
-func NewVendir(nsName string, coreClient kubernetes.Interface, skipTLSConfig SkipTLSConfig) *Vendir {
+// VendirOpts allows to customize vendir configuration given to vendir.
+type VendirOpts struct {
+	// ConfigHook provides an opportunity to make changes to vendir configuration
+	// before it's given to vendir for execution. If not provided it will default
+	// to the identity function.
+	ConfigHook    func(vendirconf.Config) vendirconf.Config
+	SkipTLSConfig SkipTLSConfig
+}
+
+// NewVendir returns vendir.
+func NewVendir(nsName string, coreClient kubernetes.Interface,
+	opts VendirOpts, cmdRunner exec.CmdRunner) *Vendir {
+
+	if opts.ConfigHook == nil {
+		opts.ConfigHook = func(conf vendirconf.Config) vendirconf.Config { return conf }
+	}
 	return &Vendir{
-		nsName:        nsName,
-		coreClient:    coreClient,
-		skipTLSConfig: skipTLSConfig,
+		nsName:     nsName,
+		coreClient: coreClient,
+		opts:       opts,
 		config: vendirconf.Config{
 			APIVersion: "vendir.k14s.io/v1alpha1", // TODO: use constant from vendir package
 			Kind:       "Config",                  // TODO: use constant from vendir package
-		}}
+		},
+		cmdRunner: cmdRunner,
+	}
 }
 
 // AddDir adds a directory to vendir's config for each fetcher that the app spec declares.
@@ -209,7 +229,7 @@ func (v *Vendir) ConfigBytes() ([]byte, error) {
 		}
 	}
 
-	vendirConfBytes, err := v.config.AsBytes()
+	vendirConfBytes, err := v.opts.ConfigHook(v.config).AsBytes()
 	if err != nil {
 		return nil, err
 	}
@@ -359,7 +379,7 @@ func (v *Vendir) configMapBytes(configMapRef vendirconf.DirectoryContentsLocalRe
 // extraction for those
 func (v *Vendir) shouldSkipTLSVerify(url string) bool {
 	hostAndPort := v.extractImageRefHostname(url)
-	return v.skipTLSConfig.ShouldSkipTLSForAuthority(hostAndPort)
+	return v.opts.SkipTLSConfig.ShouldSkipTLSForAuthority(hostAndPort)
 }
 
 func (v *Vendir) extractImageRefHostname(ref string) string {
@@ -368,4 +388,25 @@ func (v *Vendir) extractImageRefHostname(ref string) string {
 		return ""
 	}
 	return parsedRef.Context().RegistryStr()
+}
+
+// Run executes vendir command based on given configuration.
+func (v *Vendir) Run(conf []byte, workingDir string) exec.CmdRunResult {
+	var stdoutBs, stderrBs bytes.Buffer
+
+	cmd := goexec.Command("vendir", "sync", "-f", "-", "--lock-file", os.DevNull)
+	cmd.Dir = workingDir
+	cmd.Stdin = bytes.NewReader(conf)
+	cmd.Stdout = &stdoutBs
+	cmd.Stderr = &stderrBs
+
+	err := v.cmdRunner.Run(cmd)
+
+	result := exec.CmdRunResult{
+		Stdout: stdoutBs.String(),
+		Stderr: stderrBs.String(),
+	}
+	result.AttachErrorf("Fetching resources: %s", err)
+
+	return result
 }
