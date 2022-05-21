@@ -7,55 +7,29 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 	"os"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-)
-
-const (
-	kcConfigName = "kapp-controller-config"
-
-	caCertsKey            = "caCerts"
-	systemCertsFile       = "/etc/pki/tls/certs/ca-bundle.crt"
-	backupSystemCertsFile = "/etc/pki/tls/certs/ca-bundle.crt.orig"
-
-	httpProxyKey     = "httpProxy"
-	httpsProxyKey    = "httpsProxy"
-	httpProxyEnvVar  = "http_proxy"
-	httpsProxyEnvVar = "https_proxy"
-	noProxyKey       = "noProxy"
-	noProxyEnvVar    = "no_proxy"
-
-	skipTLSVerifyKey = "dangerousSkipTLSVerify"
-
-	kubernetesServiceHostEnvVar    = "KUBERNETES_SERVICE_HOST"
-	kubernetesServiceHostShorthand = "KAPPCTRL_KUBERNETES_SERVICE_HOST"
-
-	kappDeployRawOptionsKey = "kappDeployRawOptions"
 )
 
 // Config is populated from the cluster's Secret or ConfigMap and sets behavior of kapp-controller.
 // NOTE because config may be populated from a Secret use caution if you're tempted to serialize.
 type Config struct {
 	caCerts       string
-	httpProxy     string
-	httpsProxy    string
-	noProxy       string
-	skipTLSVerify string
-
+	proxyOpts     ProxyOpts
 	kappDeployRawOptions []string
-
-	BackupCaBundlePath string
-	SystemCaBundlePath string
+	skipTLSVerify string
 }
+
+const (
+	kcConfigName = "kapp-controller-config"
+)
 
 // findExternalConfig will populate exactly one of its return values and the others will be nil.
 // we prefer to populate secret, fall back to configMap, and return unrecoverable errors if they occur.
@@ -104,7 +78,7 @@ func GetConfig(client kubernetes.Interface) (*Config, error) {
 			return nil, err
 		}
 	} else if configMap != nil {
-		err := config.addConfigMapDataToConfig(configMap)
+		err := config.addDataToConfig(configMap.Data)
 		if err != nil {
 			return nil, err
 		}
@@ -113,16 +87,8 @@ func GetConfig(client kubernetes.Interface) (*Config, error) {
 	return config, nil
 }
 
-func (gc *Config) Apply() error {
-	err := gc.addTrustedCerts(gc.caCerts)
-	if err != nil {
-		return fmt.Errorf("Adding trusted certs: %s", err)
-	}
-
-	gc.configureProxies()
-
-	return nil
-}
+func (gc *Config) CACerts() string      { return gc.caCerts }
+func (gc *Config) ProxyOpts() ProxyOpts { return gc.proxyOpts }
 
 // ShouldSkipTLSForAuthority compares a candidate host or host:port against a stored set of allow-listed authorities.
 // the allow-list is built from the user-facing flag `dangerousSkipTLSVerify`.
@@ -165,85 +131,6 @@ func (gc *Config) KappDeployRawOptions() []string {
 	return append([]string{"--app-changes-max-to-keep=5"}, gc.kappDeployRawOptions...)
 }
 
-func (gc *Config) addTrustedCerts(certChain string) (err error) {
-	backupCertsFilePath := backupSystemCertsFile
-	systemCertsFilePath := systemCertsFile
-
-	if gc.BackupCaBundlePath != "" && gc.SystemCaBundlePath != "" {
-		backupCertsFilePath = gc.BackupCaBundlePath
-		systemCertsFilePath = gc.SystemCaBundlePath
-	}
-
-	backupFile, err := os.Open(backupCertsFilePath)
-	if err != nil {
-		return fmt.Errorf("Opening original certs file: %s", err)
-	}
-	defer backupFile.Close()
-
-	tmpFile, err := os.CreateTemp(os.TempDir(), "tmp-ca-bundle-")
-	if err != nil {
-		return fmt.Errorf("Creating tmp certs file: %s", err)
-	}
-	defer os.Remove(tmpFile.Name())
-
-	_, err = io.Copy(tmpFile, backupFile)
-	if err != nil {
-		_ = tmpFile.Close()
-		return fmt.Errorf("Copying certs file: %s", err)
-	}
-
-	_, err = tmpFile.Write([]byte("\n" + certChain))
-	if err != nil {
-		_ = tmpFile.Close()
-		return err
-	}
-
-	if err = tmpFile.Close(); err != nil {
-		return err
-	}
-
-	err = os.Rename(tmpFile.Name(), systemCertsFilePath)
-	if err != nil {
-		return fmt.Errorf("Renaming certs file: %s", err)
-	}
-
-	return nil
-}
-
-func (gc *Config) configureProxies() {
-	if httpProxyEnvVar == "" {
-		os.Unsetenv(httpProxyEnvVar)
-		os.Unsetenv(strings.ToUpper(httpProxyEnvVar))
-	} else {
-		os.Setenv(httpProxyEnvVar, gc.httpProxy)
-		os.Setenv(strings.ToUpper(httpProxyEnvVar), gc.httpProxy)
-	}
-
-	if httpsProxyEnvVar == "" {
-		os.Unsetenv(httpsProxyEnvVar)
-		os.Unsetenv(strings.ToUpper(httpsProxyEnvVar))
-	} else {
-		os.Setenv(httpsProxyEnvVar, gc.httpsProxy)
-		os.Setenv(strings.ToUpper(httpsProxyEnvVar), gc.httpsProxy)
-	}
-
-	if noProxyEnvVar == "" {
-		os.Unsetenv(noProxyEnvVar)
-		os.Unsetenv(strings.ToUpper(noProxyEnvVar))
-	} else {
-		gc.addKubernetesServiceHostInNoProxy()
-		os.Setenv(noProxyEnvVar, gc.noProxy)
-		os.Setenv(strings.ToUpper(noProxyEnvVar), gc.noProxy)
-	}
-}
-
-func (gc *Config) addKubernetesServiceHostInNoProxy() {
-	if strings.Contains(gc.noProxy, kubernetesServiceHostShorthand) {
-		k8sSvcHost := os.Getenv(kubernetesServiceHostEnvVar)
-		gc.noProxy = strings.Replace(gc.noProxy, kubernetesServiceHostShorthand, k8sSvcHost, 1)
-	}
-}
-
 func (gc *Config) addSecretDataToConfig(secret *v1.Secret) error {
 	extractedValues := map[string]string{}
 	for key, value := range secret.Data {
@@ -252,18 +139,15 @@ func (gc *Config) addSecretDataToConfig(secret *v1.Secret) error {
 	return gc.addDataToConfig(extractedValues)
 }
 
-func (gc *Config) addConfigMapDataToConfig(configMap *v1.ConfigMap) error {
-	return gc.addDataToConfig(configMap.Data)
-}
-
 func (gc *Config) addDataToConfig(data map[string]string) error {
-	gc.caCerts = data[caCertsKey]
-	gc.httpProxy = data[httpProxyKey]
-	gc.httpsProxy = data[httpsProxyKey]
-	gc.noProxy = data[noProxyKey]
-	gc.skipTLSVerify = data[skipTLSVerifyKey]
+	gc.caCerts = data["caCerts"]
+	gc.proxyOpts = ProxyOpts{
+		HTTPProxy:  data["httpProxy"],
+		HTTPsProxy: data["httpsProxy"],
+		NoProxy:    gc.replaceServiceHostPlaceholder(data["noProxy"]),
+	}
 
-	if val := data[kappDeployRawOptionsKey]; len(val) > 0 {
+	if val := data["kappDeployRawOptions"]; len(val) > 0 {
 		var opts []string
 		err := json.Unmarshal([]byte(val), &opts)
 		if err != nil {
@@ -274,5 +158,18 @@ func (gc *Config) addDataToConfig(data map[string]string) error {
 		gc.kappDeployRawOptions = opts
 	}
 
+	gc.skipTLSVerify = data["dangerousSkipTLSVerify"]
 	return nil
+}
+
+func (Config) replaceServiceHostPlaceholder(val string) string {
+	const (
+		kubernetesServiceHostEnvVar    = "KUBERNETES_SERVICE_HOST"
+		kubernetesServiceHostShorthand = "KAPPCTRL_KUBERNETES_SERVICE_HOST"
+	)
+	if strings.Contains(val, kubernetesServiceHostShorthand) {
+		k8sSvcHost := os.Getenv(kubernetesServiceHostEnvVar)
+		val = strings.Replace(val, kubernetesServiceHostShorthand, k8sSvcHost, 1)
+	}
+	return val
 }

@@ -4,6 +4,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"         // Pprof related
 	_ "net/http/pprof" // Pprof related
@@ -29,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const (
@@ -62,8 +64,6 @@ func Run(opts Options, runLog logr.Logger) error {
 	if err != nil {
 		return fmt.Errorf("Setting up overall controller manager: %s", err)
 	}
-
-	logProxies(runLog)
 
 	runLog.Info("setting up controller")
 
@@ -125,11 +125,11 @@ func Run(opts Options, runLog logr.Logger) error {
 		return fmt.Errorf("Starting API server: %s", err)
 	}
 
-	refTracker := reftracker.NewAppRefTracker()
-	updateStatusTracker := reftracker.NewAppUpdateStatus()
+	sidecarClient := sidecarexec.NewClient(exec.NewPlainCmdRunner())
 
 	{ // add controller for config
-		reconciler := kcconfig.NewReconciler(coreClient, runLog.WithName("config"))
+		reconciler := kcconfig.NewReconciler(
+			coreClient, sidecarClient.OSConfig(), runLog.WithName("config"))
 
 		ctrl, err := controller.New("config", mgr, controller.Options{
 			Reconciler:              reconciler,
@@ -148,7 +148,17 @@ func Run(opts Options, runLog logr.Logger) error {
 		if err != nil {
 			return fmt.Errorf("Setting up Config reconciler watches: %s", err)
 		}
+
+		// Reconcile once synchronously to ensure controller configuration
+		// (e.g. proxy, CA certs) is applied to sidecar before any tool execution happens.
+		_, err = reconciler.Reconcile(context.TODO(), reconcile.Request{})
+		if err != nil {
+			return fmt.Errorf("Reconcile config reconciler once: %s", err)
+		}
 	}
+
+	refTracker := reftracker.NewAppRefTracker()
+	updateStatusTracker := reftracker.NewAppUpdateStatus()
 
 	{ // add controller for apps
 		appFactory := app.CRDAppFactory{
@@ -156,7 +166,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			AppClient:  kcClient,
 			KcConfig:   kcConfig,
 			AppMetrics: appMetrics,
-			CmdRunner:  sidecarexec.NewClient(exec.NewPlainCmdRunner()),
+			CmdRunner:  sidecarClient.CmdExec(),
 		}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 			appFactory, refTracker, updateStatusTracker)
@@ -237,18 +247,4 @@ func Run(opts Options, runLog logr.Logger) error {
 	server.Stop()
 
 	return nil
-}
-
-func logProxies(runLog logr.Logger) {
-	if proxyVal := os.Getenv("http_proxy"); proxyVal != "" {
-		runLog.Info("http_proxy is enabled.")
-	}
-
-	if proxyVal := os.Getenv("https_proxy"); proxyVal != "" {
-		runLog.Info("https_proxy is enabled.")
-	}
-
-	if noProxyVal := os.Getenv("no_proxy"); noProxyVal != "" {
-		runLog.Info("no_proxy is enabled.")
-	}
 }

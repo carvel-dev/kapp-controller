@@ -4,14 +4,13 @@
 package sidecarexec
 
 import (
-	"bytes"
 	"fmt"
 	"net"
 	"net/http"
 	"net/rpc"
 	"os"
-	goexec "os/exec"
 
+	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
 
@@ -20,22 +19,9 @@ var (
 	serverListenAddr = os.Getenv("KAPPCTRL_SIDECAREXEC_SOCK")
 )
 
-type CmdInput struct {
-	Command string
-	Args    []string
-	Stdin   []byte
-	Env     []string
-	Dir     string
-}
-
-type CmdOutput struct {
-	Stdout []byte
-	Stderr []byte
-	Error  string
-}
-
 type Server struct {
-	serverMethods *ServerMethods
+	cmdExec *CmdExec
+	log     logr.Logger
 }
 
 type ServerOpts struct {
@@ -43,18 +29,26 @@ type ServerOpts struct {
 }
 
 // NewServer returns a new Server.
-func NewServer(local exec.CmdRunner, opts ServerOpts) *Server {
+func NewServer(local exec.CmdRunner, opts ServerOpts, log logr.Logger) *Server {
 	allowedCmdNames := map[string]struct{}{}
 	for _, cmd := range opts.AllowedCmdNames {
 		allowedCmdNames[cmd] = struct{}{}
 	}
-	return &Server{&ServerMethods{local, allowedCmdNames}}
+	return &Server{&CmdExec{local, allowedCmdNames}, log}
 }
 
 func (r *Server) Serve() error {
-	err := rpc.Register(r.serverMethods)
+	// See which methods satisfy criteria: https://pkg.go.dev/net/rpc#pkg-overview
+	// e.g.   func (t *T) MethodName(argType T1, replyType *T2) error
+
+	err := rpc.Register(r.cmdExec)
 	if err != nil {
-		return fmt.Errorf("Registering RPC methods: %s", err)
+		return fmt.Errorf("Registering CmdExec RPC methods: %s", err)
+	}
+
+	err = rpc.Register(NewOSConfig(r.log))
+	if err != nil {
+		return fmt.Errorf("Registering OSConfig RPC methods: %s", err)
 	}
 
 	rpc.HandleHTTP()
@@ -63,42 +57,5 @@ func (r *Server) Serve() error {
 	if err != nil {
 		return err
 	}
-	go http.Serve(listener, nil)
-	select {} // TODO
-}
-
-type ServerMethods struct {
-	local           exec.CmdRunner
-	allowedCmdNames map[string]struct{}
-}
-
-func (r ServerMethods) Run(input CmdInput, output *CmdOutput) error {
-	if _, found := r.allowedCmdNames[input.Command]; !found {
-		return fmt.Errorf("Command '%s' is not allowed", input.Command)
-	}
-
-	cmd := goexec.Command(input.Command, input.Args...)
-
-	if len(input.Stdin) > 0 {
-		cmd.Stdin = bytes.NewBuffer(input.Stdin)
-	}
-	if len(input.Env) > 0 {
-		cmd.Env = input.Env
-	}
-	if len(input.Dir) > 0 {
-		cmd.Dir = input.Dir
-	}
-
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	err := r.local.Run(cmd)
-	if err != nil {
-		output.Error = err.Error()
-	}
-
-	output.Stdout = stdout.Bytes()
-	output.Stderr = stderr.Bytes()
-	return nil
+	return http.Serve(listener, nil)
 }

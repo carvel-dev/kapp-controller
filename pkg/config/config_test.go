@@ -35,22 +35,12 @@ func Test_GetConfig_ReturnsSecret_WhenBothConfigMapAndSecretExist(t *testing.T) 
 		},
 	}
 
-	defer os.Unsetenv("http_proxy")
-
-	k8scs := k8sfake.NewSimpleClientset(configMap, secret)
-
-	config, err := kcconfig.GetConfig(k8scs)
-	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
-
-	err = stubTrustedCerts(t, config)
+	config, err := kcconfig.GetConfig(k8sfake.NewSimpleClientset(configMap, secret))
 	assert.NoError(t, err)
 
-	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
-
-	expected := "proxy-svc.proxy-server.svc.cluster.local:80"
-	httpProxyActual := os.Getenv("http_proxy")
-
-	assert.Equal(t, expected, httpProxyActual)
+	assert.Equal(t, kcconfig.ProxyOpts{
+		HTTPProxy: "proxy-svc.proxy-server.svc.cluster.local:80",
+	}, config.ProxyOpts())
 }
 
 func Test_GetConfig_KappDeployRawOptions(t *testing.T) {
@@ -109,22 +99,12 @@ func Test_GetConfig_ReturnsConfigMap_WhenOnlyConfigMapExists(t *testing.T) {
 		},
 	}
 
-	defer os.Unsetenv("http_proxy")
-
-	k8scs := k8sfake.NewSimpleClientset(configMap)
-
-	config, err := kcconfig.GetConfig(k8scs)
-	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
-
-	err = stubTrustedCerts(t, config)
+	config, err := kcconfig.GetConfig(k8sfake.NewSimpleClientset(configMap))
 	assert.NoError(t, err)
 
-	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
-
-	expected := "proxy-svc.proxy-server.svc.cluster.local:80"
-	httpProxyActual := os.Getenv("http_proxy")
-
-	assert.Equal(t, expected, httpProxyActual)
+	assert.Equal(t, kcconfig.ProxyOpts{
+		HTTPProxy: "proxy-svc.proxy-server.svc.cluster.local:80",
+	}, config.ProxyOpts())
 }
 
 func Test_GetConfig_ReturnsSecret_WhenOnlySecretExists(t *testing.T) {
@@ -138,22 +118,38 @@ func Test_GetConfig_ReturnsSecret_WhenOnlySecretExists(t *testing.T) {
 		},
 	}
 
-	defer os.Unsetenv("http_proxy")
-
-	k8scs := k8sfake.NewSimpleClientset(secret)
-
-	config, err := kcconfig.GetConfig(k8scs)
-	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
-
-	err = stubTrustedCerts(t, config)
+	config, err := kcconfig.GetConfig(k8sfake.NewSimpleClientset(secret))
 	assert.NoError(t, err)
 
-	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
+	assert.Equal(t, kcconfig.ProxyOpts{
+		HTTPProxy: "proxy-svc.proxy-server.svc.cluster.local:80",
+	}, config.ProxyOpts())
+}
 
-	expected := "proxy-svc.proxy-server.svc.cluster.local:80"
-	httpProxyActual := os.Getenv("http_proxy")
+func Test_GetConfig(t *testing.T) {
+	secret := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kapp-controller-config",
+			Namespace: "default",
+		},
+		Data: map[string][]byte{
+			"httpProxy":  []byte("http-proxy"),
+			"httpsProxy": []byte("https-proxy"),
+			"noProxy":    []byte("no-proxy"),
+			"caCerts":    []byte("ca-certs"),
+		},
+	}
 
-	assert.Equal(t, expected, httpProxyActual)
+	config, err := kcconfig.GetConfig(k8sfake.NewSimpleClientset(secret))
+	assert.NoError(t, err)
+
+	assert.Equal(t, kcconfig.ProxyOpts{
+		HTTPProxy:  "http-proxy",
+		HTTPsProxy: "https-proxy",
+		NoProxy:    "no-proxy",
+	}, config.ProxyOpts())
+
+	assert.Equal(t, "ca-certs", config.CACerts())
 }
 
 func Test_KubernetesServiceHost_IsSet(t *testing.T) {
@@ -167,25 +163,13 @@ func Test_KubernetesServiceHost_IsSet(t *testing.T) {
 		},
 	}
 
-	defer os.Unsetenv("no_proxy")
+	os.Setenv("KUBERNETES_SERVICE_HOST", "10.96.0.1")
 	defer os.Unsetenv("KUBERNETES_SERVICE_HOST")
 
-	os.Setenv("KUBERNETES_SERVICE_HOST", "10.96.0.1")
-
-	k8scs := k8sfake.NewSimpleClientset(secret)
-
-	config, err := kcconfig.GetConfig(k8scs)
-	assert.Nil(t, err, "unexpected error after running config.GetConfig()", err)
-
-	err = stubTrustedCerts(t, config)
+	config, err := kcconfig.GetConfig(k8sfake.NewSimpleClientset(secret))
 	assert.NoError(t, err)
 
-	assert.Nil(t, config.Apply(), "unexpected error after running config.Apply()", err)
-
-	expected := "10.96.0.1"
-	noProxyActual := os.Getenv("no_proxy")
-
-	assert.Equal(t, expected, noProxyActual)
+	assert.Equal(t, kcconfig.ProxyOpts{NoProxy: "10.96.0.1"}, config.ProxyOpts())
 }
 
 func Test_ShouldSkipTLSForAuthority(t *testing.T) {
@@ -198,8 +182,8 @@ func Test_ShouldSkipTLSForAuthority(t *testing.T) {
 			"dangerousSkipTLSVerify": "always.trustworthy.com, selectively.trusted.net:123456, [1fff:0:a88:85a3::ac1f]:8001, 1aaa:0:a88:85a3::ac1f",
 		},
 	}
-	k8scs := k8sfake.NewSimpleClientset(configMap)
-	config, err := kcconfig.GetConfig(k8scs)
+
+	config, err := kcconfig.GetConfig(k8sfake.NewSimpleClientset(configMap))
 	assert.NoError(t, err)
 
 	assert.False(t, config.ShouldSkipTLSForAuthority("some.random.org"))
@@ -213,132 +197,4 @@ func Test_ShouldSkipTLSForAuthority(t *testing.T) {
 	assert.False(t, config.ShouldSkipTLSForAuthority("1fff:0:a88:85a3::ac1f"))
 	assert.True(t, config.ShouldSkipTLSForAuthority("1aaa:0:a88:85a3::ac1f"))
 	assert.True(t, config.ShouldSkipTLSForAuthority("[1aaa:0:a88:85a3::ac1f]:888"))
-}
-
-func Test_TrustedCertsCreateConfig(t *testing.T) {
-	configMap := &v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "kapp-controller-config",
-			Namespace: "default",
-		},
-		Data: map[string]string{
-			"caCerts": "cert-42",
-		},
-	}
-	k8scs := k8sfake.NewSimpleClientset(configMap)
-	config, err := kcconfig.GetConfig(k8scs)
-	assert.NoError(t, err)
-
-	backup, certs, close, err := createCertTempFiles(t)
-	assert.NoError(t, err)
-	defer close()
-
-	config.BackupCaBundlePath = backup.Name()
-	config.SystemCaBundlePath = certs.Name()
-
-	assert.NoError(t, config.Apply(), "unexpected error after running config.Apply()")
-
-	contents, err := os.ReadFile(config.SystemCaBundlePath)
-	assert.NoError(t, err)
-
-	assert.Contains(t, string(contents), "cert-42")
-}
-
-func Test_TrustedCertsUpdateConfig(t *testing.T) {
-	configMap := &v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "kapp-controller-config",
-			Namespace: "default",
-		},
-		Data: map[string]string{
-			"caCerts": "cert-42",
-		},
-	}
-	k8scs := k8sfake.NewSimpleClientset(configMap)
-	config, err := kcconfig.GetConfig(k8scs)
-	assert.NoError(t, err)
-
-	backup, certs, close, err := createCertTempFiles(t)
-	assert.NoError(t, err)
-	defer close()
-
-	config.BackupCaBundlePath = backup.Name()
-	config.SystemCaBundlePath = certs.Name()
-
-	assert.NoError(t, config.Apply(), "unexpected error after running config.Apply()")
-
-	contents, err := os.ReadFile(config.SystemCaBundlePath)
-	assert.NoError(t, err)
-	assert.Contains(t, string(contents), "cert-42")
-
-	// update config
-	configMap.Data["caCerts"] = "cert-43"
-
-	k8scs = k8sfake.NewSimpleClientset(configMap)
-	config, err = kcconfig.GetConfig(k8scs)
-	assert.NoError(t, err)
-
-	config.BackupCaBundlePath = backup.Name()
-	config.SystemCaBundlePath = certs.Name()
-
-	assert.NoError(t, config.Apply(), "unexpected error after running config.Apply()")
-
-	contents, err = os.ReadFile(config.SystemCaBundlePath)
-	assert.NoError(t, err)
-
-	assert.Contains(t, string(contents), "cert-43")
-}
-
-func Test_TrustedCertsDeleteConfig(t *testing.T) {
-	backup, certs, close, err := createCertTempFiles(t)
-	assert.NoError(t, err)
-	defer close()
-
-	backup.Write([]byte("this-is-the-old-content"))
-
-	// no config found
-	k8scs := k8sfake.NewSimpleClientset()
-	config, err := kcconfig.GetConfig(k8scs)
-	assert.NoError(t, err)
-
-	config.BackupCaBundlePath = backup.Name()
-	config.SystemCaBundlePath = certs.Name()
-
-	assert.NoError(t, config.Apply(), "unexpected error after running config.Apply()")
-
-	contents, err := os.ReadFile(config.SystemCaBundlePath)
-	assert.NoError(t, err)
-
-	// restored to the backup without any additional data
-	assert.Contains(t, string(contents), "this-is-the-old-content")
-}
-
-func stubTrustedCerts(t *testing.T, gc *kcconfig.Config) error {
-	backup, certs, close, err := createCertTempFiles(t)
-	if err != nil {
-		return err
-	}
-	defer close()
-
-	gc.BackupCaBundlePath = backup.Name()
-	gc.SystemCaBundlePath = certs.Name()
-
-	return nil
-}
-
-func createCertTempFiles(t *testing.T) (backup *os.File, certs *os.File, close func(), err error) {
-	backup, err = os.CreateTemp("", "backup.crt")
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	certs, err = os.CreateTemp("", "certs.crt")
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	return backup, certs, func() {
-		backup.Close()
-		certs.Close()
-	}, nil
 }
