@@ -13,8 +13,8 @@ RUN curl -sLo /helm https://get.helm.sh/helm-v3.8.0-linux-amd64.tar.gz && \
   mkdir /helm-unpacked && tar -C /helm-unpacked -xzvf /helm
 
 # sops
-RUN curl -sLo /usr/local/bin/sops https://github.com/mozilla/sops/releases/download/v3.7.2/sops-v3.7.2.linux && \
-  echo "0f54a5fc68f82d3dcb0d3310253f2259fef1902d48cfa0a8721b82803c575024  /usr/local/bin/sops" | sha256sum -c - && \
+RUN curl -sLo /usr/local/bin/sops https://github.com/mozilla/sops/releases/download/v3.7.3/sops-v3.7.3.linux && \
+  echo "53aec65e45f62a769ff24b7e5384f0c82d62668dd96ed56685f649da114b4dbb  /usr/local/bin/sops" | sha256sum -c - && \
   chmod +x /usr/local/bin/sops && sops -v
 
 # age (encryption for sops)
