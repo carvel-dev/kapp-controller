@@ -12,6 +12,7 @@ import (
 	"github.com/go-logr/logr"
 )
 
+// OSConfig provides RPC interface system configuration.
 type OSConfig struct {
 	log logr.Logger
 
@@ -21,11 +22,13 @@ type OSConfig struct {
 	UnsetenvFunc func(string) error
 }
 
+// OSConfigCACertsLoc is a set of CA cert paths needed for cert management.
 type OSConfigCACertsLoc struct {
 	Path         string
 	OrigCopyPath string
 }
 
+// NewOSConfig returns new OSConfig.
 func NewOSConfig(log logr.Logger) OSConfig {
 	return OSConfig{
 		log: log,
@@ -38,6 +41,8 @@ func NewOSConfig(log logr.Logger) OSConfig {
 	}
 }
 
+// ApplyCACerts atomically updates existing CA certs file
+// with additional CA certs provided.
 func (r OSConfig) ApplyCACerts(chain string, unusedResult *int) error {
 	r.log.Info("Applying CA certs")
 
@@ -77,16 +82,18 @@ func (r OSConfig) ApplyCACerts(chain string, unusedResult *int) error {
 	return nil
 }
 
+// ProxyInput describes proxy configuration.
 type ProxyInput struct {
 	HTTPProxy  string
-	HTTPsProxy string
+	HTTPSProxy string
 	NoProxy    string
 }
 
+// ApplyProxy sets proxy related environment variables.
 func (r OSConfig) ApplyProxy(in ProxyInput, unusedResult *int) error {
 	vals := map[string]string{
 		"http_proxy":  in.HTTPProxy,
-		"https_proxy": in.HTTPsProxy,
+		"https_proxy": in.HTTPSProxy,
 		"no_proxy":    in.NoProxy,
 	}
 

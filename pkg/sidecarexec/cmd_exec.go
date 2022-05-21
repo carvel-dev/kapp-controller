@@ -11,6 +11,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
 
+// CmdInput describes a command to run.
 type CmdInput struct {
 	Command string
 	Args    []string
@@ -19,17 +20,21 @@ type CmdInput struct {
 	Dir     string
 }
 
+// CmdOutput describes an command execution result.
 type CmdOutput struct {
-	Stdout []byte
-	Stderr []byte
-	Error  string
+	Stdout   []byte
+	Stderr   []byte
+	Error    string
+	ExitCode int
 }
 
+// CmdExec provides RPC interface for command execution.
 type CmdExec struct {
 	local           exec.CmdRunner
 	allowedCmdNames map[string]struct{}
 }
 
+// Run executes a command (out of a set of allowed ones).
 func (r CmdExec) Run(input CmdInput, output *CmdOutput) error {
 	if _, found := r.allowedCmdNames[input.Command]; !found {
 		return fmt.Errorf("Command '%s' is not allowed", input.Command)
@@ -54,6 +59,10 @@ func (r CmdExec) Run(input CmdInput, output *CmdOutput) error {
 	err := r.local.Run(cmd)
 	if err != nil {
 		output.Error = err.Error()
+		output.ExitCode = -1
+		if exitError, ok := err.(*goexec.ExitError); ok {
+			output.ExitCode = exitError.ExitCode()
+		}
 	}
 
 	output.Stdout = stdout.Bytes()

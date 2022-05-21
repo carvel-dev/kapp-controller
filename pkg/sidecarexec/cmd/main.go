@@ -13,9 +13,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
+// Version is set via ldflags at build-time from the most recent git tag; see hack/build.sh
+var Version = "develop"
+
 func main() {
 	mainLog := zap.New(zap.UseDevMode(false)).WithName("kc-sidecarexec")
-	mainLog.Info("start sidecarexec")
+	mainLog.Info("start sidecarexec", "version", Version)
 
 	go reapZombies(mainLog)
 

@@ -21,10 +21,10 @@ import (
 // Config is populated from the cluster's Secret or ConfigMap and sets behavior of kapp-controller.
 // NOTE because config may be populated from a Secret use caution if you're tempted to serialize.
 type Config struct {
-	caCerts       string
-	proxyOpts     ProxyOpts
+	caCerts              string
+	proxyOpts            ProxyOpts
 	kappDeployRawOptions []string
-	skipTLSVerify string
+	skipTLSVerify        string
 }
 
 const (
@@ -87,7 +87,10 @@ func GetConfig(client kubernetes.Interface) (*Config, error) {
 	return config, nil
 }
 
-func (gc *Config) CACerts() string      { return gc.caCerts }
+// CACerts returns configured CA certificates in PEM format.
+func (gc *Config) CACerts() string { return gc.caCerts }
+
+// ProxyOpts returns configured proxy configuration.
 func (gc *Config) ProxyOpts() ProxyOpts { return gc.proxyOpts }
 
 // ShouldSkipTLSForAuthority compares a candidate host or host:port against a stored set of allow-listed authorities.
@@ -143,7 +146,7 @@ func (gc *Config) addDataToConfig(data map[string]string) error {
 	gc.caCerts = data["caCerts"]
 	gc.proxyOpts = ProxyOpts{
 		HTTPProxy:  data["httpProxy"],
-		HTTPsProxy: data["httpsProxy"],
+		HTTPSProxy: data["httpsProxy"],
 		NoProxy:    gc.replaceServiceHostPlaceholder(data["noProxy"]),
 	}
 

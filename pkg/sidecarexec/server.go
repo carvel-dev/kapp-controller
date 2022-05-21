@@ -19,11 +19,13 @@ var (
 	serverListenAddr = os.Getenv("KAPPCTRL_SIDECAREXEC_SOCK")
 )
 
+// Server accepts RPCs to execute commands or configure runtime environment.
 type Server struct {
 	cmdExec *CmdExec
 	log     logr.Logger
 }
 
+// ServerOpts accepts Server's configuration.
 type ServerOpts struct {
 	AllowedCmdNames []string
 }
@@ -37,6 +39,7 @@ func NewServer(local exec.CmdRunner, opts ServerOpts, log logr.Logger) *Server {
 	return &Server{&CmdExec{local, allowedCmdNames}, log}
 }
 
+// Serve starts an RPC server.
 func (r *Server) Serve() error {
 	// See which methods satisfy criteria: https://pkg.go.dev/net/rpc#pkg-overview
 	// e.g.   func (t *T) MethodName(argType T1, replyType *T2) error
@@ -55,7 +58,7 @@ func (r *Server) Serve() error {
 
 	listener, err := net.Listen(serverListenType, serverListenAddr)
 	if err != nil {
-		return err
+		return fmt.Errorf("Listening RPC: %s", err)
 	}
 	return http.Serve(listener, nil)
 }

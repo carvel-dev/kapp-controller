@@ -13,7 +13,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
 
-// Client executes commands remotely (in a sidecar container)
+// CmdExecClient executes commands remotely (in a sidecar container)
 // except for kapp commands which continue to run locally.
 type CmdExecClient struct {
 	local     exec.CmdRunner
@@ -22,6 +22,15 @@ type CmdExecClient struct {
 
 var _ exec.CmdRunner = CmdExecClient{}
 
+type runError struct {
+	exitCode int
+	message  string
+}
+
+func (e runError) ExitCode() int { return e.exitCode }
+func (e runError) Error() string { return e.message }
+
+// Run makes a CmdExec.Run RPC call. kapp command run locally though.
 func (r CmdExecClient) Run(cmd *goexec.Cmd) error {
 	// TODO is there better way to "undo" path resolution done by exec.Command
 	cmdName := filepath.Base(cmd.Path)
@@ -60,13 +69,13 @@ func (r CmdExecClient) Run(cmd *goexec.Cmd) error {
 		cmd.Stderr.Write(output.Stderr)
 	}
 
-	// TODO exit code on the error
-	if len(output.Error) > 0 {
-		return fmt.Errorf("%s", output.Error)
+	if output.ExitCode != 0 || len(output.Error) > 0 {
+		return runError{exitCode: output.ExitCode, message: output.Error}
 	}
 	return nil
 }
 
+// RunWithCancel is not supported except for kapp which runs locally.
 func (r CmdExecClient) RunWithCancel(cmd *goexec.Cmd, cancelCh chan struct{}) error {
 	cmdName := filepath.Base(cmd.Path)
 
