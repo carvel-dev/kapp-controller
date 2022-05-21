@@ -125,7 +125,10 @@ func Run(opts Options, runLog logr.Logger) error {
 		return fmt.Errorf("Starting API server: %s", err)
 	}
 
-	sidecarClient := sidecarexec.NewClient(exec.NewPlainCmdRunner())
+	sidecarClient, err := sidecarexec.NewClient(exec.NewPlainCmdRunner())
+	if err != nil {
+		return fmt.Errorf("Starting RPC client: %s", err)
+	}
 
 	{ // add controller for config
 		reconciler := kcconfig.NewReconciler(

@@ -16,20 +16,20 @@ type Client struct {
 }
 
 // NewClient returns a new Client.
-func NewClient(local exec.CmdRunner) Client {
+func NewClient(local exec.CmdRunner) (Client, error) {
 	rpcClient, err := rpc.DialHTTP(serverListenType, serverListenAddr)
 	if err != nil {
-		// TODO
-		panic("Dialing rpc")
+		return Client{}, err
 	}
-
-	return Client{local, rpcClient}
+	return Client{local, rpcClient}, nil
 }
 
+// CmdExec returns command execution implementation.
 func (r Client) CmdExec() CmdExecClient {
 	return CmdExecClient{r.local, r.rpcClient}
 }
 
+// OSConfig returns runtime environment configuration implementation.
 func (r Client) OSConfig() OSConfigClient {
 	return OSConfigClient{r.rpcClient}
 }

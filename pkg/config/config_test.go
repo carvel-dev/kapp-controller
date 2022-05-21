@@ -145,7 +145,7 @@ func Test_GetConfig(t *testing.T) {
 
 	assert.Equal(t, kcconfig.ProxyOpts{
 		HTTPProxy:  "http-proxy",
-		HTTPsProxy: "https-proxy",
+		HTTPSProxy: "https-proxy",
 		NoProxy:    "no-proxy",
 	}, config.ProxyOpts())
 
