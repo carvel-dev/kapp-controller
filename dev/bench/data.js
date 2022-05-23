@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653345565539,
+  "lastUpdate": 1653349073102,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -1209,6 +1209,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6445591458,
             "unit": "ns/op\t         4.272 DeleteSeconds\t         2.135 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86852107+joe-kimmel-vmw@users.noreply.github.com",
+            "name": "Joe Kimmel",
+            "username": "joe-kimmel-vmw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7080dc36c0bdcb62f78053024156bb8c37bc5063",
+          "message": "[k8 1.24] Use TokenRequest API to get SA token (#695)\n\nCo-authored-by: Neil Hickey <nhickey@vmware.com>",
+          "timestamp": "2022-05-23T19:24:07-04:00",
+          "tree_id": "02ae0be7486938548e6928bb395c2c00901be1de",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/7080dc36c0bdcb62f78053024156bb8c37bc5063"
+        },
+        "date": 1653349071877,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37430056409,
+            "unit": "ns/op\t        19.54 DeleteSeconds\t        17.83 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9812601204,
+            "unit": "ns/op\t         5.485 DeleteSeconds\t         4.254 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6779125244,
+            "unit": "ns/op\t         4.507 DeleteSeconds\t         2.210 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
