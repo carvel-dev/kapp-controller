@@ -6,6 +6,7 @@ package deploy
 import (
 	"fmt"
 
+	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"k8s.io/client-go/kubernetes"
@@ -24,8 +25,8 @@ type Factory struct {
 }
 
 // NewFactory returns deploy factory.
-func NewFactory(coreClient kubernetes.Interface, cmdRunner exec.CmdRunner) Factory {
-	return Factory{coreClient, NewKubeconfigSecrets(coreClient), NewServiceAccounts(coreClient), cmdRunner}
+func NewFactory(coreClient kubernetes.Interface, cmdRunner exec.CmdRunner, log logr.Logger) Factory {
+	return Factory{coreClient, NewKubeconfigSecrets(coreClient), NewServiceAccounts(coreClient, log), cmdRunner}
 }
 
 func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,

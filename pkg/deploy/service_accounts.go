@@ -4,21 +4,30 @@
 package deploy
 
 import (
-	"context"
 	"encoding/base64"
 	"fmt"
+	"os"
+	"sync"
+	"time"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/go-logr/logr"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/satoken"
+	authenticationv1 "k8s.io/api/authentication/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 type ServiceAccounts struct {
-	coreClient kubernetes.Interface
+	coreClient   kubernetes.Interface
+	log          logr.Logger
+	tokenManager *satoken.Manager
+	caCert       []byte
+	caCertMutex  sync.Mutex
 }
 
-func NewServiceAccounts(coreClient kubernetes.Interface) *ServiceAccounts {
-	return &ServiceAccounts{coreClient}
+// NewServiceAccounts provides access to the ServiceAccount Resource in kubernetes
+func NewServiceAccounts(coreClient kubernetes.Interface, log logr.Logger) *ServiceAccounts {
+	tokenMgr := satoken.NewManager(coreClient, log)
+	return &ServiceAccounts{coreClient: coreClient, log: log, tokenManager: tokenMgr}
 }
 
 func (s *ServiceAccounts) Find(genericOpts GenericOpts, saName string) (ProcessedGenericOpts, error) {
@@ -42,6 +51,11 @@ func (s *ServiceAccounts) Find(genericOpts GenericOpts, saName string) (Processe
 }
 
 func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (string, error) {
+	const (
+		caCertPath      = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+		tokenExpiration = time.Hour * 2
+	)
+
 	if len(nsName) == 0 {
 		return "", fmt.Errorf("Internal inconsistency: Expected namespace name to not be empty")
 	}
@@ -49,43 +63,29 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 		return "", fmt.Errorf("Internal inconsistency: Expected service account name to not be empty")
 	}
 
-	sa, err := s.coreClient.CoreV1().ServiceAccounts(nsName).Get(context.Background(), saName, metav1.GetOptions{})
+	expiration := int64(tokenExpiration.Seconds())
+	t, err := s.tokenManager.GetServiceAccountToken(nsName, saName, &authenticationv1.TokenRequest{
+		Spec: authenticationv1.TokenRequestSpec{
+			ExpirationSeconds: &expiration,
+		},
+	})
 	if err != nil {
-		return "", fmt.Errorf("Getting service account: %s", err)
+		return "", fmt.Errorf("Get service account token: %s", err)
 	}
 
-	for _, secretRef := range sa.Secrets {
-		secret, err := s.coreClient.CoreV1().Secrets(nsName).Get(context.Background(), secretRef.Name, metav1.GetOptions{})
+	s.caCertMutex.Lock()
+	defer s.caCertMutex.Unlock()
+	if len(s.caCert) == 0 {
+		s.caCert, err = os.ReadFile(caCertPath)
 		if err != nil {
-			return "", fmt.Errorf("Getting service account secret: %s", err)
+			return "", fmt.Errorf("Read ca cert from %s: %s", caCertPath, err)
 		}
-
-		if secret.Type != corev1.SecretTypeServiceAccountToken {
-			continue
-		}
-
-		return s.buildKubeconfig(secret)
 	}
 
-	return "", fmt.Errorf("Expected to find one service account token secret, but found none")
+	return s.buildKubeconfig(t.Status.Token, nsName, s.caCert)
 }
 
-func (s *ServiceAccounts) buildKubeconfig(secret *corev1.Secret) (string, error) {
-	caBytes, found := secret.Data[corev1.ServiceAccountRootCAKey]
-	if !found {
-		return "", fmt.Errorf("Expected to find service account token ca")
-	}
-
-	tokenBytes, found := secret.Data[corev1.ServiceAccountTokenKey]
-	if !found {
-		return "", fmt.Errorf("Expected to find service account token value")
-	}
-
-	nsBytes, found := secret.Data[corev1.ServiceAccountNamespaceKey]
-	if !found {
-		return "", fmt.Errorf("Expected to find service account token namespace")
-	}
-
+func (s *ServiceAccounts) buildKubeconfig(token string, nsBytes string, caCert []byte) (string, error) {
 	const kubeconfigYAMLTpl = `
 apiVersion: v1
 kind: Config
@@ -107,9 +107,9 @@ contexts:
 current-context: dst-ctx
 `
 
-	caB64Encoded := base64.StdEncoding.EncodeToString(caBytes)
+	caB64Encoded := base64.StdEncoding.EncodeToString(caCert)
 
-	return fmt.Sprintf(kubeconfigYAMLTpl, caB64Encoded, tokenBytes, nsBytes), nil
+	return fmt.Sprintf(kubeconfigYAMLTpl, caB64Encoded, []byte(token), []byte(nsBytes)), nil
 }
 
 /*

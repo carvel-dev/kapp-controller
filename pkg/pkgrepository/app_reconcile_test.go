@@ -41,7 +41,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	kappcs := fake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner(), log)
 	pkgr := v1alpha12.PackageRepository{}
 
 	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, fetchFac, tmpFac, deployFac)
@@ -102,7 +102,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	kappcs := fake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner(), log)
 	pkgr := v1alpha12.PackageRepository{}
 
 	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, fetchFac, tmpFac, deployFac)
