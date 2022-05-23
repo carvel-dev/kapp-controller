@@ -64,7 +64,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v3
         with:
-          go-version: "1.17.6"
+          go-version: "1.18"
       - name: Build the kapp-controller artifacts
         run: |
           ./hack/install-deps.sh
