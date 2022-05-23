@@ -25,12 +25,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-logr/logr"
 	authenticationv1 "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
-	"k8s.io/klog/v2"
 	"k8s.io/utils/clock"
 )
 
@@ -41,13 +40,14 @@ const (
 )
 
 // NewManager returns a new token manager.
-func NewManager(c clientset.Interface) *Manager {
+func NewManager(c clientset.Interface, log logr.Logger) *Manager {
 	m := &Manager{
 		getToken: func(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
 			return c.CoreV1().ServiceAccounts(namespace).CreateToken(context.TODO(), name, tr, metav1.CreateOptions{})
 		},
 		cache: make(map[string]*authenticationv1.TokenRequest),
 		clock: clock.RealClock{},
+		log:   log,
 	}
 	go wait.Forever(m.cleanup, gcPeriod)
 	return m
@@ -63,9 +63,11 @@ type Manager struct {
 	// mocked for testing
 	getToken func(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error)
 	clock    clock.Clock
+
+	log logr.Logger
 }
 
-// GetServiceAccountToken gets a service account token for a pod from cache or
+// GetServiceAccountToken gets a service account token from cache or
 // from the TokenRequest API. This process is as follows:
 // * Check the cache for the current token request.
 // * If the token exists and does not require a refresh, return the current token.
@@ -90,25 +92,13 @@ func (m *Manager) GetServiceAccountToken(namespace, name string, tr *authenticat
 		case m.expired(ctr):
 			return nil, fmt.Errorf("token %s expired and refresh failed: %v", key, err)
 		default:
-			klog.ErrorS(err, "Couldn't update token", "cacheKey", key)
+			m.log.Error(err, "Couldn't update token", "cacheKey", key)
 			return ctr, nil
 		}
 	}
 
 	m.set(key, tr)
 	return tr, nil
-}
-
-// DeleteServiceAccountToken should be invoked when pod got deleted. It simply
-// clean token manager cache.
-func (m *Manager) DeleteServiceAccountToken(podUID types.UID) {
-	m.cacheMutex.Lock()
-	defer m.cacheMutex.Unlock()
-	for k, tr := range m.cache {
-		if tr.Spec.BoundObjectRef.UID == podUID {
-			delete(m.cache, k)
-		}
-	}
 }
 
 func (m *Manager) cleanup() {
@@ -144,7 +134,7 @@ func (m *Manager) requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 	if tr.Spec.ExpirationSeconds == nil {
 		cpy := tr.DeepCopy()
 		cpy.Status.Token = ""
-		klog.ErrorS(nil, "Expiration seconds was nil for token request", "tokenRequest", cpy)
+		m.log.Info("Expiration seconds was nil for token request", "tokenRequest", cpy)
 		return false
 	}
 	now := m.clock.Now()
@@ -163,17 +153,11 @@ func (m *Manager) requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 	return false
 }
 
-// keys should be nonconfidential and safe to log
 func keyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
 	var exp int64
 	if tr.Spec.ExpirationSeconds != nil {
 		exp = *tr.Spec.ExpirationSeconds
 	}
 
-	var ref authenticationv1.BoundObjectReference
-	if tr.Spec.BoundObjectRef != nil {
-		ref = *tr.Spec.BoundObjectRef
-	}
-
-	return fmt.Sprintf("%q/%q/%#v/%#v/%#v", name, namespace, tr.Spec.Audiences, exp, ref)
+	return fmt.Sprintf("%q/%q/%#v", name, namespace, exp)
 }

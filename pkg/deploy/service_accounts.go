@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/token"
 	authenticationv1 "k8s.io/api/authentication/v1"
 	"k8s.io/client-go/kubernetes"
@@ -19,10 +20,11 @@ const (
 
 type ServiceAccounts struct {
 	coreClient kubernetes.Interface
+	logr       logr.Logger
 }
 
-func NewServiceAccounts(coreClient kubernetes.Interface) *ServiceAccounts {
-	return &ServiceAccounts{coreClient}
+func NewServiceAccounts(coreClient kubernetes.Interface, log logr.Logger) *ServiceAccounts {
+	return &ServiceAccounts{coreClient, log}
 }
 
 func (s *ServiceAccounts) Find(genericOpts GenericOpts, saName string) (ProcessedGenericOpts, error) {
@@ -53,7 +55,7 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 		return "", fmt.Errorf("Internal inconsistency: Expected service account name to not be empty")
 	}
 
-	tokenMgr := token.NewManager(s.coreClient)
+	tokenMgr := token.NewManager(s.coreClient, log)
 
 	t, err := tokenMgr.GetServiceAccountToken(nsName, saName, &authenticationv1.TokenRequest{
 		Spec: authenticationv1.TokenRequestSpec{
