@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -15,16 +16,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-const (
-	caCertPath      = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-	tokenExpiration = time.Hour * 2
-)
-
 type ServiceAccounts struct {
 	coreClient   kubernetes.Interface
 	log          logr.Logger
 	tokenManager *satoken.Manager
 	caCert       []byte
+	caCertMutex  sync.Mutex
 }
 
 // NewServiceAccounts provides access to the ServiceAccount Resource in kubernetes
@@ -54,6 +51,11 @@ func (s *ServiceAccounts) Find(genericOpts GenericOpts, saName string) (Processe
 }
 
 func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (string, error) {
+	const (
+		caCertPath      = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+		tokenExpiration = time.Hour * 2
+	)
+
 	if len(nsName) == 0 {
 		return "", fmt.Errorf("Internal inconsistency: Expected namespace name to not be empty")
 	}
@@ -71,6 +73,8 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 		return "", fmt.Errorf("Get service account token: %s", err)
 	}
 
+	s.caCertMutex.Lock()
+	defer s.caCertMutex.Unlock()
 	if len(s.caCert) == 0 {
 		s.caCert, err = os.ReadFile(caCertPath)
 		if err != nil {
