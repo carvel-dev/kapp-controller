@@ -44,7 +44,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	kappcs := fake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner(), log)
 
 	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
@@ -110,7 +110,7 @@ func Test_NoInspectReconcile_IfInspectNotEnabled(t *testing.T) {
 	kappcs := fake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner(), log)
 
 	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
@@ -181,7 +181,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	kappcs := fake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner(), log)
 
 	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)

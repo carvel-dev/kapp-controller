@@ -48,7 +48,7 @@ func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	k8scs := k8sfake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner(), log)
 
 	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
 
@@ -74,7 +74,7 @@ func Test_SecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 	k8scs := k8sfake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(k8scs, exec.NewPlainCmdRunner(), log)
 
 	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
 

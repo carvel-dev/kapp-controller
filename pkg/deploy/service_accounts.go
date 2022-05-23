@@ -20,7 +20,7 @@ const (
 
 type ServiceAccounts struct {
 	coreClient kubernetes.Interface
-	logr       logr.Logger
+	log        logr.Logger
 }
 
 func NewServiceAccounts(coreClient kubernetes.Interface, log logr.Logger) *ServiceAccounts {
@@ -55,7 +55,7 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 		return "", fmt.Errorf("Internal inconsistency: Expected service account name to not be empty")
 	}
 
-	tokenMgr := token.NewManager(s.coreClient, log)
+	tokenMgr := token.NewManager(s.coreClient, s.log)
 
 	t, err := tokenMgr.GetServiceAccountToken(nsName, saName, &authenticationv1.TokenRequest{
 		Spec: authenticationv1.TokenRequestSpec{

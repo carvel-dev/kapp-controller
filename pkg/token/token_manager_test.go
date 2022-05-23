@@ -25,6 +25,7 @@ import (
 	authenticationv1 "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	testingclock "k8s.io/utils/clock/testing"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func TestTokenCachingAndExpiration(t *testing.T) {
@@ -84,11 +85,12 @@ func TestTokenCachingAndExpiration(t *testing.T) {
 
 	for _, c := range testCases {
 		t.Run(c.name, func(t *testing.T) {
+			log := logf.Log.WithName("sa")
 			clock := testingclock.NewFakeClock(time.Time{}.Add(30 * 24 * time.Hour))
 			expSecs := int64(c.exp.Seconds())
 			s := &suite{
 				clock: clock,
-				mgr:   NewManager(nil),
+				mgr:   NewManager(nil, log),
 				tg: &fakeTokenGetter{
 					tr: &authenticationv1.TokenRequest{
 						Spec: authenticationv1.TokenRequestSpec{
@@ -150,6 +152,7 @@ func TestRequiresRefresh(t *testing.T) {
 
 	for i, c := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			log := logf.Log.WithName("sa")
 			clock := testingclock.NewFakeClock(c.now)
 			secs := int64(c.exp.Sub(start).Seconds())
 			tr := &authenticationv1.TokenRequest{
@@ -161,7 +164,7 @@ func TestRequiresRefresh(t *testing.T) {
 				},
 			}
 
-			mgr := NewManager(nil)
+			mgr := NewManager(nil, log)
 			mgr.clock = clock
 
 			rr := mgr.requiresRefresh(tr)
@@ -192,8 +195,9 @@ func TestCleanup(t *testing.T) {
 
 	for _, c := range testCases {
 		t.Run(c.name, func(t *testing.T) {
+			log := logf.Log.WithName("sa")
 			clock := testingclock.NewFakeClock(time.Time{}.Add(24 * time.Hour))
-			mgr := NewManager(nil)
+			mgr := NewManager(nil, log)
 			mgr.clock = clock
 
 			mgr.set("key", &authenticationv1.TokenRequest{
