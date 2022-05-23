@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	maxTTL    = 1 * time.Hour
+	maxTTL    = 2 * time.Hour
 	gcPeriod  = time.Minute
 	maxJitter = 10 * time.Second
 )
@@ -116,8 +116,7 @@ func (m *Manager) expired(t *authenticationv1.TokenRequest) bool {
 	return m.clock.Now().After(t.Status.ExpirationTimestamp.Time)
 }
 
-// requiresRefresh returns true if the token is older than 80% of its total
-// ttl, or if the token is older than 24 hours.
+// requiresRefresh returns true if the token is older half of it's maxTTL
 func (m *Manager) requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 	if tr.Spec.ExpirationSeconds == nil {
 		cpy := tr.DeepCopy()
@@ -133,12 +132,9 @@ func (m *Manager) requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 	if now.After(iat.Add(maxTTL - jitter)) {
 		return true
 	}
-	// Require a refresh if within 20% of the TTL plus a jitter from the expiration time.
-	if now.After(exp.Add(-1*time.Duration((*tr.Spec.ExpirationSeconds*20)/100)*time.Second - jitter)) {
-		return true
-	}
 
-	return false
+	// Require a refresh if within 50% of the TTL plus a jitter from the expiration time.
+	return now.After(exp.Add(-1*time.Duration((*tr.Spec.ExpirationSeconds*50)/100)*time.Second - jitter))
 }
 
 func keyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {

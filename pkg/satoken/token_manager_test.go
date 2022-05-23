@@ -45,10 +45,10 @@ func TestTokenCachingAndExpiration(t *testing.T) {
 			},
 		},
 		{
-			name: "rotate 5 minute token expires in the last minute",
-			exp:  time.Minute * 5,
+			name: "rotate 2 hour token expires within the last hour",
+			exp:  time.Hour * 2,
 			f: func(t *testing.T, s *suite) {
-				s.clock.SetTime(s.clock.Now().Add(4 * time.Minute))
+				s.clock.SetTime(s.clock.Now().Add(time.Hour + time.Minute))
 
 				_, err := s.mgr.GetServiceAccountToken("a", "b", getTokenRequest())
 
@@ -58,9 +58,9 @@ func TestTokenCachingAndExpiration(t *testing.T) {
 		},
 		{
 			name: "rotate token fails, old token is still valid, doesn't error",
-			exp:  time.Hour,
+			exp:  time.Hour * 2,
 			f: func(t *testing.T, s *suite) {
-				s.clock.SetTime(s.clock.Now().Add(4 * time.Minute))
+				s.clock.SetTime(s.clock.Now().Add(time.Hour + time.Minute))
 				tg := &fakeTokenGetter{
 					err: fmt.Errorf("err"),
 				}
@@ -120,22 +120,22 @@ func TestRequiresRefresh(t *testing.T) {
 	testCases := []testCase{
 		{
 			now:           start.Add(1 * time.Minute),
-			exp:           start.Add(5 * time.Minute),
+			exp:           start.Add(maxTTL),
 			expectRefresh: false,
 		},
 		{
-			now:           start.Add(4 * time.Minute),
-			exp:           start.Add(5 * time.Minute),
+			now:           start.Add(59 * time.Minute),
+			exp:           start.Add(maxTTL),
+			expectRefresh: false,
+		},
+		{
+			now:           start.Add(61 * time.Minute),
+			exp:           start.Add(maxTTL),
 			expectRefresh: true,
 		},
 		{
-			now:           start.Add(25 * time.Hour),
-			exp:           start.Add(60 * time.Hour),
-			expectRefresh: true,
-		},
-		{
-			now:           start.Add(10 * time.Minute),
-			exp:           start.Add(5 * time.Minute),
+			now:           start.Add(3 * time.Hour),
+			exp:           start.Add(maxTTL),
 			expectRefresh: true,
 		},
 	}
@@ -214,10 +214,11 @@ func (ftg *fakeTokenGetter) getToken(name, namespace string, tr *authenticationv
 }
 
 func getTokenRequest() *authenticationv1.TokenRequest {
+	expiration := int64(2000)
 	return &authenticationv1.TokenRequest{
 		Spec: authenticationv1.TokenRequestSpec{
 			Audiences:         []string{"foo1", "foo2"},
-			ExpirationSeconds: getInt64Point(2000),
+			ExpirationSeconds: &expiration,
 			BoundObjectRef: &authenticationv1.BoundObjectReference{
 				Kind: "pod",
 				Name: "foo-pod",
@@ -225,8 +226,4 @@ func getTokenRequest() *authenticationv1.TokenRequest {
 			},
 		},
 	}
-}
-
-func getInt64Point(v int64) *int64 {
-	return &v
 }
