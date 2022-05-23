@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653333796829,
+  "lastUpdate": 1653345565539,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -1167,6 +1167,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6515398956,
             "unit": "ns/op\t         4.344 DeleteSeconds\t         2.134 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bbdb44b376ee6e198aba8c2163524f309c0ddc9a",
+          "message": "Merge pull request #698 from vmware-tanzu/dependabot/github_actions/reviewdog/action-misspell-1.12.2\n\nBump reviewdog/action-misspell from 1.12.1 to 1.12.2",
+          "timestamp": "2022-05-23T16:28:59-06:00",
+          "tree_id": "c9cc8b5b55cf68aec99adf85b5b34abaaac6e1a5",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/bbdb44b376ee6e198aba8c2163524f309c0ddc9a"
+        },
+        "date": 1653345564429,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36619588204,
+            "unit": "ns/op\t        19.06 DeleteSeconds\t        17.52 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9607161798,
+            "unit": "ns/op\t         5.379 DeleteSeconds\t         4.190 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6445591458,
+            "unit": "ns/op\t         4.272 DeleteSeconds\t         2.135 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
