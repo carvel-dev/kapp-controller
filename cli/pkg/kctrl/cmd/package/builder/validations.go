@@ -9,25 +9,25 @@ import (
 )
 
 //TODO should we use the same validation used in kapp controller. But that accepts other parameter. ValidatePackageMetadataName in validations.go file
-func validateFQName(name string) error {
+func validateFQName(name string) (bool, string, error) {
 	if len(name) == 0 {
-		return fmt.Errorf("Fully Qualified Name of a package cannot be empty")
+		return false, "Fully Qualified Name of a package cannot be empty", nil
 	}
 	if errs := validation.IsDNS1123Subdomain(name); len(errs) > 0 {
-		return fmt.Errorf(strings.Join(errs, ","))
+		return false, strings.Join(errs, ","), nil
 	}
 	if len(strings.Split(name, ".")) < 3 {
-		return fmt.Errorf("should be a fully qualified name with at least three segments separated by dots")
+		return false, "Should be a fully qualified name with at least three segments separated by dots", nil
 	}
-	return nil
+	return true, "", nil
 }
 
-func validatePackageSpecVersion(version string) error {
+func validatePackageSpecVersion(version string) (bool, string, error) {
 	if version == "" {
-		return fmt.Errorf("Version cannot be empty")
+		return false, "Version cannot be empty", nil
 	}
 	if _, err := versions.NewSemver(version); err != nil {
-		return fmt.Errorf("must be valid semver: %v", err)
+		return false, fmt.Sprintf("must be valid semver: %v", err), nil
 	}
-	return nil
+	return true, "", nil
 }

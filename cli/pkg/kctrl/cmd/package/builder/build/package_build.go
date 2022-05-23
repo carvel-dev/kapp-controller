@@ -1,7 +1,6 @@
 package build
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -83,8 +82,9 @@ func GeneratePackageBuild(pkgBuildFilePath string) (PackageBuild, error) {
 // Check if file exists
 func isPkgBuildFileExists(filePath string) (bool, error) {
 	_, err := os.Stat(filePath)
-	// check if error is "file not exists"
-	if os.IsNotExist(err) {
+	if err == nil {
+		return true, nil
+	} else if os.IsNotExist(err) {
 		return false, nil
 	} else {
 		return false, fmt.Errorf("failed to check for the existence of file. Error is: %s", err.Error())
@@ -97,7 +97,7 @@ func NewPackageBuildFromFile(filePath string) (PackageBuild, error) {
 		return PackageBuild{}, err
 	}
 	var packageBuild PackageBuild
-	err = json.Unmarshal(content, &packageBuild)
+	err = yaml.Unmarshal(content, &packageBuild)
 	if err != nil {
 		return PackageBuild{}, err
 	}

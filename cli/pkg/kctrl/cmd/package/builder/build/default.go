@@ -48,7 +48,9 @@ spec:
   packageMetadata: 
     apiVersion: data.packaging.carvel.dev/v1alpha1
     kind: PackageMetadata
-    metadata: ~
+    metadata:
+      name: samplepackage.corp.com
+      namespace: default
     spec: 
       categories: 
         - demo

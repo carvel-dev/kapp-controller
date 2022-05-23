@@ -14,6 +14,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/template"
+	pkgui "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/ui"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/util"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -21,13 +22,13 @@ import (
 )
 
 const (
-	PkgBuildFileName = "package_build.yml"
+	PkgBuildFileName = "package-build.yml"
 )
 
 type CreateOptions struct {
-	ui          ui.UI
-	depsFactory cmdcore.DepsFactory
-	logger      logger.Logger
+	pkgAuthoringUI pkgui.IPkgAuthoringUI
+	depsFactory    cmdcore.DepsFactory
+	logger         logger.Logger
 
 	DefaultValuesFile string
 
@@ -35,7 +36,7 @@ type CreateOptions struct {
 }
 
 func NewCreateOptions(ui ui.UI, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *CreateOptions {
-	return &CreateOptions{ui: ui, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
+	return &CreateOptions{pkgAuthoringUI: pkgui.NewPackageAuthoringUI(ui), logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewCreateCmd(o *CreateOptions) *cobra.Command {
@@ -64,7 +65,7 @@ func (o *CreateOptions) Run(args []string) error {
 	if err != nil {
 		return err
 	}
-	createStep := NewCreateStep(o.ui, pkgLocation, pkgBuild)
+	createStep := NewCreateStep(o.pkgAuthoringUI, pkgLocation, pkgBuild)
 	err = common.Run(createStep)
 	if err != nil {
 		return err
@@ -73,32 +74,29 @@ func (o *CreateOptions) Run(args []string) error {
 }
 
 type CreateStep struct {
-	ui           ui.UI
-	pkgLocation  string
-	valuesSchema v1alpha1.ValuesSchema
-	template     template.TemplateStep
-	pkgBuild     *build.PackageBuild
+	pkgAuthoringUI pkgui.IPkgAuthoringUI
+	pkgLocation    string
+	valuesSchema   v1alpha1.ValuesSchema
+	template       template.TemplateStep
+	pkgBuild       *build.PackageBuild
 }
 
-func NewCreateStep(ui ui.UI, pkgLocation string, pkgBuild build.PackageBuild) *CreateStep {
+func NewCreateStep(pkgAuthorUI pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild build.PackageBuild) *CreateStep {
 	return &CreateStep{
-		ui:          ui,
-		pkgLocation: pkgLocation,
-		pkgBuild:    &pkgBuild,
+		pkgAuthoringUI: pkgAuthorUI,
+		pkgLocation:    pkgLocation,
+		pkgBuild:       &pkgBuild,
 	}
 }
 
-func (createStep CreateStep) getStartBlock() string {
-	str := fmt.Sprintf(`
-Lets start on the package creation process.
-Creating directory %s
-	$ mkdir -p %s
-`, createStep.pkgLocation, createStep.pkgLocation)
-	return str
+func (createStep CreateStep) printStartBlock() {
+	createStep.pkgAuthoringUI.PrintInformationalText("\nLets start on the package creation process.")
+	createStep.pkgAuthoringUI.PrintActionableText("\nCreating directory")
+	createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", createStep.pkgLocation))
 }
 
 func (createStep CreateStep) PreInteract() error {
-	createStep.ui.BeginLinef(createStep.getStartBlock())
+	createStep.printStartBlock()
 	err := createStep.createDirectory(createStep.pkgLocation)
 	if err != nil {
 		return err
@@ -109,7 +107,8 @@ func (createStep CreateStep) PreInteract() error {
 func (createStep CreateStep) createDirectory(dirPath string) error {
 	result := util.Execute("mkdir", []string{"-p", dirPath})
 	if result.Error != nil {
-		createStep.ui.ErrorLinef("Error creating package directory.Error is: %s", result.Stderr)
+		createStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Error creating package directory.Error is: %s",
+			result.Stderr))
 		return result.Error
 	}
 	return nil
@@ -148,21 +147,18 @@ func (createStep *CreateStep) Interact() error {
 }
 
 //Get Fully Qualified Name of the Package and store it in package-build.yml
+//Get Fully Qualified Name of the Package and store it in package-build.yml
 func (createStep CreateStep) configureFullyQualifiedName() error {
-	var fqName string
-	createStep.ui.BeginLinef(createStep.getFQPkgNameBlock())
-	_ = createStep.pkgBuild.Spec.PkgMetadata.Name
-	var err error
-	for {
-		fqName, err = createStep.ui.AskForText("Enter the fully qualified package name")
-		if err != nil {
-			return err
-		}
-		err = validateFQName(fqName)
-		if err == nil {
-			break
-		}
-		createStep.ui.ErrorLinef("Invalid Package Name. %s", err.Error())
+	createStep.printFQPkgNameBlock()
+	defaultFullyQualifiedName := createStep.pkgBuild.Spec.PkgMetadata.Name
+	textOpts := ui.TextOpts{
+		Label:        "Enter the fully qualified package name",
+		Default:      defaultFullyQualifiedName,
+		ValidateFunc: validateFQName,
+	}
+	fqName, err := createStep.pkgAuthoringUI.AskForText(textOpts)
+	if err != nil {
+		return err
 	}
 
 	createStep.pkgBuild.Spec.PkgMetadata.Name = fqName
@@ -172,45 +168,41 @@ func (createStep CreateStep) configureFullyQualifiedName() error {
 	return nil
 }
 
-func (createStep *CreateStep) getFQPkgNameBlock() string {
-	str := `
+func (createStep *CreateStep) printFQPkgNameBlock() {
+	createStep.pkgAuthoringUI.PrintInformationalText(`
 A package name must be a fully qualified name. 
 It must consist of at least three segments separated by a '.'
-Fully Qualified Name cannot have a trailing '.' e.g. samplepackage.corp.com`
-	return str
+Fully Qualified Name cannot have a trailing '.' e.g. samplepackage.corp.com`)
 }
 
 //Get Package Version and store it in package-build.yml
+//Get Package Version and store it in package-build.yml
 func (createStep CreateStep) configurePackageVersion() error {
-	var pkgVersion string
-	createStep.ui.BeginLinef(createStep.getPkgVersionBlock())
-	_ = createStep.pkgBuild.Spec.Pkg.Spec.Version
-	var err error
-	for {
-		pkgVersion, err = createStep.ui.AskForText("Enter the package version")
-		if err != nil {
-			return err
-		}
-		err = validatePackageSpecVersion(pkgVersion)
-		if err == nil {
-			break
-		}
-		createStep.ui.ErrorLinef("Invalid package version. %s", err.Error())
+	createStep.printPkgVersionBlock()
+	defaultPkgVersion := createStep.pkgBuild.Spec.Pkg.Spec.Version
+	textOpts := ui.TextOpts{
+		Label:        "Enter the package version",
+		Default:      defaultPkgVersion,
+		ValidateFunc: validatePackageSpecVersion,
 	}
 
+	pkgVersion, err := createStep.pkgAuthoringUI.AskForText(textOpts)
+	if err != nil {
+		return err
+	}
 	createStep.pkgBuild.Spec.Pkg.Spec.Version = pkgVersion
 	createStep.pkgBuild.Spec.Pkg.Name = createStep.pkgBuild.Spec.Pkg.Spec.RefName + "." + pkgVersion
 	createStep.pkgBuild.WriteToFile(createStep.pkgLocation)
 	return nil
 }
 
-func (createStep *CreateStep) getPkgVersionBlock() string {
-	str := `A package can have multiple versions. These versions are used by PackageInstall to install specific version of the package into the Kubernetes cluster.`
-	return str
+func (createStep *CreateStep) printPkgVersionBlock() {
+	createStep.pkgAuthoringUI.PrintInformationalText(`A package can have multiple versions. 
+These versions are used by PackageInstall to install specific version of the package into the Kubernetes cluster.`)
 }
 
 func (createStep *CreateStep) configureFetchSection() error {
-	fetchConfiguration := fetch.NewFetchStep(createStep.ui, createStep.pkgLocation, createStep.pkgBuild)
+	fetchConfiguration := fetch.NewFetchStep(createStep.pkgAuthoringUI, createStep.pkgLocation, createStep.pkgBuild)
 	err := common.Run(fetchConfiguration)
 	if err != nil {
 		return err
@@ -219,7 +211,7 @@ func (createStep *CreateStep) configureFetchSection() error {
 }
 
 func (createStep *CreateStep) configureTemplateSection() error {
-	templateConfiguration := template.NewTemplateStep(createStep.ui)
+	templateConfiguration := template.NewTemplateStep(createStep.pkgAuthoringUI)
 	err := common.Run(templateConfiguration)
 	if err != nil {
 		return err
@@ -237,22 +229,16 @@ func (createStep *CreateStep) configureValuesSchema() error {
 }
 
 func (createStep CreateStep) PostInteract() error {
-	str := `Great, we have all the data needed to build the package.yml and package-metadata.yml.`
-	createStep.ui.BeginLinef(str)
+	createStep.pkgAuthoringUI.PrintInformationalText("Great, we have all the data needed to build the package.yml and package-metadata.yml.")
 	createStep.printPackageCR(createStep.pkgBuild.GetPackage())
 	createStep.printPackageMetadataCR(createStep.pkgBuild.GetPackageMetadata())
-	str = fmt.Sprintf(`
-Both the files can be accessed from the following location: %s
-`, createStep.pkgLocation)
-	createStep.ui.PrintBlock([]byte(str))
+	createStep.pkgAuthoringUI.PrintInformationalText(fmt.Sprintf("Both the files can be accessed from the following location: %s\n", createStep.pkgLocation))
 	return nil
 }
 
 func (createStep CreateStep) printPackageCR(pkg v1alpha1.Package) error {
-	str := `This is how the package.yml will look like
-	$ cat package.yml
-`
-	createStep.ui.PrintBlock([]byte(str))
+	createStep.pkgAuthoringUI.PrintInformationalText("This is how the package.yml will look like")
+	createStep.pkgAuthoringUI.PrintCmdExecutionText("cat package.yml")
 
 	//TODO: remove this comment. Marshal will make yaml/json
 
@@ -271,7 +257,7 @@ func (createStep CreateStep) printPackageCR(pkg v1alpha1.Package) error {
 	}
 	err = writeToFile(pkgFileLocation, packageData)
 	if err != nil {
-		createStep.ui.ErrorLinef("Unable to create package file. %s", err.Error())
+		createStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Unable to create package file. %s", err.Error()))
 		return err
 	}
 
@@ -285,19 +271,16 @@ func (createStep CreateStep) printPackageCR(pkg v1alpha1.Package) error {
 func (createStep CreateStep) printFile(filePath string) error {
 	result := util.Execute("cat", []string{filePath})
 	if result.Error != nil {
-		createStep.ui.ErrorLinef("Error printing file %s.Error is: %s", filePath, result.ErrorStr())
+		createStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Error printing file %s.Error is: %s", filePath, result.ErrorStr()))
 		return result.Error
 	}
-	createStep.ui.PrintBlock([]byte(result.Stdout))
+	createStep.pkgAuthoringUI.PrintCmdExecutionOutput(result.Stdout)
 	return nil
 }
 
 func (createStep CreateStep) printPackageMetadataCR(pkgMetadata v1alpha1.PackageMetadata) error {
-	str := `
-This is how the packageMetadata.yml will look like
-	$ cat packageMetadata.yml
-`
-	createStep.ui.PrintBlock([]byte(str))
+	createStep.pkgAuthoringUI.PrintInformationalText("\nThis is how the packageMetadata.yml will look like")
+	createStep.pkgAuthoringUI.PrintCmdExecutionText("cat packageMetadata.yml")
 	jsonPackageMetadataData, err := json.Marshal(&pkgMetadata)
 	if err != nil {
 		return err
@@ -312,7 +295,7 @@ This is how the packageMetadata.yml will look like
 	}
 	err = writeToFile(pkgMetadataFileLocation, packageMetadataData)
 	if err != nil {
-		createStep.ui.ErrorLinef("Unable to create package metadata file. %s", err.Error())
+		createStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Unable to create package metadata file. %s", err.Error()))
 		return err
 	}
 

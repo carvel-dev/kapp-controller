@@ -3,6 +3,7 @@ package upstream
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
+	pkgui "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/ui"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
@@ -11,16 +12,16 @@ const (
 )
 
 type GithubStep struct {
-	ui          ui.UI
-	pkgBuild    *pkgbuilder.PackageBuild
-	pkgLocation string
+	pkgAuthoringUI pkgui.IPkgAuthoringUI
+	pkgBuild       *pkgbuilder.PackageBuild
+	pkgLocation    string
 }
 
-func NewGithubStep(ui ui.UI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *GithubStep {
+func NewGithubStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *GithubStep {
 	return &GithubStep{
-		ui:          ui,
-		pkgLocation: pkgLocation,
-		pkgBuild:    pkgBuild,
+		pkgAuthoringUI: ui,
+		pkgLocation:    pkgLocation,
+		pkgBuild:       pkgBuild,
 	}
 }
 
@@ -30,8 +31,8 @@ func (g *GithubStep) PreInteract() error {
 
 func (g *GithubStep) Interact() error {
 	contents := g.pkgBuild.Spec.Vendir.Directories[0].Contents
-	if contents == nil || contents[0].GithubRelease == nil {
-		g.initializeContentWithGithubReleaseGithubRelease()
+	if contents == nil {
+		g.initializeContentWithGithubRelease()
 	} else if contents[0].GithubRelease == nil {
 		g.initializeGithubRelease()
 	}
@@ -51,8 +52,13 @@ func (g *GithubStep) Interact() error {
 
 func (g *GithubStep) configureRepoSlug() error {
 	githubReleaseContent := g.pkgBuild.Spec.Vendir.Directories[0].Contents[0].GithubRelease
-	_ = githubReleaseContent.Slug
-	repoSlug, err := g.ui.AskForText("Enter slug for repository(org/repo)")
+	defaultSlug := githubReleaseContent.Slug
+	textOpts := ui.TextOpts{
+		Label:        "Enter slug for repository(org/repo)",
+		Default:      defaultSlug,
+		ValidateFunc: nil,
+	}
+	repoSlug, err := g.pkgAuthoringUI.AskForText(textOpts)
 	if err != nil {
 		return err
 	}
@@ -64,9 +70,14 @@ func (g *GithubStep) configureRepoSlug() error {
 
 func (g GithubStep) configureVersion() error {
 	githubReleaseContent := g.pkgBuild.Spec.Vendir.Directories[0].Contents[0].GithubRelease
-	_ = g.getDefaultReleaseTag()
+	defaultReleaseTag := g.getDefaultReleaseTag()
+	textOpts := ui.TextOpts{
+		Label:        "Enter the release tag to be used. Leave empty to use the latest version",
+		Default:      defaultReleaseTag,
+		ValidateFunc: nil,
+	}
 
-	releaseTag, err := g.ui.AskForText("Enter the release tag to be used. Leave empty to use the latest version")
+	releaseTag, err := g.pkgAuthoringUI.AskForText(textOpts)
 	if err != nil {
 		return err
 	}
@@ -103,7 +114,8 @@ func (g *GithubStep) getDefaultReleaseTag() string {
 	return ""
 }
 
-func (g *GithubStep) initializeContentWithGithubReleaseGithubRelease() {
+func (g *GithubStep) initializeContentWithGithubRelease() {
+	//TODO Rohit need to check this how it should be done. It is giving path as empty.
 	g.pkgBuild.Spec.Vendir.Directories[0].Contents = append(g.pkgBuild.Spec.Vendir.Directories[0].Contents, vendirconf.DirectoryContents{})
 	g.initializeGithubRelease()
 }

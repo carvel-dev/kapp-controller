@@ -1,12 +1,13 @@
 package builder
 
 import (
+	"os"
+
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"os"
 )
 
 type ValuesSchema struct {
@@ -27,21 +28,27 @@ func (createStep CreateStep) getValueSchema() (v1alpha1.ValuesSchema, error) {
 	valuesSchema := v1alpha1.ValuesSchema{}
 	var isValueSchemaSpecified bool
 	var isValidInput bool
-	input, err := createStep.ui.AskForText("Do you want to specify the values Schema(y/n)")
+	input, err := createStep.pkgAuthoringUI.AskForText(ui.TextOpts{
+		Label: "Do you want to specify the values Schema(y/n)",
+	})
 	if err != nil {
 		return valuesSchema, err
 	}
 	for {
 		isValueSchemaSpecified, isValidInput = common.ValidateInputYesOrNo(input)
 		if !isValidInput {
-			input, err = createStep.ui.AskForText("Invalid input. (must be 'y','n','Y','N')")
+			input, err = createStep.pkgAuthoringUI.AskForText(ui.TextOpts{
+				Label: "Invalid input. (must be 'y','n','Y','N')",
+			})
 			if err != nil {
 				return valuesSchema, err
 			}
 			continue
 		}
 		if isValueSchemaSpecified {
-			valuesSchemaFileLocation, err := createStep.ui.AskForText("Enter the values schema file location")
+			valuesSchemaFileLocation, err := createStep.pkgAuthoringUI.AskForText(ui.TextOpts{
+				Label: "Enter the values schema file location",
+			})
 			if err != nil {
 				return valuesSchema, err
 			}

@@ -5,6 +5,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/fetch/imgpkg"
+	pkgui "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/ui"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
@@ -18,25 +19,24 @@ const (
 )
 
 type FetchStep struct {
-	ui          ui.UI
-	pkgLocation string
-	pkgBuild    *build.PackageBuild
+	pkgAuthoringUI pkgui.IPkgAuthoringUI
+	pkgLocation    string
+	pkgBuild       *build.PackageBuild
 }
 
-func NewFetchStep(ui ui.UI, pkgLocation string, pkgBuild *build.PackageBuild) *FetchStep {
+func NewFetchStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *build.PackageBuild) *FetchStep {
 	fetchStep := FetchStep{
-		ui:          ui,
-		pkgLocation: pkgLocation,
-		pkgBuild:    pkgBuild,
+		pkgAuthoringUI: ui,
+		pkgLocation:    pkgLocation,
+		pkgBuild:       pkgBuild,
 	}
 	return &fetchStep
 }
 
 func (fetch FetchStep) PreInteract() error {
-	str := `Now, we have to add the configuration which makes up the package for distribution. 
+	fetch.pkgAuthoringUI.PrintInformationalText(`Now, we have to add the configuration which makes up the package for distribution. 
 Configuration can be fetched from different types of sources.
-Imgpkg is a tool to package, distribute, and relocate Kubernetes configuration and dependent OCI images as one OCI artifact: a bundle.`
-	fetch.ui.BeginLinef(str)
+Imgpkg is a tool to package, distribute, and relocate Kubernetes configuration and dependent OCI images as one OCI artifact: a bundle.`)
 	return nil
 }
 
@@ -56,17 +56,20 @@ func (fetch *FetchStep) Interact() error {
 	}
 
 	var fetchTypeNames = []string{AppFetchImgpkgBundle, AppFetchHelmChart}
-	//defaultFetchOptionIndex := getDefaultFetchOptionIndex(fetchTypeNames, defaultFetchOptionSelected)
-	_ = getDefaultFetchOptionIndex(fetchTypeNames, defaultFetchOptionSelected)
-
-	fetchOptionSelected, err := fetch.ui.AskForChoice("Enter the fetch configuration type", fetchTypeNames)
+	defaultFetchOptionIndex := getDefaultFetchOptionIndex(fetchTypeNames, defaultFetchOptionSelected)
+	choiceOpts := ui.ChoiceOpts{
+		Label:   "Enter the fetch configuration type",
+		Default: defaultFetchOptionIndex,
+		Choices: fetchTypeNames,
+	}
+	fetchOptionSelected, err := fetch.pkgAuthoringUI.AskForChoice(choiceOpts)
 	if err != nil {
 		return err
 	}
 
 	switch fetchTypeNames[fetchOptionSelected] {
 	case AppFetchImgpkgBundle:
-		imgpkgStep := imgpkg.NewImgPkgStep(fetch.ui, fetch.pkgLocation, fetch.pkgBuild)
+		imgpkgStep := imgpkg.NewImgPkgStep(fetch.pkgAuthoringUI, fetch.pkgLocation, fetch.pkgBuild)
 		err := common.Run(imgpkgStep)
 		if err != nil {
 			return err
