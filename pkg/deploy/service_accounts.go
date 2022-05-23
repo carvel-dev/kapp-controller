@@ -23,6 +23,7 @@ type ServiceAccounts struct {
 	log        logr.Logger
 }
 
+// NewServiceAccounts provides access to the ServiceAccount Resource in kubernetes
 func NewServiceAccounts(coreClient kubernetes.Interface, log logr.Logger) *ServiceAccounts {
 	return &ServiceAccounts{coreClient, log}
 }
