@@ -23,7 +23,7 @@ import (
 
 const (
 	maxTTL    = 2 * time.Hour
-	gcPeriod  = time.Minute
+	gcPeriod  = time.Hour * 24
 	maxJitter = 10 * time.Second
 )
 
@@ -64,7 +64,7 @@ type Manager struct {
 // * If refresh fails and the old token is still valid, log an error and return the old token.
 // * If refresh fails and the old token is no longer valid, return an error
 func (m *Manager) GetServiceAccountToken(namespace, name string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
-	key := keyFunc(name, namespace, tr)
+	key := fmt.Sprintf("%q/%q", name, namespace)
 
 	ctr, ok := m.get(key)
 
@@ -135,13 +135,4 @@ func (m *Manager) requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 
 	// Require a refresh if within 50% of the TTL plus a jitter from the expiration time.
 	return now.After(exp.Add(-1*time.Duration((*tr.Spec.ExpirationSeconds*50)/100)*time.Second - jitter))
-}
-
-func keyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
-	var exp int64
-	if tr.Spec.ExpirationSeconds != nil {
-		exp = *tr.Spec.ExpirationSeconds
-	}
-
-	return fmt.Sprintf("%q/%q/%#v", name, namespace, exp)
 }
