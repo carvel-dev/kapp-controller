@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	caCertPath = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+	caCertPath      = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+	tokenExpiration = time.Hour * 2
 )
 
 type ServiceAccounts struct {
@@ -60,7 +61,7 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 		return "", fmt.Errorf("Internal inconsistency: Expected service account name to not be empty")
 	}
 
-	expiration := int64(time.Hour.Seconds())
+	expiration := int64(tokenExpiration.Seconds())
 	t, err := s.tokenManager.GetServiceAccountToken(nsName, saName, &authenticationv1.TokenRequest{
 		Spec: authenticationv1.TokenRequestSpec{
 			ExpirationSeconds: &expiration,
