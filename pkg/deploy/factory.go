@@ -17,6 +17,7 @@ import (
 // should only be used for PackageRepository reconciliation.
 type Factory struct {
 	coreClient kubernetes.Interface
+	kappConfig KappConfiguration
 
 	kubeconfigSecrets *KubeconfigSecrets
 	serviceAccounts   *ServiceAccounts
@@ -24,9 +25,17 @@ type Factory struct {
 	cmdRunner exec.CmdRunner
 }
 
+// KappConfiguration provides a way to inject shared kapp settings.
+type KappConfiguration interface {
+	KappDeployRawOptions() []string
+}
+
 // NewFactory returns deploy factory.
-func NewFactory(coreClient kubernetes.Interface, cmdRunner exec.CmdRunner, log logr.Logger) Factory {
-	return Factory{coreClient, NewKubeconfigSecrets(coreClient), NewServiceAccounts(coreClient, log), cmdRunner}
+func NewFactory(coreClient kubernetes.Interface,
+	kappConfig KappConfiguration, cmdRunner exec.CmdRunner, log logr.Logger) Factory {
+
+	return Factory{coreClient, kappConfig,
+		NewKubeconfigSecrets(coreClient), NewServiceAccounts(coreClient, log), cmdRunner}
 }
 
 func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
@@ -52,7 +61,8 @@ func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
 		return nil, fmt.Errorf("Expected service account or cluster specified")
 	}
 
-	return NewKapp(opts, processedGenericOpts, cancelCh, f.cmdRunner), nil
+	return NewKapp(opts, processedGenericOpts,
+		f.globalKappDeployRawOpts(), cancelCh, f.cmdRunner), nil
 }
 
 // NewKappPrivileged is used for package repositories where users aren't required to provide
@@ -70,5 +80,12 @@ func (f Factory) NewKappPrivileged(opts v1alpha1.AppDeployKapp,
 		DangerousUsePodServiceAccount: true,
 	}
 
-	return NewKapp(opts, pgo, cancelCh, f.cmdRunner), nil
+	return NewKapp(opts, pgo, f.globalKappDeployRawOpts(), cancelCh, f.cmdRunner), nil
+}
+
+func (f Factory) globalKappDeployRawOpts() []string {
+	if f.kappConfig != nil {
+		return f.kappConfig.KappDeployRawOptions()
+	}
+	return nil
 }

@@ -5,6 +5,7 @@ package config
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -37,16 +38,21 @@ const (
 
 	kubernetesServiceHostEnvVar    = "KUBERNETES_SERVICE_HOST"
 	kubernetesServiceHostShorthand = "KAPPCTRL_KUBERNETES_SERVICE_HOST"
+
+	kappDeployRawOptionsKey = "kappDeployRawOptions"
 )
 
 // Config is populated from the cluster's Secret or ConfigMap and sets behavior of kapp-controller.
 // NOTE because config may be populated from a Secret use caution if you're tempted to serialize.
 type Config struct {
-	caCerts            string
-	httpProxy          string
-	httpsProxy         string
-	noProxy            string
-	skipTLSVerify      string
+	caCerts       string
+	httpProxy     string
+	httpsProxy    string
+	noProxy       string
+	skipTLSVerify string
+
+	kappDeployRawOptions []string
+
 	BackupCaBundlePath string
 	SystemCaBundlePath string
 }
@@ -93,9 +99,15 @@ func GetConfig(client kubernetes.Interface) (*Config, error) {
 	config := &Config{}
 
 	if secret != nil {
-		config.addSecretDataToConfig(secret)
+		err := config.addSecretDataToConfig(secret)
+		if err != nil {
+			return nil, err
+		}
 	} else if configMap != nil {
-		config.addConfigMapDataToConfig(configMap)
+		err := config.addConfigMapDataToConfig(configMap)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return config, nil
@@ -142,6 +154,15 @@ func (gc *Config) ShouldSkipTLSForAuthority(candidateAuthority string) bool {
 	}
 
 	return false
+}
+
+// KappDeployRawOptions returns user configured kapp raw options
+func (gc *Config) KappDeployRawOptions() []string {
+	// Configure kapp to keep only 5 app changes as it seems that
+	// larger number of ConfigMaps negative affects other controllers on the cluster.
+	// Eventually kapp can be smart enough to keep minimal number of app changes.
+	// Set default first so that it can be overridden by user provided options.
+	return append([]string{"--app-changes-max-to-keep=5"}, gc.kappDeployRawOptions...)
 }
 
 func (gc *Config) addTrustedCerts(certChain string) (err error) {
@@ -223,23 +244,35 @@ func (gc *Config) addKubernetesServiceHostInNoProxy() {
 	}
 }
 
-func (gc *Config) addSecretDataToConfig(secret *v1.Secret) {
+func (gc *Config) addSecretDataToConfig(secret *v1.Secret) error {
 	extractedValues := map[string]string{}
 	for key, value := range secret.Data {
 		extractedValues[key] = string(value)
 	}
-
-	gc.addDataToConfig(extractedValues)
+	return gc.addDataToConfig(extractedValues)
 }
 
-func (gc *Config) addConfigMapDataToConfig(configMap *v1.ConfigMap) {
-	gc.addDataToConfig(configMap.Data)
+func (gc *Config) addConfigMapDataToConfig(configMap *v1.ConfigMap) error {
+	return gc.addDataToConfig(configMap.Data)
 }
 
-func (gc *Config) addDataToConfig(data map[string]string) {
+func (gc *Config) addDataToConfig(data map[string]string) error {
 	gc.caCerts = data[caCertsKey]
 	gc.httpProxy = data[httpProxyKey]
 	gc.httpsProxy = data[httpsProxyKey]
 	gc.noProxy = data[noProxyKey]
 	gc.skipTLSVerify = data[skipTLSVerifyKey]
+
+	if val := data[kappDeployRawOptionsKey]; len(val) > 0 {
+		var opts []string
+		err := json.Unmarshal([]byte(val), &opts)
+		if err != nil {
+			return fmt.Errorf("Unmarshaling kappDeployRawOptions as JSON: %s", err)
+		}
+		// Allowed flags will be verified before kapp is invoked within Kapp class.
+		// (See pkg/deploy/kapp_restrict.go).
+		gc.kappDeployRawOptions = opts
+	}
+
+	return nil
 }
