@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653349073102,
+  "lastUpdate": 1653388095075,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -1251,6 +1251,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6779125244,
             "unit": "ns/op\t         4.507 DeleteSeconds\t         2.210 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "59fc2c1397ff448409ba9b5f36137247a4ad2492",
+          "message": "Merge pull request #692 from vmware-tanzu/pkg-update-install\n\nkctrl: Remove `install` option in package installed update command",
+          "timestamp": "2022-05-24T12:15:19+02:00",
+          "tree_id": "e6dae66f8e8839cbc04ac69dc3882be35fe95fe3",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/59fc2c1397ff448409ba9b5f36137247a4ad2492"
+        },
+        "date": 1653388094221,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37144113037,
+            "unit": "ns/op\t        19.39 DeleteSeconds\t        17.70 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9762874613,
+            "unit": "ns/op\t         5.412 DeleteSeconds\t         4.296 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6671985463,
+            "unit": "ns/op\t         4.397 DeleteSeconds\t         2.221 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
