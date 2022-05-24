@@ -162,7 +162,6 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Name of package install to be updated")
 	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
-	cmd.Flags().BoolVarP(&o.install, "install", "", false, "Install package if the installed package does not exist, optional")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -258,6 +257,14 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 		o.Name = args[0]
 	}
 
+	if len(o.Name) == 0 {
+		return fmt.Errorf("Expected package install to be non-empty")
+	}
+
+	if len(o.version) == 0 && len(o.valuesFile) == 0 {
+		return fmt.Errorf("Expected either package version or values file to update the package")
+	}
+
 	client, err := o.depsFactory.CoreClient()
 	if err != nil {
 		return err
@@ -275,20 +282,7 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 		context.Background(), o.Name, metav1.GetOptions{},
 	)
 	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
-		}
-		if !o.install {
-			return fmt.Errorf("Package not installed")
-		}
-		o.statusUI.PrintMessagef("Installing package '%s'", o.Name)
-
-		err = o.create(client, kcClient)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return err
 	}
 
 	err = o.update(client, kcClient, pkgInstall)
