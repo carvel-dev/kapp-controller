@@ -74,7 +74,6 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 		DefaultTimeout:   5 * time.Minute,
 	})
 
-	// For `add` command create option will always be true
 	o.CreateRepository = true
 
 	return cmd
@@ -102,8 +101,6 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 	}
 
 	cmd.Flags().StringVarP(&o.URL, "url", "", "", "OCI registry url for package repository bundle (required)")
-
-	cmd.Flags().BoolVar(&o.CreateRepository, "create", false, "Creates the package repository if it does not exist, optional")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
