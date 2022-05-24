@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653388095075,
+  "lastUpdate": 1653410198061,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -1293,6 +1293,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6671985463,
             "unit": "ns/op\t         4.397 DeleteSeconds\t         2.221 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cppforlife@gmail.com",
+            "name": "Dmitriy Kalinin",
+            "username": "cppforlife"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fa18786913f6dff2af3cd9e97db7dde6fbbe45c9",
+          "message": "support global kapp rawOptions and set default --app-changes-max-to-keep to 5 (#694)\n\nCo-authored-by: Dmitriy Kalinin <dkalinin@vmware.com>",
+          "timestamp": "2022-05-24T12:26:25-04:00",
+          "tree_id": "240e8fe82b6bd4f3de57cc0df03d99040850df39",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/fa18786913f6dff2af3cd9e97db7dde6fbbe45c9"
+        },
+        "date": 1653410197288,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36584205540,
+            "unit": "ns/op\t        19.02 DeleteSeconds\t        17.52 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9507992873,
+            "unit": "ns/op\t         5.314 DeleteSeconds\t         4.156 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6459052120,
+            "unit": "ns/op\t         4.284 DeleteSeconds\t         2.136 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
