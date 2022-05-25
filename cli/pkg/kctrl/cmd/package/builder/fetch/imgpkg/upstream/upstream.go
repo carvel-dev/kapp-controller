@@ -190,7 +190,7 @@ Lets use our inputs to create vendir.yml file.`)
 	upstreamStep.pkgAuthoringUI.PrintActionableText("Creating vendir.yml")
 	data, err := yaml.Marshal(&upstreamStep.pkgBuild.Spec.Vendir)
 	if err != nil {
-		upstreamStep.pkgAuthoringUI.PrintErrorText("Unable to create vendir.yml")
+		return fmt.Errorf("Unable to create vendir.yml\n %s", err.Error())
 	}
 	f, err := os.Create(vendirFileLocation)
 	if err != nil {
@@ -221,8 +221,7 @@ func (upstreamStep *UpstreamStep) printVendirFile() error {
 func (upstreamStep *UpstreamStep) printFile(filePath string) error {
 	result := util.Execute("cat", []string{filePath})
 	if result.Error != nil {
-		upstreamStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Error printing file %s. Error is: %s", filePath, result.ErrorStr()))
-		return result.Error
+		return fmt.Errorf("Printing file %s\n %s", filePath, result.Stderr)
 	}
 	upstreamStep.pkgAuthoringUI.PrintCmdExecutionOutput(result.Stdout)
 	return nil
@@ -230,10 +229,7 @@ func (upstreamStep *UpstreamStep) printFile(filePath string) error {
 
 func (upstreamStep *UpstreamStep) printVendirLockFile() error {
 	vendirLockFileLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "vendir.lock.yml")
-	upstreamStep.pkgAuthoringUI.PrintInformationalText(`After running vendir sync, there is one more file created i.e. bundle/vendir.lock.yml
-This lock file resolves the release tag to the specific GitHub release and declares that the config is the synchronization target path.
-Lets see its content
-`)
+	upstreamStep.pkgAuthoringUI.PrintInformationalText("After running vendir sync, there is one more file created i.e. bundle/vendir.lock.yml \nThis lock file resolves the release tag to the specific GitHub release and declares that the config is the synchronization target path.")
 	upstreamStep.pkgAuthoringUI.PrintActionableText("Printing Vendir.lock.yml")
 	upstreamStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("cat %s", vendirLockFileLocation))
 	err := upstreamStep.printFile(vendirLockFileLocation)
@@ -249,8 +245,7 @@ func (upstreamStep *UpstreamStep) runVendirSync() error {
 	upstreamStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("vendir sync --chdir %s", bundleLocation))
 	result := util.Execute("vendir", []string{"sync", "--chdir", bundleLocation})
 	if result.Error != nil {
-		upstreamStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Error while running vendir sync. Error is: %s", result.Stderr))
-		return result.Error
+		return fmt.Errorf("while running vendir sync. %s", result.Stderr)
 	}
 	configLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "config")
 	upstreamStep.pkgAuthoringUI.PrintInformationalText("To ensure that data has been synced, lets list down the files in config directory")
@@ -266,17 +261,15 @@ func (upstreamStep *UpstreamStep) runVendirSync() error {
 func (upstreamStep UpstreamStep) listFiles(dir string) error {
 	result := util.Execute("ls", []string{"-l", dir})
 	if result.Error != nil {
-		upstreamStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Error while listing files. Error is: %s", result.ErrorStr()))
-		return result.Error
+		return fmt.Errorf("Listing files.\n %s", result.Stderr)
 	}
 	upstreamStep.pkgAuthoringUI.PrintCmdExecutionOutput(result.Stdout)
 	return nil
 }
 
 func (upstreamStep UpstreamStep) getIncludedPaths() ([]string, error) {
-
-	upstreamStep.pkgAuthoringUI.PrintInformationalText(`Now, we need to enter the specific paths which we want to include as package content. More than one paths can be added with comma separator. 
-To include everything from the upstream, leave it empty.`)
+	upstreamStep.pkgAuthoringUI.PrintInformationalText("Now, we need to enter the specific paths which we want to include as package content. " +
+		"More than one paths can be added with comma separator. \nTo include everything from the upstream, leave it empty.")
 	includedPaths := upstreamStep.pkgBuild.Spec.Vendir.Directories[0].Contents[0].IncludePaths
 	defaultIncludedPath := strings.Join(includedPaths, ",")
 	textOpts := ui.TextOpts{

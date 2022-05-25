@@ -24,9 +24,8 @@ func NewTemplateStep(ui pkgui.IPkgAuthoringUI) *TemplateStep {
 }
 
 func (t TemplateStep) PreInteract() error {
-	t.PkgAuthoringUI.PrintInformationalText(`
-# Next step is to define which templating tool to be used to render the package template. 
-# A package template can be rendered by various different tools.`)
+	t.PkgAuthoringUI.PrintInformationalText("# Next step is to define which templating tool to be used to render the package template.\n" +
+		"# A package template can be rendered by various different tools.")
 	return nil
 }
 

@@ -14,7 +14,6 @@ type IPkgAuthoringUI interface {
 	PrintActionableText(text string)
 	AskForText(textOpts ui.TextOpts) (string, error)
 	AskForChoice(opts ui.ChoiceOpts) (int, error)
-	PrintErrorText(text string)
 	PrintCmdExecutionOutput(text string)
 }
 
@@ -29,7 +28,7 @@ func NewPackageAuthoringUI(ui ui.UI) IPkgAuthoringUI {
 }
 
 func (c PackageAuthoringUIImpl) PrintInformationalText(text string) {
-	c.ui.BeginLinef(color.New(color.Faint).Sprint(text))
+	c.ui.BeginLinef(color.New(color.Faint).Sprint("\n" + text))
 }
 
 func (c PackageAuthoringUIImpl) PrintCmdExecutionText(text string) {
@@ -38,8 +37,10 @@ func (c PackageAuthoringUIImpl) PrintCmdExecutionText(text string) {
 
 func (c PackageAuthoringUIImpl) PrintCmdExecutionOutput(output string) {
 	lines := strings.Split(output, "\n")
-	for ind := range lines {
-		lines[ind] = fmt.Sprintf("\t    | %s", lines[ind])
+	for ind, line := range lines {
+		if line != "" {
+			lines[ind] = fmt.Sprintf("\t    | %s", lines[ind])
+		}
 	}
 
 	indentedBlock := strings.Join(lines, "\n")
@@ -63,8 +64,4 @@ func (c PackageAuthoringUIImpl) AskForChoice(choiceOpts ui.ChoiceOpts) (int, err
 	col := color.New(color.Bold)
 	choiceOpts.Label = fmt.Sprintf(col.Sprint("> ")) + choiceOpts.Label
 	return c.ui.AskForChoice(choiceOpts)
-}
-
-func (c PackageAuthoringUIImpl) PrintErrorText(text string) {
-	c.ui.BeginLinef(color.RedString(text))
 }

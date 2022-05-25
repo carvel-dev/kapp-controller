@@ -50,8 +50,7 @@ func (createImgPkgStep CreateImgPkgStep) PreInteract() error {
 func (createImgPkgStep CreateImgPkgStep) createDirectory(dirPath string) error {
 	result := util.Execute("mkdir", []string{"-p", dirPath})
 	if result.Error != nil {
-		createImgPkgStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Error creating package directory.Error is: %s", result.ErrorStr()))
-		return result.Error
+		return fmt.Errorf("Creating package directory.\n %s", result.Stderr)
 	}
 	return nil
 }
@@ -128,11 +127,10 @@ This mapping will then be placed into an images.yml lock file in your bundle/.im
 	createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("kbld --file %s --imgpkg-lock-output %s", bundleLocation, imagesFileLocation))
 	err := createImgPkgStep.runkbld(bundleLocation, imagesFileLocation)
 	if err != nil {
-		createImgPkgStep.pkgAuthoringUI.PrintErrorText(err.Error())
 		return err
 	}
 
-	createImgPkgStep.pkgAuthoringUI.PrintInformationalText("\nLets see how the images.yml file looks like:")
+	createImgPkgStep.pkgAuthoringUI.PrintInformationalText("Lets see how the images.yml file looks like:")
 	createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("Running cat %s", imagesFileLocation))
 	err = createImgPkgStep.printFile(imagesFileLocation)
 	if err != nil {
@@ -150,8 +148,7 @@ This mapping will then be placed into an images.yml lock file in your bundle/.im
 func (createImgPkgStep CreateImgPkgStep) runkbld(bundleLocation, imagesFileLocation string) error {
 	result := util.Execute("kbld", []string{"--file", bundleLocation, "--imgpkg-lock-output", imagesFileLocation})
 	if result.Error != nil {
-		createImgPkgStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Error running kbld.Error is: %s", result.ErrorStr()))
-		return result.Error
+		return fmt.Errorf("Running kbld.\n %s", result.Stderr)
 	}
 	return nil
 }
@@ -159,8 +156,7 @@ func (createImgPkgStep CreateImgPkgStep) runkbld(bundleLocation, imagesFileLocat
 func (createImgPkgStep CreateImgPkgStep) printFile(filePath string) error {
 	result := util.Execute("cat", []string{filePath})
 	if result.Error != nil {
-		createImgPkgStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Error printing file %s.Error is: %s", filePath, result.ErrorStr()))
-		return result.Error
+		return fmt.Errorf("Printing file %s\n %s", filePath, result.Stderr)
 	}
 	createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionOutput(result.Stdout)
 	return nil
@@ -168,14 +164,13 @@ func (createImgPkgStep CreateImgPkgStep) printFile(filePath string) error {
 
 func (createImgPkgStep CreateImgPkgStep) pushImgpkgBundleToRegistry(bundleLoc string) (string, error) {
 	pushURL := createImgPkgStep.pkgBuild.Spec.Imgpkg.RegistryURL
-	createImgPkgStep.pkgAuthoringUI.PrintInformationalText("\nRunning imgpkg to push the bundle directory and indicate what project name and tag to give it.")
+	createImgPkgStep.pkgAuthoringUI.PrintInformationalText("Running imgpkg to push the bundle directory and indicate what project name and tag to give it.")
 	createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("imgpkg push --bundle %s --file %s --json", pushURL, bundleLoc))
 
 	//TODO Rohit it is not showing the actual error
 	result := util.Execute("imgpkg", []string{"push", "--bundle", pushURL, "--file", bundleLoc, "--json"})
 	if result.Error != nil {
-		createImgPkgStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Imgpkg bundle push failed. Reason: %s", result.Stderr))
-		return "", result.Error
+		return "", fmt.Errorf("Imgpkg bundle push failed, check the registry url: %s", pushURL)
 	}
 	createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionOutput(result.Stdout)
 	bundleURL := getBundleURL(result.Stdout)

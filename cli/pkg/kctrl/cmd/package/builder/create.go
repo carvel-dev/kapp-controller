@@ -90,7 +90,7 @@ func NewCreateStep(pkgAuthorUI pkgui.IPkgAuthoringUI, pkgLocation string, pkgBui
 }
 
 func (createStep CreateStep) printStartBlock() {
-	createStep.pkgAuthoringUI.PrintInformationalText("\nLets start on the package creation process.")
+	createStep.pkgAuthoringUI.PrintInformationalText("Lets start on the package creation process.")
 	createStep.pkgAuthoringUI.PrintActionableText("\nCreating directory")
 	createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", createStep.pkgLocation))
 }
@@ -107,9 +107,7 @@ func (createStep CreateStep) PreInteract() error {
 func (createStep CreateStep) createDirectory(dirPath string) error {
 	result := util.Execute("mkdir", []string{"-p", dirPath})
 	if result.Error != nil {
-		createStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Error creating package directory.Error is: %s",
-			result.Stderr))
-		return result.Error
+		return fmt.Errorf("Creating package directory: %s", result.Stderr)
 	}
 	return nil
 }
@@ -169,10 +167,8 @@ func (createStep CreateStep) configureFullyQualifiedName() error {
 }
 
 func (createStep *CreateStep) printFQPkgNameBlock() {
-	createStep.pkgAuthoringUI.PrintInformationalText(`
-A package name must be a fully qualified name. 
-It must consist of at least three segments separated by a '.'
-Fully Qualified Name cannot have a trailing '.' e.g. samplepackage.corp.com`)
+	createStep.pkgAuthoringUI.PrintInformationalText("A package name must be a fully qualified name. \nIt must consist of at least three segments separated by a '.'\n" +
+		"Fully Qualified Name cannot have a trailing '.' e.g. samplepackage.corp.com")
 }
 
 //Get Package Version and store it in package-build.yml
@@ -197,8 +193,7 @@ func (createStep CreateStep) configurePackageVersion() error {
 }
 
 func (createStep *CreateStep) printPkgVersionBlock() {
-	createStep.pkgAuthoringUI.PrintInformationalText(`A package can have multiple versions. 
-These versions are used by PackageInstall to install specific version of the package into the Kubernetes cluster.`)
+	createStep.pkgAuthoringUI.PrintInformationalText("A package can have multiple versions. \nThese versions are used by PackageInstall to install specific version of the package into the Kubernetes cluster.")
 }
 
 func (createStep *CreateStep) configureFetchSection() error {
@@ -230,8 +225,14 @@ func (createStep *CreateStep) configureValuesSchema() error {
 
 func (createStep CreateStep) PostInteract() error {
 	createStep.pkgAuthoringUI.PrintInformationalText("Great, we have all the data needed to build the package.yml and package-metadata.yml.")
-	createStep.printPackageCR(createStep.pkgBuild.GetPackage())
-	createStep.printPackageMetadataCR(createStep.pkgBuild.GetPackageMetadata())
+	err := createStep.printPackageCR(createStep.pkgBuild.GetPackage())
+	if err != nil {
+		return err
+	}
+	err = createStep.printPackageMetadataCR(createStep.pkgBuild.GetPackageMetadata())
+	if err != nil {
+		return err
+	}
 	createStep.pkgAuthoringUI.PrintInformationalText(fmt.Sprintf("Both the files can be accessed from the following location: %s\n", createStep.pkgLocation))
 	return nil
 }
@@ -257,8 +258,7 @@ func (createStep CreateStep) printPackageCR(pkg v1alpha1.Package) error {
 	}
 	err = writeToFile(pkgFileLocation, packageData)
 	if err != nil {
-		createStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Unable to create package file. %s", err.Error()))
-		return err
+		return fmt.Errorf("Unable to create package file. %s", err.Error())
 	}
 
 	err = createStep.printFile(pkgFileLocation)
@@ -271,15 +271,14 @@ func (createStep CreateStep) printPackageCR(pkg v1alpha1.Package) error {
 func (createStep CreateStep) printFile(filePath string) error {
 	result := util.Execute("cat", []string{filePath})
 	if result.Error != nil {
-		createStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Error printing file %s.Error is: %s", filePath, result.ErrorStr()))
-		return result.Error
+		return fmt.Errorf("Printing file %s\n %s", filePath, result.Stderr)
 	}
 	createStep.pkgAuthoringUI.PrintCmdExecutionOutput(result.Stdout)
 	return nil
 }
 
 func (createStep CreateStep) printPackageMetadataCR(pkgMetadata v1alpha1.PackageMetadata) error {
-	createStep.pkgAuthoringUI.PrintInformationalText("\nThis is how the packageMetadata.yml will look like")
+	createStep.pkgAuthoringUI.PrintInformationalText("This is how the packageMetadata.yml will look like")
 	createStep.pkgAuthoringUI.PrintCmdExecutionText("cat packageMetadata.yml")
 	jsonPackageMetadataData, err := json.Marshal(&pkgMetadata)
 	if err != nil {
@@ -295,8 +294,7 @@ func (createStep CreateStep) printPackageMetadataCR(pkgMetadata v1alpha1.Package
 	}
 	err = writeToFile(pkgMetadataFileLocation, packageMetadataData)
 	if err != nil {
-		createStep.pkgAuthoringUI.PrintErrorText(fmt.Sprintf("Unable to create package metadata file. %s", err.Error()))
-		return err
+		return fmt.Errorf("Unable to create package metadata file. %s", err.Error())
 	}
 
 	err = createStep.printFile(pkgMetadataFileLocation)
