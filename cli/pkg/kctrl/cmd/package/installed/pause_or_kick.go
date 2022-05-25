@@ -89,7 +89,7 @@ func NewKickCmd(o *PauseOrKickOptions, flagsFactory cmdcore.FlagsFactory) *cobra
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
-		DefaultInterval:  1 * time.Second,
+		DefaultInterval:  2 * time.Second,
 		DefaultTimeout:   5 * time.Minute,
 	})
 
@@ -229,10 +229,22 @@ func (o *PauseOrKickOptions) waitForPackageInstallReconciliation(client kcclient
 		if err != nil {
 			return false, err
 		}
+		appResource, err := client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+
+		// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
 		if resource.Generation != resource.Status.ObservedGeneration {
-			// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
 			return false, nil
 		}
+		// Temporary workaround so that we do not pick up stale conditions
+		// To be removed on resolution of: https://github.com/vmware-tanzu/carvel-kapp-controller/issues/639
+		// Poll interval to be reverted to 1s post removal
+		if appResource.Generation != appResource.Status.ObservedGeneration {
+			return false, nil
+		}
+
 		status := resource.Status.GenericStatus
 
 		for _, condition := range status.Conditions {
