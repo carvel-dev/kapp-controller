@@ -34,8 +34,8 @@ func NewFetchStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *build.
 }
 
 func (fetch FetchStep) PreInteract() error {
-	fetch.pkgAuthoringUI.PrintInformationalText(`Now, we have to add the configuration which makes up the package for distribution. 
-Configuration can be fetched from different types of sources.
+	fetch.pkgAuthoringUI.PrintInformationalText(`Now, we have to add the content which makes up the package for distribution. 
+This content, which is essentially the configuration defined by the app operator, can be fetched from different types of sources.
 Imgpkg is a tool to package, distribute, and relocate Kubernetes configuration and dependent OCI images as one OCI artifact: a bundle.`)
 	return nil
 }

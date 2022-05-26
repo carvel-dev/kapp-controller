@@ -90,7 +90,7 @@ func NewCreateStep(pkgAuthorUI pkgui.IPkgAuthoringUI, pkgLocation string, pkgBui
 }
 
 func (createStep CreateStep) printStartBlock() {
-	createStep.pkgAuthoringUI.PrintInformationalText("Lets start on the package creation process.")
+	createStep.pkgAuthoringUI.PrintInformationalText("Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n* You have access to an OCI registry, and you have authenticated locally so that you can push images. e.g. docker login")
 	createStep.pkgAuthoringUI.PrintActionableText("\nCreating directory")
 	createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", createStep.pkgLocation))
 }
@@ -193,7 +193,7 @@ func (createStep CreateStep) configurePackageVersion() error {
 }
 
 func (createStep *CreateStep) printPkgVersionBlock() {
-	createStep.pkgAuthoringUI.PrintInformationalText("A package can have multiple versions. \nThese versions are used by PackageInstall to install specific version of the package into the Kubernetes cluster.")
+	createStep.pkgAuthoringUI.PrintInformationalText("These versions are used by PackageInstall to install specific version of the package into the Kubernetes cluster.")
 }
 
 func (createStep *CreateStep) configureFetchSection() error {
