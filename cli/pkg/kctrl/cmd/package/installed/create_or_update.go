@@ -732,9 +732,8 @@ func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interfa
 		return fmt.Errorf("Reading data values file '%s': %s", o.valuesFile, err.Error())
 	}
 
-	updatedSecret := createdSecret.DeepCopy()
-	updatedSecret.Data = dataValues
-	_, err = client.CoreV1().Secrets(o.NamespaceFlags.Name).Update(context.Background(), updatedSecret, metav1.UpdateOptions{})
+	createdSecret.Data = dataValues
+	_, err = client.CoreV1().Secrets(o.NamespaceFlags.Name).Update(context.Background(), createdSecret, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("Updating Secret resource: %s", err.Error())
 	}
