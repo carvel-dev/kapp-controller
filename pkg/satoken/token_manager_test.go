@@ -20,9 +20,10 @@ import (
 
 func TestTokenCachingAndExpiration(t *testing.T) {
 	type suite struct {
-		clock *testingclock.FakeClock
-		tg    *fakeTokenGetter
-		mgr   *Manager
+		clock    *testingclock.FakeClock
+		tg       *fakeTokenGetter
+		reviewer *fakeTokenReviewer
+		mgr      *Manager
 	}
 
 	type testCase struct {
@@ -92,8 +93,19 @@ func TestTokenCachingAndExpiration(t *testing.T) {
 						},
 					},
 				},
+				reviewer: &fakeTokenReviewer{
+					review: &authenticationv1.TokenReview{
+						Spec: authenticationv1.TokenReviewSpec{
+							Token: "foo",
+						},
+						Status: authenticationv1.TokenReviewStatus{
+							Authenticated: true,
+						},
+					},
+				},
 			}
 			s.mgr.getToken = s.tg.getToken
+			s.mgr.reviewToken = s.reviewer.reviewToken
 			s.mgr.clock = s.clock
 
 			_, err := s.mgr.GetServiceAccountToken("a", "b", getTokenRequest())
@@ -114,6 +126,7 @@ func TestRequiresRefresh(t *testing.T) {
 
 	type testCase struct {
 		now, exp      time.Time
+		authenticated bool
 		expectRefresh bool
 	}
 
@@ -121,21 +134,31 @@ func TestRequiresRefresh(t *testing.T) {
 		{
 			now:           start.Add(1 * time.Minute),
 			exp:           start.Add(maxTTL),
+			authenticated: true,
 			expectRefresh: false,
 		},
 		{
 			now:           start.Add(59 * time.Minute),
 			exp:           start.Add(maxTTL),
+			authenticated: true,
 			expectRefresh: false,
 		},
 		{
 			now:           start.Add(61 * time.Minute),
 			exp:           start.Add(maxTTL),
+			authenticated: true,
 			expectRefresh: true,
 		},
 		{
 			now:           start.Add(3 * time.Hour),
 			exp:           start.Add(maxTTL),
+			authenticated: false,
+			expectRefresh: true,
+		},
+		{
+			now:           start.Add(1 * time.Minute),
+			exp:           start.Add(maxTTL),
+			authenticated: false,
 			expectRefresh: true,
 		},
 	}
@@ -153,8 +176,19 @@ func TestRequiresRefresh(t *testing.T) {
 					ExpirationTimestamp: metav1.Time{Time: c.exp},
 				},
 			}
+			reviewer := &fakeTokenReviewer{
+				review: &authenticationv1.TokenReview{
+					Spec: authenticationv1.TokenReviewSpec{
+						Token: "foo",
+					},
+					Status: authenticationv1.TokenReviewStatus{
+						Authenticated: c.authenticated,
+					},
+				},
+			}
 
 			mgr := NewManager(nil, log)
+			mgr.reviewToken = reviewer.reviewToken
 			mgr.clock = clock
 
 			rr := mgr.requiresRefresh(tr)
@@ -211,6 +245,17 @@ type fakeTokenGetter struct {
 func (ftg *fakeTokenGetter) getToken(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
 	ftg.count++
 	return ftg.tr, ftg.err
+}
+
+type fakeTokenReviewer struct {
+	count  int
+	review *authenticationv1.TokenReview
+	err    error
+}
+
+func (ftr *fakeTokenReviewer) reviewToken(tr *authenticationv1.TokenReview) (*authenticationv1.TokenReview, error) {
+	ftr.count++
+	return ftr.review, ftr.err
 }
 
 func getTokenRequest() *authenticationv1.TokenRequest {
