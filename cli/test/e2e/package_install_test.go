@@ -203,16 +203,15 @@ spec:
 
 	logger.Section("package installed kick", func() {
 
-		_, err := kappCtrl.RunWithOpts([]string{
+		out, err := kappCtrl.RunWithOpts([]string{
 			"package", "installed", "kick",
 			"--package-install", pkgiName,
 		}, RunOpts{})
 		require.NoError(t, err)
 
-		out, err := kubectl.RunWithOpts([]string{"get", "app", pkgiName}, RunOpts{})
-		require.NoError(t, err)
-
-		require.Contains(t, out, "Reconcile succeeded")
+		require.Contains(t, out, "Fetch succeeded")
+		require.Contains(t, out, "Template succeeded")
+		require.Contains(t, out, "App reconciled")
 	})
 
 	logger.Section("package install delete", func() {
