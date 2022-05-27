@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
@@ -105,14 +107,19 @@ stringData:
 			defer cleanUp()
 
 			logger.Section("deploy", func() {
-				kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", tc.appCRName},
-					e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(tc.deploymentYAML)})
+				_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", tc.appCRName},
+					e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(tc.deploymentYAML), AllowError: true})
+				if err != nil {
+					fmt.Println(err)
+					fmt.Println([]string{"kubectl", "get", "app", "-oyaml"})
+				}
+				require.NoError(t, err)
 
 				out := kapp.Run([]string{"inspect", "-a", tc.appCRName, "--raw", "--tty=false", "--filter-kind=App"})
 
 				var cr v1alpha1.App
 
-				err := yaml.Unmarshal([]byte(out), &cr)
+				err = yaml.Unmarshal([]byte(out), &cr)
 				if err != nil {
 					t.Fatalf("Failed to unmarshal: %s", err)
 				}
@@ -226,6 +233,13 @@ spec:
 	defer cleanUp()
 
 	// App CR will fail if ytt assertion fails
-	kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-		e2e.RunOpts{StdinReader: strings.NewReader(config)})
+	out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+		e2e.RunOpts{StdinReader: strings.NewReader(config), AllowError: true})
+	// but it's helpful to actually see the error message...
+	if err != nil {
+		fmt.Println(out)
+		kubectl := e2e.Kubectl{t, env.Namespace, logger}
+		fmt.Println(kubectl.Run([]string{"get", "app", "-oyaml"}))
+	}
+	assert.NoError(t, err)
 }
