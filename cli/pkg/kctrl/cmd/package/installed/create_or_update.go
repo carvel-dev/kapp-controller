@@ -113,6 +113,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 			cmdcore.Example{"Install package and ask it to use an existing service account",
 				[]string{"package", "install", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--service-account-name", "existing-sa"}},
 		}.Description("-i", o.pkgCmdTreeOpts),
+		SilenceUsage: true,
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
 
@@ -149,6 +150,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 			cmdcore.Example{"Update package install with new values file",
 				[]string{"package", "installed", "update", "-i", "cert-man", "--values-file", "values.yml"}},
 		}.Description("-i", o.pkgCmdTreeOpts),
+		SilenceUsage: true,
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
 
