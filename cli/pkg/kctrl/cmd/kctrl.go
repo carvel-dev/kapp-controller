@@ -16,6 +16,7 @@ import (
 	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder"
 	pkginst "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
 	pkgrepo "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository"
+	pkgrepobuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/version"
 )
@@ -151,6 +152,7 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 	pkgrepoCmd.AddCommand(pkgrepo.NewDeleteCmd(pkgrepo.NewDeleteOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgrepoCmd.AddCommand(pkgrepo.NewAddCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgrepoCmd.AddCommand(pkgrepo.NewUpdateCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgrepobuild.NewCreateCmd(pkgrepobuild.NewCreateOptions(o.ui, o.logger, opts)))
 
 	pkgiCmd := pkginst.NewCmd()
 	pkgiCmd.AddCommand(pkginst.NewListCmd(pkginst.NewListOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))

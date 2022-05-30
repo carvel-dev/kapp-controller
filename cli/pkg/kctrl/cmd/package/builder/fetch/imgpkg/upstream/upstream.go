@@ -56,7 +56,7 @@ func (upstreamStep *UpstreamStep) Interact() error {
 		return nil
 	}
 	if len(vendirDirectories) == 0 {
-		upstreamStep.initializeVendirDirectoryConf()
+		vendirDirectories = upstreamStep.initializeVendirDirectoryConf()
 	} else {
 		directory := vendirDirectories[0]
 		if len(directory.Contents) > 1 {
@@ -73,12 +73,14 @@ func (upstreamStep *UpstreamStep) Interact() error {
 		Default: defaultUpstreamOptionIndex,
 		Choices: upstreamTypeNames,
 	}
-	upstreamTypeSelected, err := upstreamStep.pkgAuthoringUI.AskForChoice(choiceOpts)
+	upstreamTypeSelectedIndex, err := upstreamStep.pkgAuthoringUI.AskForChoice(choiceOpts)
 	if err != nil {
 		//TODO Rohit error handling
 	}
-
-	switch upstreamTypeNames[upstreamTypeSelected] {
+	if defaultUpstreamOptionIndex != upstreamTypeSelectedIndex {
+		setEarlierUpstreamOptionAsNil(vendirDirectories, defaultUpstreamOptionSelected)
+	}
+	switch upstreamTypeNames[upstreamTypeSelectedIndex] {
 	case VendirGithubReleaseConf:
 		githubStep := NewGithubStep(upstreamStep.pkgAuthoringUI, upstreamStep.PkgLocation, upstreamStep.pkgBuild)
 		err := common.Run(githubStep)
@@ -94,6 +96,35 @@ func (upstreamStep *UpstreamStep) Interact() error {
 	upstreamStep.pkgBuild.Spec.Vendir.Directories[0].Contents[0].IncludePaths = includedPaths
 	upstreamStep.pkgBuild.WriteToFile(upstreamStep.PkgLocation)
 	return nil
+}
+
+func setEarlierUpstreamOptionAsNil(vendirDirectories []vendirconf.Directory, earlierUpstreamOptionIndex string) {
+	if vendirDirectories[0].Contents == nil {
+		return
+	}
+	switch earlierUpstreamOptionIndex {
+	case VendirGitConf:
+		vendirDirectories[0].Contents[0].Git = nil
+	case VendirHgConf:
+		vendirDirectories[0].Contents[0].Hg = nil
+	case VendirHTTPConf:
+		vendirDirectories[0].Contents[0].HTTP = nil
+	case VendirImageConf:
+		vendirDirectories[0].Contents[0].Image = nil
+	case VendirImgpkgBundleConf:
+		vendirDirectories[0].Contents[0].ImgpkgBundle = nil
+	case VendirGithubReleaseConf:
+		vendirDirectories[0].Contents[0].GithubRelease = nil
+	case VendirHelmChartConf:
+		vendirDirectories[0].Contents[0].HelmChart = nil
+	case VendirDirectoryConf:
+		vendirDirectories[0].Contents[0].Directory = nil
+	case VendirManualConf:
+		vendirDirectories[0].Contents[0].Manual = nil
+	case VendirInlineConf:
+		vendirDirectories[0].Contents[0].Inline = nil
+	}
+	return
 }
 
 func getDefaultUpstreamOptionIndex(upstreamTypeNames []string, defaultUpstreamOptionSelected string) int {
@@ -145,7 +176,7 @@ func getUpstreamOptionFromPkgBuild(pkgBuild *pkgbuilder.PackageBuild) string {
 	return selectedUpstreamOption
 }
 
-func (upstreamStep *UpstreamStep) initializeVendirDirectoryConf() {
+func (upstreamStep *UpstreamStep) initializeVendirDirectoryConf() []vendirconf.Directory {
 	var directory vendirconf.Directory
 	directory = vendirconf.Directory{
 		Path: "config",
@@ -155,9 +186,10 @@ func (upstreamStep *UpstreamStep) initializeVendirDirectoryConf() {
 			},
 		},
 	}
-	directories := []vendirconf.Directory{}
-	upstreamStep.pkgBuild.Spec.Vendir.Directories = append(directories, directory)
+	directories := []vendirconf.Directory{directory}
+	upstreamStep.pkgBuild.Spec.Vendir.Directories = directories
 	upstreamStep.pkgBuild.WriteToFile(upstreamStep.PkgLocation)
+	return directories
 }
 
 func (upstreamStep *UpstreamStep) PostInteract() error {

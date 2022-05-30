@@ -125,7 +125,7 @@ kbld scans a package configuration for any references to images and creates a ma
 This mapping will then be placed into an images.yml lock file in your bundle/.imgpkg directory. Running kbld now.`)
 	createImgPkgStep.pkgAuthoringUI.PrintActionableText("Running kbld")
 	createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("kbld --file %s --imgpkg-lock-output %s", bundleLocation, imagesFileLocation))
-	err := createImgPkgStep.runkbld(bundleLocation, imagesFileLocation)
+	err := createImgPkgStep.runKbld(bundleLocation, imagesFileLocation)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ This mapping will then be placed into an images.yml lock file in your bundle/.im
 	return nil
 }
 
-func (createImgPkgStep CreateImgPkgStep) runkbld(bundleLocation, imagesFileLocation string) error {
+func (createImgPkgStep CreateImgPkgStep) runKbld(bundleLocation, imagesFileLocation string) error {
 	result := util.Execute("kbld", []string{"--file", bundleLocation, "--imgpkg-lock-output", imagesFileLocation})
 	if result.Error != nil {
 		return fmt.Errorf("Running kbld.\n %s", result.Stderr)
@@ -173,7 +173,10 @@ func (createImgPkgStep CreateImgPkgStep) pushImgpkgBundleToRegistry(bundleLoc st
 		return "", fmt.Errorf("Imgpkg bundle push failed, check the registry url: %s", pushURL)
 	}
 	createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionOutput(result.Stdout)
-	bundleURL := getBundleURL(result.Stdout)
+	bundleURL, err := getBundleURL(result.Stdout)
+	if err != nil {
+		return "", err
+	}
 	return bundleURL, nil
 }
 
@@ -183,15 +186,17 @@ type ImgpkgPushOutput struct {
 	Blocks interface{} `json:"Blocks"`
 }
 
-func getBundleURL(output string) string {
+func getBundleURL(output string) (string, error) {
 	var imgPkgPushOutput ImgpkgPushOutput
-	json.Unmarshal([]byte(output), &imgPkgPushOutput)
+	err := json.Unmarshal([]byte(output), &imgPkgPushOutput)
+	if err != nil {
+		return "", err
+	}
 	for _, val := range imgPkgPushOutput.Lines {
 		if strings.HasPrefix(val, "Pushed") {
 			bundleURL := strings.Split(val, " ")[1]
-			return strings.Trim(bundleURL, "'")
+			return strings.Trim(bundleURL, "'"), nil
 		}
 	}
-	return ""
-
+	return "", fmt.Errorf("No Bundle URL generated after doing imgpkg push")
 }
