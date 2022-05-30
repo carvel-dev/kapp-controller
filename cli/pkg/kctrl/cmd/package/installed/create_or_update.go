@@ -152,7 +152,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 			cmdcore.Example{"Update package install with new values file",
 				[]string{"package", "installed", "update", "-i", "cert-man", "--values-file", "values.yml"}},
 			cmdcore.Example{"Update package install to stop consuming supplied values",
-				[]string{"package", "installed", "update", "-i", "cert-man", "--with-values", "false"}},
+				[]string{"package", "installed", "update", "-i", "cert-man", "--values", "false"}},
 		}.Description("-i", o.pkgCmdTreeOpts),
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
@@ -310,7 +310,6 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 
 	isSecretCreated, err := o.createOrUpdateValuesSecret(updatedPkgInstall, client)
 	if err != nil {
-		o.statusUI.PrintMessagef("", o.Name)
 		return err
 	}
 
@@ -318,7 +317,7 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 	if !o.values && len(updatedPkgInstall.Spec.Values) > 0 {
 		isSecretDeleted, err = o.dropValuesSecret(client)
 		if err != nil {
-			return err
+			return fmt.Errorf("Deleting values secret: %s", err.Error())
 		}
 
 		if isSecretDeleted {
@@ -373,14 +372,14 @@ func (o *CreateOrUpdateOptions) dropValuesSecret(client kubernetes.Interface) (b
 		// To support older version of Tanzu CLI. To be deprecated
 		val, found = annotations[TanzuPkgAnnotation]
 		if !found || val != pkgiIdentifier {
-			return false, fmt.Errorf("Deleting values secret: Secret was not created by kctrl")
+			return false, fmt.Errorf("Secret was not created by kctrl")
 		}
 	}
 
 	o.statusUI.PrintMessagef("Deleting values secret '%s'", secretName)
 	err = client.CoreV1().Secrets(o.NamespaceFlags.Name).Delete(context.Background(), secretName, metav1.DeleteOptions{})
 	if err != nil {
-		return false, fmt.Errorf("Deleting values secret: %s", err.Error())
+		return false, err
 	}
 
 	return true, nil
@@ -390,6 +389,7 @@ func (o *CreateOrUpdateOptions) removeValuesSecretReference(pkgi *kcpkgv1alpha1.
 	for i, valueRef := range pkgi.Spec.Values {
 		if valueRef.SecretRef.Name == o.createdAnnotations.SecretAnnValue() {
 			pkgi.Spec.Values = append(pkgi.Spec.Values[:i], pkgi.Spec.Values[i+1:]...)
+			return
 		}
 	}
 }
