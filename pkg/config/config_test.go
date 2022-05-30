@@ -53,6 +53,51 @@ func Test_GetConfig_ReturnsSecret_WhenBothConfigMapAndSecretExist(t *testing.T) 
 	assert.Equal(t, expected, httpProxyActual)
 }
 
+func Test_GetConfig_KappDeployRawOptions(t *testing.T) {
+	t.Run("with empty config value, returns just default", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "kapp-controller-config",
+				Namespace: "default",
+			},
+			Data: map[string][]byte{},
+		}
+		config, err := kcconfig.GetConfig(k8sfake.NewSimpleClientset(secret))
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"--app-changes-max-to-keep=5"}, config.KappDeployRawOptions())
+	})
+
+	t.Run("with empty config value, returns just default", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "kapp-controller-config",
+				Namespace: "default",
+			},
+			Data: map[string][]byte{
+				"kappDeployRawOptions": []byte(""),
+			},
+		}
+		config, err := kcconfig.GetConfig(k8sfake.NewSimpleClientset(secret))
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"--app-changes-max-to-keep=5"}, config.KappDeployRawOptions())
+	})
+
+	t.Run("with populated config value, returns default and user set", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "kapp-controller-config",
+				Namespace: "default",
+			},
+			Data: map[string][]byte{
+				"kappDeployRawOptions": []byte("[\"--key=val\"]"),
+			},
+		}
+		config, err := kcconfig.GetConfig(k8sfake.NewSimpleClientset(secret))
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"--app-changes-max-to-keep=5", "--key=val"}, config.KappDeployRawOptions())
+	})
+}
+
 func Test_GetConfig_ReturnsConfigMap_WhenOnlyConfigMapExists(t *testing.T) {
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{

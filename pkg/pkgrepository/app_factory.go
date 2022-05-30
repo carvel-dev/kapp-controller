@@ -28,6 +28,6 @@ func (f *AppFactory) NewCRDPackageRepo(app *kcv1alpha1.App, pkgr *pkgv1alpha1.Pa
 	cmdRunner := exec.PlainCmdRunner{}
 	fetchFactory := fetch.NewFactory(f.CoreClient, fetch.VendirOpts{SkipTLSConfig: f.KcConfig}, cmdRunner)
 	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, false, cmdRunner)
-	deployFactory := deploy.NewFactory(f.CoreClient, cmdRunner, log)
+	deployFactory := deploy.NewFactory(f.CoreClient, nil, cmdRunner, log)
 	return NewCRDApp(app, pkgr, log, f.AppClient, fetchFactory, templateFactory, deployFactory)
 }
