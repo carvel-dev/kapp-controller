@@ -24,10 +24,12 @@ type StatusOptions struct {
 	Name           string
 
 	IgnoreNotExists bool
+
+	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
 
-func NewStatusOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *StatusOptions {
-	return &StatusOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewStatusOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *StatusOptions {
+	return &StatusOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewStatusCmd(o *StatusOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -36,10 +38,21 @@ func NewStatusCmd(o *StatusOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		Aliases: []string{"s"},
 		Short:   "View status of app created by package install",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Check status of package install",
+				[]string{"package", "installed", "status", "-i", "cert-man"},
+			},
+		}.Description("-i", o.pkgCmdTreeOpts),
+		SilenceUsage: true,
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set package installname (required)")
+
+	if !o.pkgCmdTreeOpts.PositionalArgs {
+		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
+	} else {
+		cmd.Use = "status INSTALLED_PACKAGE_NAME"
+	}
 
 	return cmd
 }
