@@ -45,7 +45,7 @@ func NewPauseCmd(o *PauseOrKickOptions, flagsFactory cmdcore.FlagsFactory) *cobr
 		Use:   "pause",
 		Short: "Pause reconciliation of package install",
 		Args:  cobra.ExactArgs(1),
-		RunE:  func(_ *cobra.Command, _ []string) error { return o.Pause() },
+		RunE:  func(_ *cobra.Command, args []string) error { return o.Pause(args) },
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Pause reconciliation of package install",
 				[]string{"package", "installed", "pause", "-i", "cert-man"},
@@ -70,7 +70,7 @@ func NewKickCmd(o *PauseOrKickOptions, flagsFactory cmdcore.FlagsFactory) *cobra
 		Use:   "kick",
 		Short: "Trigger reconciliation of package install",
 		Args:  cobra.ExactArgs(1),
-		RunE:  func(_ *cobra.Command, _ []string) error { return o.Kick() },
+		RunE:  func(_ *cobra.Command, args []string) error { return o.Kick(args) },
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Trigger reconciliation of package install",
 				[]string{"package", "installed", "kick", "-i", "cert-man"},
@@ -96,7 +96,11 @@ func NewKickCmd(o *PauseOrKickOptions, flagsFactory cmdcore.FlagsFactory) *cobra
 	return cmd
 }
 
-func (o *PauseOrKickOptions) Pause() error {
+func (o *PauseOrKickOptions) Pause(args []string) error {
+	if o.pkgCmdTreeOpts.PositionalArgs {
+		o.Name = args[0]
+	}
+
 	if len(o.Name) == 0 {
 		return fmt.Errorf("Expected package install name to be non empty")
 	}
@@ -121,7 +125,11 @@ func (o *PauseOrKickOptions) Pause() error {
 	return o.pause(client)
 }
 
-func (o *PauseOrKickOptions) Kick() error {
+func (o *PauseOrKickOptions) Kick(args []string) error {
+	if o.pkgCmdTreeOpts.PositionalArgs {
+		o.Name = args[0]
+	}
+
 	if len(o.Name) == 0 {
 		return fmt.Errorf("Expected package install name to be non empty")
 	}
