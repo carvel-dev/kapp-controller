@@ -37,7 +37,7 @@ func NewStatusCmd(o *StatusOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		Use:     "status",
 		Aliases: []string{"s"},
 		Short:   "View status of app created by package install",
-		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Check status of package install",
 				[]string{"package", "installed", "status", "-i", "cert-man"},
@@ -57,7 +57,11 @@ func NewStatusCmd(o *StatusOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	return cmd
 }
 
-func (o *StatusOptions) Run() error {
+func (o *StatusOptions) Run(args []string) error {
+	if o.pkgCmdTreeOpts.PositionalArgs {
+		o.Name = args[0]
+	}
+
 	if len(o.Name) == 0 {
 		return fmt.Errorf("Expected package install name to be non empty")
 	}
