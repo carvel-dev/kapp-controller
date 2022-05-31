@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653974087375,
+  "lastUpdate": 1654014858482,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -1461,6 +1461,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6626451628,
             "unit": "ns/op\t         4.349 DeleteSeconds\t         2.224 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c2660e2fee78272342f63394431faeb4caba145b",
+          "message": "Ensure that pkgi status tail is picked up after kicking it (#702)\n\n* Ensure that stale conditions in PackageInstalls copied from underlying AppCR are not picked up by kctrl\r\n* Poll for underlying App CR and ensure it matches the latest generation\r\n* Double poll interval so that we are not heavier on the api-server\r\n* These changes are to be reverted on resolution of https://github.com/vmware-tanzu/carvel-kapp-controller/issues/639\r\n\r\n* Ensure that underlying App CR is paused before triggering reconciliation\r\n\r\n* Make package installed kick tests stricter",
+          "timestamp": "2022-05-31T12:24:01-04:00",
+          "tree_id": "0db62e310bc59908c7d900772617ad023ca346db",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/c2660e2fee78272342f63394431faeb4caba145b"
+        },
+        "date": 1654014857759,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36628078980,
+            "unit": "ns/op\t        19.06 DeleteSeconds\t        17.52 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9562094551,
+            "unit": "ns/op\t         5.326 DeleteSeconds\t         4.194 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6453482320,
+            "unit": "ns/op\t         4.269 DeleteSeconds\t         2.143 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
