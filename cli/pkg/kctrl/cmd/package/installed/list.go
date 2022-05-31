@@ -41,7 +41,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 				[]string{"package", "installed", "list"},
 			},
 			cmdcore.Example{"List installed packages in all namespaces",
-				[]string{"package", "installed", "list", "A"}},
+				[]string{"package", "installed", "list", "-A"}},
 		}.Description("", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 		Annotations:  map[string]string{"table": ""},
