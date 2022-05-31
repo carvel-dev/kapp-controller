@@ -65,8 +65,8 @@ type Manager struct {
 // * If refresh fails and the old token is still valid, log an error and return the old token.
 // * If refresh fails and the old token is no longer valid, return an error
 func (m *Manager) GetServiceAccountToken(sa *v1.ServiceAccount, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
-	saUID := string(sa.UID)
-	ctr, ok := m.get(saUID)
+	key := fmt.Sprintf("%q/%q/%q", sa.Name, sa.Namespace, string(sa.UID))
+	ctr, ok := m.get(key)
 
 	if ok && !m.requiresRefresh(ctr) {
 		return ctr, nil
@@ -79,14 +79,14 @@ func (m *Manager) GetServiceAccountToken(sa *v1.ServiceAccount, tr *authenticati
 		case !ok:
 			return nil, fmt.Errorf("Fetch token: %v", err)
 		case m.expired(ctr):
-			return nil, fmt.Errorf("Token %s expired and refresh failed: %v", saUID, err)
+			return nil, fmt.Errorf("Token %s expired and refresh failed: %v", key, err)
 		default:
-			m.log.Error(err, "Update token", "cacheKey", saUID)
+			m.log.Error(err, "Update token", "cacheKey", key)
 			return ctr, nil
 		}
 	}
 
-	m.set(saUID, tr)
+	m.set(key, tr)
 	return tr, nil
 }
 
