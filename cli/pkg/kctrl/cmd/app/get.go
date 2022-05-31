@@ -85,7 +85,7 @@ func (o *GetOptions) Run() error {
 			uitable.NewValueString(app.Namespace),
 			uitable.NewValueString(app.Name),
 			uitable.NewValueString(app.Spec.ServiceAccountName),
-			uitable.NewValueString(app.Status.FriendlyDescription),
+			uitable.NewValueString(appStatusString(app)),
 			uitable.NewValueInterface(o.formatOwnerReferences(app.OwnerReferences)),
 			uitable.NewValueInterface(app.Status.Conditions),
 			uitable.NewValueString(o.failingStage(app.Status)),

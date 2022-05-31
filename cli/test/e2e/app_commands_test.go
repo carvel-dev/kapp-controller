@@ -116,7 +116,7 @@ spec:
 			"namespace":        "kctrl-test",
 			"owner_references": "",
 			"service_account":  "kappctrl-e2e-ns-sa",
-			"status":           "Canceled/paused",
+			"status":           "Paused",
 		}}
 		require.Exactly(t, expectedOutputRows, replaceAgeAndSinceDeployed(output.Tables[0].Rows))
 	})

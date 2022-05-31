@@ -137,7 +137,7 @@ func (o *AppTailer) printInfo(app kcv1alpha1.App) {
 		Rows: [][]uitable.Value{{
 			uitable.NewValueString(app.Name),
 			uitable.NewValueString(app.Namespace),
-			uitable.NewValueString(o.statusString(app.Status)),
+			uitable.NewValueString(appStatusString(&app)),
 			uitable.NewValueString(o.metricString(app.Status)),
 		}},
 	}
@@ -153,27 +153,6 @@ func (o *AppTailer) metricString(status kcv1alpha1.AppStatus) string {
 	} else {
 		return "0 consecutive failures | 0 consecutive successes"
 	}
-}
-
-func (o *AppTailer) statusString(status kcv1alpha1.AppStatus) string {
-	if len(status.Conditions) < 1 {
-		return ""
-	}
-	for _, condition := range status.Conditions {
-		switch condition.Type {
-		case kcv1alpha1.ReconcileFailed:
-			return color.RedString("Reconcile failed")
-		case kcv1alpha1.ReconcileSucceeded:
-			return color.GreenString("Reconcile succeeded")
-		case kcv1alpha1.DeleteFailed:
-			return color.RedString("Deletion failed")
-		case kcv1alpha1.Reconciling:
-			return "Reconciling"
-		case kcv1alpha1.Deleting:
-			return "Deleting"
-		}
-	}
-	return status.FriendlyDescription
 }
 
 func (o *AppTailer) hasReconciled(status kcv1alpha1.AppStatus) bool {
