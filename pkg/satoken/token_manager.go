@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-logr/logr"
 	authenticationv1 "k8s.io/api/authentication/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
@@ -67,29 +68,29 @@ type Manager struct {
 // * If the token is refreshed successfully, save it in the cache and return the token.
 // * If refresh fails and the old token is still valid, log an error and return the old token.
 // * If refresh fails and the old token is no longer valid, return an error
-func (m *Manager) GetServiceAccountToken(namespace, name string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
-	key := fmt.Sprintf("%q/%q", name, namespace)
-
-	ctr, ok := m.get(key)
+func (m *Manager) GetServiceAccountToken(sa *v1.ServiceAccount, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
+	saUID := string(sa.UID)
+	ctr, ok := m.get(saUID)
 
 	if ok && !m.requiresRefresh(ctr) {
 		return ctr, nil
 	}
 
-	tr, err := m.getToken(name, namespace, tr)
+	tr, err := m.getToken(sa.Name, sa.Namespace, tr)
+
 	if err != nil {
 		switch {
 		case !ok:
 			return nil, fmt.Errorf("Fetch token: %v", err)
 		case m.expired(ctr):
-			return nil, fmt.Errorf("Token %s expired and refresh failed: %v", key, err)
+			return nil, fmt.Errorf("Token %s expired and refresh failed: %v", saUID, err)
 		default:
-			m.log.Error(err, "Update token", "cacheKey", key)
+			m.log.Error(err, "Update token", "cacheKey", saUID)
 			return ctr, nil
 		}
 	}
 
-	m.set(key, tr)
+	m.set(saUID, tr)
 	return tr, nil
 }
 
