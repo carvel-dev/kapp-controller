@@ -89,7 +89,7 @@ func NewKickCmd(o *PauseOrKickOptions, flagsFactory cmdcore.FlagsFactory) *cobra
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
-		DefaultInterval:  1 * time.Second,
+		DefaultInterval:  2 * time.Second,
 		DefaultTimeout:   5 * time.Minute,
 	})
 
@@ -156,6 +156,11 @@ func (o *PauseOrKickOptions) Kick(args []string) error {
 		return err
 	}
 
+	err = o.waitForAppPause(client)
+	if err != nil {
+		return err
+	}
+
 	err = o.unpause(client)
 	if err != nil {
 		return err
@@ -169,6 +174,7 @@ func (o *PauseOrKickOptions) Kick(args []string) error {
 }
 
 func (o *PauseOrKickOptions) pause(client kcclient.Interface) error {
+	o.statusUI.PrintMessagef("Pausing reconciliation for package installation '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 	pausePatch := []map[string]interface{}{
 		{
 			"op":    "add",
@@ -191,6 +197,7 @@ func (o *PauseOrKickOptions) pause(client kcclient.Interface) error {
 }
 
 func (o *PauseOrKickOptions) unpause(client kcclient.Interface) error {
+	o.statusUI.PrintMessagef("Starting reconciliation for package install '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 	unpausePatch := []map[string]interface{}{
 		{
 			"op":   "remove",
@@ -208,6 +215,25 @@ func (o *PauseOrKickOptions) unpause(client kcclient.Interface) error {
 		return err
 	}
 
+	return nil
+}
+
+func (o *PauseOrKickOptions) waitForAppPause(client kcclient.Interface) error {
+	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
+		appResource, err := client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+		if appResource.Generation != appResource.Status.ObservedGeneration {
+			return false, nil
+		}
+		if appResource.Status.FriendlyDescription == "Canceled/paused" {
+			return true, nil
+		}
+		return false, nil
+	}); err != nil {
+		return fmt.Errorf("Waiting for app '%s' in namespace '%s' to be paused: %s", o.Name, o.NamespaceFlags.Name, err)
+	}
 	return nil
 }
 
@@ -237,10 +263,22 @@ func (o *PauseOrKickOptions) waitForPackageInstallReconciliation(client kcclient
 		if err != nil {
 			return false, err
 		}
+		appResource, err := client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+
+		// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
 		if resource.Generation != resource.Status.ObservedGeneration {
-			// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
 			return false, nil
 		}
+		// Temporary workaround so that we do not pick up stale conditions
+		// To be removed on resolution of: https://github.com/vmware-tanzu/carvel-kapp-controller/issues/639
+		// Poll interval to be reverted to 1s post removal
+		if appResource.Generation != appResource.Status.ObservedGeneration {
+			return false, nil
+		}
+
 		status := resource.Status.GenericStatus
 
 		for _, condition := range status.Conditions {
