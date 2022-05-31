@@ -4,8 +4,7 @@
 package app
 
 import (
-	"fmt"
-
+	"github.com/cppforlife/color"
 	"github.com/spf13/cobra"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -29,7 +28,29 @@ func isOwnedByPackageInstall(app *kcv1alpha1.App) bool {
 	return false
 }
 
-func getAppDescription(name string, namespace string) string {
-	description := fmt.Sprintf("app/%s (kappctrl.k14s.io/v1alpha1)  namespace: %s", name, namespace)
-	return description
+func appStatusString(app *kcv1alpha1.App) string {
+	if len(app.Status.Conditions) < 1 {
+		return ""
+	}
+	if app.Spec.Canceled {
+		return color.RedString("Camceled")
+	}
+	if app.Spec.Paused {
+		return color.YellowString("Paused")
+	}
+	for _, condition := range app.Status.Conditions {
+		switch condition.Type {
+		case kcv1alpha1.ReconcileFailed:
+			return color.RedString("Reconcile failed")
+		case kcv1alpha1.ReconcileSucceeded:
+			return color.GreenString("Reconcile succeeded")
+		case kcv1alpha1.DeleteFailed:
+			return color.RedString("Deletion failed")
+		case kcv1alpha1.Reconciling:
+			return "Reconciling"
+		case kcv1alpha1.Deleting:
+			return "Deleting"
+		}
+	}
+	return app.Status.FriendlyDescription
 }
