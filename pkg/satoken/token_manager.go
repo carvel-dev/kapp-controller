@@ -34,9 +34,6 @@ func NewManager(c clientset.Interface, log logr.Logger) *Manager {
 		getToken: func(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
 			return c.CoreV1().ServiceAccounts(namespace).CreateToken(context.TODO(), name, tr, metav1.CreateOptions{})
 		},
-		reviewToken: func(tr *authenticationv1.TokenReview) (*authenticationv1.TokenReview, error) {
-			return c.AuthenticationV1().TokenReviews().Create(context.TODO(), tr, metav1.CreateOptions{})
-		},
 		cache: make(map[string]*authenticationv1.TokenRequest),
 		clock: clock.RealClock{},
 		log:   log,
@@ -53,9 +50,8 @@ type Manager struct {
 	cache      map[string]*authenticationv1.TokenRequest
 
 	// mocked for testing
-	getToken    func(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error)
-	reviewToken func(tr *authenticationv1.TokenReview) (*authenticationv1.TokenReview, error)
-	clock       clock.Clock
+	getToken func(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error)
+	clock    clock.Clock
 
 	log logr.Logger
 }
@@ -123,16 +119,6 @@ func (m *Manager) expired(t *authenticationv1.TokenRequest) bool {
 
 // requiresRefresh returns true if the token is older half of it's maxTTL
 func (m *Manager) requiresRefresh(tr *authenticationv1.TokenRequest) bool {
-	review, err := m.reviewToken(&authenticationv1.TokenReview{
-		Spec: authenticationv1.TokenReviewSpec{
-			Token: tr.Status.Token,
-		},
-	})
-	if err != nil || !review.Status.Authenticated {
-		m.log.Info("ReviewToken request failed or not authenticated - refresh required", "reviewTokenRequest", review)
-		return true
-	}
-
 	if tr.Spec.ExpirationSeconds == nil {
 		cpy := tr.DeepCopy()
 		cpy.Status.Token = ""
