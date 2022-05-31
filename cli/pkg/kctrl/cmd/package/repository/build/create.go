@@ -1,8 +1,11 @@
 package build
 
 import (
-	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
@@ -11,9 +14,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/util"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository/build/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	"os"
-	"path/filepath"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
 
@@ -90,18 +91,29 @@ func NewCreateStep(pkgAuthorUI pkgui.IPkgAuthoringUI, pkgRepoLocation string, pk
 }
 
 func (createStep CreateStep) printStartBlock() {
-	createStep.pkgAuthoringUI.PrintInformationalText("\nLets start on the package creation process.")
-	createStep.pkgAuthoringUI.PrintActionableText("\nCreating directory")
+	createStep.pkgAuthoringUI.PrintInformationalText("Lets start on the package repository creation process.")
+	createStep.pkgAuthoringUI.PrintInformationalText("A package repository is a collection of Package and PackageMetadata CRs.")
+	createStep.pkgAuthoringUI.PrintInformationalText("Similar to a maven repository or a rpm repository, adding a package repository to a cluster gives users of that cluster the ability to install any of the packages from that repository.")
+	createStep.pkgAuthoringUI.PrintInformationalText("We need a directory to act as parent directory. This will be used to store all the information and files required/needed in the package repository creation journey.")
+	createStep.pkgAuthoringUI.PrintActionableText("Creating directory")
 	createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", createStep.pkgRepoLocation))
 }
 
 func (createStep CreateStep) PreInteract() error {
+	createStep.printPreRequisite()
 	createStep.printStartBlock()
 	err := createStep.createDirectory(createStep.pkgRepoLocation)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (createStep CreateStep) printPreRequisite() {
+	createStep.pkgAuthoringUI.PrintInformationalText(`Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:
+* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: imgpkg, kbld, etc.
+* You have access to an OCI registry, and you have authenticated locally so that you can push images. e.g. docker login <OCI_REGISTRY_URL>
+`)
 }
 
 func (createStep CreateStep) createDirectory(dirPath string) error {
@@ -116,7 +128,20 @@ func (createStep CreateStep) createDirectory(dirPath string) error {
 
 func (createStep *CreateStep) Interact() error {
 
-	err := createStep.configurePackageLocation()
+	createStep.pkgAuthoringUI.PrintInformationalText("A package repository name is the name with which it will be referenced while deploying on the cluster.")
+	defaultPkgRepoName := createStep.pkgRepoBuild.Spec.PkgRepo.Name
+	textOpts := ui.TextOpts{
+		Label:        "Enter the package repository name",
+		Default:      defaultPkgRepoName,
+		ValidateFunc: nil,
+	}
+	pkgRepoName, err := createStep.pkgAuthoringUI.AskForText(textOpts)
+	if err != nil {
+		return err
+	}
+	createStep.pkgRepoBuild.Spec.PkgRepo.Name = pkgRepoName
+	createStep.pkgRepoBuild.WriteToFile(createStep.pkgRepoLocation)
+	err = createStep.configurePackageRepositoryLocation()
 	if err != nil {
 		return err
 	}
@@ -130,10 +155,10 @@ func (createStep *CreateStep) Interact() error {
 	return nil
 }
 
-func (createStep CreateStep) configurePackageLocation() error {
+func (createStep CreateStep) configurePackageRepositoryLocation() error {
 	defaultfilesLocation := createStep.pkgRepoBuild.ObjectMeta.Annotations[FilesLocation]
 	textOpts := ui.TextOpts{
-		Label:        "Enter the location of package and packageMetadata files",
+		Label:        "Enter the directory which contains package and packageMetadata files. Multiple directories can be entered in comma separated format",
 		Default:      defaultfilesLocation,
 		ValidateFunc: validatePathExists,
 	}
@@ -151,35 +176,37 @@ func (createStep CreateStep) configurePackageLocation() error {
 }
 
 func (createStep CreateStep) PostInteract() error {
+	createStep.printPackageRepositoryCR()
+	createStep.pkgAuthoringUI.PrintInformationalText("This file can be taken and deployed on the Kubernetes cluster to have access to all the packages available to install as part of this repository.")
+	createStep.pkgAuthoringUI.PrintInformationalText(fmt.Sprintf("Alternatively, use kctrl to deploy this package repository on the Kubernetes cluster by running `kctrl package repository add -r demo-pkg-repo --url %s`", createStep.pkgRepoBuild.Spec.PkgRepo.Spec.Fetch.ImgpkgBundle.Image))
 	return nil
 }
 
-func (createStep CreateStep) printPackageRepositoryCR(pkg v1alpha1.Package) error {
-	createStep.pkgAuthoringUI.PrintInformationalText(`This is how the package.yml will look like`)
-	createStep.pkgAuthoringUI.PrintCmdExecutionText("cat package.yml")
-
-	//TODO: remove this comment. Marshal will make yaml/json
-
-	jsonPackageData, err := json.Marshal(&pkg)
+func (createStep CreateStep) printPackageRepositoryCR() error {
+	createStep.pkgAuthoringUI.PrintInformationalText("Great, we have all the data needed to create the packageRepository.yml")
+	pkgRepo := createStep.pkgRepoBuild.Spec.PkgRepo
+	pkgRepo.ObjectMeta.CreationTimestamp = v1.NewTime(time.Now())
+	pkgRepoData, err := yaml.Marshal(createStep.pkgRepoBuild.Spec.PkgRepo)
 	if err != nil {
 		return err
 	}
-	yaml.JSONToYAML(jsonPackageData)
-	packageData, err := yaml.JSONToYAML(jsonPackageData)
 	if err != nil {
 		return err
 	}
-	pkgFileLocation := filepath.Join(createStep.pkgRepoLocation, "package.yml")
+	pkgRepoFileLocation := filepath.Join(createStep.pkgRepoLocation, "packageRepository.yml")
 	if err != nil {
 		return err
 	}
-	err = writeToFile(pkgFileLocation, packageData)
+	err = writeToFile(pkgRepoFileLocation, pkgRepoData)
 	if err != nil {
 		createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("Unable to create package file. %s", err.Error()))
 		return err
 	}
 
-	err = createStep.printFile(pkgFileLocation)
+	createStep.pkgAuthoringUI.PrintActionableText(`Printing packageRepository.yml`)
+	createStep.pkgAuthoringUI.PrintCmdExecutionText("cat packageRepository.yml")
+
+	err = createStep.printFile(pkgRepoFileLocation)
 	if err != nil {
 		return err
 	}

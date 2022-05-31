@@ -11,7 +11,11 @@ import (
 )
 
 const (
-	PackageRepositoryBuildFileName = "pkgrepo-build.yml"
+	PackageRepositoryBuildFileName   = "pkgrepo-build.yml"
+	PackageRepositoryKind            = "PackageRepository"
+	PackageRepositoryAPIVersion      = "packaging.carvel.dev/v1alpha1"
+	PackageRepositoryBuildKind       = "PackageRepositoryBuild"
+	PackageRepositoryBuildAPIVersion = "kctrl.carvel.dev/v1alpha1"
 )
 
 type PackageRepositoryBuild struct {
@@ -21,7 +25,7 @@ type PackageRepositoryBuild struct {
 }
 
 type Spec struct {
-	PkgRepo *v1alpha12.PackageRepository `json:"package, omitempty"`
+	PkgRepo *v1alpha12.PackageRepository `json:"packageRepository, omitempty"`
 }
 
 func (pkgBuilder PackageRepositoryBuild) WriteToFile(dirPath string) error {
@@ -54,9 +58,23 @@ func GeneratePackageRepositoryBuild(pkgRepoBuildFilePath string) (PackageReposit
 			return PackageRepositoryBuild{}, err
 		}
 	} else {
-		pkgRepoBuild, err = NewDefaultPackageRepositoryBuild()
-		if err != nil {
-			return PackageRepositoryBuild{}, err
+		pkgRepoBuild = PackageRepositoryBuild{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       PackageRepositoryBuildKind,
+				APIVersion: PackageRepositoryBuildAPIVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{},
+			Spec: Spec{
+				PkgRepo: &v1alpha12.PackageRepository{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       PackageRepositoryKind,
+						APIVersion: PackageRepositoryAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "samplepackagerepository",
+					},
+				},
+			},
 		}
 	}
 	return pkgRepoBuild, nil
