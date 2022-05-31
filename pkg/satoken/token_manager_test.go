@@ -13,6 +13,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	authenticationv1 "k8s.io/api/authentication/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	testingclock "k8s.io/utils/clock/testing"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -38,7 +39,7 @@ func TestTokenCachingAndExpiration(t *testing.T) {
 			f: func(t *testing.T, s *suite) {
 				s.clock.SetTime(s.clock.Now())
 
-				_, err := s.mgr.GetServiceAccountToken("a", "b", getTokenRequest())
+				_, err := s.mgr.GetServiceAccountToken(&v1.ServiceAccount{}, getTokenRequest())
 
 				assert.NoErrorf(t, err, "unexpected error getting token")
 				assert.Equal(t, s.tg.count, 1, "expected refresh to not be called, call count was %d", s.tg.count)
@@ -50,7 +51,7 @@ func TestTokenCachingAndExpiration(t *testing.T) {
 			f: func(t *testing.T, s *suite) {
 				s.clock.SetTime(s.clock.Now().Add(time.Hour + time.Minute))
 
-				_, err := s.mgr.GetServiceAccountToken("a", "b", getTokenRequest())
+				_, err := s.mgr.GetServiceAccountToken(&v1.ServiceAccount{}, getTokenRequest())
 
 				assert.NoErrorf(t, err, "unexpected error getting token")
 				assert.Equal(t, s.tg.count, 2, "expected token to be refreshed, call count was %d", s.tg.count)
@@ -65,7 +66,7 @@ func TestTokenCachingAndExpiration(t *testing.T) {
 					err: fmt.Errorf("err"),
 				}
 				s.mgr.getToken = tg.getToken
-				tr, err := s.mgr.GetServiceAccountToken("a", "b", getTokenRequest())
+				tr, err := s.mgr.GetServiceAccountToken(&v1.ServiceAccount{}, getTokenRequest())
 
 				assert.NoErrorf(t, err, "unexpected error getting token")
 				assert.Equal(t, tr.Status.Token, "foo", "unexpected token")
@@ -96,11 +97,11 @@ func TestTokenCachingAndExpiration(t *testing.T) {
 			s.mgr.getToken = s.tg.getToken
 			s.mgr.clock = s.clock
 
-			_, err := s.mgr.GetServiceAccountToken("a", "b", getTokenRequest())
+			_, err := s.mgr.GetServiceAccountToken(&v1.ServiceAccount{}, getTokenRequest())
 			assert.NoErrorf(t, err, "unexpected error getting token")
 			assert.Equal(t, s.tg.count, 1, "unexpected client call, call count was %d", s.tg.count)
 
-			_, err = s.mgr.GetServiceAccountToken("a", "b", getTokenRequest())
+			_, err = s.mgr.GetServiceAccountToken(&v1.ServiceAccount{}, getTokenRequest())
 			assert.NoErrorf(t, err, "unexpected error getting token")
 			assert.Equal(t, s.tg.count, 1, "expected token to be served from cache, call count was %d", s.tg.count)
 
