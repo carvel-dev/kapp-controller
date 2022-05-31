@@ -4,6 +4,7 @@
 package deploy
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/satoken"
 	authenticationv1 "k8s.io/api/authentication/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -63,8 +65,13 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 		return "", fmt.Errorf("Internal inconsistency: Expected service account name to not be empty")
 	}
 
+	sa, err := s.coreClient.CoreV1().ServiceAccounts(nsName).Get(context.Background(), saName, metav1.GetOptions{})
+	if err != nil {
+		return "", fmt.Errorf("Getting service account: %s", err)
+	}
+
 	expiration := int64(tokenExpiration.Seconds())
-	t, err := s.tokenManager.GetServiceAccountToken(nsName, saName, &authenticationv1.TokenRequest{
+	t, err := s.tokenManager.GetServiceAccountToken(sa, &authenticationv1.TokenRequest{
 		Spec: authenticationv1.TokenRequestSpec{
 			ExpirationSeconds: &expiration,
 		},
