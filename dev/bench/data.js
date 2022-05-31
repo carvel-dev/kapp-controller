@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653586427398,
+  "lastUpdate": 1653974069649,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -1377,6 +1377,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6455390925,
             "unit": "ns/op\t         4.263 DeleteSeconds\t         2.148 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3beaddc443c6ec2ab2b1a0677684fb1c2d6d7f35",
+          "message": "Merge pull request #711 from vmware-tanzu/kctrl-examples\n\nAdd support for positional arguments in package installed status command",
+          "timestamp": "2022-05-31T10:31:56+05:30",
+          "tree_id": "1aac1ab5401f225dc33828b58af41c018f5f624a",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/3beaddc443c6ec2ab2b1a0677684fb1c2d6d7f35"
+        },
+        "date": 1653974068288,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36944340327,
+            "unit": "ns/op\t        19.21 DeleteSeconds\t        17.68 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9758356739,
+            "unit": "ns/op\t         5.512 DeleteSeconds\t         4.195 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6600464357,
+            "unit": "ns/op\t         4.330 DeleteSeconds\t         2.200 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
