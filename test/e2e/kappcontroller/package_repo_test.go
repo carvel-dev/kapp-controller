@@ -536,15 +536,10 @@ spec:
 	}
 
 	logger.Section("deploy pkgr1", func() {
-		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), AllowError: true})
-		if err != nil {
-			fmt.Println(out)
-			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
-		}
-		assert.NoError(t, err)
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
 
-		out, err = kubectl.RunWithOpts([]string{"get", "packages", "-A"}, e2e.RunOpts{NoNamespace: true})
+		out, _ := kubectl.RunWithOpts([]string{"get", "packages", "-A"}, e2e.RunOpts{NoNamespace: true})
 		require.Contains(t, out, "pkg0.test.carvel.dev.0.0.0")
 
 		out = kapp.Run([]string{"inspect", "-a", appName1, "--json"})
@@ -554,15 +549,10 @@ spec:
 	})
 
 	logger.Section("deploy pkgr2 successfully, but pkg is still owned by pkgr1", func() {
-		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), AllowError: true})
-		if err != nil {
-			fmt.Println(out)
-			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
-		}
-		assert.NoError(t, err)
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
 
-		out = kapp.Run([]string{"inspect", "-a", appName2, "--json"})
+		out := kapp.Run([]string{"inspect", "-a", appName2, "--json"})
 		require.Contains(t, out, `"reconcile_state": "ok"`)
 
 		assertPkgOwnedBy(pkgr1Name)
@@ -712,13 +702,7 @@ spec:
 
 	logger.Section("deploy pkgr1", func() {
 		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1, "-n", pkgr1NS},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), AllowError: true, NoNamespace: true})
-		fmt.Println(out)
-		if err != nil {
-			fmt.Println(out)
-			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
-		}
-		assert.NoError(t, err)
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), NoNamespace: true, OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
 
 		out, err = kubectl.RunWithOpts([]string{"get", "packages", "-A"}, e2e.RunOpts{NoNamespace: true})
 		require.NoError(t, err)
@@ -751,12 +735,7 @@ spec:
 
 	logger.Section("deploy pkgr2 successfully, but pkg is still owned by pkgr1", func() {
 		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2, "-n", pkgr2NS},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), AllowError: true, NoNamespace: true})
-		if err != nil {
-			fmt.Println(out)
-			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
-		}
-		assert.NoError(t, err)
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}, NoNamespace: true})
 
 		out, err = kapp.RunWithOpts([]string{"inspect", "-a", appName2, "--json", "-n", pkgr2NS}, e2e.RunOpts{NoNamespace: true})
 		assert.NoError(t, err)
@@ -836,15 +815,10 @@ spec:
 	}
 
 	logger.Section("deploy pkgr1", func() {
-		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), AllowError: true})
-		if err != nil {
-			fmt.Println(out)
-			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
-		}
-		assert.NoError(t, err)
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
 
-		out, err = kubectl.RunWithOpts([]string{"get", "packages", "-A"}, e2e.RunOpts{NoNamespace: true})
+		out, _ := kubectl.RunWithOpts([]string{"get", "packages", "-A"}, e2e.RunOpts{NoNamespace: true})
 		require.Contains(t, out, "pkg0.test.carvel.dev.0.0.0")
 
 		out = kapp.Run([]string{"inspect", "-a", appName1, "--json"})
@@ -854,13 +828,8 @@ spec:
 	})
 
 	logger.Section("deploy pkgr2 successfully, and it overrides bc it has higher rev", func() {
-		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), AllowError: true})
-		if err != nil {
-			fmt.Println(out)
-			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
-		}
-		assert.NoError(t, err)
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
 
 		out = kapp.Run([]string{"inspect", "-a", appName2, "--json"})
 		require.Contains(t, out, `"reconcile_state": "ok"`)
@@ -870,12 +839,8 @@ spec:
 
 	logger.Section("uninstall and reinstall pkgr1 but it never takes ownership of the pkg bc it has lower rev", func() {
 		kapp.Run([]string{"delete", "-a", appName1})
-		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), AllowError: true})
-		if err != nil {
-			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
-		}
-		assert.NoError(t, err)
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
 
 		out = kapp.Run([]string{"inspect", "-a", appName1, "--json"})
 		require.Contains(t, out, `"reconcile_state": "ok"`)
@@ -963,15 +928,10 @@ spec:
 	defer cleanUp()
 
 	logger.Section("deploy pkgr1", func() {
-		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), AllowError: true})
-		if err != nil {
-			fmt.Println(out)
-			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
-		}
-		assert.NoError(t, err)
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
 
-		out, err = kubectl.RunWithOpts([]string{"get", "packages", "-A"}, e2e.RunOpts{NoNamespace: true})
+		out, _ = kubectl.RunWithOpts([]string{"get", "packages", "-A"}, e2e.RunOpts{NoNamespace: true})
 		require.Contains(t, out, "shirt-mgr.co.uk.5.5.5")
 		require.Contains(t, out, "shirt-mgr.co.uk.5.6.0")
 		require.Contains(t, out, "coredino.co.uk.32.76.7")
@@ -999,13 +959,8 @@ spec:
 	defer cleanUp2()
 
 	logger.Section("deploy and check pkgr2", func() {
-		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), AllowError: true})
-		if err != nil {
-			fmt.Println(out)
-			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
-		}
-		assert.NoError(t, err)
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
 
 		out = kapp.Run([]string{"inspect", "-a", appName2, "--json"})
 		require.Contains(t, out, `"reconcile_state": "ok"`)
@@ -1032,13 +987,12 @@ spec:
 	logger.Section("deploy and check pkgr3", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName3},
 			e2e.RunOpts{StdinReader: strings.NewReader(pkgr3), AllowError: true})
-		if err != nil {
-			out := string(kubectl.Run([]string{"get", "pkgr", pkgr3Name, "-oyaml"}))
-			assert.Contains(t, out, "Conflicting Resources: Package/contooor.co.uk.0.22.0 is already present but not identical (mismatch in spec.template)")
-		}
 		assert.Error(t, err)
 
-		out := kapp.Run([]string{"inspect", "-a", appName3, "--json"})
+		out := string(kubectl.Run([]string{"get", "pkgr", pkgr3Name, "-oyaml"}))
+		assert.Contains(t, out, "Conflicting Resources: Package/contooor.co.uk.0.22.0 is already present but not identical (mismatch in spec.template)")
+
+		out = kapp.Run([]string{"inspect", "-a", appName3, "--json"})
 		assert.Contains(t, out, `"reconcile_state": "fail"`)
 
 		assertPkgOwnedBy(pkgr1Name, "shirt-mgr.co.uk.5.5.5")
@@ -1064,13 +1018,11 @@ spec:
 	logger.Section("deploy and check pkgr4", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName4},
 			e2e.RunOpts{StdinReader: strings.NewReader(pkgr4), AllowError: true})
-		if err != nil {
-			out := string(kubectl.Run([]string{"get", "pkgr", pkgr4Name, "-oyaml"}))
-			assert.Contains(t, out, " Conflicting Resources: PackageMetadata/shirt-mgr.co.uk is already present but not identical (mismatch in spec.shortDescription)")
-		}
 		assert.Error(t, err)
+		out := string(kubectl.Run([]string{"get", "pkgr", pkgr4Name, "-oyaml"}))
+		assert.Contains(t, out, " Conflicting Resources: PackageMetadata/shirt-mgr.co.uk is already present but not identical (mismatch in spec.shortDescription)")
 
-		out := kapp.Run([]string{"inspect", "-a", appName4, "--json"})
+		out = kapp.Run([]string{"inspect", "-a", appName4, "--json"})
 		assert.Contains(t, out, `"reconcile_state": "fail"`)
 	})
 }
