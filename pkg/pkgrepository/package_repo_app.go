@@ -173,7 +173,12 @@ rebaseRules:
         #@   return filter(existing_labels, carvel_labels) == filter(new_labels, carvel_labels)
         #@ end
         #@
-        #@ def specs_are_identical(existing_spec, new_spec, kind):
+        #@ def specs_are_identical(existing_spec, new_spec):
+        #@   if new_spec == existing_spec:
+        #@     return True, ""
+        #@   end
+        #@
+        #!   the rest of this method is to help make a better error message
         #@   ex = existing_spec
         #@   nw = new_spec
         #@
@@ -191,11 +196,11 @@ rebaseRules:
         #@       return False, "mismatch in spec." + attr
         #@     end
         #@   end
-        #@   return True, ""
+        #@   return False, "mismatch in unknown location"
         #@ end
         #@
         #@ def is_identical(existing, new):
-        #@   eq, reason = specs_are_identical(struct.decode(existing.spec), struct.decode(new.spec), existing.kind)
+        #@   eq, reason = specs_are_identical(struct.decode(existing.spec), struct.decode(new.spec))
         #@   if not eq:
         #@     return False, reason
         #@   end

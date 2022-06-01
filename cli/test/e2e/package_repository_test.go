@@ -57,7 +57,6 @@ func TestPackageRepository(t *testing.T) {
 	logger.Section("adding a repository", func() {
 		out, err := kappCtrl.RunWithOpts([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL}, RunOpts{AllowError: true})
 		if err != nil {
-			fmt.Println(out, err)
 			fmt.Println(kubectl.Run([]string{"get", "packagerepository", pkgrName, "-oyaml"}))
 		}
 		require.NoError(t, err)

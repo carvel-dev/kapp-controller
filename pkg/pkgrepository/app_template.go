@@ -62,7 +62,6 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 	template = a.templateFactory.NewYtt(*(a.app.Spec.Template[2]).Ytt, genericOpts)
 	result = template.TemplateStream(strings.NewReader(resources), dirPath)
 
-	a.log.Info("returning from the great yaml caper")
 	return result
 }
 
