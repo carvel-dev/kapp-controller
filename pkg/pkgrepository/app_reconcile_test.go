@@ -4,7 +4,7 @@
 package pkgrepository
 
 import (
-	"reflect"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -91,9 +91,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 			Fetch: []v1alpha1.AppFetch{
 				v1alpha1.AppFetch{Inline: &v1alpha1.AppFetchInline{Paths: fetchInline}},
 			},
-			Template: []v1alpha1.AppTemplate{
-				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{Paths: []string{"file.yml"}}},
-			},
+			// Note: PKGR Template phase is hardcoded in app_template.go
 		},
 	}
 
@@ -121,7 +119,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 			}},
 			ObservedGeneration:  0,
 			FriendlyDescription: "Reconcile failed: Templating dir: Error (see .status.usefulErrorMessage for details)",
-			UsefulErrorMessage:  "ytt: Error: \n- undefined: data\n    file.yml:1 | foo: #@ data.values.nothere\n",
+			UsefulErrorMessage:  "", // we'll compare this via Regexp, but here's an example: "ytt: Error: Checking file '/var/folders/s8/8vjjqpx1085071vj4xl0n5100000gr/T/kapp-controller-fetch-template-deploy3279989879/0/packages': lstat /var/folders/s8/8vjjqpx1085071vj4xl0n5100000gr/T/kapp-controller-fetch-template-deploy3279989879/0/packages: no such file or directory\n"}}
 		},
 		Fetch: &v1alpha1.AppStatusFetch{
 			ExitCode: 0,
@@ -142,7 +140,17 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	// No need to assert on stderr as its captured elsewhere
 	crdApp.app.Status().Template.Stderr = ""
 
-	if !reflect.DeepEqual(expectedStatus, crdApp.app.Status()) {
-		t.Fatalf("\nStatus is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, crdApp.app.Status())
-	}
+	// Test the useful error message separately with a regex bc it's variable
+	assert.Regexp(t,
+		regexp.MustCompile("ytt: Error: Checking file '/var/folders/.+/.+/./kapp-controller-fetch-template-deploy[0-9]+/0/packages'.*no such file or directory\n"),
+		crdApp.app.Status().GenericStatus.UsefulErrorMessage)
+
+	// unset the useful error message since we don't want to do an actual string comparison.
+	// (note: GenericStatus is not a pointer so we can't assign into it like we did above for Fetch and Template)
+	gs := crdApp.app.Status().GenericStatus
+	gs.UsefulErrorMessage = ""
+	assert.Equal(t, expectedStatus.GenericStatus, gs)
+
+	assert.Equal(t, expectedStatus.Fetch, crdApp.app.Status().Fetch)
+	assert.Equal(t, expectedStatus.Template, crdApp.app.Status().Template)
 }
