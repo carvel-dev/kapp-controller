@@ -119,7 +119,9 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 			}},
 			ObservedGeneration:  0,
 			FriendlyDescription: "Reconcile failed: Templating dir: Error (see .status.usefulErrorMessage for details)",
-			UsefulErrorMessage:  "", // we'll compare this via Regexp, but here's an example: "ytt: Error: Checking file '/var/folders/s8/8vjjqpx1085071vj4xl0n5100000gr/T/kapp-controller-fetch-template-deploy3279989879/0/packages': lstat /var/folders/s8/8vjjqpx1085071vj4xl0n5100000gr/T/kapp-controller-fetch-template-deploy3279989879/0/packages: no such file or directory\n"}}
+			UsefulErrorMessage:  "", // we'll compare this via Regexp, but below are two examples:
+			// "ytt: Error: Checking file '/var/folders/s8/8vjjqpx1085071vj4xl0n5100000gr/T/kapp-controller-fetch-template-deploy3279989879/0/packages': lstat /var/folders/s8/8vjjqpx1085071vj4xl0n5100000gr/T/kapp-controller-fetch-template-deploy3279989879/0/packages: no such file or directory\n"}}
+			// "ytt: Error: Checking file '/tmp/kapp-controller-fetch-template-deploy4226062659/0/packages': lstat /tmp/kapp-controller-fetch-template-deploy4226062659/0/packages: no such file or directory
 		},
 		Fetch: &v1alpha1.AppStatusFetch{
 			ExitCode: 0,
@@ -142,7 +144,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 
 	// Test the useful error message separately with a regex bc it's variable
 	assert.Regexp(t,
-		regexp.MustCompile("ytt: Error: Checking file '/var/folders/.+/.+/./kapp-controller-fetch-template-deploy[0-9]+/0/packages'.*no such file or directory\n"),
+		regexp.MustCompile("ytt: Error: Checking file '.+/kapp-controller-fetch-template-deploy[0-9]+/0/packages'.*no such file or directory\n"),
 		crdApp.app.Status().GenericStatus.UsefulErrorMessage)
 
 	// unset the useful error message since we don't want to do an actual string comparison.
