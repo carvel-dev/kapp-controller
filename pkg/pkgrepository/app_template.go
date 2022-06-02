@@ -220,7 +220,7 @@ rebaseRules:
 
 	// intermediate phase deserializes and reserializes all of the resources
 	// which guarantees that they only include fields this version of kc knows about.
-	resources, err := FilterResources([]byte(result.Stdout))
+	resources, err := FilterResources(result.Stdout)
 	if err != nil {
 		result.Error = err
 		return result
@@ -233,11 +233,12 @@ rebaseRules:
 	return result
 }
 
-// FilterResources takes a multi-doc yaml byte array of the templated
+// FilterResources takes a multi-doc yaml of the templated
 // contents of a PKGR, and filters out unexpected fields on each resource by deserializing and re-serializing
 // This filtering step allows us to use newer CRDs (with new fields) in older versions of kc
 // without triggering a mistmatch in the rebase "is_identical" checker.
-func FilterResources(yamls []byte) (string, error) {
+func FilterResources(yamlss string) (string, error) {
+	yamls := []byte(yamlss)
 	sch := runtime.NewScheme()
 	err := scheme.AddToScheme(sch)
 	if err != nil {
