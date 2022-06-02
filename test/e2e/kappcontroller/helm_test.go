@@ -59,7 +59,7 @@ spec:
   fetch:
   - helmChart:
       name: redis
-      version: "12.10.1"
+      version: "16.10.0"
       repository:
         url: https://charts.bitnami.com/bitnami
   template:
@@ -173,7 +173,7 @@ spec:
   fetch:
   - helmChart:
       name: redis
-      version: "12.10.1"
+      version: "16.10.0"
       repository:
         url: https://charts.bitnami.com/bitnami
   - inline:
