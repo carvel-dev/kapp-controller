@@ -4,8 +4,9 @@
 package pkgrepository
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestYamlUnique(t *testing.T) {
@@ -45,7 +46,7 @@ spec:
       deploy:
       - kapp: {}`
 
-	observedOutput, err := FilterResources([]byte(input))
+	observedOutput, err := FilterResources(input)
 	assert.NoError(t, err)
 	assert.NotContains(t, observedOutput, "unexpected")
 }
