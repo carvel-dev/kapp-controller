@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654039125824,
+  "lastUpdate": 1654198658063,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -1629,6 +1629,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6760887039,
             "unit": "ns/op\t         4.509 DeleteSeconds\t         2.194 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cppforlife@gmail.com",
+            "name": "Dmitriy Kalinin",
+            "username": "cppforlife"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "772c1c29a1af0edad6a21066f570f82fb28a6c4e",
+          "message": "update example/test for helm fetching (#716)\n\nCo-authored-by: Dmitriy Kalinin <dkalinin@vmware.com>",
+          "timestamp": "2022-06-02T15:23:03-04:00",
+          "tree_id": "ad246315e734c8bf2acc7cd0a271c516ae4ec6e8",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/772c1c29a1af0edad6a21066f570f82fb28a6c4e"
+        },
+        "date": 1654198656599,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37565505538,
+            "unit": "ns/op\t        19.65 DeleteSeconds\t        17.84 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9832086572,
+            "unit": "ns/op\t         5.495 DeleteSeconds\t         4.273 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6826489722,
+            "unit": "ns/op\t         4.517 DeleteSeconds\t         2.247 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
