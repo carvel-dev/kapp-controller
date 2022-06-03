@@ -88,6 +88,11 @@ func (upstreamStep *UpstreamStep) Interact() error {
 			return err
 		}
 	case VendirHelmChartConf:
+		helmStep := NewHelmStep(upstreamStep.pkgAuthoringUI, upstreamStep.PkgLocation, upstreamStep.pkgBuild)
+		err := common.Run(helmStep)
+		if err != nil {
+			return err
+		}
 	}
 	includedPaths, err := upstreamStep.getIncludedPaths()
 	if err != nil {
@@ -98,11 +103,11 @@ func (upstreamStep *UpstreamStep) Interact() error {
 	return nil
 }
 
-func setEarlierUpstreamOptionAsNil(vendirDirectories []vendirconf.Directory, earlierUpstreamOptionIndex string) {
+func setEarlierUpstreamOptionAsNil(vendirDirectories []vendirconf.Directory, earlierUpstreamOption string) {
 	if vendirDirectories[0].Contents == nil {
 		return
 	}
-	switch earlierUpstreamOptionIndex {
+	switch earlierUpstreamOption {
 	case VendirGitConf:
 		vendirDirectories[0].Contents[0].Git = nil
 	case VendirHgConf:
@@ -179,7 +184,7 @@ func getUpstreamOptionFromPkgBuild(pkgBuild *pkgbuilder.PackageBuild) string {
 func (upstreamStep *UpstreamStep) initializeVendirDirectoryConf() []vendirconf.Directory {
 	var directory vendirconf.Directory
 	directory = vendirconf.Directory{
-		Path: "config",
+		Path: "config/upstream",
 		Contents: []vendirconf.DirectoryContents{
 			{
 				Path: ".",

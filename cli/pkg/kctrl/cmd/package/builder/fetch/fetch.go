@@ -62,20 +62,48 @@ func (fetch *FetchStep) Interact() error {
 		Default: defaultFetchOptionIndex,
 		Choices: fetchTypeNames,
 	}
-	fetchOptionSelected, err := fetch.pkgAuthoringUI.AskForChoice(choiceOpts)
+	fetchOptionSelectedIndex, err := fetch.pkgAuthoringUI.AskForChoice(choiceOpts)
 	if err != nil {
 		return err
 	}
 
-	switch fetchTypeNames[fetchOptionSelected] {
+	if defaultFetchOptionIndex != fetchOptionSelectedIndex {
+		setEarlierUpstreamOptionAsNil(fetchSection, defaultFetchOptionSelected)
+	}
+	switch fetchTypeNames[fetchOptionSelectedIndex] {
 	case AppFetchImgpkgBundle:
 		imgpkgStep := imgpkg.NewImgPkgStep(fetch.pkgAuthoringUI, fetch.pkgLocation, fetch.pkgBuild)
 		err := common.Run(imgpkgStep)
 		if err != nil {
 			return err
 		}
+	case AppFetchHelmChart:
+		helmStep := NewHelmStep(fetch.pkgAuthoringUI, fetch.pkgLocation, fetch.pkgBuild)
+		err := common.Run(helmStep)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+func setEarlierUpstreamOptionAsNil(fetchSection []v1alpha1.AppFetch, earlierFetchOption string) {
+	switch earlierFetchOption {
+	case AppFetchImgpkgBundle:
+		fetchSection[0].ImgpkgBundle = nil
+	case AppFetchHelmChart:
+		fetchSection[0].HelmChart = nil
+	case AppFetchGit:
+		fetchSection[0].Git = nil
+	case AppFetchHTTP:
+		fetchSection[0].HTTP = nil
+	case AppFetchImage:
+		fetchSection[0].Image = nil
+	case AppFetchInline:
+		fetchSection[0].Inline = nil
+	}
+	return
+
 }
 
 func getFetchOptionFromPkgBuild(pkgBuild *build.PackageBuild) string {

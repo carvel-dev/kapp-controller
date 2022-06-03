@@ -44,14 +44,14 @@ func NewCreateOptions(ui ui.UI, logger logger.Logger, pkgCmdTreeOpts cmdcore.Pac
 
 func NewCreateCmd(o *CreateOptions) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "create",
-		Aliases: []string{"c"},
-		Short:   "Create a package repository",
+		Use:     "build",
+		Aliases: []string{"b"},
+		Short:   "Build and create a package repository",
 		Args:    cobra.ExactArgs(1),
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: cmdcore.Examples{
-			cmdcore.Example{"Create a package",
-				[]string{"package", "repository", "build", "create"},
+			cmdcore.Example{"Build and create a package",
+				[]string{"package", "repository", "build"},
 			},
 		}.Description("", o.pkgCmdTreeOpts),
 		SilenceUsage: true,

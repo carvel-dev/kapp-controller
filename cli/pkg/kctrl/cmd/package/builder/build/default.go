@@ -7,7 +7,7 @@ import (
 const defaultPackageBuildYAML = `
 --- 
 apiVersion: kctrl.carvel.dev/v1alpha1
-kind: Config
+kind: PackageBuild
 spec: 
   imgpkg: 
     registryUrl: ~

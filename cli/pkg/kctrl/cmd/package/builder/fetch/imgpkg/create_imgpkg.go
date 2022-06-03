@@ -36,14 +36,6 @@ func (createImgPkgStep CreateImgPkgStep) PreInteract() error {
 	if err != nil {
 		return err
 	}
-	err = createImgPkgStep.createBundleConfigDir()
-	if err != nil {
-		return err
-	}
-	err = createImgPkgStep.createBundleDotImgpkgDir()
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -61,31 +53,6 @@ func (createImgPkgStep CreateImgPkgStep) createBundleDir() error {
 	createImgPkgStep.pkgAuthoringUI.PrintActionableText("Creating directory")
 	createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", bundleLocation))
 	err := createImgPkgStep.createDirectory(bundleLocation)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (createImgPkgStep CreateImgPkgStep) createBundleConfigDir() error {
-	bundleConfigLocation := filepath.Join(createImgPkgStep.pkgLocation, "bundle", "config")
-	createImgPkgStep.pkgAuthoringUI.PrintInformationalText("Config directory will contain package contents such as Kubernetes YAML configuration, ytt templates, Helm templates, etc.")
-	createImgPkgStep.pkgAuthoringUI.PrintActionableText("Creating directory")
-	createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", bundleConfigLocation))
-	err := createImgPkgStep.createDirectory(bundleConfigLocation)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (createImgPkgStep CreateImgPkgStep) createBundleDotImgpkgDir() error {
-	bundleDotImgPkgLocation := filepath.Join(createImgPkgStep.pkgLocation, "bundle", ".imgpkg")
-	createImgPkgStep.pkgAuthoringUI.PrintInformationalText(".imgpkg directory will contain the bundle’s lock file. \n" +
-		"A bundle lock file has the mapping of images(referenced in the package contents such as K8s YAML configurations, etc)to its sha256 digest.")
-	createImgPkgStep.pkgAuthoringUI.PrintActionableText("Creating directory")
-	createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", bundleDotImgPkgLocation))
-	err := createImgPkgStep.createDirectory(bundleDotImgPkgLocation)
 	if err != nil {
 		return err
 	}
