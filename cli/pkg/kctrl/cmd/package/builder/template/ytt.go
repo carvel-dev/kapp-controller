@@ -8,7 +8,10 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
-const ()
+const (
+	YttFilesLocation int = iota
+	Inline
+)
 
 type YttTemplateStep struct {
 	pkgAuthoringUI pkgui.IPkgAuthoringUI
