@@ -255,8 +255,8 @@ func FilterResources(yamlss string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for _, resourceYAML := range docs {
 
+	for _, resourceYAML := range docs {
 		obj, gKV, err := decoder(resourceYAML, nil, nil)
 		if err != nil {
 			return "", err

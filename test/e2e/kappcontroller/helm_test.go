@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
@@ -233,13 +232,6 @@ spec:
 	defer cleanUp()
 
 	// App CR will fail if ytt assertion fails
-	out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-		e2e.RunOpts{StdinReader: strings.NewReader(config), AllowError: true})
-	// but it's helpful to actually see the error message...
-	if err != nil {
-		fmt.Println(out)
-		kubectl := e2e.Kubectl{t, env.Namespace, logger}
-		fmt.Println(kubectl.Run([]string{"get", "app", "-oyaml"}))
-	}
-	assert.NoError(t, err)
+	kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+		e2e.RunOpts{StdinReader: strings.NewReader(config), OnErrKubectl: []string{"get", "app", "-oyaml"}})
 }
