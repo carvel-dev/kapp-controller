@@ -98,11 +98,6 @@ rebaseRules:
         #@     return -1
         #@   end
         #@ end
-        #@ if not hasattr(data.values.existing.metadata.annotations, "packaging.carvel.dev/package-repository-ref"):
-        #@   msg = "Error: cannot overwrite package " + data.values.existing.metadata.name + " because it was not created by a package repository."
-        #@   print(msg)
-        #@   fail(msg)
-        #@ end
 
         #@ def filter(d, s):
         #@   return {x: v for x, v in d.items() if not x in s}
@@ -164,8 +159,14 @@ rebaseRules:
         #@   return True, ""
         #@ end
 
+        #! if the pkgr-ref annotation is missing (and the packages are identical) then assume ownership - covers upgrade case from old kcs
         #@ new_owner = data.values.new.metadata.annotations["packaging.carvel.dev/package-repository-ref"]
-        #@ existing_owner = data.values.existing.metadata.annotations["packaging.carvel.dev/package-repository-ref"]
+        #@ if 'packaging.carvel.dev/package-repository-ref' in data.values.existing.metadata.annotations:
+        #@   existing_owner = data.values.existing.metadata.annotations["packaging.carvel.dev/package-repository-ref"]
+        #@ else:
+        #@   existing_owner = new_owner
+        #@ end
+        #@
         #@ if new_owner != existing_owner:
         #@   identical, reason = is_identical(data.values.existing, data.values.new)
         #@   if identical:
