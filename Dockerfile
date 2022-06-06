@@ -1,4 +1,4 @@
-FROM golang:1.18.2 AS deps
+FROM golang:1.18.3 AS deps
 
 ARG KCTRL_VER=development
 WORKDIR /workspace
