@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654198658063,
+  "lastUpdate": 1654513007497,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -1671,6 +1671,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6826489722,
             "unit": "ns/op\t         4.517 DeleteSeconds\t         2.247 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "526b10b6decd603de87605e16634df8c8f7d13b1",
+          "message": "Ensure that kctrl picks up status tail after secrets are updated (#713)\n\n* Ensure that kctrl picks up status tail after secrets are updated. Stricter tests.\r\n\r\n* Add logging messages while pausing and resuming reconciliation",
+          "timestamp": "2022-06-06T16:16:31+05:30",
+          "tree_id": "99e0e5296e991b9b327ade98daf21a30912f62ab",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/526b10b6decd603de87605e16634df8c8f7d13b1"
+        },
+        "date": 1654513006819,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36604218523,
+            "unit": "ns/op\t        19.05 DeleteSeconds\t        17.51 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9542257119,
+            "unit": "ns/op\t         5.305 DeleteSeconds\t         4.196 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6508661667,
+            "unit": "ns/op\t         4.294 DeleteSeconds\t         2.143 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
