@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654539409074,
+  "lastUpdate": 1654548523617,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -1797,6 +1797,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6645973872,
             "unit": "ns/op\t         4.389 DeleteSeconds\t         2.206 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "benm@vmware.com",
+            "name": "Ben Moss",
+            "username": "benmoss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bc807c4df615d953a39b911292ddbb3bd347f625",
+          "message": "Merge pull request #718 from vmware-tanzu/dependabot/docker/golang-1.18.3\n\nBump golang from 1.17.9 to 1.18.3",
+          "timestamp": "2022-06-06T16:35:57-04:00",
+          "tree_id": "619bbd2a8062daba41a1effeb6733b793ac3287b",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/bc807c4df615d953a39b911292ddbb3bd347f625"
+        },
+        "date": 1654548522361,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37196353381,
+            "unit": "ns/op\t        19.37 DeleteSeconds\t        17.77 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9706622473,
+            "unit": "ns/op\t         5.422 DeleteSeconds\t         4.220 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6687499450,
+            "unit": "ns/op\t         4.403 DeleteSeconds\t         2.231 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
