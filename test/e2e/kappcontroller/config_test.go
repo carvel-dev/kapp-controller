@@ -21,10 +21,10 @@ func TestConfig_HTTPProxy(t *testing.T) {
 	// Proxy configured in config-test/secret-config.yml
 	logger.Section("inspect controller logs for propagation of proxy env vars", func() {
 		// app name must match the app name being deployed in hack/deploy-test.sh
-		out := kubectl.Run([]string{"logs", "deployment/kapp-controller"})
-
-		assert.Contains(out, "http_proxy is enabled.", "expected log line detailing http_proxy is enabled")
-		assert.Contains(out, "no_proxy is enabled.", "expected log line detailing no_proxy is enabled")
+		out := kubectl.Run([]string{"logs", "deployment/kapp-controller", "-c", "kapp-controller-sidecarexec"})
+		assert.Contains(out, "Setting http_proxy", "should be non-empty value, so set")
+		assert.Contains(out, "Clearing https_proxy", "should be empty value, so clear")
+		assert.Contains(out, "Setting no_proxy", "should be non-empty value, so set")
 	})
 }
 

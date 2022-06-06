@@ -1,5 +1,6 @@
 .DS_Store
 /controller
+/controller-sidecarexec
 /controller-linux-amd64
 /Dockerfile.dev
 /tmp

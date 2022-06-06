@@ -18,15 +18,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-// Reconciler is responsible for reconciling Kapp-controllers config.
+// Reconciler is responsible for reconciling kapp-controllers config.
 type Reconciler struct {
 	coreClient kubernetes.Interface
+	osConfig   OSConfig
 	log        logr.Logger
 }
 
 // NewReconciler constructs new Reconciler.
-func NewReconciler(coreClient kubernetes.Interface, log logr.Logger) *Reconciler {
-	return &Reconciler{coreClient, log}
+func NewReconciler(coreClient kubernetes.Interface,
+	osConfig OSConfig, log logr.Logger) *Reconciler {
+
+	return &Reconciler{coreClient, osConfig, log}
 }
 
 var _ reconcile.Reconciler = &Reconciler{}
@@ -57,16 +60,23 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 
 	kcConfig, err := GetConfig(r.coreClient)
 	if err != nil {
-		log.Error(err, "getting kapp-controller config")
+		log.Error(err, "Getting kapp-controller config")
 		return reconcile.Result{}, nil // no re-queue
 	}
 
 	log.Info("Applying new config")
-	err = kcConfig.Apply()
+
+	err = r.osConfig.ApplyCACerts(kcConfig.CACerts())
 	if err != nil {
-		log.Error(err, "applying kapp-controller config")
-		return reconcile.Result{}, nil // no re-queue
+		log.Error(err, "Failed applying CA certificates")
+		// continue on
 	}
 
-	return reconcile.Result{}, nil
+	err = r.osConfig.ApplyProxy(kcConfig.ProxyOpts())
+	if err != nil {
+		log.Error(err, "Failed applying proxy opts")
+		// continue on
+	}
+
+	return reconcile.Result{}, nil // no re-queue
 }

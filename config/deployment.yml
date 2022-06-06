@@ -30,6 +30,8 @@ spec:
         env:
         - name: KAPPCTRL_MEM_TMP_DIR
           value: /etc/kappctrl-mem-tmp
+        - name: KAPPCTRL_SIDECAREXEC_SOCK
+          value: /etc/kappctrl-mem-tmp/sidecarexec.sock
         - name: KAPPCTRL_SYSTEM_NAMESPACE
           valueFrom:
             fieldRef:
@@ -51,6 +53,31 @@ spec:
           protocol: TCP
         securityContext:
           allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - all
+      - name: kapp-controller-sidecarexec
+        image: kapp-controller
+        command: ["/kapp-controller-sidecarexec"]
+        resources:
+          requests:
+            cpu: 120m
+            memory: 100Mi
+        env:
+        - name: KAPPCTRL_SIDECAREXEC_SOCK
+          value: /etc/kappctrl-mem-tmp/sidecarexec.sock
+        volumeMounts:
+        - name: template-fs
+          mountPath: /etc/kappctrl-mem-tmp
+        - name: home
+          mountPath: /home/kapp-controller
+        #! mount over service account token to make it not available
+        - name: empty-sa
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        securityContext:
+          allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false #! TODO(bmo): don't write to the root ca-bundle
           runAsNonRoot: true
           capabilities:
@@ -63,6 +90,8 @@ spec:
       - name: home
         emptyDir:
           medium: Memory
+      - name: empty-sa
+        emptyDir: {}
 
 #@ if/end data.values.dangerous_enable_pprof:
 ---
