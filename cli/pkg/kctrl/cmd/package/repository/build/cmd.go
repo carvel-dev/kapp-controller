@@ -4,7 +4,7 @@ package build
 // SPDX-License-Identifier: Apache-2.0
 
 import (
-"github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 )
 
 func NewCmd() *cobra.Command {
@@ -15,4 +15,3 @@ func NewCmd() *cobra.Command {
 	}
 	return cmd
 }
-

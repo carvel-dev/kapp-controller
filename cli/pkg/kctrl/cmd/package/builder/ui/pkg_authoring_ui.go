@@ -6,6 +6,7 @@ import (
 
 	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
+	"github.com/mitchellh/go-wordwrap"
 )
 
 type IPkgAuthoringUI interface {
@@ -28,7 +29,7 @@ func NewPackageAuthoringUI(ui ui.UI) IPkgAuthoringUI {
 }
 
 func (c PackageAuthoringUIImpl) PrintInformationalText(text string) {
-	c.ui.BeginLinef(color.New(color.Faint).Sprint("\n" + text))
+	c.ui.BeginLinef(color.New(color.Faint).Sprint("\n" + wordwrap.WrapString(text, 70)))
 }
 
 func (c PackageAuthoringUIImpl) PrintCmdExecutionText(text string) {

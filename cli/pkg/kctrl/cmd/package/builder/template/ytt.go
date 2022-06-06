@@ -26,8 +26,8 @@ func NewYttTemplateStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *
 	}
 }
 
-func (yttTemplateStep YttTemplateStep) PreInteract() error {
-	yttTemplateStep.pkgAuthoringUI.PrintInformationalText(`# We need to provide the values to ytt. They can be done in two different ways:
+func (y YttTemplateStep) PreInteract() error {
+	y.pkgAuthoringUI.PrintInformationalText(`We need to provide the values to ytt. They can be done in two different ways:
 # 1. We can specify the files(including data values) to be used via ytt. Multiple paths can be provided with comma separated values.
 # 2. We can enter the values directly i.e. inline`)
 	return nil

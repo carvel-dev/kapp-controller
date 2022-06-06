@@ -2,6 +2,7 @@ package template
 
 import (
 	"fmt"
+
 	"github.com/cppforlife/go-cli-ui/ui"
 	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	pkgui "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/ui"
@@ -23,7 +24,7 @@ func NewHelmTemplateStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild 
 }
 
 func (helmStep HelmTemplateStep) PreInteract() error {
-	helmStep.pkgAuthoringUI.PrintInformationalText(`We need to add path to the helm Chart so that helm template can be run.`)
+	helmStep.pkgAuthoringUI.PrintInformationalText("We need to add path to the helm Chart so that helm template can be run.")
 	return nil
 }
 
@@ -49,7 +50,7 @@ func (helmStep *HelmTemplateStep) Interact() error {
 		helmStep.configureHelmChartPath()
 	}
 
-	helmStep.pkgAuthoringUI.PrintInformationalText(`Adding path to the helm template section`)
+	helmStep.pkgAuthoringUI.PrintInformationalText("Adding path to the helm template section")
 	return nil
 }
 

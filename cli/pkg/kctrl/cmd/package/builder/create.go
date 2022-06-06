@@ -167,8 +167,7 @@ func (createStep CreateStep) configureFullyQualifiedName() error {
 }
 
 func (createStep *CreateStep) printFQPkgNameBlock() {
-	createStep.pkgAuthoringUI.PrintInformationalText("A package name must be a fully qualified name. \nIt must consist of at least three segments separated by a '.'\n" +
-		"Fully Qualified Name cannot have a trailing '.' e.g. samplepackage.corp.com")
+	createStep.pkgAuthoringUI.PrintInformationalText("A package name must be a fully qualified name. It must consist of at least three segments separated by a '.' Fully Qualified Name cannot have a trailing '.' e.g. samplepackage.corp.com")
 }
 
 //Get Package Version and store it in package-build.yml

@@ -65,7 +65,7 @@ func (createImgPkgStep CreateImgPkgStep) Interact() error {
 	if err != nil {
 		return err
 	}
-	createImgPkgStep.pkgAuthoringUI.PrintInformationalText("To push the image onto registry, ensure that `docker login` is done onto registry. \nIf not done, open a separate tab and run `docker login` and enter the valid credentials to login successfully.")
+	createImgPkgStep.pkgAuthoringUI.PrintInformationalText("To push the image onto registry, ensure that `docker login` is done onto registry. If not done, open a separate tab and run `docker login` and enter the valid credentials to login successfully.")
 	registryDetails, err := createImgPkgStep.GetRegistryDetails()
 	if err != nil {
 		return err
@@ -86,10 +86,7 @@ func (createImgPkgStep CreateImgPkgStep) populateRegistryDetailsInPkgBuild(regis
 func (createImgPkgStep *CreateImgPkgStep) PostInteract() error {
 	imagesFileLocation := filepath.Join(createImgPkgStep.pkgLocation, "bundle", ".imgpkg", "images.yml")
 	bundleLocation := filepath.Join(createImgPkgStep.pkgLocation, "bundle")
-	createImgPkgStep.pkgAuthoringUI.PrintInformationalText(`imgpkg bundle configuration is now complete. Let's use kbld to lock it down.
-kbld allows to build the imgpkg bundle with immutable image references.
-kbld scans a package configuration for any references to images and creates a mapping of image tags to a URL with a sha256 digest. 
-This mapping will then be placed into an images.yml lock file in your bundle/.imgpkg directory. Running kbld now.`)
+	createImgPkgStep.pkgAuthoringUI.PrintInformationalText("imgpkg bundle configuration is now complete. Let's use kbld to lock it down. kbld allows to build the imgpkg bundle with immutable image references. kbld scans a package configuration for any references to images and creates a mapping of image tags to a URL with a sha256 digest. This mapping will then be placed into an images.yml lock file in your bundle .imgpkg directory. Running kbld now.")
 	createImgPkgStep.pkgAuthoringUI.PrintActionableText("Running kbld")
 	createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("kbld --file %s --imgpkg-lock-output %s", bundleLocation, imagesFileLocation))
 	err := createImgPkgStep.runKbld(bundleLocation, imagesFileLocation)

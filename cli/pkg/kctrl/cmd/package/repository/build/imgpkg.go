@@ -80,8 +80,7 @@ func (imgpkg ImgpkgStep) createBundlePackagesDir() error {
 
 func (imgpkg ImgpkgStep) createBundleDotImgpkgDir() error {
 	bundleDotImgPkgLocation := filepath.Join(imgpkg.pkgRepoLocation, "bundle", ".imgpkg")
-	imgpkg.pkgAuthoringUI.PrintInformationalText(".imgpkg directory will contain the bundle’s lock file. \n" +
-		"A bundle lock file has the mapping of images(referenced in the package contents such as K8s YAML configurations, etc)to its sha256 digest.")
+	imgpkg.pkgAuthoringUI.PrintInformationalText(".imgpkg directory will contain the bundle’s lock file. A bundle lock file has the mapping of images(referenced in the package contents such as K8s YAML configurations, etc)to its sha256 digest.")
 	imgpkg.pkgAuthoringUI.PrintInformationalText("It ensures that later on while deployment, we are using the same exact image which we used while creating the bundle as digest are immutable even though tags are.")
 	imgpkg.pkgAuthoringUI.PrintActionableText("Creating directory")
 	imgpkg.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", bundleDotImgPkgLocation))
@@ -124,10 +123,7 @@ func (imgpkg ImgpkgStep) PostInteract() error {
 	bundledPackagesLocation := filepath.Join(imgpkg.pkgRepoLocation, "bundle", "packages")
 	imagesFileLocation := filepath.Join(imgpkg.pkgRepoLocation, "bundle", ".imgpkg", "images.yml")
 
-	imgpkg.pkgAuthoringUI.PrintInformationalText(`Kbld, a Carvel tool, will be used to create a mapping of all the image references to their sha256 digest.
-kbld looks for image keys within YAML documents and tries to resolve image reference to its full digest form and creates a mapping of image tags to a URL with a sha256 digest. 
-This mapping will then be placed into an images.yml lock file in bundle/.imgpkg directory.
-kbld allows to build the imgpkg bundle with immutable image references.`)
+	imgpkg.pkgAuthoringUI.PrintInformationalText("Kbld, a Carvel tool, will be used to create a mapping of all the image references to their sha256 digest. kbld looks for image keys within YAML documents and tries to resolve image reference to its full digest form and creates a mapping of image tags to a URL with a sha256 digest. This mapping will then be placed into an images.yml lock file in bundle/.imgpkg directory. kbld allows to build the imgpkg bundle with immutable image references.")
 	imgpkg.pkgAuthoringUI.PrintActionableText("Running kbld")
 	imgpkg.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("kbld --file %s --imgpkg-lock-output %s", bundleLocation, imagesFileLocation))
 
@@ -144,8 +140,8 @@ kbld allows to build the imgpkg bundle with immutable image references.`)
 	if err != nil {
 		return err
 	}
-	imgpkg.pkgAuthoringUI.PrintInformationalText(fmt.Sprintf(`We have successfully pushed the package repository imgpkg bundle to the OCI registry.
-We can use %s in our package repository CR fetch section to have access to our package and packageMetadata CRs`, imgpkg.pkgRepoBuild.Spec.PkgRepo.Spec.Fetch.ImgpkgBundle.Image))
+	imgpkg.pkgAuthoringUI.PrintInformationalText(fmt.Sprintf("We have successfully pushed the package repository imgpkg bundle to the OCI registry.We can use %s in our package repository CR fetch section to have access to our package and packageMetadata CRs",
+		imgpkg.pkgRepoBuild.Spec.PkgRepo.Spec.Fetch.ImgpkgBundle.Image))
 	return nil
 }
 
