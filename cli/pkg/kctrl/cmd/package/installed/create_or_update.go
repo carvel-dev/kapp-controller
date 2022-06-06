@@ -5,6 +5,7 @@ package installed
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -24,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 )
@@ -310,6 +312,20 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		return nil
 	}
 
+	// Pause reconciliation so that kctrl can tail status if an existing values secret is updated
+	reconciliationPaused := false
+	if o.valuesFile != "" && len(pkgInstall.Spec.Values) > 0 {
+		updatedPkgInstall, err = o.pauseReconciliation(kcClient)
+		if err != nil {
+			return err
+		}
+		err = o.waitForAppPause(kcClient)
+		if err != nil {
+			return err
+		}
+		reconciliationPaused = true
+	}
+
 	isSecretCreated, err := o.createOrUpdateValuesSecret(updatedPkgInstall, client)
 	if err != nil {
 		return err
@@ -334,14 +350,23 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		}
 	}
 
-	o.statusUI.PrintMessagef("Updating package install for '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
-	o.addCreatedResourceAnnotations(&updatedPkgInstall.ObjectMeta, false, isSecretCreated, isSecretDeleted)
-	_, err = kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Update(
-		context.Background(), updatedPkgInstall, metav1.UpdateOptions{},
-	)
-	if err != nil {
-		err = fmt.Errorf("Updating package '%s': %s", o.Name, err.Error())
-		return err
+	if isSecretCreated || changed {
+		o.statusUI.PrintMessagef("Updating package install for '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+		o.addCreatedResourceAnnotations(&updatedPkgInstall.ObjectMeta, false, isSecretCreated, isSecretDeleted)
+		_, err = kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Update(
+			context.Background(), updatedPkgInstall, metav1.UpdateOptions{},
+		)
+		if err != nil {
+			err = fmt.Errorf("Updating package '%s': %s", o.Name, err.Error())
+			return err
+		}
+	}
+
+	if reconciliationPaused {
+		err = o.unpauseReconciliation(kcClient)
+		if err != nil {
+			return err
+		}
 	}
 
 	if o.WaitFlags.Enabled {
@@ -685,7 +710,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *k
 		if err != nil {
 			return false, fmt.Errorf("Failed to update manually referenced secret based on values file: %s", err.Error())
 		}
-		return true, nil
+		return secretCreated, nil
 	}
 
 	// Second condition supports older versions of Tanzu CLI. To be deprecated
@@ -740,6 +765,71 @@ func (o *CreateOrUpdateOptions) updateDataValuesSecret(client kubernetes.Interfa
 		return fmt.Errorf("Updating Secret resource: %s", err.Error())
 	}
 
+	return nil
+}
+
+func (o *CreateOrUpdateOptions) pauseReconciliation(client kcclient.Interface) (*kcpkgv1alpha1.PackageInstall, error) {
+	pausePatch := []map[string]interface{}{
+		{
+			"op":    "add",
+			"path":  "/spec/paused",
+			"value": true,
+		},
+	}
+
+	patchJSON, err := json.Marshal(pausePatch)
+	if err != nil {
+		return nil, err
+	}
+
+	o.statusUI.PrintMessagef("Pausing reconciliation for package installation '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+	pkgi, err := client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return pkgi, nil
+}
+
+func (o *CreateOrUpdateOptions) unpauseReconciliation(client kcclient.Interface) error {
+	unpausePatch := []map[string]interface{}{
+		{
+			"op":   "remove",
+			"path": "/spec/paused",
+		},
+	}
+
+	patchJSON, err := json.Marshal(unpausePatch)
+	if err != nil {
+		return err
+	}
+
+	o.statusUI.PrintMessagef("Resuming reconciliation for package installation '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+	_, err = client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Waits for the App CR created by the package installation to pick up it's paused status
+func (o *CreateOrUpdateOptions) waitForAppPause(client kcclient.Interface) error {
+	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
+		appResource, err := client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+		if appResource.Generation != appResource.Status.ObservedGeneration {
+			return false, nil
+		}
+		if appResource.Status.FriendlyDescription == "Canceled/paused" {
+			return true, nil
+		}
+		return false, nil
+	}); err != nil {
+		return fmt.Errorf("Waiting for app '%s' in namespace '%s' to be paused: %s", o.Name, o.NamespaceFlags.Name, err)
+	}
 	return nil
 }
 
