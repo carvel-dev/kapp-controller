@@ -97,7 +97,7 @@ This mapping will then be placed into an images.yml lock file in your bundle/.im
 		return err
 	}
 
-	createImgPkgStep.pkgAuthoringUI.PrintInformationalText("Lets see how the images.yml file looks like:")
+	createImgPkgStep.pkgAuthoringUI.PrintActionableText("Printing images.yml")
 	createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("Running cat %s", imagesFileLocation))
 	err = createImgPkgStep.printFile(imagesFileLocation)
 	if err != nil {
@@ -131,7 +131,8 @@ func (createImgPkgStep CreateImgPkgStep) printFile(filePath string) error {
 
 func (createImgPkgStep CreateImgPkgStep) pushImgpkgBundleToRegistry(bundleLoc string) (string, error) {
 	pushURL := createImgPkgStep.pkgBuild.Spec.Imgpkg.RegistryURL
-	createImgPkgStep.pkgAuthoringUI.PrintInformationalText("Running imgpkg to push the bundle directory and indicate what project name and tag to give it.")
+	createImgPkgStep.pkgAuthoringUI.PrintInformationalText("As kbld has created the immutable references, we will push the bundle directory by running `imgpkg push`. `Push` command allows users to create a bundle in the registry from files and/or directories on their local file systems. ")
+	createImgPkgStep.pkgAuthoringUI.PrintActionableText("Running imgpkg push")
 	createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("imgpkg push --bundle %s --file %s --json", pushURL, bundleLoc))
 
 	//TODO Rohit it is not showing the actual error

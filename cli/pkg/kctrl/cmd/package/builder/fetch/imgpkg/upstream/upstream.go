@@ -223,8 +223,7 @@ func (upstreamStep *UpstreamStep) createVendirFile() error {
 To create an imgpkg bundle, data has to be synced from upstream to local. 
 To sync the data from upstream to local, we will use vendir.
 Vendir allows to declaratively state what should be in a directory and sync any number of data sources into it.
-Lets use our inputs to create vendir.yml file.`)
-	upstreamStep.pkgAuthoringUI.PrintActionableText("Creating vendir.yml")
+Lets use our inputs to create and print vendir.yml file.`)
 	data, err := yaml.Marshal(&upstreamStep.pkgBuild.Spec.Vendir)
 	if err != nil {
 		return fmt.Errorf("Unable to create vendir.yml\n %s", err.Error())
@@ -246,6 +245,7 @@ Lets use our inputs to create vendir.yml file.`)
 }
 
 func (upstreamStep *UpstreamStep) printVendirFile() error {
+	upstreamStep.pkgAuthoringUI.PrintActionableText("Printing vendir.yml")
 	vendirFileLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "vendir.yml")
 	upstreamStep.pkgAuthoringUI.PrintCmdExecutionText("cat vendir.yml")
 	err := upstreamStep.printFile(vendirFileLocation)
@@ -278,7 +278,8 @@ func (upstreamStep *UpstreamStep) printVendirLockFile() error {
 
 func (upstreamStep *UpstreamStep) runVendirSync() error {
 	bundleLocation := filepath.Join(upstreamStep.PkgLocation, "bundle")
-	upstreamStep.pkgAuthoringUI.PrintInformationalText("Next step is to run vendir to sync the data from upstream. Running 'vendir sync`")
+	upstreamStep.pkgAuthoringUI.PrintInformationalText("Next step is to run vendir to sync the data from upstream.")
+	upstreamStep.pkgAuthoringUI.PrintActionableText("Running vendir sync")
 	upstreamStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("vendir sync --chdir %s", bundleLocation))
 	result := util.Execute("vendir", []string{"sync", "--chdir", bundleLocation})
 	if result.Error != nil {
@@ -306,11 +307,11 @@ func (upstreamStep UpstreamStep) listFiles(dir string) error {
 
 func (upstreamStep UpstreamStep) getIncludedPaths() ([]string, error) {
 	upstreamStep.pkgAuthoringUI.PrintInformationalText("Now, we need to enter the specific paths which we want to include as package content. " +
-		"More than one paths can be added with comma separator. \nTo include everything from the upstream, leave it empty.")
+		"More than one paths can be added with comma separator.")
 	includedPaths := upstreamStep.pkgBuild.Spec.Vendir.Directories[0].Contents[0].IncludePaths
 	defaultIncludedPath := strings.Join(includedPaths, ",")
 	textOpts := ui.TextOpts{
-		Label:        "Enter the paths which need to be included as part of this package",
+		Label:        "Enter the paths which need to be included as part of this package. Leave empty to include everything",
 		Default:      defaultIncludedPath,
 		ValidateFunc: nil,
 	}

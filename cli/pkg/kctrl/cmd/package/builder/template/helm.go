@@ -10,13 +10,15 @@ import (
 
 type HelmTemplateStep struct {
 	pkgAuthoringUI pkgui.IPkgAuthoringUI
-	pkgBuild       pkgbuilder.PackageBuild
+	pkgBuild       *pkgbuilder.PackageBuild
 	pkgLocation    string
 }
 
-func NewHelmTemplateStep(ui pkgui.IPkgAuthoringUI) *HelmTemplateStep {
+func NewHelmTemplateStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *HelmTemplateStep {
 	return &HelmTemplateStep{
 		pkgAuthoringUI: ui,
+		pkgLocation:    pkgLocation,
+		pkgBuild:       pkgBuild,
 	}
 }
 
@@ -78,13 +80,6 @@ func isHelmTemplateExistOnlyOnce(existingTemplates []v1alpha1.AppTemplate) bool 
 	return true
 }
 
-func (y *HelmTemplateStep) Run() error {
-	y.PreInteract()
-	y.Interact()
-	y.PostInteract()
-	return nil
-}
-
 func (helmStep HelmTemplateStep) initializeHelmTemplate() {
 	helmStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template = append(helmStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template,
 		v1alpha1.AppTemplate{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{}})
@@ -121,7 +116,7 @@ func (helmStep HelmTemplateStep) configureHelmChartPath() error {
 	return nil
 }
 
-func getPathFromFetchConf(pkgBuild pkgbuilder.PackageBuild) (string, error) {
+func getPathFromFetchConf(pkgBuild *pkgbuilder.PackageBuild) (string, error) {
 	//This means that helmChart has been mentioned directly in the fetch section of Package.
 	if pkgBuild.Spec.Vendir == nil {
 		return "", nil

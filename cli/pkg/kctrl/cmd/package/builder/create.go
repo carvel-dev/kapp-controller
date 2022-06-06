@@ -206,7 +206,7 @@ func (createStep *CreateStep) configureFetchSection() error {
 }
 
 func (createStep *CreateStep) configureTemplateSection() error {
-	templateConfiguration := template.NewTemplateStep(createStep.pkgAuthoringUI)
+	templateConfiguration := template.NewTemplateStep(createStep.pkgAuthoringUI, createStep.pkgLocation, createStep.pkgBuild)
 	err := common.Run(templateConfiguration)
 	if err != nil {
 		return err
@@ -224,7 +224,7 @@ func (createStep *CreateStep) configureValuesSchema() error {
 }
 
 func (createStep CreateStep) PostInteract() error {
-	createStep.pkgAuthoringUI.PrintInformationalText("Great, we have all the data needed to build the package.yml and package-metadata.yml.")
+	createStep.pkgAuthoringUI.PrintInformationalText("Great, we have all the data needed to create the package.yml and package-metadata.yml.")
 	err := createStep.printPackageCR(createStep.pkgBuild.GetPackage())
 	if err != nil {
 		return err
@@ -238,7 +238,7 @@ func (createStep CreateStep) PostInteract() error {
 }
 
 func (createStep CreateStep) printPackageCR(pkg v1alpha1.Package) error {
-	createStep.pkgAuthoringUI.PrintInformationalText("This is how the package.yml will look like")
+	createStep.pkgAuthoringUI.PrintActionableText("Printing package.yml")
 	createStep.pkgAuthoringUI.PrintCmdExecutionText("cat package.yml")
 
 	//TODO: remove this comment. Marshal will make yaml/json
@@ -278,7 +278,7 @@ func (createStep CreateStep) printFile(filePath string) error {
 }
 
 func (createStep CreateStep) printPackageMetadataCR(pkgMetadata v1alpha1.PackageMetadata) error {
-	createStep.pkgAuthoringUI.PrintInformationalText("This is how the packageMetadata.yml will look like")
+	createStep.pkgAuthoringUI.PrintActionableText("Printing packageMetadata.yml")
 	createStep.pkgAuthoringUI.PrintCmdExecutionText("cat packageMetadata.yml")
 	jsonPackageMetadataData, err := json.Marshal(&pkgMetadata)
 	if err != nil {
