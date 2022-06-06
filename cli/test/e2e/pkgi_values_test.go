@@ -100,12 +100,15 @@ foo: bar
 	// When https://github.com/vmware-tanzu/carvel-kapp-controller/issues/670 is resolved
 
 	logger.Section("Updating values config for test package", func() {
-		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "update", "--package-install", pkgiName, "--values-file", "-"}, RunOpts{StdinReader: strings.NewReader(valuesFile)})
+		out, err := kappCtrl.RunWithOpts([]string{"package", "installed", "update", "--package-install", pkgiName, "--values-file", "-"}, RunOpts{StdinReader: strings.NewReader(valuesFile)})
 		require.NoError(t, err)
+		require.Contains(t, out, "Fetch succeeded")
+		require.Contains(t, out, "Template succeeded")
+		require.Contains(t, out, "App reconciled")
 
 		// Check that ownership annotations are intact
 		secretName := fmt.Sprintf("%s-%s-values", pkgiName, env.Namespace)
-		out, err := kubectl.RunWithOpts([]string{"get", "secret", secretName, "-o", "yaml"}, RunOpts{})
+		out, err = kubectl.RunWithOpts([]string{"get", "secret", secretName, "-o", "yaml"}, RunOpts{})
 		require.NoError(t, err)
 		require.Contains(t, out, pkgiName+"-"+"kctrl-test")
 	})
