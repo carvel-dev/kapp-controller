@@ -782,6 +782,7 @@ func (o *CreateOrUpdateOptions) pauseReconciliation(client kcclient.Interface) (
 		return nil, err
 	}
 
+	o.statusUI.PrintMessagef("Pausing reconciliation for package installation '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 	pkgi, err := client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
 	if err != nil {
 		return nil, err
@@ -803,6 +804,7 @@ func (o *CreateOrUpdateOptions) unpauseReconciliation(client kcclient.Interface)
 		return err
 	}
 
+	o.statusUI.PrintMessagef("Resuming reconciliation for package installation '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 	_, err = client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Patch(context.Background(), o.Name, types.JSONPatchType, patchJSON, metav1.PatchOptions{})
 	if err != nil {
 		return err
