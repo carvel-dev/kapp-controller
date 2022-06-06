@@ -72,21 +72,22 @@ export PATH=$PWD/tmp/protoc-dl/bin/:$PATH
 protoc --version
 
 # Generate binaries called out by protoc binary
-rm -rf tmp/gen-apiserver-bin/
-mkdir -p tmp/gen-apiserver-bin/
-go build -o tmp/gen-apiserver-bin/protoc-gen-gogo vendor/github.com/gogo/protobuf/protoc-gen-gogo/main.go
-go build -o tmp/gen-apiserver-bin/protoc-gen-gofast vendor/github.com/gogo/protobuf/protoc-gen-gofast/main.go
-go build -o tmp/gen-apiserver-bin/goimports vendor/golang.org/x/tools/cmd/goimports/{goimports,goimports_not_gc}.go
-export PATH=$PWD/tmp/gen-apiserver-bin/:$PATH
+export GOBIN=$PWD/tmp/gen-apiserver-bin
+rm -rf $GOBIN
+go install \
+  github.com/gogo/protobuf/protoc-gen-gogo \
+  github.com/gogo/protobuf/protoc-gen-gofast \
+  golang.org/x/tools/cmd/goimports \
+  k8s.io/code-generator/cmd/go-to-protobuf
+export PATH=$GOBIN:$PATH
 
 rm -f $(find pkg|grep '\.proto')
 
 # TODO It seems this command messes around with protos in vendor directory
-go run vendor/k8s.io/code-generator/cmd/go-to-protobuf/main.go \
+go-to-protobuf \
   --proto-import "${GOPATH}/src/${KC_PKG}/vendor" \
   --packages "-github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1,${KC_PKG}/pkg/apis/kappctrl/v1alpha1,${KC_PKG}/pkg/apiserver/apis/datapackaging/v1alpha1" \
   --vendor-output-base="${GOPATH}/src/${KC_PKG}/vendor" \
   --go-header-file hack/gen-boilerplate.txt
-
 
 echo "GEN SUCCESS"
