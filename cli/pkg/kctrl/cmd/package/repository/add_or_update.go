@@ -20,6 +20,7 @@ import (
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -132,7 +133,7 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 	existingRepository, err := client.PackagingV1alpha1().PackageRepositories(o.NamespaceFlags.Name).Get(
 		context.Background(), o.Name, metav1.GetOptions{})
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") && o.CreateRepository {
+		if errors.IsNotFound(err) && o.CreateRepository {
 			return o.add(client)
 		}
 		return err

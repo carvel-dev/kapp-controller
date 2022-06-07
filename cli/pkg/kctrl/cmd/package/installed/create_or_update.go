@@ -385,7 +385,7 @@ func (o *CreateOrUpdateOptions) dropValuesSecret(client kubernetes.Interface) (b
 	valuesSecret, err := client.CoreV1().Secrets(o.NamespaceFlags.Name).Get(context.Background(), secretName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			o.statusUI.PrintMessagef("Values secret '%s' not found", secretName)
+			o.statusUI.PrintMessagef("Values secret '%s' not found in namespace '%s'", secretName, o.NamespaceFlags.Name)
 			return true, nil
 		}
 		return false, fmt.Errorf("Getting values secret: %s", err.Error())
