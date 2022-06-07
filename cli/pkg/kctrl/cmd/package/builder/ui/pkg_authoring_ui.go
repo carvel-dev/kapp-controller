@@ -29,7 +29,7 @@ func NewPackageAuthoringUI(ui ui.UI) IPkgAuthoringUI {
 }
 
 func (c PackageAuthoringUIImpl) PrintInformationalText(text string) {
-	c.ui.BeginLinef(color.New(color.Faint).Sprint("\n" + wordwrap.WrapString(text, 70)))
+	c.ui.BeginLinef(color.New(color.Faint).Sprint("\n" + wordwrap.WrapString(text, 80)))
 }
 
 func (c PackageAuthoringUIImpl) PrintCmdExecutionText(text string) {

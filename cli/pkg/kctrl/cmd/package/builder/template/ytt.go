@@ -2,14 +2,9 @@ package template
 
 import (
 	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 
-	"github.com/cppforlife/go-cli-ui/ui"
 	pkgui "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/ui"
-)
-
-const (
-	YttFilesLocation int = iota
-	Inline
 )
 
 type YttTemplateStep struct {
@@ -26,10 +21,8 @@ func NewYttTemplateStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *
 	}
 }
 
-func (y YttTemplateStep) PreInteract() error {
-	y.pkgAuthoringUI.PrintInformationalText(`We need to provide the values to ytt. They can be done in two different ways:
-# 1. We can specify the files(including data values) to be used via ytt. Multiple paths can be provided with comma separated values.
-# 2. We can enter the values directly i.e. inline`)
+func (yttTemplateStep YttTemplateStep) PreInteract() error {
+	yttTemplateStep.pkgAuthoringUI.PrintInformationalText(`We need to provide the values to ytt.`)
 	return nil
 }
 
@@ -38,27 +31,100 @@ func (yttTemplateStep YttTemplateStep) PostInteract() error {
 }
 
 func (yttTemplateStep *YttTemplateStep) Interact() error {
-	input, err := yttTemplateStep.pkgAuthoringUI.AskForChoice(ui.ChoiceOpts{
-		Label:   "Enter how do you prefer to provide values to ytt",
-		Default: 0,
-		Choices: []string{"ytt files location(recommended)", "inline"},
-	})
-	if err != nil {
-		return err
+	existingPkgTemplates := yttTemplateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template
+	//TODO Rohit needs to be removed
+	if existingPkgTemplates == nil {
+		yttTemplateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template = append(yttTemplateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template, v1alpha1.AppTemplate{})
 	}
-	switch input {
-	case YttFilesLocation:
-		/*paths, err := yttTemplateStep.pkgAuthoringUI.AskForText(ui.TextOpts{
-			Label:        "Enter the paths of ytt files",
-			Default:      "",
-			ValidateFunc: nil,
-		})
-		if err != nil {
-			return err
+	if isYttTemplateExist(existingPkgTemplates) {
+		if isYttTemplateExistOnlyOnce(existingPkgTemplates) {
+			yttTemplateStep.configureYttPath()
+		} else {
+			//If there are > 1 helmTemplate section, then we dont want to touch them as they had been intentionally added.
+			//TODO Rohit should we throw an error here?
+			return nil
 		}
-		yttTemplateStep.appTemplateYtt = v1alpha1.AppTemplateYtt{Paths: strings.Split(paths, ",")}*/
-	case Inline:
+	} else {
+		yttTemplateStep.initializeYttTemplate()
+		yttTemplateStep.configureYttPath()
+	}
 
+	yttTemplateStep.pkgAuthoringUI.PrintInformationalText("Adding path to the ytt template section")
+	return nil
+}
+
+func (yttTemplateStep *YttTemplateStep) askForPath() bool {
+	return false
+}
+
+func isYttTemplateExist(existingTemplates []v1alpha1.AppTemplate) bool {
+	for _, appTemplate := range existingTemplates {
+		if appTemplate.Ytt != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func isYttTemplateExistOnlyOnce(existingTemplates []v1alpha1.AppTemplate) bool {
+	var count int
+	for _, appTemplate := range existingTemplates {
+		if appTemplate.Ytt != nil {
+			if count == 0 {
+				count++
+			} else {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (yttTemplateStep *YttTemplateStep) initializeYttTemplate() {
+	yttTemplateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template = append(yttTemplateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template,
+		v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{}})
+	yttTemplateStep.pkgBuild.WriteToFile(yttTemplateStep.pkgLocation)
+}
+
+func (yttTemplateStep *YttTemplateStep) configureYttPath() error {
+	for _, appTemplate := range yttTemplateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template {
+		if appTemplate.Ytt != nil {
+			defaultPaths := appTemplate.Ytt.Paths
+			if yttTemplateStep.askForPath() {
+
+			} else {
+				if len(defaultPaths) == 0 {
+					defaultPaths = append(defaultPaths, yttTemplateStep.getPathFromFetchConf())
+				}
+			}
+			//TODO Rohit check if this works
+			appTemplate.Ytt.Paths = defaultPaths
+			yttTemplateStep.pkgBuild.WriteToFile(yttTemplateStep.pkgLocation)
+		}
 	}
 	return nil
+}
+
+func (yttTemplateStep *YttTemplateStep) getPathFromFetchConf() string {
+	//This means that helmChart has been mentioned directly in the fetch section of Package.
+	if yttTemplateStep.pkgBuild.Spec.Vendir == nil {
+		return "-"
+	}
+
+	directories := yttTemplateStep.pkgBuild.Spec.Vendir.Directories
+	if directories == nil {
+		return "-"
+	}
+
+	var path string
+	for _, directory := range directories {
+		directoryPath := directory.Path
+		for _, content := range directories[0].Contents {
+			if content.Directory != nil {
+				path = directoryPath + "/" + content.Path
+				break
+			}
+		}
+	}
+	return path
 }

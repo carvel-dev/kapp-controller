@@ -16,8 +16,9 @@ const (
 )
 
 type PackageBuild struct {
-	metav1.TypeMeta `json:",inline"`
-	Spec            Spec `json:"spec, omitempty"`
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:",inline"`
+	Spec              Spec `json:"spec, omitempty"`
 }
 
 type Imgpkg struct {

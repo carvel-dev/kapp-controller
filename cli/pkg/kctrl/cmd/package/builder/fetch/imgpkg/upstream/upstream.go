@@ -94,12 +94,14 @@ func (upstreamStep *UpstreamStep) Interact() error {
 			return err
 		}
 	}
-	includedPaths, err := upstreamStep.getIncludedPaths()
-	if err != nil {
-		return err
+	if VendirHelmChartConf != upstreamTypeNames[upstreamTypeSelectedIndex] {
+		includedPaths, err := upstreamStep.getIncludedPaths()
+		if err != nil {
+			return err
+		}
+		upstreamStep.pkgBuild.Spec.Vendir.Directories[0].Contents[0].IncludePaths = includedPaths
+		upstreamStep.pkgBuild.WriteToFile(upstreamStep.PkgLocation)
 	}
-	upstreamStep.pkgBuild.Spec.Vendir.Directories[0].Contents[0].IncludePaths = includedPaths
-	upstreamStep.pkgBuild.WriteToFile(upstreamStep.PkgLocation)
 	return nil
 }
 
@@ -220,7 +222,6 @@ func (upstreamStep *UpstreamStep) PostInteract() error {
 func (upstreamStep *UpstreamStep) createVendirFile() error {
 	vendirFileLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "vendir.yml")
 	upstreamStep.pkgAuthoringUI.PrintInformationalText("We have all the information needed to sync the upstream. To create an imgpkg bundle, data has to be synced from upstream to local. To sync the data from upstream to local, we will use vendir. Vendir allows to declaratively state what should be in a directory and sync any number of data sources into it. Lets use our inputs to create vendir.yml file.")
-	upstreamStep.pkgAuthoringUI.PrintActionableText("Creating vendir.yml")
 	data, err := yaml.Marshal(&upstreamStep.pkgBuild.Spec.Vendir)
 	if err != nil {
 		return fmt.Errorf("Unable to create vendir.yml\n %s", err.Error())

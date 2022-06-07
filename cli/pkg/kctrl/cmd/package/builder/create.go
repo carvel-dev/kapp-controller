@@ -22,7 +22,15 @@ import (
 )
 
 const (
-	PkgBuildFileName = "package-build.yml"
+	PkgBuildFileName             = "package-build.yml"
+	PkgFetchContentAnnotationKey = "fetch-content-from"
+)
+
+const (
+	FetchReleaseArtifactFromGithub string = "Release artifact from Github Repository"
+	FetchManifestFromGithub        string = "Github Repository"
+	FetchChartFromHelmRepo         string = "Helm Repository"
+	FetchChartFromGithub           string = "Helm Chart from Github repository"
 )
 
 type CreateOptions struct {
@@ -59,7 +67,10 @@ func NewCreateCmd(o *CreateOptions) *cobra.Command {
 
 func (o *CreateOptions) Run(args []string) error {
 	//TODO Rohit Should we provide an option to give pkg location?
-	pkgLocation := GetPkgLocation()
+	pkgLocation, err := GetPkgLocation()
+	if err != nil {
+		return err
+	}
 	pkgBuildFilePath := filepath.Join(pkgLocation, PkgBuildFileName)
 	pkgBuild, err := build.GeneratePackageBuild(pkgBuildFilePath)
 	if err != nil {
@@ -124,27 +135,61 @@ func (createStep *CreateStep) Interact() error {
 		return err
 	}
 
+	defaultManifestOptionSelected := getManifestOptionFromPkgBuild(createStep.pkgBuild)
+	createStep.pkgAuthoringUI.PrintInformationalText("In package, we need to fetch the manifest which defines how the application would be deployed in a K8s cluster. This manifest can be in the form of a yaml file used with `kubectl apply ...` or it could be a helm chart used with `helm install ...`. They can be available in Github repository, release artifact of a Github Repository, helm repo. Please specify the information with regards to where the manifest can be fetched from:")
+	manifestOptions := []string{FetchReleaseArtifactFromGithub, FetchManifestFromGithub, FetchChartFromHelmRepo, FetchChartFromGithub}
+	defaultFetchManifestOptionIndex := getDefaultManifestOptionIndex(manifestOptions, defaultManifestOptionSelected)
+	choiceOpts := ui.ChoiceOpts{
+		Label:   "Where is the manifest located",
+		Default: defaultFetchManifestOptionIndex,
+		Choices: manifestOptions,
+	}
+	manifestOptionSelectedIndex, err := createStep.pkgAuthoringUI.AskForChoice(choiceOpts)
+	createStep.pkgBuild.Annotations[PkgFetchContentAnnotationKey] = manifestOptions[manifestOptionSelectedIndex]
+	createStep.pkgBuild.WriteToFile(createStep.pkgLocation)
+
+	createStep.pkgBuild.Annotations[PkgFetchContentAnnotationKey] = manifestOptions[manifestOptionSelectedIndex]
+	createStep.pkgBuild.WriteToFile(createStep.pkgLocation)
+
 	err = createStep.configureFetchSection()
 	if err != nil {
 		return err
 	}
-	/*
-		err = createStep.configureTemplateSection()
-		if err != nil {
-			return err
-		}
 
-			err = createStep.configureValuesSchema()
+	err = createStep.configureTemplateSection()
+	if err != nil {
+		return err
+	}
+
+	/*		err = createStep.configureValuesSchema()
 			if err != nil {
 				return err
 			}
 
 	*/
-
+	createStep.printNextStep()
 	return nil
 }
 
-//Get Fully Qualified Name of the Package and store it in package-build.yml
+func getManifestOptionFromPkgBuild(pkgBuild *build.PackageBuild) string {
+	return pkgBuild.Annotations[PkgFetchContentAnnotationKey]
+}
+
+func getDefaultManifestOptionIndex(manifestOptions []string, defaultManifestOptionSelected string) int {
+	var defaultManifestOptionIndex int
+	if defaultManifestOptionSelected == "" {
+		defaultManifestOptionIndex = 0
+	} else {
+		for i, fetchTypeName := range manifestOptions {
+			if fetchTypeName == defaultManifestOptionSelected {
+				defaultManifestOptionIndex = i
+				break
+			}
+		}
+	}
+	return defaultManifestOptionIndex
+}
+
 //Get Fully Qualified Name of the Package and store it in package-build.yml
 func (createStep CreateStep) configureFullyQualifiedName() error {
 	createStep.printFQPkgNameBlock()
@@ -303,6 +348,10 @@ func (createStep CreateStep) printPackageMetadataCR(pkgMetadata v1alpha1.Package
 	return nil
 }
 
+func (createStep CreateStep) printNextStep() {
+
+}
+
 func writeToFile(path string, data []byte) error {
 	err := os.WriteFile(path, data, 0644)
 	if err != nil {
@@ -311,8 +360,12 @@ func writeToFile(path string, data []byte) error {
 	return nil
 }
 
-func GetPkgLocation() string {
+func GetPkgLocation() (string, error) {
 	pwd, _ := os.Getwd()
 	//TODO Rohit what should we call the folder name
-	return filepath.Join(pwd, "pkgBuild")
+	pkgLocation, err := filepath.Rel(pwd, filepath.Join(pwd, "pkgBuild"))
+	if err != nil {
+		return "", err
+	}
+	return pkgLocation, nil
 }

@@ -38,11 +38,10 @@ spec:
             - 
               ytt: 
                 paths: 
-                  - config/
+                  - "-"
             - 
               kbld: 
                 paths: 
-                  - .imgpkg/images.yml
                   - "-"
       version: "1.0.0"
   packageMetadata: 

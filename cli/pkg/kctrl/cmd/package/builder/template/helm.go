@@ -55,7 +55,7 @@ func (helmStep *HelmTemplateStep) Interact() error {
 }
 
 func (helmStep HelmTemplateStep) askForPath() bool {
-	return true
+	return false
 }
 
 func isHelmTemplateExist(existingTemplates []v1alpha1.AppTemplate) bool {
@@ -82,8 +82,8 @@ func isHelmTemplateExistOnlyOnce(existingTemplates []v1alpha1.AppTemplate) bool 
 }
 
 func (helmStep HelmTemplateStep) initializeHelmTemplate() {
-	helmStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template = append(helmStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template,
-		v1alpha1.AppTemplate{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{}})
+	helmStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template = append([]v1alpha1.AppTemplate{
+		v1alpha1.AppTemplate{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{}}}, helmStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template...)
 	helmStep.pkgBuild.WriteToFile(helmStep.pkgLocation)
 }
 

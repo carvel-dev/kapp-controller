@@ -1,7 +1,6 @@
 package template
 
 import (
-	"github.com/cppforlife/go-cli-ui/ui"
 	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
 	pkgui "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/ui"
@@ -37,7 +36,6 @@ func (templateStep TemplateStep) PostInteract() error {
 }
 
 func (templateStep *TemplateStep) Interact() error {
-
 	if templateStep.isHelmTemplateRequired() {
 		helmTemplateStep := NewHelmTemplateStep(templateStep.pkgAuthoringUI, templateStep.pkgLocation, templateStep.pkgBuild)
 		err := common.Run(helmTemplateStep)
@@ -45,7 +43,6 @@ func (templateStep *TemplateStep) Interact() error {
 			return err
 		}
 	}
-
 	err := templateStep.configureYtt()
 	if err != nil {
 		return err
@@ -56,26 +53,6 @@ func (templateStep *TemplateStep) Interact() error {
 		return err
 	}
 
-	templateType, err := templateStep.pkgAuthoringUI.AskForChoice(ui.ChoiceOpts{
-		Label:   "Enter the templating tool to be used",
-		Default: 0,
-		Choices: []string{"ytt(recommended)", "helmTemplate"},
-	})
-	if err != nil {
-		return err
-	}
-	//var appTemplateList []v1alpha1.AppTemplate
-	switch templateType {
-	case Ytt:
-		/*yttTemplateStep := NewYttTemplateStep(templateStep.pkgAuthoringUI)
-		yttTemplateStep.Run()
-		yttAppTemplate := v1alpha1.AppTemplate{
-			Ytt: &yttTemplateStep.appTemplateYtt,
-		}
-		appTemplateList = append(appTemplateList, yttAppTemplate)
-		templateStep.AppTemplate = appTemplateList*/
-	case HelmTemplate:
-	}
 	return nil
 }
 
@@ -84,10 +61,11 @@ func (templateStep TemplateStep) isHelmTemplateRequired() bool {
 }
 
 func (templateStep TemplateStep) configureKbld() error {
-	return nil
+	kbldTemplateStep := NewKbldTemplateStep(templateStep.pkgAuthoringUI, templateStep.pkgLocation, templateStep.pkgBuild)
+	return common.Run(kbldTemplateStep)
 }
 
 func (templateStep TemplateStep) configureYtt() error {
-	//yttTemplateStep := NewYttTemplateStep(templateStep.pkgAuthoringUI)
-	return nil
+	yttTemplateStep := NewYttTemplateStep(templateStep.pkgAuthoringUI, templateStep.pkgLocation, templateStep.pkgBuild)
+	return common.Run(yttTemplateStep)
 }
