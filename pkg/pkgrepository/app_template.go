@@ -30,10 +30,23 @@ var rebaseRule string = `
 
         #@ def get_rev(annotations):
         #@   if hasattr(annotations, "packaging.carvel.dev/revision"):
-        #@     return int(annotations["packaging.carvel.dev/revision"])
+        #@     return [int(x) for x in annotations["packaging.carvel.dev/revision"].split('.')]
         #@   else:
-        #@     return -1
+        #@     return [-1]
         #@   end
+        #@ end
+
+        #! return 0 iff eq, 1 (or more) iff r1 is gt r2, -1(or less) iff r1 < r2
+        #@ def cmp_rev(r1, r2):
+        #@   size = min(len(r1), len(r2))
+        #@   for i in range(size):
+        #@     if r1[i] > r2[i]:
+        #@        return 1
+        #@     elif r1[i] < r2[i]:
+        #@        return -1
+        #@     end
+        #@   end
+        #@   return len(r1) - len(r2)
         #@ end
 
         #@ def filter(d, s):
@@ -114,7 +127,7 @@ var rebaseRule string = `
           annotations:
             #@overlay/match missing_ok=True
             kapp.k14s.io/noop: ""
-        #@ elif get_rev(data.values.existing.metadata.annotations) > get_rev(data.values.new.metadata.annotations):
+        #@ elif cmp_rev(get_rev(data.values.existing.metadata.annotations), get_rev(data.values.new.metadata.annotations)) > 0:
         #@overlay/match by=overlay.all
         ---
         metadata:
@@ -122,7 +135,7 @@ var rebaseRule string = `
           annotations:
             #@overlay/match missing_ok=True
             kapp.k14s.io/noop: ""
-        #@   elif get_rev(data.values.existing.metadata.annotations) < get_rev(data.values.new.metadata.annotations):
+        #@   elif cmp_rev(get_rev(data.values.existing.metadata.annotations), get_rev(data.values.new.metadata.annotations)) < 0:
         #@     print("replacing existing older rev with newer rev")
         #@   else:
         #@     msg = "Error: Conflicting Resources: " + data.values.existing.kind + "/" + data.values.existing.metadata.name + " is already present but not identical (" + reason +")"

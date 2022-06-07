@@ -776,7 +776,7 @@ spec:
           metadata:
             name: %s
             annotations:
-              packaging.carvel.dev/revision: "%d"
+              packaging.carvel.dev/revision: "%s"
           spec:
             refName: pkg0.test.carvel.dev
             version: 0.0.0
@@ -785,8 +785,8 @@ spec:
 `
 	pkgr1Name := "repo1"
 	pkgr2Name := "repo2"
-	pkgr1 := fmt.Sprintf(pkgrTemplate, pkgr1Name, pkgName, 1)
-	pkgr2 := fmt.Sprintf(pkgrTemplate, pkgr2Name, pkgName, 2)
+	pkgr1 := fmt.Sprintf(pkgrTemplate, pkgr1Name, pkgName, "1")
+	pkgr2 := fmt.Sprintf(pkgrTemplate, pkgr2Name, pkgName, "2")
 
 	env := e2e.BuildEnv(t)
 	logger := e2e.Logger{}
@@ -842,6 +842,56 @@ spec:
 
 		assertPkgOwnedBy(pkgr2Name)
 	})
+
+	logger.Section("install some pkgrs with some other versions", func() {
+		pkgr3Name := "repo3"
+		pkgr3 := fmt.Sprintf(pkgrTemplate, pkgr3Name, pkgName, "2.0") // 2.0 should take priorit over "2"
+		appName3 := "pkgr-3"
+		cleaner3 := func() {
+			kapp.Run([]string{"delete", "-a", appName3})
+		}
+		cleaner3()
+		defer cleaner3()
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName3},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr3), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
+		out := kapp.Run([]string{"inspect", "-a", appName1, "--json"})
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy(pkgr3Name)
+
+		/// now install one of lower rev
+		pkgr4Name := "repo4"
+		pkgr4 := fmt.Sprintf(pkgrTemplate, pkgr4Name, pkgName, "1.6.8") // 2.0 should still take priority
+		appName4 := "pkgr-4"
+		cleaner4 := func() {
+			kapp.Run([]string{"delete", "-a", appName4})
+		}
+		cleaner4()
+		defer cleaner4()
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName4},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr4), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
+		out = kapp.Run([]string{"inspect", "-a", appName1, "--json"})
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy(pkgr3Name)
+
+		/// now install one of higher rev
+		pkgr5Name := "repo5"
+		pkgr5 := fmt.Sprintf(pkgrTemplate, pkgr5Name, pkgName, "2.1.0") // 2.1.0 should take priority
+		appName5 := "pkgr-5"
+		cleaner5 := func() {
+			kapp.Run([]string{"delete", "-a", appName5})
+		}
+		cleaner5()
+		defer cleaner5()
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName5},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr5), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
+		out = kapp.Run([]string{"inspect", "-a", appName1, "--json"})
+		require.Contains(t, out, `"reconcile_state": "ok"`)
+
+		assertPkgOwnedBy(pkgr5Name)
+	})
+
 }
 
 func Test_PackageReposWithOverlappingPackages_NonTrivialPackages(t *testing.T) {
