@@ -1,16 +1,85 @@
----
-ytt_version: v0.41.1
-ytt_checksum_darwin: c370fab22081b17b780d4ec37fb664edb58fe6f28d635ad4beccbac7997586f9
-ytt_checksum_linux: 65dbc4f3a4a2ed84296dd1b323e8e7bd77e488fa7540d12dd36cf7fb2fc77c03
-kbld_version: v0.33.0
-kbld_checksum_darwin: 181ac8be5652b54344617d90aa8e83fbb41756d1b4b99168fec85d8813b3c1b2
-kbld_checksum_linux: 38a5dad7ed478d209c8206d95546989b2730c7fed914c78d85eed68a2233688e
-kapp_version: v0.48.0
-kapp_checksum_darwin: 20b57cbb2ba883ebb78809a71c42c0f26b7b0ca15610d7a37dab4d962cca6e54
-kapp_checksum_linux: 1f5fa1cb1d90575d97d7f7f801070ebf4096f10a0b21b4bbd9521b183bad91c6
-imgpkg_version: v0.29.0
-imgpkg_checksum_darwin: b8462c9b2b9c060e1a81c206ea9810937bf7357ae2ee150f94ec8635dff1d612
-imgpkg_checksum_linux: c7190adcb8445480e4e457c899aecdf7ca98606c625493b904c0eb2ab721ce19
-vendir_version: v0.27.0
-vendir_checksum_darwin: c26547097d67f21e129a25557d9d36c7c0e109afe130adff63d3c83ce9459ecc
-vendir_checksum_linux: 1aa12d070f2e91fcb0f4d138704c5061075b0821e6f943f5a39676d7a4709142
+- checksums:
+    darwin:
+      amd64: c370fab22081b17b780d4ec37fb664edb58fe6f28d635ad4beccbac7997586f9
+    linux:
+      amd64: 65dbc4f3a4a2ed84296dd1b323e8e7bd77e488fa7540d12dd36cf7fb2fc77c03
+  dev: true
+  name: ytt
+  repo: vmware-tanzu/carvel-ytt
+  urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
+  version: v0.41.1
+- checksums:
+    darwin:
+      amd64: 181ac8be5652b54344617d90aa8e83fbb41756d1b4b99168fec85d8813b3c1b2
+    linux:
+      amd64: 38a5dad7ed478d209c8206d95546989b2730c7fed914c78d85eed68a2233688e
+  dev: true
+  name: kbld
+  repo: vmware-tanzu/carvel-kbld
+  urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
+  version: v0.33.0
+- checksums:
+    darwin:
+      amd64: 20b57cbb2ba883ebb78809a71c42c0f26b7b0ca15610d7a37dab4d962cca6e54
+    linux:
+      amd64: 1f5fa1cb1d90575d97d7f7f801070ebf4096f10a0b21b4bbd9521b183bad91c6
+  dev: true
+  name: kapp
+  repo: vmware-tanzu/carvel-kapp
+  urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
+  version: v0.48.0
+- checksums:
+    darwin:
+      amd64: b8462c9b2b9c060e1a81c206ea9810937bf7357ae2ee150f94ec8635dff1d612
+    linux:
+      amd64: c7190adcb8445480e4e457c899aecdf7ca98606c625493b904c0eb2ab721ce19
+  dev: true
+  name: imgpkg
+  repo: vmware-tanzu/carvel-imgpkg
+  urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
+  version: v0.29.0
+- checksums:
+    darwin:
+      amd64: c26547097d67f21e129a25557d9d36c7c0e109afe130adff63d3c83ce9459ecc
+    linux:
+      amd64: 1aa12d070f2e91fcb0f4d138704c5061075b0821e6f943f5a39676d7a4709142
+  dev: true
+  name: vendir
+  repo: vmware-tanzu/carvel-vendir
+  urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
+  version: v0.27.0
+- checksums:
+    linux:
+      amd64: 8408c91e846c5b9ba15eb6b1a5a79fc22dd4d33ac6ea63388e5698d1b2320c8b
+  dev: false
+  name: helm
+  repo: helm/helm
+  tarballSubpath: '{{.OS}}-{{.Arch}}/helm'
+  urlTemplate: https://get.helm.sh/helm-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
+  version: v3.8.0
+- checksums:
+    linux:
+      amd64: 53aec65e45f62a769ff24b7e5384f0c82d62668dd96ed56685f649da114b4dbb
+  dev: false
+  name: sops
+  repo: mozilla/sops
+  urlTemplate: https://github.com/mozilla/sops/releases/download/{{.Version}}/sops-{{.Version}}.{{.OS}}.{{.Arch}}
+  version: v3.7.3
+- checksums:
+    linux:
+      amd64: 6414f71ce947fbbea1314f6e9786c5d48436ebc76c3fd6167bf018e432b3b669
+  dev: false
+  name: age
+  repo: FiloSottile/age
+  tarballSubpath: age/age
+  urlTemplate: https://github.com/FiloSottile/age/releases/download/{{.Version}}/age-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
+  version: v1.0.0
+- checksums:
+    linux:
+      amd64: d43cf77e54f42619d270b8e4c1836aec87304daf243449c503251e6943f7466a
+  dev: false
+  name: cue
+  repo: cue-lang/cue
+  tarballSubpath: cue
+  urlTemplate: https://github.com/cue-lang/cue/releases/download/{{.Version}}/cue_{{.Version}}_{{.OS}}_{{.Arch}}.tar.gz
+  version: v0.4.2
