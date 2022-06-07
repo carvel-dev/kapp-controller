@@ -88,6 +88,7 @@ spec:
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", appName})
 	}
+	cleanUp()
 	defer cleanUp()
 
 	logger.Section("package available list with no package present", func() {
