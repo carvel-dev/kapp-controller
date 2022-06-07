@@ -88,7 +88,7 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
-	cmd.Flags().StringVar(&o.version, "version", "", "Set package version (required)")
+	cmd.Flags().StringVarP(&o.version, "version", "v", "", "Set package version (required)")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
@@ -129,7 +129,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
-	cmd.Flags().StringVar(&o.version, "version", "", "Set package version (required)")
+	cmd.Flags().StringVarP(&o.version, "version", "v", "", "Set package version (required)")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
@@ -169,7 +169,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Name of package install to be updated")
-	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
+	cmd.Flags().StringVarP(&o.version, "version", "v", "", "Set package version")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
 
