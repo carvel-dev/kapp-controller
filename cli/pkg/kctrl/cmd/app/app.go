@@ -33,7 +33,7 @@ func appStatusString(app *kcv1alpha1.App) string {
 		return ""
 	}
 	if app.Spec.Canceled {
-		return color.RedString("Camceled")
+		return color.RedString("Canceled")
 	}
 	if app.Spec.Paused {
 		return color.YellowString("Paused")
