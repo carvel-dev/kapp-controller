@@ -21,7 +21,7 @@ import (
 	otherkyaml "sigs.k8s.io/yaml" // TODO: dude seriously there's so many yamls what would you call this one
 )
 
-var rebaseRule string = `
+var rebaseRule = `
         #@ load("@ytt:data", "data")
         #@ load("@ytt:yaml", "yaml")
         #@ load("@ytt:json", "json")
