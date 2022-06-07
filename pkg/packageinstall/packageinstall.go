@@ -147,15 +147,19 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 		return reconcile.Result{Requeue: true}, err
 	}
 
-	appStatus := reconciler.Status{S: existingApp.Status.GenericStatus}
-	switch {
-	case appStatus.IsReconciling():
+	if existingApp.Generation != existingApp.Status.ObservedGeneration {
 		modelStatus.SetReconciling(pi.model.ObjectMeta)
-	case appStatus.IsReconcileSucceeded():
-		modelStatus.SetReconcileCompleted(nil)
-	case appStatus.IsReconcileFailed():
-		modelStatus.SetUsefulErrorMessage(existingApp.Status.UsefulErrorMessage)
-		modelStatus.SetReconcileCompleted(fmt.Errorf("Error (see .status.usefulErrorMessage for details)"))
+	} else {
+		appStatus := reconciler.Status{S: existingApp.Status.GenericStatus}
+		switch {
+		case appStatus.IsReconciling():
+			modelStatus.SetReconciling(pi.model.ObjectMeta)
+		case appStatus.IsReconcileSucceeded():
+			modelStatus.SetReconcileCompleted(nil)
+		case appStatus.IsReconcileFailed():
+			modelStatus.SetUsefulErrorMessage(existingApp.Status.UsefulErrorMessage)
+			modelStatus.SetReconcileCompleted(fmt.Errorf("Error (see .status.usefulErrorMessage for details)"))
+		}
 	}
 
 	return pi.reconcileAppWithPackage(existingApp, pkg)
