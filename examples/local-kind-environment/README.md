@@ -1,6 +1,6 @@
 # Setup a local Carvel Kapp Controller in KIND
 
-The purpose of this doc is to walk through the necessary steps to setup Kapp-Controller insidne of [KIND.](https://kind.sigs.k8s.io/docs/user/quick-start/)
+The purpose of this doc is to walk through the necessary steps to setup Kapp-Controller inside of [KIND.](https://kind.sigs.k8s.io/docs/user/quick-start/)
 
 This doc also provides examples on creating:
 
@@ -154,7 +154,7 @@ Package Repository
 ```sh
 ❯ kubectl get packagerepository -n kapp-controller-packaging-global
 NAME                            AGE    DESCRIPTION
-mgmt-core-services.twilio.com   125m   Reconcile succeeded
+package-repository.example.com   125m   Reconcile succeeded
 ```
 
 Packages
