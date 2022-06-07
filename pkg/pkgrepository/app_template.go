@@ -21,70 +21,7 @@ import (
 	otherkyaml "sigs.k8s.io/yaml" // TODO: dude seriously there's so many yamls what would you call this one
 )
 
-func (a *App) template(dirPath string) exec.CmdRunResult {
-	// we have multiple ytt sections because we want to squash all the user yamls together
-	// and then apply our overlays. This way we do multiple distinct ytt passes.
-	template1 := kcv1alpha1.AppTemplateYtt{
-		IgnoreUnknownComments: true,
-		Paths:                 []string{"packages"},
-	}
-	template2 := kcv1alpha1.AppTemplateYtt{
-		Paths: []string{"-"},
-		Inline: &kcv1alpha1.AppFetchInline{
-			Paths: map[string]string{
-				// - Adjust the contents of the repo including adding
-				//   annotations and ensuring namespace.
-				// - Remove all resources that are not known to this kapp-controller.
-				//   It's worth just removing instead of erroring,
-				//   since future repo bundles may introduce new kinds.
-				"kapp-controller-clean-up.yml": fmt.Sprintf(`
-#@ load("@ytt:overlay", "overlay")
-
-#@ pkg = overlay.subset({"apiVersion":"data.packaging.carvel.dev/v1alpha1", "kind": "Package"})
-#@ pkgm = overlay.subset({"apiVersion":"data.packaging.carvel.dev/v1alpha1", "kind": "PackageMetadata"})
-
-#@overlay/match by=overlay.not_op(overlay.or_op(pkg, pkgm)),expects="0+"
-#@overlay/remove
----
-
-#@overlay/match by=overlay.all,expects="0+"
----
-metadata:
-  #! Ensure that all resources do not set some random namespace
-  #! so that all resource end in the PackageRepository's namespace
-  #@overlay/match missing_ok=True
-  #@overlay/remove
-  namespace:
-
-  #@overlay/match missing_ok=True
-  annotations:
-    #@overlay/match missing_ok=True
-    kapp.k14s.io/disable-original: ""
-
-    #@overlay/match missing_ok=True
-    kapp.k14s.io/disable-wait: ""
-
-    #@overlay/match missing_ok=True
-    packaging.carvel.dev/package-repository-ref: %s/%s
-
-    #@overlay/match missing_ok=True
-    kapp.k14s.io/create-strategy: "fallback-on-update-or-noop"`, a.Namespace(), a.Name()),
-			},
-		},
-	}
-	template3 := kcv1alpha1.AppTemplateYtt{
-		Paths: []string{"-"},
-		Inline: &kcv1alpha1.AppFetchInline{
-			Paths: map[string]string{
-				//   rebase rule to allow multiple repositories to expose identical packages.
-				"noop-on-identical-packages.yml": `
----
-apiVersion: kapp.k14s.io/v1alpha1
-kind: Config
-rebaseRules:
-- ytt:
-    overlayContractV1:
-      overlay.yml: |
+var rebaseRule string = `
         #@ load("@ytt:data", "data")
         #@ load("@ytt:yaml", "yaml")
         #@ load("@ytt:json", "json")
@@ -196,7 +133,74 @@ rebaseRules:
   resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: data.packaging.carvel.dev/v1alpha1, kind: Package}
   - apiVersionKindMatcher: {apiVersion: data.packaging.carvel.dev/v1alpha1, kind: PackageMetadata}
-`,
+`
+
+func (a *App) template(dirPath string) exec.CmdRunResult {
+	// we have multiple ytt sections because we want to squash all the user yamls together
+	// and then apply our overlays. This way we do multiple distinct ytt passes.
+	template1 := kcv1alpha1.AppTemplateYtt{
+		IgnoreUnknownComments: true,
+		Paths:                 []string{"packages"},
+	}
+	template2 := kcv1alpha1.AppTemplateYtt{
+		Paths: []string{"-"},
+		Inline: &kcv1alpha1.AppFetchInline{
+			Paths: map[string]string{
+				// - Adjust the contents of the repo including adding
+				//   annotations and ensuring namespace.
+				// - Remove all resources that are not known to this kapp-controller.
+				//   It's worth just removing instead of erroring,
+				//   since future repo bundles may introduce new kinds.
+				"kapp-controller-clean-up.yml": fmt.Sprintf(`
+#@ load("@ytt:overlay", "overlay")
+
+#@ pkg = overlay.subset({"apiVersion":"data.packaging.carvel.dev/v1alpha1", "kind": "Package"})
+#@ pkgm = overlay.subset({"apiVersion":"data.packaging.carvel.dev/v1alpha1", "kind": "PackageMetadata"})
+
+#@overlay/match by=overlay.not_op(overlay.or_op(pkg, pkgm)),expects="0+"
+#@overlay/remove
+---
+
+#@overlay/match by=overlay.all,expects="0+"
+---
+metadata:
+  #! Ensure that all resources do not set some random namespace
+  #! so that all resource end in the PackageRepository's namespace
+  #@overlay/match missing_ok=True
+  #@overlay/remove
+  namespace:
+
+  #@overlay/match missing_ok=True
+  annotations:
+    #@overlay/match missing_ok=True
+    kapp.k14s.io/disable-original: ""
+
+    #@overlay/match missing_ok=True
+    kapp.k14s.io/disable-wait: ""
+
+    #@overlay/match missing_ok=True
+    packaging.carvel.dev/package-repository-ref: %s/%s
+
+    #@overlay/match missing_ok=True
+    kapp.k14s.io/create-strategy: "fallback-on-update-or-noop"`, a.Namespace(), a.Name()),
+			},
+		},
+	}
+	template3 := kcv1alpha1.AppTemplateYtt{
+		Paths: []string{"-"},
+		Inline: &kcv1alpha1.AppFetchInline{
+			Paths: map[string]string{
+				//   rebase rule to allow multiple repositories to expose identical packages.
+				"noop-on-identical-packages.yml": fmt.Sprintf(`
+---
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+rebaseRules:
+- ytt:
+    overlayContractV1:
+      overlay.yml: |
+%s
+`, rebaseRule),
 			},
 		},
 	}
