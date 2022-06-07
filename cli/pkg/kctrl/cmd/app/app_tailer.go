@@ -112,7 +112,7 @@ func (o *AppTailer) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alpha
 	}
 
 	if o.hasReconciled(status) {
-		o.statusUI.PrintLogLine("App reconciled", "", false, status.Deploy.UpdatedAt.Time)
+		o.statusUI.PrintLogLine("Deploy succeeded", "", false, status.Deploy.UpdatedAt.Time)
 		o.stopWatch(false)
 	}
 	failed, errMsg := o.hasFailed(status)
