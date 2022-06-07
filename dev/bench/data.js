@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654595088990,
+  "lastUpdate": 1654612458683,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -1881,6 +1881,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6402914909,
             "unit": "ns/op\t         4.239 DeleteSeconds\t         2.128 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "benm@vmware.com",
+            "name": "Ben Moss",
+            "username": "benmoss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "799672bc102662495e5ec43aac0c8aa2b880dbb8",
+          "message": "Install/lock dependencies via config file (#721)\n\n* Install/lock dependencies via config file\r\n* fix kc binary names",
+          "timestamp": "2022-06-07T10:22:21-04:00",
+          "tree_id": "2ba7c458bdc1434b925d9ab2d6db905c115ba236",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/799672bc102662495e5ec43aac0c8aa2b880dbb8"
+        },
+        "date": 1654612457309,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36811947317,
+            "unit": "ns/op\t        19.14 DeleteSeconds\t        17.63 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9571864011,
+            "unit": "ns/op\t         5.331 DeleteSeconds\t         4.192 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6531431323,
+            "unit": "ns/op\t         4.311 DeleteSeconds\t         2.166 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
