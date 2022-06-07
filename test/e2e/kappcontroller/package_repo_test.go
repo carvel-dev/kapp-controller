@@ -105,13 +105,8 @@ spec:
 	defer cleanUp()
 
 	logger.Section("deploy", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			e2e.RunOpts{StdinReader: strings.NewReader(repoYml), AllowError: true})
-		// if pkgrs are failing to deploy, it's helpful to see the .usefulErrorMessage at this juncture:
-		if err != nil {
-			fmt.Println(kubectl.Run([]string{"get", "pkgr", "-oyaml"}))
-		}
-		require.NoError(t, err)
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			e2e.RunOpts{StdinReader: strings.NewReader(repoYml), OnErrKubectl: []string{"get", "pkgr", "-oyaml"}})
 	})
 
 	expectedStatus := v1alpha1.PackageRepositoryStatus{
