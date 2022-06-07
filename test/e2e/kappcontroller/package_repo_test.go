@@ -376,15 +376,10 @@ spec:
 	defer cleanUp()
 
 	logger.Section("deploy pkgr1", func() {
-		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), AllowError: true})
-		if err != nil {
-			fmt.Println(out)
-			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
-		}
-		assert.NoError(t, err)
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
 
-		out, err = kubectl.RunWithOpts([]string{"get", "packages", "-A"}, e2e.RunOpts{NoNamespace: true})
+		out, _ := kubectl.RunWithOpts([]string{"get", "packages", "-A"}, e2e.RunOpts{NoNamespace: true})
 		require.Contains(t, out, "pkg0.test.carvel.dev.0.0.0")
 
 		out = kapp.Run([]string{"inspect", "-a", appName1, "--json"})
@@ -394,15 +389,10 @@ spec:
 	})
 
 	logger.Section("deploy pkgr2 successfully, but pkg is still owned by pkgr1", func() {
-		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), AllowError: true})
-		if err != nil {
-			fmt.Println(out)
-			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
-		}
-		assert.NoError(t, err)
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
 
-		out = kapp.Run([]string{"inspect", "-a", appName2, "--json"})
+		out := kapp.Run([]string{"inspect", "-a", appName2, "--json"})
 		require.Contains(t, out, `"reconcile_state": "ok"`)
 
 		assertPkgOwnedBy1()
@@ -446,15 +436,10 @@ spec:
 	pkgr2u := fmt.Sprintf(pkgrUpdate, pkgr2Name, "pkg0.test.carvel.dev", "0.0.0")
 
 	logger.Section("updated pkgr1", func() {
-		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1u), AllowError: true})
-		if err != nil {
-			fmt.Println(out)
-			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
-		}
-		assert.NoError(t, err)
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName1},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr1u), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
 
-		out = kapp.Run([]string{"inspect", "-a", appName1, "--json"})
+		out := kapp.Run([]string{"inspect", "-a", appName1, "--json"})
 		require.Contains(t, out, `"reconcile_state": "ok"`)
 
 		assertPkgOwnedBy1()
@@ -464,15 +449,10 @@ spec:
 	})
 
 	logger.Section("update pkgr2 successfully, but pkg is still owned by pkgr1", func() {
-		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2u), AllowError: true})
-		if err != nil {
-			fmt.Println(out)
-			fmt.Println(string(kubectl.Run([]string{"get", "pkgr", "-A", "-oyaml"})))
-		}
-		assert.NoError(t, err)
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName2},
+			e2e.RunOpts{StdinReader: strings.NewReader(pkgr2u), OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"}})
 
-		out = kapp.Run([]string{"inspect", "-a", appName2, "--json"})
+		out := kapp.Run([]string{"inspect", "-a", appName2, "--json"})
 		require.Contains(t, out, `"reconcile_state": "ok"`)
 
 		assertPkgOwnedBy1()
