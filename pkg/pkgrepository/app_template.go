@@ -119,6 +119,11 @@ rebaseRules:
         #@ end
         #@
         #@ def specs_are_identical(existing_spec, new_spec):
+        #@   if str(new_spec) == str(existing_spec):
+        #@     return True, ""
+        #@   end
+        #@
+        #!   the rest of this method is to help make a better error message
         #@   ex = existing_spec
         #@   nw = new_spec
         #@
@@ -132,11 +137,11 @@ rebaseRules:
         #@     if not attr in nw:
         #@       return False, "missing spec." + attr
         #@     end
-        #@     if nw[attr] != ex[attr]:
+        #@     if str(nw[attr]) != str(ex[attr]):
         #@       return False, "mismatch in spec." + attr
         #@     end
         #@   end
-        #@   return True, ""
+        #@   return False, "mismatch in unknown location"
         #@ end
         #@
         #@ def is_identical(existing, new):
