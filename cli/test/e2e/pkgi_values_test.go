@@ -104,7 +104,7 @@ foo: bar
 		require.NoError(t, err)
 		require.Contains(t, out, "Fetch succeeded")
 		require.Contains(t, out, "Template succeeded")
-		require.Contains(t, out, "App reconciled")
+		require.Contains(t, out, "Deploy succeeded")
 
 		// Check that ownership annotations are intact
 		secretName := fmt.Sprintf("%s-%s-values", pkgiName, env.Namespace)
