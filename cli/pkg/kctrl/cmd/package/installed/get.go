@@ -141,6 +141,9 @@ func (o *GetOptions) Run(args []string) error {
 }
 
 func (o *GetOptions) getSecretData(pkgi *kcpkgv1alpha1.PackageInstall) ([]byte, error) {
+	if len(pkgi.Spec.Values) == 0 {
+		return nil, fmt.Errorf("No values have been supplied to package installation '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+	}
 
 	if len(pkgi.Spec.Values) != 1 {
 		return nil, fmt.Errorf("Expected 1 values reference, found %d", len(pkgi.Spec.Values))
