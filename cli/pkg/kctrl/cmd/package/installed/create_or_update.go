@@ -201,7 +201,10 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 			return err
 		}
 
-		o.showVersions(pkgClient)
+		err = o.showVersions(pkgClient)
+		if err != nil {
+			return err
+		}
 		return fmt.Errorf("Expected package version to be non empty")
 	}
 
@@ -924,6 +927,10 @@ func (o *CreateOrUpdateOptions) showVersions(client pkgclient.Interface) error {
 		o.NamespaceFlags.Name).List(context.Background(), listOpts)
 	if err != nil {
 		return err
+	}
+
+	if len(pkgList.Items) == 0 {
+		return fmt.Errorf("No versions of package '%s' found in namespace '%s'", o.packageName, o.NamespaceFlags.Name)
 	}
 
 	table := uitable.Table{
