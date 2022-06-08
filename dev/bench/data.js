@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654701660733,
+  "lastUpdate": 1654705070164,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -2091,6 +2091,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6406396388,
             "unit": "ns/op\t         4.236 DeleteSeconds\t         2.133 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "davidblum@users.noreply.github.com",
+            "name": "David Blum",
+            "username": "davidblum"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a3a04afac3433abd121db2d6143743c8008da919",
+          "message": "Add documentation for running kapp-controller in KIND (#724)\n\n* Add documentation for running kapp-controller in KIND\r\n\r\n* typo, update readme",
+          "timestamp": "2022-06-08T12:05:38-04:00",
+          "tree_id": "5a27326418447473abb5fac273104c50a649d301",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/a3a04afac3433abd121db2d6143743c8008da919"
+        },
+        "date": 1654705068454,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36741137656,
+            "unit": "ns/op\t        19.08 DeleteSeconds\t        17.61 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9566259395,
+            "unit": "ns/op\t         5.335 DeleteSeconds\t         4.184 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6524210189,
+            "unit": "ns/op\t         4.330 DeleteSeconds\t         2.145 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
