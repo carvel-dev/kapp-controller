@@ -5,9 +5,7 @@ package e2e
 
 import (
 	"fmt"
-	"strings"
 	"testing"
-	"time"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/require"
@@ -55,23 +53,7 @@ func TestPackageRepository(t *testing.T) {
 	})
 
 	logger.Section("adding a repository", func() {
-		out, err := kappCtrl.RunWithOpts([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL}, RunOpts{AllowError: true})
-		if err != nil {
-			fmt.Println(kubectl.Run([]string{"get", "packagerepository", pkgrName, "-oyaml"}))
-		}
-		require.NoError(t, err)
-
-		fmt.Println(kubectl.Run([]string{"get", "pkg", "pkg.test.carvel.dev.3.0.0-rc.1", "-oyaml"}))
-
-		for i := 1; i < 5; i++ {
-			out = kubectl.Run([]string{"get", "packagerepository", pkgrName})
-			fmt.Println(out)
-			if strings.Contains(out, "failed") {
-				fmt.Println(kubectl.Run([]string{"get", "packagerepository", pkgrName, "-oyaml"}))
-			}
-			require.NotContains(t, out, "failed")
-			time.Sleep(time.Duration(i) * time.Second)
-		}
+		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL})
 		kubectl.Run([]string{"get", kind, pkgrName})
 		kubectl.Run([]string{"get", "pkgm/pkg.test.carvel.dev"})
 		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"})
