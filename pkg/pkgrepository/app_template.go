@@ -16,12 +16,102 @@ import (
 	ctltpl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	kyaml "k8s.io/apimachinery/pkg/util/yaml"
+	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes/scheme"
-	otherkyaml "sigs.k8s.io/yaml" // TODO: dude seriously there's so many yamls what would you call this one
+	sigsyaml "sigs.k8s.io/yaml"
 )
 
-var rebaseRule = `
+func (a *App) template(dirPath string) exec.CmdRunResult {
+    genericOpts := ctltpl.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
+
+	// We have multiple ytt sections because we want to squash all the user yamls together
+	// and then apply our overlays. This way we do multiple distinct ytt passes.
+
+	// First templating pass is to read all the files in
+    template1 := kcv1alpha1.AppTemplateYtt{
+        IgnoreUnknownComments: true,
+        Paths:                 []string{"packages"},
+    }
+	result, _ := a.templateFactory.NewYtt(template1, genericOpts).TemplateDir(dirPath)
+	if result.Error != nil {
+		return result
+	}
+
+	// Second templating applies a bunch of overlays and filters,
+    // some of which could be migrated to go code
+	stream := strings.NewReader(result.Stdout)
+	result = a.templateFactory.NewYtt(
+        a.yttTemplateCleanRs(), genericOpts).TemplateStream(stream, dirPath)
+	if result.Error != nil {
+		return result
+	}
+
+	// Intermediate phase deserializes and reserializes all of the resources
+	// which guarantees that they only include fields this version of kc knows about.
+	resources, err := FilterResources(result.Stdout)
+	if err != nil {
+		result.Error = err
+		return result
+	}
+
+	// Third templating inserts a kapp rebase rule to allow noops
+    // on identical resources provided by multiple pkgrs
+	stream = strings.NewReader(resources)
+	result = a.templateFactory.NewYtt(
+        a.yttTemplateAddIdenticalRsRebase(), genericOpts).TemplateStream(stream, dirPath)
+
+	return result
+}
+
+func (a *App) yttTemplateCleanRs() kcv1alpha1.AppTemplateYtt {
+    return kcv1alpha1.AppTemplateYtt{
+        Paths: []string{"-"},
+        Inline: &kcv1alpha1.AppFetchInline{
+            Paths: map[string]string{
+                // - Adjust the contents of the repo including adding
+                //   annotations and ensuring namespace.
+                // - Remove all resources that are not known to this kapp-controller.
+                //   It's worth just removing instead of erroring,
+                //   since future repo bundles may introduce new kinds.
+                "kapp-controller-clean-up.yml": fmt.Sprintf(`
+#@ load("@ytt:overlay", "overlay")
+
+#@ pkg = overlay.subset({"apiVersion":"data.packaging.carvel.dev/v1alpha1", "kind": "Package"})
+#@ pkgm = overlay.subset({"apiVersion":"data.packaging.carvel.dev/v1alpha1", "kind": "PackageMetadata"})
+
+#@overlay/match by=overlay.not_op(overlay.or_op(pkg, pkgm)),expects="0+"
+#@overlay/remove
+---
+
+#@overlay/match by=overlay.all,expects="0+"
+---
+metadata:
+  #! Ensure that all resources do not set some random namespace
+  #! so that all resource end in the PackageRepository's namespace
+  #@overlay/match missing_ok=True
+  #@overlay/remove
+  namespace:
+
+  #@overlay/match missing_ok=True
+  annotations:
+    #@overlay/match missing_ok=True
+    kapp.k14s.io/disable-original: ""
+
+    #@overlay/match missing_ok=True
+    kapp.k14s.io/disable-wait: ""
+
+    #@overlay/match missing_ok=True
+    packaging.carvel.dev/package-repository-ref: %s/%s
+
+    #@overlay/match missing_ok=True
+    kapp.k14s.io/create-strategy: "fallback-on-update-or-noop"`, a.Namespace(), a.Name()),
+            },
+        },
+    }
+}
+
+func (a *App) yttTemplateAddIdenticalRsRebase() kcv1alpha1.AppTemplateYtt {
+    var yttRebasePackageRelatedRsByRevision = `
         #@ load("@ytt:data", "data")
         #@ load("@ytt:yaml", "yaml")
         #@ load("@ytt:json", "json")
@@ -143,68 +233,14 @@ var rebaseRule = `
         #@     fail(msg)
         #@   end
         #@ end
-  resourceMatchers:
-  - apiVersionKindMatcher: {apiVersion: data.packaging.carvel.dev/v1alpha1, kind: Package}
-  - apiVersionKindMatcher: {apiVersion: data.packaging.carvel.dev/v1alpha1, kind: PackageMetadata}
 `
 
-func (a *App) template(dirPath string) exec.CmdRunResult {
-	// we have multiple ytt sections because we want to squash all the user yamls together
-	// and then apply our overlays. This way we do multiple distinct ytt passes.
-	template1 := kcv1alpha1.AppTemplateYtt{
-		IgnoreUnknownComments: true,
-		Paths:                 []string{"packages"},
-	}
-	template2 := kcv1alpha1.AppTemplateYtt{
-		Paths: []string{"-"},
-		Inline: &kcv1alpha1.AppFetchInline{
-			Paths: map[string]string{
-				// - Adjust the contents of the repo including adding
-				//   annotations and ensuring namespace.
-				// - Remove all resources that are not known to this kapp-controller.
-				//   It's worth just removing instead of erroring,
-				//   since future repo bundles may introduce new kinds.
-				"kapp-controller-clean-up.yml": fmt.Sprintf(`
-#@ load("@ytt:overlay", "overlay")
-
-#@ pkg = overlay.subset({"apiVersion":"data.packaging.carvel.dev/v1alpha1", "kind": "Package"})
-#@ pkgm = overlay.subset({"apiVersion":"data.packaging.carvel.dev/v1alpha1", "kind": "PackageMetadata"})
-
-#@overlay/match by=overlay.not_op(overlay.or_op(pkg, pkgm)),expects="0+"
-#@overlay/remove
----
-
-#@overlay/match by=overlay.all,expects="0+"
----
-metadata:
-  #! Ensure that all resources do not set some random namespace
-  #! so that all resource end in the PackageRepository's namespace
-  #@overlay/match missing_ok=True
-  #@overlay/remove
-  namespace:
-
-  #@overlay/match missing_ok=True
-  annotations:
-    #@overlay/match missing_ok=True
-    kapp.k14s.io/disable-original: ""
-
-    #@overlay/match missing_ok=True
-    kapp.k14s.io/disable-wait: ""
-
-    #@overlay/match missing_ok=True
-    packaging.carvel.dev/package-repository-ref: %s/%s
-
-    #@overlay/match missing_ok=True
-    kapp.k14s.io/create-strategy: "fallback-on-update-or-noop"`, a.Namespace(), a.Name()),
-			},
-		},
-	}
-	template3 := kcv1alpha1.AppTemplateYtt{
-		Paths: []string{"-"},
-		Inline: &kcv1alpha1.AppFetchInline{
-			Paths: map[string]string{
-				//   rebase rule to allow multiple repositories to expose identical packages.
-				"noop-on-identical-packages.yml": fmt.Sprintf(`
+    return kcv1alpha1.AppTemplateYtt{
+        Paths: []string{"-"},
+        Inline: &kcv1alpha1.AppFetchInline{
+            Paths: map[string]string{
+                //   rebase rule to allow multiple repositories to expose identical packages.
+                "noop-on-identical-packages.yml": fmt.Sprintf(`
 ---
 apiVersion: kapp.k14s.io/v1alpha1
 kind: Config
@@ -213,55 +249,23 @@ rebaseRules:
     overlayContractV1:
       overlay.yml: |
 %s
-`, rebaseRule),
-			},
-		},
-	}
-
-	genericOpts := ctltpl.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
-
-	// first templating pass is to read all the files in
-	var result exec.CmdRunResult
-	var template ctltpl.Template
-	template = a.templateFactory.NewYtt(template1, genericOpts)
-	result, _ = template.TemplateDir(dirPath)
-	if result.Error != nil {
-		return result
-	}
-
-	// second templating applies a bunch of overlays and filters, some of which could be migrated to go code
-	template = a.templateFactory.NewYtt(template2, genericOpts)
-	result = template.TemplateStream(strings.NewReader(result.Stdout), dirPath)
-	if result.Error != nil {
-		return result
-	}
-
-	// intermediate phase deserializes and reserializes all of the resources
-	// which guarantees that they only include fields this version of kc knows about.
-	resources, err := FilterResources(result.Stdout)
-	if err != nil {
-		result.Error = err
-		return result
-	}
-
-	// third templating inserts a kapp rebase rule to allow noops on identical resources provided by multiple pkgrs
-	template = a.templateFactory.NewYtt(template3, genericOpts)
-	result = template.TemplateStream(strings.NewReader(resources), dirPath)
-
-	return result
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: data.packaging.carvel.dev/v1alpha1, kind: Package}
+  - apiVersionKindMatcher: {apiVersion: data.packaging.carvel.dev/v1alpha1, kind: PackageMetadata}
+`, yttRebasePackageRelatedRsByRevision),
+            },
+        },
+    }
 }
 
 // FilterResources takes a multi-doc yaml of the templated
-// contents of a PKGR, and filters out unexpected fields on each resource by deserializing and re-serializing
-// This filtering step allows us to use newer CRDs (with new fields) in older versions of kc
+// contents of a PKGR, and filters out unexpected fields on each resource
+// by deserializing and re-serializing. This filtering step allows us
+// to use newer CRDs (with new fields) in older versions of kc
 // without triggering a mistmatch in the rebase "is_identical" checker.
 func FilterResources(yamlss string) (string, error) {
-	yamls := []byte(yamlss)
 	sch := runtime.NewScheme()
-	err := scheme.AddToScheme(sch)
-	if err != nil {
-		return "", err
-	}
+
 	err = datapackagingv1alpha1.AddToScheme(sch)
 	if err != nil {
 		return "", err
@@ -269,7 +273,7 @@ func FilterResources(yamlss string) (string, error) {
 	decoder := serializer.NewCodecFactory(sch).UniversalDeserializer().Decode
 
 	filteredYamls := []string{}
-	docs, err := yamlDocs(yamls)
+	docs, err := yamlDocs([]byte(yamlss))
 	if err != nil {
 		return "", err
 	}
@@ -291,14 +295,14 @@ func FilterResources(yamlss string) (string, error) {
 		switch kind {
 		case "Package":
 			p := obj.(*datapackagingv1alpha1.Package)
-			buf, err := otherkyaml.Marshal(p)
+			buf, err := sigsyaml.Marshal(p)
 			if err != nil {
 				return "", err
 			}
 			filteredYamls = append(filteredYamls, string(buf))
 		case "PackageMetadata":
 			p := obj.(*datapackagingv1alpha1.PackageMetadata)
-			buf, err := otherkyaml.Marshal(p)
+			buf, err := sigsyaml.Marshal(p)
 			if err != nil {
 				return "", err
 			}
@@ -315,7 +319,7 @@ func yamlDocs(yamls []byte) ([][]byte, error) {
 	var docs [][]byte
 
 	fileBytes := yamls
-	reader := kyaml.NewYAMLReader(bufio.NewReaderSize(bytes.NewReader(fileBytes), 4096))
+	reader := utilyaml.NewYAMLReader(bufio.NewReaderSize(bytes.NewReader(fileBytes), 4096))
 
 	for {
 		docBytes, err := reader.Read()
