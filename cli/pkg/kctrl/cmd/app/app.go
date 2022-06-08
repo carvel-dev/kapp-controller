@@ -4,10 +4,10 @@
 package app
 
 import (
-	"github.com/cppforlife/color"
 	"github.com/spf13/cobra"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func NewCmd() *cobra.Command {
@@ -33,19 +33,19 @@ func appStatusString(app *kcv1alpha1.App) string {
 		return ""
 	}
 	if app.Spec.Canceled {
-		return color.RedString("Canceled")
+		return "Canceled"
 	}
 	if app.Spec.Paused {
-		return color.YellowString("Paused")
+		return "Paused"
 	}
 	for _, condition := range app.Status.Conditions {
 		switch condition.Type {
 		case kcv1alpha1.ReconcileFailed:
-			return color.RedString("Reconcile failed")
+			return "Reconcile failed"
 		case kcv1alpha1.ReconcileSucceeded:
-			return color.GreenString("Reconcile succeeded")
+			return "Reconcile succeeded"
 		case kcv1alpha1.DeleteFailed:
-			return color.RedString("Deletion failed")
+			return "Deletion failed"
 		case kcv1alpha1.Reconciling:
 			return "Reconciling"
 		case kcv1alpha1.Deleting:
@@ -53,4 +53,13 @@ func appStatusString(app *kcv1alpha1.App) string {
 		}
 	}
 	return app.Status.FriendlyDescription
+}
+
+func isFailing(conditions []kcv1alpha1.AppCondition) bool {
+	for _, condition := range conditions {
+		if condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
 }
