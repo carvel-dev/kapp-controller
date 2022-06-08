@@ -1,0 +1,23 @@
+# See https://carvel.dev/kapp-controller/docs/v0.36.1/packaging/#package
+
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: example.com.http-bin.0.1.0
+  namespace: kapp-controller-packaging-global
+spec:
+  refName: example.com.http-bin
+  version: 0.1.0
+  releaseNotes: "install http-bin example"
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: kind-registry.local:5000/http-bin:0.1.0
+      template:
+        - kbld:
+            paths:
+              - /service
+      deploy:
+        - kapp: {}
+
