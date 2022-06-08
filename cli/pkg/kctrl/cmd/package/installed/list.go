@@ -96,7 +96,10 @@ func (o *ListOptions) Run() error {
 			uitable.NewValueString(pkgi.Name),
 			uitable.NewValueString(pkgi.Spec.PackageRef.RefName),
 			uitable.NewValueString(pkgi.Status.Version),
-			uitable.NewValueString(packageInstallStatus(&pkgi)),
+			uitable.ValueFmt{
+				V:     uitable.NewValueString(packageInstallStatus(&pkgi)),
+				Error: isFailing(pkgi.Status.Conditions) || pkgi.Spec.Canceled,
+			},
 		})
 	}
 

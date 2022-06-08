@@ -17,6 +17,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -129,7 +130,10 @@ func (o *GetOptions) Run(args []string) error {
 			uitable.NewValueString(pkgi.Name),
 			uitable.NewValueString(pkgi.Spec.PackageRef.RefName),
 			uitable.NewValueString(pkgi.Status.Version),
-			uitable.NewValueString(packageInstallStatus(pkgi)),
+			uitable.ValueFmt{
+				V:     uitable.NewValueString(packageInstallStatus(pkgi)),
+				Error: isFailing(pkgi.Status.Conditions) || pkgi.Spec.Canceled,
+			},
 			uitable.NewValueInterface(pkgi.Status.Conditions),
 			uitable.NewValueString(color.RedString(pkgi.Status.UsefulErrorMessage)),
 		}},
@@ -214,20 +218,20 @@ func (o *GetOptions) showValuesData(pkgi *kcpkgv1alpha1.PackageInstall) error {
 
 func packageInstallStatus(pkgi *kcpkgv1alpha1.PackageInstall) string {
 	if pkgi.Spec.Canceled {
-		return color.RedString("Canceled")
+		return "Canceled"
 	}
 	if pkgi.Spec.Paused {
-		return color.YellowString("Paused")
+		return "Paused"
 	}
 
 	for _, condition := range pkgi.Status.Conditions {
 		switch condition.Type {
 		case kcv1alpha1.ReconcileFailed:
-			return color.RedString("Reconcile failed")
+			return "Reconcile failed"
 		case kcv1alpha1.ReconcileSucceeded:
-			return color.GreenString("Reconcile succeeded")
+			return "Reconcile succeeded"
 		case kcv1alpha1.DeleteFailed:
-			return color.RedString("Deletion failed")
+			return "Deletion failed"
 		case kcv1alpha1.Reconciling:
 			return "Reconciling"
 		case kcv1alpha1.Deleting:
@@ -235,4 +239,14 @@ func packageInstallStatus(pkgi *kcpkgv1alpha1.PackageInstall) string {
 		}
 	}
 	return pkgi.Status.FriendlyDescription
+}
+
+// TODO: Dedup across app and pkgi packages
+func isFailing(conditions []kcv1alpha1.AppCondition) bool {
+	for _, condition := range conditions {
+		if condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
 }

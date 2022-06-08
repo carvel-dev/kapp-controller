@@ -91,7 +91,10 @@ func (o *ListOptions) Run() error {
 		table.Rows = append(table.Rows, []uitable.Value{
 			cmdcore.NewValueNamespace(app.Namespace),
 			uitable.NewValueString(app.Name),
-			uitable.NewValueString(appStatusString(&app)),
+			uitable.ValueFmt{
+				V:     uitable.NewValueString(appStatusString(&app)),
+				Error: isFailing(app.Status.Conditions) || app.Spec.Canceled,
+			},
 			sinceDeployAge,
 			uitable.NewValueString(o.owner(app.OwnerReferences)),
 			cmdcore.NewValueAge(app.CreationTimestamp.Time),
