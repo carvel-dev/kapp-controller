@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654694413189,
+  "lastUpdate": 1654701660733,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -2049,6 +2049,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6619403322,
             "unit": "ns/op\t         4.352 DeleteSeconds\t         2.199 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "benm@vmware.com",
+            "name": "Ben Moss",
+            "username": "benmoss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "34875791846ca5093ac5facd770d3ec3486ba947",
+          "message": "pkgi waits for app to reconcile latest generation (#726)\n\nRight now we end up observing an old generation of the app's status.\r\nThis update means we will go back to the \"Reconciling\" state while\r\nwaiting for the app reconciler to sync to the latest desired state.\r\n\r\nObservedGeneration has this semi-helpful comment on it:\r\n> Populated based on metadata.generation when controller observes a change\r\n> to the resource; if this value is out of data, other status fields do\r\n> not reflect latest state",
+          "timestamp": "2022-06-08T11:10:28-04:00",
+          "tree_id": "af7b05a937ef7baa9113120e94a1822872a9a4ed",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/34875791846ca5093ac5facd770d3ec3486ba947"
+        },
+        "date": 1654701659577,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36423730968,
+            "unit": "ns/op\t        18.91 DeleteSeconds\t        17.48 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9548355774,
+            "unit": "ns/op\t         5.332 DeleteSeconds\t         4.153 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6406396388,
+            "unit": "ns/op\t         4.236 DeleteSeconds\t         2.133 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
