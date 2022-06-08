@@ -1015,7 +1015,7 @@ spec:
 		assert.Error(t, err)
 
 		out := string(kubectl.Run([]string{"get", "pkgr", pkgr3Name, "-oyaml"}))
-		assert.Contains(t, out, "Conflicting Resources: Package/contooor.co.uk.0.22.0 is already present but not identical (mismatch in spec.template)")
+		assert.Contains(t, out, "Conflicting resources: Package/contooor.co.uk.0.22.0 is already present but not identical (mismatch in spec.template)")
 
 		out = kapp.Run([]string{"inspect", "-a", appName3, "--json"})
 		assert.Contains(t, out, `"reconcile_state": "fail"`)
@@ -1045,7 +1045,7 @@ spec:
 			e2e.RunOpts{StdinReader: strings.NewReader(pkgr4), AllowError: true})
 		assert.Error(t, err)
 		out := string(kubectl.Run([]string{"get", "pkgr", pkgr4Name, "-oyaml"}))
-		assert.Contains(t, out, " Conflicting Resources: PackageMetadata/shirt-mgr.co.uk is already present but not identical (mismatch in spec.shortDescription)")
+		assert.Contains(t, out, " Conflicting resources: PackageMetadata/shirt-mgr.co.uk is already present but not identical (mismatch in spec.shortDescription)")
 
 		out = kapp.Run([]string{"inspect", "-a", appName4, "--json"})
 		assert.Contains(t, out, `"reconcile_state": "fail"`)

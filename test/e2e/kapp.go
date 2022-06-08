@@ -79,8 +79,8 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 		err = fmt.Errorf("Execution error: stdout: '%s' stderr: '%s' error: '%s'", stdoutStr, stderr.String(), err)
 
 		if len(opts.OnErrKubectl) > 0 {
-			kb := Kubectl{Namespace: k.Namespace}
-			fmt.Println(kb.Run(opts.OnErrKubectl))
+			debugOut := Kubectl{k.T, k.Namespace, k.L}.Run(opts.OnErrKubectl)
+			k.L.Debugf("OnErrKubectl output:\n%s\n", debugOut)
 		}
 
 		if !opts.AllowError {

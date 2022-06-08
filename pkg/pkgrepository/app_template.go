@@ -17,31 +17,30 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/client-go/kubernetes/scheme"
 	sigsyaml "sigs.k8s.io/yaml"
 )
 
 func (a *App) template(dirPath string) exec.CmdRunResult {
-    genericOpts := ctltpl.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
+	genericOpts := ctltpl.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
 
 	// We have multiple ytt sections because we want to squash all the user yamls together
 	// and then apply our overlays. This way we do multiple distinct ytt passes.
 
 	// First templating pass is to read all the files in
-    template1 := kcv1alpha1.AppTemplateYtt{
-        IgnoreUnknownComments: true,
-        Paths:                 []string{"packages"},
-    }
+	template1 := kcv1alpha1.AppTemplateYtt{
+		IgnoreUnknownComments: true,
+		Paths:                 []string{"packages"},
+	}
 	result, _ := a.templateFactory.NewYtt(template1, genericOpts).TemplateDir(dirPath)
 	if result.Error != nil {
 		return result
 	}
 
 	// Second templating applies a bunch of overlays and filters,
-    // some of which could be migrated to go code
+	// some of which could be migrated to go code
 	stream := strings.NewReader(result.Stdout)
 	result = a.templateFactory.NewYtt(
-        a.yttTemplateCleanRs(), genericOpts).TemplateStream(stream, dirPath)
+		a.yttTemplateCleanRs(), genericOpts).TemplateStream(stream, dirPath)
 	if result.Error != nil {
 		return result
 	}
@@ -55,25 +54,25 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 	}
 
 	// Third templating inserts a kapp rebase rule to allow noops
-    // on identical resources provided by multiple pkgrs
+	// on identical resources provided by multiple pkgrs
 	stream = strings.NewReader(resources)
 	result = a.templateFactory.NewYtt(
-        a.yttTemplateAddIdenticalRsRebase(), genericOpts).TemplateStream(stream, dirPath)
+		a.yttTemplateAddIdenticalRsRebase(), genericOpts).TemplateStream(stream, dirPath)
 
 	return result
 }
 
 func (a *App) yttTemplateCleanRs() kcv1alpha1.AppTemplateYtt {
-    return kcv1alpha1.AppTemplateYtt{
-        Paths: []string{"-"},
-        Inline: &kcv1alpha1.AppFetchInline{
-            Paths: map[string]string{
-                // - Adjust the contents of the repo including adding
-                //   annotations and ensuring namespace.
-                // - Remove all resources that are not known to this kapp-controller.
-                //   It's worth just removing instead of erroring,
-                //   since future repo bundles may introduce new kinds.
-                "kapp-controller-clean-up.yml": fmt.Sprintf(`
+	return kcv1alpha1.AppTemplateYtt{
+		Paths: []string{"-"},
+		Inline: &kcv1alpha1.AppFetchInline{
+			Paths: map[string]string{
+				// - Adjust the contents of the repo including adding
+				//   annotations and ensuring namespace.
+				// - Remove all resources that are not known to this kapp-controller.
+				//   It's worth just removing instead of erroring,
+				//   since future repo bundles may introduce new kinds.
+				"kapp-controller-clean-up.yml": fmt.Sprintf(`
 #@ load("@ytt:overlay", "overlay")
 
 #@ pkg = overlay.subset({"apiVersion":"data.packaging.carvel.dev/v1alpha1", "kind": "Package"})
@@ -105,15 +104,14 @@ metadata:
 
     #@overlay/match missing_ok=True
     kapp.k14s.io/create-strategy: "fallback-on-update-or-noop"`, a.Namespace(), a.Name()),
-            },
-        },
-    }
+			},
+		},
+	}
 }
 
 func (a *App) yttTemplateAddIdenticalRsRebase() kcv1alpha1.AppTemplateYtt {
-    var yttRebasePackageRelatedRsByRevision = `
+	var yttRebasePackageRelatedRsByRevision = `
         #@ load("@ytt:data", "data")
-        #@ load("@ytt:yaml", "yaml")
         #@ load("@ytt:json", "json")
         #@ load("@ytt:overlay", "overlay")
         #@ load("@ytt:struct", "struct")
@@ -126,7 +124,7 @@ func (a *App) yttTemplateAddIdenticalRsRebase() kcv1alpha1.AppTemplateYtt {
         #@   end
         #@ end
 
-        #! return 0 iff eq, 1 (or more) iff r1 is gt r2, -1(or less) iff r1 < r2
+        #! return 0 iff eq, 1 (or more) iff r1 > r2, -1 (or less) iff r1 < r2
         #@ def cmp_rev(r1, r2):
         #@   size = min(len(r1), len(r2))
         #@   for i in range(size):
@@ -139,8 +137,8 @@ func (a *App) yttTemplateAddIdenticalRsRebase() kcv1alpha1.AppTemplateYtt {
         #@   return len(r1) - len(r2)
         #@ end
 
-        #@ def filter(d, s):
-        #@   return {x: v for x, v in d.items() if not x in s}
+        #@ def filter(kvs, exclude_keys):
+        #@   return {k: v for k, v in kvs.items() if not k in exclude_keys}
         #@ end
 
         #! TODO: next person who adds an annotation to the set of all kapp-controller annotations is gonna have a bad time.
@@ -157,13 +155,13 @@ func (a *App) yttTemplateAddIdenticalRsRebase() kcv1alpha1.AppTemplateYtt {
         #@   carvel_labels = set(["kapp.k14s.io/app", "kapp.k14s.io/association"])
         #@   return filter(existing_labels, carvel_labels) == filter(new_labels, carvel_labels)
         #@ end
-        #@
+
         #@ def specs_are_identical(existing_spec, new_spec):
-        #@   if str(new_spec) == str(existing_spec):
+        #@   if json.encode(new_spec) == json.encode(existing_spec):
         #@     return True, ""
         #@   end
         #@
-        #!   the rest of this method is to help make a better error message
+        #@   # the rest of this method is to help make a better error message
         #@   ex = existing_spec
         #@   nw = new_spec
         #@
@@ -183,7 +181,7 @@ func (a *App) yttTemplateAddIdenticalRsRebase() kcv1alpha1.AppTemplateYtt {
         #@   end
         #@   return False, "mismatch in unknown location"
         #@ end
-        #@
+
         #@ def is_identical(existing, new):
         #@   eq, reason = specs_are_identical(struct.decode(existing.spec), struct.decode(new.spec))
         #@   if not eq:
@@ -195,14 +193,17 @@ func (a *App) yttTemplateAddIdenticalRsRebase() kcv1alpha1.AppTemplateYtt {
         #@   if not annotations_are_identical(struct.decode(existing.metadata.annotations), struct.decode(new.metadata.annotations)):
         #@     return False, "mismatch in metadata.annotations"
         #@   end
-        #@
         #@   return True, ""
         #@ end
 
-        #! if the pkgr-ref annotation is missing (and the packages are identical) then assume ownership - covers upgrade case from old kcs
-        #@ new_owner = data.values.new.metadata.annotations["packaging.carvel.dev/package-repository-ref"]
-        #@ if 'packaging.carvel.dev/package-repository-ref' in data.values.existing.metadata.annotations:
-        #@   existing_owner = data.values.existing.metadata.annotations["packaging.carvel.dev/package-repository-ref"]
+        #! if the pkgr-ref annotation is missing (and the packages are identical)
+        #! then assume ownership - covers upgrade case from old kcs
+
+        #@ pkg_repo_ann = "packaging.carvel.dev/package-repository-ref"
+        #@ new_owner = data.values.new.metadata.annotations[pkg_repo_ann]
+        #@
+        #@ if pkg_repo_ann in data.values.existing.metadata.annotations:
+        #@   existing_owner = data.values.existing.metadata.annotations[pkg_repo_ann]
         #@ else:
         #@   existing_owner = new_owner
         #@ end
@@ -210,6 +211,7 @@ func (a *App) yttTemplateAddIdenticalRsRebase() kcv1alpha1.AppTemplateYtt {
         #@ if new_owner != existing_owner:
         #@   identical, reason = is_identical(data.values.existing, data.values.new)
         #@   if identical:
+
         #@overlay/match by=overlay.all
         ---
         metadata:
@@ -217,7 +219,9 @@ func (a *App) yttTemplateAddIdenticalRsRebase() kcv1alpha1.AppTemplateYtt {
           annotations:
             #@overlay/match missing_ok=True
             kapp.k14s.io/noop: ""
+
         #@ elif cmp_rev(get_rev(data.values.existing.metadata.annotations), get_rev(data.values.new.metadata.annotations)) > 0:
+
         #@overlay/match by=overlay.all
         ---
         metadata:
@@ -225,22 +229,21 @@ func (a *App) yttTemplateAddIdenticalRsRebase() kcv1alpha1.AppTemplateYtt {
           annotations:
             #@overlay/match missing_ok=True
             kapp.k14s.io/noop: ""
+
         #@   elif cmp_rev(get_rev(data.values.existing.metadata.annotations), get_rev(data.values.new.metadata.annotations)) < 0:
-        #@     print("replacing existing older rev with newer rev")
+        #@     # replacing existing older rev with newer rev
         #@   else:
-        #@     msg = "Error: Conflicting Resources: " + data.values.existing.kind + "/" + data.values.existing.metadata.name + " is already present but not identical (" + reason +")"
-        #@     print(msg)
-        #@     fail(msg)
+        #@     fail("Error: Conflicting resources: " + data.values.existing.kind + "/" + data.values.existing.metadata.name + " is already present but not identical (" + reason +")")
         #@   end
         #@ end
 `
 
-    return kcv1alpha1.AppTemplateYtt{
-        Paths: []string{"-"},
-        Inline: &kcv1alpha1.AppFetchInline{
-            Paths: map[string]string{
-                //   rebase rule to allow multiple repositories to expose identical packages.
-                "noop-on-identical-packages.yml": fmt.Sprintf(`
+	return kcv1alpha1.AppTemplateYtt{
+		Paths: []string{"-"},
+		Inline: &kcv1alpha1.AppFetchInline{
+			Paths: map[string]string{
+				//   rebase rule to allow multiple repositories to expose identical packages.
+				"noop-on-identical-packages.yml": fmt.Sprintf(`
 ---
 apiVersion: kapp.k14s.io/v1alpha1
 kind: Config
@@ -253,9 +256,9 @@ rebaseRules:
   - apiVersionKindMatcher: {apiVersion: data.packaging.carvel.dev/v1alpha1, kind: Package}
   - apiVersionKindMatcher: {apiVersion: data.packaging.carvel.dev/v1alpha1, kind: PackageMetadata}
 `, yttRebasePackageRelatedRsByRevision),
-            },
-        },
-    }
+			},
+		},
+	}
 }
 
 // FilterResources takes a multi-doc yaml of the templated
@@ -263,63 +266,51 @@ rebaseRules:
 // by deserializing and re-serializing. This filtering step allows us
 // to use newer CRDs (with new fields) in older versions of kc
 // without triggering a mistmatch in the rebase "is_identical" checker.
-func FilterResources(yamlss string) (string, error) {
+func FilterResources(inputYAML string) (string, error) {
 	sch := runtime.NewScheme()
 
-	err = datapackagingv1alpha1.AddToScheme(sch)
+	err := datapackagingv1alpha1.AddToScheme(sch)
 	if err != nil {
 		return "", err
 	}
-	decoder := serializer.NewCodecFactory(sch).UniversalDeserializer().Decode
+	deserializer := serializer.NewCodecFactory(sch).UniversalDeserializer()
 
-	filteredYamls := []string{}
-	docs, err := yamlDocs([]byte(yamlss))
+	docs, err := yamlDocs([]byte(inputYAML))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Parsing stream of resources: %s", err)
 	}
+
+	filteredYAMLs := []string{}
 
 	for _, resourceYAML := range docs {
-		obj, gKV, err := decoder(resourceYAML, nil, nil)
+		obj, gvk, err := deserializer.Decode(resourceYAML, nil, nil)
 		if err != nil {
-			return "", err
-		}
-		kind := gKV.Kind
-		if gKV.Group != "data.packaging.carvel.dev" {
-			return "", fmt.Errorf("Expected group 'data.packaging.carvel.dev' but was: %s", gKV.Group)
+			return "", fmt.Errorf("Deserializing resource: %s", err)
 		}
 
-		if gKV.Version != "v1alpha1" {
-			return "", fmt.Errorf("Expected version 'v1alpha1' but was: %s", gKV.Version)
+		if gvk.Group != datapackagingv1alpha1.SchemeGroupVersion.Group {
+			return "", fmt.Errorf("Expected group 'data.packaging.carvel.dev' but was '%s'", gvk.Group)
+		}
+		if gvk.Version != datapackagingv1alpha1.SchemeGroupVersion.Version {
+			return "", fmt.Errorf("Expected version 'v1alpha1' but was '%s'", gvk.Version)
+		}
+		if gvk.Kind != "Package" && gvk.Kind != "PackageMetadata" {
+			return "", fmt.Errorf("Expected kind to be 'Package' or 'PackageMetadata' but was '%s'", gvk.Kind)
 		}
 
-		switch kind {
-		case "Package":
-			p := obj.(*datapackagingv1alpha1.Package)
-			buf, err := sigsyaml.Marshal(p)
-			if err != nil {
-				return "", err
-			}
-			filteredYamls = append(filteredYamls, string(buf))
-		case "PackageMetadata":
-			p := obj.(*datapackagingv1alpha1.PackageMetadata)
-			buf, err := sigsyaml.Marshal(p)
-			if err != nil {
-				return "", err
-			}
-			filteredYamls = append(filteredYamls, string(buf))
-		default:
-			return "", fmt.Errorf("PKGR contained unexpected kind: %s", kind)
+		buf, err := sigsyaml.Marshal(obj)
+		if err != nil {
+			return "", fmt.Errorf("Marshaling resource: %s", err)
 		}
-
+		filteredYAMLs = append(filteredYAMLs, string(buf))
 	}
-	return strings.Join(filteredYamls, "\n---\n"), nil
+
+	return strings.Join(filteredYAMLs, "\n---\n"), nil
 }
 
 func yamlDocs(yamls []byte) ([][]byte, error) {
 	var docs [][]byte
-
-	fileBytes := yamls
-	reader := utilyaml.NewYAMLReader(bufio.NewReaderSize(bytes.NewReader(fileBytes), 4096))
+	reader := utilyaml.NewYAMLReader(bufio.NewReaderSize(bytes.NewReader(yamls), 4096))
 
 	for {
 		docBytes, err := reader.Read()

@@ -105,14 +105,14 @@ stringData:
 			defer cleanUp()
 
 			logger.Section("deploy", func() {
-				_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", tc.appCRName},
+				kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", tc.appCRName},
 					e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(tc.deploymentYAML), OnErrKubectl: []string{"kubectl", "get", "app", "-oyaml"}})
 
 				out := kapp.Run([]string{"inspect", "-a", tc.appCRName, "--raw", "--tty=false", "--filter-kind=App"})
 
 				var cr v1alpha1.App
 
-				err = yaml.Unmarshal([]byte(out), &cr)
+				err := yaml.Unmarshal([]byte(out), &cr)
 				if err != nil {
 					t.Fatalf("Failed to unmarshal: %s", err)
 				}

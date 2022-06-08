@@ -1,15 +1,16 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package pkgrepository
+package pkgrepository_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
 )
 
-func TestYamlUnique(t *testing.T) {
+func TestFilterResourcesYAMLUnique(t *testing.T) {
 	input := `
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
@@ -46,7 +47,9 @@ spec:
       deploy:
       - kapp: {}`
 
-	observedOutput, err := FilterResources(input)
+	observedOutput, err := pkgrepository.FilterResources(input)
 	assert.NoError(t, err)
-	assert.NotContains(t, observedOutput, "unexpected")
+	assert.Contains(t, observedOutput, "kind: PackageMetadata\n")
+	assert.Contains(t, observedOutput, "kind: Package\n")
+	assert.NotContains(t, observedOutput, "unexpected") // does not include unexpected* keys
 }
