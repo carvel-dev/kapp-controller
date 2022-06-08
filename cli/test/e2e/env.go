@@ -39,7 +39,7 @@ func (e Env) Validate(t *testing.T) {
 	errStrs := []string{}
 
 	if len(e.Namespace) == 0 {
-		errStrs = append(errStrs, "Expected Namespace to be non-empty")
+		errStrs = append(errStrs, "Expected Namespace to be non-empty (hint: kubectl create namespace kctrl-test; export KCTRL_E2E_NAMESPACE=kctrl-test)")
 	}
 
 	if len(errStrs) > 0 {

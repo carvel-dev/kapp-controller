@@ -4,7 +4,6 @@
 package pkgrepository
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -26,7 +25,6 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 	desiredApp.Generation = pkgRepository.Generation
 
 	kappRawOpts := []string{
-		"--wait-timeout=30s",
 		"--kube-api-qps=30",
 		"--kube-api-burst=40",
 		// Default kapp-controller service account allows listing all namespaces
@@ -42,11 +40,17 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 	kappDeployRawOpts := append([]string{
 		"--logs=false",
 		"--app-changes-max-to-keep=5",
+		// in the case where two packages in different PKGRs are identical,
+		// first we have to tell kapp it's ok if the new PKGR takes ownership
+		// but then we use the rebase rule (below) to actually not override the ownership
+		// but without this flag the rebase rule won't get a chance to run. So in conclusion
+		// it's a fake-out and we shouldn't actually take ownership of existing resources.
+		"--dangerous-override-ownership-of-existing-resources=true",
 		// GKE for some reason does not like high volume of GETs for our API server
 		// and ends up taking very long time to respond to SubjectAccessReviews (SAR).
-		// We can disable existing check entirely since we do not allow to "take ownership"
-		// of other Package/PackageMetadata and we do not _need_ to adopt Packages that
-		// are not owned by kapp already.
+		// We can disable existing check entirely since we use a rebase rule to enforce
+		// non-transference of ownership in the case that we have multiple packages of
+		// the same name.
 		"--existing-non-labeled-resources-check=false",
 		// ... could in theory just lower concurrency, but decided to turn it off entirely.
 		// (on GKE, 6 was a sweet spot, 10 exhibited hanging behaviour)
@@ -63,56 +67,7 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 			HTTP:         pkgRepository.Spec.Fetch.HTTP,
 			ImgpkgBundle: pkgRepository.Spec.Fetch.ImgpkgBundle,
 		}},
-		Template: []kcv1alpha1.AppTemplate{{
-			Ytt: &kcv1alpha1.AppTemplateYtt{
-				IgnoreUnknownComments: true,
-				Paths:                 []string{"packages"},
-			},
-		}, {
-			Ytt: &kcv1alpha1.AppTemplateYtt{
-				Paths: []string{"-"},
-
-				Inline: &kcv1alpha1.AppFetchInline{
-					Paths: map[string]string{
-						// - Adjust the contents of the repo including adding
-						//   annotations and ensuring namespace.
-						// - Remove all resources that are not known to this kapp-controller.
-						//   It's worth just removing instead of erroring,
-						//   since future repo bundles may introduce new kinds.
-						"kapp-controller-clean-up.yml": fmt.Sprintf(`
-#@ load("@ytt:overlay", "overlay")
-
-#@ pkg = overlay.subset({"apiVersion":"data.packaging.carvel.dev/v1alpha1", "kind": "Package"})
-#@ pkgm = overlay.subset({"apiVersion":"data.packaging.carvel.dev/v1alpha1", "kind": "PackageMetadata"})
-
-#@overlay/match by=overlay.not_op(overlay.or_op(pkg, pkgm)),expects="0+"
-#@overlay/remove
----
-
-#@overlay/match by=overlay.all,expects="0+"
----
-metadata:
-  #! Ensure that all resources do not set some random namespace
-  #! so that all resource end in the PackageRepository's namespace
-  #@overlay/match missing_ok=True
-  #@overlay/remove
-  namespace:
-
-  #@overlay/match missing_ok=True
-  annotations:
-    #@overlay/match missing_ok=True
-    kapp.k14s.io/disable-original: ""
-
-    #@overlay/match missing_ok=True
-    kapp.k14s.io/disable-wait: ""
-
-    #@overlay/match missing_ok=True
-    packaging.carvel.dev/package-repository-ref: %s/%s
-`, pkgRepository.Namespace, pkgRepository.Name),
-					},
-				},
-			},
-		}},
+		Template: []kcv1alpha1.AppTemplate{}, // Template step hardcoded into app_template.go
 		Deploy: []kcv1alpha1.AppDeploy{{
 			Kapp: &kcv1alpha1.AppDeployKapp{
 				RawOptions: kappDeployRawOpts,

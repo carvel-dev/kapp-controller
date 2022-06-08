@@ -29,6 +29,7 @@ type RunOpts struct {
 	Ctx          context.Context
 	Redact       bool
 	Interactive  bool
+	OnErrKubectl []string
 }
 
 func (k Kapp) Run(args []string) string {
@@ -76,6 +77,11 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 
 	if err != nil {
 		err = fmt.Errorf("Execution error: stdout: '%s' stderr: '%s' error: '%s'", stdoutStr, stderr.String(), err)
+
+		if len(opts.OnErrKubectl) > 0 {
+			debugOut := Kubectl{k.T, k.Namespace, k.L}.Run(opts.OnErrKubectl)
+			k.L.Debugf("OnErrKubectl output:\n%s\n", debugOut)
+		}
 
 		if !opts.AllowError {
 			k.T.Fatalf("Failed to successfully execute '%s': %v", k.cmdDesc(args, opts), err)

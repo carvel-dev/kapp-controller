@@ -53,9 +53,7 @@ func TestPackageRepository(t *testing.T) {
 	})
 
 	logger.Section("adding a repository", func() {
-		kappCtrl.RunWithOpts([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL}, RunOpts{})
-
-		kubectl.Run([]string{"get", "packagerepository", pkgrName})
+		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL})
 		kubectl.Run([]string{"get", kind, pkgrName})
 		kubectl.Run([]string{"get", "pkgm/pkg.test.carvel.dev"})
 		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"})
