@@ -1,0 +1,10 @@
+apiVersion: imgpkg.carvel.dev/v1alpha1
+kind: Bundle
+metadata:
+  name: http-bin
+authors:
+  - name: test
+    email: test@example.com
+websites:
+  - url: test.example.com
+

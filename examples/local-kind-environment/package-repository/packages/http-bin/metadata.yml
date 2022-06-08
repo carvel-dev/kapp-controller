@@ -1,0 +1,18 @@
+# See https://carvel.dev/kapp-controller/docs/v0.36.1/packaging/#package-metadata
+
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: example.com.http-bin
+  namespace: kapp-controller-packaging-global
+spec:
+  displayName: "http-bin example"
+  longDescription: "Negative, I am a meat popsicle"
+  shortDescription: "Lilu Dallas, multi-pass"
+  maintainers:
+    - name: test
+  categories:
+    - "test"
+    - "http-bin"
+  supportDescription: "Please hold while your call is connected."
+

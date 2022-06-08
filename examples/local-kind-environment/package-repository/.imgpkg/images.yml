@@ -1,0 +1,11 @@
+---
+apiVersion: imgpkg.carvel.dev/v1alpha1
+images:
+- annotations:
+    kbld.carvel.dev/id: kind-registry.local:5000/http-bin:0.1.0
+    kbld.carvel.dev/origins: |
+      - resolved:
+          tag: 0.1.0
+          url: kind-registry.local:5000/http-bin:0.1.0
+  image: kind-registry.local:5000/http-bin@sha256:a299c0f8e265993c28af1eeed6c6da6672483fc71e83124a1d6d89a9a4d75db8
+kind: ImagesLock
