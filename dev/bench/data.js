@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654705070164,
+  "lastUpdate": 1654730370987,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -2133,6 +2133,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6524210189,
             "unit": "ns/op\t         4.330 DeleteSeconds\t         2.145 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86852107+joe-kimmel-vmw@users.noreply.github.com",
+            "name": "Joe Kimmel",
+            "username": "joe-kimmel-vmw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d6c7d28734f061acdb9be2a1b88af7fa5601e6f9",
+          "message": "rebase rule and e2e tests for pkgrs with identical pkgs (#657)\n\n* Allow identical Packages from different Repos\r\n\r\npkgr templating applies a rebase rule that inserts a noop\r\nannotation on a package coming from a PKGR in cases where\r\na package with identical name and contents is already provided\r\nby a different repo.\r\n\r\n- revision annotation allows changes to the package yaml without\r\n  changing the version\r\n- packages that are not identical will still fail to reconcile\r\n\r\n* allow for upgrades from old versions of kc at the expense of taking ownership of standalone packages",
+          "timestamp": "2022-06-08T19:08:02-04:00",
+          "tree_id": "09f1e40734c6d571f55b2f2d0f259e84e8eb70bc",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/d6c7d28734f061acdb9be2a1b88af7fa5601e6f9"
+        },
+        "date": 1654730370136,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36838873935,
+            "unit": "ns/op\t        19.19 DeleteSeconds\t        17.59 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9571353324,
+            "unit": "ns/op\t         5.313 DeleteSeconds\t         4.207 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6548914547,
+            "unit": "ns/op\t         4.313 DeleteSeconds\t         2.192 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
