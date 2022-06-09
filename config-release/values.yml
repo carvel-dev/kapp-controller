@@ -3,3 +3,4 @@
 push_images: true
 image_cache: false
 image_repo: ghcr.io/vmware-tanzu/carvel-kapp-controller
+platform: "linux/amd64,linux/arm64"
