@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654807199824,
+  "lastUpdate": 1654807398432,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -2301,6 +2301,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6559534100,
             "unit": "ns/op\t         4.302 DeleteSeconds\t         2.204 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "benm@vmware.com",
+            "name": "Ben Moss",
+            "username": "benmoss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0f13453db4957439e29519d61b2ffa10bd33d06b",
+          "message": "Use the built-in minikube (#734)",
+          "timestamp": "2022-06-09T16:32:00-04:00",
+          "tree_id": "a932f543d033354aef0eb091851bdb447274859b",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/0f13453db4957439e29519d61b2ffa10bd33d06b"
+        },
+        "date": 1654807397600,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37093229810,
+            "unit": "ns/op\t        19.34 DeleteSeconds\t        17.69 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9742420332,
+            "unit": "ns/op\t         5.389 DeleteSeconds\t         4.296 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6595219474,
+            "unit": "ns/op\t         4.321 DeleteSeconds\t         2.187 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
