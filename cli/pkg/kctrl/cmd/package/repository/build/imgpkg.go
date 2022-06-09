@@ -124,7 +124,7 @@ func (imgpkg ImgpkgStep) PostInteract() error {
 	imagesFileLocation := filepath.Join(imgpkg.pkgRepoLocation, "bundle", ".imgpkg", "images.yml")
 
 	imgpkg.pkgAuthoringUI.PrintInformationalText("Kbld, a Carvel tool, will be used to create a mapping of all the image references to their sha256 digest. kbld looks for image keys within YAML documents and tries to resolve image reference to its full digest form and creates a mapping of image tags to a URL with a sha256 digest. This mapping will then be placed into an images.yml lock file in bundle/.imgpkg directory. kbld allows to build the imgpkg bundle with immutable image references.")
-	imgpkg.pkgAuthoringUI.PrintActionableText("Running kbld")
+	imgpkg.pkgAuthoringUI.PrintActionableText("Lock image references using Kbld")
 	imgpkg.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("kbld --file %s --imgpkg-lock-output %s", bundleLocation, imagesFileLocation))
 
 	err := runningKbld(bundledPackagesLocation, imagesFileLocation)

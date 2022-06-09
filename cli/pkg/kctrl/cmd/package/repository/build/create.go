@@ -141,10 +141,6 @@ func (createStep *CreateStep) Interact() error {
 	}
 	createStep.pkgRepoBuild.Spec.PkgRepo.Name = pkgRepoName
 	createStep.pkgRepoBuild.WriteToFile(createStep.pkgRepoLocation)
-	err = createStep.configurePackageRepositoryLocation()
-	if err != nil {
-		return err
-	}
 
 	fetchStep := NewFetchStep(createStep.pkgAuthoringUI, createStep.pkgRepoLocation, createStep.pkgRepoBuild)
 	err = common.Run(fetchStep)

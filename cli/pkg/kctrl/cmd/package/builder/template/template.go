@@ -26,8 +26,8 @@ func NewTemplateStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *pkg
 	return &templateStep
 }
 
-func (t TemplateStep) PreInteract() error {
-	t.pkgAuthoringUI.PrintInformationalText("Next step is to define which templating tool to be used to render the package template. A package template can be rendered by various different tools.")
+func (templateStep TemplateStep) PreInteract() error {
+	templateStep.pkgAuthoringUI.PrintInformationalText("\nNext step is to add the template section of the package.")
 	return nil
 }
 
@@ -57,7 +57,10 @@ func (templateStep *TemplateStep) Interact() error {
 }
 
 func (templateStep TemplateStep) isHelmTemplateRequired() bool {
-	return true
+	if templateStep.pkgBuild.Annotations[common.PkgFetchContentAnnotationKey] == common.FetchChartFromHelmRepo {
+		return true
+	}
+	return false
 }
 
 func (templateStep TemplateStep) configureKbld() error {

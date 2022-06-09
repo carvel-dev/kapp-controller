@@ -36,7 +36,7 @@ func (g *GithubStep) Interact() error {
 	} else if contents[0].GithubRelease == nil {
 		g.initializeGithubRelease()
 	}
-
+	g.pkgAuthoringUI.PrintHeading("Repository details")
 	err := g.configureRepoSlug()
 	if err != nil {
 		return err
@@ -53,6 +53,7 @@ func (g *GithubStep) Interact() error {
 func (g *GithubStep) configureRepoSlug() error {
 	githubReleaseContent := g.pkgBuild.Spec.Vendir.Directories[0].Contents[0].GithubRelease
 	defaultSlug := githubReleaseContent.Slug
+	g.pkgAuthoringUI.PrintInformationalText("Slug format is org/repo e.g. vmware-tanzu/simple-app")
 	textOpts := ui.TextOpts{
 		Label:        "Enter slug for repository(org/repo)",
 		Default:      defaultSlug,

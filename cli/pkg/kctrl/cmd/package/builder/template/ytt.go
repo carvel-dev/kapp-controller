@@ -3,6 +3,7 @@ package template
 import (
 	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"path/filepath"
 
 	pkgui "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/ui"
 )
@@ -22,7 +23,7 @@ func NewYttTemplateStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *
 }
 
 func (yttTemplateStep YttTemplateStep) PreInteract() error {
-	yttTemplateStep.pkgAuthoringUI.PrintInformationalText(`We need to provide the values to ytt.`)
+	//yttTemplateStep.pkgAuthoringUI.PrintInformationalText(`We need to provide the values to ytt.`)
 	return nil
 }
 
@@ -49,7 +50,7 @@ func (yttTemplateStep *YttTemplateStep) Interact() error {
 		yttTemplateStep.configureYttPath()
 	}
 
-	yttTemplateStep.pkgAuthoringUI.PrintInformationalText("Adding path to the ytt template section")
+	//yttTemplateStep.pkgAuthoringUI.PrintInformationalText("Adding path to the ytt template section")
 	return nil
 }
 
@@ -121,7 +122,7 @@ func (yttTemplateStep *YttTemplateStep) getPathFromFetchConf() string {
 		directoryPath := directory.Path
 		for _, content := range directories[0].Contents {
 			if content.Directory != nil {
-				path = directoryPath + "/" + content.Path
+				path = filepath.Join(directoryPath, content.Path)
 				break
 			}
 		}

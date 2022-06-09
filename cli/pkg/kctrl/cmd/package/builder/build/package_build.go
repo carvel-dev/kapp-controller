@@ -47,7 +47,7 @@ func (pkgBuilder PackageBuild) WriteToFile(dirPath string) error {
 	if err != nil {
 		return err
 	}
-	fileLocation := filepath.Join(dirPath, PkgBuildFileName)
+	fileLocation := filepath.Join(PkgBuildFileName)
 	file, err := os.Create(fileLocation)
 	if err != nil {
 		return err

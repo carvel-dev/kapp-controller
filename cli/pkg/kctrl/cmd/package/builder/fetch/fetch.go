@@ -34,48 +34,41 @@ func NewFetchStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *build.
 }
 
 func (fetch FetchStep) PreInteract() error {
-	fetch.pkgAuthoringUI.PrintInformationalText("Now, we have to add the content which makes up the package for distribution. This content, which is essentially the configuration defined by the app operator, can be fetched from different types of sources. Imgpkg is a tool to package, distribute, and relocate Kubernetes configuration and dependent OCI images as one OCI artifact: a bundle.")
+	//fetch.pkgAuthoringUI.PrintInformationalText("Now, we have to add the content which makes up the package for distribution. This content, which is essentially the configuration defined by the app operator, can be fetched from different types of sources. Imgpkg is a tool to package, distribute, and relocate Kubernetes configuration and dependent OCI images as one OCI artifact: a bundle.")
 	return nil
 }
 
 func (fetch *FetchStep) Interact() error {
-	fetchSection := fetch.pkgBuild.Spec.Pkg.Spec.Template.Spec.Fetch
-	var defaultFetchOptionSelected string
-	if len(fetchSection) > 1 {
-		//As multiple fetch sections are configured, we dont want to touch them.
-		return nil
-	} else if len(fetchSection) == 0 {
-		//Initialize fetch Section
-		var appFetchList []v1alpha1.AppFetch
-		appFetchList = append(appFetchList, v1alpha1.AppFetch{})
-		fetch.pkgBuild.Spec.Pkg.Spec.Template.Spec.Fetch = appFetchList
-	} else {
-		defaultFetchOptionSelected = getFetchOptionFromPkgBuild(fetch.pkgBuild)
-	}
+	fetch.pkgAuthoringUI.PrintHeading("\nPackage Content(Step 2/3)")
+	isPreferenceImmutable := fetch.pkgBuild.Annotations[common.PkgCreatePreferenceAnnotationKey]
 
-	var fetchTypeNames = []string{AppFetchImgpkgBundle, AppFetchHelmChart}
-	defaultFetchOptionIndex := getDefaultFetchOptionIndex(fetchTypeNames, defaultFetchOptionSelected)
+	defaultManifestOptionSelected := getManifestOptionFromPkgBuild(fetch.pkgBuild)
+	fetch.pkgAuthoringUI.PrintInformationalText("In package, we need to fetch the manifest which defines how the application would be deployed in a K8s cluster. This manifest can be in the form of a yaml file used with `kubectl apply ...` or it could be a helm chart used with `helm install ...`. They can be available in any of the following locations. Please select from where to fetch the manifest")
+	manifestOptions := []string{common.FetchReleaseArtifactFromGithub, common.FetchManifestFromGithub, common.FetchChartFromHelmRepo, common.FetchChartFromGithub}
+	defaultFetchManifestOptionIndex := getDefaultManifestOptionIndex(manifestOptions, defaultManifestOptionSelected)
 	choiceOpts := ui.ChoiceOpts{
-		Label:   "Enter the fetch configuration type",
-		Default: defaultFetchOptionIndex,
-		Choices: fetchTypeNames,
+		Label:   "From where to fetch the manifest",
+		Default: defaultFetchManifestOptionIndex,
+		Choices: manifestOptions,
 	}
-	fetchOptionSelectedIndex, err := fetch.pkgAuthoringUI.AskForChoice(choiceOpts)
+	manifestOptionSelectedIndex, err := fetch.pkgAuthoringUI.AskForChoice(choiceOpts)
 	if err != nil {
 		return err
 	}
-
-	if defaultFetchOptionIndex != fetchOptionSelectedIndex {
-		setEarlierUpstreamOptionAsNil(fetchSection, defaultFetchOptionSelected)
+	//TODO Rohit should we move it up?
+	if fetch.pkgBuild.Annotations == nil {
+		fetch.pkgBuild.Annotations = make(map[string]string, 0)
 	}
-	switch fetchTypeNames[fetchOptionSelectedIndex] {
-	case AppFetchImgpkgBundle:
+	fetch.pkgBuild.Annotations[common.PkgFetchContentAnnotationKey] = manifestOptions[manifestOptionSelectedIndex]
+	fetch.pkgBuild.WriteToFile(fetch.pkgLocation)
+
+	if isPreferenceImmutable == "true" {
 		imgpkgStep := imgpkg.NewImgPkgStep(fetch.pkgAuthoringUI, fetch.pkgLocation, fetch.pkgBuild)
 		err := common.Run(imgpkgStep)
 		if err != nil {
 			return err
 		}
-	case AppFetchHelmChart:
+	} else {
 		helmStep := NewHelmStep(fetch.pkgAuthoringUI, fetch.pkgLocation, fetch.pkgBuild)
 		err := common.Run(helmStep)
 		if err != nil {
@@ -83,6 +76,25 @@ func (fetch *FetchStep) Interact() error {
 		}
 	}
 	return nil
+}
+
+func getManifestOptionFromPkgBuild(pkgBuild *build.PackageBuild) string {
+	return pkgBuild.Annotations[common.PkgFetchContentAnnotationKey]
+}
+
+func getDefaultManifestOptionIndex(manifestOptions []string, defaultManifestOptionSelected string) int {
+	var defaultManifestOptionIndex int
+	if defaultManifestOptionSelected == "" {
+		defaultManifestOptionIndex = 0
+	} else {
+		for i, fetchTypeName := range manifestOptions {
+			if fetchTypeName == defaultManifestOptionSelected {
+				defaultManifestOptionIndex = i
+				break
+			}
+		}
+	}
+	return defaultManifestOptionIndex
 }
 
 func setEarlierUpstreamOptionAsNil(fetchSection []v1alpha1.AppFetch, earlierFetchOption string) {

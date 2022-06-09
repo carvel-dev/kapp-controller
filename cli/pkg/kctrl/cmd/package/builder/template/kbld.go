@@ -21,7 +21,7 @@ func NewKbldTemplateStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild 
 }
 
 func (kbldTemplateStep KbldTemplateStep) PreInteract() error {
-	kbldTemplateStep.pkgAuthoringUI.PrintInformationalText(`We need to provide the values to ytt.`)
+	//kbldTemplateStep.pkgAuthoringUI.PrintInformationalText(`We need to provide the values to ytt.`)
 	return nil
 }
 
@@ -48,7 +48,7 @@ func (kbldTemplateStep *KbldTemplateStep) Interact() error {
 		kbldTemplateStep.configureKbldPaths()
 	}
 
-	kbldTemplateStep.pkgAuthoringUI.PrintInformationalText("Adding path to the ytt template section")
+	//kbldTemplateStep.pkgAuthoringUI.PrintInformationalText("Adding path to the ytt template section")
 	return nil
 }
 

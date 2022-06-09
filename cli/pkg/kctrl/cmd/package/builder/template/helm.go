@@ -2,6 +2,7 @@ package template
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
@@ -24,7 +25,7 @@ func NewHelmTemplateStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild 
 }
 
 func (helmStep HelmTemplateStep) PreInteract() error {
-	helmStep.pkgAuthoringUI.PrintInformationalText("We need to add path to the helm Chart so that helm template can be run.")
+	helmStep.pkgAuthoringUI.PrintInformationalText("\nSince we are using a helm chart, we have to add helmTemplate section. In this section, we will add helm Chart path inside package so that helm template can be run.")
 	return nil
 }
 
@@ -50,7 +51,6 @@ func (helmStep *HelmTemplateStep) Interact() error {
 		helmStep.configureHelmChartPath()
 	}
 
-	helmStep.pkgAuthoringUI.PrintInformationalText("Adding path to the helm template section")
 	return nil
 }
 
@@ -103,7 +103,8 @@ func (helmStep HelmTemplateStep) configureHelmChartPath() error {
 				}
 				chartPath = input
 			} else {
-				path, err := getPathFromFetchConf(helmStep.pkgBuild)
+				path, err := helmStep.getPathFromFetchConf()
+
 				if err != nil {
 					return err
 				}
@@ -117,13 +118,14 @@ func (helmStep HelmTemplateStep) configureHelmChartPath() error {
 	return nil
 }
 
-func getPathFromFetchConf(pkgBuild *pkgbuilder.PackageBuild) (string, error) {
+func (helmStep HelmTemplateStep) getPathFromFetchConf() (string, error) {
 	//This means that helmChart has been mentioned directly in the fetch section of Package.
-	if pkgBuild.Spec.Vendir == nil {
+	if helmStep.pkgBuild.Spec.Vendir == nil {
+		helmStep.pkgAuthoringUI.PrintInformationalText("As package is being created with direct reference, we need not specify any path in the helmTemplate section")
 		return "", nil
 	}
 
-	directories := pkgBuild.Spec.Vendir.Directories
+	directories := helmStep.pkgBuild.Spec.Vendir.Directories
 	if directories == nil {
 		return "", fmt.Errorf("No helm chart reference in Vendir")
 	}
@@ -133,10 +135,11 @@ func getPathFromFetchConf(pkgBuild *pkgbuilder.PackageBuild) (string, error) {
 		directoryPath := directory.Path
 		for _, content := range directories[0].Contents {
 			if content.HelmChart != nil {
-				path = directoryPath + "/" + content.Path
+				path = filepath.Join(directoryPath, content.Path)
 				break
 			}
 		}
 	}
+	helmStep.pkgAuthoringUI.PrintInformationalText(fmt.Sprintf("As package is being created with immutable reference, helm chart is located in the %s directory. Add same in the helmTemplate path section", path))
 	return path, nil
 }

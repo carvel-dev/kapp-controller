@@ -21,18 +21,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const (
-	PkgBuildFileName             = "package-build.yml"
-	PkgFetchContentAnnotationKey = "fetch-content-from"
-)
-
-const (
-	FetchReleaseArtifactFromGithub string = "Release artifact from Github Repository"
-	FetchManifestFromGithub        string = "Github Repository"
-	FetchChartFromHelmRepo         string = "Helm Repository"
-	FetchChartFromGithub           string = "Helm Chart from Github repository"
-)
-
 type CreateOptions struct {
 	pkgAuthoringUI pkgui.IPkgAuthoringUI
 	depsFactory    cmdcore.DepsFactory
@@ -71,7 +59,7 @@ func (o *CreateOptions) Run(args []string) error {
 	if err != nil {
 		return err
 	}
-	pkgBuildFilePath := filepath.Join(pkgLocation, PkgBuildFileName)
+	pkgBuildFilePath := filepath.Join(common.PkgBuildFileName)
 	pkgBuild, err := build.GeneratePackageBuild(pkgBuildFilePath)
 	if err != nil {
 		return err
@@ -101,8 +89,10 @@ func NewCreateStep(pkgAuthorUI pkgui.IPkgAuthoringUI, pkgLocation string, pkgBui
 }
 
 func (createStep CreateStep) printStartBlock() {
-	createStep.pkgAuthoringUI.PrintInformationalText("Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n* You have access to an OCI registry, and you have authenticated locally so that you can push images. e.g. docker login")
-	createStep.pkgAuthoringUI.PrintActionableText("\nCreating directory")
+	createStep.pkgAuthoringUI.PrintHeading("Pre-requisite")
+	createStep.pkgAuthoringUI.PrintInformationalText("Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
+	createStep.pkgAuthoringUI.PrintInformationalText("\nWe need a directory to hold generated Package and PackageMetadata CRs")
+	createStep.pkgAuthoringUI.PrintActionableText("Creating directory")
 	createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", createStep.pkgLocation))
 }
 
@@ -124,7 +114,7 @@ func (createStep CreateStep) createDirectory(dirPath string) error {
 }
 
 func (createStep *CreateStep) Interact() error {
-
+	createStep.pkgAuthoringUI.PrintHeading("\nBasic Information(Step 1/3)")
 	err := createStep.configureFullyQualifiedName()
 	if err != nil {
 		return err
@@ -134,23 +124,63 @@ func (createStep *CreateStep) Interact() error {
 	if err != nil {
 		return err
 	}
+	/*
+		isDefaultPreferenceImmutable := getPackageCreatePreferenceFromPkgBuild(createStep.pkgBuild)
+		createStep.pkgAuthoringUI.PrintInformationalText("A package can be created in two ways. Either having immutable reference to the fetch'ed manifest or a direct reference to the fetch'ed manifest. To create an immutable reference, we will use imgpkg and kbld to lock the reference.")
+		pkgCreateOptions := []string{common.CreateWithImmutableReference, common.CreateWithDirectReference}
+		var defaultPreferenceOptionIndex int
+		if isDefaultPreferenceImmutable {
+			defaultPreferenceOptionIndex = 0
+		} else {
+			defaultPreferenceOptionIndex = 1
+		}
+		choiceOpts := ui.ChoiceOpts{
+			Label:   "How to package the manifest",
+			Default: defaultPreferenceOptionIndex,
+			Choices: pkgCreateOptions,
+		}
+		preferenceOptionSelectedIndex, err := createStep.pkgAuthoringUI.AskForChoice(choiceOpts)
+		if err != nil {
+			return err
+		}
+		if preferenceOptionSelectedIndex == 0 {
+			createStep.pkgBuild.Annotations[common.PkgCreatePreferenceAnnotationKey] = "true"
+			bundleLocation := filepath.Join(createStep.pkgLocation, "bundle")
+			createStep.pkgAuthoringUI.PrintInformationalText("To create an immutable reference, we need to create an imgpkg bundle. Imgpkg, a Carvel tool, allows users to package, distribute, and relocate a set of files as one OCI artifact: a bundle. Imgpkg bundles are identified with a unique sha256 digest based on the file contents. Imgpkg uses that digest to ensure that the copied contents are identical to those originally pushed.")
+			createStep.pkgAuthoringUI.PrintInformationalText("\nCleaning up any previous imgpkg bundle directory present.")
+			createStep.pkgAuthoringUI.PrintActionableText("Cleaning up any previous bundle directory")
+			createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("rm -r -f %s", bundleLocation))
+			util.Execute("rm", []string{"-r", "-f", bundleLocation})
+			err := createStep.createBundleDir()
+			if err != nil {
+				return err
+			}
 
-	defaultManifestOptionSelected := getManifestOptionFromPkgBuild(createStep.pkgBuild)
-	createStep.pkgAuthoringUI.PrintInformationalText("In package, we need to fetch the manifest which defines how the application would be deployed in a K8s cluster. This manifest can be in the form of a yaml file used with `kubectl apply ...` or it could be a helm chart used with `helm install ...`. They can be available in Github repository, release artifact of a Github Repository, helm repo. Please specify the information with regards to where the manifest can be fetched from:")
-	manifestOptions := []string{FetchReleaseArtifactFromGithub, FetchManifestFromGithub, FetchChartFromHelmRepo, FetchChartFromGithub}
-	defaultFetchManifestOptionIndex := getDefaultManifestOptionIndex(manifestOptions, defaultManifestOptionSelected)
-	choiceOpts := ui.ChoiceOpts{
-		Label:   "Where is the manifest located",
-		Default: defaultFetchManifestOptionIndex,
-		Choices: manifestOptions,
+			err = createStep.createBundleDotImgpkgDir()
+			if err != nil {
+				return err
+			}
+
+		} else {
+			createStep.pkgBuild.Annotations[common.PkgCreatePreferenceAnnotationKey] = "false"
+		}
+		createStep.pkgBuild.WriteToFile(createStep.pkgLocation)
+	*/
+	bundleLocation := filepath.Join(createStep.pkgLocation, "bundle")
+	createStep.pkgAuthoringUI.PrintInformationalText("We need to create an imgpkg bundle as part of the package creation process. Imgpkg, a Carvel tool, allows users to package, distribute, and relocate a set of files as one OCI artifact: a bundle. Imgpkg bundles are identified with a unique sha256 digest based on the file contents. Imgpkg uses that digest to ensure that the copied contents are identical to those originally pushed.")
+	createStep.pkgAuthoringUI.PrintInformationalText("\nCleaning up any previous imgpkg bundle directory present.")
+	createStep.pkgAuthoringUI.PrintActionableText("Cleaning up any previous bundle directory")
+	createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("rm -r -f %s", bundleLocation))
+	util.Execute("rm", []string{"-r", "-f", bundleLocation})
+	err = createStep.createBundleDir()
+	if err != nil {
+		return err
 	}
-	manifestOptionSelectedIndex, err := createStep.pkgAuthoringUI.AskForChoice(choiceOpts)
-	createStep.pkgBuild.Annotations[PkgFetchContentAnnotationKey] = manifestOptions[manifestOptionSelectedIndex]
-	createStep.pkgBuild.WriteToFile(createStep.pkgLocation)
 
-	createStep.pkgBuild.Annotations[PkgFetchContentAnnotationKey] = manifestOptions[manifestOptionSelectedIndex]
-	createStep.pkgBuild.WriteToFile(createStep.pkgLocation)
-
+	err = createStep.createBundleDotImgpkgDir()
+	if err != nil {
+		return err
+	}
 	err = createStep.configureFetchSection()
 	if err != nil {
 		return err
@@ -167,27 +197,37 @@ func (createStep *CreateStep) Interact() error {
 			}
 
 	*/
-	createStep.printNextStep()
 	return nil
 }
 
-func getManifestOptionFromPkgBuild(pkgBuild *build.PackageBuild) string {
-	return pkgBuild.Annotations[PkgFetchContentAnnotationKey]
+func getPackageCreatePreferenceFromPkgBuild(pkgBuild *build.PackageBuild) bool {
+	if pkgBuild.Annotations[common.PkgCreatePreferenceAnnotationKey] == "false" {
+		return false
+	}
+	return true
 }
 
-func getDefaultManifestOptionIndex(manifestOptions []string, defaultManifestOptionSelected string) int {
-	var defaultManifestOptionIndex int
-	if defaultManifestOptionSelected == "" {
-		defaultManifestOptionIndex = 0
-	} else {
-		for i, fetchTypeName := range manifestOptions {
-			if fetchTypeName == defaultManifestOptionSelected {
-				defaultManifestOptionIndex = i
-				break
-			}
-		}
+func (createStep CreateStep) createBundleDir() error {
+	bundleLocation := filepath.Join(createStep.pkgLocation, "bundle")
+	createStep.pkgAuthoringUI.PrintInformationalText("\nBundle directory will act as a parent directory which will contain all the artifacts which makes up our imgpkg bundle.")
+	createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", bundleLocation))
+	err := createStep.createDirectory(bundleLocation)
+	if err != nil {
+		return err
 	}
-	return defaultManifestOptionIndex
+	return nil
+}
+
+func (createStep CreateStep) createBundleDotImgpkgDir() error {
+	bundleDotImgPkgLocation := filepath.Join(createStep.pkgLocation, "bundle", ".imgpkg")
+	createStep.pkgAuthoringUI.PrintInformationalText("\n.imgpkg directory will contain the bundle’s lock file. A bundle lock file has the mapping of images(referenced in the package contents such as K8s YAML configurations, etc)to its sha256 digest.")
+	createStep.pkgAuthoringUI.PrintActionableText("Creating directory")
+	createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", bundleDotImgPkgLocation))
+	err := createStep.createDirectory(bundleDotImgPkgLocation)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 //Get Fully Qualified Name of the Package and store it in package-build.yml
@@ -195,7 +235,7 @@ func (createStep CreateStep) configureFullyQualifiedName() error {
 	createStep.printFQPkgNameBlock()
 	defaultFullyQualifiedName := createStep.pkgBuild.Spec.PkgMetadata.Name
 	textOpts := ui.TextOpts{
-		Label:        "Enter the fully qualified package name",
+		Label:        "Enter the package reference name",
 		Default:      defaultFullyQualifiedName,
 		ValidateFunc: validateFQName,
 	}
@@ -212,10 +252,9 @@ func (createStep CreateStep) configureFullyQualifiedName() error {
 }
 
 func (createStep *CreateStep) printFQPkgNameBlock() {
-	createStep.pkgAuthoringUI.PrintInformationalText("A package name must be a fully qualified name. It must consist of at least three segments separated by a '.' Fully Qualified Name cannot have a trailing '.' e.g. samplepackage.corp.com")
+	createStep.pkgAuthoringUI.PrintInformationalText("A package Reference name must be a valid DNS subdomain name (https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names) \n - at least three segments separated by a '.', no trailing '.' e.g. samplepackage.corp.com")
 }
 
-//Get Package Version and store it in package-build.yml
 //Get Package Version and store it in package-build.yml
 func (createStep CreateStep) configurePackageVersion() error {
 	createStep.printPkgVersionBlock()
@@ -237,7 +276,7 @@ func (createStep CreateStep) configurePackageVersion() error {
 }
 
 func (createStep *CreateStep) printPkgVersionBlock() {
-	createStep.pkgAuthoringUI.PrintInformationalText("These versions are used by PackageInstall to install specific version of the package into the Kubernetes cluster.")
+	createStep.pkgAuthoringUI.PrintInformationalText("A package version is used by PackageInstall to install particular version of the package into the Kubernetes cluster. It must be valid semver as specified by https://semver.org/spec/v2.0.0.html")
 }
 
 func (createStep *CreateStep) configureFetchSection() error {
@@ -278,6 +317,7 @@ func (createStep CreateStep) PostInteract() error {
 		return err
 	}
 	createStep.pkgAuthoringUI.PrintInformationalText(fmt.Sprintf("Both the files can be accessed from the following location: %s\n", createStep.pkgLocation))
+	createStep.printNextStep()
 	return nil
 }
 
@@ -349,7 +389,7 @@ func (createStep CreateStep) printPackageMetadataCR(pkgMetadata v1alpha1.Package
 }
 
 func (createStep CreateStep) printNextStep() {
-
+	createStep.pkgAuthoringUI.PrintInformationalText("\nCreated package can be consumed in following ways:\n1. Package-build.yml is the source of truth for the package authoring. Currently, the package.yml and packageMetadata.yml is created with some default values e.g. Release Notes, Short description, Long description etc. You can change these values to actual values in package-build.yml and rerun `kctrl pkg build create -y`. `-y` will run it in the non-interactive mode and will pick the values described in the package-build.yml\n2. Add the package to package repository by running `kctrl pkg repo build`. Once it has been added to the package repository, test it by running `kctrl pkg install -i <INSTALL_NAME> -p <PACKAGE_NAME> --version <VERSION>\n3. Publish the package on the github repository.\n4. For local testing, add the package to Kubernetes cluster by running `kubectl apply -f package.yml` and then install it by running `kctrl pkg install -i <INSTALL_NAME> -p <PACKAGE_NAME> --version <VERSION> \n")
 }
 
 func writeToFile(path string, data []byte) error {

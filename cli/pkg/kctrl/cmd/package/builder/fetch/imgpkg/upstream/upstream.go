@@ -43,11 +43,60 @@ func NewUpstreamStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *pkg
 }
 
 func (upstreamStep *UpstreamStep) PreInteract() error {
-	upstreamStep.pkgAuthoringUI.PrintInformationalText("In Carvel, An upstream source is the location from where we want to sync the software configuration.")
 	return nil
 }
 
 func (upstreamStep *UpstreamStep) Interact() error {
+	vendirDirectories := upstreamStep.pkgBuild.Spec.Vendir.Directories
+	var earlierUpstreamOptionSelected string
+	if len(vendirDirectories) > 1 {
+		//As multiple upstream directories are configured, we dont want to touch them.
+		return nil
+	}
+	if len(vendirDirectories) == 0 {
+		vendirDirectories = upstreamStep.initializeVendirDirectoryConf()
+	} else {
+		directory := vendirDirectories[0]
+		if len(directory.Contents) > 1 {
+			//As multiple content sections are configured, we dont want to touch them.
+			return nil
+		}
+		earlierUpstreamOptionSelected = getUpstreamOptionFromPkgBuild(upstreamStep.pkgBuild)
+	}
+
+	manifestOptionSelected := getManifestOptionFromPkgBuild(upstreamStep.pkgBuild)
+	if manifestOptionSelected != earlierUpstreamOptionSelected {
+		setEarlierUpstreamOptionAsNil(vendirDirectories, earlierUpstreamOptionSelected)
+	}
+	switch manifestOptionSelected {
+	case common.FetchReleaseArtifactFromGithub:
+		githubStep := NewGithubStep(upstreamStep.pkgAuthoringUI, upstreamStep.PkgLocation, upstreamStep.pkgBuild)
+		err := common.Run(githubStep)
+		if err != nil {
+			return err
+		}
+		includedPaths, err := upstreamStep.getIncludedPaths()
+		if err != nil {
+			return err
+		}
+		upstreamStep.pkgBuild.Spec.Vendir.Directories[0].Contents[0].IncludePaths = includedPaths
+		upstreamStep.pkgBuild.WriteToFile(upstreamStep.PkgLocation)
+	case common.FetchChartFromHelmRepo:
+		helmStep := NewHelmStep(upstreamStep.pkgAuthoringUI, upstreamStep.PkgLocation, upstreamStep.pkgBuild)
+		err := common.Run(helmStep)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func getManifestOptionFromPkgBuild(pkgBuild *pkgbuilder.PackageBuild) string {
+	return pkgBuild.Annotations[common.PkgFetchContentAnnotationKey]
+}
+
+func (upstreamStep *UpstreamStep) OldInteract() error {
 	var defaultUpstreamOptionSelected string
 
 	vendirDirectories := upstreamStep.pkgBuild.Spec.Vendir.Directories
@@ -65,6 +114,7 @@ func (upstreamStep *UpstreamStep) Interact() error {
 		}
 		defaultUpstreamOptionSelected = getUpstreamOptionFromPkgBuild(upstreamStep.pkgBuild)
 	}
+
 	var upstreamTypeNames = []string{VendirGithubReleaseConf, VendirHelmChartConf}
 
 	defaultUpstreamOptionIndex := getDefaultUpstreamOptionIndex(upstreamTypeNames, defaultUpstreamOptionSelected)
@@ -168,9 +218,9 @@ func getUpstreamOptionFromPkgBuild(pkgBuild *pkgbuilder.PackageBuild) string {
 	case content.ImgpkgBundle != nil:
 		selectedUpstreamOption = VendirImgpkgBundleConf
 	case content.GithubRelease != nil:
-		selectedUpstreamOption = VendirGithubReleaseConf
+		selectedUpstreamOption = common.FetchReleaseArtifactFromGithub
 	case content.HelmChart != nil:
-		selectedUpstreamOption = VendirHelmChartConf
+		selectedUpstreamOption = common.FetchChartFromHelmRepo
 	case content.Directory != nil:
 		selectedUpstreamOption = VendirDirectoryConf
 	case content.Manual != nil:
@@ -212,16 +262,16 @@ func (upstreamStep *UpstreamStep) PostInteract() error {
 	if err != nil {
 		return err
 	}
-	err = upstreamStep.printVendirLockFile()
+	/*err = upstreamStep.printVendirLockFile()
 	if err != nil {
 		return err
-	}
+	}*/
 	return nil
 }
 
 func (upstreamStep *UpstreamStep) createVendirFile() error {
 	vendirFileLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "vendir.yml")
-	upstreamStep.pkgAuthoringUI.PrintInformationalText("We have all the information needed to sync the upstream. To create an imgpkg bundle, data has to be synced from upstream to local. To sync the data from upstream to local, we will use vendir. Vendir allows to declaratively state what should be in a directory and sync any number of data sources into it. Lets use our inputs to create vendir.yml file.")
+	upstreamStep.pkgAuthoringUI.PrintInformationalText("We have all the information needed to fetch the data from source to local. We will use vendir for this purpose. Vendir allows to declaratively state what should be in a directory and sync any number of data sources into it. Lets create vendir.yml file. Vendir.yml is used to fetch the data.This is how `vendir.yml` file looks.")
 	data, err := yaml.Marshal(&upstreamStep.pkgBuild.Spec.Vendir)
 	if err != nil {
 		return fmt.Errorf("Unable to create vendir.yml\n %s", err.Error())
@@ -264,7 +314,7 @@ func (upstreamStep *UpstreamStep) printFile(filePath string) error {
 
 func (upstreamStep *UpstreamStep) printVendirLockFile() error {
 	vendirLockFileLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "vendir.lock.yml")
-	upstreamStep.pkgAuthoringUI.PrintInformationalText("After running vendir sync, there is one more file created i.e. bundle/vendir.lock.yml. This lock file resolves the release tag to the specific GitHub release and declares that the config is the synchronization target path.")
+	upstreamStep.pkgAuthoringUI.PrintInformationalText("Vendir sync creates one more file i.e. bundle/vendir.lock.yml. This lock file contains mapping of the resolved release tag to the specific GitHub release and the target path where data is synchronized.")
 	upstreamStep.pkgAuthoringUI.PrintActionableText("Printing Vendir.lock.yml")
 	upstreamStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("cat %s", vendirLockFileLocation))
 	err := upstreamStep.printFile(vendirLockFileLocation)
@@ -276,17 +326,17 @@ func (upstreamStep *UpstreamStep) printVendirLockFile() error {
 
 func (upstreamStep *UpstreamStep) runVendirSync() error {
 	bundleLocation := filepath.Join(upstreamStep.PkgLocation, "bundle")
-	upstreamStep.pkgAuthoringUI.PrintInformationalText("Next step is to run vendir to sync the data from upstream.")
+	upstreamStep.pkgAuthoringUI.PrintInformationalText("\nNext step is to run `vendir sync` to fetch the data from source to local.")
 	upstreamStep.pkgAuthoringUI.PrintActionableText("Running vendir sync")
-	upstreamStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("vendir sync --chdir %s", bundleLocation))
-	result := util.Execute("vendir", []string{"sync", "--chdir", bundleLocation})
+	upstreamStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("vendir sync --chdir %s -f vendir.yml", bundleLocation))
+	result := util.Execute("vendir", []string{"sync", "--chdir", bundleLocation, "-f", "vendir.yml"})
 	if result.Error != nil {
 		return fmt.Errorf("while running vendir sync. %s", result.Stderr)
 	}
 	configLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "config")
-	upstreamStep.pkgAuthoringUI.PrintInformationalText("To ensure that data has been synced, lets list down the files in config directory")
-	upstreamStep.pkgAuthoringUI.PrintActionableText(fmt.Sprintf("Listing files in config directory"))
-	upstreamStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("ls -l %s", configLocation))
+	upstreamStep.pkgAuthoringUI.PrintInformationalText("\nTo validate that data has been fetched, lets list down the files")
+	upstreamStep.pkgAuthoringUI.PrintActionableText(fmt.Sprintf("Validating by listing files"))
+	upstreamStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("ls -lR %s", configLocation))
 	err := upstreamStep.listFiles(configLocation)
 	if err != nil {
 		return err
@@ -295,7 +345,7 @@ func (upstreamStep *UpstreamStep) runVendirSync() error {
 }
 
 func (upstreamStep UpstreamStep) listFiles(dir string) error {
-	result := util.Execute("ls", []string{"-l", dir})
+	result := util.Execute("ls", []string{"-lR", dir})
 	if result.Error != nil {
 		return fmt.Errorf("Listing files.\n %s", result.Stderr)
 	}
@@ -304,11 +354,14 @@ func (upstreamStep UpstreamStep) listFiles(dir string) error {
 }
 
 func (upstreamStep UpstreamStep) getIncludedPaths() ([]string, error) {
-	upstreamStep.pkgAuthoringUI.PrintInformationalText("Now, we need to enter the specific paths which we want to include as package content. More than one paths can be added with comma separator. To include everything from the upstream, leave it empty.")
+	upstreamStep.pkgAuthoringUI.PrintInformationalText("We need exact manifest files from the above provided repository which should be included as package content. Multiple files can be included using a comma separator. If you want to include all the files, enter *.")
 	includedPaths := upstreamStep.pkgBuild.Spec.Vendir.Directories[0].Contents[0].IncludePaths
 	defaultIncludedPath := strings.Join(includedPaths, ",")
+	if len(includedPaths) == 0 {
+		defaultIncludedPath = "*"
+	}
 	textOpts := ui.TextOpts{
-		Label:        "Enter the paths which need to be included as part of this package. Leave empty to include everything",
+		Label:        "Enter the paths which need to be included as part of this package",
 		Default:      defaultIncludedPath,
 		ValidateFunc: nil,
 	}
@@ -316,7 +369,7 @@ func (upstreamStep UpstreamStep) getIncludedPaths() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(path) == 0 {
+	if path == "*" {
 		return []string{}, nil
 	}
 	paths := strings.Split(path, ",")

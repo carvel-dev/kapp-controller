@@ -16,6 +16,7 @@ type IPkgAuthoringUI interface {
 	AskForText(textOpts ui.TextOpts) (string, error)
 	AskForChoice(opts ui.ChoiceOpts) (int, error)
 	PrintCmdExecutionOutput(text string)
+	PrintHeading(text string)
 }
 
 type PackageAuthoringUIImpl struct {
@@ -29,7 +30,7 @@ func NewPackageAuthoringUI(ui ui.UI) IPkgAuthoringUI {
 }
 
 func (c PackageAuthoringUIImpl) PrintInformationalText(text string) {
-	c.ui.BeginLinef(color.New(color.Faint).Sprint("\n" + wordwrap.WrapString(text, 80)))
+	c.ui.BeginLinef(color.New(color.Faint).Sprint(wordwrap.WrapString(text, 80)))
 }
 
 func (c PackageAuthoringUIImpl) PrintCmdExecutionText(text string) {
@@ -65,4 +66,8 @@ func (c PackageAuthoringUIImpl) AskForChoice(choiceOpts ui.ChoiceOpts) (int, err
 	col := color.New(color.Bold)
 	choiceOpts.Label = fmt.Sprintf(col.Sprint("> ")) + choiceOpts.Label
 	return c.ui.AskForChoice(choiceOpts)
+}
+
+func (c PackageAuthoringUIImpl) PrintHeading(text string) {
+	c.ui.BeginLinef(color.New(color.Bold).Sprintf("%s\n\n", text))
 }
