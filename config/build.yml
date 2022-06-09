@@ -12,8 +12,6 @@ sources:
       #! pass kapp_controller_version into Dockerfile.
       rawOptions:
       - #@ "--build-arg=KCTRL_VER="+data.values.kapp_controller_version
-      #@ if/end data.values.push_secret != "":
-      - #@ "--registry-secret="+data.values.push_secret
       #@ if/end data.values.platform != "":
       - #@ "--platform="+data.values.platform
 
