@@ -1,0 +1,12 @@
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: http-bin
+  namespace: default
+spec:
+  serviceAccountName: cluster-admin-sa
+  packageRef:
+    refName: example.com.http-bin
+    versionSelection:
+      constraints: 0.1.0
+

@@ -9,9 +9,10 @@ go mod vendor
 go mod tidy
 go fmt ./cmd/... ./pkg/...
 
-go build -trimpath -mod=vendor -o controller ./cmd/main.go
+go build -trimpath -mod=vendor -o controller ./cmd/controller/...
+go build -trimpath -mod=vendor -o controller-sidecarexec ./cmd/sidecarexec/main.go
 
-ls -la ./controller
+ls -la ./controller ./controller-sidecarexec
 
 ./hack/gen-crds.sh
 ytt -f config/ >/dev/null

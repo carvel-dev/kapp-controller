@@ -106,7 +106,7 @@ stringData:
 
 			logger.Section("deploy", func() {
 				kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", tc.appCRName},
-					e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(tc.deploymentYAML)})
+					e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(tc.deploymentYAML), OnErrKubectl: []string{"kubectl", "get", "app", "-oyaml"}})
 
 				out := kapp.Run([]string{"inspect", "-a", tc.appCRName, "--raw", "--tty=false", "--filter-kind=App"})
 
@@ -227,5 +227,5 @@ spec:
 
 	// App CR will fail if ytt assertion fails
 	kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-		e2e.RunOpts{StdinReader: strings.NewReader(config)})
+		e2e.RunOpts{StdinReader: strings.NewReader(config), OnErrKubectl: []string{"get", "app", "-oyaml"}})
 }

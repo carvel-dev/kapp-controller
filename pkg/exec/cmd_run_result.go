@@ -5,7 +5,6 @@ package exec
 
 import (
 	"fmt"
-	"os/exec"
 	"regexp"
 	"strings"
 )
@@ -32,7 +31,7 @@ func (r *CmdRunResult) AttachErrorf(msg string, err error) {
 	r.Finished = true
 	if err != nil {
 		r.ExitCode = -1
-		if exitError, ok := err.(*exec.ExitError); ok {
+		if exitError, ok := err.(interface{ ExitCode() int }); ok {
 			r.ExitCode = exitError.ExitCode()
 		}
 

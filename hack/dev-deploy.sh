@@ -14,6 +14,9 @@ then
   echo "For your first deploy please use hack/deploy.sh and then try re-running this script for subsequent deploys."
   exit 1
 fi
+
+echo "got kc latest image: $kc_latest_image"
+
 tail -n +$run_image_start Dockerfile | \
   sed 's/COPY.*kapp-controller/COPY controller-linux-amd64 kapp-controller/' | \
    sed "s/from=deps/from=$kc_latest_image/g" | \

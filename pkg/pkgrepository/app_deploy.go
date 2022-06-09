@@ -29,7 +29,6 @@ func (a *App) deploy(tplOutput string) exec.CmdRunResult {
 		if err != nil {
 			return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 		}
-
 		return kapp.Deploy(tplOutput, a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
 
 	default:
