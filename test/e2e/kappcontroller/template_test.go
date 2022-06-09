@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
@@ -113,6 +114,14 @@ spec:
         - configMapRef:
             name: cm-values
         - path: vals.yml
+        - downwardAPI:
+            items:
+            - name: namespace
+              fieldPath: metadata.namespace
+            - name: name
+              fieldPath: metadata.name
+            - name: uid
+              fieldPath: metadata.uid
   deploy:
     - kapp: {}
 ---
@@ -145,6 +154,7 @@ data:
 	})
 
 	logger.Section("check ConfigMap exists", func() {
+		uid := strings.Trim(kubectl.Run([]string{"get", "-n", env.Namespace, "app", name, "-o", "jsonpath='{.metadata.uid}'"}), "'")
 		out := kubectl.Run([]string{"get", "configmap", "cm-result", "-o", "yaml"})
 
 		var cm corev1.ConfigMap
@@ -154,14 +164,15 @@ data:
 			t.Fatalf("Unmarshaling result config map: %s", err)
 		}
 
-		expectedOut := `from_secret: true
+		expectedOut := fmt.Sprintf(`from_secret: true
 from_cm: true
 from_path: true
-`
+name: %s
+namespace: %s
+uid: %s
+`, name, env.Namespace, uid)
 
-		if cm.Data["values"] != expectedOut {
-			t.Fatalf("Values '%s' does not match expected value", cm.Data["values"])
-		}
+		require.YAMLEq(t, expectedOut, cm.Data["values"])
 	})
 }
 

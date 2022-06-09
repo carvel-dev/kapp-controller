@@ -407,6 +407,21 @@ spec:
                                           name:
                                             type: string
                                         type: object
+                                      downwardAPI:
+                                        properties:
+                                          items:
+                                            items:
+                                              properties:
+                                                fieldPath:
+                                                  description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
+                                                  type: string
+                                                name:
+                                                  type: string
+                                              required:
+                                              - fieldPath
+                                              type: object
+                                            type: array
+                                        type: object
                                       path:
                                         type: string
                                       secretRef:
@@ -437,6 +452,21 @@ spec:
                                         properties:
                                           name:
                                             type: string
+                                        type: object
+                                      downwardAPI:
+                                        properties:
+                                          items:
+                                            items:
+                                              properties:
+                                                fieldPath:
+                                                  description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
+                                                  type: string
+                                                name:
+                                                  type: string
+                                              required:
+                                              - fieldPath
+                                              type: object
+                                            type: array
                                         type: object
                                       path:
                                         type: string
@@ -548,6 +578,21 @@ spec:
                                         properties:
                                           name:
                                             type: string
+                                        type: object
+                                      downwardAPI:
+                                        properties:
+                                          items:
+                                            items:
+                                              properties:
+                                                fieldPath:
+                                                  description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
+                                                  type: string
+                                                name:
+                                                  type: string
+                                              required:
+                                              - fieldPath
+                                              type: object
+                                            type: array
                                         type: object
                                       path:
                                         type: string
@@ -907,6 +952,21 @@ spec:
                                   name:
                                     type: string
                                 type: object
+                              downwardAPI:
+                                properties:
+                                  items:
+                                    items:
+                                      properties:
+                                        fieldPath:
+                                          description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - fieldPath
+                                      type: object
+                                    type: array
+                                type: object
                               path:
                                 type: string
                               secretRef:
@@ -937,6 +997,21 @@ spec:
                                 properties:
                                   name:
                                     type: string
+                                type: object
+                              downwardAPI:
+                                properties:
+                                  items:
+                                    items:
+                                      properties:
+                                        fieldPath:
+                                          description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - fieldPath
+                                      type: object
+                                    type: array
                                 type: object
                               path:
                                 type: string
@@ -1048,6 +1123,21 @@ spec:
                                 properties:
                                   name:
                                     type: string
+                                type: object
+                              downwardAPI:
+                                properties:
+                                  items:
+                                    items:
+                                      properties:
+                                        fieldPath:
+                                          description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - fieldPath
+                                      type: object
+                                    type: array
                                 type: object
                               path:
                                 type: string
