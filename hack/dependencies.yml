@@ -10,14 +10,14 @@
   version: v0.41.1
 - checksums:
     darwin:
-      amd64: 181ac8be5652b54344617d90aa8e83fbb41756d1b4b99168fec85d8813b3c1b2
+      amd64: 5fd3afbe09a66fc9e91252c57448045eeeab1ee3f6d305da6f9885186b744e67
     linux:
-      amd64: 38a5dad7ed478d209c8206d95546989b2730c7fed914c78d85eed68a2233688e
+      amd64: 67c86ece94a3747b2e011a5b72044b69f2594ca807621b1e1e4c805f6abcaeef
   dev: true
   name: kbld
   repo: vmware-tanzu/carvel-kbld
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.33.0
+  version: v0.34.0
 - checksums:
     darwin:
       amd64: 20b57cbb2ba883ebb78809a71c42c0f26b7b0ca15610d7a37dab4d962cca6e54
