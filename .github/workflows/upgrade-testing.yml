@@ -29,11 +29,6 @@ jobs:
         run: |
           set -e -x
 
-          mkdir /tmp/bin
-          export PATH=/tmp/bin:$PATH
-
-          curl -sLo /tmp/bin/minikube https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
-          chmod +x /tmp/bin/minikube
           minikube start --driver=docker
           eval $(minikube docker-env --shell=bash)
 
