@@ -3,6 +3,7 @@
       amd64: c370fab22081b17b780d4ec37fb664edb58fe6f28d635ad4beccbac7997586f9
     linux:
       amd64: 65dbc4f3a4a2ed84296dd1b323e8e7bd77e488fa7540d12dd36cf7fb2fc77c03
+      arm64: 3eaa8fcb3526a2a305a4845196bbffe7e1b0f3ea57fcd90daad94c855139df86
   dev: true
   name: ytt
   repo: vmware-tanzu/carvel-ytt
@@ -13,6 +14,7 @@
       amd64: 5fd3afbe09a66fc9e91252c57448045eeeab1ee3f6d305da6f9885186b744e67
     linux:
       amd64: 67c86ece94a3747b2e011a5b72044b69f2594ca807621b1e1e4c805f6abcaeef
+      arm64: 658725c5dab5349dd4cb826ff9278749f093ed2275aadf51dc994265e6599b2c
   dev: true
   name: kbld
   repo: vmware-tanzu/carvel-kbld
@@ -23,6 +25,7 @@
       amd64: 51e209f903b17c9e330151c41c6d507bfabccfdaa56dd8fdaa1c0f39ed2240e9
     linux:
       amd64: dec5040d90478fdf0af3c1548d46f9ded642f156245bba83fe99171c8461e4f7
+      arm64: e2047147c4bc00d8fcf9a5f01bdefc9fdf0aa5de9582357f03e54d4cd9fc0d75
   dev: true
   name: kapp
   repo: vmware-tanzu/carvel-kapp
@@ -33,6 +36,7 @@
       amd64: b8462c9b2b9c060e1a81c206ea9810937bf7357ae2ee150f94ec8635dff1d612
     linux:
       amd64: c7190adcb8445480e4e457c899aecdf7ca98606c625493b904c0eb2ab721ce19
+      arm64: 415120c4ede6ff1456feae6b980319998c0a3fc2128bbac1946ba98ce4d07aaf
   dev: true
   name: imgpkg
   repo: vmware-tanzu/carvel-imgpkg
@@ -43,6 +47,7 @@
       amd64: c26547097d67f21e129a25557d9d36c7c0e109afe130adff63d3c83ce9459ecc
     linux:
       amd64: 1aa12d070f2e91fcb0f4d138704c5061075b0821e6f943f5a39676d7a4709142
+      arm64: 015977ae54d85bf2366d7affb0d582fecf79737f0eb80fa8a66de9f66e877b61
   dev: true
   name: vendir
   repo: vmware-tanzu/carvel-vendir
@@ -51,6 +56,7 @@
 - checksums:
     linux:
       amd64: 1484ffb0c7a608d8069470f48b88d729e88c41a1b6602f145231e8ea7b43b50a
+      arm64: 5c0aa709c5aaeedd190907d70f9012052c1eea7dff94bffe941b879a33873947
   dev: false
   name: helm
   repo: helm/helm
@@ -60,6 +66,7 @@
 - checksums:
     linux:
       amd64: 53aec65e45f62a769ff24b7e5384f0c82d62668dd96ed56685f649da114b4dbb
+      arm64: 4945313ed0dfddba52a12ab460d750c91ead725d734039493da0285ad6c5f032
   dev: false
   name: sops
   repo: mozilla/sops
@@ -68,6 +75,7 @@
 - checksums:
     linux:
       amd64: 6414f71ce947fbbea1314f6e9786c5d48436ebc76c3fd6167bf018e432b3b669
+      arm64: 6c82aa1d406e5a401ec3bb344cd406626478be74d5ae628f192d907cd78af981
   dev: false
   name: age
   repo: FiloSottile/age
@@ -77,6 +85,7 @@
 - checksums:
     linux:
       amd64: 5e7ecb614b5926acfc36eb1258800391ab7c6e6e026fa7cacbfe92006bac895c
+      arm64: a8c3f4140d18c324cc69f5de4df0566e529e1636cff340095a42475799bf3fed
   dev: false
   name: cue
   repo: cue-lang/cue
