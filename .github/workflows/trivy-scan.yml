@@ -13,10 +13,10 @@ jobs:
         id: latest-sha
         run: |
           # Get the latest released docker image sha
-          curl -sL https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/releases/latest | jq -r '.assets[].browser_download_url' | wget -i -
+          curl -sL https://api.github.com/repos/${{github.repository}}/releases/latest | jq -r '.assets[].browser_download_url' | wget -i -
 
           echo ::set-output name=image::$(yq eval '.spec.template.spec.containers[0].image' release.yml -N -j | jq 'select(. != null)' -r)
-          echo ::set-output name=tag::$(curl -sL https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/releases/latest | jq -r '.tag_name')
+          echo ::set-output name=tag::$(curl -sL https://api.github.com/repos/${{github.repository}}/releases/latest | jq -r '.tag_name')
       - name: Install Trivy
         run: |
           brew install aquasecurity/trivy/trivy
@@ -83,7 +83,7 @@ jobs:
             echo "the curl reply was:"
             cat cves.txt
           }
-          curl https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/code-scanning/alerts \
+          curl https://api.github.com/repos/${{github.repository}}/code-scanning/alerts \
             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' > cves.txt
           cat cves.txt| jq '.[] | select(.state == "dismissed" or .state == "closed" or .state == "fixed") | .rule.id' | tr -d '"' > .trivyignore
       - name: Run Trivy Reports
@@ -119,7 +119,7 @@ jobs:
         if: steps.cve-summary.outputs.summary != ''
         uses: slackapi/slack-github-action@v1.19.0
         with:
-          slack-message: "New CVEs found! Check https://github.com/vmware-tanzu/carvel-kapp-controller/security/code-scanning for details \n ${{ steps.cve-summary.outputs.summary }}"
+          slack-message: "New CVEs found! Check https://github.com/${{github.repository}}/security/code-scanning for details \n ${{ steps.cve-summary.outputs.summary }}"
           channel-id: G01FTP43JMQ
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
