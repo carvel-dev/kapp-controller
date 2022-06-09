@@ -27,7 +27,7 @@ func NewTemplateStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *pkg
 }
 
 func (templateStep TemplateStep) PreInteract() error {
-	templateStep.pkgAuthoringUI.PrintInformationalText("\nNext step is to add the template section of the package.")
+	//templateStep.pkgAuthoringUI.PrintInformationalText("\nNext step is to add the template section of the package.")
 	return nil
 }
 

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	PackageRepositoryBuildFileName   = "pkgrepo-build.yml"
+	PackageRepositoryBuildFileName   = "repo-build.yml"
 	PackageRepositoryKind            = "PackageRepository"
 	PackageRepositoryAPIVersion      = "packaging.carvel.dev/v1alpha1"
 	PackageRepositoryBuildKind       = "PackageRepositoryBuild"
@@ -25,7 +25,7 @@ type PackageRepositoryBuild struct {
 }
 
 type Spec struct {
-	PkgRepo *v1alpha12.PackageRepository `json:"packageRepository, omitempty"`
+	PkgRepo *PackageRepository `json:"packageRepository, omitempty"`
 }
 
 func (pkgBuilder PackageRepositoryBuild) WriteToFile(dirPath string) error {
@@ -33,7 +33,7 @@ func (pkgBuilder PackageRepositoryBuild) WriteToFile(dirPath string) error {
 	if err != nil {
 		return err
 	}
-	fileLocation := filepath.Join(dirPath, PackageRepositoryBuildFileName)
+	fileLocation := filepath.Join(PackageRepositoryBuildFileName)
 	file, err := os.Create(fileLocation)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func GeneratePackageRepositoryBuild(pkgRepoBuildFilePath string) (PackageReposit
 			},
 			ObjectMeta: metav1.ObjectMeta{},
 			Spec: Spec{
-				PkgRepo: &v1alpha12.PackageRepository{
+				PkgRepo: &PackageRepository{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       PackageRepositoryKind,
 						APIVersion: PackageRepositoryAPIVersion,
@@ -103,4 +103,13 @@ func NewPackageRepositoryBuildFromFile(filePath string) (PackageRepositoryBuild,
 		return PackageRepositoryBuild{}, err
 	}
 	return pkgRepoBuild, nil
+}
+
+type PackageRepository struct {
+	metav1.TypeMeta `json:",inline"`
+	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec v1alpha12.PackageRepositorySpec `json:"spec"`
 }

@@ -69,5 +69,5 @@ func (c PackageAuthoringUIImpl) AskForChoice(choiceOpts ui.ChoiceOpts) (int, err
 }
 
 func (c PackageAuthoringUIImpl) PrintHeading(text string) {
-	c.ui.BeginLinef(color.New(color.Bold).Sprintf("%s\n\n", text))
+	c.ui.BeginLinef(color.New(color.Bold).Sprintf("%s\n", text))
 }

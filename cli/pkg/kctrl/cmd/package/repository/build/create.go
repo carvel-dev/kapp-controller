@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	PackageRepositoryBuildFileName = "pkgrepo-build.yml"
+	PackageRepositoryBuildFileName = "repo-build.yml"
 	FilesLocation                  = "filesLocation"
 	FilesLocationSeparator         = ","
 	PackageMetadataFileName        = "metadata"
@@ -62,8 +62,11 @@ func NewCreateCmd(o *CreateOptions) *cobra.Command {
 
 func (o *CreateOptions) Run(args []string) error {
 	//TODO Rohit Should we provide an option to give pkg location?
-	pkgRepoLocation := GetPkgRepoLocation()
-	pkgRepoBuildFilePath := filepath.Join(pkgRepoLocation, PackageRepositoryBuildFileName)
+	pkgRepoLocation, err := GetPkgRepoLocation()
+	if err != nil {
+		return err
+	}
+	pkgRepoBuildFilePath := filepath.Join(PackageRepositoryBuildFileName)
 	pkgRepoBuild, err := build.GeneratePackageRepositoryBuild(pkgRepoBuildFilePath)
 	if err != nil {
 		return err
@@ -91,10 +94,8 @@ func NewCreateStep(pkgAuthorUI pkgui.IPkgAuthoringUI, pkgRepoLocation string, pk
 }
 
 func (createStep CreateStep) printStartBlock() {
-	createStep.pkgAuthoringUI.PrintInformationalText("Lets start on the package repository creation process.")
-	createStep.pkgAuthoringUI.PrintInformationalText("A package repository is a collection of Package and PackageMetadata CRs.")
-	createStep.pkgAuthoringUI.PrintInformationalText("Similar to a maven repository or a rpm repository, adding a package repository to a cluster gives users of that cluster the ability to install any of the packages from that repository.")
-	createStep.pkgAuthoringUI.PrintInformationalText("We need a directory to act as parent directory. This will be used to store all the information and files required/needed in the package repository creation journey.")
+	createStep.pkgAuthoringUI.PrintInformationalText("\nA package repository is a collection of Package and PackageMetadata CRs.")
+	createStep.pkgAuthoringUI.PrintInformationalText("\nWe need a directory to act as parent directory. This will be used to store all the information and files required/needed in the package repository creation journey.")
 	createStep.pkgAuthoringUI.PrintActionableText("Creating directory")
 	createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", createStep.pkgRepoLocation))
 }
@@ -110,10 +111,8 @@ func (createStep CreateStep) PreInteract() error {
 }
 
 func (createStep CreateStep) printPreRequisite() {
-	createStep.pkgAuthoringUI.PrintInformationalText(`Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:
-* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: imgpkg, kbld, etc.
-* You have access to an OCI registry, and you have authenticated locally so that you can push images. e.g. docker login <OCI_REGISTRY_URL>
-`)
+	createStep.pkgAuthoringUI.PrintHeading("\nPre-requisite")
+	createStep.pkgAuthoringUI.PrintInformationalText("Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: imgpkg, kbld, etc.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
 }
 
 func (createStep CreateStep) createDirectory(dirPath string) error {
@@ -127,8 +126,8 @@ func (createStep CreateStep) createDirectory(dirPath string) error {
 }
 
 func (createStep *CreateStep) Interact() error {
-
-	createStep.pkgAuthoringUI.PrintInformationalText("A package repository name is the name with which it will be referenced while deploying on the cluster.")
+	createStep.pkgAuthoringUI.PrintHeading("\nBasic Information(Step 1/3)")
+	createStep.pkgAuthoringUI.PrintInformationalText("\nA package repository name is the name with which it will be referenced while deploying on the cluster.")
 	defaultPkgRepoName := createStep.pkgRepoBuild.Spec.PkgRepo.Name
 	textOpts := ui.TextOpts{
 		Label:        "Enter the package repository name",
@@ -173,13 +172,21 @@ func (createStep CreateStep) configurePackageRepositoryLocation() error {
 
 func (createStep CreateStep) PostInteract() error {
 	createStep.printPackageRepositoryCR()
-	createStep.pkgAuthoringUI.PrintInformationalText("This file can be taken and deployed on the Kubernetes cluster to have access to all the packages available to install as part of this repository.")
-	createStep.pkgAuthoringUI.PrintInformationalText(fmt.Sprintf("Alternatively, use kctrl to deploy this package repository on the Kubernetes cluster by running `kctrl package repository add -r demo-pkg-repo --url %s`", createStep.pkgRepoBuild.Spec.PkgRepo.Spec.Fetch.ImgpkgBundle.Image))
+	createStep.printInformation()
+	createStep.printNextStep()
 	return nil
 }
 
+func (createStep CreateStep) printNextStep() {
+	createStep.pkgAuthoringUI.PrintInformationalText(fmt.Sprintf("\n**Next steps**\nPackage Repository can be consumed in following ways: \n1. Use kctrl to deploy this package repository on the Kubernetes cluster by running `kctrl package repository add -r demo-pkg-repo --url %s`\n2. Alternatively, use `packageRepository.yml` file can be deployed on the Kubernetes cluster to have access to all the packages available to install as part of this repository e.g. `kubectl apply -f packageRepository.yml`.", createStep.pkgRepoBuild.Spec.PkgRepo.Spec.Fetch.ImgpkgBundle.Image))
+}
+
+func (createStep CreateStep) printInformation() {
+	createStep.pkgAuthoringUI.PrintInformationalText("\n**Information**\nrepo-build.yml is generated as part of this flow. This file can be used for further updating while using the `kctrl pkg repo build` command. Please read the link'ed documentation for more explanation.")
+}
+
 func (createStep CreateStep) printPackageRepositoryCR() error {
-	createStep.pkgAuthoringUI.PrintInformationalText("Great, we have all the data needed to create the packageRepository.yml")
+	createStep.pkgAuthoringUI.PrintInformationalText("\n\nGreat, we have all the data needed to create the packageRepository.yml")
 	pkgRepo := createStep.pkgRepoBuild.Spec.PkgRepo
 	pkgRepo.ObjectMeta.CreationTimestamp = v1.NewTime(time.Now())
 	pkgRepoData, err := yaml.Marshal(createStep.pkgRepoBuild.Spec.PkgRepo)
@@ -206,6 +213,7 @@ func (createStep CreateStep) printPackageRepositoryCR() error {
 	if err != nil {
 		return err
 	}
+	createStep.pkgAuthoringUI.PrintInformationalText("`packageRepository.yml` file can be accessed from the following location: repobuild")
 	return nil
 }
 
@@ -226,8 +234,12 @@ func writeToFile(path string, data []byte) error {
 	return nil
 }
 
-func GetPkgRepoLocation() string {
+func GetPkgRepoLocation() (string, error) {
 	pwd, _ := os.Getwd()
 	//TODO Rohit what should we call the folder name
-	return filepath.Join(pwd, "repoBuild")
+	repoBuildLocation, err := filepath.Rel(pwd, filepath.Join(pwd, "repobuild"))
+	if err != nil {
+		return "", err
+	}
+	return repoBuildLocation, nil
 }

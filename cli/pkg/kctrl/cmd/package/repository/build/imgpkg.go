@@ -32,12 +32,9 @@ func NewImgPkgStep(ui pkgui.IPkgAuthoringUI, pkgRepoLocation string, pkgRepoBuil
 }
 
 func (imgpkg ImgpkgStep) PreInteract() error {
-	imgpkg.pkgAuthoringUI.PrintInformationalText("To create package repository, we will create an imgpkg bundle first.")
-	imgpkg.pkgAuthoringUI.PrintInformationalText("imgpkg is a Carvel tool to store a set of files as an OCI image.")
-	imgpkg.pkgAuthoringUI.PrintInformationalText("A bundle, imgpkg's primary concept, is an OCI image that holds 0+ files and 0+ references to dependent OCI images.")
-	imgpkg.pkgAuthoringUI.PrintInformationalText("With this concept, imgpkg is able to copy, push and pull bundles and their dependent images across registries.")
-	imgpkg.pkgAuthoringUI.PrintInformationalText("\nA package repository bundle is an imgpkg bundle that holds PackageMetadata and Package CRs.")
-	imgpkg.pkgAuthoringUI.PrintInformationalText("Later on, this bundle can be mentioned in the package repository CR to fetch the package and packageMetadata CRs.")
+	imgpkg.pkgAuthoringUI.PrintInformationalText("To create package repository, we will create an imgpkg bundle first. Imgpkg, a Carvel tool, allows users to package, distribute, and relocate a set of files as one OCI artifact: a bundle. Imgpkg bundles are identified with a unique sha256 digest based on the file contents. Imgpkg uses that digest to ensure that the copied contents are identical to those originally pushed.")
+	imgpkg.pkgAuthoringUI.PrintInformationalText("\nA package repository bundle is an imgpkg bundle that holds PackageMetadata and Package CRs. Later on, this bundle can be mentioned in the package repository CR to fetch the package and packageMetadata CRs.")
+	imgpkg.pkgAuthoringUI.PrintActionableText("\nCreating the required directory structure for imgpkg bundle\n")
 	err := imgpkg.createBundleDir()
 	if err != nil {
 		return err
@@ -55,9 +52,9 @@ func (imgpkg ImgpkgStep) PreInteract() error {
 }
 
 func (imgpkg ImgpkgStep) createBundleDir() error {
+	util.Execute("rm", []string{"-r", "-f", imgpkg.pkgRepoLocation, "bundle"})
 	bundleLocation := filepath.Join(imgpkg.pkgRepoLocation, "bundle")
-	imgpkg.pkgAuthoringUI.PrintInformationalText("To understand the directory structure of package repository bundle and the purpose of each subdirectory, refer: https://carvel.dev/kapp-controller/docs/latest/packaging-artifact-formats/#package-repository-bundle ")
-	imgpkg.pkgAuthoringUI.PrintActionableText("Creating directory")
+	imgpkg.pkgAuthoringUI.PrintInformationalText("To understand the directory structure of package repository bundle and the purpose of each subdirectory, refer: https://carvel.dev/kapp-controller/docs/latest/packaging-artifact-formats/#package-repository-bundle")
 	imgpkg.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", bundleLocation))
 	err := createDirectory(bundleLocation)
 	if err != nil {
@@ -69,7 +66,6 @@ func (imgpkg ImgpkgStep) createBundleDir() error {
 func (imgpkg ImgpkgStep) createBundlePackagesDir() error {
 	bundleLocation := filepath.Join(imgpkg.pkgRepoLocation, "bundle", "packages")
 	imgpkg.pkgAuthoringUI.PrintInformationalText("Packages directory will contain all the Package and PackageMetadata CRs which makes up imgpkg bundle.")
-	imgpkg.pkgAuthoringUI.PrintActionableText("Creating directory")
 	imgpkg.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", bundleLocation))
 	err := createDirectory(bundleLocation)
 	if err != nil {
@@ -81,8 +77,7 @@ func (imgpkg ImgpkgStep) createBundlePackagesDir() error {
 func (imgpkg ImgpkgStep) createBundleDotImgpkgDir() error {
 	bundleDotImgPkgLocation := filepath.Join(imgpkg.pkgRepoLocation, "bundle", ".imgpkg")
 	imgpkg.pkgAuthoringUI.PrintInformationalText(".imgpkg directory will contain the bundle’s lock file. A bundle lock file has the mapping of images(referenced in the package contents such as K8s YAML configurations, etc)to its sha256 digest.")
-	imgpkg.pkgAuthoringUI.PrintInformationalText("It ensures that later on while deployment, we are using the same exact image which we used while creating the bundle as digest are immutable even though tags are.")
-	imgpkg.pkgAuthoringUI.PrintActionableText("Creating directory")
+	//imgpkg.pkgAuthoringUI.PrintInformationalText("It ensures that later on while deployment, we are using the same exact image which we used while creating the bundle as digest are immutable even though tags are.")
 	imgpkg.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", bundleDotImgPkgLocation))
 	err := createDirectory(bundleDotImgPkgLocation)
 	if err != nil {
@@ -92,13 +87,15 @@ func (imgpkg ImgpkgStep) createBundleDotImgpkgDir() error {
 }
 
 func (imgpkg *ImgpkgStep) Interact() error {
+	imgpkg.pkgAuthoringUI.PrintHeading("\nRegistry URL(Step 2/3)")
 	imgpkgBundleConf := imgpkg.pkgRepoBuild.Spec.PkgRepo.Spec.Fetch.ImgpkgBundle
 	if imgpkgBundleConf == nil {
 		imgpkg.pkgRepoBuild.Spec.PkgRepo.Spec.Fetch.ImgpkgBundle = &v1alpha12.AppFetchImgpkgBundle{}
 	}
 	defaultRegistryURL := imgpkg.pkgRepoBuild.Spec.PkgRepo.Spec.Fetch.ImgpkgBundle.Image
+	imgpkg.pkgAuthoringUI.PrintInformationalText("\nNext is to push the imgpkg bundle created above to the OCI registry. Registry URL format: <REGISTRY_URL/REPOSITORY_NAME:TAG> e.g. index.docker.io/k8slt/sample-bundle:v0.1.0")
 	textOpts := ui.TextOpts{
-		Label:        "Enter the registry url to push the package repository",
+		Label:        "Enter the registry url to push the package repository bundle",
 		Default:      defaultRegistryURL,
 		ValidateFunc: nil,
 	}
@@ -109,13 +106,13 @@ func (imgpkg *ImgpkgStep) Interact() error {
 
 	imgpkg.pkgRepoBuild.Spec.PkgRepo.Spec.Fetch.ImgpkgBundle.Image = registryURL
 	imgpkg.pkgRepoBuild.WriteToFile(imgpkg.pkgRepoLocation)
+	imgpkg.pkgAuthoringUI.PrintHeading("\nCreating Package Repository(Step 3/3)")
 	return nil
 }
 
 func (imgpkg ImgpkgStep) PostInteract() error {
 
-	filesLocation := imgpkg.pkgRepoBuild.ObjectMeta.Annotations[FilesLocation]
-
+	filesLocation := "packages"
 	for _, location := range strings.Split(filesLocation, FilesLocationSeparator) {
 		filepath.Walk(location, imgpkg.copyPkgOrPkgMetadataFiles)
 	}
@@ -123,7 +120,9 @@ func (imgpkg ImgpkgStep) PostInteract() error {
 	bundledPackagesLocation := filepath.Join(imgpkg.pkgRepoLocation, "bundle", "packages")
 	imagesFileLocation := filepath.Join(imgpkg.pkgRepoLocation, "bundle", ".imgpkg", "images.yml")
 
-	imgpkg.pkgAuthoringUI.PrintInformationalText("Kbld, a Carvel tool, will be used to create a mapping of all the image references to their sha256 digest. kbld looks for image keys within YAML documents and tries to resolve image reference to its full digest form and creates a mapping of image tags to a URL with a sha256 digest. This mapping will then be placed into an images.yml lock file in bundle/.imgpkg directory. kbld allows to build the imgpkg bundle with immutable image references.")
+	imgpkg.pkgAuthoringUI.PrintInformationalText("imgpkg bundle configuration is now complete.")
+	//imgpkg.pkgAuthoringUI.PrintInformationalText("Kbld, a Carvel tool, will be used to create a mapping of all the image references to their sha256 digest. kbld looks for image keys within YAML documents and tries to resolve image reference to its full digest form and creates a mapping of image tags to a URL with a sha256 digest. This mapping will then be placed into an images.yml lock file in bundle/.imgpkg directory. kbld allows to build the imgpkg bundle with immutable image references.")
+	imgpkg.pkgAuthoringUI.PrintInformationalText("\nLet's use `kbld` to create immutable image reference. Kbld scans all the files in bundle configuration for any references of images and creates a mapping of image tags to a URL with sha256 digest.")
 	imgpkg.pkgAuthoringUI.PrintActionableText("Lock image references using Kbld")
 	imgpkg.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("kbld --file %s --imgpkg-lock-output %s", bundleLocation, imagesFileLocation))
 
@@ -131,8 +130,8 @@ func (imgpkg ImgpkgStep) PostInteract() error {
 	if err != nil {
 		return err
 	}
-	imgpkg.pkgAuthoringUI.PrintInformationalText("Lets see how the images.yml file looks like:")
-	imgpkg.pkgAuthoringUI.PrintActionableText("Printing file")
+	imgpkg.pkgAuthoringUI.PrintInformationalText("\nKbld places the mapping of image tag to its sha digest in images.yml lock file")
+	imgpkg.pkgAuthoringUI.PrintActionableText("Printing images.yml")
 	imgpkg.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("cat %s", imagesFileLocation))
 	err = imgpkg.printFile(imagesFileLocation)
 
@@ -140,8 +139,10 @@ func (imgpkg ImgpkgStep) PostInteract() error {
 	if err != nil {
 		return err
 	}
-	imgpkg.pkgAuthoringUI.PrintInformationalText(fmt.Sprintf("We have successfully pushed the package repository imgpkg bundle to the OCI registry.We can use %s in our package repository CR fetch section to have access to our package and packageMetadata CRs",
+	imgpkg.pkgAuthoringUI.PrintInformationalText(fmt.Sprintf("We have successfully pushed the package repository imgpkg bundle to the OCI registry.We can use `%s` in our package repository CR fetch section to have access to our package and packageMetadata CRs",
 		imgpkg.pkgRepoBuild.Spec.PkgRepo.Spec.Fetch.ImgpkgBundle.Image))
+
+	imgpkg.pkgRepoBuild.WriteToFile(imgpkg.pkgRepoLocation)
 	return nil
 }
 
@@ -280,7 +281,8 @@ func runningKbld(bundleLocation, imagesFileLocation string) error {
 
 func (imgpkg ImgpkgStep) pushImgpkgBundleToRegistry(bundleLoc string) error {
 	pushURL := imgpkg.pkgRepoBuild.Spec.PkgRepo.Spec.Fetch.ImgpkgBundle.Image
-	imgpkg.pkgAuthoringUI.PrintInformationalText("Running imgpkg push to push the bundle directory into OCI registry.")
+	imgpkg.pkgAuthoringUI.PrintInformationalText("\nNow that our imgpkg bundle is created, we will push the bundle directory by running `imgpkg push`. `Push` command allows users to push the imgpkg bundle from local to registry for consumption.")
+	imgpkg.pkgAuthoringUI.PrintActionableText("Running imgpkg push")
 	imgpkg.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("imgpkg push --bundle %s --file %s --json", pushURL, bundleLoc))
 	result := util.Execute("imgpkg", []string{"push", "--bundle", pushURL, "--file", bundleLoc, "--json"})
 	//TODO Rohit it is not showing the actual error

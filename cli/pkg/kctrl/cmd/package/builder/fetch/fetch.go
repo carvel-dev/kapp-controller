@@ -40,7 +40,6 @@ func (fetch FetchStep) PreInteract() error {
 
 func (fetch *FetchStep) Interact() error {
 	fetch.pkgAuthoringUI.PrintHeading("\nPackage Content(Step 2/3)")
-	isPreferenceImmutable := fetch.pkgBuild.Annotations[common.PkgCreatePreferenceAnnotationKey]
 
 	defaultManifestOptionSelected := getManifestOptionFromPkgBuild(fetch.pkgBuild)
 	fetch.pkgAuthoringUI.PrintInformationalText("In package, we need to fetch the manifest which defines how the application would be deployed in a K8s cluster. This manifest can be in the form of a yaml file used with `kubectl apply ...` or it could be a helm chart used with `helm install ...`. They can be available in any of the following locations. Please select from where to fetch the manifest")
@@ -62,18 +61,10 @@ func (fetch *FetchStep) Interact() error {
 	fetch.pkgBuild.Annotations[common.PkgFetchContentAnnotationKey] = manifestOptions[manifestOptionSelectedIndex]
 	fetch.pkgBuild.WriteToFile(fetch.pkgLocation)
 
-	if isPreferenceImmutable == "true" {
-		imgpkgStep := imgpkg.NewImgPkgStep(fetch.pkgAuthoringUI, fetch.pkgLocation, fetch.pkgBuild)
-		err := common.Run(imgpkgStep)
-		if err != nil {
-			return err
-		}
-	} else {
-		helmStep := NewHelmStep(fetch.pkgAuthoringUI, fetch.pkgLocation, fetch.pkgBuild)
-		err := common.Run(helmStep)
-		if err != nil {
-			return err
-		}
+	imgpkgStep := imgpkg.NewImgPkgStep(fetch.pkgAuthoringUI, fetch.pkgLocation, fetch.pkgBuild)
+	err = common.Run(imgpkgStep)
+	if err != nil {
+		return err
 	}
 	return nil
 }

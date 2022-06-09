@@ -38,7 +38,7 @@ spec:
             - 
               ytt: 
                 paths: 
-                  - "-"
+                  - "config"
             - 
               kbld: 
                 paths: 
