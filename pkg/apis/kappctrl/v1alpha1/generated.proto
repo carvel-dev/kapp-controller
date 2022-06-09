@@ -377,12 +377,19 @@ message AppTemplateSopsPrivateKeysSecretRef {
 }
 
 // +k8s:openapi-gen=true
+message AppTemplateValuesDownwardAPI {
+  repeated DownwardAPIAppTemplateValues items = 1;
+}
+
+// +k8s:openapi-gen=true
 message AppTemplateValuesSource {
   optional AppTemplateValuesSourceRef secretRef = 1;
 
   optional AppTemplateValuesSourceRef configMapRef = 2;
 
   optional string path = 3;
+
+  optional AppTemplateValuesDownwardAPI downwardAPI = 4;
 }
 
 // +k8s:openapi-gen=true
@@ -429,6 +436,14 @@ message Condition {
   // Human-readable message indicating details about last transition.
   // +optional
   optional string message = 4;
+}
+
+// +k8s:openapi-gen=true
+message DownwardAPIAppTemplateValues {
+  optional string name = 1;
+
+  // Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.
+  optional string fieldPath = 2;
 }
 
 message GenericStatus {

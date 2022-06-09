@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	ctltpl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 )
@@ -16,7 +17,11 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Expected at least one template option"))
 	}
 
-	genericOpts := ctltpl.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
+	genericOpts := ctltpl.GenericOpts{
+		Name:      a.app.Name,
+		Namespace: a.app.Namespace,
+		Metadata:  asPartialObjectMetadata(a.app),
+	}
 
 	var result exec.CmdRunResult
 	var isStream bool
@@ -51,4 +56,16 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 	}
 
 	return result
+}
+
+func asPartialObjectMetadata(m v1alpha1.App) *ctltpl.PartialObjectMetadata {
+	return &ctltpl.PartialObjectMetadata{
+		ObjectMeta: ctltpl.ObjectMeta{
+			Name:        m.GetName(),
+			Namespace:   m.GetNamespace(),
+			UID:         m.GetUID(),
+			Labels:      m.GetLabels(),
+			Annotations: m.GetAnnotations(),
+		},
+	}
 }
