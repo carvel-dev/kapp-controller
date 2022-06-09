@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654730370987,
+  "lastUpdate": 1654786894248,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -2175,6 +2175,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6548914547,
             "unit": "ns/op\t         4.313 DeleteSeconds\t         2.192 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "benm@vmware.com",
+            "name": "Ben Moss",
+            "username": "benmoss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7d8793060f6a9a1c913c847c770e21506ca78ddd",
+          "message": "Merge pull request #730 from vmware-tanzu/bump-dependencies\n\nBump dependencies",
+          "timestamp": "2022-06-09T10:48:35-04:00",
+          "tree_id": "62161d650f778f90999b06a995a4347c3690b170",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/7d8793060f6a9a1c913c847c770e21506ca78ddd"
+        },
+        "date": 1654786892819,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37057197148,
+            "unit": "ns/op\t        19.31 DeleteSeconds\t        17.70 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9739129908,
+            "unit": "ns/op\t         5.427 DeleteSeconds\t         4.260 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6660095347,
+            "unit": "ns/op\t         4.406 DeleteSeconds\t         2.205 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
