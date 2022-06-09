@@ -32,7 +32,7 @@ func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Log
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
-		Aliases: []string{"g"},
+		Aliases: []string{"l", "ls"},
 		Short:   "List Apps",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
