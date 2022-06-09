@@ -13,8 +13,8 @@ RUN go run ./hack/dependencies.go install -d out --arch ${TARGETARCH} --os ${TAR
 # kapp-controller
 COPY . .
 # helpful ldflags reference: https://www.digitalocean.com/community/tutorials/using-ldflags-to-set-version-information-for-go-applications
-RUN CGO_ENABLED=0 GOOS=linux GOOS=${TARGETOS} GOSARCH=${TARGETARCH} go build -mod=vendor -ldflags="-X 'main.Version=$KCTRL_VER'" -trimpath -o out/kapp-controller ./cmd/controller
-RUN CGO_ENABLED=0 GOOS=linux GOOS=${TARGETOS} GOSARCH=${TARGETARCH} go build -mod=vendor -ldflags="-X 'main.Version=$KCTRL_VER'" -trimpath -o out/kapp-controller-sidecarexec ./cmd/sidecarexec
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOSARCH=${TARGETARCH} go build -mod=vendor -ldflags="-X 'main.Version=$KCTRL_VER'" -trimpath -o out/kapp-controller ./cmd/controller
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOSARCH=${TARGETARCH} go build -mod=vendor -ldflags="-X 'main.Version=$KCTRL_VER'" -trimpath -o out/kapp-controller-sidecarexec ./cmd/sidecarexec
 
 # --- run image ---
 FROM photon:4.0
