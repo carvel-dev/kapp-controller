@@ -12,6 +12,8 @@ dangerous_enable_pprof: false
 push_images: false
 image_cache: true
 image_repo: docker.io/k14stest/kapp-controller-test
+push_secret: ""
+platform: ""
 
 api_port: 10350
 kapp_controller_version: "develop"
