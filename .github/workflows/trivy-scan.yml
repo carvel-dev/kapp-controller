@@ -92,7 +92,7 @@ jobs:
           # kapp-controller binary - output in sarif and json
           trivy rootfs --ignore-unfixed --format sarif --output trivy-results.sarif "controller"
           trivy rootfs --ignore-unfixed --format json --output trivy-results.json "controller"
-      
+
           # kapp-controller docker image - output in sarif and json
           trivy image --ignore-unfixed --format sarif --output trivy-results-image.sarif "docker.io/carvel/kapp-controller:${{ github.sha }}"
           trivy image --ignore-unfixed --format json --output trivy-results-image.json "docker.io/carvel/kapp-controller:${{ github.sha }}"
@@ -104,10 +104,10 @@ jobs:
         id: cve-summary
         run: |
           set -eo pipefail
-        
+
           summary_binary=$(jq '.Results[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results.json | tr -d \\ | tr -d '"')
           summary_image=$(jq '.Results[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results-image.json | tr -d \\ | tr -d '"')
-          
+
           summary=$( echo -e "Binary Image Summary:\n$summary_binary\nDocker Image Summary:\n$summary_image")
           if [[ -n $summary_binary || -n $summary_image ]]
           then
