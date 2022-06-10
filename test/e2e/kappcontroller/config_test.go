@@ -6,6 +6,7 @@ package kappcontroller
 import (
 	"testing"
 	"strings"
+	"time"
 	"fmt"
 
 	"github.com/stretchr/testify/assert"
@@ -16,17 +17,50 @@ import (
 )
 
 func TestConfig_HTTPProxy(t *testing.T) {
-	assert := assert.New(t)
+	env := e2e.BuildEnv(t)
 	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
 	kubectl := e2e.Kubectl{t, "kapp-controller", logger}
 
-	// Proxy configured in config-test/secret-config.yml
+	configName := "test-config-http-proxy-config"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", configName})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("inspect controller logs for empty proxy vars at startup", func() {
+		// app name must match the app name being deployed in hack/deploy-test.sh
+		out := kubectl.Run([]string{"logs", "deployment/kapp-controller", "-c", "kapp-controller-sidecarexec"})
+		assert.Contains(t, out, "Clearing http_proxy", "should be empty value, so set")
+		assert.Contains(t, out, "Clearing https_proxy", "should be empty value, so clear")
+		assert.Contains(t, out, "Clearing no_proxy", "should be empty value, so set")
+	})
+
+	logger.Section("change proxy configuration", func() {
+		config := `
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kapp-controller-config
+  namespace: kapp-controller
+stringData:
+  httpProxy: proxy-svc.proxy-server.svc.cluster.local:80
+  httpsProxy: proxy-svc.proxy-server.svc.cluster.local:80
+  noProxy: docker.io,KAPPCTRL_KUBERNETES_SERVICE_HOST
+`
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", configName}, e2e.RunOpts{StdinReader: strings.NewReader(config)})
+
+		// Since config propagation is async, just wait a little bit
+		time.Sleep(2 * time.Second)
+	})
+
 	logger.Section("inspect controller logs for propagation of proxy env vars", func() {
 		// app name must match the app name being deployed in hack/deploy-test.sh
 		out := kubectl.Run([]string{"logs", "deployment/kapp-controller", "-c", "kapp-controller-sidecarexec"})
-		assert.Contains(out, "Setting http_proxy", "should be non-empty value, so set")
-		assert.Contains(out, "Clearing https_proxy", "should be empty value, so clear")
-		assert.Contains(out, "Setting no_proxy", "should be non-empty value, so set")
+		assert.Contains(t, out, "Setting http_proxy", "should be non-empty value, so set")
+		assert.Contains(t, out, "Setting https_proxy", "should be non-empty value, so clear")
+		assert.Contains(t, out, "Setting no_proxy", "should be non-empty value, so set")
 	})
 }
 
@@ -36,7 +70,9 @@ func TestConfig_KappDeployRawOptions(t *testing.T) {
 	kapp := e2e.Kapp{t, env.Namespace, logger}
 	sas := e2e.ServiceAccounts{env.Namespace}
 
+	configName := "test-config-kapp-deploy-raw-opts-config"
 	name := "global-kapp-deploy-raw-opts"
+
 	appYaml := fmt.Sprintf(`
 ---
 apiVersion: kappctrl.k14s.io/v1alpha1
@@ -65,12 +101,27 @@ spec:
 
 	cleanUpApp := func() {
 		kapp.Run([]string{"delete", "-a", name})
+		kapp.Run([]string{"delete", "-a", configName})
 	}
-
 	cleanUpApp()
 	defer cleanUpApp()
 
-	// Global label is configured in config-test/secret-config.yml
+	logger.Section("deploy controller config to set global label", func() {
+		config := `
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kapp-controller-config
+  namespace: kapp-controller
+stringData:
+  kappDeployRawOptions: "[\"--diff-changes=true\", \"--labels=kc-test=kc-test-val\"]"
+`
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", configName}, e2e.RunOpts{StdinReader: strings.NewReader(config)})
+
+		// Since config propagation is async, just wait a little bit
+		time.Sleep(2 * time.Second)
+	})
+
 	logger.Section("deploy and check that kc-test label is set", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
 
@@ -85,10 +136,12 @@ func TestConfig_TrustCACerts(t *testing.T) {
 	env := e2e.BuildEnv(t)
 	logger := e2e.Logger{}
 	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
 	sas := e2e.ServiceAccounts{env.Namespace}
 
-	// When updating, certs and keys must be regenerated for server and added to server.go and config-test/config-map.yml
-	serverNamespace := "https-server"
+	name := "test-https"
+	httpsServerName := "test-https-server"
+	configName := "test-config-trust-ca-config"
 
 	yaml1 := fmt.Sprintf(`---
 apiVersion: kappctrl.k14s.io/v1alpha1
@@ -101,102 +154,82 @@ spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
   - http:
-      url: https://https-svc.%s.svc.cluster.local:443/deployment.yml
+      # use https to exercise CA certificate validation
+      # When updating address, certs and keys must be regenerated
+      # for server and added to e2e/assets/https-server
+      url: https://https-svc.https-server.svc.cluster.local:443/deployment.yml
   template:
   - ytt: {}
   deploy:
   - kapp:
       inspect: {}
       intoNs: %s
-`, serverNamespace, env.Namespace) + sas.ForNamespaceYAML()
-
-	name := "test-https"
-	httpsServerName := "test-https-server"
+`, env.Namespace) + sas.ForNamespaceYAML()
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
-		kapp.Run([]string{"delete", "-a", httpsServerName, "-n", serverNamespace})
+		kapp.Run([]string{"delete", "-a", configName})
+		kapp.Run([]string{"delete", "-a", httpsServerName})
 	}
-
 	cleanUp()
 	defer cleanUp()
 
+	logger.Section("deploy controller config to trust CA cert", func() {
+		config := `
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kapp-controller-config
+  namespace: kapp-controller
+stringData:
+  caCerts: |
+    -----BEGIN CERTIFICATE-----
+    MIIEaTCCAtGgAwIBAgIQMnHSoj2so3Ye4U0CepDOfTANBgkqhkiG9w0BAQsFADA9
+    MQwwCgYDVQQGEwNVU0ExFjAUBgNVBAoTDUNsb3VkIEZvdW5kcnkxFTATBgNVBAMT
+    DGdlbmVyYXRlZC1jYTAgFw0yMjAzMjIxNjA4NDNaGA8yMTIyMDIyNjE2MDg0M1ow
+    PTEMMAoGA1UEBhMDVVNBMRYwFAYDVQQKEw1DbG91ZCBGb3VuZHJ5MRUwEwYDVQQD
+    EwxnZW5lcmF0ZWQtY2EwggGiMA0GCSqGSIb3DQEBAQUAA4IBjwAwggGKAoIBgQDm
+    1mAC3HRlZd7ZTlPPB2K5AxHl8luSGmRm4UnYXxxCaoKNJAfP9Fr/f7NOXSss/R02
+    F9JKH9UIAOaxSvyGnQegbbpRkRwvgPt76TSMrvwq/Qvr+beocJXeIbgNXY18/SLe
+    jDyMJezDhWcOYolXOWD6+pNzJ5QjenidO82LVKOtp9umHRMqZbaBhW0AbN9WwV1e
+    YM+iU/l9Ql7H+meDAioGP/NSduHtyD6dtgfFGVxwKEoU0HmVwCMsgcU5DVbexk01
+    SDFOHNv1adfKIB0NQNZZNuT45QV3En2jON79EP7QQQ3kcX65BRv+AWsP0TNoa8SI
+    Tma097oFnoats7JpcGptcgCafaZq1suGs2Lcc004cCOvcquw6ow3hXw0YCKZHDNO
+    TGPdylU8T3FTrB9gJMBrwCs7OqjCL83m6vr68vICswNch6jaVaTkiRheTfjUyShP
+    GmUsCvv/yT5sBt6kjzlCTtGlSKDOYxEqoMbvsV34Cb1qUUjoalYKfsn3Fo6ttVMC
+    AwEAAaNjMGEwDgYDVR0PAQH/BAQDAgEGMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0O
+    BBYEFOxC7vVMU3/CO7q9Ylp1zVL9AW2cMB8GA1UdIwQYMBaAFOxC7vVMU3/CO7q9
+    Ylp1zVL9AW2cMA0GCSqGSIb3DQEBCwUAA4IBgQDICCkhON4+AIxHrbtK1rfuF7vK
+    Ck1yL0k482H+FH1bkMXCTGTtBPsk9yvG0mGzSi6f52euh2m+ZKWp5MXRcPJT5OUC
+    59oXZhLiHBeQRQ5cJRXxz7OgsGORwjWIrjU1mHq6xAIwl59v0QennCDHUFzu6nPw
+    6dgy+excnZ4KJmH70D3/QRxfj2nuxe5KyobTyOQIawRl1TTgLSRMchiDp23TbIWe
+    ZLiyb2CoWdRfQfEanwYbAavyhYNQJCWLwDExBYEV5Ep6hr1g5E8jHN6f+/0a5nkK
+    GES8ooNXEsm9QTuA2Cnvf8a9jYoRAHrMoL0KlaP+0HikjFoySafl5UFdm/iEWVRV
+    fmDRVhlZZ0bHX/0jR1woV/Nlz3dRysMH4M7/FKsuPFYg9xOfqa0PwBFNK0Os1jM7
+    WM+DlzZxGMBd7QKW7xCdEuUmKxB8gQw0LvStYM/38MB5KMDtFo/uTIkr1HsEpSNG
+    lYEKi+1KNYrJFl+DIUQVWoC+fi0Doiqor2D2Zkk=
+    -----END CERTIFICATE-----
+`
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", configName},
+			e2e.RunOpts{StdinReader: strings.NewReader(config)})
+
+		// Since config propagation is async, just wait a little bit
+		time.Sleep(2 * time.Second)
+	})
+
 	logger.Section("deploy https server with self signed certs", func() {
-		kapp.Run([]string{"deploy", "-f", "../assets/https-server/server.yml", "-f", "../assets/https-server/certs-for-custom-ca.yml", "-a", httpsServerName})
+		kapp.Run([]string{"deploy", "-f", "../assets/https-server/", "-a", httpsServerName})
 	})
 
-	logger.Section("deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+	logger.Section("deploy app that fetches content from http server", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{
+			StdinReader: strings.NewReader(yaml1),
+			OnErrKubectl: []string{"get", "app/test-https", "-oyaml"},
+		})
 
-		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
-
-		var cr v1alpha1.App
-
-		err := yaml.Unmarshal([]byte(out), &cr)
-		if err != nil {
-			t.Fatalf("Failed to unmarshal: %s", err)
-		}
-
-		expectedStatus := v1alpha1.AppStatus{
-			GenericStatus: v1alpha1.GenericStatus{
-				Conditions: []v1alpha1.Condition{{
-					Type:   v1alpha1.ReconcileSucceeded,
-					Status: corev1.ConditionTrue,
-				}},
-				ObservedGeneration:  1,
-				FriendlyDescription: "Reconcile succeeded",
-			},
-			Deploy: &v1alpha1.AppStatusDeploy{
-				ExitCode: 0,
-				Finished: true,
-			},
-			Fetch: &v1alpha1.AppStatusFetch{
-				ExitCode: 0,
-			},
-			Inspect: &v1alpha1.AppStatusInspect{
-				ExitCode: 0,
-			},
-			Template: &v1alpha1.AppStatusTemplate{
-				ExitCode: 0,
-			},
-			ConsecutiveReconcileSuccesses: 1,
-		}
-
-		{
-			// deploy
-			if !strings.Contains(cr.Status.Deploy.Stdout, "Wait to:") {
-				t.Fatalf("Expected non-empty deploy output: '%s'", cr.Status.Deploy.Stdout)
-			}
-			cr.Status.Deploy.StartedAt = metav1.Time{}
-			cr.Status.Deploy.UpdatedAt = metav1.Time{}
-			cr.Status.Deploy.Stdout = ""
-
-			// fetch
-			if !strings.Contains(cr.Status.Fetch.Stdout, "kind: LockConfig") {
-				t.Fatalf("Expected non-empty fetch output: '%s'", cr.Status.Fetch.Stdout)
-			}
-			cr.Status.Fetch.StartedAt = metav1.Time{}
-			cr.Status.Fetch.UpdatedAt = metav1.Time{}
-			cr.Status.Fetch.Stdout = ""
-
-			// inspect
-			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-https-ctrl'") {
-				t.Fatalf("Expected non-empty inspect output: '%s'", cr.Status.Inspect.Stdout)
-			}
-			cr.Status.Inspect.UpdatedAt = metav1.Time{}
-			cr.Status.Inspect.Stdout = ""
-
-			// template
-			cr.Status.Template.UpdatedAt = metav1.Time{}
-			cr.Status.Template.Stderr = ""
-		}
-
-		if !reflect.DeepEqual(expectedStatus, cr.Status) {
-			t.Fatalf("Status is not same: %#v vs %#v", expectedStatus, cr.Status)
-		}
+		out := kubectl.Run([]string{"get", "cm", "http-server-returned-cm", "-oyaml"})
+		assert.Contains(t, out, "content: http-server-returned-content\n")
 	})
-
 }
 
 func TestConfig_SkipTLSVerify(t *testing.T) {
