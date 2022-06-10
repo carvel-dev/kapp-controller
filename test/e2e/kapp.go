@@ -79,8 +79,13 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 		err = fmt.Errorf("Execution error: stdout: '%s' stderr: '%s' error: '%s'", stdoutStr, stderr.String(), err)
 
 		if len(opts.OnErrKubectl) > 0 {
-			debugOut := Kubectl{k.T, k.Namespace, k.L}.Run(opts.OnErrKubectl)
-			k.L.Debugf("OnErrKubectl output:\n%s\n", debugOut)
+			kubectl := Kubectl{k.T, k.Namespace, k.L}
+			debugOut, err := kubectl.RunWithOpts(opts.OnErrKubectl, RunOpts{AllowError: true})
+			if err != nil {
+				k.L.Debugf("OnErrKubectl error: %s\n", err)
+			} else {
+				k.L.Debugf("OnErrKubectl output:\n%s\n", debugOut)
+			}
 		}
 
 		if !opts.AllowError {
