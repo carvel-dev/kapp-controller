@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654807398432,
+  "lastUpdate": 1654887207750,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -2343,6 +2343,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6595219474,
             "unit": "ns/op\t         4.321 DeleteSeconds\t         2.187 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cppforlife@gmail.com",
+            "name": "Dmitriy Kalinin",
+            "username": "cppforlife"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9c27bad3769bd86fa3409ee7c8ca0baa867d9226",
+          "message": "correct automated usage of kbld in PackageRepository (when imgpkgBundle is specified) (#737)\n\nCo-authored-by: Dmitriy Kalinin <dkalinin@vmware.com>",
+          "timestamp": "2022-06-10T14:42:55-04:00",
+          "tree_id": "eb40697eaafe504c2236b83288bc9c0d89a35cae",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/9c27bad3769bd86fa3409ee7c8ca0baa867d9226"
+        },
+        "date": 1654887206874,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36643157783,
+            "unit": "ns/op\t        19.00 DeleteSeconds\t        17.57 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9538181732,
+            "unit": "ns/op\t         5.339 DeleteSeconds\t         4.158 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6565298856,
+            "unit": "ns/op\t         4.371 DeleteSeconds\t         2.150 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
