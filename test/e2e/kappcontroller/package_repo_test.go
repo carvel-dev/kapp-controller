@@ -156,6 +156,7 @@ func Test_PackageRepoBundle_PackagesAvailable(t *testing.T) {
 	logger := e2e.Logger{}
 	kubectl := e2e.Kubectl{t, env.Namespace, logger}
 	kapp := e2e.Kapp{t, env.Namespace, logger}
+
 	// contents of this bundle (k8slt/k8slt/kappctrl-e2e-repo-bundle)
 	// under examples/packaging-demo/repo-bundle
 	yamlRepo := `---
@@ -174,19 +175,44 @@ spec:
 	}
 	defer cleanUp()
 
-	logger.Section("deploy PackageRepository", func() {
+	verifyPkg := func(resourceName, imgRef string) {
+		out := kubectl.Run([]string{"get", resourceName, "-o", "yaml"})
+		assert.Contains(t, out, "packaging.carvel.dev/package-repository-ref: kappctrl-test/basic.test.carvel.dev")
+		assert.Contains(t, out, "image: "+imgRef+"\n")
+	}
+
+	logger.Section("deploy pkg repository", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(yamlRepo)})
+
+		out := kubectl.Run([]string{"get", "pkgm/pkg.test.carvel.dev", "-o", "yaml"})
+		assert.Contains(t, out, "packaging.carvel.dev/package-repository-ref: kappctrl-test/basic.test.carvel.dev")
+		
+		verifyPkg("pkg/pkg.test.carvel.dev.1.0.0", "index.docker.io/k8slt/kctrl-example-pkg@sha256:8ffa7f9352149dba1d539d0006b38eda357917edcdd39b82497a61dab2c27b75")
+		verifyPkg("pkg/pkg.test.carvel.dev.2.0.0", "index.docker.io/k8slt/kctrl-example-pkg@sha256:73713d922b5f561c0db2a7ea5f4f6384f7d2d6289886f8400a8aaf5e8fdf134a")
 	})
 
-	logger.Section("check PackageMetadata/Packages created", func() {
-		verify := func(resourceName string) {
-			kctlOutput := kubectl.Run([]string{"get", resourceName, "-o", "yaml"})
-			assert.Contains(t, kctlOutput, "kapp.k14s.io/identity:")
-			assert.Contains(t, kctlOutput, "packaging.carvel.dev/package-repository-ref: kappctrl-test/basic.test.carvel.dev")
-		}
-		verify("pkgm/pkg.test.carvel.dev")
-		verify("pkg/pkg.test.carvel.dev.1.0.0")
-		verify("pkg/pkg.test.carvel.dev.2.0.0")
+	logger.Section("deploy pkg repository with same content from a different location (where bundle was copied)", func() {
+		// Change location of the bundle to be different
+		// (imgpkg copy was used to copy original repo to a new location)
+		updatedRepo := `---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: basic.test.carvel.dev
+spec:
+  fetch:
+    imgpkgBundle:
+      image: index.docker.io/k8slt/kc-e2e-test-repo-copied@sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c`
+
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(updatedRepo)})
+
+		out := kubectl.Run([]string{"get", "pkgm/pkg.test.carvel.dev", "-o", "yaml"})
+		assert.Contains(t, out, "packaging.carvel.dev/package-repository-ref: kappctrl-test/basic.test.carvel.dev")
+
+		// Note that location of Packages has also changed to k8slt/kc-e2e-test-repo-copied
+		// since kbld is being applied with imgpkg's images.yml relocation data
+		verifyPkg("pkg/pkg.test.carvel.dev.1.0.0", "index.docker.io/k8slt/kc-e2e-test-repo-copied@sha256:8ffa7f9352149dba1d539d0006b38eda357917edcdd39b82497a61dab2c27b75")
+		verifyPkg("pkg/pkg.test.carvel.dev.2.0.0", "index.docker.io/k8slt/kc-e2e-test-repo-copied@sha256:73713d922b5f561c0db2a7ea5f4f6384f7d2d6289886f8400a8aaf5e8fdf134a")
 	})
 }
 

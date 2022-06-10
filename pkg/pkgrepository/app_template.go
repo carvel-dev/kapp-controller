@@ -21,6 +21,10 @@ import (
 )
 
 func (a *App) template(dirPath string) exec.CmdRunResult {
+	if len(a.app.Spec.Template) != 0 {
+		panic("Internal inconsistency: Package repository templates are not configurable")
+	}
+
 	genericOpts := ctltpl.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
 
 	// We have multiple ytt sections because we want to squash all the user yamls together
@@ -58,6 +62,16 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 	stream = strings.NewReader(resources)
 	result = a.templateFactory.NewYtt(
 		a.yttTemplateAddIdenticalRsRebase(), genericOpts).TemplateStream(stream, dirPath)
+	if result.Error != nil {
+		return result
+	}
+
+	// Optionally use kbld to apply .imgpkg/images.yml if content came from imgpkgBundle
+	if a.app.Spec.Fetch[0].ImgpkgBundle != nil {
+		stream = strings.NewReader(result.Stdout)
+		kbldOpts := kcv1alpha1.AppTemplateKbld{Paths: []string{"-", ".imgpkg/images.yml"}}
+		result = a.templateFactory.NewKbld(kbldOpts, genericOpts).TemplateStream(stream, dirPath)
+	}
 
 	return result
 }
