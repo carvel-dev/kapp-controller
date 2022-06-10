@@ -7,7 +7,7 @@ metadata:
 type: Opaque
 stringData:
   # Certs and key in this secret generated for `https-svc.https-server.svc.cluster.local` using the bosh cli.
-  # The second cert in the `https-server.crt` cert chain must match the ca cert in config-test/config-map.yml
+  # The second cert in the `https-server.crt` cert chain must match the ca cert in TestConfig_TrustCACerts e2e test
   # or tests will fail.
 
   # Bosh cli config used:
