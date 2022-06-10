@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"sync"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -21,6 +22,10 @@ import (
 // Config is populated from the cluster's Secret or ConfigMap and sets behavior of kapp-controller.
 // NOTE because config may be populated from a Secret use caution if you're tempted to serialize.
 type Config struct {
+	client    kubernetes.Interface
+	namespace string
+
+	lock                 sync.RWMutex
 	caCerts              string
 	proxyOpts            ProxyOpts
 	kappDeployRawOptions []string
@@ -31,10 +36,46 @@ const (
 	kcConfigName = "kapp-controller-config"
 )
 
+// NewConfig populates the Config struct from k8s resources.
+// NewConfig prefers a secret named kcConfigName but
+// if that does not exist falls back to a configMap of same name.
+func NewConfig(client kubernetes.Interface) (*Config, error) {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	kubeConf := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
+
+	namespace, _, err := kubeConf.Namespace()
+	if err != nil {
+		return nil, fmt.Errorf("Getting namespace: %s", err)
+	}
+
+	config := &Config{client: client, namespace: namespace}
+
+	return config, config.Reload()
+}
+
+// Reload reloads configuration (proxy, CA certs, etc.) from ConfigMap/Secret.
+// All configuration is cleared if ConfigMap or Secret are not found.
+func (gc *Config) Reload() error {
+	secret, configMap, err := gc.findExternalConfig()
+	if err != nil {
+		return err
+	}
+	switch {
+	case secret != nil:
+		return gc.addSecretDataToConfig(secret)
+	case configMap != nil:
+		return gc.addDataToConfig(configMap.Data)
+	default:
+		// Clear out previously set data
+		return gc.addDataToConfig(map[string]string{})
+	}
+}
+
 // findExternalConfig will populate exactly one of its return values and the others will be nil.
 // we prefer to populate secret, fall back to configMap, and return unrecoverable errors if they occur.
-func findExternalConfig(namespace string, client kubernetes.Interface) (*v1.Secret, *v1.ConfigMap, error) {
-	secret, err := client.CoreV1().Secrets(namespace).Get(context.Background(), kcConfigName, metav1.GetOptions{})
+func (gc *Config) findExternalConfig() (*v1.Secret, *v1.ConfigMap, error) {
+	secret, err := gc.client.CoreV1().Secrets(
+		gc.namespace).Get(context.Background(), kcConfigName, metav1.GetOptions{})
 	// NOTE: to avoid nested ifs we are checking err == nil,  instead of != nil.
 	if err == nil { // happy path return
 		return secret, nil, nil
@@ -43,7 +84,8 @@ func findExternalConfig(namespace string, client kubernetes.Interface) (*v1.Secr
 		return nil, nil, err
 	}
 
-	configMap, err := client.CoreV1().ConfigMaps(namespace).Get(context.Background(), kcConfigName, metav1.GetOptions{})
+	configMap, err := gc.client.CoreV1().ConfigMaps(
+		gc.namespace).Get(context.Background(), kcConfigName, metav1.GetOptions{})
 	if err == nil { // second happiest path return
 		return nil, configMap, nil
 	}
@@ -55,49 +97,30 @@ func findExternalConfig(namespace string, client kubernetes.Interface) (*v1.Secr
 	return nil, nil, nil
 }
 
-// GetConfig populates the Config struct from k8s resources.
-// GetConfig prefers a secret named kcConfigName but if that does not exist falls back to a configMap of same name.
-func GetConfig(client kubernetes.Interface) (*Config, error) {
-	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	kubeConf := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
-	namespace, _, err := kubeConf.Namespace()
-	if err != nil {
-		return nil, fmt.Errorf("Getting namespace: %s", err)
-	}
+// CACerts returns configured CA certificates in PEM format.
+func (gc *Config) CACerts() string {
+	gc.lock.RLock()
+	defer gc.lock.RUnlock()
 
-	secret, configMap, err := findExternalConfig(namespace, client)
-	if err != nil {
-		return nil, err
-	}
-
-	config := &Config{}
-
-	if secret != nil {
-		err := config.addSecretDataToConfig(secret)
-		if err != nil {
-			return nil, err
-		}
-	} else if configMap != nil {
-		err := config.addDataToConfig(configMap.Data)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return config, nil
+	return gc.caCerts
 }
 
-// CACerts returns configured CA certificates in PEM format.
-func (gc *Config) CACerts() string { return gc.caCerts }
-
 // ProxyOpts returns configured proxy configuration.
-func (gc *Config) ProxyOpts() ProxyOpts { return gc.proxyOpts }
+func (gc *Config) ProxyOpts() ProxyOpts {
+	gc.lock.RLock()
+	defer gc.lock.RUnlock()
+
+	return gc.proxyOpts
+}
 
 // ShouldSkipTLSForAuthority compares a candidate host or host:port against a stored set of allow-listed authorities.
 // the allow-list is built from the user-facing flag `dangerousSkipTLSVerify`.
 // Note that in some cases the allow-list may contain ports, so the function name could also be ShouldSkipTLSForDomainAndPort
 // Note that "authority" is defined in: https://www.rfc-editor.org/rfc/rfc3986#section-3 to mean "host and port"
 func (gc *Config) ShouldSkipTLSForAuthority(candidateAuthority string) bool {
+	gc.lock.RLock()
+	defer gc.lock.RUnlock()
+
 	authorities := gc.skipTLSVerify
 	if len(authorities) == 0 {
 		return false
@@ -127,6 +150,9 @@ func (gc *Config) ShouldSkipTLSForAuthority(candidateAuthority string) bool {
 
 // KappDeployRawOptions returns user configured kapp raw options
 func (gc *Config) KappDeployRawOptions() []string {
+	gc.lock.RLock()
+	defer gc.lock.RUnlock()
+
 	// Configure kapp to keep only 5 app changes as it seems that
 	// larger number of ConfigMaps negative affects other controllers on the cluster.
 	// Eventually kapp can be smart enough to keep minimal number of app changes.
@@ -143,6 +169,9 @@ func (gc *Config) addSecretDataToConfig(secret *v1.Secret) error {
 }
 
 func (gc *Config) addDataToConfig(data map[string]string) error {
+	gc.lock.Lock()
+	defer gc.lock.Unlock()
+
 	gc.caCerts = data["caCerts"]
 	gc.proxyOpts = ProxyOpts{
 		HTTPProxy:  data["httpProxy"],
@@ -159,6 +188,8 @@ func (gc *Config) addDataToConfig(data map[string]string) error {
 		// Allowed flags will be verified before kapp is invoked within Kapp class.
 		// (See pkg/deploy/kapp_restrict.go).
 		gc.kappDeployRawOptions = opts
+	} else {
+		gc.kappDeployRawOptions = nil
 	}
 
 	gc.skipTLSVerify = data["dangerousSkipTLSVerify"]
