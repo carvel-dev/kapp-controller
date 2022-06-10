@@ -27,7 +27,7 @@ func Test_AddDir_skipsTLS(t *testing.T) {
 		},
 	}
 	k8scs := k8sfake.NewSimpleClientset(configMap)
-	config, err := kcconfig.GetConfig(k8scs)
+	config, err := kcconfig.NewConfig(k8scs)
 	assert.NoError(t, err)
 
 	vendir := fetch.NewVendir("default", k8scs,
