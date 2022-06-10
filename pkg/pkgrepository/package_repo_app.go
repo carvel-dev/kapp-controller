@@ -85,11 +85,6 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 		desiredApp.Spec.SyncPeriod = pkgRepository.Spec.SyncPeriod
 	}
 
-	if desiredApp.Spec.Fetch[0].ImgpkgBundle != nil {
-		desiredApp.Spec.Template = append(desiredApp.Spec.Template,
-			kcv1alpha1.AppTemplate{Kbld: &kcv1alpha1.AppTemplateKbld{Paths: []string{"-", ".imgpkg/images.yml"}}})
-	}
-
 	desiredApp.Status = kcv1alpha1.AppStatus{
 		Fetch:                         pkgRepository.Status.Fetch,
 		Template:                      pkgRepository.Status.Template,
