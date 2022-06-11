@@ -102,7 +102,7 @@ func (o *AppTailer) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alpha
 		if oldStatus.Deploy == nil || !oldStatus.Deploy.UpdatedAt.Equal(&status.Deploy.UpdatedAt) {
 			if status.Deploy.ExitCode != 0 && status.Deploy.Finished {
 				msg := fmt.Sprintf("Deploy failed")
-				o.statusUI.PrintLogLine(msg, status.Deploy.Stderr, true, status.Deploy.UpdatedAt.Time)
+				o.statusUI.PrintLogLine(msg, status.Deploy.Stderr+"\n"+status.Deploy.Error, true, status.Deploy.UpdatedAt.Time)
 				o.failureMessage = msg
 				o.stopWatch(true)
 				return
