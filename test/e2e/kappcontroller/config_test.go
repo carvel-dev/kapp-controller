@@ -182,6 +182,7 @@ metadata:
   name: kapp-controller-config
   namespace: kapp-controller
 stringData:
+  # Must match the second cert in the cert chain in test/e2e/assets/self-signed-https-server.yml
   caCerts: |
     -----BEGIN CERTIFICATE-----
     MIIEaTCCAtGgAwIBAgIQMnHSoj2so3Ye4U0CepDOfTANBgkqhkiG9w0BAQsFADA9
