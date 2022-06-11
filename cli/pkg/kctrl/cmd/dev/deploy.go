@@ -113,7 +113,7 @@ func (o *DeployOptions) Run() error {
 		return fmt.Errorf("Getting core client: %s", err)
 	}
 
-	err = o.hackyConfigureKubernetesDst()
+	err = o.hackyConfigureKubernetesDst(coreClient)
 	if err != nil {
 		return err
 	}
@@ -202,7 +202,7 @@ func (o *DeployOptions) Run() error {
 // This would not be necessary if kapp was using default kubeconfig; however,
 // right now kapp will use configuration based on configured serviceAccount within
 // PackageInstall or App CR. However, we still need to configure it to know where to connect.
-func (o *DeployOptions) hackyConfigureKubernetesDst() error {
+func (o *DeployOptions) hackyConfigureKubernetesDst(coreClient kubernetes.Interface) error {
 	host, err := o.depsFactory.RESTHost()
 	if err != nil {
 		return fmt.Errorf("Getting host: %s", err)
@@ -213,6 +213,14 @@ func (o *DeployOptions) hackyConfigureKubernetesDst() error {
 	}
 	os.Setenv("KUBERNETES_SERVICE_HOST", hostURL.Hostname())
 	os.Setenv("KUBERNETES_SERVICE_PORT", hostURL.Port())
+
+	cm, err := coreClient.CoreV1().ConfigMaps("kube-public").Get(context.TODO(), "kube-root-ca.crt", metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("Fetching kube-root-ca.crt: %s", err)
+	}
+	// Used during fetching of service accounts in kapp-controller
+	os.Setenv("KAPPCTRL_KUBERNETES_CA_DATA", cm.Data["ca.crt"])
+
 	return nil
 }
 
