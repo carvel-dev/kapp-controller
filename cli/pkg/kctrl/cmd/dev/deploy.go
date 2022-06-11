@@ -19,6 +19,7 @@ import (
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	fakekc "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/yaml"
 )
 
@@ -117,7 +118,7 @@ func (o *DeployOptions) afterAppReconcile(app kcv1alpha1.App, kcClient *fakekc.C
 // This would not be necessary if kapp was using default kubeconfig; however,
 // right now kapp will use configuration based on configured serviceAccount within
 // PackageInstall or App CR. However, we still need to configure it to know where to connect.
-func (o *DeployOptions) hackyConfigureKubernetesDst() error {
+func (o *DeployOptions) hackyConfigureKubernetesDst(coreClient kubernetes.Interface) error {
 	host, err := o.depsFactory.RESTHost()
 	if err != nil {
 		return fmt.Errorf("Getting host: %s", err)
@@ -128,6 +129,14 @@ func (o *DeployOptions) hackyConfigureKubernetesDst() error {
 	}
 	os.Setenv("KUBERNETES_SERVICE_HOST", hostURL.Hostname())
 	os.Setenv("KUBERNETES_SERVICE_PORT", hostURL.Port())
+
+	cm, err := coreClient.CoreV1().ConfigMaps("kube-public").Get(context.TODO(), "kube-root-ca.crt", metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("Fetching kube-root-ca.crt: %s", err)
+	}
+	// Used during fetching of service accounts in kapp-controller
+	os.Setenv("KAPPCTRL_KUBERNETES_CA_DATA", cm.Data["ca.crt"])
+
 	return nil
 }
 
