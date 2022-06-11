@@ -442,7 +442,6 @@ func (*ServiceAccounts) Apply(ctx context.Context, serviceAccount *aplcorev1.Ser
 	panic("Not implemented")
 	return nil, nil
 }
-func (*ServiceAccounts) CreateToken(ctx context.Context, serviceAccountName string, tokenRequest *authenticationv1api.TokenRequest, opts metav1.CreateOptions) (*authenticationv1api.TokenRequest, error) {
-	panic("Not implemented")
-	return nil, nil
+func (sa *ServiceAccounts) CreateToken(ctx context.Context, serviceAccountName string, tokenRequest *authenticationv1api.TokenRequest, opts metav1.CreateOptions) (*authenticationv1api.TokenRequest, error) {
+	return sa.client.CreateToken(ctx, serviceAccountName, tokenRequest, opts)
 }
