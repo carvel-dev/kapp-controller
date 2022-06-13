@@ -71,7 +71,7 @@ jobs:
           ./hack/build.sh
 
           # docker image
-          docker build -t docker.io/carvel/kapp-controller:${{ github.sha }} .
+          docker buildx build -t docker.io/carvel/kapp-controller:${{ github.sha }} .
       - name: Install Trivy
         run: |
           brew install aquasecurity/trivy/trivy
