@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -31,7 +32,8 @@ import (
 )
 
 const (
-	valuesFileKey = "values.yaml"
+	valuesFileKey        = "values.yaml"
+	yttOverlayAnnotation = "ext.packaging.carvel.dev/ytt-paths-from-secret-name.kctrl"
 )
 
 type CreateOrUpdateOptions struct {
@@ -40,7 +42,8 @@ type CreateOrUpdateOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	WaitFlags cmdcore.WaitFlags
+	WaitFlags       cmdcore.WaitFlags
+	YttOverlayFlags YttOverlayFlags
 
 	packageName        string
 	version            string
@@ -101,6 +104,7 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		DefaultInterval:  1 * time.Second,
 		DefaultTimeout:   30 * time.Minute,
 	})
+	o.YttOverlayFlags.Set(cmd)
 
 	return cmd
 }
@@ -144,6 +148,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 		DefaultInterval:  1 * time.Second,
 		DefaultTimeout:   30 * time.Minute,
 	})
+	o.YttOverlayFlags.Set(cmd)
 
 	return cmd
 }
@@ -185,6 +190,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		DefaultInterval:  1 * time.Second,
 		DefaultTimeout:   30 * time.Minute,
 	})
+	o.YttOverlayFlags.Set(cmd)
 
 	return cmd
 }
@@ -263,8 +269,17 @@ func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient kcc
 		return err
 	}
 
+	overlaySecretName := ""
+	if o.YttOverlayFlags.yttOverlays {
+		overlaysSecret, err := o.createOrUpdateYttOverlaySecrets(nil, client)
+		if err != nil {
+			return err
+		}
+		overlaySecretName = overlaysSecret.Name
+	}
+
 	o.statusUI.PrintMessagef("Creating package install resource")
-	if err = o.createPackageInstall(isServiceAccountCreated, isSecretCreated, kcClient); err != nil {
+	if err = o.createPackageInstall(isServiceAccountCreated, isSecretCreated, overlaySecretName, kcClient); err != nil {
 		return err
 	}
 
@@ -327,14 +342,17 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		return err
 	}
 
-	if o.valuesFile == "" && !changed && o.values {
+	if o.valuesFile == "" && !changed && o.values &&
+		o.YttOverlayFlags.yttOverlays && len(o.YttOverlayFlags.yttOverlayFiles) == 0 {
 		o.statusUI.PrintMessagef("No changes to package install '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 		return nil
 	}
 
 	// Pause reconciliation so that kctrl can tail status if an existing values secret is updated
+	// Or when existing ytt overlay has to be updated
 	reconciliationPaused := false
-	if o.valuesFile != "" && len(pkgInstall.Spec.Values) > 0 {
+	if (o.valuesFile != "" && len(pkgInstall.Spec.Values) > 0) ||
+		(len(o.YttOverlayFlags.yttOverlayFiles) > 0 && o.hasYttOverlays(pkgInstall)) {
 		updatedPkgInstall, err = o.pauseReconciliation(kcClient)
 		if err != nil {
 			return err
@@ -368,6 +386,25 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		if !changed {
 			return nil
 		}
+	}
+
+	if o.YttOverlayFlags.yttOverlays {
+		overlaysSecret, err := o.createOrUpdateYttOverlaySecrets(updatedPkgInstall, client)
+		if err != nil {
+			return err
+		}
+		if overlaysSecret != nil {
+			updatedPkgInstall.Annotations[yttOverlayAnnotation] = overlaysSecret.Name
+			changed = true
+		}
+	}
+
+	if !o.YttOverlayFlags.yttOverlays {
+		err = o.dropYttOverlaySecrets(updatedPkgInstall, client)
+		if err != nil {
+			return err
+		}
+		o.removeYttOverlaysAnnotation(updatedPkgInstall)
 	}
 
 	if isSecretCreated || changed {
@@ -602,7 +639,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateDataValuesSecret(client kubernetes
 	return true, nil
 }
 
-func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secretCreated bool, kcClient kcclient.Interface) error {
+func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secretCreated bool, overlaysSecretName string, kcClient kcclient.Interface) error {
 	svcAccount := o.serviceAccountName
 	if svcAccount == "" {
 		svcAccount = o.createdAnnotations.ServiceAccountAnnValue()
@@ -632,6 +669,11 @@ func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secr
 				},
 			},
 		}
+	}
+
+	// Add reference to ytt overlaty annotation if overlay secret has been created
+	if overlaysSecretName != "" {
+		packageInstall.Annotations[yttOverlayAnnotation] = overlaysSecretName
 	}
 
 	o.addCreatedResourceAnnotations(&packageInstall.ObjectMeta, serviceAccountCreated, secretCreated, false)
@@ -972,6 +1014,88 @@ func (o *CreateOrUpdateOptions) showVersions(client pkgclient.Interface) error {
 	o.ui.PrintTable(table)
 
 	return nil
+}
+
+const (
+	yttOverlayPrefix = "ext.packaging.carvel.dev/ytt-paths-from-secret-name"
+	yttOverlaySuffix = "kctrl.carvel.dev"
+)
+
+func (o *CreateOrUpdateOptions) createOrUpdateYttOverlaySecrets(pkgi *kcpkgv1alpha1.PackageInstall, client kubernetes.Interface) (*corev1.Secret, error) {
+	o.statusUI.PrintMessage("Creating overlay secrets")
+	if len(o.YttOverlayFlags.yttOverlayFiles) == 0 {
+		return nil, nil
+	}
+
+	if pkgi != nil {
+		for annotation := range pkgi.Annotations {
+			// Ensure that kctrl does not clobber existing overlays
+			if strings.HasPrefix(annotation, yttOverlayPrefix) && strings.TrimPrefix(annotation, yttOverlayPrefix) != yttOverlaySuffix {
+				return nil, fmt.Errorf("Package install has manually supplied overlays")
+			}
+		}
+	}
+
+	secret, err := NewYttOverlays(o.YttOverlayFlags.yttOverlayFiles, o.Name, o.NamespaceFlags.Name).OverlaysSecret()
+	if err != nil {
+		return nil, fmt.Errorf("Structuring overlays secret: %s", err.Error())
+	}
+
+	var createdOrUpdatedSecret *corev1.Secret
+	createdOrUpdatedSecret, err = client.CoreV1().Secrets(o.NamespaceFlags.Name).Create(context.Background(), secret, metav1.CreateOptions{})
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			o.statusUI.PrintMessagef("Updating existing overlay secret '%s' in namespace '%s'", secret.Name, secret.Name)
+			return nil, fmt.Errorf("Creating overlays secret: %s", err.Error())
+		}
+		createdOrUpdatedSecret, err = client.CoreV1().Secrets(o.NamespaceFlags.Name).Update(context.Background(), secret, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("Updating overlays secret: %s", err.Error())
+		}
+	}
+
+	return createdOrUpdatedSecret, nil
+}
+
+func (o *CreateOrUpdateOptions) hasYttOverlays(pkgi *kcpkgv1alpha1.PackageInstall) bool {
+	for annotation := range pkgi.Annotations {
+		if strings.HasPrefix(annotation, yttOverlayPrefix) {
+			return true
+		}
+	}
+	return false
+}
+
+func (o *CreateOrUpdateOptions) dropYttOverlaySecrets(pkgi *kcpkgv1alpha1.PackageInstall, client kubernetes.Interface) error {
+	o.statusUI.PrintMessage("Dropping overlay secrets")
+	overlaySecretName, hasOverlay := pkgi.Annotations[yttOverlayAnnotation]
+	if !hasOverlay {
+		return nil
+	}
+
+	overlaySecret, err := client.CoreV1().Secrets(o.NamespaceFlags.Name).Get(context.Background(), overlaySecretName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			o.statusUI.PrintMessagef("Overlay secret '%s' not found in namespace '%s'", overlaySecretName, o.NamespaceFlags.Name)
+			return nil
+		}
+		return fmt.Errorf("Getting overlay secret: %s", err.Error())
+	}
+	annValue, found := overlaySecret.Annotations[KctrlPkgAnnotation]
+	if !found || annValue != o.createdAnnotations.PackageAnnValue() {
+		return fmt.Errorf("Overlay secret was not created by kctrl")
+	}
+
+	err = client.CoreV1().Secrets(o.NamespaceFlags.Name).Delete(context.Background(), overlaySecretName, metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("Deleting overlays secret: %s", err)
+	}
+
+	return nil
+}
+
+func (o *CreateOrUpdateOptions) removeYttOverlaysAnnotation(pkgi *kcpkgv1alpha1.PackageInstall) {
+	delete(pkgi.Annotations, yttOverlayAnnotation)
 }
 
 func getPackageInstallDescription(name string, namespace string) string {
