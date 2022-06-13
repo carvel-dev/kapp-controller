@@ -123,6 +123,7 @@ func (o *AppTailer) printUpdate(oldStatus kcv1alpha1.AppStatus, status kcv1alpha
 }
 
 func (o *AppTailer) printInfo(app kcv1alpha1.App) {
+	status, isFailing := appStatus(&app)
 	table := uitable.Table{
 		Transpose: true,
 
@@ -137,7 +138,7 @@ func (o *AppTailer) printInfo(app kcv1alpha1.App) {
 		Rows: [][]uitable.Value{{
 			uitable.NewValueString(app.Name),
 			uitable.NewValueString(app.Namespace),
-			uitable.NewValueString(appStatusString(&app)),
+			uitable.ValueFmt{V: uitable.NewValueString(status), Error: isFailing},
 			uitable.NewValueString(o.metricString(app.Status)),
 		}},
 	}

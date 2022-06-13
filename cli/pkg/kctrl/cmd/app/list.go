@@ -83,6 +83,7 @@ func (o *ListOptions) Run() error {
 	}
 
 	for _, app := range appList.Items {
+		status, isFailing := appStatus(&app)
 		sinceDeployAge := cmdcore.NewValueAge(time.Time{})
 		if app.Status.Deploy != nil {
 			sinceDeployAge = cmdcore.NewValueAge(app.Status.Deploy.UpdatedAt.Time)
@@ -91,10 +92,7 @@ func (o *ListOptions) Run() error {
 		table.Rows = append(table.Rows, []uitable.Value{
 			cmdcore.NewValueNamespace(app.Namespace),
 			uitable.NewValueString(app.Name),
-			uitable.ValueFmt{
-				V:     uitable.NewValueString(appStatusString(&app)),
-				Error: isFailing(app.Status.Conditions) || app.Spec.Canceled,
-			},
+			uitable.ValueFmt{V: uitable.NewValueString(status), Error: isFailing},
 			sinceDeployAge,
 			uitable.NewValueString(o.owner(app.OwnerReferences)),
 			cmdcore.NewValueAge(app.CreationTimestamp.Time),

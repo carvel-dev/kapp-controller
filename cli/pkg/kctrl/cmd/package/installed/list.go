@@ -91,15 +91,13 @@ func (o *ListOptions) Run() error {
 	}
 
 	for _, pkgi := range pkgiList.Items {
+		status, isFailing := packageInstallStatus(&pkgi)
 		table.Rows = append(table.Rows, []uitable.Value{
 			cmdcore.NewValueNamespace(pkgi.Namespace),
 			uitable.NewValueString(pkgi.Name),
 			uitable.NewValueString(pkgi.Spec.PackageRef.RefName),
 			uitable.NewValueString(pkgi.Status.Version),
-			uitable.ValueFmt{
-				V:     uitable.NewValueString(packageInstallStatus(&pkgi)),
-				Error: isFailing(pkgi.Status.Conditions) || pkgi.Spec.Canceled,
-			},
+			uitable.ValueFmt{V: uitable.NewValueString(status), Error: isFailing},
 		})
 	}
 
