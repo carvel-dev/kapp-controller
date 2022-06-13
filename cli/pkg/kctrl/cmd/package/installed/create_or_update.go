@@ -88,7 +88,7 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
-	cmd.Flags().StringVar(&o.version, "version", "", "Set package version (required)")
+	cmd.Flags().StringVarP(&o.version, "version", "v", "", "Set package version (required)")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
@@ -129,7 +129,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
-	cmd.Flags().StringVar(&o.version, "version", "", "Set package version (required)")
+	cmd.Flags().StringVarP(&o.version, "version", "v", "", "Set package version (required)")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
@@ -169,7 +169,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Name of package install to be updated")
-	cmd.Flags().StringVar(&o.version, "version", "", "Set package version")
+	cmd.Flags().StringVarP(&o.version, "version", "v", "", "Set package version")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
 
@@ -201,7 +201,10 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 			return err
 		}
 
-		o.showVersions(pkgClient)
+		err = o.showVersions(pkgClient)
+		if err != nil {
+			return err
+		}
 		return fmt.Errorf("Expected package version to be non empty")
 	}
 
@@ -385,7 +388,7 @@ func (o *CreateOrUpdateOptions) dropValuesSecret(client kubernetes.Interface) (b
 	valuesSecret, err := client.CoreV1().Secrets(o.NamespaceFlags.Name).Get(context.Background(), secretName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			o.statusUI.PrintMessagef("Values secret '%s' not found", secretName)
+			o.statusUI.PrintMessagef("Values secret '%s' not found in namespace '%s'", secretName, o.NamespaceFlags.Name)
 			return true, nil
 		}
 		return false, fmt.Errorf("Getting values secret: %s", err.Error())
@@ -924,6 +927,10 @@ func (o *CreateOrUpdateOptions) showVersions(client pkgclient.Interface) error {
 		o.NamespaceFlags.Name).List(context.Background(), listOpts)
 	if err != nil {
 		return err
+	}
+
+	if len(pkgList.Items) == 0 {
+		return fmt.Errorf("No versions of package '%s' found in namespace '%s'", o.packageName, o.NamespaceFlags.Name)
 	}
 
 	table := uitable.Table{

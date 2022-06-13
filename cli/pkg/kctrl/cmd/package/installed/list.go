@@ -41,7 +41,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 				[]string{"package", "installed", "list"},
 			},
 			cmdcore.Example{"List installed packages in all namespaces",
-				[]string{"package", "installed", "list", "A"}},
+				[]string{"package", "installed", "list", "-A"}},
 		}.Description("", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 		Annotations:  map[string]string{"table": ""},
@@ -91,12 +91,13 @@ func (o *ListOptions) Run() error {
 	}
 
 	for _, pkgi := range pkgiList.Items {
+		status, isFailing := packageInstallStatus(&pkgi)
 		table.Rows = append(table.Rows, []uitable.Value{
 			cmdcore.NewValueNamespace(pkgi.Namespace),
 			uitable.NewValueString(pkgi.Name),
 			uitable.NewValueString(pkgi.Spec.PackageRef.RefName),
 			uitable.NewValueString(pkgi.Status.Version),
-			uitable.NewValueString(packageInstallStatus(&pkgi)),
+			uitable.ValueFmt{V: uitable.NewValueString(status), Error: isFailing},
 		})
 	}
 

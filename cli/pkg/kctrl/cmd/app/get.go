@@ -14,7 +14,6 @@ import (
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -60,12 +59,12 @@ func (o *GetOptions) Run() error {
 		return err
 	}
 
-	isFailing := o.isFailing(app.Status.Conditions)
+	status, isFailing := appStatus(app)
 
 	failingStageHeader := uitable.NewHeader("Failing Stage")
-	failingStageHeader.Hidden = !isFailing
+	failingStageHeader.Hidden = len(app.Status.UsefulErrorMessage) == 0
 	errorMessageHeader := uitable.NewHeader("Useful Error Message")
-	errorMessageHeader.Hidden = !isFailing
+	errorMessageHeader.Hidden = len(app.Status.UsefulErrorMessage) == 0
 
 	table := uitable.Table{
 		Transpose: true,
@@ -85,7 +84,7 @@ func (o *GetOptions) Run() error {
 			uitable.NewValueString(app.Namespace),
 			uitable.NewValueString(app.Name),
 			uitable.NewValueString(app.Spec.ServiceAccountName),
-			uitable.NewValueString(app.Status.FriendlyDescription),
+			uitable.ValueFmt{V: uitable.NewValueString(status), Error: isFailing},
 			uitable.NewValueInterface(o.formatOwnerReferences(app.OwnerReferences)),
 			uitable.NewValueInterface(app.Status.Conditions),
 			uitable.NewValueString(o.failingStage(app.Status)),
@@ -106,15 +105,6 @@ func (o *GetOptions) formatOwnerReferences(references []metav1.OwnerReference) [
 	}
 
 	return referenceList
-}
-
-func (o *GetOptions) isFailing(conditions []kcv1alpha1.AppCondition) bool {
-	for _, condition := range conditions {
-		if condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue {
-			return true
-		}
-	}
-	return false
 }
 
 // TODO: Do we need to check observed generation here?

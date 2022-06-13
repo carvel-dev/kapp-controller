@@ -32,7 +32,7 @@ func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Log
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
-		Aliases: []string{"g"},
+		Aliases: []string{"l", "ls"},
 		Short:   "List Apps",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
@@ -83,6 +83,7 @@ func (o *ListOptions) Run() error {
 	}
 
 	for _, app := range appList.Items {
+		status, isFailing := appStatus(&app)
 		sinceDeployAge := cmdcore.NewValueAge(time.Time{})
 		if app.Status.Deploy != nil {
 			sinceDeployAge = cmdcore.NewValueAge(app.Status.Deploy.UpdatedAt.Time)
@@ -91,7 +92,7 @@ func (o *ListOptions) Run() error {
 		table.Rows = append(table.Rows, []uitable.Value{
 			cmdcore.NewValueNamespace(app.Namespace),
 			uitable.NewValueString(app.Name),
-			uitable.NewValueString(app.Status.FriendlyDescription),
+			uitable.ValueFmt{V: uitable.NewValueString(status), Error: isFailing},
 			sinceDeployAge,
 			uitable.NewValueString(o.owner(app.OwnerReferences)),
 			cmdcore.NewValueAge(app.CreationTimestamp.Time),

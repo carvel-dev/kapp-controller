@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -107,6 +108,8 @@ func (o *GetOptions) Run(args []string) error {
 		return nil
 	}
 
+	status, isFailing := packageInstallStatus(pkgi)
+
 	errorMessageHeader := uitable.NewHeader("Useful Error Message")
 	errorMessageHeader.Hidden = len(pkgi.Status.UsefulErrorMessage) == 0
 
@@ -128,7 +131,7 @@ func (o *GetOptions) Run(args []string) error {
 			uitable.NewValueString(pkgi.Name),
 			uitable.NewValueString(pkgi.Spec.PackageRef.RefName),
 			uitable.NewValueString(pkgi.Status.Version),
-			uitable.NewValueString(packageInstallStatus(pkgi)),
+			uitable.ValueFmt{V: uitable.NewValueString(status), Error: isFailing},
 			uitable.NewValueInterface(pkgi.Status.Conditions),
 			uitable.NewValueString(color.RedString(pkgi.Status.UsefulErrorMessage)),
 		}},
@@ -140,6 +143,9 @@ func (o *GetOptions) Run(args []string) error {
 }
 
 func (o *GetOptions) getSecretData(pkgi *kcpkgv1alpha1.PackageInstall) ([]byte, error) {
+	if len(pkgi.Spec.Values) == 0 {
+		return nil, fmt.Errorf("No values have been supplied to package installation '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
+	}
 
 	if len(pkgi.Spec.Values) != 1 {
 		return nil, fmt.Errorf("Expected 1 values reference, found %d", len(pkgi.Spec.Values))
@@ -208,12 +214,28 @@ func (o *GetOptions) showValuesData(pkgi *kcpkgv1alpha1.PackageInstall) error {
 	return nil
 }
 
-func packageInstallStatus(pkgi *kcpkgv1alpha1.PackageInstall) string {
+// Returns pkgi status string and a bool indicating if it is a failure
+func packageInstallStatus(pkgi *kcpkgv1alpha1.PackageInstall) (string, bool) {
 	if pkgi.Spec.Canceled {
-		return "Canceled"
+		return "Canceled", true
 	}
 	if pkgi.Spec.Paused {
-		return "Paused"
+		return "Paused", true
 	}
-	return pkgi.Status.FriendlyDescription
+
+	for _, condition := range pkgi.Status.Conditions {
+		switch condition.Type {
+		case kcv1alpha1.ReconcileFailed:
+			return "Reconcile failed", true
+		case kcv1alpha1.ReconcileSucceeded:
+			return "Reconcile succeeded", false
+		case kcv1alpha1.DeleteFailed:
+			return "Deletion failed", true
+		case kcv1alpha1.Reconciling:
+			return "Reconciling", false
+		case kcv1alpha1.Deleting:
+			return "Deleting", false
+		}
+	}
+	return pkgi.Status.FriendlyDescription, false
 }
