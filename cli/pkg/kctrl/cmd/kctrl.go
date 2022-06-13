@@ -98,6 +98,7 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 
 	cmd.AddCommand(NewCmdCompletion())
 
+	ConfigureTTY(o, cmd)
 	return cmd
 }
 
@@ -143,6 +144,20 @@ func ConfigureGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdc
 	}
 }
 
+func ConfigureTTY(o *KctrlOptions, cmd *cobra.Command) {
+	configureTTYFlag := func(cmd *cobra.Command) {
+		var forceTTY bool
+
+		_, defaultTTY := cmd.Annotations[app.TTYByDefaultKey]
+		cmd.Flags().BoolVar(&forceTTY, "tty", defaultTTY, "Force TTY-like output")
+		cobrautil.VisitCommands(cmd, cobrautil.WrapRunEForCmd(func(*cobra.Command, []string) error {
+			o.ui.EnableTTY(forceTTY)
+			return nil
+		}))
+	}
+	cobrautil.VisitCommands(cmd, cobrautil.ReconfigureLeafCmds(configureTTYFlag))
+}
+
 func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opts cmdcore.PackageCommandTreeOpts) {
 	pkgrepoCmd := pkgrepo.NewCmd()
 	pkgrepoCmd.AddCommand(pkgrepo.NewListCmd(pkgrepo.NewListOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
@@ -175,6 +190,7 @@ func AttachGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore
 	SetGlobalFlags(o, cmd, flagsFactory, opts)
 	ConfigurePathResolvers(o, cmd, flagsFactory)
 	ConfigureGlobalFlags(o, cmd, flagsFactory, opts.PositionalArgs)
+	ConfigureTTY(o, cmd)
 }
 
 func AttachKctrlPackageCommandTree(cmd *cobra.Command, confUI *ui.ConfUI, opts cmdcore.PackageCommandTreeOpts) {

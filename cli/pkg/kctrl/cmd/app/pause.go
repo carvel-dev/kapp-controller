@@ -33,10 +33,11 @@ func NewPauseOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Lo
 
 func NewPauseCmd(o *PauseOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "pause",
-		Aliases: []string{"p"},
-		Short:   "Pause reconciliation for app",
-		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Use:         "pause",
+		Aliases:     []string{"p"},
+		Short:       "Pause reconciliation for app",
+		RunE:        func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{TTYByDefaultKey: ""},
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

@@ -19,6 +19,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+const (
+	TTYByDefaultKey = "cli.carvel.dev/tty-by-default"
+)
+
 type DeleteOptions struct {
 	ui          ui.UI
 	statusUI    cmdcore.StatusLoggingUI
@@ -39,9 +43,10 @@ func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.L
 
 func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "delete",
-		Short: "Delete app",
-		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Use:         "delete",
+		Short:       "Delete app",
+		RunE:        func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{TTYByDefaultKey: ""},
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
