@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 )
 
 func NewCmd() *cobra.Command {
@@ -28,38 +27,30 @@ func isOwnedByPackageInstall(app *kcv1alpha1.App) bool {
 	return false
 }
 
-func appStatusString(app *kcv1alpha1.App) string {
-	if len(app.Status.Conditions) < 1 {
-		return ""
+// Returns app status string and a bool indicating if it is a failure
+func appStatus(app *kcv1alpha1.App) (string, bool) {
+	if len(app.Status.Conditions) == 0 {
+		return "", false
 	}
 	if app.Spec.Canceled {
-		return "Canceled"
+		return "Canceled", true
 	}
 	if app.Spec.Paused {
-		return "Paused"
+		return "Paused", true
 	}
 	for _, condition := range app.Status.Conditions {
 		switch condition.Type {
 		case kcv1alpha1.ReconcileFailed:
-			return "Reconcile failed"
+			return "Reconcile failed", true
 		case kcv1alpha1.ReconcileSucceeded:
-			return "Reconcile succeeded"
+			return "Reconcile succeeded", false
 		case kcv1alpha1.DeleteFailed:
-			return "Deletion failed"
+			return "Deletion failed", true
 		case kcv1alpha1.Reconciling:
-			return "Reconciling"
+			return "Reconciling", false
 		case kcv1alpha1.Deleting:
-			return "Deleting"
+			return "Deleting", false
 		}
 	}
-	return app.Status.FriendlyDescription
-}
-
-func isFailing(conditions []kcv1alpha1.AppCondition) bool {
-	for _, condition := range conditions {
-		if condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue {
-			return true
-		}
-	}
-	return false
+	return app.Status.FriendlyDescription, false
 }
