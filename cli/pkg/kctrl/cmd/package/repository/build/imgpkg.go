@@ -113,9 +113,19 @@ func (imgpkg *ImgpkgStep) Interact() error {
 func (imgpkg ImgpkgStep) PostInteract() error {
 
 	filesLocation := "packages"
-	for _, location := range strings.Split(filesLocation, FilesLocationSeparator) {
-		filepath.Walk(location, imgpkg.copyPkgOrPkgMetadataFiles)
+	_, err := os.Stat(filesLocation)
+	if err != nil {
+		if os.IsNotExist(err) {
+
+		} else {
+			return err
+		}
+	} else {
+		for _, location := range strings.Split(filesLocation, FilesLocationSeparator) {
+			filepath.Walk(location, imgpkg.copyPkgOrPkgMetadataFiles)
+		}
 	}
+
 	bundleLocation := filepath.Join(imgpkg.pkgRepoLocation, "bundle")
 	bundledPackagesLocation := filepath.Join(imgpkg.pkgRepoLocation, "bundle", "packages")
 	imagesFileLocation := filepath.Join(imgpkg.pkgRepoLocation, "bundle", ".imgpkg", "images.yml")
@@ -125,7 +135,7 @@ func (imgpkg ImgpkgStep) PostInteract() error {
 	imgpkg.pkgAuthoringUI.PrintActionableText("Lock image references using Kbld")
 	imgpkg.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("kbld --file %s --imgpkg-lock-output %s", bundleLocation, imagesFileLocation))
 
-	err := runningKbld(bundledPackagesLocation, imagesFileLocation)
+	err = runningKbld(bundledPackagesLocation, imagesFileLocation)
 	if err != nil {
 		return err
 	}
