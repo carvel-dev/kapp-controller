@@ -27,6 +27,7 @@ type CreateOptions struct {
 	depsFactory       cmdcore.DepsFactory
 	logger            logger.Logger
 	DefaultValuesFile string
+	pkgVersion        string
 	pkgCmdTreeOpts    cmdcore.PackageCommandTreeOpts
 }
 
@@ -49,6 +50,8 @@ func NewCreateCmd(o *CreateOptions) *cobra.Command {
 		SilenceUsage: true,
 	}
 
+	cmd.PersistentFlags().StringVarP(&o.pkgVersion, "version", "v", "", "Version of a package (in semver format)")
+
 	return cmd
 }
 
@@ -63,7 +66,7 @@ func (o *CreateOptions) Run(args []string) error {
 	if err != nil {
 		return err
 	}
-	createStep := NewCreateStep(o.pkgAuthoringUI, pkgLocation, pkgBuild)
+	createStep := NewCreateStep(o.pkgAuthoringUI, pkgLocation, o.pkgVersion, pkgBuild)
 	err = common.Run(createStep)
 	if err != nil {
 		return err
@@ -74,16 +77,18 @@ func (o *CreateOptions) Run(args []string) error {
 type CreateStep struct {
 	pkgAuthoringUI pkgui.IAuthoringUI
 	pkgLocation    string
+	pkgVersion     string
 	valuesSchema   v1alpha1.ValuesSchema
 	template       template.TemplateStep
 	pkgBuild       *build.PackageBuild
 }
 
-func NewCreateStep(pkgAuthorUI pkgui.IAuthoringUI, pkgLocation string, pkgBuild build.PackageBuild) *CreateStep {
+func NewCreateStep(pkgAuthorUI pkgui.IAuthoringUI, pkgLocation, pkgVersion string, pkgBuild build.PackageBuild) *CreateStep {
 	return &CreateStep{
 		pkgAuthoringUI: pkgAuthorUI,
 		pkgLocation:    pkgLocation,
 		pkgBuild:       &pkgBuild,
+		pkgVersion:     pkgVersion,
 	}
 }
 
@@ -169,18 +174,28 @@ func (createStep *CreateStep) printFQPkgNameBlock() {
 
 //Get Package Version and store it in package-build.yml
 func (createStep CreateStep) configurePackageVersion() error {
-	createStep.printPkgVersionBlock()
-	defaultPkgVersion := createStep.pkgBuild.Spec.Pkg.Spec.Version
-	textOpts := ui.TextOpts{
-		Label:        "Enter the package version",
-		Default:      defaultPkgVersion,
-		ValidateFunc: validatePackageSpecVersion,
+	var (
+		pkgVersion string
+		err        error
+	)
+
+	if createStep.pkgVersion != "" {
+		pkgVersion = createStep.pkgVersion
+	} else {
+		createStep.printPkgVersionBlock()
+		defaultPkgVersion := createStep.pkgBuild.Spec.Pkg.Spec.Version
+		textOpts := ui.TextOpts{
+			Label:        "Enter the package version",
+			Default:      defaultPkgVersion,
+			ValidateFunc: validatePackageSpecVersion,
+		}
+
+		pkgVersion, err = createStep.pkgAuthoringUI.AskForText(textOpts)
+		if err != nil {
+			return err
+		}
 	}
 
-	pkgVersion, err := createStep.pkgAuthoringUI.AskForText(textOpts)
-	if err != nil {
-		return err
-	}
 	createStep.pkgBuild.Spec.Pkg.Spec.Version = pkgVersion
 	createStep.pkgBuild.Spec.Pkg.Name = createStep.pkgBuild.Spec.Pkg.Spec.RefName + "." + pkgVersion
 	createStep.pkgBuild.WriteToFile()
