@@ -4,19 +4,18 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/cppforlife/go-cli-ui/ui"
 	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	pkgui "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/ui"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
 type HelmTemplateStep struct {
-	pkgAuthoringUI pkgui.IPkgAuthoringUI
+	pkgAuthoringUI pkgui.IAuthoringUI
 	pkgBuild       *pkgbuilder.PackageBuild
 	pkgLocation    string
 }
 
-func NewHelmTemplateStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *HelmTemplateStep {
+func NewHelmTemplateStep(ui pkgui.IAuthoringUI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *HelmTemplateStep {
 	return &HelmTemplateStep{
 		pkgAuthoringUI: ui,
 		pkgLocation:    pkgLocation,
@@ -35,9 +34,6 @@ func (helmStep HelmTemplateStep) PostInteract() error {
 
 func (helmStep *HelmTemplateStep) Interact() error {
 	existingPkgTemplates := helmStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template
-	if existingPkgTemplates == nil {
-		helmStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template = append(helmStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template, v1alpha1.AppTemplate{})
-	}
 	if isHelmTemplateExist(existingPkgTemplates) {
 		if isHelmTemplateExistOnlyOnce(existingPkgTemplates) {
 			helmStep.configureHelmChartPath()
@@ -52,10 +48,6 @@ func (helmStep *HelmTemplateStep) Interact() error {
 	}
 
 	return nil
-}
-
-func (helmStep HelmTemplateStep) askForPath() bool {
-	return false
 }
 
 func isHelmTemplateExist(existingTemplates []v1alpha1.AppTemplate) bool {
@@ -84,52 +76,36 @@ func isHelmTemplateExistOnlyOnce(existingTemplates []v1alpha1.AppTemplate) bool 
 func (helmStep HelmTemplateStep) initializeHelmTemplate() {
 	helmStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template = append([]v1alpha1.AppTemplate{
 		v1alpha1.AppTemplate{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{}}}, helmStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template...)
-	helmStep.pkgBuild.WriteToFile(helmStep.pkgLocation)
+	helmStep.pkgBuild.WriteToFile()
 }
 
 func (helmStep HelmTemplateStep) configureHelmChartPath() error {
 	var chartPath string
 	for _, appTemplate := range helmStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template {
 		if appTemplate.HelmTemplate != nil {
-			defaultPath := appTemplate.HelmTemplate.Path
-			if helmStep.askForPath() {
-				input, err := helmStep.pkgAuthoringUI.AskForText(ui.TextOpts{
-					Label:        "Enter the path where helm chart is located",
-					Default:      defaultPath,
-					ValidateFunc: nil, //I think we can add some validation.
-				})
-				if err != nil {
-					return err
-				}
-				chartPath = input
-			} else {
-				path, err := helmStep.getPathFromFetchConf()
 
-				if err != nil {
-					return err
-				}
-				chartPath = path
+			path, err := helmStep.getPath()
+			if err != nil {
+				return err
 			}
-			//TODO Rohit check if this works
+			chartPath = path
+
 			appTemplate.HelmTemplate.Path = chartPath
-			helmStep.pkgBuild.WriteToFile(helmStep.pkgLocation)
+			helmStep.pkgBuild.WriteToFile()
 		}
 	}
 	return nil
 }
 
-func (helmStep HelmTemplateStep) getPathFromFetchConf() (string, error) {
-	//This means that helmChart has been mentioned directly in the fetch section of Package.
+func (helmStep HelmTemplateStep) getPath() (string, error) {
 	if helmStep.pkgBuild.Spec.Vendir == nil {
-		helmStep.pkgAuthoringUI.PrintInformationalText("As package is being created with direct reference, we need not specify any path in the helmTemplate section")
-		return "", nil
+		return "", fmt.Errorf("No Vendir configuration exist to get the path for helm template.")
 	}
 
 	directories := helmStep.pkgBuild.Spec.Vendir.Directories
 	if directories == nil {
 		return "", fmt.Errorf("No helm chart reference in Vendir")
 	}
-
 	var path string
 	for _, directory := range directories {
 		directoryPath := directory.Path

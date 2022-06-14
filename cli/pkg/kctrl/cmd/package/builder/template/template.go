@@ -4,6 +4,7 @@ import (
 	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
 	pkgui "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/ui"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
 const (
@@ -12,12 +13,12 @@ const (
 )
 
 type TemplateStep struct {
-	pkgAuthoringUI pkgui.IPkgAuthoringUI
+	pkgAuthoringUI pkgui.IAuthoringUI
 	pkgBuild       *pkgbuilder.PackageBuild
 	pkgLocation    string
 }
 
-func NewTemplateStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *TemplateStep {
+func NewTemplateStep(ui pkgui.IAuthoringUI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *TemplateStep {
 	templateStep := TemplateStep{
 		pkgAuthoringUI: ui,
 		pkgLocation:    pkgLocation,
@@ -27,7 +28,6 @@ func NewTemplateStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *pkg
 }
 
 func (templateStep TemplateStep) PreInteract() error {
-	//templateStep.pkgAuthoringUI.PrintInformationalText("\nNext step is to add the template section of the package.")
 	return nil
 }
 
@@ -36,6 +36,10 @@ func (templateStep TemplateStep) PostInteract() error {
 }
 
 func (templateStep *TemplateStep) Interact() error {
+	existingPkgTemplates := templateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template
+	if existingPkgTemplates == nil {
+		templateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template = append(templateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template, v1alpha1.AppTemplate{})
+	}
 	if templateStep.isHelmTemplateRequired() {
 		helmTemplateStep := NewHelmTemplateStep(templateStep.pkgAuthoringUI, templateStep.pkgLocation, templateStep.pkgBuild)
 		err := common.Run(helmTemplateStep)
@@ -63,12 +67,12 @@ func (templateStep TemplateStep) isHelmTemplateRequired() bool {
 	return false
 }
 
-func (templateStep TemplateStep) configureKbld() error {
-	kbldTemplateStep := NewKbldTemplateStep(templateStep.pkgAuthoringUI, templateStep.pkgLocation, templateStep.pkgBuild)
-	return common.Run(kbldTemplateStep)
-}
-
 func (templateStep TemplateStep) configureYtt() error {
 	yttTemplateStep := NewYttTemplateStep(templateStep.pkgAuthoringUI, templateStep.pkgLocation, templateStep.pkgBuild)
 	return common.Run(yttTemplateStep)
+}
+
+func (templateStep TemplateStep) configureKbld() error {
+	kbldTemplateStep := NewKbldTemplateStep(templateStep.pkgAuthoringUI, templateStep.pkgLocation, templateStep.pkgBuild)
+	return common.Run(kbldTemplateStep)
 }

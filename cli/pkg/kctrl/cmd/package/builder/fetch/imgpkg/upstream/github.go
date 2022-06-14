@@ -5,6 +5,7 @@ import (
 	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	pkgui "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/ui"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
+	"strings"
 )
 
 const (
@@ -12,12 +13,12 @@ const (
 )
 
 type GithubStep struct {
-	pkgAuthoringUI pkgui.IPkgAuthoringUI
+	pkgAuthoringUI pkgui.IAuthoringUI
 	pkgBuild       *pkgbuilder.PackageBuild
 	pkgLocation    string
 }
 
-func NewGithubStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *GithubStep {
+func NewGithubStep(ui pkgui.IAuthoringUI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *GithubStep {
 	return &GithubStep{
 		pkgAuthoringUI: ui,
 		pkgLocation:    pkgLocation,
@@ -25,24 +26,25 @@ func NewGithubStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *pkgbu
 	}
 }
 
-func (g *GithubStep) PreInteract() error {
+func (githubStep *GithubStep) PreInteract() error {
 	return nil
 }
 
-func (g *GithubStep) Interact() error {
-	contents := g.pkgBuild.Spec.Vendir.Directories[0].Contents
+func (githubStep *GithubStep) Interact() error {
+	contents := githubStep.pkgBuild.Spec.Vendir.Directories[0].Contents
 	if contents == nil {
-		g.initializeContentWithGithubRelease()
+		githubStep.initializeContentWithGithubRelease()
 	} else if contents[0].GithubRelease == nil {
-		g.initializeGithubRelease()
+		githubStep.initializeGithubRelease()
 	}
-	g.pkgAuthoringUI.PrintHeading("Repository details")
-	err := g.configureRepoSlug()
+	githubStep.pkgAuthoringUI.PrintHeaderText("Repository details")
+
+	err := githubStep.configureRepoSlug()
 	if err != nil {
 		return err
 	}
 
-	err = g.configureVersion()
+	err = githubStep.configureVersion()
 	if err != nil {
 		return err
 	}
@@ -50,38 +52,39 @@ func (g *GithubStep) Interact() error {
 	return nil
 }
 
-func (g *GithubStep) configureRepoSlug() error {
-	githubReleaseContent := g.pkgBuild.Spec.Vendir.Directories[0].Contents[0].GithubRelease
+func (githubStep *GithubStep) configureRepoSlug() error {
+	githubReleaseContent := githubStep.pkgBuild.Spec.Vendir.Directories[0].Contents[0].GithubRelease
 	defaultSlug := githubReleaseContent.Slug
-	g.pkgAuthoringUI.PrintInformationalText("Slug format is org/repo e.g. vmware-tanzu/simple-app")
+	githubStep.pkgAuthoringUI.PrintInformationalText("Slug format is org/repo e.g. vmware-tanzu/simple-app")
 	textOpts := ui.TextOpts{
-		Label:        "Enter slug for repository(org/repo)",
+		Label:        "Enter slug for repository",
 		Default:      defaultSlug,
 		ValidateFunc: nil,
 	}
-	repoSlug, err := g.pkgAuthoringUI.AskForText(textOpts)
+	repoSlug, err := githubStep.pkgAuthoringUI.AskForText(textOpts)
 	if err != nil {
 		return err
 	}
 
-	githubReleaseContent.Slug = repoSlug
-	g.pkgBuild.WriteToFile(g.pkgLocation)
+	githubReleaseContent.Slug = strings.TrimSpace(repoSlug)
+	githubStep.pkgBuild.WriteToFile()
 	return nil
 }
 
-func (g GithubStep) configureVersion() error {
-	githubReleaseContent := g.pkgBuild.Spec.Vendir.Directories[0].Contents[0].GithubRelease
-	defaultReleaseTag := g.getDefaultReleaseTag()
+func (githubStep GithubStep) configureVersion() error {
+	githubReleaseContent := githubStep.pkgBuild.Spec.Vendir.Directories[0].Contents[0].GithubRelease
+	defaultReleaseTag := githubStep.getDefaultReleaseTag()
 	textOpts := ui.TextOpts{
 		Label:        "Enter the release tag to be used. Leave empty to use the latest version",
 		Default:      defaultReleaseTag,
 		ValidateFunc: nil,
 	}
-
-	releaseTag, err := g.pkgAuthoringUI.AskForText(textOpts)
+	releaseTag, err := githubStep.pkgAuthoringUI.AskForText(textOpts)
 	if err != nil {
 		return err
 	}
+	releaseTag = strings.TrimSpace(releaseTag)
+
 	//TODO Rohit getting the releaseTag even though it is empty bcoz we dont have omitEmpty in the json representation. Might be have to create PR on imgpkg
 	if len(releaseTag) == 0 {
 		githubReleaseContent.Latest = true
@@ -90,33 +93,32 @@ func (g GithubStep) configureVersion() error {
 		githubReleaseContent.Tag = releaseTag
 		githubReleaseContent.Latest = false
 	}
-
-	g.pkgBuild.WriteToFile(g.pkgLocation)
+	githubStep.pkgBuild.WriteToFile()
 	return nil
 }
 
-func (g *GithubStep) PostInteract() error {
+func (githubStep *GithubStep) PostInteract() error {
 	return nil
 }
 
-func (g *GithubStep) initializeGithubRelease() {
+func (githubStep *GithubStep) initializeGithubRelease() {
 	githubReleaseContent := vendirconf.DirectoryContentsGithubRelease{
 		DisableAutoChecksumValidation: true,
 	}
-	g.pkgBuild.Spec.Vendir.Directories[0].Contents[0].GithubRelease = &githubReleaseContent
-	g.pkgBuild.WriteToFile(g.pkgLocation)
+	githubStep.pkgBuild.Spec.Vendir.Directories[0].Contents[0].GithubRelease = &githubReleaseContent
+	githubStep.pkgBuild.WriteToFile()
 }
 
-func (g *GithubStep) getDefaultReleaseTag() string {
-	releaseTag := g.pkgBuild.Spec.Vendir.Directories[0].Contents[0].GithubRelease.Tag
+func (githubStep *GithubStep) getDefaultReleaseTag() string {
+	releaseTag := githubStep.pkgBuild.Spec.Vendir.Directories[0].Contents[0].GithubRelease.Tag
 	if len(releaseTag) > 0 {
 		return releaseTag
 	}
 	return ""
 }
 
-func (g *GithubStep) initializeContentWithGithubRelease() {
+func (githubStep *GithubStep) initializeContentWithGithubRelease() {
 	//TODO Rohit need to check this how it should be done. It is giving path as empty.
-	g.pkgBuild.Spec.Vendir.Directories[0].Contents = append(g.pkgBuild.Spec.Vendir.Directories[0].Contents, vendirconf.DirectoryContents{})
-	g.initializeGithubRelease()
+	githubStep.pkgBuild.Spec.Vendir.Directories[0].Contents = append(githubStep.pkgBuild.Spec.Vendir.Directories[0].Contents, vendirconf.DirectoryContents{})
+	githubStep.initializeGithubRelease()
 }

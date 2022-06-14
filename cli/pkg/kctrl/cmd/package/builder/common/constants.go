@@ -1,11 +1,8 @@
 package common
 
 const (
-	PkgBuildFileName                 = "package-build.yml"
-	PkgFetchContentAnnotationKey     = "fetch-content-from"
-	PkgCreatePreferenceAnnotationKey = "create-immutable-package"
-	CreateWithImmutableReference     = "Immutable(recommended)"
-	CreateWithDirectReference        = "Direct"
+	PkgBuildFileName             = "package-build.yml"
+	PkgFetchContentAnnotationKey = "fetch-content-from"
 )
 
 const (

@@ -11,8 +11,6 @@ kind: PackageBuild
 spec: 
   imgpkg: 
     registryUrl: ~
-    repoName: ~
-    tag: v1.0.0
   package: 
     apiVersion: data.packaging.carvel.dev/v1alpha1
     kind: Package
@@ -22,27 +20,20 @@ spec:
     spec: 
       licenses: 
         - "Apache 2.0"
-        - MIT
       refName: samplepackage.corp.com
       releaseNotes: "Initial release of the simple app package\n"
       template: 
         spec: 
           deploy: 
-            - 
-              kapp: {}
+            - kapp: {}
           fetch: 
-            - 
-              imgpkgBundle: 
+            - imgpkgBundle: 
                 image: ~
-          template: 
-            - 
-              ytt: 
-                paths: 
-                  - "config"
-            - 
-              kbld: 
+          template:
+            - kbld: 
                 paths: 
                   - "-"
+                  - .imgpkg/images.yml
       version: "1.0.0"
   packageMetadata: 
     apiVersion: data.packaging.carvel.dev/v1alpha1

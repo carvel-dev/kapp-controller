@@ -7,12 +7,12 @@ import (
 )
 
 type KbldTemplateStep struct {
-	pkgAuthoringUI pkgui.IPkgAuthoringUI
+	pkgAuthoringUI pkgui.IAuthoringUI
 	pkgBuild       *pkgbuilder.PackageBuild
 	pkgLocation    string
 }
 
-func NewKbldTemplateStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *KbldTemplateStep {
+func NewKbldTemplateStep(ui pkgui.IAuthoringUI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *KbldTemplateStep {
 	return &KbldTemplateStep{
 		pkgAuthoringUI: ui,
 		pkgLocation:    pkgLocation,
@@ -21,7 +21,6 @@ func NewKbldTemplateStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild 
 }
 
 func (kbldTemplateStep KbldTemplateStep) PreInteract() error {
-	//kbldTemplateStep.pkgAuthoringUI.PrintInformationalText(`We need to provide the values to ytt.`)
 	return nil
 }
 
@@ -31,10 +30,6 @@ func (kbldTemplateStep KbldTemplateStep) PostInteract() error {
 
 func (kbldTemplateStep *KbldTemplateStep) Interact() error {
 	existingPkgTemplates := kbldTemplateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template
-	//TODO Rohit needs to be removed
-	if existingPkgTemplates == nil {
-		kbldTemplateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template = append(kbldTemplateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template, v1alpha1.AppTemplate{})
-	}
 	if isKbldTemplateExist(existingPkgTemplates) {
 		if isKbldTemplateExistOnlyOnce(existingPkgTemplates) {
 			kbldTemplateStep.configureKbldPaths()
@@ -50,10 +45,6 @@ func (kbldTemplateStep *KbldTemplateStep) Interact() error {
 
 	//kbldTemplateStep.pkgAuthoringUI.PrintInformationalText("Adding path to the ytt template section")
 	return nil
-}
-
-func (kbldTemplateStep *KbldTemplateStep) askForPath() bool {
-	return false
 }
 
 func isKbldTemplateExist(existingTemplates []v1alpha1.AppTemplate) bool {
@@ -82,20 +73,20 @@ func isKbldTemplateExistOnlyOnce(existingTemplates []v1alpha1.AppTemplate) bool 
 func (kbldTemplateStep *KbldTemplateStep) initializeKbldTemplate() {
 	kbldTemplateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template = append(kbldTemplateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template,
 		v1alpha1.AppTemplate{Kbld: &v1alpha1.AppTemplateKbld{}})
-	kbldTemplateStep.pkgBuild.WriteToFile(kbldTemplateStep.pkgLocation)
+	kbldTemplateStep.pkgBuild.WriteToFile()
 }
 
 func (kbldTemplateStep *KbldTemplateStep) configureKbldPaths() error {
 	for _, appTemplate := range kbldTemplateStep.pkgBuild.Spec.Pkg.Spec.Template.Spec.Template {
+		//TODO What if user intentionally wants to skip kbld in his package-build.yml? Should we still add "-" and ".imgpkg/images.yml" to kbld?
 		if appTemplate.Kbld != nil {
 			defaultPaths := appTemplate.Kbld.Paths
 			//If paths are already configured, do not change them
 			if len(defaultPaths) == 0 {
-				defaultPaths = append(defaultPaths, "-")
+				defaultPaths = append(defaultPaths, "-", ".imgpkg/images.yml")
 			}
-			//TODO Rohit check if this works
 			appTemplate.Kbld.Paths = defaultPaths
-			kbldTemplateStep.pkgBuild.WriteToFile(kbldTemplateStep.pkgLocation)
+			kbldTemplateStep.pkgBuild.WriteToFile()
 		}
 	}
 	return nil

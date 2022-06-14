@@ -5,15 +5,16 @@ import (
 	pkgbuilder "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/build"
 	pkgui "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/ui"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
+	"strings"
 )
 
 type HelmStep struct {
-	pkgAuthoringUI pkgui.IPkgAuthoringUI
+	pkgAuthoringUI pkgui.IAuthoringUI
 	pkgBuild       *pkgbuilder.PackageBuild
 	pkgLocation    string
 }
 
-func NewHelmStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *HelmStep {
+func NewHelmStep(ui pkgui.IAuthoringUI, pkgLocation string, pkgBuild *pkgbuilder.PackageBuild) *HelmStep {
 	return &HelmStep{
 		pkgAuthoringUI: ui,
 		pkgLocation:    pkgLocation,
@@ -53,7 +54,7 @@ func (helmStep *HelmStep) initializeHelmRelease() {
 		HelmVersion: "3",
 	}
 	helmStep.pkgBuild.Spec.Vendir.Directories[0].Contents[0].HelmChart = &helmChartContent
-	helmStep.pkgBuild.WriteToFile(helmStep.pkgLocation)
+	helmStep.pkgBuild.WriteToFile()
 }
 
 func (helmStep *HelmStep) initializeContentWithHelmRelease() {
@@ -75,8 +76,8 @@ func (helmStep *HelmStep) configureHelmChartName() error {
 		return err
 	}
 
-	helmChartContent.Name = name
-	helmStep.pkgBuild.WriteToFile(helmStep.pkgLocation)
+	helmChartContent.Name = strings.TrimSpace(name)
+	helmStep.pkgBuild.WriteToFile()
 	return nil
 }
 
@@ -93,8 +94,8 @@ func (helmStep *HelmStep) configureHelmChartVersion() error {
 		return err
 	}
 
-	helmChartContent.Version = version
-	helmStep.pkgBuild.WriteToFile(helmStep.pkgLocation)
+	helmChartContent.Version = strings.TrimSpace(version)
+	helmStep.pkgBuild.WriteToFile()
 	return nil
 }
 
@@ -114,8 +115,8 @@ func (helmStep *HelmStep) configureHelmChartRepositoryURL() error {
 		return err
 	}
 
-	helmChartContent.Repository.URL = url
-	helmStep.pkgBuild.WriteToFile(helmStep.pkgLocation)
+	helmChartContent.Repository.URL = strings.TrimSpace(url)
+	helmStep.pkgBuild.WriteToFile()
 	return nil
 }
 

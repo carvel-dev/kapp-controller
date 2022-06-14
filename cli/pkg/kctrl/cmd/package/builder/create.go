@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"encoding/json"
 	"fmt"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
@@ -24,17 +23,15 @@ import (
 )
 
 type CreateOptions struct {
-	pkgAuthoringUI pkgui.IPkgAuthoringUI
-	depsFactory    cmdcore.DepsFactory
-	logger         logger.Logger
-
+	pkgAuthoringUI    pkgui.IAuthoringUI
+	depsFactory       cmdcore.DepsFactory
+	logger            logger.Logger
 	DefaultValuesFile string
-
-	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
+	pkgCmdTreeOpts    cmdcore.PackageCommandTreeOpts
 }
 
 func NewCreateOptions(ui ui.UI, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *CreateOptions {
-	return &CreateOptions{pkgAuthoringUI: pkgui.NewPackageAuthoringUI(ui), logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
+	return &CreateOptions{pkgAuthoringUI: pkgui.NewAuthoringUI(ui), logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewCreateCmd(o *CreateOptions) *cobra.Command {
@@ -75,14 +72,14 @@ func (o *CreateOptions) Run(args []string) error {
 }
 
 type CreateStep struct {
-	pkgAuthoringUI pkgui.IPkgAuthoringUI
+	pkgAuthoringUI pkgui.IAuthoringUI
 	pkgLocation    string
 	valuesSchema   v1alpha1.ValuesSchema
 	template       template.TemplateStep
 	pkgBuild       *build.PackageBuild
 }
 
-func NewCreateStep(pkgAuthorUI pkgui.IPkgAuthoringUI, pkgLocation string, pkgBuild build.PackageBuild) *CreateStep {
+func NewCreateStep(pkgAuthorUI pkgui.IAuthoringUI, pkgLocation string, pkgBuild build.PackageBuild) *CreateStep {
 	return &CreateStep{
 		pkgAuthoringUI: pkgAuthorUI,
 		pkgLocation:    pkgLocation,
@@ -91,7 +88,7 @@ func NewCreateStep(pkgAuthorUI pkgui.IPkgAuthoringUI, pkgLocation string, pkgBui
 }
 
 func (createStep CreateStep) printStartBlock() {
-	createStep.pkgAuthoringUI.PrintHeading("\nPre-requisite")
+	createStep.pkgAuthoringUI.PrintHeaderText("\nPre-requisite")
 	createStep.pkgAuthoringUI.PrintInformationalText("Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
 	createStep.pkgAuthoringUI.PrintInformationalText("\nWe need a directory to hold generated Package and PackageMetadata CRs")
 	createStep.pkgAuthoringUI.PrintActionableText("Creating directory")
@@ -116,70 +113,13 @@ func (createStep CreateStep) createDirectory(dirPath string) error {
 }
 
 func (createStep *CreateStep) Interact() error {
-	createStep.pkgAuthoringUI.PrintHeading("\nBasic Information(Step 1/3)")
+	createStep.pkgAuthoringUI.PrintHeaderText("\nBasic Information(Step 1/3)")
 	err := createStep.configureFullyQualifiedName()
 	if err != nil {
 		return err
 	}
 
 	err = createStep.configurePackageVersion()
-	if err != nil {
-		return err
-	}
-	/*
-		isDefaultPreferenceImmutable := getPackageCreatePreferenceFromPkgBuild(createStep.pkgBuild)
-		createStep.pkgAuthoringUI.PrintInformationalText("A package can be created in two ways. Either having immutable reference to the fetch'ed manifest or a direct reference to the fetch'ed manifest. To create an immutable reference, we will use imgpkg and kbld to lock the reference.")
-		pkgCreateOptions := []string{common.CreateWithImmutableReference, common.CreateWithDirectReference}
-		var defaultPreferenceOptionIndex int
-		if isDefaultPreferenceImmutable {
-			defaultPreferenceOptionIndex = 0
-		} else {
-			defaultPreferenceOptionIndex = 1
-		}
-		choiceOpts := ui.ChoiceOpts{
-			Label:   "How to package the manifest",
-			Default: defaultPreferenceOptionIndex,
-			Choices: pkgCreateOptions,
-		}
-		preferenceOptionSelectedIndex, err := createStep.pkgAuthoringUI.AskForChoice(choiceOpts)
-		if err != nil {
-			return err
-		}
-		if preferenceOptionSelectedIndex == 0 {
-			createStep.pkgBuild.Annotations[common.PkgCreatePreferenceAnnotationKey] = "true"
-			bundleLocation := filepath.Join(createStep.pkgLocation, "bundle")
-			createStep.pkgAuthoringUI.PrintInformationalText("To create an immutable reference, we need to create an imgpkg bundle. Imgpkg, a Carvel tool, allows users to package, distribute, and relocate a set of files as one OCI artifact: a bundle. Imgpkg bundles are identified with a unique sha256 digest based on the file contents. Imgpkg uses that digest to ensure that the copied contents are identical to those originally pushed.")
-			createStep.pkgAuthoringUI.PrintInformationalText("\nCleaning up any previous imgpkg bundle directory present.")
-			createStep.pkgAuthoringUI.PrintActionableText("Cleaning up any previous bundle directory")
-			createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("rm -r -f %s", bundleLocation))
-			util.Execute("rm", []string{"-r", "-f", bundleLocation})
-			err := createStep.createBundleDir()
-			if err != nil {
-				return err
-			}
-
-			err = createStep.createBundleDotImgpkgDir()
-			if err != nil {
-				return err
-			}
-
-		} else {
-			createStep.pkgBuild.Annotations[common.PkgCreatePreferenceAnnotationKey] = "false"
-		}
-		createStep.pkgBuild.WriteToFile(createStep.pkgLocation)
-	*/
-	bundleLocation := filepath.Join(createStep.pkgLocation, "bundle")
-	createStep.pkgAuthoringUI.PrintInformationalText("We need to create an imgpkg bundle as part of the package creation process. Imgpkg, a Carvel tool, allows users to package, distribute, and relocate a set of files as one OCI artifact: a bundle. Imgpkg bundles are identified with a unique sha256 digest based on the file contents. Imgpkg uses that digest to ensure that the copied contents are identical to those originally pushed.")
-	createStep.pkgAuthoringUI.PrintActionableText("Cleaning up any previous bundle directory")
-	createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("rm -r -f %s", bundleLocation))
-	util.Execute("rm", []string{"-r", "-f", bundleLocation})
-	createStep.pkgAuthoringUI.PrintActionableText("Creating the required directory structure for imgpkg bundle")
-	err = createStep.createBundleDir()
-	if err != nil {
-		return err
-	}
-
-	err = createStep.createBundleDotImgpkgDir()
 	if err != nil {
 		return err
 	}
@@ -202,35 +142,6 @@ func (createStep *CreateStep) Interact() error {
 	return nil
 }
 
-func getPackageCreatePreferenceFromPkgBuild(pkgBuild *build.PackageBuild) bool {
-	if pkgBuild.Annotations[common.PkgCreatePreferenceAnnotationKey] == "false" {
-		return false
-	}
-	return true
-}
-
-func (createStep CreateStep) createBundleDir() error {
-	bundleLocation := filepath.Join(createStep.pkgLocation, "bundle")
-	createStep.pkgAuthoringUI.PrintInformationalText("\nBundle directory will act as a parent directory which will contain all the artifacts which makes up our imgpkg bundle.")
-	createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", bundleLocation))
-	err := createStep.createDirectory(bundleLocation)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (createStep CreateStep) createBundleDotImgpkgDir() error {
-	bundleDotImgPkgLocation := filepath.Join(createStep.pkgLocation, "bundle", ".imgpkg")
-	createStep.pkgAuthoringUI.PrintInformationalText("\n.imgpkg directory will contain the bundle’s lock file. A bundle lock file has the mapping of images(referenced in the package contents such as K8s YAML configurations, etc)to its sha256 digest.")
-	createStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("mkdir -p %s", bundleDotImgPkgLocation))
-	err := createStep.createDirectory(bundleDotImgPkgLocation)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 //Get Fully Qualified Name of the Package and store it in package-build.yml
 func (createStep CreateStep) configureFullyQualifiedName() error {
 	createStep.printFQPkgNameBlock()
@@ -248,7 +159,7 @@ func (createStep CreateStep) configureFullyQualifiedName() error {
 	createStep.pkgBuild.Spec.PkgMetadata.Name = fqName
 	createStep.pkgBuild.Spec.PkgMetadata.Spec.DisplayName = strings.Split(fqName, ".")[0]
 	createStep.pkgBuild.Spec.Pkg.Spec.RefName = fqName
-	createStep.pkgBuild.WriteToFile(createStep.pkgLocation)
+	createStep.pkgBuild.WriteToFile()
 	return nil
 }
 
@@ -272,7 +183,7 @@ func (createStep CreateStep) configurePackageVersion() error {
 	}
 	createStep.pkgBuild.Spec.Pkg.Spec.Version = pkgVersion
 	createStep.pkgBuild.Spec.Pkg.Name = createStep.pkgBuild.Spec.Pkg.Spec.RefName + "." + pkgVersion
-	createStep.pkgBuild.WriteToFile(createStep.pkgLocation)
+	createStep.pkgBuild.WriteToFile()
 	return nil
 }
 
@@ -328,14 +239,7 @@ func (createStep CreateStep) printPackageCR(pkg v1alpha1.Package) error {
 	createStep.pkgAuthoringUI.PrintCmdExecutionText("cat package.yml")
 	pkg.ObjectMeta.CreationTimestamp = v1.NewTime(time.Now())
 	pkg.Spec.ReleasedAt = v1.NewTime(time.Now())
-	//TODO: remove this comment. Marshal will make yaml/json
-
-	jsonPackageData, err := json.Marshal(&pkg)
-	if err != nil {
-		return err
-	}
-	yaml.JSONToYAML(jsonPackageData)
-	packageData, err := yaml.JSONToYAML(jsonPackageData)
+	packageData, err := yaml.Marshal(&pkg)
 	if err != nil {
 		return err
 	}
@@ -347,7 +251,6 @@ func (createStep CreateStep) printPackageCR(pkg v1alpha1.Package) error {
 	if err != nil {
 		return fmt.Errorf("Unable to create package file. %s", err.Error())
 	}
-
 	err = createStep.printFile(pkgFileLocation)
 	if err != nil {
 		return err
@@ -368,11 +271,7 @@ func (createStep CreateStep) printPackageMetadataCR(pkgMetadata v1alpha1.Package
 	createStep.pkgAuthoringUI.PrintActionableText("Printing packageMetadata.yml")
 	createStep.pkgAuthoringUI.PrintCmdExecutionText("cat packageMetadata.yml")
 	pkgMetadata.ObjectMeta.CreationTimestamp = v1.NewTime(time.Now())
-	jsonPackageMetadataData, err := json.Marshal(&pkgMetadata)
-	if err != nil {
-		return err
-	}
-	packageMetadataData, err := yaml.JSONToYAML(jsonPackageMetadataData)
+	packageMetadataData, err := yaml.Marshal(&pkgMetadata)
 	if err != nil {
 		return err
 	}
@@ -384,7 +283,6 @@ func (createStep CreateStep) printPackageMetadataCR(pkgMetadata v1alpha1.Package
 	if err != nil {
 		return fmt.Errorf("Unable to create package metadata file. %s", err.Error())
 	}
-
 	err = createStep.printFile(pkgMetadataFileLocation)
 	if err != nil {
 		return err

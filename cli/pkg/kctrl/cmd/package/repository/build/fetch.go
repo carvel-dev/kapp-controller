@@ -13,12 +13,12 @@ const (
 )
 
 type FetchStep struct {
-	pkgAuthoringUI  pkgui.IPkgAuthoringUI
+	pkgAuthoringUI  pkgui.IAuthoringUI
 	pkgRepoLocation string
 	pkgRepoBuild    *build.PackageRepositoryBuild
 }
 
-func NewFetchStep(ui pkgui.IPkgAuthoringUI, pkgLocation string, pkgRepoBuild *build.PackageRepositoryBuild) *FetchStep {
+func NewFetchStep(ui pkgui.IAuthoringUI, pkgLocation string, pkgRepoBuild *build.PackageRepositoryBuild) *FetchStep {
 	fetchStep := FetchStep{
 		pkgAuthoringUI:  ui,
 		pkgRepoLocation: pkgLocation,

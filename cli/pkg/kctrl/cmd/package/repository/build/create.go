@@ -29,7 +29,7 @@ const (
 )
 
 type CreateOptions struct {
-	pkgAuthoringUI pkgui.IPkgAuthoringUI
+	pkgAuthoringUI pkgui.IAuthoringUI
 	depsFactory    cmdcore.DepsFactory
 	logger         logger.Logger
 
@@ -39,7 +39,7 @@ type CreateOptions struct {
 }
 
 func NewCreateOptions(ui ui.UI, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *CreateOptions {
-	return &CreateOptions{pkgAuthoringUI: pkgui.NewPackageAuthoringUI(ui), logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
+	return &CreateOptions{pkgAuthoringUI: pkgui.NewAuthoringUI(ui), logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewCreateCmd(o *CreateOptions) *cobra.Command {
@@ -80,12 +80,12 @@ func (o *CreateOptions) Run(args []string) error {
 }
 
 type CreateStep struct {
-	pkgAuthoringUI  pkgui.IPkgAuthoringUI
+	pkgAuthoringUI  pkgui.IAuthoringUI
 	pkgRepoLocation string
 	pkgRepoBuild    *build.PackageRepositoryBuild
 }
 
-func NewCreateStep(pkgAuthorUI pkgui.IPkgAuthoringUI, pkgRepoLocation string, pkgRepoBuild *build.PackageRepositoryBuild) *CreateStep {
+func NewCreateStep(pkgAuthorUI pkgui.IAuthoringUI, pkgRepoLocation string, pkgRepoBuild *build.PackageRepositoryBuild) *CreateStep {
 	return &CreateStep{
 		pkgAuthoringUI:  pkgAuthorUI,
 		pkgRepoLocation: pkgRepoLocation,
@@ -111,7 +111,7 @@ func (createStep CreateStep) PreInteract() error {
 }
 
 func (createStep CreateStep) printPreRequisite() {
-	createStep.pkgAuthoringUI.PrintHeading("\nPre-requisite")
+	createStep.pkgAuthoringUI.PrintHeaderText("\nPre-requisite")
 	createStep.pkgAuthoringUI.PrintInformationalText("Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: imgpkg, kbld, etc.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
 }
 
@@ -126,7 +126,7 @@ func (createStep CreateStep) createDirectory(dirPath string) error {
 }
 
 func (createStep *CreateStep) Interact() error {
-	createStep.pkgAuthoringUI.PrintHeading("\nBasic Information(Step 1/3)")
+	createStep.pkgAuthoringUI.PrintHeaderText("\nBasic Information(Step 1/3)")
 	createStep.pkgAuthoringUI.PrintInformationalText("\nA package repository name is the name with which it will be referenced while deploying on the cluster.")
 	defaultPkgRepoName := createStep.pkgRepoBuild.Spec.PkgRepo.Name
 	textOpts := ui.TextOpts{

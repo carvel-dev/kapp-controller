@@ -17,12 +17,12 @@ import (
 )
 
 type ImgpkgStep struct {
-	pkgAuthoringUI  pkgui.IPkgAuthoringUI
+	pkgAuthoringUI  pkgui.IAuthoringUI
 	pkgRepoLocation string
 	pkgRepoBuild    *build.PackageRepositoryBuild
 }
 
-func NewImgPkgStep(ui pkgui.IPkgAuthoringUI, pkgRepoLocation string, pkgRepoBuild *build.PackageRepositoryBuild) *ImgpkgStep {
+func NewImgPkgStep(ui pkgui.IAuthoringUI, pkgRepoLocation string, pkgRepoBuild *build.PackageRepositoryBuild) *ImgpkgStep {
 	imgpkg := ImgpkgStep{
 		pkgAuthoringUI:  ui,
 		pkgRepoLocation: pkgRepoLocation,
@@ -87,7 +87,7 @@ func (imgpkg ImgpkgStep) createBundleDotImgpkgDir() error {
 }
 
 func (imgpkg *ImgpkgStep) Interact() error {
-	imgpkg.pkgAuthoringUI.PrintHeading("\nRegistry URL(Step 2/3)")
+	imgpkg.pkgAuthoringUI.PrintHeaderText("\nRegistry URL(Step 2/3)")
 	imgpkgBundleConf := imgpkg.pkgRepoBuild.Spec.PkgRepo.Spec.Fetch.ImgpkgBundle
 	if imgpkgBundleConf == nil {
 		imgpkg.pkgRepoBuild.Spec.PkgRepo.Spec.Fetch.ImgpkgBundle = &v1alpha12.AppFetchImgpkgBundle{}
@@ -106,7 +106,7 @@ func (imgpkg *ImgpkgStep) Interact() error {
 
 	imgpkg.pkgRepoBuild.Spec.PkgRepo.Spec.Fetch.ImgpkgBundle.Image = registryURL
 	imgpkg.pkgRepoBuild.WriteToFile(imgpkg.pkgRepoLocation)
-	imgpkg.pkgAuthoringUI.PrintHeading("\nCreating Package Repository(Step 3/3)")
+	imgpkg.pkgAuthoringUI.PrintHeaderText("\nCreating Package Repository(Step 3/3)")
 	return nil
 }
 
@@ -121,7 +121,6 @@ func (imgpkg ImgpkgStep) PostInteract() error {
 	imagesFileLocation := filepath.Join(imgpkg.pkgRepoLocation, "bundle", ".imgpkg", "images.yml")
 
 	imgpkg.pkgAuthoringUI.PrintInformationalText("imgpkg bundle configuration is now complete.")
-	//imgpkg.pkgAuthoringUI.PrintInformationalText("Kbld, a Carvel tool, will be used to create a mapping of all the image references to their sha256 digest. kbld looks for image keys within YAML documents and tries to resolve image reference to its full digest form and creates a mapping of image tags to a URL with a sha256 digest. This mapping will then be placed into an images.yml lock file in bundle/.imgpkg directory. kbld allows to build the imgpkg bundle with immutable image references.")
 	imgpkg.pkgAuthoringUI.PrintInformationalText("\nLet's use `kbld` to create immutable image reference. Kbld scans all the files in bundle configuration for any references of images and creates a mapping of image tags to a URL with sha256 digest.")
 	imgpkg.pkgAuthoringUI.PrintActionableText("Lock image references using Kbld")
 	imgpkg.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("kbld --file %s --imgpkg-lock-output %s", bundleLocation, imagesFileLocation))

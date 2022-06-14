@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/builder/common"
 	"os"
 	"path/filepath"
 
@@ -9,10 +10,6 @@ import (
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
-)
-
-const (
-	PkgBuildFileName = "package-build.yml"
 )
 
 type PackageBuild struct {
@@ -33,21 +30,19 @@ type Spec struct {
 }
 
 func (pkgBuilder PackageBuild) GetPackageMetadata() v1alpha1.PackageMetadata {
-	//TODO we should start getting the data from pkgBuilder rather than create
 	return *pkgBuilder.Spec.PkgMetadata
 }
 
 func (pkgBuilder PackageBuild) GetPackage() v1alpha1.Package {
-	//TODO we should start getting the data from pkgBuilder rather than create
 	return *pkgBuilder.Spec.Pkg
 }
 
-func (pkgBuilder PackageBuild) WriteToFile(dirPath string) error {
+func (pkgBuilder PackageBuild) WriteToFile() error {
 	content, err := yaml.Marshal(pkgBuilder)
 	if err != nil {
 		return err
 	}
-	fileLocation := filepath.Join(PkgBuildFileName)
+	fileLocation := filepath.Join(common.PkgBuildFileName)
 	file, err := os.Create(fileLocation)
 	if err != nil {
 		return err
