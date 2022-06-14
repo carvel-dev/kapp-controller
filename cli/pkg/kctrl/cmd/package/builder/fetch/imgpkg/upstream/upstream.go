@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	VendirGithubReleaseConf string = "Github Release(recommended)"
+	VendirGithubReleaseConf string = "Github Release"
 	VendirHelmChartConf     string = "HelmChart"
 	IncludeAllFiles         string = "*"
 )
@@ -42,6 +42,10 @@ func (upstreamStep *UpstreamStep) PreInteract() error {
 func (upstreamStep *UpstreamStep) Interact() error {
 	vendirDirectories := upstreamStep.pkgBuild.Spec.Vendir.Directories
 	currentUpstreamOptionSelected := getCurrentSelectedUpstreamOption(upstreamStep.pkgBuild)
+	upstreamOptionToVendirContentMap := map[string]string{
+		common.FetchReleaseArtifactFromGithub: VendirGithubReleaseConf,
+		common.FetchChartFromHelmRepo:         VendirHelmChartConf,
+	}
 
 	if len(vendirDirectories) > 1 {
 		//As multiple upstream directories are configured, we dont want to touch them.
@@ -58,7 +62,8 @@ func (upstreamStep *UpstreamStep) Interact() error {
 		var previousUpstreamOptionSelected string
 		previousUpstreamOptionSelected = getPreviousSelectedUpstreamOption(upstreamStep.pkgBuild)
 		if currentUpstreamOptionSelected != previousUpstreamOptionSelected {
-			setEarlierUpstreamOptionAsNil(vendirDirectories, previousUpstreamOptionSelected)
+			setEarlierUpstreamOptionAsNil(vendirDirectories, upstreamOptionToVendirContentMap[previousUpstreamOptionSelected])
+			resetIncludedPathAsNil(vendirDirectories)
 		}
 	}
 
@@ -101,6 +106,14 @@ func setEarlierUpstreamOptionAsNil(vendirDirectories []vendirconf.Directory, ear
 		vendirDirectories[0].Contents[0].HelmChart = nil
 	}
 	return
+}
+
+func resetIncludedPathAsNil(vendirDirectories []vendirconf.Directory) {
+	if vendirDirectories[0].Contents == nil {
+		return
+	}
+	vendirDirectories[0].Contents[0].IncludePaths = nil
+
 }
 
 func getPreviousSelectedUpstreamOption(pkgBuild *pkgbuilder.PackageBuild) string {
