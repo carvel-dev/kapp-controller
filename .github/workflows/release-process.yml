@@ -32,6 +32,8 @@ jobs:
       - name: Run release script
         run: |
           set -e -x
+          minikube start --driver=docker --wait=all
+          docker buildx create minikube --use --driver=kubernetes --bootstrap
           ./hack/build-release.sh
           cd cli
           ./hack/build-binaries.sh
