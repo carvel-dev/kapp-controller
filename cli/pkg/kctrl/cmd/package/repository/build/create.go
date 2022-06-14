@@ -112,7 +112,7 @@ func (createStep CreateStep) PreInteract() error {
 
 func (createStep CreateStep) printPreRequisite() {
 	createStep.pkgAuthoringUI.PrintHeaderText("\nPre-requisite")
-	createStep.pkgAuthoringUI.PrintInformationalText("Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: imgpkg, kbld, etc.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
+	createStep.pkgAuthoringUI.PrintInformationalText("Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: imgpkg, kbld, etc.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n*Ensure that all the yml files of package and package-metadata which are part of this repository are present in the `packages` folder\n")
 }
 
 func (createStep CreateStep) createDirectory(dirPath string) error {
