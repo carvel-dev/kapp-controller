@@ -212,6 +212,18 @@ func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.
 		}
 	}
 
+	overlaysSecretName, hasOverlays := pkgInstall.Annotations[yttOverlayAnnotation]
+	if hasOverlays {
+		err := o.deleteResourceUsingGVR(schema.GroupVersionResource{
+			Group:    corev1.SchemeGroupVersion.Group,
+			Version:  corev1.SchemeGroupVersion.Version,
+			Resource: KindSecret.Resource(),
+		}, overlaysSecretName, o.NamespaceFlags.Name, dynamicClient)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -252,6 +264,17 @@ func (o *DeleteOptions) cleanUpIfInstallNotFound(dynamicClient dynamic.Interface
 			Version:  rbacv1.SchemeGroupVersion.Version,
 			Resource: KindClusterRoleBinding.Resource(),
 		}, KindClusterRoleBinding.Name(o.Name, o.NamespaceFlags.Name), "", dynamicClient)
+	if err != nil {
+		return err
+	}
+
+	//Delete ytt overlays secret created by kctrl if any
+	err = o.deleteIfExistsAndOwned(
+		schema.GroupVersionResource{
+			Group:    rbacv1.SchemeGroupVersion.Group,
+			Version:  rbacv1.SchemeGroupVersion.Version,
+			Resource: KindSecret.Resource(),
+		}, fmt.Sprintf("%s-%s-overlays", o.Name, o.NamespaceFlags.Name), o.NamespaceFlags.Name, dynamicClient)
 	if err != nil {
 		return err
 	}
