@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655299095939,
+  "lastUpdate": 1655303424917,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -2553,6 +2553,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6521999267,
             "unit": "ns/op\t         4.351 DeleteSeconds\t         2.134 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4532073f483c0cfb5a7d331a9eae2e87bf65add6",
+          "message": "Enhance tty experience (#743)\n\n* Set tty to be an alternate flag instead of global\r\n\r\nSet default value of tty to true for add/update, delete, pause, kick and status commands. For rest of the commands, default value should be false.\r\n\r\n* Make cmd configuration functions private",
+          "timestamp": "2022-06-15T10:20:32-04:00",
+          "tree_id": "70bbc9a72e25b15864c0df6e2e3e7268681375bc",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/4532073f483c0cfb5a7d331a9eae2e87bf65add6"
+        },
+        "date": 1655303423608,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36459723420,
+            "unit": "ns/op\t        18.94 DeleteSeconds\t        17.48 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9520327856,
+            "unit": "ns/op\t         5.281 DeleteSeconds\t         4.198 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6478436406,
+            "unit": "ns/op\t         4.308 DeleteSeconds\t         2.127 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
