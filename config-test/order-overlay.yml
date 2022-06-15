@@ -1,9 +1,0 @@
-#@ load("@ytt:overlay", "overlay")
-
-#@overlay/match by=overlay.subset({"kind": "Deployment", "metadata": {"name": "kapp-controller"}})
----
-metadata:
-  #@overlay/match missing_ok=True
-  annotations:
-    #@overlay/match missing_ok=True
-    kapp.k14s.io/change-rule: "upsert after upserting kapp-controller.carvel.dev/config"

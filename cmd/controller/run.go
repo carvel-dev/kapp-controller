@@ -77,7 +77,7 @@ func Run(opts Options, runLog logr.Logger) error {
 		return fmt.Errorf("Building kappctrl client: %s", err)
 	}
 
-	kcConfig, err := kcconfig.GetConfig(coreClient)
+	kcConfig, err := kcconfig.NewConfig(coreClient)
 	if err != nil {
 		return fmt.Errorf("getting kapp-controller config: %s", err)
 	}
@@ -132,7 +132,7 @@ func Run(opts Options, runLog logr.Logger) error {
 
 	{ // add controller for config
 		reconciler := kcconfig.NewReconciler(
-			coreClient, sidecarClient.OSConfig(), runLog.WithName("config"))
+			coreClient, kcConfig, sidecarClient.OSConfig(), runLog.WithName("config"))
 
 		ctrl, err := controller.New("config", mgr, controller.Options{
 			Reconciler:              reconciler,
