@@ -109,8 +109,3 @@ func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResu
 
 	return result
 }
-
-// auxiliary struct used for Chart.yaml unmarshalling
-type chartSpec struct {
-	APIVersion string
-}
