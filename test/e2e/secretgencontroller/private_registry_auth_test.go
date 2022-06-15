@@ -95,19 +95,93 @@ spec:
 	})
 }
 
-func Test_PackageInstall_CanAuthenticateToPrivateRepository_UsingPlaceholderSecret(t *testing.T) {
+func Test_PackageInstallAndRepo_CanAuthenticateToPrivateRepository_UsingPlaceholderSecret(t *testing.T) {
 	env := e2e.BuildEnv(t)
 	logger := e2e.Logger{}
 	kapp := e2e.Kapp{t, env.Namespace, logger}
 	kubectl := e2e.Kubectl{t, env.Namespace, logger}
-	name := "placeholder-private-auth"
 	sas := e2e.ServiceAccounts{env.Namespace}
 
 	// If this changes, the skip-tls-verify domain must be updated to match
+	name := "placeholder-private-auth"
 	registryNamespace := "registry"
 	registryName := "test-registry"
+	configName := "test-registry-ca-cert-config"
 
-	pkgiYaml := fmt.Sprintf(`---
+	secretYaml := fmt.Sprintf(`
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: regcred
+type: kubernetes.io/dockerconfigjson
+stringData:
+  .dockerconfigjson: |
+    {
+      "auths": {
+        "registry-svc.%s.svc.cluster.local:443": {
+          "username": "testuser",
+          "password": "testpassword",
+          "auth": ""
+        }
+      }
+    }
+---
+apiVersion: secretgen.carvel.dev/v1alpha1
+kind: SecretExport
+metadata:
+  name: regcred
+spec:
+  toNamespaces:
+  - %s
+`, registryNamespace, env.Namespace)
+
+	cleanUp := func() {
+		// Delete App with kubectl first since kapp
+		// deletes ServiceAccount before App
+		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, e2e.RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", name})
+		kapp.Run([]string{"delete", "-a", configName})
+		kapp.Run([]string{"delete", "-a", "secret-export"})
+		kapp.Run([]string{"delete", "-a", registryName, "-n", registryNamespace})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy controller config to skip registry TLS verify", func() {
+		config := `
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kapp-controller-config
+  namespace: kapp-controller
+stringData:
+  dangerousSkipTLSVerify: registry-svc.registry.svc.cluster.local
+`
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", configName},
+			e2e.RunOpts{StdinReader: strings.NewReader(config)})
+
+		// Since config propagation is async, just wait a little bit
+		time.Sleep(2 * time.Second)
+	})
+
+	logger.Section("deploy registry with self signed certs", func() {
+		kapp.Run([]string{
+			"deploy", "-a", registryName,
+			"-f", "../assets/registry/registry2.yml",
+			"-f", "../assets/registry/certs-for-skip-tls.yml",
+			"-f", "../assets/registry/htpasswd-auth",
+			"-f", "../assets/registry/registry-contents.yml",
+		})
+	})
+
+	logger.Section("create exported registry secret", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", "secret-export", "-f", "-"},
+			e2e.RunOpts{StdinReader: strings.NewReader(secretYaml)})
+	})
+
+	logger.Section("deploy PackageInstall that auths to registry", func() {
+		pkgiYaml := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
@@ -149,75 +223,16 @@ spec:
       constraints: 1.0.0
 `, env.Namespace, name, registryNamespace) + sas.ForNamespaceYAML()
 
-	secretYaml := fmt.Sprintf(`
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: regcred
-type: kubernetes.io/dockerconfigjson
-stringData:
-  .dockerconfigjson: |
-    {
-      "auths": {
-        "registry-svc.%s.svc.cluster.local:443": {
-          "username": "testuser",
-          "password": "testpassword",
-          "auth": ""
-        }
-      }
-    }
----
-apiVersion: secretgen.carvel.dev/v1alpha1
-kind: SecretExport
-metadata:
-  name: regcred
-spec:
-  toNamespaces:
-  - %s
-`, registryNamespace, env.Namespace)
-
-	cleanUp := func() {
-		// Delete App with kubectl first since kapp
-		// deletes ServiceAccount before App
-		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, e2e.RunOpts{AllowError: true})
-		kapp.Run([]string{"delete", "-a", name})
-		kapp.Run([]string{"delete", "-a", "secret-export"})
-		kapp.Run([]string{"delete", "-a", registryName, "-n", registryNamespace})
-	}
-	cleanUp()
-	defer cleanUp()
-
-	logger.Section("deploy registry with self signed certs", func() {
-		kapp.Run([]string{"deploy", "-f", "../assets/registry/registry2.yml", "-f", "../assets/registry/certs-for-skip-tls.yml", "-f", "../assets/registry/htpasswd-auth", "-f", "../assets/registry/registry-contents.yml", "-a", registryName})
-	})
-
-	logger.Section("Create Docker Registry Secret", func() {
-		kapp.RunWithOpts([]string{"deploy", "-a", "secret-export", "-f", "-"},
-			e2e.RunOpts{StdinReader: strings.NewReader(secretYaml)})
-	})
-
-	logger.Section("Create PackageInstall", func() {
-		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgiYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{
+			StdinReader: strings.NewReader(pkgiYaml),
+			OnErrKubectl: []string{"get", "app", "placeholder-private-auth", "-oyaml"},
+		})
 
 		kubectl.Run([]string{"get", "configmap", "e2e-test-map"})
 	})
-}
 
-func Test_PackageRepository_CanAuthenticateToPrivateRepository_UsingPlaceholderSecret(t *testing.T) {
-	env := e2e.BuildEnv(t)
-	logger := e2e.Logger{}
-	kapp := e2e.Kapp{t, env.Namespace, logger}
-	kubectl := e2e.Kubectl{t, env.Namespace, logger}
-	name := "repo-private-auth"
-	sas := e2e.ServiceAccounts{env.Namespace}
-
-	// If this changes, the skip-tls-verify domain must be updated to match
-	registryNamespace := "registry"
-	registryName := "test-registry"
-
-	pkgrYaml := fmt.Sprintf(`---
+	logger.Section("deploy PackageRepository that auths to registry", func() {
+		pkgrYaml := fmt.Sprintf(`---
 apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
@@ -229,57 +244,9 @@ spec:
       url: registry-svc.%[3]s.svc.cluster.local:443/secret-test/test-repo
 `, env.Namespace, name, registryNamespace) + sas.ForNamespaceYAML()
 
-	secretYaml := fmt.Sprintf(`
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: regcred
-type: kubernetes.io/dockerconfigjson
-stringData:
-  .dockerconfigjson: |
-    {
-      "auths": {
-        "registry-svc.%s.svc.cluster.local:443": {
-          "username": "testuser",
-          "password": "testpassword",
-          "auth": ""
-        }
-      }
-    }
----
-apiVersion: secretgen.carvel.dev/v1alpha1
-kind: SecretExport
-metadata:
-  name: regcred
-spec:
-  toNamespaces:
-  - %s
-`, registryNamespace, env.Namespace)
-
-	cleanUp := func() {
-		kapp.Run([]string{"delete", "-a", name})
-		kapp.Run([]string{"delete", "-a", "secret-export"})
-		kapp.Run([]string{"delete", "-a", registryName, "-n", registryNamespace})
-	}
-	cleanUp()
-	defer cleanUp()
-
-	logger.Section("Deploy registry with self signed certs", func() {
-		kapp.Run([]string{"deploy", "-f", "../assets/registry/registry2.yml", "-f", "../assets/registry/certs-for-skip-tls.yml", "-f", "../assets/registry/htpasswd-auth", "-f", "../assets/registry/registry-contents.yml", "-a", registryName})
-	})
-
-	logger.Section("Create Docker Registry Secret", func() {
-		kapp.RunWithOpts([]string{"deploy", "-a", "secret-export", "-f", "-"},
-			e2e.RunOpts{StdinReader: strings.NewReader(secretYaml)})
-	})
-
-	logger.Section("Create PackageRepository", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
 			e2e.RunOpts{StdinReader: strings.NewReader(pkgrYaml)})
-	})
 
-	logger.Section("Check Packages created from PackageRepository", func() {
 		kubectl.Run([]string{"get", "package", "pkg.test.carvel.dev.1.0.0"})
 	})
 }
