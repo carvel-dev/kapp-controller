@@ -17,6 +17,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	fakekc "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
@@ -32,11 +33,14 @@ import (
 
 type Reconciler struct {
 	depsFactory cmdcore.DepsFactory
+	cmdRunner   exec.CmdRunner
 	logger      logger.Logger
 }
 
-func NewReconciler(depsFactory cmdcore.DepsFactory, logger logger.Logger) *Reconciler {
-	return &Reconciler{depsFactory: depsFactory, logger: logger}
+func NewReconciler(depsFactory cmdcore.DepsFactory,
+	cmdRunner exec.CmdRunner, logger logger.Logger) *Reconciler {
+
+	return &Reconciler{depsFactory, cmdRunner, logger}
 }
 
 type ReconcileOpts struct {
@@ -205,7 +209,7 @@ func (o *Reconciler) newReconcilers(
 		AppMetrics:       appMetrics,
 		VendirConfigHook: vendirConfigHook,
 		KbldAllowBuild:   opts.KbldBuild, // only for CLI mode
-		CmdRunner:        NewDetailedCmdRunner(os.Stdout, opts.Debug),
+		CmdRunner:        o.cmdRunner,
 	}
 	appReconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 		appFactory, refTracker, updateStatusTracker)

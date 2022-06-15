@@ -6,6 +6,7 @@ package dev
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -64,7 +65,8 @@ func (o *DeployOptions) Run() error {
 
 	configs.ApplyNamespace(o.NamespaceFlags.Name)
 
-	reconciler := cmdlocal.NewReconciler(o.depsFactory, o.logger)
+	cmdRunner := cmdlocal.NewDetailedCmdRunner(os.Stdout, o.Debug)
+	reconciler := cmdlocal.NewReconciler(o.depsFactory, cmdRunner, o.logger)
 
 	reconcileErr := reconciler.Reconcile(configs, cmdlocal.ReconcileOpts{
 		Local:     o.Local,
