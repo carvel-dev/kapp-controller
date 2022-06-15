@@ -44,6 +44,7 @@ func NewStatusCmd(o *StatusOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 			},
 		}.Description("-i", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
+		Annotations:  map[string]string{cmdapp.TTYByDefaultKey: ""},
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

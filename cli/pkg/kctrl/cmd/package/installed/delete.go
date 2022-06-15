@@ -58,6 +58,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 				[]string{"package", "installed", "delete", "-i", "cert-man"}},
 		}.Description("-i", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
+		Annotations:  map[string]string{cmdapp.TTYByDefaultKey: ""},
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
 

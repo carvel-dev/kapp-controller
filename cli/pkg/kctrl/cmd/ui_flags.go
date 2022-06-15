@@ -19,8 +19,6 @@ type UIFlags struct {
 }
 
 func (f *UIFlags) Set(cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opts cmdcore.PackageCommandTreeOpts) {
-	// Default tty to true: https://github.com/vmware-tanzu/carvel-kapp/issues/28
-	cmd.PersistentFlags().BoolVar(&f.TTY, "tty", true, "Force TTY-like output")
 	if opts.Color {
 		cmd.PersistentFlags().BoolVar(&f.Color, "color", true, "Set color output")
 	}
@@ -32,8 +30,6 @@ func (f *UIFlags) Set(cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opt
 }
 
 func (f *UIFlags) ConfigureUI(ui *ui.ConfUI) {
-	ui.EnableTTY(f.TTY)
-
 	if f.Color {
 		ui.EnableColor()
 	}

@@ -73,9 +73,9 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 
 	pkgOpts := cmdcore.PackageCommandTreeOpts{BinaryName: "kctrl", PositionalArgs: false, Color: true, JSON: true}
 
-	SetGlobalFlags(o, cmd, flagsFactory, pkgOpts)
+	setGlobalFlags(o, cmd, flagsFactory, pkgOpts)
 
-	ConfigurePathResolvers(o, cmd, flagsFactory)
+	configurePathResolvers(o, cmd, flagsFactory)
 
 	cmd.AddCommand(NewVersionCmd(NewVersionOptions(o.ui, o.depsFactory), flagsFactory))
 
@@ -94,27 +94,28 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 
 	cmd.AddCommand(appCmd)
 
-	ConfigureGlobalFlags(o, cmd, flagsFactory, pkgOpts.PositionalArgs)
+	configureGlobalFlags(o, cmd, flagsFactory, pkgOpts.PositionalArgs)
 
 	cmd.AddCommand(NewCmdCompletion())
 
+	configureTTY(o, cmd)
 	return cmd
 }
 
-func SetGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opts cmdcore.PackageCommandTreeOpts) {
+func setGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opts cmdcore.PackageCommandTreeOpts) {
 	o.UIFlags.Set(cmd, flagsFactory, opts)
 	o.LoggerFlags.Set(cmd, flagsFactory)
 	o.KubeAPIFlags.Set(cmd, flagsFactory)
 	o.KubeconfigFlags.Set(cmd, flagsFactory, opts)
 }
 
-func ConfigurePathResolvers(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
+func configurePathResolvers(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
 	o.configFactory.ConfigurePathResolver(o.KubeconfigFlags.Path.Value)
 	o.configFactory.ConfigureContextResolver(o.KubeconfigFlags.Context.Value)
 	o.configFactory.ConfigureYAMLResolver(o.KubeconfigFlags.YAML.Value)
 }
 
-func ConfigureGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, positionalNameArg bool) {
+func configureGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, positionalNameArg bool) {
 	finishDebugLog := func(cmd *cobra.Command) {
 		origRunE := cmd.RunE
 		if origRunE != nil {
@@ -141,6 +142,20 @@ func ConfigureGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdc
 		cobrautil.VisitCommands(cmd, finishDebugLog, cobrautil.ReconfigureCmdWithSubcmd,
 			cobrautil.ReconfigureLeafCmds(cobrautil.DisallowExtraArgs), configureGlobal, cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd))
 	}
+}
+
+func configureTTY(o *KctrlOptions, cmd *cobra.Command) {
+	configureTTYFlag := func(cmd *cobra.Command) {
+		var forceTTY bool
+
+		_, defaultTTY := cmd.Annotations[app.TTYByDefaultKey]
+		cmd.Flags().BoolVar(&forceTTY, "tty", defaultTTY, "Force TTY-like output")
+		cobrautil.VisitCommands(cmd, cobrautil.WrapRunEForCmd(func(*cobra.Command, []string) error {
+			o.ui.EnableTTY(forceTTY)
+			return nil
+		}))
+	}
+	cobrautil.VisitCommands(cmd, cobrautil.ReconfigureLeafCmds(configureTTYFlag))
 }
 
 func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opts cmdcore.PackageCommandTreeOpts) {
@@ -172,9 +187,10 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 }
 
 func AttachGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opts cmdcore.PackageCommandTreeOpts) {
-	SetGlobalFlags(o, cmd, flagsFactory, opts)
-	ConfigurePathResolvers(o, cmd, flagsFactory)
-	ConfigureGlobalFlags(o, cmd, flagsFactory, opts.PositionalArgs)
+	setGlobalFlags(o, cmd, flagsFactory, opts)
+	configurePathResolvers(o, cmd, flagsFactory)
+	configureGlobalFlags(o, cmd, flagsFactory, opts.PositionalArgs)
+	configureTTY(o, cmd)
 }
 
 func AttachKctrlPackageCommandTree(cmd *cobra.Command, confUI *ui.ConfUI, opts cmdcore.PackageCommandTreeOpts) {
