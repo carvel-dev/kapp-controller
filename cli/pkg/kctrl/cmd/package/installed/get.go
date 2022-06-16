@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -113,6 +114,9 @@ func (o *GetOptions) Run(args []string) error {
 	errorMessageHeader := uitable.NewHeader("Useful Error Message")
 	errorMessageHeader.Hidden = len(pkgi.Status.UsefulErrorMessage) == 0
 
+	yttMessageHeader := uitable.NewHeader("Overlay secrets")
+	yttMessageHeader.Hidden = !hasYttOverlays(pkgi)
+
 	table := uitable.Table{
 		Transpose: true,
 
@@ -122,6 +126,7 @@ func (o *GetOptions) Run(args []string) error {
 			uitable.NewHeader("Package name"),
 			uitable.NewHeader("Package version"),
 			uitable.NewHeader("Status"),
+			yttMessageHeader,
 			uitable.NewHeader("Conditions"),
 			errorMessageHeader,
 		},
@@ -132,6 +137,7 @@ func (o *GetOptions) Run(args []string) error {
 			uitable.NewValueString(pkgi.Spec.PackageRef.RefName),
 			uitable.NewValueString(pkgi.Status.Version),
 			uitable.ValueFmt{V: uitable.NewValueString(status), Error: isFailing},
+			uitable.NewValueInterface(o.overlayList(*pkgi)),
 			uitable.NewValueInterface(pkgi.Status.Conditions),
 			uitable.NewValueString(color.RedString(pkgi.Status.UsefulErrorMessage)),
 		}},
@@ -214,7 +220,18 @@ func (o *GetOptions) showValuesData(pkgi *kcpkgv1alpha1.PackageInstall) error {
 	return nil
 }
 
+func (o *GetOptions) overlayList(pkgi kcpkgv1alpha1.PackageInstall) []string {
+	secretList := []string{}
+	for annotation := range pkgi.Annotations {
+		if strings.HasPrefix(annotation, yttOverlayPrefix) {
+			secretList = append(secretList, pkgi.Annotations[annotation])
+		}
+	}
+	return secretList
+}
+
 // Returns pkgi status string and a bool indicating if it is a failure
+// TODO: Add Paused/Cancelled statuses at a warn level
 func packageInstallStatus(pkgi *kcpkgv1alpha1.PackageInstall) (string, bool) {
 	if pkgi.Spec.Canceled {
 		return "Canceled", true
