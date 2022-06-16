@@ -11,6 +11,6 @@ type YttOverlayFlags struct {
 }
 
 func (s *YttOverlayFlags) Set(cmd *cobra.Command) {
-	cmd.Flags().StringSliceVar(&s.yttOverlayFiles, "ytt-overlay", nil, "A file or folder with ytt overlays to be applied to package install")
+	cmd.Flags().StringSliceVar(&s.yttOverlayFiles, "ytt-overlay-file", nil, "A file or folder with ytt overlays to be applied to package install")
 	cmd.Flags().BoolVar(&s.yttOverlays, "ytt-overlays", true, "Add or keep ytt overlays")
 }
