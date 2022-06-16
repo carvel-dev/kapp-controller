@@ -275,7 +275,9 @@ func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient kcc
 		if err != nil {
 			return err
 		}
-		overlaySecretName = overlaysSecret.Name
+		if overlaysSecret != nil {
+			overlaySecretName = overlaysSecret.Name
+		}
 	}
 
 	o.statusUI.PrintMessagef("Creating package install resource")
@@ -301,8 +303,9 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 		return fmt.Errorf("Expected package install to be non-empty")
 	}
 
-	if len(o.version) == 0 && len(o.valuesFile) == 0 && o.values {
-		return fmt.Errorf("Expected either package version or values file to update the package")
+	if len(o.version) == 0 && len(o.valuesFile) == 0 && o.values &&
+		o.YttOverlayFlags.yttOverlays && len(o.YttOverlayFlags.yttOverlayFiles) == 0 {
+		return fmt.Errorf("Expected either package version ,values file or overlays to update the package")
 	}
 
 	err := o.SecureNamespaceFlags.CheckForDisallowedSharedNamespaces(o.NamespaceFlags.Name)
@@ -405,6 +408,7 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 			return err
 		}
 		o.removeYttOverlaysAnnotation(updatedPkgInstall)
+		changed = true
 	}
 
 	if isSecretCreated || changed {
@@ -673,7 +677,9 @@ func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secr
 
 	// Add reference to ytt overlaty annotation if overlay secret has been created
 	if overlaysSecretName != "" {
-		packageInstall.Annotations[yttOverlayAnnotation] = overlaysSecretName
+		packageInstall.Annotations = map[string]string{
+			yttOverlayAnnotation: overlaysSecretName,
+		}
 	}
 
 	o.addCreatedResourceAnnotations(&packageInstall.ObjectMeta, serviceAccountCreated, secretCreated, false)
@@ -1029,7 +1035,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateYttOverlaySecrets(pkgi *kcpkgv1alp
 	if pkgi != nil {
 		for annotation := range pkgi.Annotations {
 			// Ensure that kctrl does not clobber existing overlays
-			if strings.HasPrefix(annotation, yttOverlayPrefix) && strings.TrimPrefix(annotation, yttOverlayPrefix) != yttOverlaySuffix {
+			if strings.HasPrefix(annotation, yttOverlayPrefix) && annotation != yttOverlayAnnotation {
 				return nil, fmt.Errorf("Package install has manually supplied overlays")
 			}
 		}
@@ -1043,7 +1049,7 @@ func (o *CreateOrUpdateOptions) createOrUpdateYttOverlaySecrets(pkgi *kcpkgv1alp
 	var createdOrUpdatedSecret *corev1.Secret
 	createdOrUpdatedSecret, err = client.CoreV1().Secrets(o.NamespaceFlags.Name).Create(context.Background(), secret, metav1.CreateOptions{})
 	if err != nil {
-		if !errors.IsNotFound(err) {
+		if !errors.IsAlreadyExists(err) {
 			o.statusUI.PrintMessagef("Updating existing overlay secret '%s' in namespace '%s'", secret.Name, secret.Name)
 			return nil, fmt.Errorf("Creating overlays secret: %s", err.Error())
 		}
