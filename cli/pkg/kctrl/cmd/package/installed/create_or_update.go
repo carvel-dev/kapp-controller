@@ -33,7 +33,7 @@ import (
 
 const (
 	valuesFileKey        = "values.yaml"
-	yttOverlayAnnotation = "ext.packaging.carvel.dev/ytt-paths-from-secret-name.kctrl"
+	yttOverlayAnnotation = "ext.packaging.carvel.dev/ytt-paths-from-secret-name.kctrl.carvel.dev"
 )
 
 type CreateOrUpdateOptions struct {
@@ -1018,7 +1018,6 @@ func (o *CreateOrUpdateOptions) showVersions(client pkgclient.Interface) error {
 
 const (
 	yttOverlayPrefix = "ext.packaging.carvel.dev/ytt-paths-from-secret-name"
-	yttOverlaySuffix = "kctrl.carvel.dev"
 )
 
 func (o *CreateOrUpdateOptions) createOrUpdateYttOverlaySecrets(pkgi *kcpkgv1alpha1.PackageInstall, client kubernetes.Interface) (*corev1.Secret, error) {
