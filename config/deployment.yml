@@ -60,7 +60,7 @@ spec:
             - all
       - name: kapp-controller-sidecarexec
         image: kapp-controller
-        command: ["/kapp-controller-sidecarexec"]
+        args: ["--sidecarexec"]
         resources:
           requests:
             cpu: 120m
