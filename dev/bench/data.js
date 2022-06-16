@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655303424917,
+  "lastUpdate": 1655398953478,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -2595,6 +2595,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6478436406,
             "unit": "ns/op\t         4.308 DeleteSeconds\t         2.127 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cppforlife@gmail.com",
+            "name": "Dmitriy Kalinin",
+            "username": "cppforlife"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "08910dda8875ec83fe81b44706b21f50cb44a955",
+          "message": "avoid having separate binary just for sidecarexec (#747)\n\nCo-authored-by: Dmitriy Kalinin <dkalinin@vmware.com>",
+          "timestamp": "2022-06-16T12:51:32-04:00",
+          "tree_id": "06d18a2a903b354c4a1bfad2c9ec58b6e6276ebe",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/08910dda8875ec83fe81b44706b21f50cb44a955"
+        },
+        "date": 1655398951379,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36766415402,
+            "unit": "ns/op\t        19.14 DeleteSeconds\t        17.57 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9626711041,
+            "unit": "ns/op\t         5.359 DeleteSeconds\t         4.223 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6578137485,
+            "unit": "ns/op\t         4.369 DeleteSeconds\t         2.165 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
