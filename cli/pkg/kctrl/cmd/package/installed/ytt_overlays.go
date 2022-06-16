@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	corev1 "k8s.io/api/core/v1"
@@ -56,7 +57,15 @@ func (o *YttOverlays) OverlaysSecret() (*corev1.Secret, error) {
 						if err != nil {
 							return fmt.Errorf("Reading file: %s", err.Error())
 						}
-						filePathsMap[fmt.Sprintf("%04d-%s", i, path)] = bytes
+						key := fmt.Sprintf("%04d-%s", i, path)
+						key = strings.ReplaceAll(key, "/", "_")
+
+						// Handle windows file paths
+						key = strings.ReplaceAll(key, ":\\", "_")
+						key = strings.ReplaceAll(key, "\\", "_")
+						key = strings.ReplaceAll(key, "$", ".")
+
+						filePathsMap[key] = bytes
 					}
 				}
 				return nil
@@ -72,7 +81,7 @@ func (o *YttOverlays) OverlaysSecret() (*corev1.Secret, error) {
 					if err != nil {
 						return nil, fmt.Errorf("Reading file: %s", err.Error())
 					}
-					filePathsMap[fmt.Sprintf("%04d-%s", i, file)] = bytes
+					filePathsMap[fmt.Sprintf("%04d-%s", i, filepath.Base(file))] = bytes
 				}
 			}
 		}
