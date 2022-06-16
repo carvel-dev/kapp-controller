@@ -355,7 +355,7 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 	// Or when existing ytt overlay has to be updated
 	reconciliationPaused := false
 	if (o.valuesFile != "" && len(pkgInstall.Spec.Values) > 0) ||
-		(len(o.YttOverlayFlags.yttOverlayFiles) > 0 && o.hasYttOverlays(pkgInstall)) {
+		(len(o.YttOverlayFlags.yttOverlayFiles) > 0 && hasYttOverlays(pkgInstall)) {
 		updatedPkgInstall, err = o.pauseReconciliation(kcClient)
 		if err != nil {
 			return err
@@ -1063,15 +1063,6 @@ func (o *CreateOrUpdateOptions) createOrUpdateYttOverlaySecrets(pkgi *kcpkgv1alp
 	return createdOrUpdatedSecret, nil
 }
 
-func (o *CreateOrUpdateOptions) hasYttOverlays(pkgi *kcpkgv1alpha1.PackageInstall) bool {
-	for annotation := range pkgi.Annotations {
-		if strings.HasPrefix(annotation, yttOverlayPrefix) {
-			return true
-		}
-	}
-	return false
-}
-
 func (o *CreateOrUpdateOptions) dropYttOverlaySecrets(pkgi *kcpkgv1alpha1.PackageInstall, client kubernetes.Interface) error {
 	o.statusUI.PrintMessage("Dropping overlay secrets")
 	overlaySecretName, hasOverlay := pkgi.Annotations[yttOverlayAnnotation]
@@ -1112,4 +1103,13 @@ func getPackageInstallDescription(name string, namespace string) string {
 		description += " cluster"
 	}
 	return description
+}
+
+func hasYttOverlays(pkgi *kcpkgv1alpha1.PackageInstall) bool {
+	for annotation := range pkgi.Annotations {
+		if strings.HasPrefix(annotation, yttOverlayPrefix) {
+			return true
+		}
+	}
+	return false
 }
