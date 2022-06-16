@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655398953478,
+  "lastUpdate": 1655401527200,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -2637,6 +2637,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6578137485,
             "unit": "ns/op\t         4.369 DeleteSeconds\t         2.165 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86852107+joe-kimmel-vmw@users.noreply.github.com",
+            "name": "Joe Kimmel",
+            "username": "joe-kimmel-vmw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c414ff7f75791e69845688d227dfb844ddfb703a",
+          "message": "PackageInstall: check if semver constraints are nil so we error instead of panic (#745)",
+          "timestamp": "2022-06-16T13:35:40-04:00",
+          "tree_id": "b2867a53d0d428bf231f20c52436ca33f7823da7",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/c414ff7f75791e69845688d227dfb844ddfb703a"
+        },
+        "date": 1655401525836,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36617763172,
+            "unit": "ns/op\t        19.04 DeleteSeconds\t        17.53 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9559536053,
+            "unit": "ns/op\t         5.317 DeleteSeconds\t         4.200 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6462957516,
+            "unit": "ns/op\t         4.277 DeleteSeconds\t         2.137 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
