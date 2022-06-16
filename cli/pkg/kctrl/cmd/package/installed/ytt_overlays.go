@@ -40,6 +40,16 @@ func (o *YttOverlays) OverlaysSecret() (*corev1.Secret, error) {
 
 	filePathsMap := map[string][]byte{}
 	for i, file := range o.files {
+		// Omit stdin input
+		if file == "-" {
+			bytes, err := cmdcore.NewInputFile(file).Bytes()
+			if err != nil {
+				return nil, fmt.Errorf("Reading file: %s", err.Error())
+			}
+			filePathsMap[fmt.Sprintf("%04d-stdin.yaml", i)] = bytes
+			continue
+		}
+
 		fileInfo, err := os.Stat(file)
 		if err != nil {
 			return nil, fmt.Errorf("Checking file '%s'", file)
@@ -53,7 +63,7 @@ func (o *YttOverlays) OverlaysSecret() (*corev1.Secret, error) {
 				ext := filepath.Ext(path)
 				for _, allowedExt := range fileResourcesAllowedExts {
 					if allowedExt == ext {
-						bytes, err := cmdcore.NewLocalFileSource(path).Bytes()
+						bytes, err := cmdcore.NewInputFile(path).Bytes()
 						if err != nil {
 							return fmt.Errorf("Reading file: %s", err.Error())
 						}
@@ -77,7 +87,7 @@ func (o *YttOverlays) OverlaysSecret() (*corev1.Secret, error) {
 			for _, allowedExt := range fileResourcesAllowedExts {
 				ext := filepath.Ext(file)
 				if allowedExt == ext {
-					bytes, err := cmdcore.NewLocalFileSource(file).Bytes()
+					bytes, err := cmdcore.NewInputFile(file).Bytes()
 					if err != nil {
 						return nil, fmt.Errorf("Reading file: %s", err.Error())
 					}
