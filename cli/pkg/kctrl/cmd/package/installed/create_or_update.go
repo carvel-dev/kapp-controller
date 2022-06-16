@@ -396,7 +396,8 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		if err != nil {
 			return err
 		}
-		if overlaysSecret != nil {
+		_, found := updatedPkgInstall.Annotations[yttOverlayAnnotation]
+		if !found && overlaysSecret != nil {
 			updatedPkgInstall.Annotations[yttOverlayAnnotation] = overlaysSecret.Name
 			changed = true
 		}
