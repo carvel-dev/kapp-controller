@@ -14,7 +14,6 @@ RUN go run ./hack/dependencies.go install -d out --arch ${TARGETARCH} --os ${TAR
 COPY . .
 # helpful ldflags reference: https://www.digitalocean.com/community/tutorials/using-ldflags-to-set-version-information-for-go-applications
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOSARCH=${TARGETARCH} go build -mod=vendor -ldflags="-X 'main.Version=$KCTRL_VER'" -trimpath -o out/kapp-controller ./cmd/controller
-RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOSARCH=${TARGETARCH} go build -mod=vendor -ldflags="-X 'main.Version=$KCTRL_VER'" -trimpath -o out/kapp-controller-sidecarexec ./cmd/sidecarexec
 
 # --- run image ---
 FROM photon:4.0
@@ -28,11 +27,10 @@ RUN echo "kapp-controller:x:1000:0:/home/kapp-controller:/usr/sbin/nologin" > /e
 # Give the root group write access to the openssh's root bundle directory
 # so we can rename the certs file with our dynamic config, and append custom roots at runtime
 RUN chmod g+w /etc/pki/tls/certs
-
-COPY --from=deps /workspace/out/* ./
-
 # Copy the ca-bundle so we have an original
 RUN cp /etc/pki/tls/certs/ca-bundle.crt /etc/pki/tls/certs/ca-bundle.crt.orig
+
+COPY --from=deps /workspace/out/* ./
 
 # Run as kapp-controller by default, will be overridden to a random uid on OpenShift
 USER 1000
