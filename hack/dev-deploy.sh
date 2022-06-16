@@ -23,7 +23,7 @@ COPY --from=build / /
 COPY controller /kapp-controller
 COPY sidecarexec /kapp-controller-sidecarexec
 USER 1000
-ENV PATH="/:${PATH}"
+ENV PATH="/:\${PATH}"
 ENTRYPOINT ["/kapp-controller"]
 EOF
 cat << EOF > tmp/build/overlay.yml
