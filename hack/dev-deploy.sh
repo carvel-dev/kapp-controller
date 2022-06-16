@@ -17,9 +17,14 @@ fi
 echo "got kc latest image: $kc_latest_image"
 
 cat << EOF > tmp/build/Dockerfile
-FROM ${kc_latest_image}
+FROM ${kc_latest_image} AS build
+FROM scratch
+COPY --from=build / /
 COPY controller /kapp-controller
 COPY sidecarexec /kapp-controller-sidecarexec
+USER 1000
+ENV PATH="/:${PATH}"
+ENTRYPOINT ["/kapp-controller"]
 EOF
 cat << EOF > tmp/build/overlay.yml
 #@ load("@ytt:overlay", "overlay")
