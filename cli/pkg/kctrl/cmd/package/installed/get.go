@@ -231,7 +231,7 @@ func (o *GetOptions) overlayList(pkgi kcpkgv1alpha1.PackageInstall) []string {
 }
 
 // Returns pkgi status string and a bool indicating if it is a failure
-// TODO: Add Paused/Cancelled statuses at a warn level
+// TODO: Add Paused/Canceled statuses at a warn level
 func packageInstallStatus(pkgi *kcpkgv1alpha1.PackageInstall) (string, bool) {
 	if pkgi.Spec.Canceled {
 		return "Canceled", true
