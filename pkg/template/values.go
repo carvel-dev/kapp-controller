@@ -25,8 +25,8 @@ import (
 type Values struct {
 	ValuesFrom []v1alpha1.AppTemplateValuesSource
 
-	genericOpts GenericOpts
-	coreClient  kubernetes.Interface
+	appContext AppContext
+	coreClient kubernetes.Interface
 }
 
 func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
@@ -91,7 +91,7 @@ func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
 func (t Values) writeFromSecret(dstPath string,
 	secretRef v1alpha1.AppTemplateValuesSourceRef) ([]string, error) {
 
-	secret, err := t.coreClient.CoreV1().Secrets(t.genericOpts.Namespace).Get(
+	secret, err := t.coreClient.CoreV1().Secrets(t.appContext.Namespace).Get(
 		context.Background(), secretRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -155,7 +155,7 @@ func (t Values) extractFieldPathAsKeyValue(name string, fieldPath string) ([]byt
 		return nil, err
 	}
 
-	results, err := path.FindResults(t.genericOpts.Metadata)
+	results, err := path.FindResults(t.appContext.Metadata)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func (t Values) keyValues(key string, m map[string]string) ([]byte, error) {
 func (t Values) writeFromConfigMap(dstPath string,
 	configMapRef v1alpha1.AppTemplateValuesSourceRef) ([]string, error) {
 
-	configMap, err := t.coreClient.CoreV1().ConfigMaps(t.genericOpts.Namespace).Get(
+	configMap, err := t.coreClient.CoreV1().ConfigMaps(t.appContext.Namespace).Get(
 		context.Background(), configMapRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
