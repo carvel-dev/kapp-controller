@@ -21,7 +21,6 @@ FROM ${kc_latest_image} AS build
 FROM scratch
 COPY --from=build / /
 COPY controller /kapp-controller
-COPY sidecarexec /kapp-controller-sidecarexec
 USER 1000
 ENV PATH="/:\${PATH}"
 ENTRYPOINT ["/kapp-controller"]
