@@ -66,6 +66,33 @@ func GeneratePackageBuild(pkgBuildFilePath string) (PackageBuild, error) {
 		if err != nil {
 			return PackageBuild{}, err
 		}
+
+		//In case user has manually removed the pkg section from the package-build
+		if pkgBuild.Spec.Pkg == nil {
+			defaultPkg, err := NewDefaultPackage()
+			if err != nil {
+				return PackageBuild{}, err
+			}
+			pkgBuild.Spec.Pkg = defaultPkg
+		}
+
+		//In case user has manually removed the pkg-metadata section from the package-build
+		if pkgBuild.Spec.PkgMetadata == nil {
+			defaultPkgMetadata, err := NewDefaultPackageMetadata()
+			if err != nil {
+				return PackageBuild{}, err
+			}
+			pkgBuild.Spec.PkgMetadata = defaultPkgMetadata
+		}
+
+		//In case user has manually removed the vendir config section from the package-build
+		if pkgBuild.Spec.Vendir == nil {
+			defaultVendirConfig, err := NewDefaultVendir()
+			if err != nil {
+				return PackageBuild{}, err
+			}
+			pkgBuild.Spec.Vendir = defaultVendirConfig
+		}
 	} else {
 		pkgBuild, err = NewDefaultPackageBuild()
 		if err != nil {

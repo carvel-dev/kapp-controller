@@ -28,6 +28,9 @@ func (fetch FetchStep) PreInteract() error {
 }
 
 func (fetch *FetchStep) Interact() error {
+	if fetch.pkgBuild.Spec.Pkg.Spec.Template.Spec == nil {
+		fetch.pkgBuild.Spec.Pkg.Spec.Template.Spec = &v1alpha1.AppSpec{}
+	}
 	pkgFetchSection := fetch.pkgBuild.Spec.Pkg.Spec.Template.Spec.Fetch
 	fetch.pkgAuthoringUI.PrintHeaderText("\nPackage Content(Step 2/3)")
 

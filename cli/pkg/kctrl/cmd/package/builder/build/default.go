@@ -1,6 +1,8 @@
 package build
 
 import (
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	"sigs.k8s.io/yaml"
 )
 
@@ -60,4 +62,28 @@ func NewDefaultPackageBuild() (PackageBuild, error) {
 		return PackageBuild{}, err
 	}
 	return packageBuild, nil
+}
+
+func NewDefaultPackage() (*v1alpha1.Package, error) {
+	pkgBuild, err := NewDefaultPackageBuild()
+	if err != nil {
+		return &v1alpha1.Package{}, err
+	}
+	return pkgBuild.Spec.Pkg, nil
+}
+
+func NewDefaultPackageMetadata() (*v1alpha1.PackageMetadata, error) {
+	pkgBuild, err := NewDefaultPackageBuild()
+	if err != nil {
+		return &v1alpha1.PackageMetadata{}, err
+	}
+	return pkgBuild.Spec.PkgMetadata, nil
+}
+
+func NewDefaultVendir() (*vendirconf.Config, error) {
+	pkgBuild, err := NewDefaultPackageBuild()
+	if err != nil {
+		return &vendirconf.Config{}, err
+	}
+	return pkgBuild.Spec.Vendir, nil
 }

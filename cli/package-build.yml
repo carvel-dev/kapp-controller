@@ -1,0 +1,40 @@
+apiVersion: kctrl.carvel.dev/v1alpha1
+creationTimestamp: null
+kind: PackageBuild
+spec:
+  imgpkg: {}
+  package:
+    apiVersion: data.packaging.carvel.dev/v1alpha1
+    kind: Package
+    metadata:
+      creationTimestamp: null
+      name: rohit.corp.com.1.0.0
+      namespace: default
+    spec:
+      licenses:
+      - Apache 2.0
+      refName: rohit.corp.com
+      releaseNotes: Initial release
+      releasedAt: null
+      template:
+        spec: null
+      valuesSchema:
+        openAPIv3: null
+      version: 1.0.0
+  packageMetadata:
+    apiVersion: data.packaging.carvel.dev/v1alpha1
+    kind: PackageMetadata
+    metadata:
+      creationTimestamp: null
+      name: rohit.corp.com
+      namespace: default
+    spec:
+      categories:
+      - demo
+      displayName: rohit
+      longDescription: samplepackage.corp.com
+      shortDescription: samplepackage.corp.com
+  vendir:
+    apiVersion: vendir.k14s.io/v1alpha1
+    kind: Config
+    minimumRequiredVersion: 0.12.0
