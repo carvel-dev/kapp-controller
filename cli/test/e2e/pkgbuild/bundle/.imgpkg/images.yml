@@ -1,0 +1,11 @@
+---
+apiVersion: imgpkg.carvel.dev/v1alpha1
+images:
+- annotations:
+    kbld.carvel.dev/id: quay.io/mongodb/mongodb-enterprise-operator:1.16.0
+    kbld.carvel.dev/origins: |
+      - resolved:
+          tag: 1.16.0
+          url: quay.io/mongodb/mongodb-enterprise-operator:1.16.0
+  image: quay.io/mongodb/mongodb-enterprise-operator@sha256:78f25ea794533bf34af067884d831b0b64df7083e494de243395a69f3f7ea394
+kind: ImagesLock

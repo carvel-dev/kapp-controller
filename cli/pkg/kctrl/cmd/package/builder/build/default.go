@@ -21,7 +21,7 @@ spec:
       licenses: 
         - "Apache 2.0"
       refName: samplepackage.corp.com
-      releaseNotes: "Initial release of the simple app package\n"
+      releaseNotes: "Initial release"
       template: 
         spec: 
           deploy: 
@@ -44,9 +44,9 @@ spec:
     spec: 
       categories: 
         - demo
-      displayName: "Simple App"
-      longDescription: "Simple app consisting of a k8s deployment and service"
-      shortDescription: "Simple app for demoing"
+      displayName: ""
+      longDescription: ""
+      shortDescription: ""
   vendir: 
     apiVersion: vendir.k14s.io/v1alpha1
     kind: Config

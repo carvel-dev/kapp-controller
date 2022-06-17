@@ -5,14 +5,18 @@ package e2e
 
 import (
 	"fmt"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strings"
 	"testing"
+	"time"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPackageAvailable(t *testing.T) {
+	timestamp := v1.NewTime(time.Now().UTC()).Rfc3339Copy()
+	fmt.Println(timestamp)
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}

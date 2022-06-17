@@ -1,0 +1,12 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  creationTimestamp: "2022-06-17T06:31:31Z"
+  name: afc.def.ghi
+  namespace: default
+spec:
+  categories:
+  - demo
+  displayName: afc
+  longDescription: Simple app consisting of a k8s deployment and service
+  shortDescription: Simple app for demoing

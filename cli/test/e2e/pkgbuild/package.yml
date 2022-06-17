@@ -1,0 +1,33 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  creationTimestamp: "2022-06-17T06:31:31Z"
+  name: afc.def.ghi.2.0.0
+  namespace: default
+spec:
+  licenses:
+  - Apache 2.0
+  refName: afc.def.ghi
+  releaseNotes: |
+    Initial release of the simple app package
+  releasedAt: "2022-06-17T06:31:31Z"
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - imgpkgBundle:
+          image: index.docker.io/rohitagg2020/mongodb-bundle@sha256:21eb6ecef9c7dec256e8722a1da029915e150478101fbb3e0fed58c92fb68e73
+      template:
+      - helmTemplate:
+          path: config/upstream
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/images.yml
+      - ytt:
+          paths:
+          - '-'
+  valuesSchema:
+    openAPIv3: null
+  version: 2.0.0

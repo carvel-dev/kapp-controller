@@ -163,6 +163,17 @@ func (createStep CreateStep) configureFullyQualifiedName() error {
 
 	createStep.pkgBuild.Spec.PkgMetadata.Name = fqName
 	createStep.pkgBuild.Spec.PkgMetadata.Spec.DisplayName = strings.Split(fqName, ".")[0]
+
+	shortDesc := createStep.pkgBuild.Spec.PkgMetadata.Spec.ShortDescription
+	if len(shortDesc) == 0 {
+		createStep.pkgBuild.Spec.PkgMetadata.Spec.ShortDescription = fqName
+	}
+
+	longDesc := createStep.pkgBuild.Spec.PkgMetadata.Spec.LongDescription
+	if len(longDesc) == 0 {
+		createStep.pkgBuild.Spec.PkgMetadata.Spec.LongDescription = fqName
+	}
+
 	createStep.pkgBuild.Spec.Pkg.Spec.RefName = fqName
 	createStep.pkgBuild.WriteToFile()
 	return nil
@@ -234,6 +245,8 @@ func (createStep *CreateStep) configureValuesSchema() error {
 }
 
 func (createStep CreateStep) PostInteract() error {
+	createStep.updateTimeStamp()
+
 	createStep.pkgAuthoringUI.PrintInformationalText("\nGreat, we have all the data needed to create the package.yml and package-metadata.yml.")
 	err := createStep.printPackageCR(createStep.pkgBuild.GetPackage())
 	if err != nil {
@@ -249,11 +262,21 @@ func (createStep CreateStep) PostInteract() error {
 	return nil
 }
 
+func (createStep CreateStep) updateTimeStamp() error {
+	timestamp := v1.NewTime(time.Now().UTC()).Rfc3339Copy()
+	createStep.pkgBuild.Spec.Pkg.ObjectMeta.CreationTimestamp = timestamp
+	createStep.pkgBuild.Spec.Pkg.Spec.ReleasedAt = timestamp
+	createStep.pkgBuild.Spec.PkgMetadata.ObjectMeta.CreationTimestamp = timestamp
+	err := createStep.pkgBuild.WriteToFile()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (createStep CreateStep) printPackageCR(pkg v1alpha1.Package) error {
 	createStep.pkgAuthoringUI.PrintActionableText("Printing package.yml")
 	createStep.pkgAuthoringUI.PrintCmdExecutionText("cat package.yml")
-	pkg.ObjectMeta.CreationTimestamp = v1.NewTime(time.Now())
-	pkg.Spec.ReleasedAt = v1.NewTime(time.Now())
 	packageData, err := yaml.Marshal(&pkg)
 	if err != nil {
 		return err
@@ -285,7 +308,7 @@ func (createStep CreateStep) printFile(filePath string) error {
 func (createStep CreateStep) printPackageMetadataCR(pkgMetadata v1alpha1.PackageMetadata) error {
 	createStep.pkgAuthoringUI.PrintActionableText("Printing packageMetadata.yml")
 	createStep.pkgAuthoringUI.PrintCmdExecutionText("cat packageMetadata.yml")
-	pkgMetadata.ObjectMeta.CreationTimestamp = v1.NewTime(time.Now())
+
 	packageMetadataData, err := yaml.Marshal(&pkgMetadata)
 	if err != nil {
 		return err
