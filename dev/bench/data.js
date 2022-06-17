@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655401527200,
+  "lastUpdate": 1655491809937,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -2679,6 +2679,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6462957516,
             "unit": "ns/op\t         4.277 DeleteSeconds\t         2.137 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cppforlife@gmail.com",
+            "name": "Dmitriy Kalinin",
+            "username": "cppforlife"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "eea919aaaf205916548039168bd284e402e82087",
+          "message": "support certificate reloading even when /etc is on a different mount from /tmp (#751)\n\n* improve TestConfig_TrustCACerts as it may flake when service->deployment is racing to completion\r\n\r\n* create tmp certs bundle in certs directory\r\n\r\nif created in /tmp, rename call may fail since /tmp and /etc are not guaranteed to be from the same mount\r\n\r\n* Test_PackageInstalled_FromPackageInstall_DeletionFailureBlocks: some prints and logic to hopefully help see why it's so flakey\r\n\r\nCo-authored-by: Dmitriy Kalinin <dkalinin@vmware.com>\r\nCo-authored-by: Joe Kimmel <jkimmel@vmware.com>",
+          "timestamp": "2022-06-17T11:40:37-07:00",
+          "tree_id": "77f6f561231227f908d7a449b13b119e684135a5",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/eea919aaaf205916548039168bd284e402e82087"
+        },
+        "date": 1655491808550,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36515466638,
+            "unit": "ns/op\t        18.98 DeleteSeconds\t        17.50 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9516154693,
+            "unit": "ns/op\t         5.301 DeleteSeconds\t         4.177 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6433148742,
+            "unit": "ns/op\t         4.251 DeleteSeconds\t         2.139 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
