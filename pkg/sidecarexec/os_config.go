@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -52,7 +53,10 @@ func (r OSConfig) ApplyCACerts(chain string, unusedResult *int) error {
 	}
 	defer origCopyFile.Close()
 
-	tmpFile, err := os.CreateTemp(os.TempDir(), "tmp-ca-bundle-")
+	// Place tmp file into dst directory as Rename call below
+	// cannot succeed if tmp file is on a different mount
+	// (no guarantee that /tmp and /etc are on same fs).
+	tmpFile, err := os.CreateTemp(filepath.Dir(r.CACertsLoc.Path), "tmp-ca-bundle-")
 	if err != nil {
 		return fmt.Errorf("Creating tmp certs file: %s", err)
 	}

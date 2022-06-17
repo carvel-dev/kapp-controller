@@ -9,6 +9,8 @@ kind: Service
 metadata:
   namespace: https-server
   name: https-svc
+  annotations:
+    kapp.k14s.io/change-group: server
 spec:
   selector:
     app: self-signed-https-server
@@ -21,6 +23,8 @@ kind: Deployment
 metadata:
   name: self-signed-https-server
   namespace: https-server
+  annotations:
+    kapp.k14s.io/change-group: server
 spec:
   replicas: 1
   selector:
@@ -107,3 +111,30 @@ data:
       name: http-server-returned-cm
     data:
       content: http-server-returned-content
+
+# TODO should we make vendir's http retry within App CR, to avoid
+# transient failure when Service=>Deployment networking is not ready?
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: check-nginx-conn
+  namespace: default
+  annotations:
+    kapp.k14s.io/update-strategy: always-replace
+    kapp.k14s.io/change-rule: upsert after upserting server
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      name: check-nginx-conn
+    spec:
+      containers:
+      - name: check
+        image: busybox
+        command:
+        - /bin/sh
+        - "-c"
+        - |
+          wget --tries=10 --no-check-certificate https://https-svc.https-server.svc.cluster.local/deployment.yml
+      restartPolicy: Never

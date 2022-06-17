@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -332,8 +333,23 @@ spec:
 	logger.Section("Check that deletion of PackageInstall results in failure conditions", func() {
 		// No waiting for deletion since it's blocked
 		kubectl.Run([]string{"delete", "pkgi", name, "--wait=false"})
-		kubectl.Run([]string{"wait", "--for=condition=DeleteFailed", "pkgi", name, "--timeout", "1m"})
+		for i := 1; i < 33; i += i {
+			out := kubectl.Run([]string{"get", "pkgi", name})
+			// we expected for the delete to fail, so once we see this we're done
+			if strings.Contains(out, "Delete failed: Error (see .status.usefulErrorMessage for details)") {
+				break
+			}
+			// succeeded is the state the resource was previously in, so it's ok if it's in this state transiently, but no other state is expected/acceptable
+			if !strings.Contains(out, "Reconcile succeeded") {
+				fmt.Println("got unexpected Description: \n", out)
+				fmt.Println(kubectl.Run([]string{"get", "pkgi", name, "-oyaml"}))
+				break
+			}
+			time.Sleep(time.Duration(i) * time.Second)
+		}
 	})
+	// this kubectl Run functions as a test assertion.
+	kubectl.Run([]string{"wait", "--for=condition=DeleteFailed", "pkgi", name, "--timeout", "1s"})
 
 	logger.Section("Bring back service account and see that kubectl delete succeeds", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-", "--filter-kind", "ServiceAccount"},
