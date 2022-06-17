@@ -15,14 +15,14 @@ import (
 
 func TestValues(t *testing.T) {
 	subject := Values{
-		ValuesFrom:  nil,
-		genericOpts: GenericOpts{},
-		coreClient:  nil,
+		ValuesFrom: nil,
+		appContext: AppContext{},
+		coreClient: nil,
 	}
 
 	t.Run("Downward API values", func(t *testing.T) {
 		subject := subject
-		subject.genericOpts.Metadata = &PartialObjectMetadata{
+		subject.appContext.Metadata = &PartialObjectMetadata{
 			ObjectMeta: ObjectMeta{
 				Name:        "some-name",
 				Namespace:   "some-namespace",
@@ -118,7 +118,7 @@ func TestValues(t *testing.T) {
 
 		t.Run("map field paths should return in stable order", func(t *testing.T) {
 			subject := subject
-			subject.genericOpts.Metadata.Annotations = map[string]string{
+			subject.appContext.Metadata.Annotations = map[string]string{
 				"z_ann": "z_ann_val",
 				"s_ann": "s_ann_val",
 				"a_ann": "a_ann_val",

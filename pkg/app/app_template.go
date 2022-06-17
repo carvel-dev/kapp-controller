@@ -17,7 +17,7 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Expected at least one template option"))
 	}
 
-	genericOpts := ctltpl.GenericOpts{
+	appContext := ctltpl.AppContext{
 		Name:      a.app.Name,
 		Namespace: a.app.Namespace,
 		Metadata:  asPartialObjectMetadata(a.app),
@@ -31,15 +31,15 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 
 		switch {
 		case tpl.Ytt != nil:
-			template = a.templateFactory.NewYtt(*tpl.Ytt, genericOpts)
+			template = a.templateFactory.NewYtt(*tpl.Ytt, appContext)
 		case tpl.Kbld != nil:
-			template = a.templateFactory.NewKbld(*tpl.Kbld, genericOpts)
+			template = a.templateFactory.NewKbld(*tpl.Kbld, appContext)
 		case tpl.HelmTemplate != nil:
-			template = a.templateFactory.NewHelmTemplate(*tpl.HelmTemplate, genericOpts)
+			template = a.templateFactory.NewHelmTemplate(*tpl.HelmTemplate, appContext)
 		case tpl.Sops != nil:
-			template = a.templateFactory.NewSops(*tpl.Sops, genericOpts)
+			template = a.templateFactory.NewSops(*tpl.Sops, appContext)
 		case tpl.Cue != nil:
-			template = a.templateFactory.NewCue(*tpl.Cue, genericOpts)
+			template = a.templateFactory.NewCue(*tpl.Cue, appContext)
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to template"))
 			return result
