@@ -100,7 +100,6 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-<<<<<<< HEAD
       namespace: default
       name: simple-app
     spec:
