@@ -29,6 +29,7 @@ type CreateOptions struct {
 	DefaultValuesFile string
 	pkgVersion        string
 	pkgCmdTreeOpts    cmdcore.PackageCommandTreeOpts
+	copyTo            string
 }
 
 func NewCreateOptions(ui ui.UI, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *CreateOptions {
@@ -51,6 +52,7 @@ func NewCreateCmd(o *CreateOptions) *cobra.Command {
 	}
 
 	cmd.PersistentFlags().StringVarP(&o.pkgVersion, "version", "v", "", "Version of a package (in semver format)")
+	cmd.PersistentFlags().StringVar(&o.copyTo, "copy-to", "", "Copies the package.yml and metadata.yml to the location mentioned")
 
 	return cmd
 }
@@ -66,7 +68,7 @@ func (o *CreateOptions) Run(args []string) error {
 	if err != nil {
 		return err
 	}
-	createStep := NewCreateStep(o.pkgAuthoringUI, pkgLocation, o.pkgVersion, pkgBuild)
+	createStep := NewCreateStep(o.pkgAuthoringUI, pkgLocation, o.pkgVersion, pkgBuild, o.copyTo)
 	err = common.Run(createStep)
 	if err != nil {
 		return err
@@ -81,14 +83,16 @@ type CreateStep struct {
 	valuesSchema   v1alpha1.ValuesSchema
 	template       template.TemplateStep
 	pkgBuild       *build.PackageBuild
+	copyTo         string
 }
 
-func NewCreateStep(pkgAuthorUI pkgui.IAuthoringUI, pkgLocation, pkgVersion string, pkgBuild build.PackageBuild) *CreateStep {
+func NewCreateStep(pkgAuthorUI pkgui.IAuthoringUI, pkgLocation, pkgVersion string, pkgBuild build.PackageBuild, copyTo string) *CreateStep {
 	return &CreateStep{
 		pkgAuthoringUI: pkgAuthorUI,
 		pkgLocation:    pkgLocation,
 		pkgBuild:       &pkgBuild,
 		pkgVersion:     pkgVersion,
+		copyTo:         copyTo,
 	}
 }
 
@@ -257,8 +261,17 @@ func (createStep CreateStep) PostInteract() error {
 		return err
 	}
 	createStep.pkgAuthoringUI.PrintInformationalText(fmt.Sprintf("Both the files can be accessed from the following location: %s\n", createStep.pkgLocation))
+
+	if len(createStep.copyTo) > 0 {
+		err := createStep.copyFiles()
+		if err != nil {
+			return err
+		}
+	}
+
 	createStep.printInformation()
 	createStep.printNextStep()
+
 	return nil
 }
 
@@ -335,6 +348,25 @@ func (createStep CreateStep) printNextStep() {
 
 func (createStep CreateStep) printInformation() {
 	createStep.pkgAuthoringUI.PrintInformationalText("\n**Information**\npackage-build.yml is generated as part of this flow. This file can be used for further updating and adding complex scenarios while using the `kctrl pkg build create` command. Please read the link'ed documentation for more explanation.")
+}
+
+func (createStep CreateStep) copyFiles() error {
+	createStep.pkgAuthoringUI.PrintInformationalText(fmt.Sprintf("\nCopy both the files to location: %s\n", createStep.copyTo))
+	result := util.Execute("mkdir", []string{"-p", createStep.copyTo})
+	if result.Error != nil {
+		return fmt.Errorf("Creating Directory %s\n %s", createStep.copyTo, result.Stderr)
+	}
+	srcPkgFileLocation := filepath.Join(createStep.pkgLocation, "package.yml")
+	result = util.Execute("cp", []string{srcPkgFileLocation, filepath.Join(createStep.copyTo, createStep.pkgVersion+".yml")})
+	if result.Error != nil {
+		return fmt.Errorf("Copying file %s\n %s", srcPkgFileLocation, result.Stderr)
+	}
+	srcPkgMetadataFileLocation := filepath.Join(createStep.pkgLocation, "package-metadata.yml")
+	result = util.Execute("cp", []string{srcPkgMetadataFileLocation, filepath.Join(createStep.copyTo, "metadata.yml")})
+	if result.Error != nil {
+		return fmt.Errorf("Copying file %s\n %s", srcPkgMetadataFileLocation, result.Stderr)
+	}
+	return nil
 }
 
 func writeToFile(path string, data []byte) error {
