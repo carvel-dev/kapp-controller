@@ -51,7 +51,7 @@ func (imgpkg *ImgpkgStep) Interact() error {
 		}
 	} else {
 		imgpkg.pkgAuthoringUI.PrintInformationalText("In package, we need to fetch the manifest which defines how the application would be deployed in a K8s cluster. This manifest can be in the form of a yaml file used with `kubectl apply ...` or it could be a helm chart used with `helm install ...`. They can be available in any of the following locations. Please select from where to fetch the manifest")
-		options := []string{common.FetchReleaseArtifactFromGithub, common.FetchManifestFromGithub, common.FetchChartFromHelmRepo, common.FetchChartFromGithub}
+		options := []string{common.FetchReleaseArtifactFromGithub, common.FetchManifestFromGithub, common.FetchChartFromHelmRepo, common.FetchChartFromGithub, common.FetchFromLocalDirectory}
 		defaultFetchOptionSelected := getPreviousSelectedFetchOption(imgpkg.pkgBuild)
 		defaultFetchOptionIndex := getDefaultFetchOptionIndex(options, defaultFetchOptionSelected)
 		choiceOpts := ui.ChoiceOpts{

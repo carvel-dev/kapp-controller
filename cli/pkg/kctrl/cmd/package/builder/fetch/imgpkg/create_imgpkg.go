@@ -120,7 +120,7 @@ func (createImgPkgStep CreateImgPkgStep) runKbld(bundleLocation, imagesFileLocat
 		if result.Error != nil {
 			return fmt.Errorf("Cleaning up previous temp directory.\n %s", result.Stderr)
 		}
-		chartLocation, err := getPathFromVendirConf(createImgPkgStep.pkgBuild)
+		chartLocation, err := getHelmChartPathFromVendirConf(createImgPkgStep.pkgBuild)
 		if err != nil {
 			return err
 		}
@@ -130,6 +130,27 @@ func (createImgPkgStep CreateImgPkgStep) runKbld(bundleLocation, imagesFileLocat
 		result = util.Execute("helm3", []string{"template", helmChartLocation, "--output-dir", tempLocation})
 		if result.Error != nil {
 			return fmt.Errorf("Running helm template.\n %s", result.Stderr)
+		}
+		bundleLocation = tempLocation
+	} else {
+		createImgPkgStep.pkgAuthoringUI.PrintInformationalText("Kbld needs valid yml files. YAML file can be templated with 'ytt', which means kbld can't parse them as it is.First, run `ytt -f` on the files to create a valid yml files. And then we will run kbld on them. Output of ytt will be stored in the temp directory")
+		tempLocation := filepath.Join(createImgPkgStep.pkgLocation, "temp")
+		createImgPkgStep.pkgAuthoringUI.PrintActionableText("Cleaning up previous temp directory")
+		createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("rm -rf %s", tempLocation))
+		result := util.Execute("rm", []string{"-rf", tempLocation})
+		if result.Error != nil {
+			return fmt.Errorf("Cleaning up previous temp directory.\n %s", result.Stderr)
+		}
+		yttFilesLocation, err := getLocalDirectoryPathFromVendirConf(createImgPkgStep.pkgBuild)
+		if err != nil {
+			return err
+		}
+		yttTemplateFilesPath := filepath.Join(createImgPkgStep.pkgLocation, "bundle", yttFilesLocation)
+		createImgPkgStep.pkgAuthoringUI.PrintActionableText("Running ytt to create valid yml files")
+		createImgPkgStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("ytt -f %s --output-files %s", yttTemplateFilesPath, tempLocation))
+		result = util.Execute("ytt", []string{"-f", yttTemplateFilesPath, "--output-files", tempLocation})
+		if result.Error != nil {
+			return fmt.Errorf("Running ytt.\n %s", result.Stderr)
 		}
 		bundleLocation = tempLocation
 	}
@@ -151,7 +172,7 @@ func (createImgPkgStep CreateImgPkgStep) runKbld(bundleLocation, imagesFileLocat
 	return nil
 }
 
-func getPathFromVendirConf(pkgBuild *pkgbuild.PackageBuild) (string, error) {
+func getHelmChartPathFromVendirConf(pkgBuild *pkgbuild.PackageBuild) (string, error) {
 	if pkgBuild.Spec.Vendir == nil {
 		return "", fmt.Errorf("Cannot get path from vendir as no vendir configuration exist\n")
 	}
@@ -173,6 +194,25 @@ func getPathFromVendirConf(pkgBuild *pkgbuild.PackageBuild) (string, error) {
 	return path, nil
 }
 
+func getLocalDirectoryPathFromVendirConf(pkgBuild *pkgbuild.PackageBuild) (string, error) {
+	if pkgBuild.Spec.Vendir == nil {
+		return "", fmt.Errorf("Cannot get path from vendir as no vendir configuration exist\n")
+	}
+
+	directories := pkgBuild.Spec.Vendir.Directories
+	if directories == nil {
+		return "", fmt.Errorf("No local directory reference in Vendir")
+	}
+	var path string
+	for _, directory := range directories {
+		for _, content := range directories[0].Contents {
+			if content.Directory != nil {
+				path = directory.Path
+			}
+		}
+	}
+	return path, nil
+}
 func (createImgPkgStep CreateImgPkgStep) isHelmContent() bool {
 	if createImgPkgStep.pkgBuild.Annotations[common.PkgFetchContentAnnotationKey] == common.FetchChartFromHelmRepo {
 		return true

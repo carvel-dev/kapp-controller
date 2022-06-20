@@ -18,6 +18,7 @@ import (
 const (
 	VendirGithubReleaseConf string = "Github Release"
 	VendirHelmChartConf     string = "HelmChart"
+	VendirDirectoryConf     string = "Directory"
 	IncludeAllFiles         string = "*"
 )
 
@@ -45,6 +46,7 @@ func (upstreamStep *UpstreamStep) Interact() error {
 	upstreamOptionToVendirContentMap := map[string]string{
 		common.FetchReleaseArtifactFromGithub: VendirGithubReleaseConf,
 		common.FetchChartFromHelmRepo:         VendirHelmChartConf,
+		common.FetchFromLocalDirectory:        VendirDirectoryConf,
 	}
 
 	if len(vendirDirectories) > 1 {
@@ -86,6 +88,12 @@ func (upstreamStep *UpstreamStep) Interact() error {
 		if err != nil {
 			return err
 		}
+	case common.FetchFromLocalDirectory:
+		directoryStep := NewDirectoryStep(upstreamStep.pkgAuthoringUI, upstreamStep.PkgLocation, upstreamStep.pkgBuild)
+		err := common.Run(directoryStep)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -104,6 +112,8 @@ func setEarlierUpstreamOptionAsNil(vendirDirectories []vendirconf.Directory, ear
 		vendirDirectories[0].Contents[0].GithubRelease = nil
 	case VendirHelmChartConf:
 		vendirDirectories[0].Contents[0].HelmChart = nil
+	case VendirDirectoryConf:
+		vendirDirectories[0].Contents[0].Directory = nil
 	}
 	return
 }
@@ -128,6 +138,8 @@ func getPreviousSelectedUpstreamOption(pkgBuild *pkgbuilder.PackageBuild) string
 		selectedUpstreamOption = common.FetchReleaseArtifactFromGithub
 	case content.HelmChart != nil:
 		selectedUpstreamOption = common.FetchChartFromHelmRepo
+	case content.Directory != nil:
+		selectedUpstreamOption = common.FetchFromLocalDirectory
 	}
 	return selectedUpstreamOption
 }

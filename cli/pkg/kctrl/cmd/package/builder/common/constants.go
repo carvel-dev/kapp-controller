@@ -10,4 +10,5 @@ const (
 	FetchManifestFromGithub        string = "Git Repository(Not supported)"
 	FetchChartFromHelmRepo         string = "Helm Chart from Helm Repository"
 	FetchChartFromGithub           string = "Helm Chart from Github repository(Not supported)"
+	FetchFromLocalDirectory        string = "Fetch artifact from Local Directory"
 )
