@@ -222,9 +222,11 @@ func (upstreamStep *UpstreamStep) runVendirSync() error {
 	upstreamStep.pkgAuthoringUI.PrintInformationalText("\nNext step is to run `vendir sync` to fetch the data from source to local.")
 	upstreamStep.pkgAuthoringUI.PrintActionableText("Running vendir sync")
 	upstreamStep.pkgAuthoringUI.PrintCmdExecutionText(fmt.Sprintf("vendir sync --chdir %s -f vendir.yml", bundleLocation))
+	util.Execute("ls", []string{"-la"})
+	util.Execute("pwd", []string{"-la"})
 	result := util.Execute("vendir", []string{"sync", "--chdir", bundleLocation, "-f", "vendir.yml"})
 	if result.Error != nil {
-		return fmt.Errorf("while running vendir sync. %s", result.Stderr)
+		return fmt.Errorf("while running vendir sync. %s %s %s", result.Stderr, result.Error, result.Stdout)
 	}
 	configLocation := filepath.Join(upstreamStep.PkgLocation, "bundle", "config")
 	upstreamStep.pkgAuthoringUI.PrintInformationalText("\nTo validate that data has been fetched, lets list down the files")
