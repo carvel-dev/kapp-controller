@@ -30,7 +30,7 @@ type Template interface {
 type AppContext struct {
 	Name      string
 	Namespace string
-	Metadata  *PartialObjectMetadata
+	Metadata  PartialObjectMetadata
 }
 
 // PartialObjectMetadata represents an v1alpha1.App with a subset of Metadata fields exposed.

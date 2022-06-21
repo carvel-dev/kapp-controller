@@ -22,7 +22,7 @@ func TestValues(t *testing.T) {
 
 	t.Run("Downward API values", func(t *testing.T) {
 		subject := subject
-		subject.appContext.Metadata = &PartialObjectMetadata{
+		subject.appContext.Metadata = PartialObjectMetadata{
 			ObjectMeta: ObjectMeta{
 				Name:        "some-name",
 				Namespace:   "some-namespace",
@@ -33,7 +33,7 @@ func TestValues(t *testing.T) {
 		}
 
 		subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
-			Items: []v1alpha1.DownwardAPIAppTemplateValues{
+			Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
 				{Name: "a_some-annotation-key", FieldPath: "metadata.annotations"},
 				{Name: "b_some-name-key", FieldPath: "metadata.name"},
 				{Name: "c_some-namespace-key", FieldPath: "metadata.namespace"},
@@ -48,11 +48,11 @@ func TestValues(t *testing.T) {
 
 		require.Len(t, paths, 5)
 		expectedValues := []string{
-			"a_some-annotation-key: \n  a_ann: \"a_ann_val\"",
-			"b_some-name-key: \"some-name\"",
-			"c_some-namespace-key: \"some-namespace\"",
-			"d_some-uid-key: \"some-uid\"",
-			"e_some-label-key: \n  a_label: \"a_label_val\"",
+			"a_some-annotation-key:\n  a_ann: a_ann_val\n",
+			"b_some-name-key: some-name\n",
+			"c_some-namespace-key: some-namespace\n",
+			"d_some-uid-key: some-uid\n",
+			"e_some-label-key:\n  a_label: a_label_val\n",
 		}
 
 		for i, p := range paths {
@@ -62,7 +62,7 @@ func TestValues(t *testing.T) {
 		t.Run("name should allow nested key structure", func(t *testing.T) {
 			subject := subject
 			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
-				Items: []v1alpha1.DownwardAPIAppTemplateValues{
+				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
 					{Name: "parent.child", FieldPath: "metadata.name"},
 					{Name: "parent.child1.child2", FieldPath: "metadata.namespace"},
 					{Name: "parent.childwith\\.dot", FieldPath: "metadata.namespace"},
@@ -74,15 +74,15 @@ func TestValues(t *testing.T) {
 			require.Len(t, paths, 3)
 			t.Cleanup(cleanup)
 
-			assertFileContents(t, paths[0], "parent:\n  child: \"some-name\"")
-			assertFileContents(t, paths[1], "parent:\n  child1:\n    child2: \"some-namespace\"")
-			assertFileContents(t, paths[2], "parent:\n  childwith.dot: \"some-namespace\"")
+			assertFileContents(t, paths[0], "parent:\n  child: some-name\n")
+			assertFileContents(t, paths[1], "parent:\n  child1:\n    child2: some-namespace\n")
+			assertFileContents(t, paths[2], "parent:\n  childwith.dot: some-namespace\n")
 		})
 
 		t.Run("map field paths should allow subpaths", func(t *testing.T) {
 			subject := subject
 			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
-				Items: []v1alpha1.DownwardAPIAppTemplateValues{
+				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
 					{Name: "a_some-annotation-key", FieldPath: "metadata.annotations['a_ann']"},
 					{Name: "b_some-label-key", FieldPath: "metadata.labels['a_label']"},
 				}},
@@ -94,8 +94,8 @@ func TestValues(t *testing.T) {
 			t.Cleanup(cleanup)
 
 			expectedValues := []string{
-				"a_some-annotation-key: \"a_ann_val\"",
-				"b_some-label-key: \"a_label_val\"",
+				"a_some-annotation-key: a_ann_val\n",
+				"b_some-label-key: a_label_val\n",
 			}
 
 			for i, p := range paths {
@@ -124,23 +124,25 @@ func TestValues(t *testing.T) {
 				"a_ann": "a_ann_val",
 			}
 			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
-				Items: []v1alpha1.DownwardAPIAppTemplateValues{
+				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
 					{Name: "some-annotation-key", FieldPath: "metadata.annotations"},
+					{Name: "parent.some-annotation-key", FieldPath: "metadata.annotations"},
 				}},
 			}}
 
 			paths, cleanup, err := subject.AsPaths(os.TempDir())
 			require.NoError(t, err)
-			require.Len(t, paths, 1)
+			require.Len(t, paths, 2)
 			t.Cleanup(cleanup)
 
-			assertFileContents(t, paths[0], "some-annotation-key: \n  a_ann: \"a_ann_val\"\n  s_ann: \"s_ann_val\"\n  z_ann: \"z_ann_val\"")
+			assertFileContents(t, paths[0], "some-annotation-key:\n  a_ann: a_ann_val\n  s_ann: s_ann_val\n  z_ann: z_ann_val\n")
+			assertFileContents(t, paths[1], "parent:\n  some-annotation-key:\n    a_ann: a_ann_val\n    s_ann: s_ann_val\n    z_ann: z_ann_val\n")
 		})
 
 		t.Run("items with same key name, latter keys specified should clobber the earlier ones", func(t *testing.T) {
 			subject := subject
 			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
-				Items: []v1alpha1.DownwardAPIAppTemplateValues{
+				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
 					{Name: "a_name", FieldPath: "metadata.name"},
 					{Name: "a_name", FieldPath: "metadata.namespace"},
 				}},
@@ -151,13 +153,13 @@ func TestValues(t *testing.T) {
 			require.Len(t, paths, 2)
 			t.Cleanup(cleanup)
 
-			assertFileContents(t, paths[1], "a_name: \"some-namespace\"")
+			assertFileContents(t, paths[1], "a_name: some-namespace\n")
 		})
 
 		t.Run("return helpful error if subpath is not found", func(t *testing.T) {
 			subject := subject
 			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
-				Items: []v1alpha1.DownwardAPIAppTemplateValues{
+				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
 					{Name: "a_some-annotation-key", FieldPath: "metadata.annotations['INVALID_SUBPATH']"},
 				}},
 			}}
@@ -170,7 +172,7 @@ func TestValues(t *testing.T) {
 		t.Run("return helpful error if an unsupported downward api field spec is provided", func(t *testing.T) {
 			subject := subject
 			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
-				Items: []v1alpha1.DownwardAPIAppTemplateValues{
+				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
 					{Name: "unsupportedFieldPath", FieldPath: "metadata.creationTimestamp"},
 				}},
 			}}
@@ -183,7 +185,7 @@ func TestValues(t *testing.T) {
 		t.Run("return helpful error if invalid nested key structure is provided", func(t *testing.T) {
 			subject := subject
 			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
-				Items: []v1alpha1.DownwardAPIAppTemplateValues{
+				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
 					{Name: "parent.", FieldPath: "metadata.name"},
 					{Name: ".parent", FieldPath: "metadata.name"},
 					{Name: "parent..child", FieldPath: "metadata.name"},
@@ -192,20 +194,20 @@ func TestValues(t *testing.T) {
 
 			_, _, err := subject.AsPaths(os.TempDir())
 			require.Error(t, err)
-			assert.ErrorContains(t, err, "Invalid name was provided (hint: separate paths should only use a single '.' character)")
+			assert.ErrorContains(t, err, "Invalid name was provided 'parent.' (hint: separate paths should only use a single '.' character)")
 		})
 
 		t.Run("return helpful error if multiple field spec is provided", func(t *testing.T) {
 			subject := subject
 			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
-				Items: []v1alpha1.DownwardAPIAppTemplateValues{
+				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
 					{Name: "a_some-annotation-key", FieldPath: "metadata['name', 'uid']"},
 				}},
 			}}
 
 			_, _, err := subject.AsPaths(os.TempDir())
 			require.Error(t, err)
-			assert.ErrorContains(t, err, "Writing paths: invalid field spec provided to DownwardAPI. Only single supported fields are allowed")
+			assert.ErrorContains(t, err, "Writing paths: Invalid field spec provided to DownwardAPI. Only single supported fields are allowed")
 		})
 	})
 }
