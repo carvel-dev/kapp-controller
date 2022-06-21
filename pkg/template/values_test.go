@@ -59,6 +59,26 @@ func TestValues(t *testing.T) {
 			assertFileContents(t, p, expectedValues[i])
 		}
 
+		t.Run("name should allow nested key structure", func(t *testing.T) {
+			subject := subject
+			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
+				Items: []v1alpha1.DownwardAPIAppTemplateValues{
+					{Name: "parent.child", FieldPath: "metadata.name"},
+					{Name: "parent.child1.child2", FieldPath: "metadata.namespace"},
+					{Name: "parent.childwith\\.dot", FieldPath: "metadata.namespace"},
+				}},
+			}}
+
+			paths, cleanup, err := subject.AsPaths(os.TempDir())
+			require.NoError(t, err)
+			require.Len(t, paths, 3)
+			t.Cleanup(cleanup)
+
+			assertFileContents(t, paths[0], "parent:\n  child: \"some-name\"")
+			assertFileContents(t, paths[1], "parent:\n  child1:\n    child2: \"some-namespace\"")
+			assertFileContents(t, paths[2], "parent:\n  childwith.dot: \"some-namespace\"")
+		})
+
 		t.Run("map field paths should allow subpaths", func(t *testing.T) {
 			subject := subject
 			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
@@ -160,6 +180,21 @@ func TestValues(t *testing.T) {
 			assert.ErrorContains(t, err, "Writing paths: creationTimestamp is not found")
 		})
 
+		t.Run("return helpful error if invalid nested key structure is provided", func(t *testing.T) {
+			subject := subject
+			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
+				Items: []v1alpha1.DownwardAPIAppTemplateValues{
+					{Name: "parent.", FieldPath: "metadata.name"},
+					{Name: ".parent", FieldPath: "metadata.name"},
+					{Name: "parent..child", FieldPath: "metadata.name"},
+				}},
+			}}
+
+			_, _, err := subject.AsPaths(os.TempDir())
+			require.Error(t, err)
+			assert.ErrorContains(t, err, "Invalid name was provided (hint: separate paths should only use a single '.' character)")
+		})
+
 		t.Run("return helpful error if multiple field spec is provided", func(t *testing.T) {
 			subject := subject
 			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
@@ -172,9 +207,6 @@ func TestValues(t *testing.T) {
 			require.Error(t, err)
 			assert.ErrorContains(t, err, "Writing paths: invalid field spec provided to DownwardAPI. Only single supported fields are allowed")
 		})
-
-		//TODO: ensure only metadata.name namespace, uid etc are allowed
-		//TODO: test relaxed fieldspec paths
 	})
 }
 
