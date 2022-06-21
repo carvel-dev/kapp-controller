@@ -113,7 +113,7 @@ metadata:
 		require.Contains(t, out, "Deploy succeeded")
 
 		out = kubectl.Run([]string{"get", "deployment", deploymentName, "-o", "yaml"})
-		require.Contains(t, out, "foo")
+		require.Contains(t, out, "test: foo")
 	})
 
 	logger.Section("get package install", func() {
