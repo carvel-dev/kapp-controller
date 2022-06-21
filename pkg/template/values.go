@@ -116,6 +116,11 @@ func (t Values) writeFromDownwardAPI(dstPath string, downwardAPIRef v1alpha1.App
 	var result []string
 
 	for idx, item := range downwardAPIRef.Items {
+		err := t.validateName(item.Name)
+		if err != nil {
+			return nil, err
+		}
+
 		fieldPathExpression, err := relaxedJSONPathExpression(item.FieldPath)
 		if err != nil {
 			return nil, err
@@ -134,6 +139,13 @@ func (t Values) writeFromDownwardAPI(dstPath string, downwardAPIRef v1alpha1.App
 	}
 
 	return result, nil
+}
+
+func (Values) validateName(name string) error {
+	if strings.HasSuffix(name, ".") || strings.HasPrefix(name, ".") || strings.Contains(name, "..") {
+		return errors.New("Invalid name was provided (hint: separate paths should only use a single '.' character)")
+	}
+	return nil
 }
 
 func (t Values) extractFieldPathAsKeyValue(name string, fieldPath string) ([]byte, error) {
@@ -164,13 +176,23 @@ func (t Values) extractFieldPathAsKeyValue(name string, fieldPath string) ([]byt
 	return t.keyValue(name, fmt.Sprintf("%v", result.Interface())), nil
 }
 
+// operator may wish to assign a downward API value into a nested key structure to use within their template
+func (Values) nestedKey(name string) string {
+	var nested string
+	for idx, n := range splitWithEscaping(name, '.', '\\') {
+		nested += fmt.Sprintf("%s%s:\n", strings.Repeat("  ", idx), n)
+	}
+
+	return strings.TrimSuffix(nested, ":\n")
+}
+
 func (t Values) keyValue(key string, val interface{}) []byte {
-	return []byte(fmt.Sprintf("%s: %q", key, val))
+	return []byte(fmt.Sprintf("%s: %q", t.nestedKey(key), val))
 }
 
 func (t Values) keyValues(key string, m map[string]string) ([]byte, error) {
 	// output with keys in sorted order to provide stable output
-	fmtStr := fmt.Sprintf("%s: \n", key)
+	fmtStr := fmt.Sprintf("%s: \n", t.nestedKey(key))
 	keys := sets.NewString()
 	for k := range m {
 		keys.Insert(k)
@@ -220,6 +242,24 @@ func (t Values) writeFile(dstPath, subPath string, content []byte) (string, erro
 	}
 
 	return newPath, nil
+}
+
+func splitWithEscaping(s string, separator, escape byte) []string {
+	var token []byte
+	var tokens []string
+	for i := 0; i < len(s); i++ {
+		if s[i] == separator {
+			tokens = append(tokens, string(token))
+			token = token[:0]
+		} else if s[i] == escape && i+1 < len(s) {
+			i++
+			token = append(token, s[i])
+		} else {
+			token = append(token, s[i])
+		}
+	}
+	tokens = append(tokens, string(token))
+	return tokens
 }
 
 // Copied from https://github.com/kubernetes/kubectl/blob/ac26f503e81287d9903761a1a8ded25fdebec6a7/pkg/cmd/get/customcolumn.go#L38
