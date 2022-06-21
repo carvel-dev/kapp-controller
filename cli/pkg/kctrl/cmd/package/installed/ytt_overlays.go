@@ -56,7 +56,7 @@ func (o *YttOverlays) OverlaysSecret() (*corev1.Secret, error) {
 		}
 
 		if fileInfo.IsDir() {
-			err := filepath.Walk(file, func(path string, fi os.FileInfo, err error) error {
+			err = filepath.Walk(file, func(path string, fi os.FileInfo, err error) error {
 				if err != nil || fi.IsDir() {
 					return err
 				}
@@ -67,7 +67,14 @@ func (o *YttOverlays) OverlaysSecret() (*corev1.Secret, error) {
 						if err != nil {
 							return fmt.Errorf("Reading file: %s", err.Error())
 						}
-						key := fmt.Sprintf("%04d-%s", i, path)
+
+						relPath, err := filepath.Rel(file, path)
+						if err != nil {
+							return err
+						}
+
+						key := fmt.Sprintf("%04d-%s", i, relPath)
+						// Ensure valid secret keys
 						key = strings.ReplaceAll(key, "/", "_")
 
 						// Handle windows file paths
@@ -81,7 +88,7 @@ func (o *YttOverlays) OverlaysSecret() (*corev1.Secret, error) {
 				return nil
 			})
 			if err != nil {
-				return nil, fmt.Errorf("Listing files '%s'", file)
+				return nil, fmt.Errorf("Recursing through directory: %s", file)
 			}
 		} else {
 			for _, allowedExt := range fileResourcesAllowedExts {

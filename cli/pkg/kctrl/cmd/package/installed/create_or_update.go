@@ -33,7 +33,8 @@ import (
 
 const (
 	valuesFileKey        = "values.yaml"
-	yttOverlayAnnotation = "ext.packaging.carvel.dev/ytt-paths-from-secret-name.kctrl.carvel.dev"
+	yttOverlayPrefix     = "ext.packaging.carvel.dev/ytt-paths-from-secret-name"
+	yttOverlayAnnotation = yttOverlayPrefix + ".kctrl.carvel.dev"
 )
 
 type CreateOrUpdateOptions struct {
@@ -305,7 +306,7 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 
 	if len(o.version) == 0 && len(o.valuesFile) == 0 && o.values &&
 		o.YttOverlayFlags.yttOverlays && len(o.YttOverlayFlags.yttOverlayFiles) == 0 {
-		return fmt.Errorf("Expected either package version ,values file or overlays to update the package")
+		return fmt.Errorf("Expected either package version, values file or overlays to update the package")
 	}
 
 	err := o.SecureNamespaceFlags.CheckForDisallowedSharedNamespaces(o.NamespaceFlags.Name)
@@ -403,7 +404,7 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		}
 	}
 
-	if !o.YttOverlayFlags.yttOverlays {
+	if !o.YttOverlayFlags.yttOverlays && hasYttOverlays(updatedPkgInstall) {
 		err = o.dropYttOverlaySecrets(updatedPkgInstall, client)
 		if err != nil {
 			return err
@@ -1022,10 +1023,6 @@ func (o *CreateOrUpdateOptions) showVersions(client pkgclient.Interface) error {
 
 	return nil
 }
-
-const (
-	yttOverlayPrefix = "ext.packaging.carvel.dev/ytt-paths-from-secret-name"
-)
 
 func (o *CreateOrUpdateOptions) createOrUpdateYttOverlaySecrets(pkgi *kcpkgv1alpha1.PackageInstall, client kubernetes.Interface) (*corev1.Secret, error) {
 	o.statusUI.PrintMessage("Creating overlay secrets")
