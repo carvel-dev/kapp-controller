@@ -198,6 +198,11 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 		return fmt.Errorf("Expected package name to be non empty")
 	}
 
+	err := o.NamespaceFlags.CheckForDisallowedSharedNamespaces()
+	if err != nil {
+		return err
+	}
+
 	if len(o.version) == 0 {
 		pkgClient, err := o.depsFactory.PackageClient()
 		if err != nil {
@@ -279,6 +284,11 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 
 	if len(o.version) == 0 && len(o.valuesFile) == 0 && o.values {
 		return fmt.Errorf("Expected either package version or values file to update the package")
+	}
+
+	err := o.NamespaceFlags.CheckForDisallowedSharedNamespaces()
+	if err != nil {
+		return err
 	}
 
 	client, err := o.depsFactory.CoreClient()
