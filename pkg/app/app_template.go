@@ -58,8 +58,8 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 	return result
 }
 
-func asPartialObjectMetadata(m v1alpha1.App) *ctltpl.PartialObjectMetadata {
-	return &ctltpl.PartialObjectMetadata{
+func asPartialObjectMetadata(m v1alpha1.App) ctltpl.PartialObjectMetadata {
+	return ctltpl.PartialObjectMetadata{
 		ObjectMeta: ctltpl.ObjectMeta{
 			Name:        m.GetName(),
 			Namespace:   m.GetNamespace(),

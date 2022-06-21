@@ -45,11 +45,11 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPGP":                  schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSopsPGP(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef": schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSopsPrivateKeysSecretRef(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPI":        schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesDownwardAPI(ref),
+		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPIItem":    schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesDownwardAPIItem(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource":             schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesSource(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSourceRef":          schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesSourceRef(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateYtt":                      schema_pkg_apis_kappctrl_v1alpha1_AppTemplateYtt(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Condition":                           schema_pkg_apis_kappctrl_v1alpha1_Condition(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.DownwardAPIAppTemplateValues":        schema_pkg_apis_kappctrl_v1alpha1_DownwardAPIAppTemplateValues(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec":      schema_apiserver_apis_datapackaging_v1alpha1_AppTemplateSpec(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware":     schema_apiserver_apis_datapackaging_v1alpha1_IncludedSoftware(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Maintainer":           schema_apiserver_apis_datapackaging_v1alpha1_Maintainer(ref),
@@ -1318,7 +1318,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesDownwardAPI(ref common.R
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.DownwardAPIAppTemplateValues"),
+										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPIItem"),
 									},
 								},
 							},
@@ -1328,7 +1328,32 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesDownwardAPI(ref common.R
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.DownwardAPIAppTemplateValues"},
+			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPIItem"},
+	}
+}
+
+func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesDownwardAPIItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"fieldPath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -1499,33 +1524,6 @@ func schema_pkg_apis_kappctrl_v1alpha1_Condition(ref common.ReferenceCallback) c
 					},
 				},
 				Required: []string{"type", "status"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_kappctrl_v1alpha1_DownwardAPIAppTemplateValues(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"fieldPath": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"fieldPath"},
 			},
 		},
 	}

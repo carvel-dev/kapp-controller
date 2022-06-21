@@ -69,15 +69,15 @@ type AppTemplateValuesSourceRef struct {
 }
 
 // +k8s:openapi-gen=true
-type DownwardAPIAppTemplateValues struct {
+type AppTemplateValuesDownwardAPIItem struct {
 	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
 	// Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.
-	FieldPath string `json:"fieldPath" protobuf:"bytes,2,opt,name=fieldPath"`
+	FieldPath string `json:"fieldPath,omitempty" protobuf:"bytes,2,opt,name=fieldPath"`
 }
 
 // +k8s:openapi-gen=true
 type AppTemplateValuesDownwardAPI struct {
-	Items []DownwardAPIAppTemplateValues `json:"items,omitempty" protobuf:"bytes,1,opt,name=items"`
+	Items []AppTemplateValuesDownwardAPIItem `json:"items,omitempty" protobuf:"bytes,1,opt,name=items"`
 }
 
 // TODO implement kustomize

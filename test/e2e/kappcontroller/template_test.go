@@ -89,6 +89,7 @@ metadata:
   annotations:
     kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
     expectedAnnotation: expectedAnnotationValue
+    anotherExpectedAnnotation: anotherExpectedAnnotationValue
   labels:
     expectedLabel: expectedLabelValue
 spec:
@@ -164,7 +165,6 @@ data:
 
 	logger.Section("check ConfigMap exists", func() {
 		uid := strings.Trim(kubectl.Run([]string{"get", "-n", env.Namespace, "app", name, "-o", "jsonpath='{.metadata.uid}'"}), "'")
-		annotations := strings.Trim(kubectl.Run([]string{"get", "-n", env.Namespace, "app", name, "-o", "jsonpath='{.metadata.annotations}'"}), "'")
 		out := kubectl.Run([]string{"get", "configmap", "cm-result", "-o", "yaml"})
 
 		var cm corev1.ConfigMap
@@ -183,10 +183,19 @@ uid: "%s"
 annotation: "expectedAnnotationValue"
 label: "expectedLabelValue"
 allAnnotations:
-  %s
-`, name, env.Namespace, uid, annotations)
+  expectedAnnotation: expectedAnnotationValue
+  anotherExpectedAnnotation: anotherExpectedAnnotationValue
+`, name, env.Namespace, uid)
 
-		require.YAMLEq(t, expectedOut, cm.Data["values"])
+		actual := cm.Data["values"]
+		// kapp injects metadata. Ignore these and assert only on non-kapp data provided by the test
+		var actualWithKappStripped string
+		for _, s := range strings.Split(actual, "\n") {
+			if !strings.Contains(s, "kapp.k14s.io") {
+				actualWithKappStripped += s + "\n"
+			}
+		}
+		require.YAMLEq(t, expectedOut, actualWithKappStripped)
 	})
 }
 
