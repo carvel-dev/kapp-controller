@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655495991201,
+  "lastUpdate": 1655824039354,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -2805,6 +2805,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6417027465,
             "unit": "ns/op\t         4.250 DeleteSeconds\t         2.129 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86852107+joe-kimmel-vmw@users.noreply.github.com",
+            "name": "Joe Kimmel",
+            "username": "joe-kimmel-vmw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1d229748b11f6fa20c4e7ae177bc6c69c910d06f",
+          "message": "hack/test-e2e: no more errors on unset variables (#752)",
+          "timestamp": "2022-06-21T10:58:01-04:00",
+          "tree_id": "d8499b2c211a4031e8da2f9fb7951017a0d02fd5",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/1d229748b11f6fa20c4e7ae177bc6c69c910d06f"
+        },
+        "date": 1655824037739,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36445692818,
+            "unit": "ns/op\t        18.87 DeleteSeconds\t        17.54 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9495432644,
+            "unit": "ns/op\t         5.304 DeleteSeconds\t         4.151 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6489881281,
+            "unit": "ns/op\t         4.309 DeleteSeconds\t         2.143 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
