@@ -103,7 +103,8 @@ func Test_PackageInstallAndRepo_CanAuthenticateToPrivateRepository_UsingPlacehol
 	sas := e2e.ServiceAccounts{env.Namespace}
 
 	// If this changes, the skip-tls-verify domain must be updated to match
-	name := "placeholder-private-auth"
+	pkgiName := "placeholder-private-auth-pkgi"
+	pkgrName := "placeholder-private-auth-pkgr"
 	registryNamespace := "registry"
 	registryName := "test-registry"
 	configName := "test-registry-ca-cert-config"
@@ -139,8 +140,9 @@ spec:
 	cleanUp := func() {
 		// Delete App with kubectl first since kapp
 		// deletes ServiceAccount before App
-		kubectl.RunWithOpts([]string{"delete", "apps/" + name}, e2e.RunOpts{AllowError: true})
-		kapp.Run([]string{"delete", "-a", name})
+		kubectl.RunWithOpts([]string{"delete", "apps/" + pkgiName}, e2e.RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", pkgiName})
+		kapp.Run([]string{"delete", "-a", pkgrName})
 		kapp.Run([]string{"delete", "-a", configName})
 		kapp.Run([]string{"delete", "-a", "secret-export"})
 		kapp.Run([]string{"delete", "-a", registryName, "-n", registryNamespace})
@@ -221,14 +223,17 @@ spec:
     refName: pkg.test.carvel.dev
     versionSelection:
       constraints: 1.0.0
-`, env.Namespace, name, registryNamespace) + sas.ForNamespaceYAML()
+`, env.Namespace, pkgiName, registryNamespace) + sas.ForNamespaceYAML()
 
-		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{
+		kapp.RunWithOpts([]string{"deploy", "-a", pkgiName, "-f", "-"}, e2e.RunOpts{
 			StdinReader: strings.NewReader(pkgiYaml),
 			OnErrKubectl: []string{"get", "app", "placeholder-private-auth", "-oyaml"},
 		})
 
 		kubectl.Run([]string{"get", "configmap", "e2e-test-map"})
+
+		// Clean up befor trying to deploy package repository
+		kapp.Run([]string{"delete", "-a", pkgiName})
 	})
 
 	logger.Section("deploy PackageRepository that auths to registry", func() {
@@ -242,10 +247,12 @@ spec:
   fetch:
     image:
       url: registry-svc.%[3]s.svc.cluster.local:443/secret-test/test-repo
-`, env.Namespace, name, registryNamespace) + sas.ForNamespaceYAML()
+`, env.Namespace, pkgrName, registryNamespace) + sas.ForNamespaceYAML()
 
-		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
-			e2e.RunOpts{StdinReader: strings.NewReader(pkgrYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-a", pkgrName, "-f", "-"}, e2e.RunOpts{
+			StdinReader: strings.NewReader(pkgrYaml),
+			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
+		})
 
 		kubectl.Run([]string{"get", "package", "pkg.test.carvel.dev.1.0.0"})
 	})
