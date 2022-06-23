@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656002782800,
+  "lastUpdate": 1656002974281,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -2931,6 +2931,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6535293482,
             "unit": "ns/op\t         4.346 DeleteSeconds\t         2.140 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cppforlife@gmail.com",
+            "name": "Dmitriy Kalinin",
+            "username": "cppforlife"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7dd8177ca515604464541b4c3d8b9fd89d33aacf",
+          "message": "Merge pull request #744 from vmware-tanzu/659-add-downward-api\n\nadd downward api",
+          "timestamp": "2022-06-23T12:39:01-04:00",
+          "tree_id": "a9c927d9ff1042a404a3b45a03aef1f5a81f23e4",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/7dd8177ca515604464541b4c3d8b9fd89d33aacf"
+        },
+        "date": 1656002972844,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36755703529,
+            "unit": "ns/op\t        19.11 DeleteSeconds\t        17.60 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9654480530,
+            "unit": "ns/op\t         5.429 DeleteSeconds\t         4.181 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6587056084,
+            "unit": "ns/op\t         4.376 DeleteSeconds\t         2.166 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
