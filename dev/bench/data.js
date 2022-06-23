@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655896533479,
+  "lastUpdate": 1656002782800,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -2889,6 +2889,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6425505803,
             "unit": "ns/op\t         4.245 DeleteSeconds\t         2.138 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "benm@vmware.com",
+            "name": "Ben Moss",
+            "username": "benmoss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9bd165d7b68c48be3ca1ed0b1b137fc0ed5d41ac",
+          "message": "Fix flakiness of private registry auth test (#759)\n\nvendir doesn't retry, so we need to make sure that the registry service\r\nis up and responsive before we deploy anything to kapp-controller",
+          "timestamp": "2022-06-23T12:36:42-04:00",
+          "tree_id": "b1dfd7182ff2f6c3953422af8a0441e18f69ff4e",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/9bd165d7b68c48be3ca1ed0b1b137fc0ed5d41ac"
+        },
+        "date": 1656002781905,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36537466427,
+            "unit": "ns/op\t        18.97 DeleteSeconds\t        17.52 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9553719992,
+            "unit": "ns/op\t         5.322 DeleteSeconds\t         4.192 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6535293482,
+            "unit": "ns/op\t         4.346 DeleteSeconds\t         2.140 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
