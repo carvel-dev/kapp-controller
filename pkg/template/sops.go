@@ -25,19 +25,19 @@ import (
 // Sops executes sops tool to decrypt configuration.
 // Currently supports age and gpg as its decryption backends.
 type Sops struct {
-	opts        v1alpha1.AppTemplateSops
-	genericOpts GenericOpts
-	coreClient  kubernetes.Interface
-	cmdRunner   exec.CmdRunner
+	opts       v1alpha1.AppTemplateSops
+	appContext AppContext
+	coreClient kubernetes.Interface
+	cmdRunner  exec.CmdRunner
 }
 
 var _ Template = &Sops{}
 
 // NewSops returns sops.
-func NewSops(opts v1alpha1.AppTemplateSops, genericOpts GenericOpts,
+func NewSops(opts v1alpha1.AppTemplateSops, appContext AppContext,
 	coreClient kubernetes.Interface, cmdRunner exec.CmdRunner) *Sops {
 
-	return &Sops{opts, genericOpts, coreClient, cmdRunner}
+	return &Sops{opts, appContext, coreClient, cmdRunner}
 }
 
 func (t *Sops) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
@@ -293,7 +293,7 @@ func (t *Sops) makeConfig() (sopsConfig, error) {
 }
 
 func (t *Sops) getSecretContents(secretRef v1alpha1.AppTemplateSopsPrivateKeysSecretRef) (string, error) {
-	secret, err := t.coreClient.CoreV1().Secrets(t.genericOpts.Namespace).Get(context.Background(), secretRef.Name, metav1.GetOptions{})
+	secret, err := t.coreClient.CoreV1().Secrets(t.appContext.Namespace).Get(context.Background(), secretRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
