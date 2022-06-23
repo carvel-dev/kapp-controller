@@ -25,7 +25,7 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 		panic("Internal inconsistency: Package repository templates are not configurable")
 	}
 
-	genericOpts := ctltpl.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
+	appContext := ctltpl.AppContext{Name: a.app.Name, Namespace: a.app.Namespace}
 
 	// We have multiple ytt sections because we want to squash all the user yamls together
 	// and then apply our overlays. This way we do multiple distinct ytt passes.
@@ -35,7 +35,7 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 		IgnoreUnknownComments: true,
 		Paths:                 []string{"packages"},
 	}
-	result, _ := a.templateFactory.NewYtt(template1, genericOpts).TemplateDir(dirPath)
+	result, _ := a.templateFactory.NewYtt(template1, appContext).TemplateDir(dirPath)
 	if result.Error != nil {
 		return result
 	}
@@ -44,7 +44,7 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 	// some of which could be migrated to go code
 	stream := strings.NewReader(result.Stdout)
 	result = a.templateFactory.NewYtt(
-		a.yttTemplateCleanRs(), genericOpts).TemplateStream(stream, dirPath)
+		a.yttTemplateCleanRs(), appContext).TemplateStream(stream, dirPath)
 	if result.Error != nil {
 		return result
 	}
@@ -61,7 +61,7 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 	// on identical resources provided by multiple pkgrs
 	stream = strings.NewReader(resources)
 	result = a.templateFactory.NewYtt(
-		a.yttTemplateAddIdenticalRsRebase(), genericOpts).TemplateStream(stream, dirPath)
+		a.yttTemplateAddIdenticalRsRebase(), appContext).TemplateStream(stream, dirPath)
 	if result.Error != nil {
 		return result
 	}
@@ -70,7 +70,7 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 	if a.app.Spec.Fetch[0].ImgpkgBundle != nil {
 		stream = strings.NewReader(result.Stdout)
 		kbldOpts := kcv1alpha1.AppTemplateKbld{Paths: []string{"-", ".imgpkg/images.yml"}}
-		result = a.templateFactory.NewKbld(kbldOpts, genericOpts).TemplateStream(stream, dirPath)
+		result = a.templateFactory.NewKbld(kbldOpts, appContext).TemplateStream(stream, dirPath)
 	}
 
 	return result

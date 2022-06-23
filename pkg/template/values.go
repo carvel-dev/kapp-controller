@@ -18,8 +18,8 @@ import (
 type Values struct {
 	ValuesFrom []v1alpha1.AppTemplateValuesSource
 
-	genericOpts GenericOpts
-	coreClient  kubernetes.Interface
+	appContext AppContext
+	coreClient kubernetes.Interface
 }
 
 func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
@@ -64,6 +64,13 @@ func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
 				}
 			}
 
+		case source.DownwardAPI != nil:
+			downwardAPIValues := DownwardAPIValues{
+				items:    source.DownwardAPI.Items,
+				metadata: t.appContext.Metadata,
+			}
+			paths, err = t.writeFromDownwardAPI(valuesDir.Path(), downwardAPIValues)
+
 		default:
 			err = fmt.Errorf("Expected either secretRef, configMapRef or path as a source")
 		}
@@ -81,7 +88,7 @@ func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
 func (t Values) writeFromSecret(dstPath string,
 	secretRef v1alpha1.AppTemplateValuesSourceRef) ([]string, error) {
 
-	secret, err := t.coreClient.CoreV1().Secrets(t.genericOpts.Namespace).Get(
+	secret, err := t.coreClient.CoreV1().Secrets(t.appContext.Namespace).Get(
 		context.Background(), secretRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -102,10 +109,43 @@ func (t Values) writeFromSecret(dstPath string,
 	return result, nil
 }
 
+func (t Values) writeFromDownwardAPI(dstPath string, valuesExtractor DownwardAPIValues) ([]string, error) {
+	var result []string
+
+	dataValues, err := valuesExtractor.AsYAMLs()
+	if err != nil {
+		return nil, err
+	}
+
+	for idx, content := range dataValues {
+		path, err := t.writeFile(dstPath, fmt.Sprintf("downwardapi_%d.yaml", idx), content)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, path)
+	}
+
+	return result, nil
+}
+
+func (t Values) writeFile(dstPath, subPath string, content []byte) (string, error) {
+	newPath, err := memdir.ScopedPath(dstPath, subPath)
+	if err != nil {
+		return "", err
+	}
+
+	err = ioutil.WriteFile(newPath, content, 0600)
+	if err != nil {
+		return "", fmt.Errorf("Writing file '%s': %s", newPath, err)
+	}
+
+	return newPath, nil
+}
+
 func (t Values) writeFromConfigMap(dstPath string,
 	configMapRef v1alpha1.AppTemplateValuesSourceRef) ([]string, error) {
 
-	configMap, err := t.coreClient.CoreV1().ConfigMaps(t.genericOpts.Namespace).Get(
+	configMap, err := t.coreClient.CoreV1().ConfigMaps(t.appContext.Namespace).Get(
 		context.Background(), configMapRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -124,18 +164,4 @@ func (t Values) writeFromConfigMap(dstPath string,
 	sort.Strings(result)
 
 	return result, nil
-}
-
-func (t Values) writeFile(dstPath, subPath string, content []byte) (string, error) {
-	newPath, err := memdir.ScopedPath(dstPath, subPath)
-	if err != nil {
-		return "", err
-	}
-
-	err = ioutil.WriteFile(newPath, content, 0600)
-	if err != nil {
-		return "", fmt.Errorf("Writing file '%s': %s", newPath, err)
-	}
-
-	return newPath, nil
 }

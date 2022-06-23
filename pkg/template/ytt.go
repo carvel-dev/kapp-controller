@@ -18,7 +18,7 @@ import (
 
 type Ytt struct {
 	opts         v1alpha1.AppTemplateYtt
-	genericOpts  GenericOpts
+	appContext   AppContext
 	coreClient   kubernetes.Interface
 	fetchFactory fetch.Factory
 	cmdRunner    exec.CmdRunner
@@ -26,10 +26,11 @@ type Ytt struct {
 
 var _ Template = &Ytt{}
 
-func NewYtt(opts v1alpha1.AppTemplateYtt, genericOpts GenericOpts,
+// NewYtt returns ytt template.
+func NewYtt(opts v1alpha1.AppTemplateYtt, appContext AppContext,
 	coreClient kubernetes.Interface, fetchFactory fetch.Factory, cmdRunner exec.CmdRunner) *Ytt {
 
-	return &Ytt{opts, genericOpts, coreClient, fetchFactory, cmdRunner}
+	return &Ytt{opts, appContext, coreClient, fetchFactory, cmdRunner}
 }
 
 func (t *Ytt) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
@@ -59,7 +60,7 @@ func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	args = t.addFileMarks(args)
 
 	{ // Add values files
-		vals := Values{t.opts.ValuesFrom, t.genericOpts, t.coreClient}
+		vals := Values{t.opts.ValuesFrom, t.appContext, t.coreClient}
 
 		paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
 		if err != nil {
@@ -139,7 +140,7 @@ func (t *Ytt) addInlinePaths(args []string) ([]string, *memdir.TmpDir, error) {
 		return nil, nil, err
 	}
 
-	inline := t.fetchFactory.NewInline(*t.opts.Inline, t.genericOpts.Namespace)
+	inline := t.fetchFactory.NewInline(*t.opts.Inline, t.appContext.Namespace)
 
 	err = inline.Retrieve(inlineDir.Path())
 	if err != nil {

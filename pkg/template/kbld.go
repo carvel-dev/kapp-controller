@@ -17,7 +17,7 @@ import (
 // Kbld executes kbld tool.
 type Kbld struct {
 	opts           v1alpha1.AppTemplateKbld
-	genericOpts    GenericOpts
+	appContext     AppContext
 	additionalOpts KbldOpts
 	cmdRunner      exec.CmdRunner
 }
@@ -32,10 +32,10 @@ var _ Template = &Kbld{}
 
 // NewKbld returns kbld.
 func NewKbld(opts v1alpha1.AppTemplateKbld,
-	genericOpts GenericOpts, additionalOpts KbldOpts,
+	appContext AppContext, additionalOpts KbldOpts,
 	cmdRunner exec.CmdRunner) *Kbld {
 
-	return &Kbld{opts, genericOpts, additionalOpts, cmdRunner}
+	return &Kbld{opts, appContext, additionalOpts, cmdRunner}
 }
 
 func (t *Kbld) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {

@@ -16,18 +16,18 @@ import (
 )
 
 type cue struct {
-	opts        v1alpha1.AppTemplateCue
-	coreClient  kubernetes.Interface
-	genericOpts GenericOpts
-	cmdRunner   exec.CmdRunner
+	opts       v1alpha1.AppTemplateCue
+	coreClient kubernetes.Interface
+	appContext AppContext
+	cmdRunner  exec.CmdRunner
 }
 
 var _ Template = &cue{}
 
-func newCue(opts v1alpha1.AppTemplateCue, genericOpts GenericOpts,
+func newCue(opts v1alpha1.AppTemplateCue, appContext AppContext,
 	coreClient kubernetes.Interface, cmdRunner exec.CmdRunner) *cue {
 
-	return &cue{opts: opts, genericOpts: genericOpts,
+	return &cue{opts: opts, appContext: appContext,
 		coreClient: coreClient, cmdRunner: cmdRunner}
 }
 
@@ -59,7 +59,7 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		args = append(args, c.opts.Paths...)
 	}
 
-	vals := Values{c.opts.ValuesFrom, c.genericOpts, c.coreClient}
+	vals := Values{c.opts.ValuesFrom, c.appContext, c.coreClient}
 	paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Writing values: %w", err))
