@@ -10,12 +10,12 @@ require (
 	github.com/google/go-containerregistry v0.7.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/prometheus/client_golang v1.11.1
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.5
 	github.com/vmware-tanzu/carvel-vendir v0.24.0
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.10
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.22.10
 	k8s.io/apimachinery v0.22.10
 	k8s.io/apiserver v0.22.10
