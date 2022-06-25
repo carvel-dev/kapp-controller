@@ -4,9 +4,13 @@
 package app
 
 import (
+	"fmt"
+
+	"github.com/cppforlife/color"
 	"github.com/spf13/cobra"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func NewCmd() *cobra.Command {
@@ -53,4 +57,34 @@ func appStatus(app *kcv1alpha1.App) (string, bool) {
 		}
 	}
 	return app.Status.FriendlyDescription, false
+}
+
+func HasReconciled(status kcv1alpha1.AppStatus) bool {
+	for _, condition := range status.Conditions {
+		if condition.Type == kcv1alpha1.ReconcileSucceeded && condition.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
+
+func HasFailed(status kcv1alpha1.AppStatus) (bool, string) {
+	for _, condition := range status.Conditions {
+		if condition.Type == kcv1alpha1.ReconcileFailed && condition.Status == corev1.ConditionTrue {
+			return true, color.RedString(fmt.Sprintf("%s: %s", kcv1alpha1.ReconcileFailed, status.UsefulErrorMessage))
+		}
+		if condition.Type == kcv1alpha1.DeleteFailed && condition.Status == corev1.ConditionTrue {
+			return true, color.RedString(fmt.Sprintf("%s: %s", kcv1alpha1.DeleteFailed, status.UsefulErrorMessage))
+		}
+	}
+	return false, ""
+}
+
+func IsDeleting(status kcv1alpha1.AppStatus) bool {
+	for _, condition := range status.Conditions {
+		if condition.Type == kcv1alpha1.Deleting && condition.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
 }

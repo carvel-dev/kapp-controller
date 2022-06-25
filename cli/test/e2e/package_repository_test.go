@@ -53,7 +53,11 @@ func TestPackageRepository(t *testing.T) {
 	})
 
 	logger.Section("adding a repository", func() {
-		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL})
+		out := kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL})
+		require.Contains(t, out, "Fetch succeeded")
+		require.Contains(t, out, "Template succeeded")
+		require.Contains(t, out, "Deploy succeeded")
+
 		kubectl.Run([]string{"get", kind, pkgrName})
 		kubectl.Run([]string{"get", "pkgm/pkg.test.carvel.dev"})
 		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"})
@@ -103,9 +107,12 @@ func TestPackageRepository(t *testing.T) {
 
 		kubectl.Run([]string{"get", kind, pkgrName})
 
-		kappCtrl.Run([]string{"package", "repository", "update", "-r", pkgrName, "--url", pkgrURL})
+		out := kappCtrl.Run([]string{"package", "repository", "update", "-r", pkgrName, "--url", pkgrURL})
+		require.Contains(t, out, "Fetch succeeded")
+		require.Contains(t, out, "Template succeeded")
+		require.Contains(t, out, "Deploy succeeded")
 
-		out := kappCtrl.Run([]string{"package", "repository", "get", "-r", pkgrName, "--json"})
+		out = kappCtrl.Run([]string{"package", "repository", "get", "-r", pkgrName, "--json"})
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
