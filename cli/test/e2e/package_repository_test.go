@@ -64,6 +64,13 @@ func TestPackageRepository(t *testing.T) {
 		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"})
 	})
 
+	logger.Section("kicking a repository", func() {
+		out := kappCtrl.Run([]string{"package", "repository", "kick", "-r", pkgrName})
+		require.Contains(t, out, "Fetch succeeded")
+		require.Contains(t, out, "Template succeeded")
+		require.Contains(t, out, "Deploy succeeded")
+	})
+
 	logger.Section("listing repositories with one repository being present", func() {
 		out, _ := kappCtrl.RunWithOpts([]string{"package", "repository", "list", "--json"}, RunOpts{})
 
