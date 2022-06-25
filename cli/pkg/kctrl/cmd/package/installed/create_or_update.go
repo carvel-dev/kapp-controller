@@ -325,7 +325,7 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		if err != nil {
 			return err
 		}
-		err = o.waitForAppPause(kcClient)
+		err = o.waitForAppPauseIfExists(kcClient)
 		if err != nil {
 			return err
 		}
@@ -820,10 +820,14 @@ func (o *CreateOrUpdateOptions) unpauseReconciliation(client kcclient.Interface)
 }
 
 // Waits for the App CR created by the package installation to pick up it's paused status
-func (o *CreateOrUpdateOptions) waitForAppPause(client kcclient.Interface) error {
+func (o *CreateOrUpdateOptions) waitForAppPauseIfExists(client kcclient.Interface) error {
 	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
 		appResource, err := client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 		if err != nil {
+			// Do not wait if app has not been created
+			if errors.IsNotFound(err) {
+				return true, nil
+			}
 			return false, err
 		}
 		if appResource.Generation != appResource.Status.ObservedGeneration {
