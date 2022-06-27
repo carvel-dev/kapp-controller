@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656002974281,
+  "lastUpdate": 1656331436465,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -2973,6 +2973,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6587056084,
             "unit": "ns/op\t         4.376 DeleteSeconds\t         2.166 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8e67cd7f576179dbe7681dabc92f624c5a243ce0",
+          "message": "Update release workflow to have ./ before artefacts (#761)\n\nThis format is required by the carvel-release-scripts and carvel-setup-action",
+          "timestamp": "2022-06-27T07:52:21-04:00",
+          "tree_id": "eb04e4c34f2179e78331d8d57326375d20782d0f",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/8e67cd7f576179dbe7681dabc92f624c5a243ce0"
+        },
+        "date": 1656331435513,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37009780783,
+            "unit": "ns/op\t        19.26 DeleteSeconds\t        17.70 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9775177904,
+            "unit": "ns/op\t         5.509 DeleteSeconds\t         4.217 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6726261420,
+            "unit": "ns/op\t         4.455 DeleteSeconds\t         2.219 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
