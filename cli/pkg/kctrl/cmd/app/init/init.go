@@ -300,7 +300,7 @@ func addUpstreamAsPathToHelmIfNotExist(appTemplates []kcv1alpha1.AppTemplate) {
 	for _, appTemplate := range appTemplates {
 		if appTemplate.HelmTemplate != nil {
 			path := appTemplate.HelmTemplate.Path
-			//If a helmTemplate exist, it will always be the first one in the template section. Theoratically, it can exist anywhere but every real use case needs it to be first.
+			//If a helmTemplate exist, it will always be the first one in the template section. Theoretically, it can exist anywhere but every real use case needs it to be first.
 			//TODO confirm above understanding. Not handled the scenario if helmTemplate exists as not the first element of slice.
 			if strings.HasPrefix(path, UpstreamFolderName) {
 				return

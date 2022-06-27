@@ -169,36 +169,34 @@ func (v *VendirStep) printFile(filePath string) error {
 }
 
 func (v *VendirStep) runVendirSync() error {
-	/*
-		v.ui.PrintInformationalText("\nNext step is to run `vendir sync` to fetch the data from source to local.")
-		v.ui.PrintActionableText("Running vendir sync")
-		v.ui.PrintCmdExecutionText("vendir sync -f vendir.yml")
-		var stdoutBs, stderrBs bytes.Buffer
+	v.ui.PrintInformationalText("\nNext step is to run `vendir sync` to fetch the data from source to local.")
+	v.ui.PrintActionableText("Running vendir sync")
+	v.ui.PrintCmdExecutionText("vendir sync -f vendir.yml")
+	var stdoutBs, stderrBs bytes.Buffer
 
-		localCmdRunner := exec.NewPlainCmdRunner()
-		cmd := goexec.Command("vendir", []string{"sync", "-f", VendirFileName}...)
-		cmd.Stdin = nil
-		cmd.Stdout = &stdoutBs
-		cmd.Stderr = &stderrBs
-		localCmdRunner.Run(cmd)
+	localCmdRunner := exec.NewPlainCmdRunner()
+	cmd := goexec.Command("vendir", []string{"sync", "-f", VendirFileName}...)
+	cmd.Stdin = nil
+	cmd.Stdout = &stdoutBs
+	cmd.Stderr = &stderrBs
+	localCmdRunner.Run(cmd)
 
-		result := exec.CmdRunResult{
-			Stdout: stdoutBs.String(),
-			Stderr: stderrBs.String(),
-		}
-		if result.Error != nil {
-			return fmt.Errorf("Vendir sync failed. %s", result.Stderr)
-		}
+	result := exec.CmdRunResult{
+		Stdout: stdoutBs.String(),
+		Stderr: stderrBs.String(),
+	}
+	if result.Error != nil {
+		return fmt.Errorf("Vendir sync failed. %s", result.Stderr)
+	}
 
-		v.ui.PrintInformationalText("\nTo validate that data has been fetched, lets list down the files")
-		v.ui.PrintActionableText(fmt.Sprintf("Validating by listing files"))
-		v.ui.PrintCmdExecutionText(fmt.Sprintf("ls -lR %s", VendirSyncDirectory))
-		err := v.listFiles(VendirSyncDirectory)
-		if err != nil {
-			return err
-		}
+	v.ui.PrintInformationalText("\nTo validate that data has been fetched, lets list down the files")
+	v.ui.PrintActionableText(fmt.Sprintf("Validating by listing files"))
+	v.ui.PrintCmdExecutionText(fmt.Sprintf("ls -lR %s", VendirSyncDirectory))
+	err := v.listFiles(VendirSyncDirectory)
+	if err != nil {
+		return err
+	}
 
-	*/
 	return nil
 }
 
