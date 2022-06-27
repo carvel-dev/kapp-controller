@@ -233,6 +233,8 @@ func ReadVendirConfig() (vendirconf.Config, error) {
 		if err != nil {
 			return vendirconf.Config{}, err
 		}
+	} else {
+		vendirConfig = NewDefaultVendirConfig()
 	}
 	return vendirConfig, nil
 }
