@@ -10,10 +10,12 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app"
+	appinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/dev"
 	cmdpkg "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package"
 	pkgavail "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/available"
+	pkginit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/init"
 	pkginst "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
 	pkgrepo "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
@@ -92,6 +94,7 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 	appCmd.AddCommand(app.NewPauseCmd(app.NewPauseOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	appCmd.AddCommand(app.NewKickCmd(app.NewKickOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	appCmd.AddCommand(app.NewDeleteCmd(app.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	appCmd.AddCommand(appinit.NewInitCmd(appinit.NewInitOptions(o.ui, o.depsFactory, o.logger)))
 	cmd.AddCommand(appCmd)
 
 	cmd.AddCommand(dev.NewCmd(dev.NewDevOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
@@ -187,6 +190,8 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 	cmd.AddCommand(pkgiCmd)
 	cmd.AddCommand(pkgaCmd)
 	cmd.AddCommand(pkginst.NewInstallCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
+	cmd.AddCommand(pkginit.NewInitCmd(pkginit.NewInitOptions(o.ui, o.depsFactory, o.logger)))
+
 }
 
 func AttachGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opts cmdcore.PackageCommandTreeOpts) {

@@ -5,10 +5,11 @@ go 1.17
 require (
 	github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
-	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
+	github.com/cppforlife/go-cli-ui v0.0.0-20220520125801-e45d9169a663
 	github.com/getkin/kin-openapi v0.81.0
 	github.com/google/go-containerregistry v0.7.0
 	github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
+	github.com/k14s/kapp v0.49.0
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
@@ -53,7 +54,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
-	github.com/hashicorp/go-version v1.2.0 // indirect
+	github.com/hashicorp/go-version v1.3.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -71,15 +72,20 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.26.0 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
-	github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec // indirect
+	github.com/vito/go-interact v1.0.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.19.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
+<<<<<<< HEAD
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
+=======
+	golang.org/x/sys v0.0.0-20211110154304-99a53858aa08 // indirect
+	golang.org/x/term v0.0.0-20220411215600-e5f449aeb171 // indirect
+>>>>>>> 2abcbde4 (Adding app init and pkg init)
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
