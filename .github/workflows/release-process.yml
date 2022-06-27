@@ -94,11 +94,11 @@ jobs:
             }
             console.log(checksums)
             return `${checksums['release.yml']}  ./tmp/release.yml
-            ${checksums['kctrl-darwin-amd64']}  kctrl-darwin-amd64
-            ${checksums['kctrl-darwin-arm64']}  kctrl-darwin-arm64
-            ${checksums['kctrl-linux-amd64']}  kctrl-linux-amd64
-            ${checksums['kctrl-linux-arm64']}  kctrl-linux-arm64
-            ${checksums['kctrl-windows-amd64.exe']}  kctrl-windows-amd64.exe`
+            ${checksums['kctrl-darwin-amd64']}  ./kctrl-darwin-amd64
+            ${checksums['kctrl-darwin-arm64']}  ./kctrl-darwin-arm64
+            ${checksums['kctrl-linux-amd64']}  ./kctrl-linux-amd64
+            ${checksums['kctrl-linux-arm64']}  ./kctrl-linux-arm64
+            ${checksums['kctrl-windows-amd64.exe']}  ./kctrl-windows-amd64.exe`
 
       - name: Verify uploaded artifacts
         if: startsWith(github.ref, 'refs/tags/')
