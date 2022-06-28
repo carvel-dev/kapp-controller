@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656442679996,
+  "lastUpdate": 1656446351198,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -3057,6 +3057,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6391121525,
             "unit": "ns/op\t         4.237 DeleteSeconds\t         2.120 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cppforlife@gmail.com",
+            "name": "Dmitriy Kalinin",
+            "username": "cppforlife"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bae14f114fa22e6412d56e4dc9d833c261ad3f12",
+          "message": "Merge pull request #764 from vmware-tanzu/kctrl-repo-tail\n\nAdd tailing behaviour to package repo and add a package repo kick command",
+          "timestamp": "2022-06-28T15:47:28-04:00",
+          "tree_id": "eead2b5808e6bd9ca3edfa0758ae53e6aa43e864",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/bae14f114fa22e6412d56e4dc9d833c261ad3f12"
+        },
+        "date": 1656446349923,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37553097759,
+            "unit": "ns/op\t        19.43 DeleteSeconds\t        18.09 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9687594231,
+            "unit": "ns/op\t         5.391 DeleteSeconds\t         4.265 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 7762077293,
+            "unit": "ns/op\t         4.298 DeleteSeconds\t         3.428 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
