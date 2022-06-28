@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656331436465,
+  "lastUpdate": 1656442679996,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -3015,6 +3015,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6726261420,
             "unit": "ns/op\t         4.455 DeleteSeconds\t         2.219 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5e13daa01f0352c3a2e63719c93f047ce4f9ec2c",
+          "message": "Add formatting for checksums in draft release body (#767)",
+          "timestamp": "2022-06-28T14:48:17-04:00",
+          "tree_id": "3c4039778d17f78ac5b9a1bf8f2b277077ff6e8e",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/5e13daa01f0352c3a2e63719c93f047ce4f9ec2c"
+        },
+        "date": 1656442679149,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36339504691,
+            "unit": "ns/op\t        18.83 DeleteSeconds\t        17.46 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9589238809,
+            "unit": "ns/op\t         5.345 DeleteSeconds\t         4.211 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6391121525,
+            "unit": "ns/op\t         4.237 DeleteSeconds\t         2.120 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
