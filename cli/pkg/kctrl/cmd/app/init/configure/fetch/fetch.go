@@ -5,19 +5,19 @@ package fetch
 
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/build"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
 type FetchStep struct {
-	ui                        cmdcore.IAuthoringUI
-	appBuild                  *build.AppBuild
+	ui                        cmdcore.AuthoringUI
+	appBuild                  *appbuild.AppBuild
 	isAppCommandRunExplicitly bool
 }
 
-func NewFetchStep(ui cmdcore.IAuthoringUI, appBuild *build.AppBuild, isAppCommandRunExplicitly bool) *FetchStep {
+func NewFetchStep(ui cmdcore.AuthoringUI, appBuild *appbuild.AppBuild, isAppCommandRunExplicitly bool) *FetchStep {
 	fetchStep := FetchStep{
 		ui:                        ui,
 		appBuild:                  appBuild,
@@ -79,7 +79,7 @@ func (fetchStep *FetchStep) Interact() error {
 	return nil
 }
 
-func getPreviousFetchOption(appBuild *build.AppBuild) string {
+func getPreviousFetchOption(appBuild *appbuild.AppBuild) string {
 	return appBuild.ObjectMeta.Annotations[common.FetchContentAnnotationKey]
 }
 

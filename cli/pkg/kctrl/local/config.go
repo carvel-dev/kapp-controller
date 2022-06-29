@@ -21,11 +21,12 @@ import (
 )
 
 type Configs struct {
-	Apps        []kcv1alpha1.App
-	PkgInstalls []pkgv1alpha1.PackageInstall
-	Pkgs        []dpv1alpha1.Package
-	Secrets     []corev1.Secret
-	ConfigMaps  []corev1.ConfigMap
+	Apps         []kcv1alpha1.App
+	PkgInstalls  []pkgv1alpha1.PackageInstall
+	Pkgs         []dpv1alpha1.Package
+	PkgMetadatas []dpv1alpha1.PackageMetadata
+	Secrets      []corev1.Secret
+	ConfigMaps   []corev1.ConfigMap
 }
 
 func (c *Configs) ApplyNamespace(ns string) {
@@ -116,7 +117,12 @@ func NewConfigFromFiles(paths []string) (Configs, error) {
 			configs.Pkgs = append(configs.Pkgs, pkg)
 
 		case res.APIVersion == "data.packaging.carvel.dev/v1alpha1" && res.Kind == "PackageMetadata":
-			// ignore
+			var pkgMetadata dpv1alpha1.PackageMetadata
+			err := yaml.Unmarshal(docBytes, &pkgMetadata)
+			if err != nil {
+				return fmt.Errorf("Unmarshaling Package: %s", err)
+			}
+			configs.PkgMetadatas = append(configs.PkgMetadatas, pkgMetadata)
 
 		case res.APIVersion == "packaging.carvel.dev/v1alpha1" && res.Kind == "PackageInstall":
 			var pkgi pkgv1alpha1.PackageInstall

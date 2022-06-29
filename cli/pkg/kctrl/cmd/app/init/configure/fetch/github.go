@@ -16,11 +16,11 @@ const (
 )
 
 type GithubStep struct {
-	ui           cmdcore.IAuthoringUI
+	ui           cmdcore.AuthoringUI
 	vendirConfig vendirconf.Config
 }
 
-func NewGithubStep(ui cmdcore.IAuthoringUI, vendirConfig vendirconf.Config) *GithubStep {
+func NewGithubStep(ui cmdcore.AuthoringUI, vendirConfig vendirconf.Config) *GithubStep {
 	return &GithubStep{
 		ui:           ui,
 		vendirConfig: vendirConfig,

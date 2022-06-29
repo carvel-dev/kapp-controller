@@ -4,18 +4,19 @@
 package template
 
 import (
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/build"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 )
 
 type TemplateStep struct {
-	ui       cmdcore.IAuthoringUI
-	appBuild *build.AppBuild
+	ui       cmdcore.AuthoringUI
+	appBuild *appbuild.AppBuild
 }
 
-func NewTemplateStep(ui cmdcore.IAuthoringUI, appBuild *build.AppBuild) *TemplateStep {
+func NewTemplateStep(ui cmdcore.AuthoringUI, appBuild *appbuild.AppBuild) *TemplateStep {
 	templateStep := TemplateStep{
 		ui:       ui,
 		appBuild: appBuild,
@@ -28,6 +29,9 @@ func (templateStep *TemplateStep) PreInteract() error {
 }
 
 func (templateStep *TemplateStep) Interact() error {
+	if templateStep.appBuild.Spec.App == nil {
+		templateStep.appBuild.Spec.App = &v1alpha12.AppTemplateSpec{}
+	}
 	existingTemplates := templateStep.appBuild.Spec.App.Spec.Template
 	if existingTemplates == nil {
 		appTemplate := []v1alpha1.AppTemplate{}

@@ -9,7 +9,7 @@ import (
 	"github.com/mitchellh/go-wordwrap"
 )
 
-type IAuthoringUI interface {
+type AuthoringUI interface {
 	PrintInformationalText(text string)
 	PrintCmdExecutionText(text string)
 	PrintActionableText(text string)
@@ -23,7 +23,7 @@ type AuthoringUIImpl struct {
 	ui ui.UI
 }
 
-func NewAuthoringUI(ui ui.UI) IAuthoringUI {
+func NewAuthoringUIImpl(ui ui.UI) AuthoringUIImpl {
 	return AuthoringUIImpl{
 		ui: ui,
 	}

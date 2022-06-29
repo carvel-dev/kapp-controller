@@ -6,7 +6,6 @@ package common
 const (
 	FetchContentAnnotationKey = "fetch-content-from"
 	LocalFetchAnnotationKey   = "kctrl.carvel.dev/local-fetch-0"
-	PackageBuildFileName      = "package-build.yml"
 )
 
 const (

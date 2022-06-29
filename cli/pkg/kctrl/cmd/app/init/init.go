@@ -5,13 +5,13 @@ package init
 
 import (
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/configure/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/configure/template"
@@ -29,13 +29,13 @@ const (
 )
 
 type InitOptions struct {
-	ui          cmdcore.IAuthoringUI
+	ui          cmdcore.AuthoringUI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 }
 
 func NewInitOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *InitOptions {
-	return &InitOptions{ui: cmdcore.NewAuthoringUI(ui), depsFactory: depsFactory, logger: logger}
+	return &InitOptions{ui: cmdcore.NewAuthoringUIImpl(ui), depsFactory: depsFactory, logger: logger}
 }
 
 func NewInitCmd(o *InitOptions) *cobra.Command {
@@ -52,7 +52,7 @@ func (o *InitOptions) Run() error {
 	o.ui.PrintHeaderText("\nPre-requisite")
 	o.ui.PrintInformationalText("Welcome! Before we start on the app creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
 
-	appBuild, err := build.GetAppBuild()
+	appBuild, err := appbuild.GetAppBuild()
 	if err != nil {
 		return err
 	}
@@ -68,14 +68,14 @@ func (o *InitOptions) Run() error {
 }
 
 type CreateStep struct {
-	ui                        cmdcore.IAuthoringUI
-	appBuild                  *build.AppBuild
+	ui                        cmdcore.AuthoringUI
+	appBuild                  *appbuild.AppBuild
 	logger                    logger.Logger
 	depsFactory               cmdcore.DepsFactory
 	isAppCommandRunExplicitly bool
 }
 
-func NewCreateStep(ui cmdcore.IAuthoringUI, appBuild *build.AppBuild, logger logger.Logger, depsFactory cmdcore.DepsFactory, isAppCommandRunExplicitly bool) *CreateStep {
+func NewCreateStep(ui cmdcore.AuthoringUI, appBuild *appbuild.AppBuild, logger logger.Logger, depsFactory cmdcore.DepsFactory, isAppCommandRunExplicitly bool) *CreateStep {
 	return &CreateStep{
 		ui:                        ui,
 		appBuild:                  appBuild,
@@ -85,7 +85,7 @@ func NewCreateStep(ui cmdcore.IAuthoringUI, appBuild *build.AppBuild, logger log
 	}
 }
 
-func (createStep CreateStep) GetAppBuild() *build.AppBuild {
+func (createStep CreateStep) GetAppBuild() *appbuild.AppBuild {
 	return createStep.appBuild
 }
 
@@ -108,6 +108,8 @@ func (createStep *CreateStep) Interact() error {
 	if err != nil {
 		return err
 	}
+
+	createStep.configureExportSection()
 
 	return nil
 }
@@ -145,6 +147,7 @@ func (createStep *CreateStep) PostInteract() error {
 		if err != nil {
 			return err
 		}
+
 		createStep.ui.PrintInformationalText(fmt.Sprintf("Both the files can be accessed from the following location:"))
 	}
 
@@ -172,12 +175,12 @@ func (createStep CreateStep) generateApp() (kcv1alpha1.App, error) {
 
 }
 
-func printNextStep(ui cmdcore.IAuthoringUI) {
+func printNextStep(ui cmdcore.AuthoringUI) {
 	ui.PrintInformationalText("\n**Next steps**")
 	ui.PrintInformationalText("\nCreated app can be consumed in following ways:\n")
 }
 
-func printInformation(ui cmdcore.IAuthoringUI) {
+func printInformation(ui cmdcore.AuthoringUI) {
 	ui.PrintInformationalText("\n**Information**\napp-build.yml is generated as part of this flow. This file can be used for further updating and adding complex scenarios while using the `kctrl dev deploy` command. Please read the link'ed documentation for more explanation.")
 }
 
@@ -244,6 +247,22 @@ func (createStep CreateStep) updateExistingApp() (kcv1alpha1.App, error) {
 	addUpstreamAsPathToYttIfNotExist(templateSectionFromExistingApp)
 
 	return existingApp, nil
+}
+
+func (createStep CreateStep) configureExportSection() {
+	fetchSource := createStep.appBuild.ObjectMeta.Annotations[common.FetchContentAnnotationKey]
+	if fetchSource == common.FetchFromLocalDirectory {
+		return
+	}
+
+	// TODO current implementation is if export section is already defined, we will not touch it. Confirm the same.
+	if createStep.appBuild.Spec.Export == nil || len(createStep.appBuild.Spec.Export) == 0 {
+		createStep.appBuild.Spec.Export = append(createStep.appBuild.Spec.Export, appbuild.Export{
+			ImgpkgBundle: nil,
+			IncludePaths: []string{UpstreamFolderName},
+		})
+	}
+	return
 }
 
 func addUpstreamAsPathToYttIfNotExist(appTemplates []kcv1alpha1.AppTemplate) {

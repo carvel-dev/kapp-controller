@@ -4,17 +4,17 @@
 package template
 
 import (
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/build"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
 type KbldTemplateStep struct {
-	ui       cmdcore.IAuthoringUI
-	appBuild *build.AppBuild
+	ui       cmdcore.AuthoringUI
+	appBuild *appbuild.AppBuild
 }
 
-func NewKbldTemplateStep(ui cmdcore.IAuthoringUI, appBuild *build.AppBuild) *KbldTemplateStep {
+func NewKbldTemplateStep(ui cmdcore.AuthoringUI, appBuild *appbuild.AppBuild) *KbldTemplateStep {
 	return &KbldTemplateStep{
 		ui:       ui,
 		appBuild: appBuild,

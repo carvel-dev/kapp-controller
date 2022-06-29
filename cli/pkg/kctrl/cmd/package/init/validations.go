@@ -12,7 +12,7 @@ import (
 )
 
 //TODO should we use the same validation used in kapp controller. But that accepts other parameter. ValidatePackageMetadataName in validations.go file
-func validateFQName(name string) (bool, string, error) {
+func validateRefName(name string) (bool, string, error) {
 	if len(name) == 0 {
 		return false, "Fully qualified name of a package cannot be empty", nil
 	}

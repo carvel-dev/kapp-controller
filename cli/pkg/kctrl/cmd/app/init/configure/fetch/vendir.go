@@ -6,13 +6,13 @@ package fetch
 import (
 	"bytes"
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	"os"
 	goexec "os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
@@ -27,12 +27,12 @@ const (
 )
 
 type VendirStep struct {
-	ui       cmdcore.IAuthoringUI
-	appBuild *build.AppBuild
+	ui       cmdcore.AuthoringUI
+	appBuild *appbuild.AppBuild
 	config   vendirconf.Config
 }
 
-func NewVendirStep(ui cmdcore.IAuthoringUI, appBuild *build.AppBuild, config vendirconf.Config) *VendirStep {
+func NewVendirStep(ui cmdcore.AuthoringUI, appBuild *appbuild.AppBuild, config vendirconf.Config) *VendirStep {
 	vendirStep := VendirStep{
 		ui:       ui,
 		appBuild: appBuild,
@@ -127,7 +127,7 @@ func (v *VendirStep) PostInteract() error {
 	if err != nil {
 		return err
 	}
-	err = v.runVendirSync()
+	//err = v.runVendirSync()
 	if err != nil {
 		return err
 	}
@@ -196,7 +196,6 @@ func (v *VendirStep) runVendirSync() error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 

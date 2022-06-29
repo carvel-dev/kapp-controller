@@ -4,20 +4,20 @@
 package template
 
 import (
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	"strings"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
 type YttTemplateStep struct {
-	ui       cmdcore.IAuthoringUI
-	appBuild *build.AppBuild
+	ui       cmdcore.AuthoringUI
+	appBuild *appbuild.AppBuild
 }
 
-func NewYttTemplateStep(ui cmdcore.IAuthoringUI, appBuild *build.AppBuild) *YttTemplateStep {
+func NewYttTemplateStep(ui cmdcore.AuthoringUI, appBuild *appbuild.AppBuild) *YttTemplateStep {
 	return &YttTemplateStep{
 		ui:       ui,
 		appBuild: appBuild,
