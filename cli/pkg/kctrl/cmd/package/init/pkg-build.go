@@ -4,8 +4,9 @@
 package init
 
 import (
-	appBuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	"os"
+
+	appBuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	"sigs.k8s.io/yaml"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
@@ -20,7 +21,7 @@ const (
 
 type PackageBuild struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:",inline"`
+	metav1.ObjectMeta `json:"metadata"`
 	Spec              PackageBuildSpec `json:"spec,omitempty"`
 }
 

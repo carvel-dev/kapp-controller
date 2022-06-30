@@ -17,6 +17,7 @@ import (
 	pkgavail "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/available"
 	pkginit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/init"
 	pkginst "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
+	pkgrel "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/release"
 	pkgrepo "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/version"
@@ -191,6 +192,7 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 	cmd.AddCommand(pkgaCmd)
 	cmd.AddCommand(pkginst.NewInstallCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	cmd.AddCommand(pkginit.NewInitCmd(pkginit.NewInitOptions(o.ui, o.depsFactory, o.logger)))
+	cmd.AddCommand(pkgrel.NewReleaseCmd(pkgrel.NewReleaseOptions(o.ui, o.depsFactory, o.logger)))
 
 }
 
