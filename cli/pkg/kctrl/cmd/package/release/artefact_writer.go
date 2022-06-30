@@ -17,21 +17,21 @@ import (
 )
 
 type ArtefactWriter struct {
-	Package     string
-	Version     string
-	ArtefactDir string
+	Package string
+	Version string
 }
 
 const (
-	packageDir = "packages"
+	artefactDir = "carvel-artefacts"
+	packageDir  = "packages"
 )
 
-func NewArtefactWriter(pkg string, version string, artefactDir string) *ArtefactWriter {
-	return &ArtefactWriter{Package: pkg, Version: version, ArtefactDir: artefactDir}
+func NewArtefactWriter(pkg string, version string) *ArtefactWriter {
+	return &ArtefactWriter{Package: pkg, Version: version}
 }
 
 func (w *ArtefactWriter) CreatePackageDir() error {
-	path := filepath.Join(w.ArtefactDir, packageDir, w.Package)
+	path := filepath.Join(artefactDir, packageDir, w.Package)
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (w *ArtefactWriter) TouchPackageMetadata() error {
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(w.ArtefactDir, packageDir, w.Package, "metadata.yml")
+	path := filepath.Join(artefactDir, packageDir, w.Package, "metadata.yml")
 	return w.createFileIfNotExists(path, append(metadataBytes, []byte(template)...))
 }
 
@@ -97,7 +97,7 @@ func (w *ArtefactWriter) WritePackageFile(imgpkgBundleLocation string, buildAppS
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(w.ArtefactDir, packageDir, w.Package, fmt.Sprintf("%s.yml", w.Version))
+	path := filepath.Join(artefactDir, packageDir, w.Package, fmt.Sprintf("%s.yml", w.Version))
 	return w.createOrOverwriteFile(path, packageBytes)
 }
 

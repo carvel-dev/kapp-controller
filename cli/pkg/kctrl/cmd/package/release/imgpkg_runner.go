@@ -29,9 +29,6 @@ func (r ImgpkgRunner) Run() (string, error) {
 	}
 
 	wd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
 	for _, path := range r.Paths {
 		var stderrBuf bytes.Buffer
 		cmd := goexec.Command("cp", "-r", filepath.Join(wd, path), dir)
@@ -42,10 +39,7 @@ func (r ImgpkgRunner) Run() (string, error) {
 		}
 	}
 	if r.UseKbldImagesLock {
-		err = goexec.Command("cp", "-r", r.ImgLockFilepath, filepath.Join(dir, lockOutputFolder)).Run()
-		if err != nil {
-			return "", err
-		}
+		err = goexec.Command("cp", "-r", filepath.Join(wd, ".imgpkg"), dir).Run()
 	}
 	defer os.RemoveAll(dir)
 

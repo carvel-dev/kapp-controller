@@ -5,6 +5,7 @@ package release
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,9 +13,8 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
-	cmdpkgbuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/init"
+	cmdpkgbuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/init/build"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -26,17 +26,9 @@ type ReleaseOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	pkgVersion     string
-	chdir          string
-	outputLocation string
-	debug          bool
+	pkgVersion string
+	debug      bool
 }
-
-const (
-	defaultArtefactDir = "carvel-artefacts"
-	lockOutputFolder   = ".imgpkg"
-	defaultVersion     = "0.0.0-%d"
-)
 
 func NewReleaseOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ReleaseOptions {
 	return &ReleaseOptions{ui: cmdcore.NewAuthoringUIImpl(ui), depsFactory: depsFactory, logger: logger}
@@ -50,8 +42,6 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.pkgVersion, "version", "v", "", "Version to be released")
-	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Working directory with package-build and other config")
-	cmd.Flags().StringVar(&o.outputLocation, "copy-to", defaultArtefactDir, "Output location for artefacts")
 	cmd.Flags().BoolVar(&o.debug, "debug", false, "Version to be released")
 
 	return cmd
@@ -59,22 +49,14 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 
 func (o *ReleaseOptions) Run() error {
 	if o.pkgVersion == "" {
-		o.pkgVersion = fmt.Sprintf(defaultVersion, time.Now().Unix())
+		o.pkgVersion = fmt.Sprintf("build-%d", time.Now().Unix())
 	}
 
-	if o.chdir != "" {
-		err := os.Chdir(o.chdir)
-		if err != nil {
-			return err
-		}
-	}
-
-	wd, err := os.Getwd()
+	pkgBuild, err := cmdpkgbuild.NewPackageBuildFromFile("package-build.yml")
 	if err != nil {
 		return err
 	}
-
-	pkgBuild, err := cmdpkgbuild.NewPackageBuildFromFile(filepath.Join(wd, "package-build.yml"))
+	pkg, err := cmdpkgbuild.GetPackage("package-resources.yml")
 	if err != nil {
 		return err
 	}
@@ -119,13 +101,17 @@ func (o *ReleaseOptions) Run() error {
 	}
 
 	// Create temporary directory for imgpkg lock file
-	err = os.Mkdir(filepath.Join(wd, lockOutputFolder), os.ModePerm)
+	err = os.Mkdir(".imgpkg", fs.FileMode(0777))
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(filepath.Join(wd, lockOutputFolder))
+	defer os.RemoveAll(".imgpkg")
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	imgpkgLockPath := filepath.Join(wd, ".imgpkg", "images.yml")
 
-	imgpkgLockPath := filepath.Join(wd, lockOutputFolder, "images.yml")
 	cmdRunner := NewReleaseCmdRunner(os.Stdout, o.debug, imgpkgLockPath)
 	reconciler := cmdlocal.NewReconciler(o.depsFactory, cmdRunner, o.logger)
 
@@ -159,30 +145,7 @@ func (o *ReleaseOptions) Run() error {
 		}
 	}
 
-	return artefactWriter.WritePackageFile(imgpkgBundleURL, pkgBuild.Spec.Template.Spec.App.Spec, useKbldImagesLock)
-}
-
-func (o *ReleaseOptions) loadExportData(pkgBuild *cmdpkgbuild.PackageBuild) error {
-	if len(pkgBuild.Spec.Template.Spec.Export) == 0 {
-		pkgBuild.Spec.Template.Spec.Export = []appbuild.Export{
-			{
-				ImgpkgBundle: &appbuild.ImgpkgBundle{},
-			},
-		}
-	}
-	defaultImgValue := pkgBuild.Spec.Template.Spec.Export[0].ImgpkgBundle.Image
-	o.ui.PrintInformationalText("The bundle created needs to be pushed to an OCI registry. Registry URL format: <REGISTRY_URL/REPOSITORY_NAME:TAG> e.g. index.docker.io/k8slt/sample-bundle:v0.1.0")
-	textOpts := ui.TextOpts{
-		Label:        "Enter the registry URL",
-		Default:      defaultImgValue,
-		ValidateFunc: nil,
-	}
-	imgValue, err := o.ui.AskForText(textOpts)
-	if err != nil {
-		return err
-	}
-	pkgBuild.Spec.Template.Spec.Export[0].ImgpkgBundle.Image = strings.TrimSpace(imgValue)
-	return pkgBuild.Save()
+	return artefactWriter.WritePackageFile(imgpkgBundleURL, pkg.Spec.Template.Spec, useKbldImagesLock)
 }
 
 func (o *ReleaseOptions) imgpkgBundleURLFromStdout(imgpkgStdout string) (string, error) {
@@ -196,9 +159,4 @@ func (o *ReleaseOptions) imgpkgBundleURLFromStdout(imgpkgStdout string) (string,
 		}
 	}
 	return "", fmt.Errorf("Could not get imgpkg bundle location")
-}
-
-func (o *ReleaseOptions) refNameFromPackageName(val string) string {
-	items := strings.Split(val, ".")
-	return strings.Join(items[:len(items)-3], ".")
 }
