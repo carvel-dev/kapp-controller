@@ -192,14 +192,7 @@ func NewCreateStep(ui cmdcore.AuthoringUI, pkgBuild *PackageBuild, pkg *v1alpha1
 	}
 }
 
-func (createStep CreateStep) printStartBlock() {
-	createStep.ui.PrintHeaderText("\nPre-requisite")
-	createStep.ui.PrintInformationalText("Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
-	createStep.ui.PrintInformationalText("\nWe need a directory to hold generated Package and PackageMetadata CRs")
-}
-
 func (createStep *CreateStep) PreInteract() error {
-	createStep.printStartBlock()
 	return nil
 }
 
@@ -259,7 +252,7 @@ func (createStep CreateStep) configurePackageReferenceName() error {
 }
 
 func (createStep *CreateStep) printPackageReferenceNameBlock() {
-	createStep.ui.PrintInformationalText("A package Reference name must be a valid DNS subdomain name (https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names) \n - at least three segments separated by a '.', no trailing '.' e.g. samplepackage.corp.com")
+	createStep.ui.PrintInformationalText("\nA package Reference name must be a valid DNS subdomain name (https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names) \n - at least three segments separated by a '.', no trailing '.' e.g. samplepackage.corp.com")
 }
 
 //Get Package Version and store it in package-build.yml

@@ -31,9 +31,14 @@ func (fetchStep *FetchStep) PreInteract() error {
 }
 
 func (fetchStep *FetchStep) Interact() error {
-	fetchStep.ui.PrintHeaderText("\nApp Content(Step 2/3)")
+	if fetchStep.isAppCommandRunExplicitly {
+		fetchStep.ui.PrintHeaderText("\nApp Content(Step 2/3)")
+		fetchStep.ui.PrintInformationalText("We need to fetch the manifest which defines how the application would be deployed in a K8s cluster. This manifest can be in the form of a yaml file used with `kubectl apply ...` or it could be a helm chart used with `helm install ...`. They can be available in any of the following locations. Please select from where to fetch the manifest")
+	} else {
+		fetchStep.ui.PrintHeaderText("Package Content(Step 2/3)")
+		fetchStep.ui.PrintInformationalText("We need to fetch the manifest which defines how the package would be deployed in a K8s cluster. This manifest can be in the form of a yaml file used with `kubectl apply ...` or it could be a helm chart used with `helm install ...`. They can be available in any of the following locations. Please select from where to fetch the manifest")
+	}
 
-	fetchStep.ui.PrintInformationalText("We need to fetch the manifest which defines how the application would be deployed in a K8s cluster. This manifest can be in the form of a yaml file used with `kubectl apply ...` or it could be a helm chart used with `helm install ...`. They can be available in any of the following locations. Please select from where to fetch the manifest")
 	options := []string{common.FetchReleaseArtifactFromGithub, common.FetchManifestFromGithub, common.FetchChartFromHelmRepo, common.FetchChartFromGithub, common.FetchFromLocalDirectory}
 	previousFetchOption := getPreviousFetchOption(fetchStep.appBuild)
 	previousFetchOptionIndex := getPreviousFetchOptionIndex(options, previousFetchOption)
