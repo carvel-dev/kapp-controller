@@ -20,7 +20,7 @@ var sharedNamespaces = []string{
 
 type NamespaceFlags struct {
 	Name                    string
-	AllowedSharedNamespaces []string
+	AllowedSharedNamespaces bool
 }
 
 func (s *NamespaceFlags) Set(cmd *cobra.Command, flagsFactory FlagsFactory) {
@@ -32,7 +32,7 @@ func (s *NamespaceFlags) SetWithPackageCommandTreeOpts(cmd *cobra.Command, flags
 	namespaceEnvVariableKey := fmt.Sprintf("%s_NAMESPACE", strings.ToUpper(opts.BinaryName))
 	name := flagsFactory.NewNamespaceNameFlag(&s.Name, namespaceEnvVariableKey)
 	cmd.Flags().VarP(name, "namespace", "n", fmt.Sprintf("Specified namespace ($%s or default from kubeconfig)", namespaceEnvVariableKey))
-	cmd.Flags().StringArrayVar(&s.AllowedSharedNamespaces, "dangerous-allow-use-of-shared-namespace", []string{}, "Allow use of shared namespaces (optional, comma separated strings)")
+	cmd.Flags().BoolVar(&s.AllowedSharedNamespaces, "dangerous-allow-use-of-shared-namespace", false, "Allow use of shared namespaces (default: false)")
 }
 
 type NamespaceNameFlag struct {
@@ -68,13 +68,11 @@ func (s *NamespaceNameFlag) Resolve() error {
 }
 
 func (s *NamespaceFlags) CheckForDisallowedSharedNamespaces() error {
+	if s.AllowedSharedNamespaces {
+		return nil
+	}
 	for _, ns := range sharedNamespaces {
 		if s.Name == ns {
-			for _, allowedNs := range s.AllowedSharedNamespaces {
-				if ns == allowedNs {
-					return nil
-				}
-			}
 			return fmt.Errorf(`Creating sensitive resources in a shared namespace (%s)
 			(hint: Specify a namespace using the '-n' flag or use kubeconfig to change default namespace 'kubectl config set-context --current --namespace=private-namespace'.
 			Or use '--dangerous-allow-allow-use-of-shared-namespace=%s' to allow use of shared namespace)`, s.Name, s.Name)
