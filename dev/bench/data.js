@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657044798797,
+  "lastUpdate": 1657045082672,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -3309,6 +3309,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6414619650,
             "unit": "ns/op\t         4.247 DeleteSeconds\t         2.125 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cppforlife@gmail.com",
+            "name": "Dmitriy Kalinin",
+            "username": "cppforlife"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f206bc98b01b78bcb135e1c4b811c3e6e79bd0c9",
+          "message": "use cache mount in Dockerfile (#748)\n\nCo-authored-by: Dmitriy Kalinin <dkalinin@vmware.com>",
+          "timestamp": "2022-07-05T14:06:20-04:00",
+          "tree_id": "7bd2bb67a80ded8f2e369b4568026b30736ec0a2",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/f206bc98b01b78bcb135e1c4b811c3e6e79bd0c9"
+        },
+        "date": 1657045080470,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36960265042,
+            "unit": "ns/op\t        19.26 DeleteSeconds\t        17.65 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9598462168,
+            "unit": "ns/op\t         5.346 DeleteSeconds\t         4.208 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6537059271,
+            "unit": "ns/op\t         4.315 DeleteSeconds\t         2.172 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
