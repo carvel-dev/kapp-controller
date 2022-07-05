@@ -15,6 +15,7 @@ import (
 	appInit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/configure/fetch"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
@@ -37,7 +38,7 @@ const (
 	PkgInstallKind        = "PackageInstall"
 
 	defaultPkgRefName = "samplepackage.corp.com"
-	defaultPkgVersion = "1.0.0"
+	defaultPkgVersion = "0.0.0"
 
 	YAMLSeparator = "---"
 )
@@ -46,9 +47,6 @@ type InitOptions struct {
 	ui          cmdcore.AuthoringUI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
-
-	KbldBuild  bool
-	pkgVersion string
 }
 
 func NewInitOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *InitOptions {
@@ -62,7 +60,6 @@ func NewInitCmd(o *InitOptions) *cobra.Command {
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
-	cmd.PersistentFlags().StringVarP(&o.pkgVersion, "version", "v", "", "Version of a package (in semver format)")
 	return cmd
 }
 
@@ -101,7 +98,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	createStep := NewCreateStep(o.ui, pkgBuild, pkg, pkgMetadata, pkgInstall, o.logger, o.pkgVersion, o.depsFactory)
+	createStep := NewCreateStep(o.ui, pkgBuild, pkg, pkgMetadata, pkgInstall, o.logger, o.depsFactory)
 	createStep.pkg = pkg
 	createStep.pkgMetadata = pkgMetadata
 	err = common.Run(createStep)
@@ -174,19 +171,17 @@ type CreateStep struct {
 	pkg         *v1alpha1.Package
 	pkgMetadata *v1alpha1.PackageMetadata
 	pkgInstall  *v1alpha12.PackageInstall
-	pkgVersion  string
 	logger      logger.Logger
 	depsFactory cmdcore.DepsFactory
 }
 
-func NewCreateStep(ui cmdcore.AuthoringUI, pkgBuild *PackageBuild, pkg *v1alpha1.Package, pkgMetadata *v1alpha1.PackageMetadata, pkgInstall *v1alpha12.PackageInstall, logger logger.Logger, pkgVersion string, depsFactory cmdcore.DepsFactory) *CreateStep {
+func NewCreateStep(ui cmdcore.AuthoringUI, pkgBuild *PackageBuild, pkg *v1alpha1.Package, pkgMetadata *v1alpha1.PackageMetadata, pkgInstall *v1alpha12.PackageInstall, logger logger.Logger, depsFactory cmdcore.DepsFactory) *CreateStep {
 	return &CreateStep{
 		ui:          ui,
 		pkgBuild:    pkgBuild,
 		pkg:         pkg,
 		pkgMetadata: pkgMetadata,
 		pkgInstall:  pkgInstall,
-		pkgVersion:  pkgVersion,
 		logger:      logger,
 		depsFactory: depsFactory,
 	}
@@ -202,10 +197,6 @@ func (createStep *CreateStep) Interact() error {
 		return err
 	}
 
-	err = createStep.configurePackageVersion()
-	if err != nil {
-		return err
-	}
 	appBuild := createStep.generateAppBuildFromPackageBuild()
 	appCreateStep := appInit.NewCreateStep(createStep.ui, appBuild, createStep.logger, createStep.depsFactory, false)
 	err = common.Run(appCreateStep)
@@ -255,44 +246,6 @@ func (createStep *CreateStep) printPackageReferenceNameBlock() {
 	createStep.ui.PrintInformationalText("\nA package Reference name must be a valid DNS subdomain name (https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names) \n - at least three segments separated by a '.', no trailing '.' e.g. samplepackage.corp.com")
 }
 
-//Get Package Version and store it in package-build.yml
-func (createStep CreateStep) configurePackageVersion() error {
-	var (
-		pkgVersion string
-		err        error
-	)
-
-	// TODO if pkgVersion is passed via command line arg, then should we not even ask the question?
-	if createStep.pkgVersion != "" {
-		pkgVersion = createStep.pkgVersion
-	} else {
-		createStep.printPkgVersionBlock()
-		defaultPkgVersion := createStep.getDefaultPackageVersion()
-		textOpts := ui.TextOpts{
-			Label:        "Enter the package version",
-			Default:      defaultPkgVersion,
-			ValidateFunc: validatePackageSpecVersion,
-		}
-
-		pkgVersion, err = createStep.ui.AskForText(textOpts)
-		if err != nil {
-			return err
-		}
-	}
-
-	createStep.pkg.Spec.Version = pkgVersion
-	createStep.pkg.Name = createStep.pkg.Spec.RefName + "." + pkgVersion
-	err = createStep.Save()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (createStep *CreateStep) printPkgVersionBlock() {
-	createStep.ui.PrintInformationalText("A package version is used by PackageInstall to install particular version of the package into the Kubernetes cluster. It must be valid semver as specified by https://semver.org/spec/v2.0.0.html")
-}
-
 func (createStep *CreateStep) PostInteract() error {
 	currentTime := metav1.NewTime(time.Now())
 	createStep.pkgMetadata.ObjectMeta.CreationTimestamp = currentTime
@@ -325,7 +278,7 @@ func (createStep CreateStep) updatePackageInstall() error {
 	existingPkgInstall := createStep.pkgInstall
 	if existingPkgInstall.ObjectMeta.Annotations == nil {
 		existingPkgInstall.ObjectMeta.Annotations = make(map[string]string)
-		existingPkgInstall.ObjectMeta.Annotations[common.LocalFetchAnnotationKey] = "."
+		existingPkgInstall.ObjectMeta.Annotations[fetch.LocalFetchAnnotationKey] = "."
 	}
 
 	if len(existingPkgInstall.Name) == 0 {
@@ -340,7 +293,7 @@ func (createStep CreateStep) updatePackageInstall() error {
 			RefName: createStep.pkg.Spec.RefName,
 		}
 	}
-	//TODO Check whether we should add version constraint as well.
+	// TODO Check whether we should add version constraint as well.
 	if len(existingPkgInstall.Spec.PackageRef.RefName) == 0 {
 		existingPkgInstall.Spec.PackageRef.RefName = createStep.pkg.Spec.RefName
 	}
@@ -349,6 +302,11 @@ func (createStep CreateStep) updatePackageInstall() error {
 
 func (createStep CreateStep) updatePackage() error {
 	existingPkg := createStep.pkg
+
+	// TODO What if user has explicitly given the version anything else from 0.0.0?
+	existingPkg.Spec.Version = defaultPkgVersion
+	existingPkg.Name = existingPkg.Spec.RefName + "." + existingPkg.Spec.Version
+
 	if existingPkg.Spec.Template.Spec == nil {
 		existingPkg.Spec.Template.Spec = &v1alpha13.AppSpec{}
 	}
@@ -396,13 +354,6 @@ func (createStep CreateStep) getDefaultPackageRefName() string {
 		return createStep.pkgMetadata.Name
 	}
 	return defaultPkgRefName
-}
-
-func (createStep CreateStep) getDefaultPackageVersion() string {
-	if len(createStep.pkg.Spec.Version) != 0 {
-		return createStep.pkg.Spec.Version
-	}
-	return defaultPkgVersion
 }
 
 // Save method will save all the resources i.e. PackageBuild, PackageInstall, Package and PackageMetadata

@@ -4,10 +4,10 @@
 package template
 
 import (
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	"strings"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/configure/fetch"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
@@ -44,21 +44,21 @@ func isYttTemplateExist(existingTemplates []v1alpha1.AppTemplate) bool {
 func (yttTemplateStep *YttTemplateStep) initializeYttTemplate() {
 	yttTemplateStep.appBuild.Spec.App.Spec.Template = append(yttTemplateStep.appBuild.Spec.App.Spec.Template,
 		v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{}})
-	yttTemplateStep.appBuild.WriteToFile()
+	yttTemplateStep.appBuild.Save()
 }
 
 func (yttTemplateStep *YttTemplateStep) PostInteract() error {
 	existingTemplates := yttTemplateStep.appBuild.Spec.App.Spec.Template
-	fetchSource := yttTemplateStep.appBuild.ObjectMeta.Annotations[common.FetchContentAnnotationKey]
+	fetchSource := yttTemplateStep.appBuild.ObjectMeta.Annotations[fetch.FetchContentAnnotationKey]
 	//TODO how to handle if from local directory?
-	if fetchSource == common.FetchFromLocalDirectory {
+	if fetchSource == fetch.FetchFromLocalDirectory {
 		if !isYttTemplateExist(existingTemplates) {
 			yttTemplateStep.initializeYttTemplate()
 		}
 		return nil
 	}
 
-	if fetchSource == common.FetchChartFromHelmRepo || fetchSource == common.FetchChartFromGithub {
+	if fetchSource == fetch.FetchChartFromHelmRepo || fetchSource == fetch.FetchChartFromGithub {
 		//TODO in case of helm, check if any ytt path exist with '-', otherwise add it.
 		return nil
 	}
@@ -85,5 +85,5 @@ func (yttTemplateStep *YttTemplateStep) addUpstreamAsPathIfNotExist() {
 		},
 	}
 	yttTemplateStep.appBuild.Spec.App.Spec.Template = append([]v1alpha1.AppTemplate{appTemplateWithYtt}, yttTemplateStep.appBuild.Spec.App.Spec.Template...)
-	yttTemplateStep.appBuild.WriteToFile()
+	yttTemplateStep.appBuild.Save()
 }

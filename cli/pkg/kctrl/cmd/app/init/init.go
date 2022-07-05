@@ -52,7 +52,7 @@ func (o *InitOptions) Run() error {
 	o.ui.PrintHeaderText("\nPre-requisite")
 	o.ui.PrintInformationalText("Welcome! Before we start on the app creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
 
-	appBuild, err := appbuild.GetAppBuild()
+	appBuild, err := appbuild.NewAppBuild()
 	if err != nil {
 		return err
 	}
@@ -189,7 +189,7 @@ func (createStep CreateStep) createAppFromAppBuild() kcv1alpha1.App {
 	appName := "microservices-demo"
 	serviceAccountName := fmt.Sprintf("sa-%s", appName)
 	appAnnotation := map[string]string{
-		common.LocalFetchAnnotationKey: ".",
+		fetch.LocalFetchAnnotationKey: ".",
 	}
 	appTemplateSection := createStep.appBuild.Spec.App.Spec.Template
 	//TODO should we remove the fetch section as it is not beind used and add it dynamically during dev deploy.
@@ -225,8 +225,8 @@ func (createStep CreateStep) updateExistingApp() (kcv1alpha1.App, error) {
 	if err != nil {
 		return kcv1alpha1.App{}, err
 	}
-	fetchSource := createStep.appBuild.ObjectMeta.Annotations[common.FetchContentAnnotationKey]
-	if fetchSource == common.FetchFromLocalDirectory {
+	fetchSource := createStep.appBuild.ObjectMeta.Annotations[fetch.FetchContentAnnotationKey]
+	if fetchSource == fetch.FetchFromLocalDirectory {
 		return existingApp, nil
 	}
 
@@ -234,7 +234,7 @@ func (createStep CreateStep) updateExistingApp() (kcv1alpha1.App, error) {
 
 	//As fetchSource is not from Local directory, we should add upstream folder in ytt path and helmTemplate(if required).
 	isHelmTemplateRequired := false
-	if fetchSource == common.FetchChartFromHelmRepo || fetchSource == common.FetchChartFromGithub {
+	if fetchSource == fetch.FetchChartFromHelmRepo || fetchSource == fetch.FetchChartFromGithub {
 		isHelmTemplateRequired = true
 	}
 	if isHelmTemplateRequired {
@@ -250,8 +250,8 @@ func (createStep CreateStep) updateExistingApp() (kcv1alpha1.App, error) {
 }
 
 func (createStep CreateStep) configureExportSection() {
-	fetchSource := createStep.appBuild.ObjectMeta.Annotations[common.FetchContentAnnotationKey]
-	if fetchSource == common.FetchFromLocalDirectory {
+	fetchSource := createStep.appBuild.ObjectMeta.Annotations[fetch.FetchContentAnnotationKey]
+	if fetchSource == fetch.FetchFromLocalDirectory {
 		return
 	}
 

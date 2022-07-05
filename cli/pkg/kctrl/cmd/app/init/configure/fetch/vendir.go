@@ -6,8 +6,6 @@ package fetch
 import (
 	"bytes"
 	"fmt"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
-	"os"
 	goexec "os/exec"
 	"path/filepath"
 	"strings"
@@ -17,7 +15,6 @@ import (
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
-	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -27,16 +24,16 @@ const (
 )
 
 type VendirStep struct {
-	ui       cmdcore.AuthoringUI
-	appBuild *appbuild.AppBuild
-	config   vendirconf.Config
+	ui          cmdcore.AuthoringUI
+	config      vendirconf.Config
+	fetchOption string
 }
 
-func NewVendirStep(ui cmdcore.AuthoringUI, appBuild *appbuild.AppBuild, config vendirconf.Config) *VendirStep {
+func NewVendirStep(ui cmdcore.AuthoringUI, config vendirconf.Config, fetchOption string) *VendirStep {
 	vendirStep := VendirStep{
-		ui:       ui,
-		appBuild: appBuild,
-		config:   config,
+		ui:          ui,
+		config:      config,
+		fetchOption: fetchOption,
 	}
 	return &vendirStep
 }
@@ -61,9 +58,9 @@ func (v *VendirStep) Interact() error {
 			return nil
 		}
 	}
-	currentFetchOptionSelected := v.appBuild.ObjectMeta.Annotations[common.FetchContentAnnotationKey]
+	currentFetchOptionSelected := v.fetchOption
 	switch currentFetchOptionSelected {
-	case common.FetchReleaseArtifactFromGithub:
+	case FetchReleaseArtifactFromGithub:
 		githubStep := NewGithubStep(v.ui, v.config)
 		err := common.Run(githubStep)
 		if err != nil {
@@ -74,11 +71,11 @@ func (v *VendirStep) Interact() error {
 			return err
 		}
 		v.config.Directories[0].Contents[0].IncludePaths = includedPaths
-
-	case common.FetchChartFromHelmRepo:
+		return SaveVendir(v.config)
+	case FetchChartFromHelmRepo:
+		helmStep := NewHelmStep(v.ui, v.config)
+		return common.Run(helmStep)
 	}
-
-	SaveVendir(v.config)
 	return nil
 }
 
@@ -127,7 +124,7 @@ func (v *VendirStep) PostInteract() error {
 	if err != nil {
 		return err
 	}
-	//err = v.runVendirSync()
+	err = v.runVendirSync()
 	if err != nil {
 		return err
 	}
@@ -217,55 +214,5 @@ func (v *VendirStep) listFiles(dir string) error {
 		return fmt.Errorf("Listing files.\n %s", result.Stderr)
 	}
 	v.ui.PrintCmdExecutionOutput(result.Stdout)
-	return nil
-}
-
-func ReadVendirConfig() (vendirconf.Config, error) {
-	var vendirConfig vendirconf.Config
-	exists, err := common.IsFileExists(VendirFileName)
-	if err != nil {
-		return vendirconf.Config{}, err
-	}
-
-	if exists {
-		vendirConfig, err = VendirConfigFromExistingFile(VendirFileName)
-		if err != nil {
-			return vendirconf.Config{}, err
-		}
-	} else {
-		vendirConfig = NewDefaultVendirConfig()
-	}
-	return vendirConfig, nil
-}
-
-func VendirConfigFromExistingFile(filePath string) (vendirconf.Config, error) {
-	content, err := os.ReadFile(filePath)
-	if err != nil {
-		return vendirconf.Config{}, err
-	}
-	vendirConfig := vendirconf.Config{}
-	err = yaml.Unmarshal(content, &vendirConfig)
-	if err != nil {
-		return vendirconf.Config{}, err
-	}
-	return vendirConfig, nil
-}
-
-func NewDefaultVendirConfig() vendirconf.Config {
-	config := vendirconf.Config{
-		APIVersion: "vendir.k14s.io/v1alpha1", // TODO: use constant from vendir package
-		Kind:       "Config",                  // TODO: use constant from vendir package
-
-	}
-	SaveVendir(config)
-	return config
-}
-
-func SaveVendir(config vendirconf.Config) error {
-	content, err := yaml.Marshal(config)
-	if err != nil {
-		return err
-	}
-	common.WriteFile(VendirFileName, content)
 	return nil
 }

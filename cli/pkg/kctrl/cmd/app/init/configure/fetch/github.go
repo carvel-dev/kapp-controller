@@ -34,9 +34,15 @@ func (githubStep *GithubStep) PreInteract() error {
 func (githubStep *GithubStep) Interact() error {
 	contents := githubStep.vendirConfig.Directories[0].Contents
 	if contents == nil {
-		githubStep.initializeContentWithGithubRelease()
+		err := githubStep.initializeContentWithGithubRelease()
+		if err != nil {
+			return err
+		}
 	} else if contents[0].GithubRelease == nil {
-		githubStep.initializeGithubRelease()
+		err := githubStep.initializeGithubRelease()
+		if err != nil {
+			return err
+		}
 	}
 	githubStep.ui.PrintHeaderText("Repository details")
 
@@ -45,12 +51,7 @@ func (githubStep *GithubStep) Interact() error {
 		return err
 	}
 
-	err = githubStep.configureVersion()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return githubStep.configureVersion()
 }
 
 func (githubStep *GithubStep) configureRepoSlug() error {
@@ -68,8 +69,7 @@ func (githubStep *GithubStep) configureRepoSlug() error {
 	}
 
 	githubReleaseContent.Slug = strings.TrimSpace(repoSlug)
-	SaveVendir(githubStep.vendirConfig)
-	return nil
+	return SaveVendir(githubStep.vendirConfig)
 }
 
 func (githubStep *GithubStep) configureVersion() error {
@@ -94,20 +94,19 @@ func (githubStep *GithubStep) configureVersion() error {
 		githubReleaseContent.Tag = releaseTag
 		githubReleaseContent.Latest = false
 	}
-	SaveVendir(githubStep.vendirConfig)
-	return nil
+	return SaveVendir(githubStep.vendirConfig)
 }
 
 func (githubStep *GithubStep) PostInteract() error {
 	return nil
 }
 
-func (githubStep *GithubStep) initializeGithubRelease() {
+func (githubStep *GithubStep) initializeGithubRelease() error {
 	githubReleaseContent := vendirconf.DirectoryContentsGithubRelease{
 		DisableAutoChecksumValidation: true,
 	}
 	githubStep.vendirConfig.Directories[0].Contents[0].GithubRelease = &githubReleaseContent
-	SaveVendir(githubStep.vendirConfig)
+	return SaveVendir(githubStep.vendirConfig)
 }
 
 func (githubStep *GithubStep) getDefaultReleaseTag() string {
@@ -118,8 +117,8 @@ func (githubStep *GithubStep) getDefaultReleaseTag() string {
 	return LatestVersion
 }
 
-func (githubStep *GithubStep) initializeContentWithGithubRelease() {
+func (githubStep *GithubStep) initializeContentWithGithubRelease() error {
 	//TODO Rohit need to check this how it should be done. It is giving path as empty.
 	githubStep.vendirConfig.Directories[0].Contents = append(githubStep.vendirConfig.Directories[0].Contents, vendirconf.DirectoryContents{})
-	githubStep.initializeGithubRelease()
+	return githubStep.initializeGithubRelease()
 }

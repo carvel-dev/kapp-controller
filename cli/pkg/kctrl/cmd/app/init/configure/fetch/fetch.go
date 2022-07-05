@@ -39,9 +39,16 @@ func (fetchStep *FetchStep) Interact() error {
 		fetchStep.ui.PrintInformationalText("We need to fetch the manifest which defines how the package would be deployed in a K8s cluster. This manifest can be in the form of a yaml file used with `kubectl apply ...` or it could be a helm chart used with `helm install ...`. They can be available in any of the following locations. Please select from where to fetch the manifest")
 	}
 
-	options := []string{common.FetchReleaseArtifactFromGithub, common.FetchManifestFromGithub, common.FetchChartFromHelmRepo, common.FetchChartFromGithub, common.FetchFromLocalDirectory}
-	previousFetchOption := getPreviousFetchOption(fetchStep.appBuild)
-	previousFetchOptionIndex := getPreviousFetchOptionIndex(options, previousFetchOption)
+	var vendirConfig vendirconf.Config
+	vendirConfig, err := ReadVendirConfig()
+	if err != nil {
+		return err
+	}
+	isHelmTemplateExistInPreviousOption := fetchStep.helmTemplateExistInAppBuild()
+	previousFetchOptionSelected := getPreviousFetchOptionFromVendir(vendirConfig, isHelmTemplateExistInPreviousOption)
+
+	options := []string{FetchReleaseArtifactFromGithub, FetchManifestFromGithub, FetchChartFromHelmRepo, FetchChartFromGithub, FetchFromLocalDirectory}
+	previousFetchOptionIndex := getPreviousFetchOptionIndex(options, previousFetchOptionSelected)
 	defaultFetchOptionIndex := previousFetchOptionIndex
 	choiceOpts := ui.ChoiceOpts{
 		Label:   "From where to fetch the manifest",
@@ -56,36 +63,24 @@ func (fetchStep *FetchStep) Interact() error {
 		fetchStep.appBuild.ObjectMeta.Annotations = make(map[string]string)
 	}
 	currentFetchOptionSelected := options[currentFetchOptionIndex]
-	fetchStep.appBuild.ObjectMeta.Annotations[common.FetchContentAnnotationKey] = currentFetchOptionSelected
+	fetchStep.appBuild.ObjectMeta.Annotations[FetchContentAnnotationKey] = currentFetchOptionSelected
 	if fetchStep.isAppCommandRunExplicitly {
-		fetchStep.appBuild.WriteToFile()
+		fetchStep.appBuild.Save()
 	}
 	//For a local directory, we will be including everything.
-	if currentFetchOptionSelected == common.FetchFromLocalDirectory {
+	if currentFetchOptionSelected == FetchFromLocalDirectory {
 		fetchStep.ui.PrintInformationalText("For local directory, we are going to include everything as part of `init` command.")
 		return nil
 	}
-	var vendirConfig vendirconf.Config
-	if defaultFetchOptionIndex != currentFetchOptionIndex {
-		//resetVendirConf
+
+	// TODO handle a scenario where previousFetchOptionSelected is Helm from Chart(or anything similar) to currentFetchOptionSelected is Local Dir.
+	// Need to remove vendir.yml in this case.
+	if currentFetchOptionSelected != previousFetchOptionSelected {
 		vendirConfig = NewDefaultVendirConfig()
-	} else {
-		vendirConfig, err = ReadVendirConfig()
-		if err != nil {
-			return err
-		}
 	}
 
-	vendirStep := NewVendirStep(fetchStep.ui, fetchStep.appBuild, vendirConfig)
-	err = common.Run(vendirStep)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func getPreviousFetchOption(appBuild *appbuild.AppBuild) string {
-	return appBuild.ObjectMeta.Annotations[common.FetchContentAnnotationKey]
+	vendirStep := NewVendirStep(fetchStep.ui, vendirConfig, currentFetchOptionSelected)
+	return common.Run(vendirStep)
 }
 
 func getPreviousFetchOptionIndex(manifestOptions []string, previousFetchOption string) int {
@@ -105,4 +100,17 @@ func getPreviousFetchOptionIndex(manifestOptions []string, previousFetchOption s
 
 func (fetch *FetchStep) PostInteract() error {
 	return nil
+}
+
+func (fetchStep *FetchStep) helmTemplateExistInAppBuild() bool {
+	if fetchStep.appBuild.Spec.App == nil || fetchStep.appBuild.Spec.App.Spec == nil || fetchStep.appBuild.Spec.App.Spec.Template == nil {
+		return false
+	}
+	appTemplates := fetchStep.appBuild.Spec.App.Spec.Template
+	for _, appTemplate := range appTemplates {
+		if appTemplate.HelmTemplate != nil {
+			return true
+		}
+	}
+	return false
 }

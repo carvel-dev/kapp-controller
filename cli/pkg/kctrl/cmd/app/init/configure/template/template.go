@@ -6,6 +6,7 @@ package template
 import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/configure/fetch"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -54,7 +55,7 @@ func (templateStep *TemplateStep) Interact() error {
 }
 
 func (templateStep TemplateStep) isHelmTemplateRequired() bool {
-	if templateStep.appBuild.ObjectMeta.Annotations[common.FetchContentAnnotationKey] == common.FetchChartFromHelmRepo {
+	if templateStep.appBuild.ObjectMeta.Annotations[fetch.FetchContentAnnotationKey] == fetch.FetchChartFromHelmRepo {
 		return true
 	}
 	return false

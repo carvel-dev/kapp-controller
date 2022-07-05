@@ -33,7 +33,6 @@ func (kbldTemplateStep *KbldTemplateStep) Interact() error {
 	existingTemplates := kbldTemplateStep.appBuild.Spec.App.Spec.Template
 	if !isKbldTemplateExist(existingTemplates) {
 		kbldTemplateStep.initializeKbldTemplate()
-		kbldTemplateStep.configureKbldPaths()
 	}
 
 	return nil
@@ -51,21 +50,5 @@ func isKbldTemplateExist(existingTemplates []v1alpha1.AppTemplate) bool {
 func (kbldTemplateStep *KbldTemplateStep) initializeKbldTemplate() {
 	kbldTemplateStep.appBuild.Spec.App.Spec.Template = append(kbldTemplateStep.appBuild.Spec.App.Spec.Template,
 		v1alpha1.AppTemplate{Kbld: &v1alpha1.AppTemplateKbld{}})
-	kbldTemplateStep.appBuild.WriteToFile()
-}
-
-func (kbldTemplateStep *KbldTemplateStep) configureKbldPaths() error {
-	for _, appTemplate := range kbldTemplateStep.appBuild.Spec.App.Spec.Template {
-		//TODO What if user intentionally wants to skip kbld in his package-build.yml? Should we still add "-" to kbld?
-		if appTemplate.Kbld != nil {
-			defaultPaths := appTemplate.Kbld.Paths
-			//If paths are already configured, do not change them
-			if len(defaultPaths) == 0 {
-				defaultPaths = append(defaultPaths, "-")
-			}
-			appTemplate.Kbld.Paths = defaultPaths
-			kbldTemplateStep.appBuild.WriteToFile()
-		}
-	}
-	return nil
+	kbldTemplateStep.appBuild.Save()
 }

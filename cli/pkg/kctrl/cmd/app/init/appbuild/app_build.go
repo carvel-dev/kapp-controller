@@ -48,7 +48,7 @@ type ImgpkgBundle struct {
 	UseKbldImagesLock bool   `json:"useKbldImagesLock,omitempty"`
 }
 
-func (appBuild AppBuild) WriteToFile() error {
+func (appBuild AppBuild) Save() error {
 	content, err := yaml.Marshal(appBuild)
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func (appBuild AppBuild) WriteToFile() error {
 	return common.WriteFile(AppBuildFileName, content)
 }
 
-func GetAppBuild() (AppBuild, error) {
+func NewAppBuild() (AppBuild, error) {
 	var appBuild AppBuild
 	appBuildFilePath := filepath.Join(AppBuildFileName)
 	exists, err := common.IsFileExists(appBuildFilePath)

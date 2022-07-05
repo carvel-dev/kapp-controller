@@ -18,9 +18,13 @@ func Run(step Step) error {
 	if err != nil {
 		return err
 	}
-	err = step.PostInteract()
-	if err != nil {
-		return err
-	}
-	return nil
+	return step.PostInteract()
 }
+
+/*
+type BuildConfig interface {
+	Save() error
+	GetAppSpec()
+	SetAppSpec()
+}
+*/

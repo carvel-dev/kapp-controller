@@ -50,7 +50,7 @@ func (w *ArtefactWriter) TouchPackageMetadata() error {
 	}
 	template := `# longDescription: Detailed description of package
 # shortDescription: Concise description of package
-# providerName: Organisation/entity providing this package
+# providerName: Organization/entity providing this package
 # maintainers:
 #   - name: Maintainer 1
 #   - name: Maintainer 2
