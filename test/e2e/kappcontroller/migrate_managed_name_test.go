@@ -27,7 +27,7 @@ func Test_Managed_Name_App_Migration(t *testing.T) {
 	cleanUp()
 	defer cleanUp()
 
-	c := `---
+	config := `---
 kind: ConfigMap 
 apiVersion: v1 
 metadata:
@@ -59,13 +59,15 @@ spec:
     - kapp:
         inspect: {}`, name) + sas.ForNamespaceYAML()
 
-	// deploy a simple resource with the managed name
-	kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", oldName},
-		e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(c)})
+	logger.Section("deploy a simple configmap with the managed name", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", oldName},
+			e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(config)})
+	})
 
-	// kapp-controller takes over the managing of this resource as an App
-	kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-		e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
+	logger.Section("deploy an AppCR with managed name", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
+	})
 
 	_, err := kapp.RunWithOpts([]string{"inspect", "-a", name + ".app", "--raw", "--tty=false", "--filter-kind=App"}, e2e.RunOpts{AllowError: true})
 	assert.NoError(t, err, fmt.Sprintf("expected %s to exist but does not", name))
@@ -90,7 +92,7 @@ func Test_Managed_Name_Package_Repository_Migration(t *testing.T) {
 	cleanUp()
 	defer cleanUp()
 
-	c := `---
+	config := `---
 kind: ConfigMap 
 apiVersion: v1 
 metadata:
@@ -120,11 +122,13 @@ spec:
             template:
               spec: {}`, name) + sas.ForNamespaceYAML()
 
-	// deploy a simple resource with the managed name
-	kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", oldName}, e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(c)})
+	logger.Section("deploy a simple configmap with the managed name", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", oldName}, e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(config)})
+	})
 
-	// kapp-controller takes over the managing of this resource as an PackageRepository
-	kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(pkgrYaml)})
+	logger.Section("deploy a PackageRepository with managed name", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(pkgrYaml)})
+	})
 
 	_, err := kapp.RunWithOpts([]string{"inspect", "-a", name + ".pkgr", "--raw", "--tty=false", "--filter-kind=PackageRepository"}, e2e.RunOpts{AllowError: true})
 	assert.NoError(t, err, fmt.Sprintf("expected %s to exist but does not", name))
