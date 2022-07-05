@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656617163854,
+  "lastUpdate": 1657044798797,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -3267,6 +3267,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6408793696,
             "unit": "ns/op\t         4.245 DeleteSeconds\t         2.125 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86852107+joe-kimmel-vmw@users.noreply.github.com",
+            "name": "Joe Kimmel",
+            "username": "joe-kimmel-vmw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7cd7d43cb545028ef91f8da390711dc270ea6b0a",
+          "message": "rename kctrl github test action to specify that it's for kctrl (#773)",
+          "timestamp": "2022-07-05T14:03:48-04:00",
+          "tree_id": "1723c72bf46f88780ec7b42141f6c19448b9413b",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/7cd7d43cb545028ef91f8da390711dc270ea6b0a"
+        },
+        "date": 1657044797964,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36458194774,
+            "unit": "ns/op\t        18.92 DeleteSeconds\t        17.50 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9460359733,
+            "unit": "ns/op\t         5.264 DeleteSeconds\t         4.159 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6414619650,
+            "unit": "ns/op\t         4.247 DeleteSeconds\t         2.125 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
