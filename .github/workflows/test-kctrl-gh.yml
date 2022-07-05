@@ -14,7 +14,7 @@ name: test-kctrl-gh
 
 jobs:
   test-all:
-    name: Test GH
+    name: Test kctrl GH
     runs-on: ubuntu-latest
     steps:
     - name: Set up Go 1.x
