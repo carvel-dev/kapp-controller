@@ -66,7 +66,7 @@ spec:
 	})
 
 	logger.Section("verify", func() {
-		out := kapp.Run([]string{"inspect", "-a", name + "-ctrl", "--raw", "--tty=false", "--filter-kind", "ConfigMap"})
+		out := kapp.Run([]string{"inspect", "-a", name + ".app", "--raw", "--tty=false", "--filter-kind", "ConfigMap"})
 
 		var cm corev1.ConfigMap
 

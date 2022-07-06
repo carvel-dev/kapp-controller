@@ -109,7 +109,7 @@ spec:
 			cr.Status.Fetch.Stdout = ""
 
 			// inspect
-			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-git-https-public-ctrl'") {
+			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-git-https-public.app'") {
 				t.Fatalf("Expected non-empty inspect output")
 			}
 			cr.Status.Inspect.UpdatedAt = metav1.Time{}
@@ -226,7 +226,7 @@ spec:
 			cr.Status.Fetch.Stdout = ""
 
 			// inspect
-			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-git-ssh-private-ctrl'") {
+			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-git-ssh-private.app'") {
 				t.Fatalf("Expected non-empty inspect output")
 			}
 			cr.Status.Inspect.UpdatedAt = metav1.Time{}

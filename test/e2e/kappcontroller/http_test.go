@@ -107,7 +107,7 @@ spec:
 			cr.Status.Fetch.Stdout = ""
 
 			// inspect
-			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-http-ctrl'") {
+			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-http.app'") {
 				t.Fatalf("Expected non-empty inspect output: '%s'", cr.Status.Inspect.Stdout)
 			}
 			cr.Status.Inspect.UpdatedAt = metav1.Time{}
