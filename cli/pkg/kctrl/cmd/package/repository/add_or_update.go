@@ -30,9 +30,10 @@ type AddOrUpdateOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	NamespaceFlags cmdcore.NamespaceFlags
-	Name           string
-	URL            string
+	NamespaceFlags       cmdcore.NamespaceFlags
+	SecureNamespaceFlags cmdcore.SecureNamespaceFlags
+	Name                 string
+	URL                  string
 
 	CreateRepository bool
 
@@ -59,6 +60,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	}
 
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
+	o.SecureNamespaceFlags.Set(cmd)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
@@ -94,6 +96,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 	}
 
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
+	o.SecureNamespaceFlags.Set(cmd)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
@@ -126,7 +129,7 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 		return fmt.Errorf("Expected package repository url to be non-empty")
 	}
 
-	err := o.NamespaceFlags.CheckForDisallowedSharedNamespaces()
+	err := o.SecureNamespaceFlags.CheckForDisallowedSharedNamespaces(o.NamespaceFlags.Name)
 	if err != nil {
 		return err
 	}

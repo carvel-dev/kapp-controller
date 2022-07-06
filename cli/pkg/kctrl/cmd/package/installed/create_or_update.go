@@ -50,9 +50,10 @@ type CreateOrUpdateOptions struct {
 
 	install bool
 
-	Name               string
-	NamespaceFlags     cmdcore.NamespaceFlags
-	createdAnnotations *CreatedResourceAnnotations
+	Name                 string
+	NamespaceFlags       cmdcore.NamespaceFlags
+	SecureNamespaceFlags cmdcore.SecureNamespaceFlags
+	createdAnnotations   *CreatedResourceAnnotations
 
 	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
@@ -80,6 +81,7 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		Annotations:  map[string]string{cmdapp.TTYByDefaultKey: ""},
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
+	o.SecureNamespaceFlags.Set(cmd)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
@@ -122,6 +124,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 		Annotations:  map[string]string{cmdapp.TTYByDefaultKey: ""},
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
+	o.SecureNamespaceFlags.Set(cmd)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
@@ -163,6 +166,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		Annotations:  map[string]string{cmdapp.TTYByDefaultKey: ""},
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
+	o.SecureNamespaceFlags.Set(cmd)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
@@ -198,7 +202,7 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 		return fmt.Errorf("Expected package name to be non empty")
 	}
 
-	err := o.NamespaceFlags.CheckForDisallowedSharedNamespaces()
+	err := o.SecureNamespaceFlags.CheckForDisallowedSharedNamespaces(o.NamespaceFlags.Name)
 	if err != nil {
 		return err
 	}
@@ -286,7 +290,7 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 		return fmt.Errorf("Expected either package version or values file to update the package")
 	}
 
-	err := o.NamespaceFlags.CheckForDisallowedSharedNamespaces()
+	err := o.SecureNamespaceFlags.CheckForDisallowedSharedNamespaces(o.NamespaceFlags.Name)
 	if err != nil {
 		return err
 	}
