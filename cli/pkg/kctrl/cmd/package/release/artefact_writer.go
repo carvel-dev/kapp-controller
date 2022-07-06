@@ -41,6 +41,10 @@ func (w *ArtefactWriter) CreatePackageDir() error {
 
 func (w *ArtefactWriter) TouchPackageMetadata() error {
 	metadata := kcdatav1alpha1.PackageMetadata{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "data.packaging.carvel.dev/v1alpha1",
+			Kind:       "PackageMetadata",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: w.Package,
 		},
@@ -65,12 +69,17 @@ func (w *ArtefactWriter) TouchPackageMetadata() error {
 
 func (w *ArtefactWriter) WritePackageFile(imgpkgBundleLocation string, buildAppSpec *kcv1alpha1.AppSpec, useKbldLockOutput bool) error {
 	packageMeta := kcdatav1alpha1.Package{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "data.packaging.carvel.dev/v1alpha1",
+			Kind:       "Package",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("%s.%s", w.Package, w.Version),
 		},
 		Spec: kcdatav1alpha1.PackageSpec{
-			Version: w.Version,
-			RefName: w.Package,
+			ReleasedAt: metav1.Now(),
+			Version:    w.Version,
+			RefName:    w.Package,
 			Template: kcdatav1alpha1.AppTemplateSpec{
 				Spec: &kcv1alpha1.AppSpec{
 					Fetch: []kcv1alpha1.AppFetch{
@@ -87,10 +96,12 @@ func (w *ArtefactWriter) WritePackageFile(imgpkgBundleLocation string, buildAppS
 		},
 	}
 	if useKbldLockOutput {
-		packageMeta.Spec.Template.Spec.Template = append(packageMeta.Spec.Template.Spec.Template,
-			kcv1alpha1.AppTemplate{Kbld: &kcv1alpha1.AppTemplateKbld{
-				Paths: []string{"-", ".imgpkg/images.yml"},
-			}})
+		for _, templateStage := range packageMeta.Spec.Template.Spec.Template {
+			if templateStage.Kbld != nil {
+				templateStage.Kbld.Paths = append(templateStage.Kbld.Paths, "-")
+				templateStage.Kbld.Paths = append(templateStage.Kbld.Paths, ".imgpkg/images.yml")
+			}
+		}
 	}
 
 	packageBytes, err := yaml.Marshal(packageMeta)

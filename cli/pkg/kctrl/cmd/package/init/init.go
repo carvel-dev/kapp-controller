@@ -252,6 +252,7 @@ func (createStep *CreateStep) PostInteract() error {
 	createStep.pkg.ObjectMeta.CreationTimestamp = currentTime
 	createStep.pkg.Spec.ReleasedAt = currentTime
 	createStep.pkgBuild.CreationTimestamp = currentTime
+	createStep.pkgBuild.ObjectMeta.Name = createStep.pkg.Spec.RefName
 	createStep.pkgInstall.CreationTimestamp = currentTime
 
 	err := createStep.updatePackageInstall()

@@ -39,7 +39,16 @@ func (r ImgpkgRunner) Run() (string, error) {
 		}
 	}
 	if r.UseKbldImagesLock {
-		err = goexec.Command("cp", "-r", filepath.Join(wd, ".imgpkg"), dir).Run()
+		fmt.Println(r.ImgLockFilepath)
+		fmt.Println(filepath.Join(dir, lockOutputFolder))
+		err = goexec.Command("mkdir", filepath.Join(dir, lockOutputFolder)).Run()
+		if err != nil {
+			return "", err
+		}
+		err = goexec.Command("cp", r.ImgLockFilepath, filepath.Join(dir, lockOutputFolder, "images.yml")).Run()
+		if err != nil {
+			return "", err
+		}
 	}
 	defer os.RemoveAll(dir)
 
