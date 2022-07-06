@@ -72,5 +72,5 @@ func (a *App) delete() exec.CmdRunResult {
 
 func (a *App) newKapp(kapp v1alpha1.AppDeployKapp, cancelCh chan struct{}) (*ctldep.Kapp, error) {
 	genericOpts := ctldep.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
-	return a.deployFactory.NewKappPrivileged(kapp, genericOpts, cancelCh)
+	return a.deployFactory.NewKappPrivilegedForPackageRepository(kapp, genericOpts, cancelCh)
 }

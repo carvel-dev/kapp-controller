@@ -92,7 +92,7 @@ stringData:
 	})
 
 	logger.Section("verify fully encrypted configmap", func() {
-		out := kapp.Run([]string{"inspect", "-a", name + "-ctrl", "--raw", "--tty=false", "--filter-kind-name", "ConfigMap/cm2"})
+		out := kapp.Run([]string{"inspect", "-a", name + ".app", "--raw", "--tty=false", "--filter-kind-name", "ConfigMap/cm2"})
 
 		var cm corev1.ConfigMap
 
