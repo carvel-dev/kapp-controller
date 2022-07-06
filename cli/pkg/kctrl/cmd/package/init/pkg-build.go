@@ -4,6 +4,7 @@
 package init
 
 import (
+	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"os"
 
 	appBuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
@@ -95,4 +96,15 @@ func NewPackageBuildFromFile(filePath string) (*PackageBuild, error) {
 		return nil, err
 	}
 	return &packageBuild, nil
+}
+
+func (pkgBuild *PackageBuild) GetAppSpec() *v1alpha12.AppSpec {
+	return pkgBuild.Spec.Template.Spec.App.Spec
+}
+
+func (pkgBuild *PackageBuild) SetAppSpec(appSpec *v1alpha12.AppSpec) {
+	if pkgBuild.Spec.Template.Spec.App.Spec == nil {
+		// TODO may be not needed.
+	}
+	pkgBuild.Spec.Template.Spec.App.Spec = appSpec
 }

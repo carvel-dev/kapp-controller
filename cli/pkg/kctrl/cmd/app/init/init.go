@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -23,9 +22,7 @@ import (
 )
 
 const (
-	AppFileName        = "app.yml"
-	StdIn              = "-"
-	UpstreamFolderName = "upstream"
+	AppFileName = "app.yml"
 )
 
 type InitOptions struct {
@@ -90,7 +87,6 @@ func (createStep CreateStep) GetAppBuild() *appbuild.AppBuild {
 }
 
 func (createStep CreateStep) printStartBlock() {
-	//TODO what needs to be added here
 }
 
 func (createStep *CreateStep) PreInteract() error {
@@ -231,20 +227,15 @@ func (createStep CreateStep) updateExistingApp() (kcv1alpha1.App, error) {
 	}
 
 	templateSectionFromExistingApp := existingApp.Spec.Template
-
+	transformAppTemplates := template.NewTransformAppTemplates(&templateSectionFromExistingApp)
 	//As fetchSource is not from Local directory, we should add upstream folder in ytt path and helmTemplate(if required).
-	isHelmTemplateRequired := false
 	if fetchSource == fetch.FetchChartFromHelmRepo || fetchSource == fetch.FetchChartFromGithub {
-		isHelmTemplateRequired = true
-	}
-	if isHelmTemplateRequired {
 		//TODO Figure out the edge scenarios
-		addUpstreamAsPathToHelmIfNotExist(templateSectionFromExistingApp)
-		addStdInAsPathToYttIfNotExist(templateSectionFromExistingApp)
+		transformAppTemplates.AddUpstreamAsPathToHelmIfNotExist()
+		transformAppTemplates.AddStdInAsPathToYttIfNotExist()
 
 	}
-
-	addUpstreamAsPathToYttIfNotExist(templateSectionFromExistingApp)
+	transformAppTemplates.AddUpstreamAsPathToYttIfNotExist()
 
 	return existingApp, nil
 }
@@ -259,78 +250,8 @@ func (createStep CreateStep) configureExportSection() {
 	if createStep.appBuild.Spec.Export == nil || len(createStep.appBuild.Spec.Export) == 0 {
 		createStep.appBuild.Spec.Export = append(createStep.appBuild.Spec.Export, appbuild.Export{
 			ImgpkgBundle: nil,
-			IncludePaths: []string{UpstreamFolderName},
+			IncludePaths: []string{template.UpstreamFolderName},
 		})
 	}
 	return
-}
-
-func addUpstreamAsPathToYttIfNotExist(appTemplates []kcv1alpha1.AppTemplate) {
-	for _, appTemplate := range appTemplates {
-		if appTemplate.Ytt != nil {
-			for _, path := range appTemplate.Ytt.Paths {
-				if strings.HasPrefix(path, UpstreamFolderName) {
-					return
-				}
-			}
-		}
-	}
-	appTemplateWithYtt := kcv1alpha1.AppTemplate{
-		Ytt: &kcv1alpha1.AppTemplateYtt{
-			Paths: []string{UpstreamFolderName},
-		},
-	}
-	appTemplates = append([]kcv1alpha1.AppTemplate{appTemplateWithYtt}, appTemplates...)
-}
-
-func addStdInAsPathToYttIfNotExist(appTemplates []kcv1alpha1.AppTemplate) {
-	for _, appTemplate := range appTemplates {
-		if appTemplate.Ytt != nil {
-			for _, path := range appTemplate.Ytt.Paths {
-				if path == StdIn {
-					return
-				}
-			}
-		}
-	}
-	appTemplateWithYtt := kcv1alpha1.AppTemplate{
-		Ytt: &kcv1alpha1.AppTemplateYtt{
-			Paths: []string{StdIn},
-		},
-	}
-
-	//YttTemplate with Stdin should be the immediate next template to the helmTemplate.
-	index := 0
-	var appTemplate kcv1alpha1.AppTemplate
-	for index, appTemplate = range appTemplates {
-		if appTemplate.HelmTemplate != nil {
-			continue
-		}
-	}
-	var oldAppTemplates []kcv1alpha1.AppTemplate
-	copy(oldAppTemplates, appTemplates)
-	appTemplates = append(oldAppTemplates[:index], appTemplateWithYtt)
-	appTemplates = append(appTemplates, oldAppTemplates[index:]...)
-
-	return
-}
-
-func addUpstreamAsPathToHelmIfNotExist(appTemplates []kcv1alpha1.AppTemplate) {
-	for _, appTemplate := range appTemplates {
-		if appTemplate.HelmTemplate != nil {
-			path := appTemplate.HelmTemplate.Path
-			//If a helmTemplate exist, it will always be the first one in the template section. Theoretically, it can exist anywhere but every real use case needs it to be first.
-			//TODO confirm above understanding. Not handled the scenario if helmTemplate exists as not the first element of slice.
-			if strings.HasPrefix(path, UpstreamFolderName) {
-				return
-			}
-		}
-	}
-
-	appTemplateWithHelm := kcv1alpha1.AppTemplate{
-		HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{
-			Path: UpstreamFolderName,
-		},
-	}
-	appTemplates = append([]kcv1alpha1.AppTemplate{appTemplateWithHelm}, appTemplates...)
 }

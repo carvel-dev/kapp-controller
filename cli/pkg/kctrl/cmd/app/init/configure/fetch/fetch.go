@@ -75,6 +75,7 @@ func (fetchStep *FetchStep) Interact() error {
 
 	// TODO handle a scenario where previousFetchOptionSelected is Helm from Chart(or anything similar) to currentFetchOptionSelected is Local Dir.
 	// Need to remove vendir.yml in this case.
+	// One more edge case: user move from github release to helm. In that case, we should remove the whole template section I think.
 	if currentFetchOptionSelected != previousFetchOptionSelected {
 		vendirConfig = NewDefaultVendirConfig()
 	}

@@ -39,19 +39,18 @@ func (templateStep *TemplateStep) Interact() error {
 		templateStep.appBuild.Spec.App.Spec.Template = appTemplate
 	}
 	if templateStep.isHelmTemplateRequired() {
-		//TODO Add code here to add helm Template
+		helmTemplateStep := NewHelmTemplateStep(templateStep.ui, templateStep.appBuild)
+		err := common.Run(helmTemplateStep)
+		if err != nil {
+			return err
+		}
 	}
 	err := templateStep.configureYtt()
 	if err != nil {
 		return err
 	}
 
-	err = templateStep.configureKbld()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return templateStep.configureKbld()
 }
 
 func (templateStep TemplateStep) isHelmTemplateRequired() bool {
