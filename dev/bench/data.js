@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657045082672,
+  "lastUpdate": 1657119776364,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -3351,6 +3351,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6537059271,
             "unit": "ns/op\t         4.315 DeleteSeconds\t         2.172 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5f167fc1de1861cb546109dd343b67e360279eb2",
+          "message": "Rename KC owned apps from `x-ctrl` to `x.app` or `x.pkgr` (#665)\n\n* Add support for `--prev-app` on kapp deploy/delete\r\n\r\n- PackageRepo will be suffixed with .pkgr\r\n- Apps will be suffixed with .app (pkgi, appcr)\r\n- Replace hardcoded -ctrl in tests with .app\r\n- Add e2e test for migration\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\r\n\r\n* Move comments to logger.Section\r\n\r\n- Make config variable longer to adhere to GoLang practices\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>",
+          "timestamp": "2022-07-06T10:53:08-04:00",
+          "tree_id": "85bee40aa5dc0feb050ddf639c62162c2f6bd5f5",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/5f167fc1de1861cb546109dd343b67e360279eb2"
+        },
+        "date": 1657119775029,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36699595669,
+            "unit": "ns/op\t        18.99 DeleteSeconds\t        17.66 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9472875487,
+            "unit": "ns/op\t         5.263 DeleteSeconds\t         4.171 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6454494121,
+            "unit": "ns/op\t         4.254 DeleteSeconds\t         2.147 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
