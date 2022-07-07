@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657119776364,
+  "lastUpdate": 1657202004361,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -3393,6 +3393,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6454494121,
             "unit": "ns/op\t         4.254 DeleteSeconds\t         2.147 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "benm@vmware.com",
+            "name": "Ben Moss",
+            "username": "benmoss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a228a48374c812588cb5854cf17c5d994bdb373d",
+          "message": "Merge pull request #775 from vmware-tanzu/pkg-repo-sidecar\n\nexecute pkg repo fetching in the sidecar",
+          "timestamp": "2022-07-07T09:43:16-04:00",
+          "tree_id": "3794712ca0db86a787eb2b1b9a26038809a3069a",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/a228a48374c812588cb5854cf17c5d994bdb373d"
+        },
+        "date": 1657202002978,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36613660147,
+            "unit": "ns/op\t        19.06 DeleteSeconds\t        17.51 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9699032290,
+            "unit": "ns/op\t         5.429 DeleteSeconds\t         4.176 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6451443488,
+            "unit": "ns/op\t         4.262 DeleteSeconds\t         2.148 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
