@@ -130,6 +130,8 @@ func Run(opts Options, runLog logr.Logger) error {
 		return fmt.Errorf("Starting RPC client: %s", err)
 	}
 
+	sidecarCmdExec := sidecarClient.CmdExec()
+
 	{ // add controller for config
 		reconciler := kcconfig.NewReconciler(
 			coreClient, kcConfig, sidecarClient.OSConfig(), runLog.WithName("config"))
@@ -169,7 +171,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			AppClient:  kcClient,
 			KcConfig:   kcConfig,
 			AppMetrics: appMetrics,
-			CmdRunner:  sidecarClient.CmdExec(),
+			CmdRunner:  sidecarCmdExec,
 		}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 			appFactory, refTracker, updateStatusTracker)
@@ -213,7 +215,7 @@ func Run(opts Options, runLog logr.Logger) error {
 	}
 
 	{ // add controller for pkgrepositories
-		appFactory := pkgrepository.AppFactory{coreClient, kcClient, kcConfig}
+		appFactory := pkgrepository.AppFactory{coreClient, kcClient, kcConfig, sidecarCmdExec}
 
 		reconciler := pkgrepository.NewReconciler(kcClient, coreClient,
 			runLog.WithName("pkgr"), appFactory, refTracker, updateStatusTracker)

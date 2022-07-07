@@ -111,6 +111,26 @@ data:
       name: http-server-returned-cm
     data:
       content: http-server-returned-content
+binaryData:
+  # Includes single file: packages/package.yml
+  #   ---
+  #   apiVersion: data.packaging.carvel.dev/v1alpha1
+  #   kind: Package
+  #   metadata:
+  #     name: package-behind-ca-cert.carvel.dev.1.0.0
+  #   spec:
+  #     refName: package-behind-ca-cert.carvel.dev
+  #     version: 1.0.0
+  #     template:
+  #       spec:
+  #         fetch:
+  #         - http:
+  #             url: unused
+  #         template:
+  #         - ytt: {}
+  #         deploy:
+  #         - kapp: {}
+  packages.tar: "H4sIAHczxmIAA+2SS2rEMAyGZ51T6AL22KmTQg5RuupetZVJyGOM4wRC6d0bx5M+oAylDJRCvo0sS/+PjGVRN3ii4Wjjgc9de7gxQohcKQjxPs/WKNKYr2QiA6nSXKo7makUhFSZzA4gbj3Id4yDR7eMYprrfUtbWV6px6fAe/wnMMYStPUTuaE+9wUY9MjjLtT9iWt0E7Xc0HScJLa2Qpk0dW8KeIz7knTkMYiKBKDHjgq4bBJ7pmrpZBqZJuc/WXHJBRfJYEkHlaPy4WfCpXnaBo0eAJ4626Kn4ASweQZK8rraEgaV93bLAqNrCxj7cSBzuf1qFTSz9wW8vF5yQ7Y9zx/VBq1dy3/9iTs7Ozu/4A1GdDfIAAgAAA=="
 
 # TODO should we make vendir's http retry within App CR, to avoid
 # transient failure when Service=>Deployment networking is not ready?
