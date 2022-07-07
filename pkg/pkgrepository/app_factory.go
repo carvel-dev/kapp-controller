@@ -21,13 +21,13 @@ type AppFactory struct {
 	CoreClient kubernetes.Interface
 	AppClient  kcclient.Interface
 	KcConfig   *config.Config
+	CmdRunner  exec.CmdRunner
 }
 
 // NewCRDPackageRepo constructs "hidden" App to reconcile PackageRepository.
 func (f *AppFactory) NewCRDPackageRepo(app *kcv1alpha1.App, pkgr *pkgv1alpha1.PackageRepository, log logr.Logger) *CRDApp {
-	cmdRunner := exec.PlainCmdRunner{}
-	fetchFactory := fetch.NewFactory(f.CoreClient, fetch.VendirOpts{SkipTLSConfig: f.KcConfig}, cmdRunner)
-	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, false, cmdRunner)
-	deployFactory := deploy.NewFactory(f.CoreClient, nil, cmdRunner, log)
+	fetchFactory := fetch.NewFactory(f.CoreClient, fetch.VendirOpts{SkipTLSConfig: f.KcConfig}, f.CmdRunner)
+	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, false, f.CmdRunner)
+	deployFactory := deploy.NewFactory(f.CoreClient, nil, f.CmdRunner, log)
 	return NewCRDApp(app, pkgr, log, f.AppClient, fetchFactory, templateFactory, deployFactory)
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
+	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -128,6 +129,7 @@ func TestHTTPSSelfSignedCerts(t *testing.T) {
 	env := e2e.BuildEnv(t)
 	logger := e2e.Logger{}
 	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
 	sas := e2e.ServiceAccounts{env.Namespace}
 
 	// When updating, certs and keys must be regenerated for server and added to server.go and config-test/config-map.yml
@@ -154,10 +156,12 @@ spec:
 `, serverNamespace, env.Namespace) + sas.ForNamespaceYAML()
 
 	name := "test-https"
+	pkgrName := "test-https-pkgr"
 	httpsServerName := "test-https-server"
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
+		kapp.Run([]string{"delete", "-a", pkgrName})
 		kapp.Run([]string{"delete", "-a", httpsServerName, "-n", serverNamespace})
 	}
 
@@ -240,4 +244,27 @@ spec:
 		}
 	})
 
+	logger.Section("deploy package repository that fetches content from http server", func() {
+		pkgrConfig := `---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: test-https-pkgr
+spec:
+  fetch:
+    http:
+      # use https to exercise CA certificate validation
+      # When updating address, certs and keys must be regenerated
+      # for server and added to e2e/assets/https-server
+      url: https://https-svc.https-server.svc.cluster.local:443/packages.tar
+`
+
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgrName}, e2e.RunOpts{
+			StdinReader: strings.NewReader(pkgrConfig),
+			OnErrKubectl: []string{"get", "pkgr/test-https-pkgr", "-oyaml"},
+		})
+
+		out := kubectl.Run([]string{"get", "pkg", "package-behind-ca-cert.carvel.dev.1.0.0", "-oyaml"})
+		assert.Contains(t, out, "name: package-behind-ca-cert.carvel.dev.1.0.0\n")
+	})
 }
