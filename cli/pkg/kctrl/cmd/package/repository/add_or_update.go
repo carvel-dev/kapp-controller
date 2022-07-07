@@ -16,8 +16,7 @@ import (
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	kappipkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	kcpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -30,9 +29,10 @@ type AddOrUpdateOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	NamespaceFlags cmdcore.NamespaceFlags
-	Name           string
-	URL            string
+	NamespaceFlags       cmdcore.NamespaceFlags
+	SecureNamespaceFlags cmdcore.SecureNamespaceFlags
+	Name                 string
+	URL                  string
 
 	CreateRepository bool
 
@@ -59,6 +59,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	}
 
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
+	o.SecureNamespaceFlags.Set(cmd)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
@@ -95,6 +96,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 	}
 
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
+	o.SecureNamespaceFlags.Set(cmd)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
@@ -125,6 +127,11 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 
 	if len(o.URL) == 0 {
 		return fmt.Errorf("Expected package repository url to be non-empty")
+	}
+
+	err := o.SecureNamespaceFlags.CheckForDisallowedSharedNamespaces(o.NamespaceFlags.Name)
+	if err != nil {
+		return err
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
@@ -180,23 +187,23 @@ func (o *AddOrUpdateOptions) add(client kcclient.Interface) error {
 	return err
 }
 
-func (o *AddOrUpdateOptions) newPackageRepository() (*v1alpha1.PackageRepository, error) {
-	pkgr := &v1alpha1.PackageRepository{
+func (o *AddOrUpdateOptions) newPackageRepository() (*kcpkg.PackageRepository, error) {
+	pkgr := &kcpkg.PackageRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      o.Name,
 			Namespace: o.NamespaceFlags.Name,
 		},
-		Spec: kappipkg.PackageRepositorySpec{},
+		Spec: kcpkg.PackageRepositorySpec{},
 	}
 
 	return o.updateExistingPackageRepository(pkgr)
 }
 
-func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *v1alpha1.PackageRepository) (*v1alpha1.PackageRepository, error) {
+func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *kcpkg.PackageRepository) (*kcpkg.PackageRepository, error) {
 
 	pkgr = pkgr.DeepCopy()
 
-	pkgr.Spec.Fetch = &kappipkg.PackageRepositoryFetch{
+	pkgr.Spec.Fetch = &kcpkg.PackageRepositoryFetch{
 		ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: o.URL},
 	}
 
