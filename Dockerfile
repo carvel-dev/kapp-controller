@@ -21,8 +21,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 FROM photon:4.0
 
 # Install openssh for git
-# TODO(bmo): why do we need sed?
-RUN tdnf install -y git openssh-clients sed
+RUN tdnf install -y git openssh-clients
 
 # Create the kapp-controller user in the root group, the home directory will be mounted as a volume
 RUN echo "kapp-controller:x:1000:0:/home/kapp-controller:/usr/sbin/nologin" > /etc/passwd
