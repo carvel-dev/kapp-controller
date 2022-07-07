@@ -110,7 +110,6 @@ func (o *InitOptions) Run() error {
 
 func getPackage(configs cmdlocal.Configs) (*v1alpha1.Package, error) {
 	var pkg v1alpha1.Package
-	// TODO should we handle this condition?
 	if len(configs.Pkgs) > 1 {
 		return nil, fmt.Errorf("More than 1 Package found")
 	}
@@ -129,7 +128,6 @@ func getPackage(configs cmdlocal.Configs) (*v1alpha1.Package, error) {
 
 func getPackageMetadata(configs cmdlocal.Configs) (*v1alpha1.PackageMetadata, error) {
 	var pkgMetadata v1alpha1.PackageMetadata
-	// TODO should we handle this condition?
 	if len(configs.PkgMetadatas) > 1 {
 		return nil, fmt.Errorf("More than 1 PackageMetadata found")
 	}
@@ -148,7 +146,6 @@ func getPackageMetadata(configs cmdlocal.Configs) (*v1alpha1.PackageMetadata, er
 
 func getPackageInstall(configs cmdlocal.Configs) (*v1alpha12.PackageInstall, error) {
 	var pkgInstall v1alpha12.PackageInstall
-	// TODO should we handle this condition?
 	if len(configs.PkgInstalls) > 1 {
 		return nil, fmt.Errorf("More than 1 PackageInstall found")
 	}
@@ -274,7 +271,6 @@ func (createStep *CreateStep) PostInteract() error {
 	return nil
 }
 
-//TODO should we do like this or the way we are generating AppFromAppBuild.
 func (createStep CreateStep) updatePackageInstall() error {
 	existingPkgInstall := createStep.pkgInstall
 	if existingPkgInstall.ObjectMeta.Annotations == nil {
@@ -304,8 +300,9 @@ func (createStep CreateStep) updatePackageInstall() error {
 func (createStep CreateStep) updatePackage() error {
 	existingPkg := createStep.pkg
 
-	// TODO What if user has explicitly given the version anything else from 0.0.0?
-	existingPkg.Spec.Version = defaultPkgVersion
+	if len(existingPkg.Spec.Version) == 0 {
+		existingPkg.Spec.Version = defaultPkgVersion
+	}
 	existingPkg.Name = existingPkg.Spec.RefName + "." + existingPkg.Spec.Version
 
 	if existingPkg.Spec.Template.Spec == nil {

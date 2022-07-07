@@ -15,6 +15,7 @@ type FetchStep struct {
 	ui                        cmdcore.AuthoringUI
 	appBuild                  *appbuild.AppBuild
 	isAppCommandRunExplicitly bool
+	hasFetchOptionChanged     bool
 }
 
 func NewFetchStep(ui cmdcore.AuthoringUI, appBuild *appbuild.AppBuild, isAppCommandRunExplicitly bool) *FetchStep {
@@ -77,6 +78,7 @@ func (fetchStep *FetchStep) Interact() error {
 	// Need to remove vendir.yml in this case.
 	// One more edge case: user move from github release to helm. In that case, we should remove the whole template section I think.
 	if currentFetchOptionSelected != previousFetchOptionSelected {
+		fetchStep.hasFetchOptionChanged = true
 		vendirConfig = NewDefaultVendirConfig()
 	}
 
@@ -99,7 +101,7 @@ func getPreviousFetchOptionIndex(manifestOptions []string, previousFetchOption s
 	return previousFetchOptionIndex
 }
 
-func (fetch *FetchStep) PostInteract() error {
+func (fetchStep *FetchStep) PostInteract() error {
 	return nil
 }
 
@@ -114,4 +116,8 @@ func (fetchStep *FetchStep) helmTemplateExistInAppBuild() bool {
 		}
 	}
 	return false
+}
+
+func (fetchStep *FetchStep) HasFetchOptionChanged() bool {
+	return fetchStep.hasFetchOptionChanged
 }

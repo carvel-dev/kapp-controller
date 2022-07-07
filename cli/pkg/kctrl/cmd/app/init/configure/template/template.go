@@ -13,19 +13,28 @@ import (
 )
 
 type TemplateStep struct {
-	ui       cmdcore.AuthoringUI
-	appBuild *appbuild.AppBuild
+	ui                 cmdcore.AuthoringUI
+	appBuild           *appbuild.AppBuild
+	discardOldTemplate bool
 }
 
-func NewTemplateStep(ui cmdcore.AuthoringUI, appBuild *appbuild.AppBuild) *TemplateStep {
+func NewTemplateStep(ui cmdcore.AuthoringUI, appBuild *appbuild.AppBuild, discardOldTemplate bool) *TemplateStep {
 	templateStep := TemplateStep{
-		ui:       ui,
-		appBuild: appBuild,
+		ui:                 ui,
+		appBuild:           appBuild,
+		discardOldTemplate: discardOldTemplate,
 	}
 	return &templateStep
 }
 
 func (templateStep *TemplateStep) PreInteract() error {
+	if templateStep.discardOldTemplate {
+		if templateStep.appBuild.Spec.App == nil {
+			return nil
+		}
+		templateStep.appBuild.Spec.App.Spec.Template = []v1alpha1.AppTemplate{}
+		return templateStep.appBuild.Save()
+	}
 	return nil
 }
 

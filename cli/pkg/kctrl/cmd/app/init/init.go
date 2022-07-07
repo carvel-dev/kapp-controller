@@ -96,40 +96,28 @@ func (createStep *CreateStep) PreInteract() error {
 }
 
 func (createStep *CreateStep) Interact() error {
-	err := createStep.configureFetchSection()
-	if err != nil {
-		return err
-	}
-
-	err = createStep.configureTemplateSection()
-	if err != nil {
-		return err
-	}
-
-	createStep.configureExportSection()
-
-	return nil
-}
-
-func (createStep *CreateStep) configureFetchSection() error {
 	fetchConfiguration := fetch.NewFetchStep(createStep.ui, createStep.appBuild, createStep.isAppCommandRunExplicitly)
 	err := common.Run(fetchConfiguration)
 	if err != nil {
 		return err
 	}
-	return nil
-}
 
-func (createStep *CreateStep) configureTemplateSection() error {
-	templateConfiguration := template.NewTemplateStep(createStep.ui, createStep.appBuild)
-	err := common.Run(templateConfiguration)
+	var discardOldTemplate bool
+	if fetchConfiguration.HasFetchOptionChanged() {
+		discardOldTemplate = true
+	}
+	templateConfiguration := template.NewTemplateStep(createStep.ui, createStep.appBuild, discardOldTemplate)
+	err = common.Run(templateConfiguration)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func (createStep *CreateStep) PostInteract() error {
+	createStep.configureExportSection()
+
 	if createStep.isAppCommandRunExplicitly {
 		appConfig, err := createStep.generateApp()
 		if err != nil {

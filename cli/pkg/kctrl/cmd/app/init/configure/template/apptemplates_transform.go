@@ -55,9 +55,13 @@ func (t TransformAppTemplates) AddStdInAsPathToYttIfNotExist() {
 	//YttTemplate with Stdin should be the immediate next template to the helmTemplate.
 	index := 0
 	var appTemplate kcv1alpha1.AppTemplate
-	for index, appTemplate = range *t.appTemplates {
-		if appTemplate.HelmTemplate != nil {
-			break
+	if len(*t.appTemplates) == 1 {
+		index++
+	} else {
+		for index, appTemplate = range *t.appTemplates {
+			if appTemplate.HelmTemplate == nil {
+				break
+			}
 		}
 	}
 
