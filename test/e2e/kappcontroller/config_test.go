@@ -140,6 +140,7 @@ func TestConfig_TrustCACerts(t *testing.T) {
 	sas := e2e.ServiceAccounts{env.Namespace}
 
 	name := "test-https"
+	pkgrName := "test-https-pkgr"
 	httpsServerName := "test-https-server"
 	configName := "test-config-trust-ca-config"
 
@@ -168,6 +169,7 @@ spec:
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
+		kapp.Run([]string{"delete", "-a", pkgrName})
 		kapp.Run([]string{"delete", "-a", configName})
 		kapp.Run([]string{"delete", "-a", httpsServerName})
 	}
@@ -230,6 +232,30 @@ stringData:
 
 		out := kubectl.Run([]string{"get", "cm", "http-server-returned-cm", "-oyaml"})
 		assert.Contains(t, out, "content: http-server-returned-content\n")
+	})
+
+	logger.Section("deploy package repository that fetches content from http server", func() {
+		pkgrConfig := `---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: test-https-pkgr
+spec:
+  fetch:
+    http:
+      # use https to exercise CA certificate validation
+      # When updating address, certs and keys must be regenerated
+      # for server and added to e2e/assets/https-server
+      url: https://https-svc.https-server.svc.cluster.local:443/packages.tar
+`
+
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgrName}, e2e.RunOpts{
+			StdinReader: strings.NewReader(pkgrConfig),
+			OnErrKubectl: []string{"get", "pkgr/test-https-pkgr", "-oyaml"},
+		})
+
+		out := kubectl.Run([]string{"get", "pkg", "package-behind-ca-cert.carvel.dev.1.0.0", "-oyaml"})
+		assert.Contains(t, out, "name: package-behind-ca-cert.carvel.dev.1.0.0\n")
 	})
 }
 
