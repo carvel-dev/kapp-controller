@@ -45,8 +45,8 @@ func (c *cue) TemplateStream(stream io.Reader, dirPath string) exec.CmdRunResult
 }
 
 func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
-	var stdoutBs, stderrBs bytes.Buffer
 	args := []string{"export", "--out", "yaml"}
+
 	if len(c.opts.Paths) == 0 {
 		args = append(args, ".")
 	} else {
@@ -60,11 +60,14 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	}
 
 	vals := Values{c.opts.ValuesFrom, c.appContext, c.coreClient}
-	paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
+
+	paths, valuesDir, err := vals.AsPaths(dirPath)
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Writing values: %w", err))
 	}
-	defer valuesCleanUpFunc()
+
+	defer valuesDir.Remove()
+
 	if c.opts.InputExpression != "" {
 		args = append(args, "--path", c.opts.InputExpression)
 	}
@@ -73,13 +76,17 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		args = append(args, "--expression", c.opts.OutputExpression)
 	}
 
+	var stdoutBs, stderrBs bytes.Buffer
+
 	cmd := goexec.Command("cue", args...)
 	cmd.Stdin = input
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 	cmd.Dir = dirPath
 
-	err = c.cmdRunner.Run(cmd)
+	err = c.cmdRunner.Run(cmd, exec.RunOpts{
+		VisiblePaths: []string{dirPath, valuesDir.Path()},
+	})
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),

@@ -32,9 +32,8 @@ RUN chmod g+w /etc/pki/tls/certs
 # Copy the ca-bundle so we have an original
 RUN cp /etc/pki/tls/certs/ca-bundle.crt /etc/pki/tls/certs/ca-bundle.crt.orig
 
-COPY --from=deps /workspace/out/* ./
+COPY --from=deps /workspace/out/* /usr/bin/
 
 # Run as kapp-controller by default, will be overridden to a random uid on OpenShift
 USER 1000
-ENV PATH="/:${PATH}"
-ENTRYPOINT ["/kapp-controller"]
+ENTRYPOINT ["/usr/bin/kapp-controller"]

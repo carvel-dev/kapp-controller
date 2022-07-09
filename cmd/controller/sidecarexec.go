@@ -20,6 +20,16 @@ func sidecarexecMain() {
 	go reapZombies(mainLog)
 
 	localCmdRunner := exec.NewPlainCmdRunner()
+	sandboxCmdRunner := sidecarexec.NewSandboxCmdRunner(localCmdRunner, sidecarexec.SandboxCmdRunnerOpts{
+		RequiresPosix: map[string]bool{
+			"vendir": true,
+		},
+		RequiresNetwork: map[string]bool{
+			"vendir": true,
+			"kbld":   true,
+		},
+	})
+
 	opts := sidecarexec.ServerOpts{
 		AllowedCmdNames: []string{
 			// Fetch (calls impgkg and others internally)
@@ -29,7 +39,7 @@ func sidecarexecMain() {
 		},
 	}
 
-	server := sidecarexec.NewServer(localCmdRunner, opts, mainLog)
+	server := sidecarexec.NewServer(sandboxCmdRunner, opts, mainLog)
 
 	err := server.Serve()
 	if err != nil {

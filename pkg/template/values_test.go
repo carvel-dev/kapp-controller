@@ -42,9 +42,9 @@ func TestValues(t *testing.T) {
 			}},
 		}}
 
-		paths, cleanup, err := subject.AsPaths(os.TempDir())
+		paths, valuesDir, err := subject.AsPaths(os.TempDir())
 		require.NoError(t, err)
-		t.Cleanup(cleanup)
+		defer valuesDir.Remove()
 
 		require.Len(t, paths, 5)
 		expectedValues := []string{
@@ -69,10 +69,10 @@ func TestValues(t *testing.T) {
 				}},
 			}}
 
-			paths, cleanup, err := subject.AsPaths(os.TempDir())
+			paths, valuesDir, err := subject.AsPaths(os.TempDir())
 			require.NoError(t, err)
 			require.Len(t, paths, 3)
-			t.Cleanup(cleanup)
+			defer valuesDir.Remove()
 
 			assertFileContents(t, paths[0], "parent:\n  child: some-name\n")
 			assertFileContents(t, paths[1], "parent:\n  child1:\n    child2: some-namespace\n")
@@ -88,10 +88,10 @@ func TestValues(t *testing.T) {
 				}},
 			}}
 
-			paths, cleanup, err := subject.AsPaths(os.TempDir())
+			paths, valuesDir, err := subject.AsPaths(os.TempDir())
 			require.NoError(t, err)
 			require.Len(t, paths, 2)
-			t.Cleanup(cleanup)
+			defer valuesDir.Remove()
 
 			expectedValues := []string{
 				"a_some-annotation-key: a_ann_val\n",
@@ -101,15 +101,14 @@ func TestValues(t *testing.T) {
 			for i, p := range paths {
 				assertFileContents(t, p, expectedValues[i])
 			}
-
 		})
 
 		t.Run("file names have encoding suffix due to templating engines such as cue requirement", func(t *testing.T) {
 			subject := subject
-			paths, cleanup, err := subject.AsPaths(os.TempDir())
+			paths, valuesDir, err := subject.AsPaths(os.TempDir())
 			require.NoError(t, err)
 			require.Len(t, paths, 5)
-			t.Cleanup(cleanup)
+			defer valuesDir.Remove()
 
 			for _, path := range paths {
 				assert.True(t, strings.HasSuffix(path, ".yaml"))
@@ -130,10 +129,10 @@ func TestValues(t *testing.T) {
 				}},
 			}}
 
-			paths, cleanup, err := subject.AsPaths(os.TempDir())
+			paths, valuesDir, err := subject.AsPaths(os.TempDir())
 			require.NoError(t, err)
 			require.Len(t, paths, 2)
-			t.Cleanup(cleanup)
+			defer valuesDir.Remove()
 
 			assertFileContents(t, paths[0], "some-annotation-key:\n  a_ann: a_ann_val\n  s_ann: s_ann_val\n  z_ann: z_ann_val\n")
 			assertFileContents(t, paths[1], "parent:\n  some-annotation-key:\n    a_ann: a_ann_val\n    s_ann: s_ann_val\n    z_ann: z_ann_val\n")
@@ -148,10 +147,10 @@ func TestValues(t *testing.T) {
 				}},
 			}}
 
-			paths, cleanup, err := subject.AsPaths(os.TempDir())
+			paths, valuesDir, err := subject.AsPaths(os.TempDir())
 			require.NoError(t, err)
 			require.Len(t, paths, 2)
-			t.Cleanup(cleanup)
+			defer valuesDir.Remove()
 
 			assertFileContents(t, paths[1], "a_name: some-namespace\n")
 		})

@@ -13,8 +13,15 @@ import (
 // of this interface so that they can be intercepted and potentially
 // modified in kctrl when running kapp-controller locally.
 type CmdRunner interface {
-	Run(*exec.Cmd) error
-	RunWithCancel(cmd *exec.Cmd, cancelCh chan struct{}) error
+	Run(*exec.Cmd, RunOpts) error
+	RunWithCancel(cmd *exec.Cmd, cancelCh chan struct{}, opts RunOpts) error
+}
+
+// RunOpts specifies additional options for running commands.
+type RunOpts struct {
+	// VisiblePaths indicates which paths
+	// should be visible to the command when executed.
+	VisiblePaths []string
 }
 
 // PlainCmdRunner implements CmdRunner interface by simply running exec.Cmd.
@@ -28,13 +35,13 @@ func NewPlainCmdRunner() PlainCmdRunner {
 }
 
 // Run executes exec.Cmd.
-func (PlainCmdRunner) Run(cmd *exec.Cmd) error {
+func (PlainCmdRunner) Run(cmd *exec.Cmd, opts RunOpts) error {
 	return cmd.Run()
 }
 
 // RunWithCancel executes exec.Cmd.
 // Kills execution immediately if value is read from cancelCh.
-func (PlainCmdRunner) RunWithCancel(cmd *exec.Cmd, cancelCh chan struct{}) error {
+func (PlainCmdRunner) RunWithCancel(cmd *exec.Cmd, cancelCh chan struct{}, opts RunOpts) error {
 	select {
 	case <-cancelCh:
 		return fmt.Errorf("Already canceled")
