@@ -1,12 +1,9 @@
-// Copyright 2020 VMware, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
-package common
+package step
 
 type Step interface {
 	PreInteract() error
-	PostInteract() error
 	Interact() error
+	PostInteract() error
 }
 
 func Run(step Step) error {
@@ -20,11 +17,3 @@ func Run(step Step) error {
 	}
 	return step.PostInteract()
 }
-
-/*
-type BuildConfig interface {
-	Save() error
-	GetAppSpec()
-	SetAppSpec()
-}
-*/

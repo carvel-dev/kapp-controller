@@ -4,10 +4,10 @@
 package appbuild
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
 	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,19 +48,22 @@ type ImgpkgBundle struct {
 	UseKbldImagesLock bool   `json:"useKbldImagesLock,omitempty"`
 }
 
+// Save will persist the appBuild onto the fileSystem. Before saving, it will remove the Annotations from the AppBuild.
 func (appBuild AppBuild) Save() error {
+	// We dont want to persist the annotations.
+	appBuild.ObjectMeta.Annotations = nil
 	content, err := yaml.Marshal(appBuild)
 	if err != nil {
 		return err
 	}
 
-	return common.WriteFile(AppBuildFileName, content)
+	return WriteFile(AppBuildFileName, content)
 }
 
 func NewAppBuild() (AppBuild, error) {
 	var appBuild AppBuild
 	appBuildFilePath := filepath.Join(AppBuildFileName)
-	exists, err := common.IsFileExists(appBuildFilePath)
+	exists, err := IsFileExists(appBuildFilePath)
 	if err != nil {
 		return AppBuild{}, err
 	}
@@ -118,4 +121,61 @@ func NewDefaultAppBuild() AppBuild {
 		},
 	}
 	return appBuild
+}
+
+func (appBuild AppBuild) GetAppSpec() *v1alpha12.AppSpec {
+	return appBuild.Spec.App.Spec
+}
+
+func (appBuild *AppBuild) SetAppSpec(appSpec *v1alpha12.AppSpec) {
+	if appBuild.Spec.App == nil {
+		appBuild.Spec.App = &v1alpha1.AppTemplateSpec{}
+	}
+	appBuild.Spec.App.Spec = appSpec
+}
+
+func (appBuild AppBuild) GetObjectMeta() *metav1.ObjectMeta {
+	return nil
+}
+
+func (appBuild *AppBuild) SetObjectMeta(metaObj *metav1.ObjectMeta) {
+	appBuild.ObjectMeta = *metaObj
+	return
+}
+
+func (appBuild AppBuild) GetExport() *[]Export {
+	return nil
+}
+
+func (appBuild *AppBuild) SetExport(exportObj *[]Export) {
+	appBuild.Spec.Export = *exportObj
+	return
+}
+
+// Check if file exists
+func IsFileExists(filePath string) (bool, error) {
+	_, err := os.Stat(filePath)
+	if err == nil {
+		return true, nil
+	} else if os.IsNotExist(err) {
+		return false, nil
+	} else {
+		return false, fmt.Errorf("failed to check for the existence of file. Error is: %s", err.Error())
+	}
+}
+
+// Write binary content to file
+func WriteFile(filePath string, data []byte) error {
+	// Create creates or truncates the named file. If the file already exists, it is truncated.
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.Write(data)
+	if err != nil {
+		return err
+	}
+	return nil
 }

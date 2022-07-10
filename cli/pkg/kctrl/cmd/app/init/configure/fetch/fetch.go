@@ -4,24 +4,24 @@
 package fetch
 
 import (
+	"fmt"
 	"github.com/cppforlife/go-cli-ui/ui"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/build"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/step"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
 type FetchStep struct {
 	ui                        cmdcore.AuthoringUI
-	appBuild                  *appbuild.AppBuild
+	build                     build.Build
 	isAppCommandRunExplicitly bool
-	hasFetchOptionChanged     bool
 }
 
-func NewFetchStep(ui cmdcore.AuthoringUI, appBuild *appbuild.AppBuild, isAppCommandRunExplicitly bool) *FetchStep {
+func NewFetchStep(ui cmdcore.AuthoringUI, build build.Build, isAppCommandRunExplicitly bool) *FetchStep {
 	fetchStep := FetchStep{
 		ui:                        ui,
-		appBuild:                  appBuild,
+		build:                     build,
 		isAppCommandRunExplicitly: isAppCommandRunExplicitly,
 	}
 	return &fetchStep
@@ -46,7 +46,7 @@ func (fetchStep *FetchStep) Interact() error {
 		return err
 	}
 	isHelmTemplateExistInPreviousOption := fetchStep.helmTemplateExistInAppBuild()
-	previousFetchOptionSelected := getPreviousFetchOptionFromVendir(vendirConfig, isHelmTemplateExistInPreviousOption)
+	previousFetchOptionSelected := GetFetchOptionFromVendir(vendirConfig, isHelmTemplateExistInPreviousOption)
 
 	options := []string{FetchReleaseArtifactFromGithub, FetchManifestFromGithub, FetchChartFromHelmRepo, FetchChartFromGithub, FetchFromLocalDirectory}
 	previousFetchOptionIndex := getPreviousFetchOptionIndex(options, previousFetchOptionSelected)
@@ -60,30 +60,26 @@ func (fetchStep *FetchStep) Interact() error {
 	if err != nil {
 		return err
 	}
-	if fetchStep.appBuild.ObjectMeta.Annotations == nil {
-		fetchStep.appBuild.ObjectMeta.Annotations = make(map[string]string)
-	}
 	currentFetchOptionSelected := options[currentFetchOptionIndex]
-	fetchStep.appBuild.ObjectMeta.Annotations[FetchContentAnnotationKey] = currentFetchOptionSelected
-	if fetchStep.isAppCommandRunExplicitly {
-		fetchStep.appBuild.Save()
+
+	if currentFetchOptionSelected != previousFetchOptionSelected {
+		return fmt.Errorf("Transitioning from one fetch option to another is not allowed. Earlier option selected: %s, Current Option selected: %s", previousFetchOptionSelected, currentFetchOptionSelected)
 	}
+
+	buildObjectMeta := fetchStep.build.GetObjectMeta()
+	if buildObjectMeta.Annotations == nil {
+		buildObjectMeta.Annotations = make(map[string]string)
+	}
+	buildObjectMeta.Annotations[FetchContentAnnotationKey] = currentFetchOptionSelected
+	fetchStep.build.SetObjectMeta(buildObjectMeta)
 	//For a local directory, we will be including everything.
 	if currentFetchOptionSelected == FetchFromLocalDirectory {
 		fetchStep.ui.PrintInformationalText("For local directory, we are going to include everything as part of `init` command.")
 		return nil
 	}
 
-	// TODO handle a scenario where previousFetchOptionSelected is Helm from Chart(or anything similar) to currentFetchOptionSelected is Local Dir.
-	// Need to remove vendir.yml in this case.
-	// One more edge case: user move from github release to helm. In that case, we should remove the whole template section I think.
-	if currentFetchOptionSelected != previousFetchOptionSelected {
-		fetchStep.hasFetchOptionChanged = true
-		vendirConfig = NewDefaultVendirConfig()
-	}
-
 	vendirStep := NewVendirStep(fetchStep.ui, vendirConfig, currentFetchOptionSelected)
-	return common.Run(vendirStep)
+	return step.Run(vendirStep)
 }
 
 func getPreviousFetchOptionIndex(manifestOptions []string, previousFetchOption string) int {
@@ -106,18 +102,15 @@ func (fetchStep *FetchStep) PostInteract() error {
 }
 
 func (fetchStep *FetchStep) helmTemplateExistInAppBuild() bool {
-	if fetchStep.appBuild.Spec.App == nil || fetchStep.appBuild.Spec.App.Spec == nil || fetchStep.appBuild.Spec.App.Spec.Template == nil {
+	appSpec := fetchStep.build.GetAppSpec()
+	if appSpec == nil || appSpec.Template == nil {
 		return false
 	}
-	appTemplates := fetchStep.appBuild.Spec.App.Spec.Template
+	appTemplates := appSpec.Template
 	for _, appTemplate := range appTemplates {
 		if appTemplate.HelmTemplate != nil {
 			return true
 		}
 	}
 	return false
-}
-
-func (fetchStep *FetchStep) HasFetchOptionChanged() bool {
-	return fetchStep.hasFetchOptionChanged
 }

@@ -5,13 +5,13 @@ package init
 
 import (
 	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"os"
 
 	appBuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	"sigs.k8s.io/yaml"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -27,17 +27,12 @@ type PackageBuild struct {
 }
 
 type PackageBuildSpec struct {
-	Template appBuild.AppBuild  `json:"template,omitempty"`
+	Template Template           `json:"template,omitempty"`
 	Release  []appBuild.Release `json:"release,omitempty"`
 }
 
 type Template struct {
-	Spec TemplateSpec `json:"spec,omitempty"`
-}
-
-type TemplateSpec struct {
-	Export []appBuild.Export         `json:"export,omitempty"`
-	App    *v1alpha1.AppTemplateSpec `json:"app,omitempty"`
+	Spec appBuild.Spec `json:"spec"`
 }
 
 func (packageBuild PackageBuild) Save() error {
@@ -76,9 +71,6 @@ func GetPackageBuild(pkgBuildFilePath string) (*PackageBuild, error) {
 				Kind:       PkgBuildKind,
 				APIVersion: PkgBuildAPIVersion,
 			},
-			Spec: PackageBuildSpec{
-				Template: appBuild.NewDefaultAppBuild(),
-			},
 		}
 	}
 
@@ -98,13 +90,34 @@ func NewPackageBuildFromFile(filePath string) (*PackageBuild, error) {
 	return &packageBuild, nil
 }
 
-func (pkgBuild *PackageBuild) GetAppSpec() *v1alpha12.AppSpec {
+func (pkgBuild PackageBuild) GetAppSpec() *v1alpha12.AppSpec {
+	if pkgBuild.Spec.Template.Spec.App == nil || pkgBuild.Spec.Template.Spec.App.Spec == nil {
+		return nil
+	}
 	return pkgBuild.Spec.Template.Spec.App.Spec
 }
 
 func (pkgBuild *PackageBuild) SetAppSpec(appSpec *v1alpha12.AppSpec) {
-	if pkgBuild.Spec.Template.Spec.App.Spec == nil {
-		// TODO may be not needed.
+	if pkgBuild.Spec.Template.Spec.App == nil {
+		pkgBuild.Spec.Template.Spec.App = &v1alpha1.AppTemplateSpec{}
 	}
 	pkgBuild.Spec.Template.Spec.App.Spec = appSpec
+}
+
+func (pkgBuild PackageBuild) GetObjectMeta() *metav1.ObjectMeta {
+	return &pkgBuild.ObjectMeta
+}
+
+func (pkgBuild *PackageBuild) SetObjectMeta(metaObj *metav1.ObjectMeta) {
+	pkgBuild.ObjectMeta = *metaObj
+	return
+}
+
+func (pkgBuild PackageBuild) GetExport() *[]appBuild.Export {
+	return &pkgBuild.Spec.Template.Spec.Export
+}
+
+func (pkgBuild *PackageBuild) SetExport(exportObj *[]appBuild.Export) {
+	pkgBuild.Spec.Template.Spec.Export = *exportObj
+	return
 }

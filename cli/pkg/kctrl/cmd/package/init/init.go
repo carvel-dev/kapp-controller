@@ -5,6 +5,8 @@ package init
 
 import (
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/build"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/step"
 	"log"
 	"os"
 	"strings"
@@ -13,7 +15,6 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 	appInit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/configure/fetch"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
@@ -47,6 +48,7 @@ type InitOptions struct {
 	ui          cmdcore.AuthoringUI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
+	chdir       string
 }
 
 func NewInitOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *InitOptions {
@@ -60,10 +62,19 @@ func NewInitCmd(o *InitOptions) *cobra.Command {
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
+	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Working directory with package-build and other config")
 	return cmd
 }
 
 func (o *InitOptions) Run() error {
+
+	if o.chdir != "" {
+		err := os.Chdir(o.chdir)
+		if err != nil {
+			return err
+		}
+	}
+
 	o.ui.PrintHeaderText("\nPre-requisite")
 	o.ui.PrintInformationalText("Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
 
@@ -101,7 +112,7 @@ func (o *InitOptions) Run() error {
 	createStep := NewCreateStep(o.ui, pkgBuild, pkg, pkgMetadata, pkgInstall, o.logger, o.depsFactory)
 	createStep.pkg = pkg
 	createStep.pkgMetadata = pkgMetadata
-	err = common.Run(createStep)
+	err = step.Run(createStep)
 	if err != nil {
 		return err
 	}
@@ -164,7 +175,7 @@ func getPackageInstall(configs cmdlocal.Configs) (*v1alpha12.PackageInstall, err
 
 type CreateStep struct {
 	ui          cmdcore.AuthoringUI
-	pkgBuild    *PackageBuild
+	build       build.Build
 	pkg         *v1alpha1.Package
 	pkgMetadata *v1alpha1.PackageMetadata
 	pkgInstall  *v1alpha12.PackageInstall
@@ -172,10 +183,10 @@ type CreateStep struct {
 	depsFactory cmdcore.DepsFactory
 }
 
-func NewCreateStep(ui cmdcore.AuthoringUI, pkgBuild *PackageBuild, pkg *v1alpha1.Package, pkgMetadata *v1alpha1.PackageMetadata, pkgInstall *v1alpha12.PackageInstall, logger logger.Logger, depsFactory cmdcore.DepsFactory) *CreateStep {
+func NewCreateStep(ui cmdcore.AuthoringUI, pkgBuild build.Build, pkg *v1alpha1.Package, pkgMetadata *v1alpha1.PackageMetadata, pkgInstall *v1alpha12.PackageInstall, logger logger.Logger, depsFactory cmdcore.DepsFactory) *CreateStep {
 	return &CreateStep{
 		ui:          ui,
-		pkgBuild:    pkgBuild,
+		build:       pkgBuild,
 		pkg:         pkg,
 		pkgMetadata: pkgMetadata,
 		pkgInstall:  pkgInstall,
@@ -194,14 +205,12 @@ func (createStep *CreateStep) Interact() error {
 		return err
 	}
 
-	appBuild := createStep.generateAppBuildFromPackageBuild()
-	appCreateStep := appInit.NewCreateStep(createStep.ui, appBuild, createStep.logger, createStep.depsFactory, false)
-	err = common.Run(appCreateStep)
+	appCreateStep := appInit.NewCreateStep(createStep.ui, createStep.build, createStep.logger, createStep.depsFactory, false)
+	err = step.Run(appCreateStep)
 	if err != nil {
 		return err
 	}
-	createStep.pkgBuild.Spec.Template = *appCreateStep.GetAppBuild()
-	createStep.pkgBuild.Save()
+	createStep.build.Save()
 	return nil
 }
 
@@ -248,20 +257,17 @@ func (createStep *CreateStep) PostInteract() error {
 	createStep.pkgMetadata.ObjectMeta.CreationTimestamp = currentTime
 	createStep.pkg.ObjectMeta.CreationTimestamp = currentTime
 	createStep.pkg.Spec.ReleasedAt = currentTime
-	createStep.pkgBuild.CreationTimestamp = currentTime
-	createStep.pkgBuild.ObjectMeta.Name = createStep.pkg.Spec.RefName
+	buildObjectMeta := &metav1.ObjectMeta{
+		CreationTimestamp: currentTime,
+		Name:              createStep.pkg.Spec.RefName,
+	}
+	createStep.build.SetObjectMeta(buildObjectMeta)
 	createStep.pkgInstall.CreationTimestamp = currentTime
 
-	err := createStep.updatePackageInstall()
-	if err != nil {
-		return err
-	}
+	createStep.updatePackageInstall()
+	createStep.updatePackage()
 
-	err = createStep.updatePackage()
-	if err != nil {
-		return err
-	}
-	err = createStep.Save()
+	err := createStep.Save()
 	if err != nil {
 		return err
 	}
@@ -271,7 +277,7 @@ func (createStep *CreateStep) PostInteract() error {
 	return nil
 }
 
-func (createStep CreateStep) updatePackageInstall() error {
+func (createStep CreateStep) updatePackageInstall() {
 	existingPkgInstall := createStep.pkgInstall
 	if existingPkgInstall.ObjectMeta.Annotations == nil {
 		existingPkgInstall.ObjectMeta.Annotations = make(map[string]string)
@@ -294,10 +300,9 @@ func (createStep CreateStep) updatePackageInstall() error {
 	if len(existingPkgInstall.Spec.PackageRef.RefName) == 0 {
 		existingPkgInstall.Spec.PackageRef.RefName = createStep.pkg.Spec.RefName
 	}
-	return nil
 }
 
-func (createStep CreateStep) updatePackage() error {
+func (createStep CreateStep) updatePackage() {
 	existingPkg := createStep.pkg
 
 	if len(existingPkg.Spec.Version) == 0 {
@@ -309,28 +314,12 @@ func (createStep CreateStep) updatePackage() error {
 		existingPkg.Spec.Template.Spec = &v1alpha13.AppSpec{}
 	}
 	if len(existingPkg.Spec.Template.Spec.Template) == 0 {
-		existingPkg.Spec.Template.Spec.Template = createStep.pkgBuild.Spec.Template.Spec.App.Spec.Template
+		existingPkg.Spec.Template.Spec.Template = createStep.build.GetAppSpec().Template
 	}
 
 	if len(existingPkg.Spec.Template.Spec.Deploy) == 0 {
-		existingPkg.Spec.Template.Spec.Deploy = createStep.pkgBuild.Spec.Template.Spec.App.Spec.Deploy
+		existingPkg.Spec.Template.Spec.Deploy = createStep.build.GetAppSpec().Deploy
 	}
-
-	return nil
-}
-
-func (createStep CreateStep) printPackageCR(pkg v1alpha1.Package) error {
-
-	return nil
-}
-
-func (createStep CreateStep) printFile(filePath string) error {
-	return nil
-}
-
-func (createStep CreateStep) printPackageMetadataCR(pkgMetadata v1alpha1.PackageMetadata) error {
-
-	return nil
 }
 
 func (createStep CreateStep) printNextStep() {
@@ -340,11 +329,6 @@ func (createStep CreateStep) printNextStep() {
 
 func (createStep CreateStep) printInformation() {
 	createStep.ui.PrintInformationalText("\n**Information**\npackage-build.yml is generated as part of this flow. This file can be used for further updating and adding complex scenarios while using the `kctrl pkg build create` command. Please read the link'ed documentation for more explanation.")
-}
-
-func (createStep CreateStep) generateAppBuildFromPackageBuild() *appbuild.AppBuild {
-	appBuild := createStep.pkgBuild.Spec.Template
-	return &appBuild
 }
 
 func (createStep CreateStep) getDefaultPackageRefName() string {
@@ -357,17 +341,13 @@ func (createStep CreateStep) getDefaultPackageRefName() string {
 // Save method will save all the resources i.e. PackageBuild, PackageInstall, Package and PackageMetadata
 func (createStep CreateStep) Save() error {
 	// Save PackageBuild
-	content, err := yaml.Marshal(createStep.pkgBuild)
-	if err != nil {
-		return err
-	}
-	err = WriteFile(PkgBuildFileName, content, os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
+	err := createStep.build.Save()
 	if err != nil {
 		return err
 	}
 
 	// Save Package
-	content, err = yaml.Marshal(createStep.pkg)
+	content, err := yaml.Marshal(createStep.pkg)
 	if err != nil {
 		return err
 	}

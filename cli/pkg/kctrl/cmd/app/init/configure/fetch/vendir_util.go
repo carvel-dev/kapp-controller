@@ -52,7 +52,7 @@ func NewDefaultVendirConfig() vendirconf.Config {
 	return config
 }
 
-func getPreviousFetchOptionFromVendir(config vendirconf.Config, ishelmTemplateExist bool) string {
+func GetFetchOptionFromVendir(config vendirconf.Config, ishelmTemplateExist bool) string {
 	if config.Directories == nil || config.Directories[0].Contents == nil {
 		return ""
 	}

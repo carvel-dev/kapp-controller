@@ -5,6 +5,8 @@ package init
 
 import (
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/build"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/step"
 	"os"
 	"time"
 
@@ -30,6 +32,7 @@ type InitOptions struct {
 	ui          cmdcore.AuthoringUI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
+	chdir       string
 }
 
 func NewInitOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *InitOptions {
@@ -43,10 +46,18 @@ func NewInitCmd(o *InitOptions) *cobra.Command {
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
+	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Working directory with app-build and other config")
 	return cmd
 }
 
 func (o *InitOptions) Run() error {
+	if o.chdir != "" {
+		err := os.Chdir(o.chdir)
+		if err != nil {
+			return err
+		}
+	}
+
 	o.ui.PrintHeaderText("\nPre-requisite")
 	o.ui.PrintInformationalText("Welcome! Before we start on the app creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
 
@@ -55,7 +66,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 	createStep := NewCreateStep(o.ui, &appBuild, o.logger, o.depsFactory, true)
-	err = common.Run(createStep)
+	err = step.Run(createStep)
 	if err != nil {
 		return err
 	}
@@ -67,47 +78,39 @@ func (o *InitOptions) Run() error {
 
 type CreateStep struct {
 	ui                        cmdcore.AuthoringUI
-	appBuild                  *appbuild.AppBuild
+	build                     build.Build
 	logger                    logger.Logger
 	depsFactory               cmdcore.DepsFactory
 	isAppCommandRunExplicitly bool
 }
 
-func NewCreateStep(ui cmdcore.AuthoringUI, appBuild *appbuild.AppBuild, logger logger.Logger, depsFactory cmdcore.DepsFactory, isAppCommandRunExplicitly bool) *CreateStep {
+func NewCreateStep(ui cmdcore.AuthoringUI, build build.Build, logger logger.Logger, depsFactory cmdcore.DepsFactory, isAppCommandRunExplicitly bool) *CreateStep {
 	return &CreateStep{
 		ui:                        ui,
-		appBuild:                  appBuild,
+		build:                     build,
 		logger:                    logger,
 		depsFactory:               depsFactory,
 		isAppCommandRunExplicitly: isAppCommandRunExplicitly,
 	}
 }
 
-func (createStep CreateStep) GetAppBuild() *appbuild.AppBuild {
-	return createStep.appBuild
-}
-
-func (createStep CreateStep) printStartBlock() {
+func (createStep CreateStep) GetAppBuild() build.Build {
+	return createStep.build
 }
 
 func (createStep *CreateStep) PreInteract() error {
-	createStep.printStartBlock()
 	return nil
 }
 
 func (createStep *CreateStep) Interact() error {
-	fetchConfiguration := fetch.NewFetchStep(createStep.ui, createStep.appBuild, createStep.isAppCommandRunExplicitly)
-	err := common.Run(fetchConfiguration)
+	fetchConfiguration := fetch.NewFetchStep(createStep.ui, createStep.build, createStep.isAppCommandRunExplicitly)
+	err := step.Run(fetchConfiguration)
 	if err != nil {
 		return err
 	}
 
-	var discardOldTemplate bool
-	if fetchConfiguration.HasFetchOptionChanged() {
-		discardOldTemplate = true
-	}
-	templateConfiguration := template.NewTemplateStep(createStep.ui, createStep.appBuild, discardOldTemplate)
-	err = common.Run(templateConfiguration)
+	templateConfiguration := template.NewTemplateStep(createStep.ui, createStep.build)
+	err = step.Run(templateConfiguration)
 	if err != nil {
 		return err
 	}
@@ -147,7 +150,11 @@ func (createStep CreateStep) generateApp() (kcv1alpha1.App, error) {
 	}
 
 	if exists {
-		app, err = createStep.updateExistingApp()
+		data, err := os.ReadFile(AppFileName)
+		if err != nil {
+			return kcv1alpha1.App{}, err
+		}
+		err = yaml.Unmarshal(data, &app)
 		if err != nil {
 			return kcv1alpha1.App{}, err
 		}
@@ -172,16 +179,12 @@ func printInformation(ui cmdcore.AuthoringUI) {
 func (createStep CreateStep) createAppFromAppBuild() kcv1alpha1.App {
 	//TODO Should we ask for the app Name ?
 	appName := "microservices-demo"
-	serviceAccountName := fmt.Sprintf("sa-%s", appName)
+	serviceAccountName := fmt.Sprintf("%s-sa", appName)
 	appAnnotation := map[string]string{
 		fetch.LocalFetchAnnotationKey: ".",
 	}
-	appTemplateSection := createStep.appBuild.Spec.App.Spec.Template
-	//TODO should we remove the fetch section as it is not beind used and add it dynamically during dev deploy.
-	appFetchSection := []kcv1alpha1.AppFetch{kcv1alpha1.AppFetch{
-		HTTP: &kcv1alpha1.AppFetchHTTP{},
-	}}
-	appDeploySection := createStep.appBuild.Spec.App.Spec.Deploy
+	appTemplateSection := createStep.build.GetAppSpec().Template
+	appDeploySection := createStep.build.GetAppSpec().Deploy
 	return kcv1alpha1.App{
 		TypeMeta: v1.TypeMeta{
 			APIVersion: "kappctrl.k14s.io/v1alpha1",
@@ -193,54 +196,26 @@ func (createStep CreateStep) createAppFromAppBuild() kcv1alpha1.App {
 		},
 		Spec: kcv1alpha1.AppSpec{
 			ServiceAccountName: serviceAccountName,
-			Fetch:              appFetchSection,
 			Template:           appTemplateSection,
 			Deploy:             appDeploySection,
 		},
 	}
 }
 
-func (createStep CreateStep) updateExistingApp() (kcv1alpha1.App, error) {
-	var existingApp kcv1alpha1.App
-	data, err := os.ReadFile(AppFileName)
-	if err != nil {
-		return kcv1alpha1.App{}, err
-	}
-	err = yaml.Unmarshal(data, &existingApp)
-	if err != nil {
-		return kcv1alpha1.App{}, err
-	}
-	fetchSource := createStep.appBuild.ObjectMeta.Annotations[fetch.FetchContentAnnotationKey]
-	if fetchSource == fetch.FetchFromLocalDirectory {
-		return existingApp, nil
-	}
-
-	templateSectionFromExistingApp := existingApp.Spec.Template
-	transformAppTemplates := template.NewTransformAppTemplates(&templateSectionFromExistingApp)
-	//As fetchSource is not from Local directory, we should add upstream folder in ytt path and helmTemplate(if required).
-	if fetchSource == fetch.FetchChartFromHelmRepo || fetchSource == fetch.FetchChartFromGithub {
-		//TODO Figure out the edge scenarios
-		transformAppTemplates.AddUpstreamAsPathToHelmIfNotExist()
-		transformAppTemplates.AddStdInAsPathToYttIfNotExist()
-
-	}
-	transformAppTemplates.AddUpstreamAsPathToYttIfNotExist()
-
-	return existingApp, nil
-}
-
 func (createStep CreateStep) configureExportSection() {
-	fetchSource := createStep.appBuild.ObjectMeta.Annotations[fetch.FetchContentAnnotationKey]
+	fetchSource := createStep.build.GetObjectMeta().Annotations[fetch.FetchContentAnnotationKey]
 	if fetchSource == fetch.FetchFromLocalDirectory {
 		return
 	}
 
 	// TODO current implementation is if export section is already defined, we will not touch it. Confirm the same.
-	if createStep.appBuild.Spec.Export == nil || len(createStep.appBuild.Spec.Export) == 0 {
-		createStep.appBuild.Spec.Export = append(createStep.appBuild.Spec.Export, appbuild.Export{
+	exportSection := *createStep.build.GetExport()
+	if exportSection == nil || len(exportSection) == 0 {
+		exportSection = append(exportSection, appbuild.Export{
 			ImgpkgBundle: nil,
 			IncludePaths: []string{template.UpstreamFolderName},
 		})
 	}
+	createStep.build.SetExport(&exportSection)
 	return
 }

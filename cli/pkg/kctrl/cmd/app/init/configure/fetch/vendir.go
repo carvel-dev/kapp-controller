@@ -6,12 +6,12 @@ package fetch
 import (
 	"bytes"
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/step"
 	goexec "os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
@@ -45,7 +45,7 @@ func (v *VendirStep) PreInteract() error {
 func (v *VendirStep) Interact() error {
 	vendirDirectories := v.config.Directories
 	if len(vendirDirectories) > 1 {
-		//TODO what if we have >1 Directories section in the vendir conf
+		return fmt.Errorf("More than 1 directory config found in the vendir file. (hint: Run vendir sync manually)")
 
 	}
 	if len(vendirDirectories) == 0 {
@@ -53,16 +53,14 @@ func (v *VendirStep) Interact() error {
 	} else {
 		directory := vendirDirectories[0]
 		if len(directory.Contents) > 1 {
-			//TODO what needs to be done in this case
-			//As multiple content sections are configured, we dont want to touch them.
-			return nil
+			return fmt.Errorf("More than 1 content config found in the vendir file. (hint: Run vendir sync manually)")
 		}
 	}
 	currentFetchOptionSelected := v.fetchOption
 	switch currentFetchOptionSelected {
 	case FetchReleaseArtifactFromGithub:
 		githubStep := NewGithubStep(v.ui, v.config)
-		err := common.Run(githubStep)
+		err := step.Run(githubStep)
 		if err != nil {
 			return err
 		}
@@ -74,7 +72,7 @@ func (v *VendirStep) Interact() error {
 		return SaveVendir(v.config)
 	case FetchChartFromHelmRepo:
 		helmStep := NewHelmStep(v.ui, v.config)
-		return common.Run(helmStep)
+		return step.Run(helmStep)
 	}
 	return nil
 }
