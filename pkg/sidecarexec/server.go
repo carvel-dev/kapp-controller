@@ -36,7 +36,7 @@ func NewServer(cmdRunner exec.CmdRunner, opts ServerOpts, log logr.Logger) *Serv
 	for _, cmd := range opts.AllowedCmdNames {
 		allowedCmdNames[cmd] = struct{}{}
 	}
-	return &Server{&CmdExec{cmdRunner, allowedCmdNames}, log}
+	return &Server{&CmdExec{cmdRunner, allowedCmdNames, log}, log}
 }
 
 // Serve starts an RPC server.

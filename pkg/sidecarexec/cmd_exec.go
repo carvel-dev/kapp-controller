@@ -7,7 +7,9 @@ import (
 	"bytes"
 	"fmt"
 	goexec "os/exec"
+	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
 
@@ -34,6 +36,7 @@ type CmdOutput struct {
 type CmdExec struct {
 	cmdRunner       exec.CmdRunner
 	allowedCmdNames map[string]struct{}
+	log             logr.Logger
 }
 
 // Run executes a command (out of a set of allowed ones).
@@ -41,6 +44,10 @@ func (r CmdExec) Run(input CmdInput, output *CmdOutput) error {
 	if _, found := r.allowedCmdNames[input.Command]; !found {
 		return fmt.Errorf("Command '%s' is not allowed", input.Command)
 	}
+
+	t1 := time.Now()
+	r.log.Info("Start command", "cmd", input.Command)
+	defer func() { r.log.Info("Finish command", "cmd", input.Command, "dur", time.Now().Sub(t1).String()) }()
 
 	cmd := goexec.Command(input.Command, input.Args...)
 
