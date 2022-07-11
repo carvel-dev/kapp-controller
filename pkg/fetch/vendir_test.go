@@ -57,3 +57,34 @@ func Test_AddDir_skipsTLS(t *testing.T) {
 		assert.Equal(t, tc.shouldSkipTLS, vConf.Directories[i].Contents[0].Image.DangerousSkipTLSVerify, "Failed with URL %s", tc.URL)
 	}
 }
+
+func TestExtractImageRegistry(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "ubuntu:latest",
+			want: "index.docker.io",
+		},
+		{
+			name: "foo/bar:v1.2.3",
+			want: "index.docker.io",
+		},
+		{
+			name: "ghcr.io/foo/bar:foo",
+			want: "ghcr.io",
+		},
+		{
+			name: "foo.domain:5426/foo/bar@sha256:blah",
+			want: "foo.domain:5426",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := fetch.ExtractImageRegistry(tt.name); got != tt.want {
+				t.Errorf("ExtractDockerImageRepo() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
