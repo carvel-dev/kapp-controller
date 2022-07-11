@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657554081126,
+  "lastUpdate": 1657581422383,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -3561,6 +3561,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6679215314,
             "unit": "ns/op\t         4.421 DeleteSeconds\t         2.205 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "benm@vmware.com",
+            "name": "Ben Moss",
+            "username": "benmoss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8409bab24e7337ac3fd7527edd8fdb03f58b0c59",
+          "message": "Remove sed (#780)",
+          "timestamp": "2022-07-11T19:07:29-04:00",
+          "tree_id": "53315d7c1e9b8c17bf1970b77196571d597f1dd0",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/8409bab24e7337ac3fd7527edd8fdb03f58b0c59"
+        },
+        "date": 1657581421204,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36810889751,
+            "unit": "ns/op\t        19.22 DeleteSeconds\t        17.55 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9524039481,
+            "unit": "ns/op\t         5.326 DeleteSeconds\t         4.158 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6430161606,
+            "unit": "ns/op\t         4.252 DeleteSeconds\t         2.135 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
