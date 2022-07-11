@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657295505337,
+  "lastUpdate": 1657554081126,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -3519,6 +3519,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6431695470,
             "unit": "ns/op\t         4.254 DeleteSeconds\t         2.142 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "benm@vmware.com",
+            "name": "Ben Moss",
+            "username": "benmoss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8766a1d4915982a3ba5e152faf97983b8f9da28e",
+          "message": "Remove dep on go-containerregistry (#779)\n\nThis library brings in a ton of transitive deps unfortunately, which is\r\nannoying for spurious CVE reports. The logic we were relying on from the\r\nlibrary is incredibly tiny.",
+          "timestamp": "2022-07-11T11:25:55-04:00",
+          "tree_id": "65de180b32165c326dd2178c5b137aaa721d1f81",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/8766a1d4915982a3ba5e152faf97983b8f9da28e"
+        },
+        "date": 1657554078819,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 39047504052,
+            "unit": "ns/op\t        19.80 DeleteSeconds\t        19.13 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9798034219,
+            "unit": "ns/op\t         5.440 DeleteSeconds\t         4.304 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6679215314,
+            "unit": "ns/op\t         4.421 DeleteSeconds\t         2.205 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
