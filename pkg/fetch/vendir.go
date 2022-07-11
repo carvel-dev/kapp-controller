@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"os"
 	goexec "os/exec"
+	"strings"
 
-	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	// we run vendir by shelling out to it, but we create the vendir configs with help from a vendored copy of vendir.
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
@@ -378,16 +378,7 @@ func (v *Vendir) configMapBytes(configMapRef vendirconf.DirectoryContentsLocalRe
 // expand this option to other fetch options, we will need to add hostname
 // extraction for those
 func (v *Vendir) shouldSkipTLSVerify(url string) bool {
-	hostAndPort := v.extractImageRefHostname(url)
-	return v.opts.SkipTLSConfig.ShouldSkipTLSForAuthority(hostAndPort)
-}
-
-func (v *Vendir) extractImageRefHostname(ref string) string {
-	parsedRef, err := name.ParseReference(ref)
-	if err != nil {
-		return ""
-	}
-	return parsedRef.Context().RegistryStr()
+	return v.opts.SkipTLSConfig.ShouldSkipTLSForAuthority(ExtractImageRegistry(url))
 }
 
 // Run executes vendir command based on given configuration.
@@ -409,4 +400,16 @@ func (v *Vendir) Run(conf []byte, workingDir string) exec.CmdRunResult {
 	result.AttachErrorf("Fetching resources: %s", err)
 
 	return result
+}
+
+// ExtractImageRegistry returns the registry portion of a Docker image reference
+func ExtractImageRegistry(name string) string {
+	parts := strings.SplitN(name, "/", 2)
+	var registry string
+	if len(parts) == 2 && (strings.ContainsRune(parts[0], '.') || strings.ContainsRune(parts[0], ':')) {
+		registry = parts[0]
+	} else {
+		registry = "index.docker.io"
+	}
+	return registry
 }
