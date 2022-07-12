@@ -20,7 +20,7 @@ var Version = "develop"
 
 func main() {
 	ctrlOpts := Options{}
-	var isSidecarexec, isSidecarexecWrap bool
+	var isSidecarexec, isSidecarexecDebug, isSidecarexecWrap bool
 
 	flag.IntVar(&ctrlOpts.Concurrency, "concurrency", 10, "Max concurrent reconciles")
 	flag.StringVar(&ctrlOpts.Namespace, "namespace", "", "Namespace to watch")
@@ -30,11 +30,12 @@ func main() {
 	flag.DurationVar(&ctrlOpts.APIRequestTimeout, "api-request-timeout", time.Duration(0), "HTTP timeout for Kubernetes API requests")
 	flag.BoolVar(&ctrlOpts.APIPriorityAndFairness, "enable-api-priority-and-fairness", true, "Enable/disable APIPriorityAndFairness feature gate for apiserver. Recommended to disable for <= k8s 1.19.")
 	flag.BoolVar(&isSidecarexec, "sidecarexec", false, "Run sidecarexec")
+	flag.BoolVar(&isSidecarexecDebug, "sidecarexecdebug", false, "Run sidecarexecdebug")
 	flag.BoolVar(&isSidecarexecWrap, "sidecarexecwrap", false, "Run sidecarexecwrap")
 	flag.Parse()
 
-	if isSidecarexec {
-		sidecarexecMain()
+	if isSidecarexec || isSidecarexecDebug {
+		sidecarexecMain(isSidecarexecDebug, flag.Args())
 		return
 	}
 	if isSidecarexecWrap {
