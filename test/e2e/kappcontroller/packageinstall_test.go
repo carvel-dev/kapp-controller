@@ -448,6 +448,7 @@ spec:
 
 	logger.Section("Create App CR", func() {
 		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
+		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "app/" + name, "--timeout", "1m"})
 	})
 
 	logger.Section("Create PackageInstall with same name as App CR", func() {
