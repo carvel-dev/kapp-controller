@@ -17,6 +17,7 @@ type AuthoringUI interface {
 	AskForChoice(opts ui.ChoiceOpts) (int, error)
 	PrintCmdExecutionOutput(text string)
 	PrintHeaderText(text string)
+	PrintHeaderWithContextText(text string, context string)
 }
 
 type AuthoringUIImpl struct {
@@ -70,4 +71,8 @@ func (uiImpl AuthoringUIImpl) AskForChoice(choiceOpts ui.ChoiceOpts) (int, error
 
 func (uiImpl AuthoringUIImpl) PrintHeaderText(text string) {
 	uiImpl.ui.BeginLinef(color.New(color.Bold).Sprintf("%s\n", text))
+}
+
+func (uiImpl AuthoringUIImpl) PrintHeaderWithContextText(text string, context string) {
+	uiImpl.ui.BeginLinef("%s: %s\n", color.New(color.Bold).Sprintf(text), context)
 }

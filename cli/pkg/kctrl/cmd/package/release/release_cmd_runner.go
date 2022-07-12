@@ -9,23 +9,29 @@ import (
 	goexec "os/exec"
 	"strings"
 
+	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
 
 type ReleaseCmdRunner struct {
-	log        io.Writer
-	fullOutput bool
-
+	log                 io.Writer
+	fullOutput          bool
 	tempImgLockFilepath string
+	ui                  cmdcore.AuthoringUI
 }
 
 var _ exec.CmdRunner = &ReleaseCmdRunner{}
 
-func NewReleaseCmdRunner(log io.Writer, fullOutput bool, tempImgLockFilepath string) *ReleaseCmdRunner {
-	return &ReleaseCmdRunner{log, fullOutput, tempImgLockFilepath}
+func NewReleaseCmdRunner(log io.Writer, fullOutput bool, tempImgLockFilepath string, ui cmdcore.AuthoringUI) *ReleaseCmdRunner {
+	return &ReleaseCmdRunner{log: log, fullOutput: fullOutput, tempImgLockFilepath: tempImgLockFilepath, ui: ui}
 }
 
 func (r ReleaseCmdRunner) Run(cmd *goexec.Cmd) error {
+	if strings.Contains(cmd.Path, "/vendir") {
+		r.ui.PrintInformationalText("kbld builds images when necessary and ensures that all image references are resolved to an immutable reference\n")
+		r.ui.PrintHeaderText("Building images and resolving references")
+	}
+
 	if strings.Contains(cmd.Path, "/kapp") {
 		return nil
 	}
@@ -37,8 +43,9 @@ func (r ReleaseCmdRunner) Run(cmd *goexec.Cmd) error {
 		cmd.Stderr = io.MultiWriter(r.log, cmd.Stderr)
 	}
 
-	fmt.Fprintf(r.log, "==> Executing %s %v\n", cmd.Path, cmd.Args)
-	defer fmt.Fprintf(r.log, "==> Finished executing %s\n\n", cmd.Path)
+	if strings.Contains(cmd.Path, "/ytt") || strings.Contains(cmd.Path, "/kbld") {
+		r.ui.PrintCmdExecutionOutput(fmt.Sprintf("$ %s", strings.Join(cmd.Args, " ")))
+	}
 
 	return exec.PlainCmdRunner{}.Run(cmd)
 }

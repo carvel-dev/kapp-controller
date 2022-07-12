@@ -12,6 +12,8 @@ import (
 	goexec "os/exec"
 	"path/filepath"
 	"strings"
+
+	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 )
 
 type ImgpkgRunner struct {
@@ -20,6 +22,7 @@ type ImgpkgRunner struct {
 	Paths             []string
 	UseKbldImagesLock bool
 	ImgLockFilepath   string
+	UI                cmdcore.AuthoringUI
 }
 
 func (r ImgpkgRunner) Run() (string, error) {
@@ -39,8 +42,6 @@ func (r ImgpkgRunner) Run() (string, error) {
 		}
 	}
 	if r.UseKbldImagesLock {
-		fmt.Println(r.ImgLockFilepath)
-		fmt.Println(filepath.Join(dir, lockOutputFolder))
 		err = goexec.Command("mkdir", filepath.Join(dir, lockOutputFolder)).Run()
 		if err != nil {
 			return "", err
@@ -56,9 +57,12 @@ func (r ImgpkgRunner) Run() (string, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 	inMemoryStdoutWriter := bufio.NewWriter(&stdoutBuf)
 	cmd := goexec.Command("imgpkg", "push", "-b", pushLocation, "-f", dir, "--tty=true")
-	// TODO: Switch to using Authoring UI
-	fmt.Printf("Running: %s", strings.Join(cmd.Args, " "))
-	cmd.Stdout = io.MultiWriter(os.Stdout, inMemoryStdoutWriter)
+	// TODO: Stream output
+	r.UI.PrintInformationalText("\nAn imgpkg bundle consists of all required YAML configuration bundled into an OCI image" +
+		"that can be pushed to an image registry and consumed by the package.\n")
+	r.UI.PrintHeaderText("Pushing imgpkg bundle")
+	r.UI.PrintCmdExecutionOutput(fmt.Sprintf("$ %s", strings.Join(cmd.Args, " ")))
+	cmd.Stdout = io.MultiWriter(inMemoryStdoutWriter)
 	cmd.Stderr = &stderrBuf
 	err = cmd.Run()
 	if err != nil {
@@ -68,6 +72,7 @@ func (r ImgpkgRunner) Run() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	r.UI.PrintCmdExecutionOutput(stdoutBuf.String())
 
 	return stdoutBuf.String(), nil
 }
