@@ -272,8 +272,8 @@ func (createStep *CreateStep) PostInteract() error {
 	if err != nil {
 		return err
 	}
-	createStep.ui.PrintInformationalText("\nSuccessfully updated package-build.yml")
-	createStep.ui.PrintInformationalText("\nSuccessfully updated package-resources.yml\n")
+	createStep.ui.PrintInformationalText("Successfully updated package-build.yml\n")
+	createStep.ui.PrintInformationalText("Successfully updated package-resources.yml\n")
 	createStep.printInformation()
 	createStep.printNextStep()
 	return nil

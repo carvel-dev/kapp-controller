@@ -122,7 +122,7 @@ func (v *VendirStep) PostInteract() error {
 	if err != nil {
 		return err
 	}
-	//err = v.runVendirSync()
+	err = v.runVendirSync()
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func (v *VendirStep) printFile(filePath string) error {
 }
 
 func (v *VendirStep) runVendirSync() error {
-	v.ui.PrintInformationalText("\nNext step is to run `vendir sync` to fetch the data from source to local directory. Vendir will sync the data into the upstream folder.")
+	v.ui.PrintInformationalText("Next step is to run `vendir sync` to fetch the data from source to local directory. Vendir will sync the data into the upstream folder.")
 	v.ui.PrintActionableText("Running vendir sync")
 	v.ui.PrintCmdExecutionText("vendir sync -f vendir.yml")
 	var stdoutBs, stderrBs bytes.Buffer
