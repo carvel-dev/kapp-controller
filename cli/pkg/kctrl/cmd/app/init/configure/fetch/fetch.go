@@ -32,13 +32,8 @@ func (fetchStep *FetchStep) PreInteract() error {
 }
 
 func (fetchStep *FetchStep) Interact() error {
-	if fetchStep.isAppCommandRunExplicitly {
-		fetchStep.ui.PrintHeaderText("\nApp Content(Step 2/3)")
-		fetchStep.ui.PrintInformationalText("We need to fetch the manifest which defines how the application would be deployed in a K8s cluster. This manifest can be in the form of a yaml file used with `kubectl apply ...` or it could be a helm chart used with `helm install ...`. They can be available in any of the following locations. Please select from where to fetch the manifest")
-	} else {
-		fetchStep.ui.PrintHeaderText("Package Content(Step 2/3)")
-		fetchStep.ui.PrintInformationalText("We need to fetch the manifest which defines how the package would be deployed in a K8s cluster. This manifest can be in the form of a yaml file used with `kubectl apply ...` or it could be a helm chart used with `helm install ...`. They can be available in any of the following locations. Please select from where to fetch the manifest")
-	}
+	fetchStep.ui.PrintHeaderText("Content (Step 2/3)")
+	fetchStep.ui.PrintInformationalText("We need to fetch the manifest which defines how the package would be deployed in a K8s cluster. This manifest can be in the form of a yaml file used with `kubectl apply ...` or it could be a helm chart used with `helm install ...`. They can be available in any of the following locations. Please select one among them")
 
 	var vendirConfig vendirconf.Config
 	vendirConfig, err := ReadVendirConfig()
@@ -48,11 +43,11 @@ func (fetchStep *FetchStep) Interact() error {
 	isHelmTemplateExistInPreviousOption := fetchStep.helmTemplateExistInAppBuild()
 	previousFetchOptionSelected := GetFetchOptionFromVendir(vendirConfig, isHelmTemplateExistInPreviousOption)
 
-	options := []string{FetchReleaseArtifactFromGithub, FetchManifestFromGithub, FetchChartFromHelmRepo, FetchChartFromGithub, FetchFromLocalDirectory}
+	options := []string{FetchFromGithubRelease, FetchChartFromHelmRepo, FetchFromLocalDirectory}
 	previousFetchOptionIndex := getPreviousFetchOptionIndex(options, previousFetchOptionSelected)
 	defaultFetchOptionIndex := previousFetchOptionIndex
 	choiceOpts := ui.ChoiceOpts{
-		Label:   "From where to fetch the manifest",
+		Label:   "Enter configuration source",
 		Default: defaultFetchOptionIndex,
 		Choices: options,
 	}
@@ -62,7 +57,7 @@ func (fetchStep *FetchStep) Interact() error {
 	}
 	currentFetchOptionSelected := options[currentFetchOptionIndex]
 
-	if currentFetchOptionSelected != previousFetchOptionSelected {
+	if previousFetchOptionSelected != "" && currentFetchOptionSelected != previousFetchOptionSelected {
 		return fmt.Errorf("Transitioning from one fetch option to another is not allowed. Earlier option selected: %s, Current Option selected: %s", previousFetchOptionSelected, currentFetchOptionSelected)
 	}
 
@@ -72,7 +67,7 @@ func (fetchStep *FetchStep) Interact() error {
 	}
 	buildObjectMeta.Annotations[FetchContentAnnotationKey] = currentFetchOptionSelected
 	fetchStep.build.SetObjectMeta(buildObjectMeta)
-	//For a local directory, we will be including everything.
+	// For a local directory, we will be including everything.
 	if currentFetchOptionSelected == FetchFromLocalDirectory {
 		fetchStep.ui.PrintInformationalText("For local directory, we are going to include everything as part of `init` command.")
 		return nil
@@ -97,10 +92,6 @@ func getPreviousFetchOptionIndex(manifestOptions []string, previousFetchOption s
 	return previousFetchOptionIndex
 }
 
-func (fetchStep *FetchStep) PostInteract() error {
-	return nil
-}
-
 func (fetchStep *FetchStep) helmTemplateExistInAppBuild() bool {
 	appSpec := fetchStep.build.GetAppSpec()
 	if appSpec == nil || appSpec.Template == nil {
@@ -113,4 +104,8 @@ func (fetchStep *FetchStep) helmTemplateExistInAppBuild() bool {
 		}
 	}
 	return false
+}
+
+func (fetchStep *FetchStep) PostInteract() error {
+	return nil
 }

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/step"
 	goexec "os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -58,7 +57,7 @@ func (v *VendirStep) Interact() error {
 	}
 	currentFetchOptionSelected := v.fetchOption
 	switch currentFetchOptionSelected {
-	case FetchReleaseArtifactFromGithub:
+	case FetchFromGithubRelease:
 		githubStep := NewGithubStep(v.ui, v.config)
 		err := step.Run(githubStep)
 		if err != nil {
@@ -94,7 +93,7 @@ func (v *VendirStep) initializeVendirDirectorySection() []vendirconf.Directory {
 }
 
 func (v *VendirStep) getIncludedPaths() ([]string, error) {
-	v.ui.PrintInformationalText("We need exact manifest files from the above provided repository which should be included as package content. Multiple files can be included using a comma separator. If you want to include all the files, enter *.")
+	v.ui.PrintInformationalText("We need exact manifest files from the above provided repository which should be included. Multiple files can be included using a comma separator. If you want to include all the files, enter *.")
 	includedPaths := v.config.Directories[0].Contents[0].IncludePaths
 	defaultIncludedPath := strings.Join(includedPaths, ",")
 	if len(includedPaths) == 0 {
@@ -118,11 +117,12 @@ func (v *VendirStep) getIncludedPaths() ([]string, error) {
 }
 
 func (v *VendirStep) PostInteract() error {
+	v.ui.PrintInformationalText("We will use vendir to fetch the data from source to local directory. Vendir allows to declaratively state what should be in a directory and sync data sources into it. All the information entered above has been persisted into vendir.yml file.")
 	err := v.printVendirFile()
 	if err != nil {
 		return err
 	}
-	err = v.runVendirSync()
+	//err = v.runVendirSync()
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func (v *VendirStep) PostInteract() error {
 }
 
 func (v *VendirStep) printVendirFile() error {
-	vendirFileLocation := filepath.Join(VendirFileName)
+	vendirFileLocation := VendirFileName
 	v.ui.PrintActionableText(fmt.Sprintf("Printing %s", vendirFileLocation))
 	v.ui.PrintCmdExecutionText(fmt.Sprintf("cat %s", vendirFileLocation))
 	err := v.printFile(vendirFileLocation)
@@ -164,7 +164,7 @@ func (v *VendirStep) printFile(filePath string) error {
 }
 
 func (v *VendirStep) runVendirSync() error {
-	v.ui.PrintInformationalText("\nNext step is to run `vendir sync` to fetch the data from source to local.")
+	v.ui.PrintInformationalText("\nNext step is to run `vendir sync` to fetch the data from source to local directory. Vendir will sync the data into the upstream folder.")
 	v.ui.PrintActionableText("Running vendir sync")
 	v.ui.PrintCmdExecutionText("vendir sync -f vendir.yml")
 	var stdoutBs, stderrBs bytes.Buffer

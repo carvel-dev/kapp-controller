@@ -9,9 +9,9 @@ const (
 )
 
 const (
-	FetchReleaseArtifactFromGithub string = "Release artifact from Github Repository"
-	FetchManifestFromGithub        string = "Git Repository(Not supported)"
-	FetchChartFromHelmRepo         string = "Helm Chart from Helm Repository"
-	FetchChartFromGithub           string = "Helm Chart from Github repository(Not supported)"
-	FetchFromLocalDirectory        string = "Local Directory"
+	FetchFromGithubRelease  string = "Github Release"
+	FetchManifestFromGithub string = "Git Repository (Not supported)"
+	FetchChartFromHelmRepo  string = "Helm Chart from Helm Repository"
+	FetchChartFromGithub    string = "Helm Chart from Git Repository (Not supported)"
+	FetchFromLocalDirectory string = "Local Directory"
 )

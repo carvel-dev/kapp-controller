@@ -60,7 +60,7 @@ func GetFetchOptionFromVendir(config vendirconf.Config, ishelmTemplateExist bool
 	var selectedVendirOption string
 	switch {
 	case content.GithubRelease != nil:
-		selectedVendirOption = FetchReleaseArtifactFromGithub
+		selectedVendirOption = FetchFromGithubRelease
 	case content.HelmChart != nil:
 		selectedVendirOption = FetchChartFromHelmRepo
 	case content.Directory != nil:

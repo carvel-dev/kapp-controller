@@ -75,8 +75,8 @@ func (o *InitOptions) Run() error {
 		}
 	}
 
-	o.ui.PrintHeaderText("\nPre-requisite")
-	o.ui.PrintInformationalText("Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
+	o.ui.PrintHeaderText("\nPrerequisites")
+	o.ui.PrintInformationalText("Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:\n- The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n")
 
 	pkgBuild, err := GetPackageBuild(PkgBuildFileName)
 	if err != nil {
@@ -200,6 +200,7 @@ func (createStep *CreateStep) PreInteract() error {
 }
 
 func (createStep *CreateStep) Interact() error {
+	createStep.ui.PrintHeaderText("\nBasic Information (Step 1/3)")
 	err := createStep.configurePackageReferenceName()
 	if err != nil {
 		return err
@@ -249,10 +250,11 @@ func (createStep CreateStep) configurePackageReferenceName() error {
 }
 
 func (createStep *CreateStep) printPackageReferenceNameBlock() {
-	createStep.ui.PrintInformationalText("\nA package Reference name must be a valid DNS subdomain name (https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names) \n - at least three segments separated by a '.', no trailing '.' e.g. samplepackage.corp.com")
+	createStep.ui.PrintInformationalText("A package reference name must be a valid DNS subdomain name (https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names) \n - at least three segments separated by a '.', no trailing '.' e.g. samplepackage.corp.com")
 }
 
 func (createStep *CreateStep) PostInteract() error {
+	createStep.ui.PrintHeaderText("\nOutput (Step 3/3)")
 	currentTime := metav1.NewTime(time.Now())
 	createStep.pkgMetadata.ObjectMeta.CreationTimestamp = currentTime
 	createStep.pkg.ObjectMeta.CreationTimestamp = currentTime
@@ -263,7 +265,6 @@ func (createStep *CreateStep) PostInteract() error {
 	}
 	createStep.build.SetObjectMeta(buildObjectMeta)
 	createStep.pkgInstall.CreationTimestamp = currentTime
-
 	createStep.updatePackageInstall()
 	createStep.updatePackage()
 
@@ -271,13 +272,15 @@ func (createStep *CreateStep) PostInteract() error {
 	if err != nil {
 		return err
 	}
-	//createStep.ui.PrintInformationalText(fmt.Sprintf("Both the files can be accessed from the following location: %s\n", createStep.pkgLocation))
+	createStep.ui.PrintInformationalText("\nSuccessfully updated package-build.yml")
+	createStep.ui.PrintInformationalText("\nSuccessfully updated package-resources.yml\n")
 	createStep.printInformation()
 	createStep.printNextStep()
 	return nil
 }
 
 func (createStep CreateStep) updatePackageInstall() {
+
 	existingPkgInstall := createStep.pkgInstall
 	if existingPkgInstall.ObjectMeta.Annotations == nil {
 		existingPkgInstall.ObjectMeta.Annotations = make(map[string]string)
@@ -323,12 +326,14 @@ func (createStep CreateStep) updatePackage() {
 }
 
 func (createStep CreateStep) printNextStep() {
-	createStep.ui.PrintInformationalText("\n**Next steps**")
-	createStep.ui.PrintInformationalText("\nCreated package can be consumed in following ways:\n1. Add the package to package repository by running `kctrl pkg repo build`. Once it has been added to the package repository, test it by running `kctrl pkg install -i <INSTALL_NAME> -p <PACKAGE_NAME> --version <VERSION>`\n2. Publish the package on the github repository.\n")
+	createStep.ui.PrintHeaderText("\n**Next steps**")
+	createStep.ui.PrintInformationalText("Created files can be consumed in following ways:\n1. Optionally, use 'kctrl dev deploy' to iterate on the package and deploy locally.\n2. Use 'kctrl pkg release' to release the package.\n3. Use 'kctrl pkg release --repo-output repo/' to release and add package to package repository.\n")
 }
 
 func (createStep CreateStep) printInformation() {
-	createStep.ui.PrintInformationalText("\n**Information**\npackage-build.yml is generated as part of this flow. This file can be used for further updating and adding complex scenarios while using the `kctrl pkg build create` command. Please read the link'ed documentation for more explanation.")
+	createStep.ui.PrintHeaderText("\n**Information**")
+	createStep.ui.PrintInformationalText("Package-build.yml can be used by kctrl pkg release. Please read the linked documentation for more explanation.")
+	createStep.ui.PrintInformationalText("\nPackage-resources.yml file can be used by kctrl pkg release or kctrl dev deploy. Please read the linked documentation for more explanation.\n")
 }
 
 func (createStep CreateStep) getDefaultPackageRefName() string {
