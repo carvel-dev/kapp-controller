@@ -48,7 +48,6 @@ func NewDefaultVendirConfig() vendirconf.Config {
 		Kind:       "Config",                  // TODO: use constant from vendir package
 
 	}
-	SaveVendir(config)
 	return config
 }
 

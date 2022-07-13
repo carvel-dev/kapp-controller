@@ -4,10 +4,12 @@
 package template
 
 import (
+	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/configure/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/build"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"strings"
 )
 
 const (
@@ -53,23 +55,42 @@ func (templateStep *TemplateStep) PostInteract() error {
 	if existingTemplates == nil {
 		appTemplates = []v1alpha1.AppTemplate{}
 	}
-	defaultYttPath := UpstreamFolderName
+	var defaultYttPaths []string
 
+	fetchSource := templateStep.build.GetObjectMeta().Annotations[fetch.FetchContentAnnotationKey]
 	// Add helmTemplate
-	if templateStep.isHelmTemplateRequired() {
-		defaultYttPath = StdIn
+	switch fetchSource {
+	case fetch.FetchChartFromHelmRepo:
+		defaultYttPaths = []string{StdIn}
 		appTemplateWithHelm := v1alpha1.AppTemplate{
 			HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{
 				Path: UpstreamFolderName,
 			}}
 		appTemplates = append(appTemplates, appTemplateWithHelm)
+	case fetch.FetchFromLocalDirectory:
+		templateStep.ui.PrintInformationalText("We need to include files/directory which should be part of this package. Multiple values can be included using a comma separator.")
+		var defaultIncludedPath string
+		textOpts := ui.TextOpts{
+			Label:        "Enter the paths which need to be included as part of this package",
+			Default:      defaultIncludedPath,
+			ValidateFunc: nil,
+		}
+		includePaths, err := templateStep.ui.AskForText(textOpts)
+		if err != nil {
+			return err
+		}
+		defaultYttPaths = strings.Split(includePaths, ",")
+	default:
+		defaultYttPaths = []string{}
 	}
 
 	// Add yttTemplate
 	appTemplateWithYtt := v1alpha1.AppTemplate{
 		Ytt: &v1alpha1.AppTemplateYtt{
-			Paths: []string{defaultYttPath},
-		}}
+			Paths: defaultYttPaths,
+		},
+	}
+
 	appTemplates = append(appTemplates, appTemplateWithYtt)
 
 	// Add kbldTemplate
@@ -78,11 +99,4 @@ func (templateStep *TemplateStep) PostInteract() error {
 	appSpec.Template = appTemplates
 	templateStep.build.SetAppSpec(appSpec)
 	return templateStep.build.Save()
-}
-
-func (templateStep TemplateStep) isHelmTemplateRequired() bool {
-	if templateStep.build.GetObjectMeta().Annotations[fetch.FetchContentAnnotationKey] == fetch.FetchChartFromHelmRepo {
-		return true
-	}
-	return false
 }

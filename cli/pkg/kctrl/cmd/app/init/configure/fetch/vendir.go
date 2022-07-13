@@ -163,6 +163,7 @@ func (v *VendirStep) printFile(filePath string) error {
 	return nil
 }
 
+// TODO vendir sync failure. Reproduce: In case of 429 from github, we dont show errors today.
 func (v *VendirStep) runVendirSync() error {
 	v.ui.PrintInformationalText("Next step is to run `vendir sync` to fetch the data from source to local directory. Vendir will sync the data into the upstream folder.")
 	v.ui.PrintActionableText("Running vendir sync")

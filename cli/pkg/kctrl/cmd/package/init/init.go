@@ -275,7 +275,6 @@ func (createStep *CreateStep) PostInteract() error {
 	}
 	createStep.ui.PrintInformationalText("Successfully updated package-build.yml\n")
 	createStep.ui.PrintInformationalText("Successfully updated package-resources.yml\n")
-	createStep.printInformation()
 	createStep.printNextStep()
 	return nil
 }
@@ -329,12 +328,6 @@ func (createStep CreateStep) updatePackage() {
 func (createStep CreateStep) printNextStep() {
 	createStep.ui.PrintHeaderText("\n**Next steps**")
 	createStep.ui.PrintInformationalText("Created files can be consumed in following ways:\n1. Optionally, use 'kctrl dev deploy' to iterate on the package and deploy locally.\n2. Use 'kctrl pkg release' to release the package.\n3. Use 'kctrl pkg release --repo-output repo/' to release and add package to package repository.\n")
-}
-
-func (createStep CreateStep) printInformation() {
-	createStep.ui.PrintHeaderText("\n**Information**")
-	createStep.ui.PrintInformationalText("Package-build.yml can be used by kctrl pkg release. Please read the linked documentation for more explanation.")
-	createStep.ui.PrintInformationalText("\nPackage-resources.yml file can be used by kctrl pkg release or kctrl dev deploy. Please read the linked documentation for more explanation.\n")
 }
 
 func (createStep CreateStep) getDefaultPackageRefName() string {

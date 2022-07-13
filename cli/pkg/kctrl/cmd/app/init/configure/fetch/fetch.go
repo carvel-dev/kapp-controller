@@ -69,7 +69,6 @@ func (fetchStep *FetchStep) Interact() error {
 	fetchStep.build.SetObjectMeta(buildObjectMeta)
 	// For a local directory, we will be including everything.
 	if currentFetchOptionSelected == FetchFromLocalDirectory {
-		fetchStep.ui.PrintInformationalText("For local directory, we are going to include everything as part of `init` command.")
 		return nil
 	}
 

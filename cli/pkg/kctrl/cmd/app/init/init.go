@@ -203,19 +203,23 @@ func (createStep CreateStep) createAppFromAppBuild() kcv1alpha1.App {
 }
 
 func (createStep CreateStep) configureExportSection() {
-	fetchSource := createStep.build.GetObjectMeta().Annotations[fetch.FetchContentAnnotationKey]
-	if fetchSource == fetch.FetchFromLocalDirectory {
-		return
-	}
-
-	// TODO current implementation is if export section is already defined, we will not touch it. Confirm the same.
 	exportSection := *createStep.build.GetExport()
+	// TODO current implementation is if export section is already defined, we will not touch it. Confirm the same.
 	if exportSection == nil || len(exportSection) == 0 {
+		appTemplates := createStep.build.GetAppSpec().Template
+		includePaths := []string{}
+		for _, appTemplate := range appTemplates {
+			if appTemplate.HelmTemplate != nil {
+				includePaths = append(includePaths, appTemplate.HelmTemplate.Path)
+			} else if appTemplate.Ytt != nil {
+				includePaths = append(includePaths, appTemplate.Ytt.Paths...)
+			}
+		}
 		exportSection = append(exportSection, appbuild.Export{
 			ImgpkgBundle: nil,
-			IncludePaths: []string{template.UpstreamFolderName},
+			IncludePaths: includePaths,
 		})
+		createStep.build.SetExport(&exportSection)
 	}
-	createStep.build.SetExport(&exportSection)
 	return
 }
