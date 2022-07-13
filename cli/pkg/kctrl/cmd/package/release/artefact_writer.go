@@ -17,7 +17,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-type ArtefactWriter struct {
+type ArtifactWriter struct {
 	Package     string
 	Version     string
 	ArtefactDir string
@@ -30,20 +30,49 @@ const (
 	packageDir  = "packages"
 )
 
-func NewArtefactWriter(pkg string, version string, artefactDir string, ui cmdcore.AuthoringUI) *ArtefactWriter {
-	return &ArtefactWriter{Package: pkg, Version: version, ArtefactDir: artefactDir, ui: ui}
+func NewArtifactWriter(pkg string, version string, artefactDir string, ui cmdcore.AuthoringUI) *ArtifactWriter {
+	return &ArtifactWriter{Package: pkg, Version: version, ArtefactDir: artefactDir, ui: ui}
 }
 
-func (w *ArtefactWriter) CreatePackageDir() error {
-	path := filepath.Join(artefactDir, packageDir, w.Package)
+func (w *ArtifactWriter) Write(appSpec *kcv1alpha1.AppSpec) error {
+	path := filepath.Join(w.ArtefactDir, packageDir, w.Package)
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
 		return err
 	}
+
+	err = w.writePackageMetadata(filepath.Join(path, "metadata.yml"))
+	if err != nil {
+		return err
+	}
+	err = w.writePackage(filepath.Join(path, "package.yml"), appSpec)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (w *ArtefactWriter) TouchPackageMetadata() error {
+func (w *ArtifactWriter) WriteRepoOutput(appSpec *kcv1alpha1.AppSpec, path string) error {
+	path = filepath.Join(path, packageDir, w.Package)
+	err := os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	err = w.writePackageMetadata(filepath.Join(path, "metadata.yml"))
+	if err != nil {
+		return err
+	}
+	err = w.writePackage(filepath.Join(path, fmt.Sprintf("%s.yml", w.Version)), appSpec)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (w *ArtifactWriter) writePackageMetadata(path string) error {
 	metadata := kcdatav1alpha1.PackageMetadata{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "data.packaging.carvel.dev/v1alpha1",
@@ -67,12 +96,11 @@ func (w *ArtefactWriter) TouchPackageMetadata() error {
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(artefactDir, packageDir, w.Package, "metadata.yml")
 	return w.createFileIfNotExists(path, append(metadataBytes, []byte(template)...))
 }
 
-func (w *ArtefactWriter) WritePackageFile(imgpkgBundleLocation string, buildAppSpec *kcv1alpha1.AppSpec, useKbldLockOutput bool) error {
-	packageMeta := kcdatav1alpha1.Package{
+func (w *ArtifactWriter) writePackage(path string, appSpec *kcv1alpha1.AppSpec) error {
+	packageObj := kcdatav1alpha1.Package{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "data.packaging.carvel.dev/v1alpha1",
 			Kind:       "Package",
@@ -85,38 +113,19 @@ func (w *ArtefactWriter) WritePackageFile(imgpkgBundleLocation string, buildAppS
 			Version:    w.Version,
 			RefName:    w.Package,
 			Template: kcdatav1alpha1.AppTemplateSpec{
-				Spec: &kcv1alpha1.AppSpec{
-					Fetch: []kcv1alpha1.AppFetch{
-						{
-							ImgpkgBundle: &kcv1alpha1.AppFetchImgpkgBundle{
-								Image: imgpkgBundleLocation,
-							},
-						},
-					},
-					Template: buildAppSpec.Template,
-					Deploy:   buildAppSpec.Deploy,
-				},
+				Spec: appSpec,
 			},
 		},
 	}
-	if useKbldLockOutput {
-		for _, templateStage := range packageMeta.Spec.Template.Spec.Template {
-			if templateStage.Kbld != nil {
-				templateStage.Kbld.Paths = append(templateStage.Kbld.Paths, "-")
-				templateStage.Kbld.Paths = append(templateStage.Kbld.Paths, ".imgpkg/images.yml")
-			}
-		}
-	}
 
-	packageBytes, err := yaml.Marshal(packageMeta)
+	packageBytes, err := yaml.Marshal(packageObj)
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(artefactDir, packageDir, w.Package, fmt.Sprintf("%s.yml", w.Version))
 	return w.createOrOverwriteFile(path, packageBytes)
 }
 
-func (w *ArtefactWriter) createFileIfNotExists(path string, data []byte) error {
+func (w *ArtifactWriter) createFileIfNotExists(path string, data []byte) error {
 	_, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -130,7 +139,7 @@ func (w *ArtefactWriter) createFileIfNotExists(path string, data []byte) error {
 	return nil
 }
 
-func (w *ArtefactWriter) createOrOverwriteFile(path string, data []byte) error {
+func (w *ArtifactWriter) createOrOverwriteFile(path string, data []byte) error {
 	err := ioutil.WriteFile(path, data, os.ModePerm)
 	if err != nil {
 		return err
