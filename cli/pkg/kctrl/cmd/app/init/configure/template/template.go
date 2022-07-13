@@ -81,7 +81,7 @@ func (templateStep *TemplateStep) PostInteract() error {
 		}
 		defaultYttPaths = strings.Split(includePaths, ",")
 	default:
-		defaultYttPaths = []string{}
+		defaultYttPaths = []string{UpstreamFolderName}
 	}
 
 	// Add yttTemplate
