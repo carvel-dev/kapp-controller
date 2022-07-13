@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657581422383,
+  "lastUpdate": 1657733043979,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -3603,6 +3603,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6430161606,
             "unit": "ns/op\t         4.252 DeleteSeconds\t         2.135 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "benm@vmware.com",
+            "name": "Ben Moss",
+            "username": "benmoss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ce55e80d878a2b7ac252059f22c4514d950411c2",
+          "message": "Fix flaky test (#783)\n\nTest_PackageInstall_UsesExistingAppWithSameName would flake because the app\r\nreconciler is adding finalizers to the app at the same time the PKGI reconciler\r\nwants to update the app.\r\n\r\nIf the PKGI reconciler sees the app before the app reconciler finishes, there's\r\na race for who updates it first. If the PKGI reconciler loses that race, it\r\ngets angry and puts a failure status message on the PKGI, and that fails the\r\n`kapp deploy`, which fails the test.\r\n\r\nBy just waiting for the app to get ReconcileSucceeded, we can guarantee that\r\nthe app reconciler has finished and avoid the race. Ran it 100 times and it\r\ndidn't flake.",
+          "timestamp": "2022-07-13T13:11:58-04:00",
+          "tree_id": "096c9e1bf15d35f271afc98aa4b87a7c44d4dca2",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/ce55e80d878a2b7ac252059f22c4514d950411c2"
+        },
+        "date": 1657733041582,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 38032391381,
+            "unit": "ns/op\t        19.20 DeleteSeconds\t        18.78 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9831702376,
+            "unit": "ns/op\t         5.542 DeleteSeconds\t         4.230 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6591159874,
+            "unit": "ns/op\t         4.340 DeleteSeconds\t         2.204 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
