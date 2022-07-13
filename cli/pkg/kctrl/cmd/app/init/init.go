@@ -212,7 +212,14 @@ func (createStep CreateStep) configureExportSection() {
 			if appTemplate.HelmTemplate != nil {
 				includePaths = append(includePaths, appTemplate.HelmTemplate.Path)
 			} else if appTemplate.Ytt != nil {
-				includePaths = append(includePaths, appTemplate.Ytt.Paths...)
+				var yttPaths []string
+				for _, path := range appTemplate.Ytt.Paths {
+					if path == template.StdIn {
+						continue
+					}
+					yttPaths = append(yttPaths, path)
+				}
+				includePaths = append(includePaths, yttPaths...)
 			}
 		}
 		exportSection = append(exportSection, appbuild.Export{
