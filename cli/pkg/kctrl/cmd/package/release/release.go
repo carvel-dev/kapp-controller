@@ -81,8 +81,8 @@ func (o *ReleaseOptions) Run() error {
 	}
 
 	// To be removed and moved to a question in case we have more config/variations around this
-	if pkgBuild.Spec.Template.Spec.Release == nil || len(pkgBuild.Spec.Template.Spec.Release) == 0 {
-		pkgBuild.Spec.Template.Spec.Release = []appbuild.Release{
+	if pkgBuild.Spec.Release == nil || len(pkgBuild.Spec.Release) == 0 {
+		pkgBuild.Spec.Release = []appbuild.Release{
 			{
 				Resource: &appbuild.ReleaseResource{},
 			},
@@ -105,9 +105,12 @@ func (o *ReleaseOptions) Run() error {
 	}
 
 	for _, release := range pkgBuild.Spec.Release {
-		if release.Resource != nil {
+		switch {
+		case release.Resource != nil:
 			err = o.releaseResources(appSpec, pkgBuild.Name)
-
+			if err != nil {
+				return nil
+			}
 		}
 	}
 
