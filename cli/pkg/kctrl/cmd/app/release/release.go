@@ -25,7 +25,7 @@ type ReleaseOptions struct {
 }
 
 const (
-	defaultArtefactDir = "carvel-artefacts"
+	defaultArtifactDir = "carvel-arteficts"
 	defaultVersion     = "0.0.0-%d"
 )
 
@@ -42,7 +42,7 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.pkgVersion, "version", "v", "", "Version to be released")
 	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Working directory with package-build and other config")
-	cmd.Flags().StringVar(&o.outputLocation, "copy-to", defaultArtefactDir, "Output location for artefacts")
+	cmd.Flags().StringVar(&o.outputLocation, "copy-to", defaultArtifactDir, "Output location for artifacts")
 	cmd.Flags().BoolVar(&o.debug, "debug", false, "Version to be released")
 
 	return cmd
@@ -85,6 +85,6 @@ func (o *ReleaseOptions) Run() error {
 
 func (o *ReleaseOptions) printPrerequisites() {
 	o.ui.PrintHeaderText("Pre-requisites")
-	o.ui.PrintInformationalText("1. The host must be authorised to push images to a registry (can be set up by running `docker login`)\n" +
+	o.ui.PrintInformationalText("1. The host must be authorized to push images to a registry (can be set up by running `docker login`)\n" +
 		"2. an app can be released with this command only once `kctrl app init` has been run successfully.\n")
 }

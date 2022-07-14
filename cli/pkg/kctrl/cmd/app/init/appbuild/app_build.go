@@ -39,13 +39,16 @@ type Export struct {
 }
 
 type Release struct {
-	Resource interface{} `json:"resource,omitempty"`
-	Yaml     interface{} `json:"yaml,omitempty"`
+	Resource *ReleaseResource `json:"resource,omitempty"`
+	Yaml     interface{}      `json:"yaml,omitempty"`
 }
 
 type ImgpkgBundle struct {
 	Image             string `json:"image,omitempty"`
 	UseKbldImagesLock bool   `json:"useKbldImagesLock,omitempty"`
+}
+
+type ReleaseResource struct {
 }
 
 // Save will persist the appBuild onto the fileSystem. Before saving, it will remove the Annotations from the AppBuild.
