@@ -55,19 +55,23 @@ func (templateStep *TemplateStep) PostInteract() error {
 	if existingTemplates == nil {
 		appTemplates = []v1alpha1.AppTemplate{}
 	}
-	var defaultYttPaths []string
 
 	fetchSource := templateStep.build.GetObjectMeta().Annotations[fetch.FetchContentAnnotationKey]
 	// Add helmTemplate
-	switch fetchSource {
-	case fetch.FetchChartFromHelmRepo:
-		defaultYttPaths = []string{StdIn}
+	if fetchSource == fetch.FetchChartFromHelmRepo || fetchSource == fetch.FetchChartFromGit {
 		appTemplateWithHelm := v1alpha1.AppTemplate{
 			HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{
 				Path: UpstreamFolderName,
 			}}
 		appTemplates = append(appTemplates, appTemplateWithHelm)
-	case fetch.FetchFromLocalDirectory:
+	}
+
+	//  Define YttPaths
+	var defaultYttPaths []string
+	if fetchSource == fetch.FetchChartFromHelmRepo || fetchSource == fetch.FetchChartFromGit {
+		defaultYttPaths = []string{StdIn}
+
+	} else if fetchSource == fetch.FetchFromLocalDirectory {
 		templateStep.ui.PrintInformationalText("We need to include files/directory which should be part of this package. Multiple values can be included using a comma separator.")
 		var defaultIncludedPath string
 		textOpts := ui.TextOpts{
@@ -80,7 +84,7 @@ func (templateStep *TemplateStep) PostInteract() error {
 			return err
 		}
 		defaultYttPaths = strings.Split(includePaths, ",")
-	default:
+	} else {
 		defaultYttPaths = []string{UpstreamFolderName}
 	}
 

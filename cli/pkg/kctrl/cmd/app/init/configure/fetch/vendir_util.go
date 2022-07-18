@@ -66,9 +66,9 @@ func GetFetchOptionFromVendir(config vendirconf.Config, ishelmTemplateExist bool
 		selectedVendirOption = FetchFromLocalDirectory
 	case content.Git != nil:
 		if ishelmTemplateExist {
-			selectedVendirOption = FetchChartFromGithub
+			selectedVendirOption = FetchChartFromGit
 		}
-		selectedVendirOption = FetchManifestFromGithub
+		selectedVendirOption = FetchManifestFromGit
 	}
 	return selectedVendirOption
 }

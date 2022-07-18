@@ -63,16 +63,28 @@ func (v *VendirStep) Interact() error {
 		if err != nil {
 			return err
 		}
-		includedPaths, err := v.getIncludedPaths()
-		if err != nil {
-			return err
-		}
-		v.config.Directories[0].Contents[0].IncludePaths = includedPaths
-		return SaveVendir(v.config)
 	case FetchChartFromHelmRepo:
 		helmStep := NewHelmStep(v.ui, v.config)
 		return step.Run(helmStep)
+	case FetchManifestFromGit:
+		gitStep := NewGitStep(v.ui, v.config)
+		err := step.Run(gitStep)
+		if err != nil {
+			return err
+		}
+	case FetchChartFromGit:
+		gitStep := NewGitStep(v.ui, v.config)
+		err := step.Run(gitStep)
+		if err != nil {
+			return err
+		}
 	}
+	includedPaths, err := v.getIncludedPaths()
+	if err != nil {
+		return err
+	}
+	v.config.Directories[0].Contents[0].IncludePaths = includedPaths
+	return SaveVendir(v.config)
 	return nil
 }
 

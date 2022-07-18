@@ -30,16 +30,16 @@ func TestPackageInitInteractively(t *testing.T) {
 		promptOutput := newPromptOutput(t)
 
 		go func() {
-			promptOutput.WaitFor("A package Reference name must be a valid DNS subdomain name")
+			promptOutput.WaitFor("A package reference name must be a valid DNS subdomain name")
 			promptOutput.Write("testpackage.corp.dev")
 			promptOutput.WaitFor("need to fetch the manifest which defines")
 			promptOutput.Write("3")
-			promptOutput.WaitFor("From where to fetch the")
+			promptOutput.WaitFor("Enter configuration source")
+			promptOutput.Write("https://mongodb.github.io/helm-charts")
+			promptOutput.WaitFor("Enter helm chart repository URL")
 			promptOutput.Write("enterprise-operator")
 			promptOutput.WaitFor("Enter helm chart name")
 			promptOutput.Write("1.16.0")
-			promptOutput.WaitFor("Enter helm chart version")
-			promptOutput.Write("https://mongodb.github.io/helm-charts")
 		}()
 
 		kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true"},
@@ -62,11 +62,6 @@ metadata:
   name: testpackage.corp.dev
 spec:
   template:
-    apiVersion: kctrl.carvel.dev/v1alpha1
-    kind: AppBuild
-    metadata:
-      annotations:
-        fetch-content-from: Helm Chart from Helm Repository
     spec:
       app:
         spec:

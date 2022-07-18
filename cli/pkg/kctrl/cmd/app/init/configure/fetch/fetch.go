@@ -43,7 +43,7 @@ func (fetchStep *FetchStep) Interact() error {
 	isHelmTemplateExistInPreviousOption := fetchStep.helmTemplateExistInAppBuild()
 	previousFetchOptionSelected := GetFetchOptionFromVendir(vendirConfig, isHelmTemplateExistInPreviousOption)
 
-	options := []string{FetchFromGithubRelease, FetchChartFromHelmRepo, FetchFromLocalDirectory}
+	options := []string{FetchFromLocalDirectory, FetchFromGithubRelease, FetchChartFromHelmRepo, FetchManifestFromGit, FetchChartFromGit}
 	previousFetchOptionIndex := getPreviousFetchOptionIndex(options, previousFetchOptionSelected)
 	defaultFetchOptionIndex := previousFetchOptionIndex
 	choiceOpts := ui.ChoiceOpts{

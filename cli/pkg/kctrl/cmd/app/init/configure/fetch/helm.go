@@ -41,15 +41,15 @@ func (helmStep *HelmStep) Interact() error {
 		}
 	}
 
-	err := helmStep.configureHelmChartName()
+	err := helmStep.configureHelmChartRepositoryURL()
 	if err != nil {
 		return err
 	}
-	err = helmStep.configureHelmChartVersion()
+	err = helmStep.configureHelmChartName()
 	if err != nil {
 		return err
 	}
-	return helmStep.configureHelmChartRepositoryURL()
+	return helmStep.configureHelmChartVersion()
 }
 
 func (helmStep *HelmStep) initializeHelmRelease() error {

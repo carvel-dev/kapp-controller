@@ -119,6 +119,11 @@ func (createStep *CreateStep) Interact() error {
 }
 
 func (createStep *CreateStep) PostInteract() error {
+	appSpec := createStep.build.GetAppSpec()
+	if appSpec.Deploy == nil {
+		appSpec.Deploy = []kcv1alpha1.AppDeploy{kcv1alpha1.AppDeploy{Kapp: &kcv1alpha1.AppDeployKapp{}}}
+	}
+	createStep.build.SetAppSpec(appSpec)
 	createStep.configureExportSection()
 
 	if createStep.isAppCommandRunExplicitly {
