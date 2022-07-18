@@ -1173,6 +1173,33 @@ spec:
                     type: integer
                   finished:
                     type: boolean
+                  kapp:
+                    description: KappDeployStatus contains the associated AppCR deployed resources
+                    properties:
+                      associatedResources:
+                        description: AssociatedResources contains the associated App label, namespaces and GKs
+                        properties:
+                          groupKinds:
+                            items:
+                              description: GroupKind specifies a Group and a Kind, but does not force a version.  This is useful for identifying concepts during lookup stages without having partially valid types
+                              properties:
+                                group:
+                                  type: string
+                                kind:
+                                  type: string
+                              required:
+                              - group
+                              - kind
+                              type: object
+                            type: array
+                          label:
+                            type: string
+                          namespaces:
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                    type: object
                   startedAt:
                     format: date-time
                     type: string
@@ -1644,6 +1671,33 @@ spec:
                     type: integer
                   finished:
                     type: boolean
+                  kapp:
+                    description: KappDeployStatus contains the associated AppCR deployed resources
+                    properties:
+                      associatedResources:
+                        description: AssociatedResources contains the associated App label, namespaces and GKs
+                        properties:
+                          groupKinds:
+                            items:
+                              description: GroupKind specifies a Group and a Kind, but does not force a version.  This is useful for identifying concepts during lookup stages without having partially valid types
+                              properties:
+                                group:
+                                  type: string
+                                kind:
+                                  type: string
+                              required:
+                              - group
+                              - kind
+                              type: object
+                            type: array
+                          label:
+                            type: string
+                          namespaces:
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                    type: object
                   startedAt:
                     format: date-time
                     type: string

@@ -99,6 +99,7 @@ spec:
 			cr.Status.Deploy.StartedAt = metav1.Time{}
 			cr.Status.Deploy.UpdatedAt = metav1.Time{}
 			cr.Status.Deploy.Stdout = ""
+			cr.Status.Deploy.KappDeployStatus = nil
 
 			// fetch
 			if !strings.Contains(cr.Status.Fetch.Stdout, "kind: LockConfig") {
@@ -112,6 +113,7 @@ spec:
 			if !strings.Contains(cr.Status.Inspect.Stdout, "Resources in app 'test-git-https-public.app'") {
 				t.Fatalf("Expected non-empty inspect output")
 			}
+
 			cr.Status.Inspect.UpdatedAt = metav1.Time{}
 			cr.Status.Inspect.Stdout = ""
 
@@ -216,6 +218,7 @@ spec:
 			cr.Status.Deploy.StartedAt = metav1.Time{}
 			cr.Status.Deploy.UpdatedAt = metav1.Time{}
 			cr.Status.Deploy.Stdout = ""
+			cr.Status.Deploy.KappDeployStatus = nil
 
 			// fetch
 			if !strings.Contains(cr.Status.Fetch.Stdout, "kind: LockConfig") {
