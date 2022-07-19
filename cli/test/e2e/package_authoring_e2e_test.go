@@ -3,28 +3,35 @@ package e2e
 import (
 	"bufio"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
-func TestPackageInitInteractively(t *testing.T) {
+const (
+	workingDir = "kcrl-test"
+)
+
+func TestPackageAuthoringE2E(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
 
 	cleanUp := func() {
-		os.Remove("package-build.yml")
-		os.Remove("package-resources.yml")
-		os.Remove("vendir.yml")
-		os.Remove("app-build.yml")
-		os.RemoveAll("upstream")
+		os.RemoveAll(workingDir)
 	}
 	cleanUp()
 	defer cleanUp()
+
+	err := os.Mkdir(workingDir, os.ModePerm)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	logger.Section("Creating a package interactively using pkg init", func() {
 		promptOutput := newPromptOutput(t)
@@ -42,7 +49,7 @@ func TestPackageInitInteractively(t *testing.T) {
 			promptOutput.Write("1.16.0")
 		}()
 
-		kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true"},
+		kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 				StdoutWriter: promptOutput.OutputWriter(), Interactive: true})
 
@@ -51,6 +58,23 @@ func TestPackageInitInteractively(t *testing.T) {
 		verifyPackageResources(t, keysToBeIgnored)
 		verifyVendir(t, keysToBeIgnored)
 
+	})
+
+	logger.Section("releasing package using kctrl package release", func() {
+		promptOutput := newPromptOutput(t)
+
+		go func() {
+			promptOutput.WaitFor("The bundle created needs to be pushed ")
+			promptOutput.Write(env.Image)
+		}()
+
+		kappCtrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.OutputWriter(), Interactive: true})
+
+		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image"}
+		verifyPackageArtifact(t, keysToBeIgnored)
+		verifyPackageMetadataArtifact(t, keysToBeIgnored)
 	})
 }
 
@@ -172,8 +196,74 @@ minimumRequiredVersion: ""
 	require.Equal(t, vendirExpectedOutput, out, "output does not match")
 }
 
+func verifyPackageMetadataArtifact(t *testing.T, keysToBeIgnored []string) {
+	expectedPackageMetadata := `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+# longDescription: Detailed description of package
+# shortDescription: Concise description of package
+# providerName: Organization/entity providing this package
+# maintainers:
+#   - name: Maintainer 1
+#   - name: Maintainer 2
+`
+
+	out, err := readFile("./carvel-artifacts/packages/testpackage.corp.dev/metadata.yml")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	out = strings.TrimSpace(replaceSpaces(out))
+	expectedPackageMetadata = strings.TrimSpace(replaceSpaces(expectedPackageMetadata))
+	out = clearKeys(keysToBeIgnored, out)
+	require.Equal(t, expectedPackageMetadata, out, "output does not match")
+}
+
+func verifyPackageArtifact(t *testing.T, keysToBeIgnored []string) {
+	expectedPackage := `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.1.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - imgpkgBundle:
+      template:
+      - helmTemplate:
+          path: upstream
+      - ytt:
+          paths:
+          - '-'
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/
+  valuesSchema:
+    openAPIv3: null
+  version: 1.0.0
+`
+
+	out, err := readFile("./carvel-artifacts/packages/testpackage.corp.dev/package.yml")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	out = strings.TrimSpace(replaceSpaces(out))
+	expectedPackage = strings.TrimSpace(replaceSpaces(expectedPackage))
+	out = clearKeys(keysToBeIgnored, out)
+	require.Equal(t, expectedPackage, out, "output does not match")
+}
+
 func readFile(fileName string) (string, error) {
-	data, err := os.ReadFile(fileName)
+	path := filepath.Join(workingDir, fileName)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
@@ -187,6 +277,7 @@ func replaceSpaces(result string) string {
 	return result
 }
 
+// TODO: Make regex more strict. Removes 'images.yaml' from '.imgpkg/images.yml' right now
 func clearKeys(keys []string, out string) string {
 	for _, key := range keys {
 		r := regexp.MustCompile(key + ".*")

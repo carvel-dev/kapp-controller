@@ -53,7 +53,7 @@ func (r ImgpkgRunner) Run() (string, error) {
 	defer os.RemoveAll(dir)
 
 	// TODO: Stream output
-	r.UI.PrintInformationalText("\nAn imgpkg bundle consists of all required YAML configuration bundled into an OCI image" +
+	r.UI.PrintInformationalText("\nAn imgpkg bundle consists of all required YAML configuration bundled into an OCI image " +
 		"that can be pushed to an image registry and consumed by the package.\n")
 	r.UI.PrintHeaderText("Pushing imgpkg bundle")
 

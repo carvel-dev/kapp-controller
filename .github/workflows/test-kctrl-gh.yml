@@ -30,6 +30,10 @@ jobs:
     - name: Run Tests
       run: |
         set -e -x
+        function cleanup()
+        {
+          docker stop registry
+        }
 
         mkdir /tmp/bin
         export PATH=/tmp/bin:$PATH
@@ -48,7 +52,10 @@ jobs:
         ./hack/deploy-test.sh
 
         export KCTRL_E2E_NAMESPACE=kctrl-test
+        export KCTRL_E2E_IMAGE="localhost:5000/github-action-test-relocation-$GITHUB_RUN_ID"
         kubectl create ns $KCTRL_E2E_NAMESPACE
+        docker run -d -p 5000:5000 --restart=always --name registry registry:2
+        trap cleanup EXIT
 
         cd cli
         ./hack/test-all.sh
