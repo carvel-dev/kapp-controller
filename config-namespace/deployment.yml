@@ -23,9 +23,6 @@ spec:
       - name: kapp-controller
         image: kapp-controller
         args:
-        - #@ "-packaging-global-namespace={}".format(data.values.packaging_global_namespace)
-        #@ if/end data.values.dangerous_enable_pprof:
-        - -dangerous-enable-pprof=true
         - #@ "-enable-api-priority-and-fairness={}".format(data.values.enable_api_priority_and_fairness)
         env:
         - name: KAPPCTRL_MEM_TMP_DIR

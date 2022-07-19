@@ -67,6 +67,48 @@ rules:
 - apiGroups: ["flowcontrol.apiserver.k8s.io"]
   resources: ["prioritylevelconfigurations", "flowschemas"]
   verbs: ["list", "watch"]
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kapp-controller-user-role
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create", "get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["serviceaccounts"]
+  verbs: ["get"]
+- apiGroups: [""]
+  resources: ["serviceaccounts/token"]
+  verbs: ["create"]
+- apiGroups: ["kappctrl.k14s.io"]
+  resources: ["apps", "apps/status"]
+  verbs: ["*"]
+- apiGroups: ["packaging.carvel.dev"]
+  resources: ["packageinstalls", "packageinstalls/status", "packageinstalls/finalizers"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["*"]
+- apiGroups: ["packaging.carvel.dev"]
+  resources: ["packagerepositories", "packagerepositories/status"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["internal.packaging.carvel.dev"]
+  resources: ["internalpackagemetadatas"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["data.packaging.carvel.dev"]
+  resources: ["packagemetadatas", "packagemetadatas/status"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["internal.packaging.carvel.dev"]
+  resources: ["internalpackages"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["data.packaging.carvel.dev"]
+  resources: ["packages", "packages/status"]
+  verbs: ["get", "list", "watch"]
+
+
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1

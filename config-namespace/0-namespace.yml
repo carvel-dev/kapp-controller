@@ -1,0 +1,12 @@
+#@ load("@ytt:data", "data")
+
+#! Prefix filename with "0-" so that generated config
+#! has Namespace first so that kubectl can can install kc
+#! (kapp of course perm automatic ordering)
+
+#@ if/end data.values.namespace != "default" and data.values.create_namespace:
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: #@ data.values.namespace
