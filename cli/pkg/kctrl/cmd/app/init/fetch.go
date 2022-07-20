@@ -1,24 +1,22 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package fetch
+package init
 
 import (
 	"fmt"
 	"github.com/cppforlife/go-cli-ui/ui"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/build"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/step"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
 type FetchStep struct {
 	ui                        cmdcore.AuthoringUI
-	build                     build.Build
+	build                     Build
 	isAppCommandRunExplicitly bool
 }
 
-func NewFetchStep(ui cmdcore.AuthoringUI, build build.Build, isAppCommandRunExplicitly bool) *FetchStep {
+func NewFetchStep(ui cmdcore.AuthoringUI, build Build, isAppCommandRunExplicitly bool) *FetchStep {
 	fetchStep := FetchStep{
 		ui:                        ui,
 		build:                     build,
@@ -73,7 +71,7 @@ func (fetchStep *FetchStep) Interact() error {
 	}
 
 	vendirStep := NewVendirStep(fetchStep.ui, vendirConfig, currentFetchOptionSelected)
-	return step.Run(vendirStep)
+	return Run(vendirStep)
 }
 
 func getPreviousFetchOptionIndex(manifestOptions []string, previousFetchOption string) int {

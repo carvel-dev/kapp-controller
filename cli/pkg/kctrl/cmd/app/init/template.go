@@ -1,15 +1,14 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package template
+package init
 
 import (
+	"strings"
+
 	"github.com/cppforlife/go-cli-ui/ui"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/configure/fetch"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/build"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"strings"
 )
 
 const (
@@ -19,10 +18,10 @@ const (
 
 type TemplateStep struct {
 	ui    cmdcore.AuthoringUI
-	build build.Build
+	build Build
 }
 
-func NewTemplateStep(ui cmdcore.AuthoringUI, build build.Build) *TemplateStep {
+func NewTemplateStep(ui cmdcore.AuthoringUI, build Build) *TemplateStep {
 	templateStep := TemplateStep{
 		ui:    ui,
 		build: build,
@@ -56,9 +55,9 @@ func (templateStep *TemplateStep) PostInteract() error {
 		appTemplates = []v1alpha1.AppTemplate{}
 	}
 
-	fetchSource := templateStep.build.GetObjectMeta().Annotations[fetch.FetchContentAnnotationKey]
+	fetchSource := templateStep.build.GetObjectMeta().Annotations[FetchContentAnnotationKey]
 	// Add helmTemplate
-	if fetchSource == fetch.FetchChartFromHelmRepo || fetchSource == fetch.FetchChartFromGit {
+	if fetchSource == FetchChartFromHelmRepo || fetchSource == FetchChartFromGit {
 		appTemplateWithHelm := v1alpha1.AppTemplate{
 			HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{
 				Path: UpstreamFolderName,
@@ -68,10 +67,10 @@ func (templateStep *TemplateStep) PostInteract() error {
 
 	//  Define YttPaths
 	var defaultYttPaths []string
-	if fetchSource == fetch.FetchChartFromHelmRepo || fetchSource == fetch.FetchChartFromGit {
+	if fetchSource == FetchChartFromHelmRepo || fetchSource == FetchChartFromGit {
 		defaultYttPaths = []string{StdIn}
 
-	} else if fetchSource == fetch.FetchFromLocalDirectory {
+	} else if fetchSource == FetchFromLocalDirectory {
 		templateStep.ui.PrintInformationalText("We need to include files/directory which should be part of this package. Multiple values can be included using a comma separator.")
 		var defaultIncludedPath string
 		textOpts := ui.TextOpts{

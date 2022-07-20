@@ -4,15 +4,13 @@
 package init
 
 import (
-	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"os"
 
-	appBuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
-	"sigs.k8s.io/yaml"
-
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
+	appBuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
+	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -41,12 +39,12 @@ func (packageBuild PackageBuild) Save() error {
 		return err
 	}
 
-	return common.WriteFile(PkgBuildFileName, content)
+	return appBuild.WriteFile(PkgBuildFileName, content)
 }
 
 func GetPackageBuild(pkgBuildFilePath string) (*PackageBuild, error) {
 	var packageBuild *PackageBuild
-	exists, err := common.IsFileExists(pkgBuildFilePath)
+	exists, err := appBuild.IsFileExists(pkgBuildFilePath)
 	if err != nil {
 		return nil, err
 	}

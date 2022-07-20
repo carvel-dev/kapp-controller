@@ -5,18 +5,11 @@ package init
 
 import (
 	"fmt"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/build"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/step"
 	"os"
 	"time"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
-
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/configure/fetch"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/configure/template"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -61,12 +54,12 @@ func (o *InitOptions) Run() error {
 	o.ui.PrintHeaderText("\nPre-requisite")
 	o.ui.PrintInformationalText("Welcome! Before we start on the app creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
 
-	appBuild, err := appbuild.NewAppBuild()
+	appBuild, err := NewAppBuild()
 	if err != nil {
 		return err
 	}
 	createStep := NewCreateStep(o.ui, &appBuild, o.logger, o.depsFactory, true)
-	err = step.Run(createStep)
+	err = Run(createStep)
 	if err != nil {
 		return err
 	}
@@ -78,13 +71,13 @@ func (o *InitOptions) Run() error {
 
 type CreateStep struct {
 	ui                        cmdcore.AuthoringUI
-	build                     build.Build
+	build                     Build
 	logger                    logger.Logger
 	depsFactory               cmdcore.DepsFactory
 	isAppCommandRunExplicitly bool
 }
 
-func NewCreateStep(ui cmdcore.AuthoringUI, build build.Build, logger logger.Logger, depsFactory cmdcore.DepsFactory, isAppCommandRunExplicitly bool) *CreateStep {
+func NewCreateStep(ui cmdcore.AuthoringUI, build Build, logger logger.Logger, depsFactory cmdcore.DepsFactory, isAppCommandRunExplicitly bool) *CreateStep {
 	return &CreateStep{
 		ui:                        ui,
 		build:                     build,
@@ -94,7 +87,7 @@ func NewCreateStep(ui cmdcore.AuthoringUI, build build.Build, logger logger.Logg
 	}
 }
 
-func (createStep CreateStep) GetAppBuild() build.Build {
+func (createStep CreateStep) GetAppBuild() Build {
 	return createStep.build
 }
 
@@ -103,14 +96,14 @@ func (createStep *CreateStep) PreInteract() error {
 }
 
 func (createStep *CreateStep) Interact() error {
-	fetchConfiguration := fetch.NewFetchStep(createStep.ui, createStep.build, createStep.isAppCommandRunExplicitly)
-	err := step.Run(fetchConfiguration)
+	fetchConfiguration := NewFetchStep(createStep.ui, createStep.build, createStep.isAppCommandRunExplicitly)
+	err := Run(fetchConfiguration)
 	if err != nil {
 		return err
 	}
 
-	templateConfiguration := template.NewTemplateStep(createStep.ui, createStep.build)
-	err = step.Run(templateConfiguration)
+	templateConfiguration := NewTemplateStep(createStep.ui, createStep.build)
+	err = Run(templateConfiguration)
 	if err != nil {
 		return err
 	}
@@ -136,7 +129,7 @@ func (createStep *CreateStep) PostInteract() error {
 		if err != nil {
 			return err
 		}
-		err = common.WriteFile(AppFileName, appContent)
+		err = WriteFile(AppFileName, appContent)
 		if err != nil {
 			return err
 		}
@@ -149,7 +142,7 @@ func (createStep *CreateStep) PostInteract() error {
 
 func (createStep CreateStep) generateApp() (kcv1alpha1.App, error) {
 	var app kcv1alpha1.App
-	exists, err := common.IsFileExists(AppFileName)
+	exists, err := IsFileExists(AppFileName)
 	if err != nil {
 		return kcv1alpha1.App{}, err
 	}
@@ -186,7 +179,7 @@ func (createStep CreateStep) createAppFromAppBuild() kcv1alpha1.App {
 	appName := "microservices-demo"
 	serviceAccountName := fmt.Sprintf("%s-sa", appName)
 	appAnnotation := map[string]string{
-		fetch.LocalFetchAnnotationKey: ".",
+		LocalFetchAnnotationKey: ".",
 	}
 	appTemplateSection := createStep.build.GetAppSpec().Template
 	appDeploySection := createStep.build.GetAppSpec().Deploy
@@ -219,7 +212,7 @@ func (createStep CreateStep) configureExportSection() {
 			} else if appTemplate.Ytt != nil {
 				var yttPaths []string
 				for _, path := range appTemplate.Ytt.Paths {
-					if path == template.StdIn {
+					if path == StdIn {
 						continue
 					}
 					yttPaths = append(yttPaths, path)
@@ -227,7 +220,7 @@ func (createStep CreateStep) configureExportSection() {
 				includePaths = append(includePaths, yttPaths...)
 			}
 		}
-		exportSection = append(exportSection, appbuild.Export{
+		exportSection = append(exportSection, Export{
 			ImgpkgBundle: nil,
 			IncludePaths: includePaths,
 		})

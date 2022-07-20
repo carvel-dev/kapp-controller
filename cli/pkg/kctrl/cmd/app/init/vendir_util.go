@@ -1,19 +1,18 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package fetch
+package init
 
 import (
 	"os"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	"sigs.k8s.io/yaml"
 )
 
 func ReadVendirConfig() (vendirconf.Config, error) {
 	var vendirConfig vendirconf.Config
-	exists, err := common.IsFileExists(VendirFileName)
+	exists, err := IsFileExists(VendirFileName)
 	if err != nil {
 		return vendirconf.Config{}, err
 	}
@@ -78,6 +77,6 @@ func SaveVendir(config vendirconf.Config) error {
 	if err != nil {
 		return err
 	}
-	common.WriteFile(VendirFileName, content)
+	WriteFile(VendirFileName, content)
 	return nil
 }

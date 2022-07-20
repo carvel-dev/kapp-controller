@@ -1,12 +1,11 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package fetch
+package init
 
 import (
 	"bytes"
 	"fmt"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/step"
 	goexec "os/exec"
 	"strings"
 
@@ -59,22 +58,22 @@ func (v *VendirStep) Interact() error {
 	switch currentFetchOptionSelected {
 	case FetchFromGithubRelease:
 		githubStep := NewGithubStep(v.ui, v.config)
-		err := step.Run(githubStep)
+		err := Run(githubStep)
 		if err != nil {
 			return err
 		}
 	case FetchChartFromHelmRepo:
 		helmStep := NewHelmStep(v.ui, v.config)
-		return step.Run(helmStep)
+		return Run(helmStep)
 	case FetchManifestFromGit:
 		gitStep := NewGitStep(v.ui, v.config)
-		err := step.Run(gitStep)
+		err := Run(gitStep)
 		if err != nil {
 			return err
 		}
 	case FetchChartFromGit:
 		gitStep := NewGitStep(v.ui, v.config)
-		err := step.Run(gitStep)
+		err := Run(gitStep)
 		if err != nil {
 			return err
 		}
@@ -177,7 +176,7 @@ func (v *VendirStep) printFile(filePath string) error {
 
 // TODO vendir sync failure. Reproduce: In case of 429 from github, we dont show errors today.
 func (v *VendirStep) runVendirSync() error {
-	v.ui.PrintInformationalText("Next step is to run `vendir sync` to fetch the data from source to local directory. Vendir will sync the data into the upstream folder.")
+	v.ui.PrintInformationalText("\nNext step is to run `vendir sync` to fetch the data from source to local directory. Vendir will sync the data into the upstream folder.")
 	v.ui.PrintActionableText("Running vendir sync")
 	v.ui.PrintCmdExecutionText("vendir sync -f vendir.yml")
 	var stdoutBs, stderrBs bytes.Buffer

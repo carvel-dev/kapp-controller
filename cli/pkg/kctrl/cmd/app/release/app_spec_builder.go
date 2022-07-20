@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/appbuild"
+	appInit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
@@ -28,7 +28,7 @@ type AppSpecBuilder struct {
 type AppSpecBuilderOpts struct {
 	BuildTemplate []kcv1alpha1.AppTemplate
 	BuildDeploy   []kcv1alpha1.AppDeploy
-	BuildExport   []appbuild.Export
+	BuildExport   []appInit.Export
 	BundleImage   string
 	Debug         bool
 }

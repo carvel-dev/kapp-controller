@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package fetch
+package init
 
 const (
 	FetchContentAnnotationKey = "fetch-content-from"

@@ -10,14 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/build"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/interfaces/step"
-
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 	appInit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/configure/fetch"
+	interfaces "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
@@ -77,14 +73,14 @@ func (o *InitOptions) Run() error {
 	}
 
 	o.ui.PrintHeaderText("\nPrerequisites")
-	o.ui.PrintInformationalText("Welcome! Before we start on the package creation journey, please ensure the following pre-requites are met:\n- The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n")
+	o.ui.PrintInformationalText("Welcome! Before we start, please ensure the following pre-requites are met:\n- The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n")
 
 	pkgBuild, err := GetPackageBuild(PkgBuildFileName)
 	if err != nil {
 		return err
 	}
 	var configs cmdlocal.Configs
-	resourcesFileExists, err := common.IsFileExists(PkgResourcesFileName)
+	resourcesFileExists, err := interfaces.IsFileExists(PkgResourcesFileName)
 	if err != nil {
 		return err
 	}
@@ -113,7 +109,7 @@ func (o *InitOptions) Run() error {
 	createStep := NewCreateStep(o.ui, pkgBuild, pkg, pkgMetadata, pkgInstall, o.logger, o.depsFactory)
 	createStep.pkg = pkg
 	createStep.pkgMetadata = pkgMetadata
-	err = step.Run(createStep)
+	err = interfaces.Run(createStep)
 	if err != nil {
 		return err
 	}
@@ -176,7 +172,7 @@ func getPackageInstall(configs cmdlocal.Configs) (*v1alpha12.PackageInstall, err
 
 type CreateStep struct {
 	ui          cmdcore.AuthoringUI
-	build       build.Build
+	build       interfaces.Build
 	pkg         *v1alpha1.Package
 	pkgMetadata *v1alpha1.PackageMetadata
 	pkgInstall  *v1alpha12.PackageInstall
@@ -184,7 +180,7 @@ type CreateStep struct {
 	depsFactory cmdcore.DepsFactory
 }
 
-func NewCreateStep(ui cmdcore.AuthoringUI, pkgBuild build.Build, pkg *v1alpha1.Package, pkgMetadata *v1alpha1.PackageMetadata, pkgInstall *v1alpha12.PackageInstall, logger logger.Logger, depsFactory cmdcore.DepsFactory) *CreateStep {
+func NewCreateStep(ui cmdcore.AuthoringUI, pkgBuild interfaces.Build, pkg *v1alpha1.Package, pkgMetadata *v1alpha1.PackageMetadata, pkgInstall *v1alpha12.PackageInstall, logger logger.Logger, depsFactory cmdcore.DepsFactory) *CreateStep {
 	return &CreateStep{
 		ui:          ui,
 		build:       pkgBuild,
@@ -208,7 +204,7 @@ func (createStep *CreateStep) Interact() error {
 	}
 
 	appCreateStep := appInit.NewCreateStep(createStep.ui, createStep.build, createStep.logger, createStep.depsFactory, false)
-	err = step.Run(appCreateStep)
+	err = interfaces.Run(appCreateStep)
 	if err != nil {
 		return err
 	}
@@ -284,7 +280,7 @@ func (createStep CreateStep) updatePackageInstall() {
 	existingPkgInstall := createStep.pkgInstall
 	if existingPkgInstall.ObjectMeta.Annotations == nil {
 		existingPkgInstall.ObjectMeta.Annotations = make(map[string]string)
-		existingPkgInstall.ObjectMeta.Annotations[fetch.LocalFetchAnnotationKey] = "."
+		existingPkgInstall.ObjectMeta.Annotations[appInit.LocalFetchAnnotationKey] = "."
 	}
 
 	if len(existingPkgInstall.Name) == 0 {

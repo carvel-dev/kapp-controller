@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	appInit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository/release/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init/common"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 )
@@ -185,7 +185,7 @@ func (o *ReleaseOptions) Run() error {
 
 func (o *ReleaseOptions) getPackageRepositoryBuild(pkgRepoBuildFilePath string) (*build.PackageRepoBuild, error) {
 	var packageRepoBuild *build.PackageRepoBuild
-	exists, err := common.IsFileExists(pkgRepoBuildFilePath)
+	exists, err := appInit.IsFileExists(pkgRepoBuildFilePath)
 	if err != nil {
 		return nil, err
 	}

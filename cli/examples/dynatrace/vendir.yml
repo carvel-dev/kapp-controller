@@ -1,0 +1,13 @@
+apiVersion: vendir.k14s.io/v1alpha1
+directories:
+- contents:
+  - githubRelease:
+      disableAutoChecksumValidation: true
+      slug: Dynatrace/dynatrace-operator
+      tag: v0.6.0
+    includePaths:
+    - kubernetes.yaml
+    path: .
+  path: upstream
+kind: Config
+minimumRequiredVersion: ""
