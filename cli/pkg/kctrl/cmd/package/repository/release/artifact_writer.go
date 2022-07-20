@@ -45,7 +45,7 @@ func (w *ArtifactWriter) WritePackageRepositoryFile(imgpkgBundleLocation string)
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(w.TargetDir, "package-repository.yml")
+	path := filepath.Join(w.TargetDir, PkgRepositoryFileName)
 
 	return w.createOrOverwriteFile(path, packageRepoBytes)
 }
