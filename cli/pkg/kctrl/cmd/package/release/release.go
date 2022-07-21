@@ -107,7 +107,7 @@ func (o *ReleaseOptions) Run() error {
 	for _, release := range pkgBuild.Spec.Release {
 		switch {
 		case release.Resource != nil:
-			err = o.releaseResources(appSpec, pkgBuild.Name)
+			err = o.releaseResources(appSpec, *pkgBuild)
 			if err != nil {
 				return nil
 			}
@@ -118,15 +118,26 @@ func (o *ReleaseOptions) Run() error {
 	return nil
 }
 
-func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, packageName string) error {
-	artifactWriter := NewArtifactWriter(packageName, o.pkgVersion, o.outputLocation, o.ui)
-	err := artifactWriter.Write(&appSpec)
+func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild cmdpkgbuild.PackageBuild) error {
+	var yttPaths []string
+	for _, templateStage := range pkgBuild.Spec.Template.Spec.App.Spec.Template {
+		if templateStage.Ytt != nil {
+			yttPaths = append(yttPaths, templateStage.Ytt.Paths...)
+		}
+	}
+	valuesSchema, err := NewValuesSchemaGen(yttPaths).Schema()
+	if err != nil {
+		return err
+	}
+
+	artifactWriter := NewArtifactWriter(pkgBuild.Name, o.pkgVersion, o.outputLocation, o.ui)
+	err = artifactWriter.Write(&appSpec, *valuesSchema)
 	if err != nil {
 		return err
 	}
 
 	if o.repoOutputLocation != "" {
-		err = artifactWriter.WriteRepoOutput(&appSpec, o.repoOutputLocation)
+		err = artifactWriter.WriteRepoOutput(&appSpec, *valuesSchema, o.repoOutputLocation)
 		if err != nil {
 			return err
 		}

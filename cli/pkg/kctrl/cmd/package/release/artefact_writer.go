@@ -34,7 +34,7 @@ func NewArtifactWriter(pkg string, version string, artifactDir string, ui cmdcor
 	return &ArtifactWriter{Package: pkg, Version: version, ArtifactDir: artifactDir, ui: ui}
 }
 
-func (w *ArtifactWriter) Write(appSpec *kcv1alpha1.AppSpec) error {
+func (w *ArtifactWriter) Write(appSpec *kcv1alpha1.AppSpec, valuesSchema kcdatav1alpha1.ValuesSchema) error {
 	path := filepath.Join(w.ArtifactDir, packageDir, w.Package)
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
@@ -45,7 +45,7 @@ func (w *ArtifactWriter) Write(appSpec *kcv1alpha1.AppSpec) error {
 	if err != nil {
 		return err
 	}
-	err = w.writePackage(filepath.Join(path, "package.yml"), appSpec)
+	err = w.writePackage(filepath.Join(path, "package.yml"), appSpec, valuesSchema)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (w *ArtifactWriter) Write(appSpec *kcv1alpha1.AppSpec) error {
 	return nil
 }
 
-func (w *ArtifactWriter) WriteRepoOutput(appSpec *kcv1alpha1.AppSpec, path string) error {
+func (w *ArtifactWriter) WriteRepoOutput(appSpec *kcv1alpha1.AppSpec, valuesSchema kcdatav1alpha1.ValuesSchema, path string) error {
 	path = filepath.Join(path, packageDir, w.Package)
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
@@ -64,7 +64,7 @@ func (w *ArtifactWriter) WriteRepoOutput(appSpec *kcv1alpha1.AppSpec, path strin
 	if err != nil {
 		return err
 	}
-	err = w.writePackage(filepath.Join(path, fmt.Sprintf("%s.yml", w.Version)), appSpec)
+	err = w.writePackage(filepath.Join(path, fmt.Sprintf("%s.yml", w.Version)), appSpec, valuesSchema)
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (w *ArtifactWriter) writePackageMetadata(path string) error {
 	return w.createFileIfNotExists(path, append(metadataBytes, []byte(template)...))
 }
 
-func (w *ArtifactWriter) writePackage(path string, appSpec *kcv1alpha1.AppSpec) error {
+func (w *ArtifactWriter) writePackage(path string, appSpec *kcv1alpha1.AppSpec, valuesSchema kcdatav1alpha1.ValuesSchema) error {
 	packageObj := kcdatav1alpha1.Package{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "data.packaging.carvel.dev/v1alpha1",
@@ -115,6 +115,7 @@ func (w *ArtifactWriter) writePackage(path string, appSpec *kcv1alpha1.AppSpec) 
 			Template: kcdatav1alpha1.AppTemplateSpec{
 				Spec: appSpec,
 			},
+			ValuesSchema: valuesSchema,
 		},
 	}
 
