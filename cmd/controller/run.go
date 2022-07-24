@@ -34,10 +34,12 @@ import (
 )
 
 const (
-	PprofListenAddr             = "0.0.0.0:6060"
-	kappctrlAPIPORTEnvKey       = "KAPPCTRL_API_PORT"
-	kappctrlWorkNamespaceEnvKey = "WORK_NAMESPCE"
-	cluster                     = "cluster"
+	PprofListenAddr                  = "0.0.0.0:6060"
+	kappctrlAPIPORTEnvKey            = "KAPPCTRL_API_PORT"
+	kappctrlReconcileNamespaceEnvKey = "RECONCILE_NAMESPCE"
+	kappctrlReconcileScopeEnvKey     = "RECONCILE_SCOPE"
+	cluster                          = "cluster"
+	namespace                        = "namespace"
 )
 
 type Options struct {
@@ -61,20 +63,33 @@ func Run(opts Options, runLog logr.Logger) error {
 		restConfig.Timeout = opts.APIRequestTimeout
 	}
 
-	var workForClusterResource bool = true
-	var workForNamespaceResource bool = true
-	if namespaceWorkedFor, ok := os.LookupEnv(kappctrlWorkNamespaceEnvKey); ok {
-		opts.Namespace = namespaceWorkedFor
-		if namespaceWorkedFor == cluster {
+	workForClusterResource := true
+	workForNamespaceResource := true
+	if reconcileScope, ok := os.LookupEnv(kappctrlReconcileScopeEnvKey); ok {
+		runLog.Info("Start for Reconcile Scope", "reconcileScope", reconcileScope)
+		if reconcileScope == cluster {
 			workForClusterResource = true
 			workForNamespaceResource = false
-		} else if namespaceWorkedFor != "" && namespaceWorkedFor != "None" {
+		} else if reconcileScope == namespace {
 			workForClusterResource = false
 			workForNamespaceResource = true
+		} else if reconcileScope == "" {
+			workForClusterResource = true
+			workForNamespaceResource = true
+		} else {
+			return fmt.Errorf("invalid reconcile scope, should be cluster or namespace")
 		}
-		runLog.Info("Start for work namespace", "namespace", opts.Namespace)
+		runLog.Info("Reconcile for resource", "cluster", workForClusterResource, "namespace", workForNamespaceResource)
+
 	} else {
-		runLog.Info("Start for all namespace", "namespace", namespaceWorkedFor)
+		runLog.Info("Start for default reconcile scope, include cluster and namespace")
+	}
+
+	if namespaceWorkedFor, ok := os.LookupEnv(kappctrlReconcileNamespaceEnvKey); ok {
+		opts.Namespace = namespaceWorkedFor
+		runLog.Info("Reconcile for namespace", "namespace", opts.Namespace)
+	} else {
+		runLog.Info("Reconcile for all namespace", "namespace", namespaceWorkedFor)
 	}
 
 	mgr, err := manager.New(restConfig, manager.Options{Namespace: opts.Namespace,

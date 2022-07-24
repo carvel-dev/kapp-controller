@@ -9,11 +9,12 @@ enable_api_priority_and_fairness: true
 
 dangerous_enable_pprof: false
 
-push_images: false
+push_images: true
 image_cache: true
 image_repo: docker.io/k14stest/kapp-controller-test
 platform: ""
 
 api_port: 10350
 kapp_controller_version: "develop"
-work_namespace:
+reconcile_namespace: ""
+reconcile_scope: "cluster"
