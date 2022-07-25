@@ -25,7 +25,7 @@ type ReleaseOptions struct {
 }
 
 const (
-	defaultArtifactDir = "carvel-arteficts"
+	defaultArtifactDir = "carvel-artifacts"
 	defaultVersion     = "0.0.0-%d"
 )
 
@@ -43,7 +43,7 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 	cmd.Flags().StringVarP(&o.pkgVersion, "version", "v", "", "Version to be released")
 	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Working directory with package-build and other config")
 	cmd.Flags().StringVar(&o.outputLocation, "copy-to", defaultArtifactDir, "Output location for artifacts")
-	cmd.Flags().BoolVar(&o.debug, "debug", false, "Version to be released")
+	cmd.Flags().BoolVar(&o.debug, "debug", false, "Print verbose debug output")
 
 	return cmd
 }

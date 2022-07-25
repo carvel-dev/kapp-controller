@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	appInit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
+	appinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
@@ -28,7 +28,7 @@ type AppSpecBuilder struct {
 type AppSpecBuilderOpts struct {
 	BuildTemplate []kcv1alpha1.AppTemplate
 	BuildDeploy   []kcv1alpha1.AppDeploy
-	BuildExport   []appInit.Export
+	BuildExport   []appinit.Export
 	BundleImage   string
 	Debug         bool
 }
@@ -125,8 +125,7 @@ func (b *AppSpecBuilder) Build() (kcv1alpha1.AppSpec, error) {
 	if useKbldImagesLock {
 		for _, templateStage := range appSpec.Template {
 			if templateStage.Kbld != nil {
-				templateStage.Kbld.Paths = append(templateStage.Kbld.Paths, "-")
-				templateStage.Kbld.Paths = append(templateStage.Kbld.Paths, ".imgpkg/images.yml")
+				templateStage.Kbld.Paths = []string{"-", filepath.Join(LockOutputFolder, LockOutputFile)}
 			}
 		}
 	}

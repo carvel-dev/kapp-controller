@@ -13,7 +13,7 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	appInit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
+	appinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdapprelease "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/release"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdpkgbuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/init"
@@ -36,7 +36,7 @@ type ReleaseOptions struct {
 const (
 	defaultArtifactDir = "carvel-artifacts"
 	lockOutputFolder   = ".imgpkg"
-	defaultVersion     = "0.0.0-%d"
+	defaultVersion     = "0.0.0+build.%d"
 )
 
 func NewReleaseOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ReleaseOptions {
@@ -54,7 +54,7 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Working directory with package-build and other config")
 	cmd.Flags().StringVar(&o.outputLocation, "copy-to", defaultArtifactDir, "Output location for artifacts")
 	cmd.Flags().StringVar(&o.repoOutputLocation, "repo-output", "", "Output location for artifacts in repository bundle format")
-	cmd.Flags().BoolVar(&o.debug, "debug", false, "Version to be released")
+	cmd.Flags().BoolVar(&o.debug, "debug", false, "Print verbose debug output")
 
 	return cmd
 }
@@ -82,9 +82,9 @@ func (o *ReleaseOptions) Run() error {
 
 	// To be removed and moved to a question in case we have more config/variations around this
 	if pkgBuild.Spec.Release == nil || len(pkgBuild.Spec.Release) == 0 {
-		pkgBuild.Spec.Release = []appInit.Release{
+		pkgBuild.Spec.Release = []appinit.Release{
 			{
-				Resource: &appInit.ReleaseResource{},
+				Resource: &appinit.ReleaseResource{},
 			},
 		}
 		err = pkgBuild.Save()
@@ -147,16 +147,16 @@ func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild c
 
 func (o *ReleaseOptions) loadExportData(pkgBuild *cmdpkgbuild.PackageBuild) error {
 	if len(pkgBuild.Spec.Template.Spec.Export) == 0 {
-		pkgBuild.Spec.Template.Spec.Export = []appInit.Export{
+		pkgBuild.Spec.Template.Spec.Export = []appinit.Export{
 			{
-				ImgpkgBundle: &appInit.ImgpkgBundle{
+				ImgpkgBundle: &appinit.ImgpkgBundle{
 					UseKbldImagesLock: true,
 				},
 			},
 		}
 	}
 	if pkgBuild.Spec.Template.Spec.Export[0].ImgpkgBundle == nil {
-		pkgBuild.Spec.Template.Spec.Export[0].ImgpkgBundle = &appInit.ImgpkgBundle{
+		pkgBuild.Spec.Template.Spec.Export[0].ImgpkgBundle = &appinit.ImgpkgBundle{
 			UseKbldImagesLock: true,
 		}
 	}

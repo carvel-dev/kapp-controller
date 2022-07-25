@@ -247,7 +247,9 @@ spec:
           - '-'
           - .imgpkg/
   valuesSchema:
-    openAPIv3: null
+    openAPIv3:
+      default: null
+      nullable: true
   version: 1.0.0
 `
 
