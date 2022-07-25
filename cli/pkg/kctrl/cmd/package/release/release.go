@@ -35,7 +35,6 @@ type ReleaseOptions struct {
 
 const (
 	defaultArtifactDir = "carvel-artifacts"
-	lockOutputFolder   = ".imgpkg"
 	defaultVersion     = "0.0.0+build.%d"
 )
 

@@ -54,6 +54,7 @@ func TestPackageAuthoringE2E(t *testing.T) {
 				StdoutWriter: promptOutput.OutputWriter(), Interactive: true})
 
 		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:"}
+		verifyUpstreamExists(t)
 		verifyPackageBuild(t, keysToBeIgnored)
 		verifyPackageResources(t, keysToBeIgnored)
 		verifyVendir(t, keysToBeIgnored)
@@ -76,6 +77,12 @@ func TestPackageAuthoringE2E(t *testing.T) {
 		verifyPackageArtifact(t, keysToBeIgnored)
 		verifyPackageMetadataArtifact(t, keysToBeIgnored)
 	})
+}
+
+// To handle case till errors on failed syncs are handled better
+func verifyUpstreamExists(t *testing.T) {
+	_, err := os.Stat(filepath.Join(workingDir, "upstream"))
+	require.NoError(t, err)
 }
 
 func verifyPackageBuild(t *testing.T, keysToBeIgnored []string) {
