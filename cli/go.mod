@@ -9,7 +9,6 @@ require (
 	github.com/getkin/kin-openapi v0.81.0
 	github.com/google/go-containerregistry v0.7.0
 	github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
-	github.com/k14s/kapp v0.49.0
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
@@ -24,6 +23,8 @@ require (
 	sigs.k8s.io/controller-runtime v0.10.3
 	sigs.k8s.io/yaml v1.3.0
 )
+
+require github.com/otiai10/copy v1.0.2
 
 require (
 	cloud.google.com/go v0.97.0 // indirect
