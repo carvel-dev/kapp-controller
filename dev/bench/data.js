@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658267584114,
+  "lastUpdate": 1658879626171,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -3813,6 +3813,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6646514712,
             "unit": "ns/op\t         4.399 DeleteSeconds\t         2.197 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ahurley@vmware.com",
+            "name": "Aaron Hurley",
+            "username": "aaronshurley"
+          },
+          "committer": {
+            "email": "ahurley@vmware.com",
+            "name": "Aaron Hurley",
+            "username": "aaronshurley"
+          },
+          "distinct": true,
+          "id": "7821b4fbe84d48a87ae85877a477d2b0915e1390",
+          "message": "Add workflow to add new issues and prs to project",
+          "timestamp": "2022-07-26T16:43:14-07:00",
+          "tree_id": "8989930ac9fd78ed1a7ffe686f37d16db522f6e6",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/7821b4fbe84d48a87ae85877a477d2b0915e1390"
+        },
+        "date": 1658879625165,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37733003233,
+            "unit": "ns/op\t        19.09 DeleteSeconds\t        18.59 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9541254002,
+            "unit": "ns/op\t         5.326 DeleteSeconds\t         4.175 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6471745258,
+            "unit": "ns/op\t         4.278 DeleteSeconds\t         2.150 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
