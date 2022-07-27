@@ -33,10 +33,10 @@ func (r ReleaseCmdRunner) Run(cmd *goexec.Cmd) error {
 		r.ui.PrintHeaderText("Building images and resolving references")
 	}
 
-	if filepath.Base(cmd.Path) == "/kapp" {
+	if filepath.Base(cmd.Path) == "kapp" {
 		return nil
 	}
-	if filepath.Base(cmd.Path) == "/kbld" {
+	if filepath.Base(cmd.Path) == "kbld" {
 		cmd.Args = append(cmd.Args, fmt.Sprintf("--imgpkg-lock-output=%s", r.tempImgLockFilepath))
 	}
 	if r.fullOutput {
@@ -44,7 +44,7 @@ func (r ReleaseCmdRunner) Run(cmd *goexec.Cmd) error {
 		cmd.Stderr = io.MultiWriter(r.log, cmd.Stderr)
 	}
 
-	if filepath.Base(cmd.Path) == "/ytt" || filepath.Base(cmd.Path) == "/kbld" {
+	if filepath.Base(cmd.Path) == "ytt" || filepath.Base(cmd.Path) == "kbld" {
 		r.ui.PrintCmdExecutionOutput(fmt.Sprintf("$ %s", strings.Join(cmd.Args, " ")))
 	}
 

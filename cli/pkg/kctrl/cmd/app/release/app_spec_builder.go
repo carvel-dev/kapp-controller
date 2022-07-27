@@ -78,7 +78,7 @@ func (b *AppSpecBuilder) Build() (kcv1alpha1.AppSpec, error) {
 	}
 	defer os.RemoveAll(filepath.Join(b.workingDirectory, LockOutputFolder))
 
-	// Build images and resolved references using reconciler
+	// Build images and resolve references using reconciler
 	tempImgpkgLockPath := filepath.Join(b.workingDirectory, LockOutputFolder, LockOutputFile)
 	cmdRunner := NewReleaseCmdRunner(os.Stdout, b.opts.Debug, tempImgpkgLockPath, b.ui)
 	reconciler := cmdlocal.NewReconciler(b.depsFactory, cmdRunner, b.logger)
