@@ -1,15 +1,14 @@
 package release
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
-	"io"
 	"os"
 	goexec "os/exec"
 	"path/filepath"
 	"strings"
 
+	dircopy "github.com/otiai10/copy"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
@@ -23,55 +22,43 @@ type ImgpkgRunner struct {
 }
 
 func (r ImgpkgRunner) Run() (string, error) {
-	dir, err := os.MkdirTemp(".", fmt.Sprintf("bundle-%s-*", strings.Replace(r.BundlePath, "/", "-", -1)))
+	tmpDir, err := os.MkdirTemp(".", fmt.Sprintf("bundle-%s-*", strings.Replace(r.BundlePath, "/", "-", -1)))
 	if err != nil {
 		return "", err
 	}
 
-	workingDirectory, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
 	for _, path := range r.Paths {
-		var stderrBuf bytes.Buffer
-		cmd := goexec.Command("cp", "-r", filepath.Join(workingDirectory, path), dir)
-		cmd.Stderr = &stderrBuf
-		err := cmd.Run()
+		err = dircopy.Copy(path, tmpDir)
 		if err != nil {
-			return "", fmt.Errorf("%s", stderrBuf.String())
+			return "", err
 		}
 	}
 	if r.UseKbldImagesLock {
-		err = goexec.Command("mkdir", filepath.Join(dir, LockOutputFolder)).Run()
+		err = os.Mkdir(filepath.Join(tmpDir, LockOutputFolder), os.ModePerm)
 		if err != nil {
 			return "", err
 		}
-		err = goexec.Command("cp", r.ImgLockFilepath, filepath.Join(dir, LockOutputFolder, LockOutputFile)).Run()
+		err = dircopy.Copy(r.ImgLockFilepath, filepath.Join(tmpDir, LockOutputFolder, LockOutputFile))
 		if err != nil {
 			return "", err
 		}
 	}
-	defer os.RemoveAll(dir)
+	defer os.RemoveAll(tmpDir)
 
 	r.UI.PrintInformationalText("\nAn imgpkg bundle consists of all required YAML configuration bundled into an OCI image " +
 		"that can be pushed to an image registry and consumed by the package.\n")
 	r.UI.PrintHeaderText("Pushing imgpkg bundle (Step 3/3)")
 
 	imgpkgCmdRunner := exec.NewPlainCmdRunner()
-	cmd := goexec.Command("imgpkg", "push", "-b", r.BundlePath, "-f", dir, "--tty=true")
+	cmd := goexec.Command("imgpkg", "push", "-b", r.BundlePath, "-f", tmpDir, "--tty=true")
 	r.UI.PrintCmdExecutionOutput(fmt.Sprintf("$ %s", strings.Join(cmd.Args, " ")))
 
 	var stdoutBuf, stderrBuf bytes.Buffer
-	inMemoryStdoutWriter := bufio.NewWriter(&stdoutBuf)
-	cmd.Stdout = io.MultiWriter(inMemoryStdoutWriter)
+	cmd.Stdout = &stdoutBuf
 	cmd.Stderr = &stderrBuf
 	err = imgpkgCmdRunner.Run(cmd)
 	if err != nil {
 		return stdoutBuf.String(), fmt.Errorf("%s", stderrBuf.String())
-	}
-	err = inMemoryStdoutWriter.Flush()
-	if err != nil {
-		return "", err
 	}
 	r.UI.PrintCmdExecutionOutput(stdoutBuf.String())
 
