@@ -27,60 +27,58 @@ func NewGithubStep(ui cmdcore.AuthoringUI, vendirConfig vendirconf.Config) *Gith
 	}
 }
 
-func (githubStep *GithubStep) PreInteract() error {
-	return nil
-}
+func (g *GithubStep) PreInteract() error { return nil }
 
-func (githubStep *GithubStep) Interact() error {
-	contents := githubStep.vendirConfig.Directories[0].Contents
+func (g *GithubStep) Interact() error {
+	contents := g.vendirConfig.Directories[0].Contents
 	if contents == nil {
-		err := githubStep.initializeContentWithGithubRelease()
+		err := g.initializeContentWithGithubRelease()
 		if err != nil {
 			return err
 		}
 	} else if contents[0].GithubRelease == nil {
-		err := githubStep.initializeGithubRelease()
+		err := g.initializeGithubRelease()
 		if err != nil {
 			return err
 		}
 	}
-	githubStep.ui.PrintHeaderText("Repository details")
+	g.ui.PrintHeaderText("Repository details")
 
-	err := githubStep.configureRepoSlug()
+	err := g.configureRepoSlug()
 	if err != nil {
 		return err
 	}
 
-	return githubStep.configureVersion()
+	return g.configureVersion()
 }
 
-func (githubStep *GithubStep) configureRepoSlug() error {
-	githubReleaseContent := githubStep.vendirConfig.Directories[0].Contents[0].GithubRelease
+func (g *GithubStep) configureRepoSlug() error {
+	githubReleaseContent := g.vendirConfig.Directories[0].Contents[0].GithubRelease
 	defaultSlug := githubReleaseContent.Slug
-	githubStep.ui.PrintInformationalText("Slug format is org/repo e.g. vmware-tanzu/simple-app")
+	g.ui.PrintInformationalText("Slug format is org/repo e.g. vmware-tanzu/simple-app")
 	textOpts := ui.TextOpts{
 		Label:        "Enter slug for repository",
 		Default:      defaultSlug,
 		ValidateFunc: nil,
 	}
-	repoSlug, err := githubStep.ui.AskForText(textOpts)
+	repoSlug, err := g.ui.AskForText(textOpts)
 	if err != nil {
 		return err
 	}
 
 	githubReleaseContent.Slug = strings.TrimSpace(repoSlug)
-	return SaveVendir(githubStep.vendirConfig)
+	return SaveVendir(g.vendirConfig)
 }
 
-func (githubStep *GithubStep) configureVersion() error {
-	githubReleaseContent := githubStep.vendirConfig.Directories[0].Contents[0].GithubRelease
-	defaultReleaseTag := githubStep.getDefaultReleaseTag()
+func (g *GithubStep) configureVersion() error {
+	githubReleaseContent := g.vendirConfig.Directories[0].Contents[0].GithubRelease
+	defaultReleaseTag := g.getDefaultReleaseTag()
 	textOpts := ui.TextOpts{
 		Label:        "Enter the release tag to be used",
 		Default:      defaultReleaseTag,
 		ValidateFunc: nil,
 	}
-	releaseTag, err := githubStep.ui.AskForText(textOpts)
+	releaseTag, err := g.ui.AskForText(textOpts)
 	if err != nil {
 		return err
 	}
@@ -94,31 +92,29 @@ func (githubStep *GithubStep) configureVersion() error {
 		githubReleaseContent.Tag = releaseTag
 		githubReleaseContent.Latest = false
 	}
-	return SaveVendir(githubStep.vendirConfig)
+	return SaveVendir(g.vendirConfig)
 }
 
-func (githubStep *GithubStep) PostInteract() error {
-	return nil
-}
+func (g *GithubStep) PostInteract() error { return nil }
 
-func (githubStep *GithubStep) initializeGithubRelease() error {
+func (g *GithubStep) initializeGithubRelease() error {
 	githubReleaseContent := vendirconf.DirectoryContentsGithubRelease{
 		DisableAutoChecksumValidation: true,
 	}
-	githubStep.vendirConfig.Directories[0].Contents[0].GithubRelease = &githubReleaseContent
-	return SaveVendir(githubStep.vendirConfig)
+	g.vendirConfig.Directories[0].Contents[0].GithubRelease = &githubReleaseContent
+	return SaveVendir(g.vendirConfig)
 }
 
-func (githubStep *GithubStep) getDefaultReleaseTag() string {
-	releaseTag := githubStep.vendirConfig.Directories[0].Contents[0].GithubRelease.Tag
+func (g *GithubStep) getDefaultReleaseTag() string {
+	releaseTag := g.vendirConfig.Directories[0].Contents[0].GithubRelease.Tag
 	if len(releaseTag) > 0 {
 		return releaseTag
 	}
 	return LatestVersion
 }
 
-func (githubStep *GithubStep) initializeContentWithGithubRelease() error {
+func (g *GithubStep) initializeContentWithGithubRelease() error {
 	//TODO Rohit need to check this how it should be done. It is giving path as empty.
-	githubStep.vendirConfig.Directories[0].Contents = append(githubStep.vendirConfig.Directories[0].Contents, vendirconf.DirectoryContents{})
-	return githubStep.initializeGithubRelease()
+	g.vendirConfig.Directories[0].Contents = append(g.vendirConfig.Directories[0].Contents, vendirconf.DirectoryContents{})
+	return g.initializeGithubRelease()
 }

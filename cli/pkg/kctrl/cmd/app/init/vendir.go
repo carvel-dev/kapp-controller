@@ -4,8 +4,10 @@
 package init
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"os"
 	goexec "os/exec"
 	"strings"
 
@@ -36,9 +38,7 @@ func NewVendirStep(ui cmdcore.AuthoringUI, config vendirconf.Config, fetchOption
 	return &vendirStep
 }
 
-func (v *VendirStep) PreInteract() error {
-	return nil
-}
+func (v *VendirStep) PreInteract() error { return nil }
 
 func (v *VendirStep) Interact() error {
 	vendirDirectories := v.config.Directories
@@ -62,10 +62,10 @@ func (v *VendirStep) Interact() error {
 		if err != nil {
 			return err
 		}
-	case FetchChartFromHelmRepo:
+	case FetchFromHelmRepo:
 		helmStep := NewHelmStep(v.ui, v.config)
 		return Run(helmStep)
-	case FetchManifestFromGit:
+	case FetchFromGit:
 		gitStep := NewGitStep(v.ui, v.config)
 		err := Run(gitStep)
 		if err != nil {
@@ -142,8 +142,7 @@ func (v *VendirStep) PostInteract() error {
 
 func (v *VendirStep) printVendirFile() error {
 	vendirFileLocation := VendirFileName
-	v.ui.PrintActionableText(fmt.Sprintf("Printing %s", vendirFileLocation))
-	v.ui.PrintCmdExecutionText(fmt.Sprintf("cat %s", vendirFileLocation))
+	v.ui.PrintActionableText(fmt.Sprintf("Printing %s \n", vendirFileLocation))
 	err := v.printFile(vendirFileLocation)
 	if err != nil {
 		return err
@@ -152,25 +151,17 @@ func (v *VendirStep) printVendirFile() error {
 }
 
 func (v *VendirStep) printFile(filePath string) error {
-	var stdoutBs, stderrBs bytes.Buffer
-
-	localCmdRunner := exec.NewPlainCmdRunner()
-	cmd := goexec.Command("cat", []string{filePath}...)
-	cmd.Stdin = nil
-	cmd.Stdout = &stdoutBs
-	cmd.Stderr = &stderrBs
-	localCmdRunner.Run(cmd)
-
-	result := exec.CmdRunResult{
-		Stdout: stdoutBs.String(),
-		Stderr: stderrBs.String(),
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("Printing file: %w", err)
 	}
-	if result.Error != nil {
-		return fmt.Errorf("Printing file: %s", result.Stderr)
+	defer func() {
+		file.Close()
+	}()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		v.ui.PrintCmdExecutionOutput(scanner.Text())
 	}
-
-	v.ui.PrintCmdExecutionOutput(result.Stdout)
-
 	return nil
 }
 
@@ -186,22 +177,14 @@ func (v *VendirStep) runVendirSync() error {
 	cmd.Stdin = nil
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
-	localCmdRunner.Run(cmd)
-
+	err := localCmdRunner.Run(cmd)
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),
 		Stderr: stderrBs.String(),
 	}
+	result.AttachErrorf("Fetching resources: %s", err)
 	if result.Error != nil {
 		return fmt.Errorf("Vendir sync failed. %s", result.Stderr)
-	}
-
-	v.ui.PrintInformationalText("\nTo validate that data has been fetched, lets list down the files")
-	v.ui.PrintActionableText(fmt.Sprintf("Validating by listing files"))
-	v.ui.PrintCmdExecutionText(fmt.Sprintf("ls -lR %s", VendirSyncDirectory))
-	err := v.listFiles(VendirSyncDirectory)
-	if err != nil {
-		return err
 	}
 	return nil
 }

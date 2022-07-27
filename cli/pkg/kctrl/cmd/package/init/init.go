@@ -8,11 +8,10 @@ import (
 	"log"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	appInit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
+	appinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	interfaces "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
@@ -192,117 +191,109 @@ func NewCreateStep(ui cmdcore.AuthoringUI, pkgBuild interfaces.Build, pkg *v1alp
 	}
 }
 
-func (createStep *CreateStep) PreInteract() error {
-	return nil
-}
+func (c *CreateStep) PreInteract() error { return nil }
 
-func (createStep *CreateStep) Interact() error {
-	createStep.ui.PrintHeaderText("\nBasic Information (Step 1/3)")
-	err := createStep.configurePackageReferenceName()
+func (c *CreateStep) Interact() error {
+	c.ui.PrintHeaderText("\nBasic Information (Step 1/3)")
+	err := c.configurePackageReferenceName()
 	if err != nil {
 		return err
 	}
 
-	appCreateStep := appInit.NewCreateStep(createStep.ui, createStep.build, createStep.logger, createStep.depsFactory, false)
+	appCreateStep := appinit.NewCreateStep(c.ui, c.build, c.logger, c.depsFactory, false)
 	err = interfaces.Run(appCreateStep)
 	if err != nil {
 		return err
 	}
-	createStep.build.Save()
+	c.build.Save()
 	return nil
 }
 
-func (createStep CreateStep) configurePackageReferenceName() error {
-	createStep.printPackageReferenceNameBlock()
-	defaultPackageRefName := createStep.getDefaultPackageRefName()
+func (c CreateStep) configurePackageReferenceName() error {
+	c.printPackageReferenceNameBlock()
+	defaultPackageRefName := c.getDefaultPackageRefName()
 	textOpts := ui.TextOpts{
 		Label:        "Enter the package reference name",
 		Default:      defaultPackageRefName,
 		ValidateFunc: validateRefName,
 	}
-	pkgRefName, err := createStep.ui.AskForText(textOpts)
+	pkgRefName, err := c.ui.AskForText(textOpts)
 	if err != nil {
 		return err
 	}
 
-	createStep.pkgMetadata.Name = pkgRefName
-	createStep.pkgMetadata.Spec.DisplayName = strings.Split(pkgRefName, ".")[0]
+	c.pkgMetadata.Name = pkgRefName
+	c.pkgMetadata.Spec.DisplayName = strings.Split(pkgRefName, ".")[0]
 
-	shortDesc := createStep.pkgMetadata.Spec.ShortDescription
+	shortDesc := c.pkgMetadata.Spec.ShortDescription
 	if len(shortDesc) == 0 {
-		createStep.pkgMetadata.Spec.ShortDescription = pkgRefName
+		c.pkgMetadata.Spec.ShortDescription = pkgRefName
 	}
 
-	longDesc := createStep.pkgMetadata.Spec.LongDescription
+	longDesc := c.pkgMetadata.Spec.LongDescription
 	if len(longDesc) == 0 {
-		createStep.pkgMetadata.Spec.LongDescription = pkgRefName
+		c.pkgMetadata.Spec.LongDescription = pkgRefName
 	}
 
-	createStep.pkg.Spec.RefName = pkgRefName
-	err = createStep.Save()
+	c.pkg.Spec.RefName = pkgRefName
+	err = c.Save()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (createStep *CreateStep) printPackageReferenceNameBlock() {
-	createStep.ui.PrintInformationalText("A package reference name must be a valid DNS subdomain name (https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names) \n - at least three segments separated by a '.', no trailing '.' e.g. samplepackage.corp.com")
+func (c *CreateStep) printPackageReferenceNameBlock() {
+	c.ui.PrintInformationalText("A package reference name must be a valid DNS subdomain name (https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names) \n - at least three segments separated by a '.', no trailing '.' e.g. samplepackage.corp.com")
 }
 
-func (createStep *CreateStep) PostInteract() error {
-	createStep.ui.PrintHeaderText("\nOutput (Step 3/3)")
-	currentTime := metav1.NewTime(time.Now())
-	createStep.pkgMetadata.ObjectMeta.CreationTimestamp = currentTime
-	createStep.pkg.ObjectMeta.CreationTimestamp = currentTime
-	createStep.pkg.Spec.ReleasedAt = currentTime
+func (c *CreateStep) PostInteract() error {
+	c.ui.PrintHeaderText("\nOutput (Step 3/3)")
 	buildObjectMeta := &metav1.ObjectMeta{
-		CreationTimestamp: currentTime,
-		Name:              createStep.pkg.Spec.RefName,
+		Name: c.pkg.Spec.RefName,
 	}
-	createStep.build.SetObjectMeta(buildObjectMeta)
-	createStep.pkgInstall.CreationTimestamp = currentTime
-	createStep.updatePackageInstall()
-	createStep.updatePackage()
+	c.build.SetObjectMeta(buildObjectMeta)
+	c.updatePackageInstall()
+	c.updatePackage()
 
-	err := createStep.Save()
+	err := c.Save()
 	if err != nil {
 		return err
 	}
-	createStep.ui.PrintInformationalText("Successfully updated package-build.yml\n")
-	createStep.ui.PrintInformationalText("Successfully updated package-resources.yml\n")
-	createStep.printNextStep()
+	c.ui.PrintInformationalText("Successfully updated package-build.yml\n")
+	c.ui.PrintInformationalText("Successfully updated package-resources.yml\n")
+	c.printNextStep()
 	return nil
 }
 
-func (createStep CreateStep) updatePackageInstall() {
+func (c CreateStep) updatePackageInstall() {
 
-	existingPkgInstall := createStep.pkgInstall
+	existingPkgInstall := c.pkgInstall
 	if existingPkgInstall.ObjectMeta.Annotations == nil {
 		existingPkgInstall.ObjectMeta.Annotations = make(map[string]string)
-		existingPkgInstall.ObjectMeta.Annotations[appInit.LocalFetchAnnotationKey] = "."
+		existingPkgInstall.ObjectMeta.Annotations[appinit.LocalFetchAnnotationKey] = "."
 	}
 
 	if len(existingPkgInstall.Name) == 0 {
-		existingPkgInstall.Name = createStep.pkgMetadata.Spec.DisplayName
+		existingPkgInstall.Name = c.pkgMetadata.Spec.DisplayName
 	}
 
 	if len(existingPkgInstall.Spec.ServiceAccountName) == 0 {
-		existingPkgInstall.Spec.ServiceAccountName = createStep.pkgMetadata.Spec.DisplayName + "-sa"
+		existingPkgInstall.Spec.ServiceAccountName = c.pkgMetadata.Spec.DisplayName + "-sa"
 	}
 	if existingPkgInstall.Spec.PackageRef == nil {
 		existingPkgInstall.Spec.PackageRef = &v1alpha12.PackageRef{
-			RefName: createStep.pkg.Spec.RefName,
+			RefName: c.pkg.Spec.RefName,
 		}
 	}
 	// TODO Check whether we should add version constraint as well.
 	if len(existingPkgInstall.Spec.PackageRef.RefName) == 0 {
-		existingPkgInstall.Spec.PackageRef.RefName = createStep.pkg.Spec.RefName
+		existingPkgInstall.Spec.PackageRef.RefName = c.pkg.Spec.RefName
 	}
 }
 
-func (createStep CreateStep) updatePackage() {
-	existingPkg := createStep.pkg
+func (c CreateStep) updatePackage() {
+	existingPkg := c.pkg
 
 	if len(existingPkg.Spec.Version) == 0 {
 		existingPkg.Spec.Version = defaultPkgVersion
@@ -313,36 +304,36 @@ func (createStep CreateStep) updatePackage() {
 		existingPkg.Spec.Template.Spec = &v1alpha13.AppSpec{}
 	}
 	if len(existingPkg.Spec.Template.Spec.Template) == 0 {
-		existingPkg.Spec.Template.Spec.Template = createStep.build.GetAppSpec().Template
+		existingPkg.Spec.Template.Spec.Template = c.build.GetAppSpec().Template
 	}
 
 	if len(existingPkg.Spec.Template.Spec.Deploy) == 0 {
-		existingPkg.Spec.Template.Spec.Deploy = createStep.build.GetAppSpec().Deploy
+		existingPkg.Spec.Template.Spec.Deploy = c.build.GetAppSpec().Deploy
 	}
 }
 
-func (createStep CreateStep) printNextStep() {
-	createStep.ui.PrintHeaderText("\n**Next steps**")
-	createStep.ui.PrintInformationalText("Created files can be consumed in following ways:\n1. Optionally, use 'kctrl dev deploy' to iterate on the package and deploy locally.\n2. Use 'kctrl pkg release' to release the package.\n3. Use 'kctrl pkg release --repo-output repo/' to release and add package to package repository.\n")
+func (c CreateStep) printNextStep() {
+	c.ui.PrintHeaderText("\n**Next steps**")
+	c.ui.PrintInformationalText("Created files can be consumed in following ways:\n1. Optionally, use 'kctrl dev deploy' to iterate on the package and deploy locally.\n2. Use 'kctrl pkg release' to release the package.\n3. Use 'kctrl pkg release --repo-output repo/' to release and add package to package repository.\n")
 }
 
-func (createStep CreateStep) getDefaultPackageRefName() string {
-	if len(createStep.pkgMetadata.Name) != 0 {
-		return createStep.pkgMetadata.Name
+func (c CreateStep) getDefaultPackageRefName() string {
+	if len(c.pkgMetadata.Name) != 0 {
+		return c.pkgMetadata.Name
 	}
 	return defaultPkgRefName
 }
 
 // Save method will save all the resources i.e. PackageBuild, PackageInstall, Package and PackageMetadata
-func (createStep CreateStep) Save() error {
+func (c CreateStep) Save() error {
 	// Save PackageBuild
-	err := createStep.build.Save()
+	err := c.build.Save()
 	if err != nil {
 		return err
 	}
 
 	// Save Package
-	content, err := yaml.Marshal(createStep.pkg)
+	content, err := yaml.Marshal(c.pkg)
 	if err != nil {
 		return err
 	}
@@ -358,7 +349,7 @@ func (createStep CreateStep) Save() error {
 	}
 
 	// Save PackageMetadata
-	content, err = yaml.Marshal(createStep.pkgMetadata)
+	content, err = yaml.Marshal(c.pkgMetadata)
 	if err != nil {
 		return err
 	}
@@ -374,7 +365,7 @@ func (createStep CreateStep) Save() error {
 	}
 
 	// Save PackageInstall
-	content, err = yaml.Marshal(createStep.pkgInstall)
+	content, err = yaml.Marshal(c.pkgInstall)
 	if err != nil {
 		return err
 	}

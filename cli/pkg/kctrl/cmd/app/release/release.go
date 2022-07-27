@@ -62,7 +62,7 @@ func (o *ReleaseOptions) Run() error {
 	}
 	o.printPrerequisites()
 
-	appBuild, err := cmdappbuild.NewAppBuildFromFile(cmdappbuild.AppBuildFileName)
+	appBuild, err := cmdappbuild.NewAppBuildFromFile(cmdappbuild.FileName)
 	if err != nil {
 		return err
 	}

@@ -10,8 +10,8 @@ const (
 
 const (
 	FetchFromGithubRelease  string = "Github Release"
-	FetchManifestFromGit    string = "Git Repository"
-	FetchChartFromHelmRepo  string = "Helm Chart from Helm Repository"
+	FetchFromGit            string = "Git Repository"
+	FetchFromHelmRepo       string = "Helm Chart from Helm Repository"
 	FetchChartFromGit       string = "Helm Chart from Git Repository"
 	FetchFromLocalDirectory string = "Local Directory"
 )

@@ -43,9 +43,8 @@ func VendirConfigFromExistingFile(filePath string) (vendirconf.Config, error) {
 
 func NewDefaultVendirConfig() vendirconf.Config {
 	config := vendirconf.Config{
-		APIVersion: "vendir.k14s.io/v1alpha1", // TODO: use constant from vendir package
-		Kind:       "Config",                  // TODO: use constant from vendir package
-
+		APIVersion: "vendir.k14s.io/v1alpha1",
+		Kind:       "Config",
 	}
 	return config
 }
@@ -60,14 +59,14 @@ func GetFetchOptionFromVendir(config vendirconf.Config, ishelmTemplateExist bool
 	case content.GithubRelease != nil:
 		selectedVendirOption = FetchFromGithubRelease
 	case content.HelmChart != nil:
-		selectedVendirOption = FetchChartFromHelmRepo
+		selectedVendirOption = FetchFromHelmRepo
 	case content.Directory != nil:
 		selectedVendirOption = FetchFromLocalDirectory
 	case content.Git != nil:
 		if ishelmTemplateExist {
 			selectedVendirOption = FetchChartFromGit
 		}
-		selectedVendirOption = FetchManifestFromGit
+		selectedVendirOption = FetchFromGit
 	}
 	return selectedVendirOption
 }

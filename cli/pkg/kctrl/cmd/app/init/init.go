@@ -6,14 +6,14 @@ package init
 import (
 	"fmt"
 	"os"
-	"time"
+	"path/filepath"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
 
@@ -63,8 +63,6 @@ func (o *InitOptions) Run() error {
 	if err != nil {
 		return err
 	}
-	printInformation(o.ui)
-	printNextStep(o.ui)
 
 	return nil
 }
@@ -87,22 +85,52 @@ func NewCreateStep(ui cmdcore.AuthoringUI, build Build, logger logger.Logger, de
 	}
 }
 
-func (createStep CreateStep) GetAppBuild() Build {
-	return createStep.build
+func (c CreateStep) GetAppBuild() Build {
+	return c.build
 }
 
-func (createStep *CreateStep) PreInteract() error {
-	return nil
-}
+func (c *CreateStep) PreInteract() error { return nil }
 
-func (createStep *CreateStep) Interact() error {
-	fetchConfiguration := NewFetchStep(createStep.ui, createStep.build, createStep.isAppCommandRunExplicitly)
+func (c *CreateStep) Interact() error {
+	if c.isAppCommandRunExplicitly {
+		c.ui.PrintHeaderText("\nBasic Information (Step 1/3)")
+		wd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		defaultAppName := filepath.Base(wd)
+		appBuildObjectMeta := c.build.GetObjectMeta()
+		if appBuildObjectMeta == nil {
+			appBuildObjectMeta = &metav1.ObjectMeta{}
+		}
+		if len(appBuildObjectMeta.Name) != 0 {
+			defaultAppName = appBuildObjectMeta.Name
+		}
+
+		textOpts := ui.TextOpts{
+			Label:        "Enter the app name",
+			Default:      defaultAppName,
+			ValidateFunc: nil,
+		}
+		appName, err := c.ui.AskForText(textOpts)
+		if err != nil {
+			return err
+		}
+		appBuildObjectMeta.Name = appName
+		c.build.SetObjectMeta(appBuildObjectMeta)
+		err = c.build.Save()
+		if err != nil {
+			return err
+		}
+	}
+
+	fetchConfiguration := NewFetchStep(c.ui, c.build, c.isAppCommandRunExplicitly)
 	err := Run(fetchConfiguration)
 	if err != nil {
 		return err
 	}
 
-	templateConfiguration := NewTemplateStep(createStep.ui, createStep.build)
+	templateConfiguration := NewTemplateStep(c.ui, c.build)
 	err = Run(templateConfiguration)
 	if err != nil {
 		return err
@@ -111,16 +139,16 @@ func (createStep *CreateStep) Interact() error {
 	return nil
 }
 
-func (createStep *CreateStep) PostInteract() error {
-	appSpec := createStep.build.GetAppSpec()
+func (c *CreateStep) PostInteract() error {
+	appSpec := c.build.GetAppSpec()
 	if appSpec.Deploy == nil {
 		appSpec.Deploy = []kcv1alpha1.AppDeploy{kcv1alpha1.AppDeploy{Kapp: &kcv1alpha1.AppDeployKapp{}}}
 	}
-	createStep.build.SetAppSpec(appSpec)
-	createStep.configureExportSection()
+	c.build.SetAppSpec(appSpec)
+	c.configureExportSection()
 
-	if createStep.isAppCommandRunExplicitly {
-		appConfig, err := createStep.generateApp()
+	if c.isAppCommandRunExplicitly {
+		appConfig, err := c.generateApp()
 		if err != nil {
 			return err
 		}
@@ -133,14 +161,17 @@ func (createStep *CreateStep) PostInteract() error {
 		if err != nil {
 			return err
 		}
-
-		createStep.ui.PrintInformationalText(fmt.Sprintf("Both the files can be accessed from the following location:"))
+		c.ui.PrintHeaderText("\nOutput (Step 3/3)")
+		c.ui.PrintInformationalText("Successfully updated app-build.yml\n")
+		c.ui.PrintInformationalText("Successfully updated app.yml\n")
+		c.ui.PrintHeaderText("\n**Next steps**")
+		c.ui.PrintInformationalText("Created files can be consumed in following ways:\n1. Optionally, use 'kctrl dev deploy' to iterate on the app and deploy locally.\n2. Use 'kctrl app release' to release the app.\n")
 	}
 
 	return nil
 }
 
-func (createStep CreateStep) generateApp() (kcv1alpha1.App, error) {
+func (c CreateStep) generateApp() (kcv1alpha1.App, error) {
 	var app kcv1alpha1.App
 	exists, err := IsFileExists(AppFileName)
 	if err != nil {
@@ -157,38 +188,26 @@ func (createStep CreateStep) generateApp() (kcv1alpha1.App, error) {
 			return kcv1alpha1.App{}, err
 		}
 	} else {
-		app = createStep.createAppFromAppBuild()
+		app = c.createAppFromAppBuild()
 	}
-	timestamp := v1.NewTime(time.Now().UTC()).Rfc3339Copy()
-	app.ObjectMeta.CreationTimestamp = timestamp
 	return app, nil
 
 }
 
-func printNextStep(ui cmdcore.AuthoringUI) {
-	ui.PrintInformationalText("\n**Next steps**")
-	ui.PrintInformationalText("\nCreated app can be consumed in following ways:\n")
-}
-
-func printInformation(ui cmdcore.AuthoringUI) {
-	ui.PrintInformationalText("\n**Information**\napp-build.yml is generated as part of this flow. This file can be used for further updating and adding complex scenarios while using the `kctrl dev deploy` command. Please read the link'ed documentation for more explanation.")
-}
-
-func (createStep CreateStep) createAppFromAppBuild() kcv1alpha1.App {
-	//TODO Should we ask for the app Name ?
+func (c CreateStep) createAppFromAppBuild() kcv1alpha1.App {
 	appName := "microservices-demo"
 	serviceAccountName := fmt.Sprintf("%s-sa", appName)
 	appAnnotation := map[string]string{
 		LocalFetchAnnotationKey: ".",
 	}
-	appTemplateSection := createStep.build.GetAppSpec().Template
-	appDeploySection := createStep.build.GetAppSpec().Deploy
+	appTemplateSection := c.build.GetAppSpec().Template
+	appDeploySection := c.build.GetAppSpec().Deploy
 	return kcv1alpha1.App{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: "kappctrl.k14s.io/v1alpha1",
 			Kind:       "App",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:        appName,
 			Annotations: appAnnotation,
 		},
@@ -200,11 +219,11 @@ func (createStep CreateStep) createAppFromAppBuild() kcv1alpha1.App {
 	}
 }
 
-func (createStep CreateStep) configureExportSection() {
-	exportSection := *createStep.build.GetExport()
+func (c CreateStep) configureExportSection() {
+	exportSection := *c.build.GetExport()
 	// TODO current implementation is if export section is already defined, we will not touch it. Confirm the same.
 	if exportSection == nil || len(exportSection) == 0 {
-		appTemplates := createStep.build.GetAppSpec().Template
+		appTemplates := c.build.GetAppSpec().Template
 		includePaths := []string{}
 		for _, appTemplate := range appTemplates {
 			if appTemplate.HelmTemplate != nil {
@@ -224,7 +243,7 @@ func (createStep CreateStep) configureExportSection() {
 			ImgpkgBundle: nil,
 			IncludePaths: includePaths,
 		})
-		createStep.build.SetExport(&exportSection)
+		c.build.SetExport(&exportSection)
 	}
 	return
 }

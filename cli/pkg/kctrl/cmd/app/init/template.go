@@ -29,16 +29,12 @@ func NewTemplateStep(ui cmdcore.AuthoringUI, build Build) *TemplateStep {
 	return &templateStep
 }
 
-func (templateStep *TemplateStep) PreInteract() error {
-	return nil
-}
+func (t *TemplateStep) PreInteract() error { return nil }
 
-func (templateStep *TemplateStep) Interact() error {
-	return nil
-}
+func (t *TemplateStep) Interact() error { return nil }
 
-func (templateStep *TemplateStep) PostInteract() error {
-	appSpec := templateStep.build.GetAppSpec()
+func (t *TemplateStep) PostInteract() error {
+	appSpec := t.build.GetAppSpec()
 	if appSpec == nil {
 		appSpec = &v1alpha1.AppSpec{}
 	}
@@ -55,9 +51,9 @@ func (templateStep *TemplateStep) PostInteract() error {
 		appTemplates = []v1alpha1.AppTemplate{}
 	}
 
-	fetchSource := templateStep.build.GetObjectMeta().Annotations[FetchContentAnnotationKey]
+	fetchSource := t.build.GetObjectMeta().Annotations[FetchContentAnnotationKey]
 	// Add helmTemplate
-	if fetchSource == FetchChartFromHelmRepo || fetchSource == FetchChartFromGit {
+	if fetchSource == FetchFromHelmRepo || fetchSource == FetchChartFromGit {
 		appTemplateWithHelm := v1alpha1.AppTemplate{
 			HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{
 				Path: UpstreamFolderName,
@@ -67,18 +63,18 @@ func (templateStep *TemplateStep) PostInteract() error {
 
 	//  Define YttPaths
 	var defaultYttPaths []string
-	if fetchSource == FetchChartFromHelmRepo || fetchSource == FetchChartFromGit {
+	if fetchSource == FetchFromHelmRepo || fetchSource == FetchChartFromGit {
 		defaultYttPaths = []string{StdIn}
 
 	} else if fetchSource == FetchFromLocalDirectory {
-		templateStep.ui.PrintInformationalText("We need to include files/directory which should be part of this package. Multiple values can be included using a comma separator.")
+		t.ui.PrintInformationalText("We need to include files/directory which should be part of this package. Multiple values can be included using a comma separator.")
 		var defaultIncludedPath string
 		textOpts := ui.TextOpts{
 			Label:        "Enter the paths which need to be included as part of this package",
 			Default:      defaultIncludedPath,
 			ValidateFunc: nil,
 		}
-		includePaths, err := templateStep.ui.AskForText(textOpts)
+		includePaths, err := t.ui.AskForText(textOpts)
 		if err != nil {
 			return err
 		}
@@ -100,6 +96,6 @@ func (templateStep *TemplateStep) PostInteract() error {
 	appTemplates = append(appTemplates, v1alpha1.AppTemplate{Kbld: &v1alpha1.AppTemplateKbld{}})
 
 	appSpec.Template = appTemplates
-	templateStep.build.SetAppSpec(appSpec)
-	return templateStep.build.Save()
+	t.build.SetAppSpec(appSpec)
+	return t.build.Save()
 }

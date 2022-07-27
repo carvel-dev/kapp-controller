@@ -4,26 +4,22 @@
 package init
 
 import (
-	"os"
-	"path/filepath"
-
-	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os"
 	"sigs.k8s.io/yaml"
 )
 
 const (
-	AppBuildFileName = "app-build.yml"
-
-	AppBuildAPIVersion = "kctrl.carvel.dev/v1alpha1"
-	AppBuildKind       = "AppBuild"
+	FileName = "app-build.yml"
 )
 
 type AppBuild struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Spec `json:"spec,omitempty"`
+
+	Spec Spec `json:"spec,omitempty"`
 }
 
 type Spec struct {
@@ -39,7 +35,10 @@ type Export struct {
 
 type Release struct {
 	Resource *ReleaseResource `json:"resource,omitempty"`
-	Yaml     interface{}      `json:"yaml,omitempty"`
+	YAML     *ReleaseYAML     `json:"yaml,omitempty"`
+}
+
+type ReleaseYAML struct {
 }
 
 type ImgpkgBundle struct {
@@ -51,35 +50,33 @@ type ReleaseResource struct {
 }
 
 // Save will persist the appBuild onto the fileSystem. Before saving, it will remove the Annotations from the AppBuild.
-func (appBuild AppBuild) Save() error {
+func (b AppBuild) Save() error {
 	// We dont want to persist the annotations.
-	appBuild.ObjectMeta.Annotations = nil
-	content, err := yaml.Marshal(appBuild)
+	b.ObjectMeta.Annotations = nil
+	content, err := yaml.Marshal(b)
 	if err != nil {
 		return err
 	}
 
-	return WriteFile(AppBuildFileName, content)
+	return WriteFile(FileName, content)
 }
 
 func NewAppBuild() (AppBuild, error) {
 	var appBuild AppBuild
-	appBuildFilePath := filepath.Join(AppBuildFileName)
-	exists, err := IsFileExists(appBuildFilePath)
+	exists, err := IsFileExists(FileName)
 	if err != nil {
 		return AppBuild{}, err
 	}
 
 	if exists {
-		appBuild, err = NewAppBuildFromFile(appBuildFilePath)
+		appBuild, err = NewAppBuildFromFile(FileName)
 		if err != nil {
 			return AppBuild{}, err
 		}
 
-		//In case user has manually removed the app section from the app-build
+		// In case user has manually removed the app section from the app-build
 		if appBuild.Spec.App == nil {
-			defaultApp := NewDefaultAppTemplateSpec()
-			appBuild.Spec.App = defaultApp
+			appBuild.Spec.App = NewDefaultAppTemplateSpec()
 		}
 	} else {
 		appBuild = NewDefaultAppBuild()
@@ -95,61 +92,58 @@ func NewAppBuildFromFile(filePath string) (AppBuild, error) {
 	}
 	var appBuild AppBuild
 	err = yaml.Unmarshal(content, &appBuild)
-	if err != nil {
-		return AppBuild{}, err
-	}
-	return appBuild, nil
+	return appBuild, err
 }
 
 func NewDefaultAppTemplateSpec() *v1alpha1.AppTemplateSpec {
-	appSpec := v1alpha12.AppSpec{
-		Fetch:    []v1alpha12.AppFetch{},
-		Template: []v1alpha12.AppTemplate{},
-		Deploy: []v1alpha12.AppDeploy{
-			{Kapp: &v1alpha12.AppDeployKapp{}},
+	return &v1alpha1.AppTemplateSpec{
+		Spec: &kcv1alpha1.AppSpec{
+			Fetch:    []kcv1alpha1.AppFetch{},
+			Template: []kcv1alpha1.AppTemplate{},
+			Deploy: []kcv1alpha1.AppDeploy{
+				{Kapp: &kcv1alpha1.AppDeployKapp{}},
+			},
 		},
 	}
-	return &v1alpha1.AppTemplateSpec{&appSpec}
 }
 
 func NewDefaultAppBuild() AppBuild {
-	appBuild := AppBuild{
+	return AppBuild{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       AppBuildKind,
-			APIVersion: AppBuildAPIVersion,
+			Kind:       "AppBuild",
+			APIVersion: "kctrl.carvel.dev/v1alpha1",
 		},
 		Spec: Spec{
 			App: NewDefaultAppTemplateSpec(),
 		},
 	}
-	return appBuild
 }
 
-func (appBuild AppBuild) GetAppSpec() *v1alpha12.AppSpec {
-	return appBuild.Spec.App.Spec
+func (b AppBuild) GetAppSpec() *kcv1alpha1.AppSpec {
+	return b.Spec.App.Spec
 }
 
-func (appBuild *AppBuild) SetAppSpec(appSpec *v1alpha12.AppSpec) {
-	if appBuild.Spec.App == nil {
-		appBuild.Spec.App = &v1alpha1.AppTemplateSpec{}
+func (b *AppBuild) SetAppSpec(appSpec *kcv1alpha1.AppSpec) {
+	if b.Spec.App == nil {
+		b.Spec.App = &v1alpha1.AppTemplateSpec{}
 	}
-	appBuild.Spec.App.Spec = appSpec
+	b.Spec.App.Spec = appSpec
 }
 
-func (appBuild AppBuild) GetObjectMeta() *metav1.ObjectMeta {
-	return nil
+func (b AppBuild) GetObjectMeta() *metav1.ObjectMeta {
+	return &b.ObjectMeta
 }
 
-func (appBuild *AppBuild) SetObjectMeta(metaObj *metav1.ObjectMeta) {
-	appBuild.ObjectMeta = *metaObj
+func (b *AppBuild) SetObjectMeta(metaObj *metav1.ObjectMeta) {
+	b.ObjectMeta = *metaObj
 	return
 }
 
-func (appBuild AppBuild) GetExport() *[]Export {
-	return nil
+func (b AppBuild) GetExport() *[]Export {
+	return &b.Spec.Export
 }
 
-func (appBuild *AppBuild) SetExport(exportObj *[]Export) {
-	appBuild.Spec.Export = *exportObj
+func (b *AppBuild) SetExport(exportObj *[]Export) {
+	b.Spec.Export = *exportObj
 	return
 }
