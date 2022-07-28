@@ -34,40 +34,7 @@ func (b PackageBuild) Save() error {
 		return err
 	}
 
-	return appbuild.WriteFile(PkgBuildFileName, content)
-}
-
-func GetPackageBuild(pkgBuildFilePath string) (*PackageBuild, error) {
-	var packageBuild *PackageBuild
-	exists, err := appbuild.IsFileExists(pkgBuildFilePath)
-	if err != nil {
-		return nil, err
-	}
-
-	if exists {
-		packageBuild, err = NewPackageBuildFromFile(pkgBuildFilePath)
-		if err != nil {
-			return nil, err
-		}
-
-		//TODO In case user has manually removed the app section from the app-build
-		/*if packageBuild.Spec.App == nil {
-			defaultApp, err := NewDefaultAppTemplateSpec()
-			if err != nil {
-				return PackageBuild{}, err
-			}
-			appBuild.Spec.App = defaultApp
-		}*/
-	} else {
-		packageBuild = &PackageBuild{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "PackageBuild",
-				APIVersion: "kctrl.carvel.dev/v1alpha1",
-			},
-		}
-	}
-
-	return packageBuild, nil
+	return appbuild.WriteFile(pkgBuildFileName, content)
 }
 
 func NewPackageBuildFromFile(filePath string) (*PackageBuild, error) {

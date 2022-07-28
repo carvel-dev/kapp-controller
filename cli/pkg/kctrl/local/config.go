@@ -170,7 +170,7 @@ func parseResources(paths []string, resourceFunc func([]byte) error) error {
 		} else {
 			bs, err = ioutil.ReadFile(path)
 			if err != nil {
-				return fmt.Errorf("Reading config '%s': %s", path, err)
+				return fmt.Errorf("Reading config '%s': %w", path, err)
 			}
 		}
 
