@@ -183,7 +183,6 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - helmChart:
-      helmVersion: "3"
       name: enterprise-operator
       repository:
         url: https://mongodb.github.io/helm-charts
