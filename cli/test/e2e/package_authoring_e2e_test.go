@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -17,7 +16,7 @@ const (
 	workingDir = "kcrl-test"
 )
 
-func TestPackageAuthoringE2E(t *testing.T) {
+func TestPackageInitAndRelease(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
@@ -33,60 +32,7 @@ func TestPackageAuthoringE2E(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	logger.Section("Creating a package interactively using pkg init", func() {
-		promptOutput := newPromptOutput(t)
-
-		go func() {
-			promptOutput.WaitFor("A package reference name must be a valid DNS subdomain name")
-			promptOutput.Write("testpackage.corp.dev")
-			promptOutput.WaitFor("need to fetch the manifest which defines")
-			promptOutput.Write("3")
-			promptOutput.WaitFor("Enter configuration source")
-			promptOutput.Write("https://mongodb.github.io/helm-charts")
-			promptOutput.WaitFor("Enter helm chart repository URL")
-			promptOutput.Write("enterprise-operator")
-			promptOutput.WaitFor("Enter helm chart name")
-			promptOutput.Write("1.16.0")
-		}()
-
-		kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
-			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
-				StdoutWriter: promptOutput.OutputWriter(), Interactive: true})
-
-		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:"}
-		verifyUpstreamExists(t)
-		verifyPackageBuild(t, keysToBeIgnored)
-		verifyPackageResources(t, keysToBeIgnored)
-		verifyVendir(t, keysToBeIgnored)
-
-	})
-
-	logger.Section("releasing package using kctrl package release", func() {
-		promptOutput := newPromptOutput(t)
-
-		go func() {
-			promptOutput.WaitFor("The bundle created needs to be pushed ")
-			promptOutput.Write(env.Image)
-		}()
-
-		kappCtrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir},
-			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
-				StdoutWriter: promptOutput.OutputWriter(), Interactive: true})
-
-		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image"}
-		verifyPackageArtifact(t, keysToBeIgnored)
-		verifyPackageMetadataArtifact(t, keysToBeIgnored)
-	})
-}
-
-// To handle case till errors on failed syncs are handled better
-func verifyUpstreamExists(t *testing.T) {
-	_, err := os.Stat(filepath.Join(workingDir, "upstream"))
-	require.NoError(t, err)
-}
-
-func verifyPackageBuild(t *testing.T, keysToBeIgnored []string) {
-	packageBuildExpectedOutput := `
+	expectedPackageBuild := `
 apiVersion: kctrl.carvel.dev/v1alpha1
 kind: PackageBuild
 metadata:
@@ -109,19 +55,8 @@ spec:
       - includePaths:
         - upstream
 `
-	out, err := readFile("package-build.yml")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	out = strings.TrimSpace(replaceSpaces(out))
-	packageBuildExpectedOutput = strings.TrimSpace(replaceSpaces(packageBuildExpectedOutput))
-	out = clearKeys(keysToBeIgnored, out)
-	require.Equal(t, packageBuildExpectedOutput, out, "output does not match")
 
-}
-
-func verifyPackageResources(t *testing.T, keysToBeIgnored []string) {
-	packagesResourcesExpectedOutput := `
+	expectedPackageResources := `
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
@@ -167,18 +102,8 @@ status:
   friendlyDescription: ""
   observedGeneration: 0
 `
-	out, err := readFile("package-resources.yml")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	out = strings.TrimSpace(replaceSpaces(out))
-	packagesResourcesExpectedOutput = strings.TrimSpace(replaceSpaces(packagesResourcesExpectedOutput))
-	out = clearKeys(keysToBeIgnored, out)
-	require.Equal(t, packagesResourcesExpectedOutput, out, "output does not match")
-}
 
-func verifyVendir(t *testing.T, keysToBeIgnored []string) {
-	vendirExpectedOutput := `
+	expectedVendirOutput := `
 apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
@@ -192,17 +117,7 @@ directories:
 kind: Config
 minimumRequiredVersion: ""
 `
-	out, err := readFile("vendir.yml")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	out = strings.TrimSpace(replaceSpaces(out))
-	vendirExpectedOutput = strings.TrimSpace(replaceSpaces(vendirExpectedOutput))
-	out = clearKeys(keysToBeIgnored, out)
-	require.Equal(t, vendirExpectedOutput, out, "output does not match")
-}
 
-func verifyPackageMetadataArtifact(t *testing.T, keysToBeIgnored []string) {
 	expectedPackageMetadata := `
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
@@ -218,17 +133,6 @@ spec:
 #   - name: Maintainer 2
 `
 
-	out, err := readFile("./carvel-artifacts/packages/testpackage.corp.dev/metadata.yml")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	out = strings.TrimSpace(replaceSpaces(out))
-	expectedPackageMetadata = strings.TrimSpace(replaceSpaces(expectedPackageMetadata))
-	out = clearKeys(keysToBeIgnored, out)
-	require.Equal(t, expectedPackageMetadata, out, "output does not match")
-}
-
-func verifyPackageArtifact(t *testing.T, keysToBeIgnored []string) {
 	expectedPackage := `
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
@@ -259,14 +163,89 @@ spec:
   version: 1.0.0
 `
 
-	out, err := readFile("./carvel-artifacts/packages/testpackage.corp.dev/package.yml")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	out = strings.TrimSpace(replaceSpaces(out))
-	expectedPackage = strings.TrimSpace(replaceSpaces(expectedPackage))
-	out = clearKeys(keysToBeIgnored, out)
-	require.Equal(t, expectedPackage, out, "output does not match")
+	logger.Section("creating a package interactively using pkg init", func() {
+		promptOutput := newPromptOutput(t)
+
+		// TODO: Figure out a way to wait for prompts properly as the go-interact library used 
+		// for prompt output doesn't print in non tty environments
+		go func() {
+			promptOutput.WaitFor("A package reference name must be a valid DNS subdomain name")
+			promptOutput.Write("testpackage.corp.dev")
+			promptOutput.WaitFor("need to fetch the manifest which defines")
+			promptOutput.Write("3")
+			promptOutput.WaitFor("Enter configuration source")
+			promptOutput.Write("https://mongodb.github.io/helm-charts")
+			promptOutput.WaitFor("Enter helm chart repository URL")
+			promptOutput.Write("enterprise-operator")
+			promptOutput.WaitFor("Enter helm chart name")
+			promptOutput.Write("1.16.0")
+		}()
+
+		kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.OutputWriter(), Interactive: true})
+
+		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:"}
+
+		// To handle case till errors on failed syncs are handled better
+		_, err := os.Stat(filepath.Join(workingDir, "upstream"))
+		require.NoError(t, err)
+
+		// Verify PackageBuild
+		out, err := readFile("package-build.yml")
+		require.NoErrorf(t, err, "Expected to read package-build.yml")
+
+		expectedPackageBuild = strings.TrimSpace(replaceSpaces(expectedPackageBuild))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedPackageBuild, out, "Expected PackageBuild output to match")
+
+		// Verify package resources
+		out, err = readFile("package-resources.yml")
+		require.NoErrorf(t, err, "Expected to read package-resources.yml")
+
+		expectedPackageResources = strings.TrimSpace(replaceSpaces(expectedPackageResources))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedPackageResources, out, "Expected package resources output to match")
+
+		// Verify vendir
+		out, err = readFile("vendir.yml")
+		require.NoErrorf(t, err, "Expected to read vendir.yml")
+
+		expectedVendirOutput = strings.TrimSpace(replaceSpaces(expectedVendirOutput))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedVendirOutput, out, "Expected vendir output to match")
+	})
+
+	logger.Section("releasing package using kctrl package release", func() {
+		promptOutput := newPromptOutput(t)
+
+		go func() {
+			promptOutput.WaitFor("The bundle created needs to be pushed ")
+			promptOutput.Write(env.Image)
+		}()
+
+		kappCtrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.OutputWriter(), Interactive: true})
+
+		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image"}
+
+		// Verify PackageMetadata artifact
+		out, err := readFile("./carvel-artifacts/packages/testpackage.corp.dev/metadata.yml")
+		require.NoErrorf(t, err, "Expected to read metadata.yml")
+
+		expectedPackageMetadata = strings.TrimSpace(replaceSpaces(expectedPackageMetadata))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedPackageMetadata, out, "Expected PackageMetadata to match")
+
+		// Verify Package artifact
+		out, err = readFile("./carvel-artifacts/packages/testpackage.corp.dev/package.yml")
+		require.NoErrorf(t, err, "Expected to read package.yml")
+
+		expectedPackage = strings.TrimSpace(replaceSpaces(expectedPackage))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedPackage, out, "Expected Package to match")
+	})
 }
 
 func readFile(fileName string) (string, error) {
