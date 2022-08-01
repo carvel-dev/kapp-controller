@@ -14,7 +14,7 @@ RUN go run ./hack/dependencies.go install -d out --arch ${TARGETARCH} --os ${TAR
 COPY . .
 # helpful ldflags reference: https://www.digitalocean.com/community/tutorials/using-ldflags-to-set-version-information-for-go-applications
 RUN --mount=type=cache,target=/root/.cache/go-build \
-  CGO_ENABLED=0 GOOS=${TARGETOS} GOSARCH=${TARGETARCH} \
+  CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
   go build -mod=vendor -ldflags="-X 'main.Version=$KCTRL_VER'" -trimpath -o out/kapp-controller ./cmd/controller
 
 # --- run image ---
