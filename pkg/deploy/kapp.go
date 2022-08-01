@@ -99,6 +99,7 @@ func (a *Kapp) Inspect() exec.CmdRunResult {
 		// to avoid resource update churn
 		// TODO is there a better way to deal with this?
 		"--filter", `{"not":{"resource":{"kinds":["PodMetrics"]}}}`,
+		"--tty",
 	})
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(err)
