@@ -166,7 +166,7 @@ spec:
 	logger.Section("creating a package interactively using pkg init", func() {
 		promptOutput := newPromptOutput(t)
 
-		// TODO: Figure out a way to wait for prompts properly as the go-interact library used 
+		// TODO: Figure out a way to wait for prompts properly as the go-interact library used
 		// for prompt output doesn't print in non tty environments
 		go func() {
 			promptOutput.WaitFor("A package reference name must be a valid DNS subdomain name")

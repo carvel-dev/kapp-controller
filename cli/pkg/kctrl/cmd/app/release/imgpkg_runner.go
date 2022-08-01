@@ -31,7 +31,8 @@ func (r ImgpkgRunner) Run() (string, error) {
 
 	// Copy required files into temporary bundle location
 	for _, path := range r.Paths {
-		err = dircopy.Copy(path, tmpDir)
+		dst := filepath.Join(tmpDir, path)
+		err = dircopy.Copy(path, dst)
 		if err != nil {
 			return "", err
 		}
