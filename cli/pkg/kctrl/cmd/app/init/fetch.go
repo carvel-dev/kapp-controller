@@ -1,4 +1,4 @@
-// Copyright 2020 VMware, Inc.
+// Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 package init
@@ -8,6 +8,19 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+)
+
+const (
+	FetchContentAnnotationKey = "fetch-content-from"
+	LocalFetchAnnotationKey   = "kctrl.carvel.dev/local-fetch-0"
+)
+
+const (
+	FetchFromGithubRelease  string = "Github Release"
+	FetchFromGit            string = "Git Repository"
+	FetchFromHelmRepo       string = "Helm Chart from Helm Repository"
+	FetchChartFromGit       string = "Helm Chart from Git Repository"
+	FetchFromLocalDirectory string = "Local Directory"
 )
 
 type FetchStep struct {
@@ -61,7 +74,7 @@ func (f *FetchStep) Interact() error {
 	}
 	buildObjectMeta.Annotations[FetchContentAnnotationKey] = currentFetchOptionSelected
 	f.build.SetObjectMeta(buildObjectMeta)
-	// For a local directory, we will be including everything.
+	// For the local directory options, all files/directories in working directory are used while releasing
 	if currentFetchOptionSelected == FetchFromLocalDirectory {
 		return nil
 	}

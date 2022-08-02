@@ -81,11 +81,7 @@ func (o *ReleaseOptions) Run() error {
 
 	// To be removed and moved to a question in case we have more config/variations around this
 	if pkgBuild.Spec.Release == nil || len(pkgBuild.Spec.Release) == 0 {
-		pkgBuild.Spec.Release = []appinit.Release{
-			{
-				Resource: &appinit.ReleaseResource{},
-			},
-		}
+		pkgBuild.Spec.Release = []appinit.Release{{Resource: &appinit.ReleaseResource{}}}
 		err = pkgBuild.Save()
 		if err != nil {
 			return err
@@ -148,16 +144,12 @@ func (o *ReleaseOptions) loadExportData(pkgBuild *cmdpkgbuild.PackageBuild) erro
 	if len(pkgBuild.Spec.Template.Spec.Export) == 0 {
 		pkgBuild.Spec.Template.Spec.Export = []appinit.Export{
 			{
-				ImgpkgBundle: &appinit.ImgpkgBundle{
-					UseKbldImagesLock: true,
-				},
+				ImgpkgBundle: &appinit.ImgpkgBundle{UseKbldImagesLock: true},
 			},
 		}
 	}
 	if pkgBuild.Spec.Template.Spec.Export[0].ImgpkgBundle == nil {
-		pkgBuild.Spec.Template.Spec.Export[0].ImgpkgBundle = &appinit.ImgpkgBundle{
-			UseKbldImagesLock: true,
-		}
+		pkgBuild.Spec.Template.Spec.Export[0].ImgpkgBundle = &appinit.ImgpkgBundle{UseKbldImagesLock: true}
 	}
 	defaultImgValue := pkgBuild.Spec.Template.Spec.Export[0].ImgpkgBundle.Image
 	o.ui.PrintInformationalText("The bundle created needs to be pushed to an OCI registry. Registry URL format: <REGISTRY_URL/REPOSITORY_NAME> e.g. index.docker.io/k8slt/sample-bundle")

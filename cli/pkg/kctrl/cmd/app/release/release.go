@@ -8,7 +8,7 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	cmdappbuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
+	cmdappinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 )
@@ -26,7 +26,7 @@ type ReleaseOptions struct {
 
 const (
 	defaultArtifactDir = "carvel-artifacts"
-	defaultVersion     = "0.0.0-%d"
+	defaultVersion     = "0.0.0+build.%d"
 )
 
 func NewReleaseOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ReleaseOptions {
@@ -62,7 +62,7 @@ func (o *ReleaseOptions) Run() error {
 	}
 	o.printPrerequisites()
 
-	appBuild, err := cmdappbuild.NewAppBuildFromFile(cmdappbuild.FileName)
+	appBuild, err := cmdappinit.NewAppBuildFromFile(cmdappinit.FileName)
 	if err != nil {
 		return err
 	}

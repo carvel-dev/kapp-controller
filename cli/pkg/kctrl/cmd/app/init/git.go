@@ -1,4 +1,4 @@
-// Copyright 2020 VMware, Inc.
+// Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 package init
@@ -44,7 +44,6 @@ func (g *GitStep) Interact() error {
 		return err
 	}
 	return g.configureGitRef()
-	return nil
 }
 
 func (g *GitStep) PostInteract() error { return nil }
