@@ -67,6 +67,8 @@ spec:
     spec:
       deploy:
       - kapp: {}
+      fetch:
+      - git: {}
       template:
       - helmTemplate:
           path: upstream
@@ -96,6 +98,8 @@ metadata:
 spec:
   packageRef:
     refName: testpackage.corp.dev
+    versionSelection:
+      constraints: 0.0.0
   serviceAccountName: testpackage-sa
 status:
   conditions: null

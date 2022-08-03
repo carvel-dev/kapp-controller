@@ -18,6 +18,7 @@ import (
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	vendirv1alpha1 "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/yaml"
@@ -248,7 +249,9 @@ func (o *InitOptions) updatePackageInstall(pkgInstall *pkgv1alpha1.PackageInstal
 			RefName: refName,
 		}
 	}
-	// TODO Check whether we should add version constraint as well.
+
+	pkgInstall.Spec.PackageRef.VersionSelection = &vendirv1alpha1.VersionSelectionSemver{Constraints: "0.0.0"}
+
 	if len(pkgInstall.Spec.PackageRef.RefName) == 0 {
 		pkgInstall.Spec.PackageRef.RefName = refName
 	}
@@ -263,6 +266,11 @@ func (o *InitOptions) updatePackage(pkg *v1alpha1.Package, pkgBuild *PackageBuil
 	if pkg.Spec.Template.Spec == nil {
 		pkg.Spec.Template.Spec = &kcv1alpha1.AppSpec{}
 	}
+
+	if len(pkg.Spec.Template.Spec.Fetch) == 0 {
+		pkg.Spec.Template.Spec.Fetch = []kcv1alpha1.AppFetch{{Git: &kcv1alpha1.AppFetchGit{}}}
+	}
+
 	if len(pkg.Spec.Template.Spec.Template) == 0 {
 		pkg.Spec.Template.Spec.Template = pkgBuild.GetAppSpec().Template
 	}
