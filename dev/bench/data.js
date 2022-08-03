@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659386252019,
+  "lastUpdate": 1659536051476,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -3981,6 +3981,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6420960448,
             "unit": "ns/op\t         4.251 DeleteSeconds\t         2.124 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "98549719+carvel-bot@users.noreply.github.com",
+            "name": "Carvel Bot",
+            "username": "carvel-bot"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5a1e9bb7b7dbd787395a574133ce697197ab1dcf",
+          "message": "Bump dependencies (#817)",
+          "timestamp": "2022-08-03T10:02:26-04:00",
+          "tree_id": "bbf873a91c7a642c25f2f23be563a7aca4a311fe",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/5a1e9bb7b7dbd787395a574133ce697197ab1dcf"
+        },
+        "date": 1659536049028,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36960064957,
+            "unit": "ns/op\t        19.25 DeleteSeconds\t        17.63 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9584309252,
+            "unit": "ns/op\t         5.354 DeleteSeconds\t         4.182 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6514667564,
+            "unit": "ns/op\t         4.323 DeleteSeconds\t         2.140 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
