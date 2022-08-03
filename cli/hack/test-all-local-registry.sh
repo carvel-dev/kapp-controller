@@ -2,14 +2,12 @@
 
 set -e -x -u
 
-PORT=${1:-5001}
-
 function cleanup {
   docker stop registry-"$PORT"
   docker rm -v registry-"$PORT"
 }
 trap cleanup EXIT
 
-docker run -d -p "$PORT":5000 -e REGISTRY_VALIDATION_MANIFESTS_URLS_ALLOW='- ^https?://' --restart always --name registry-"$PORT" registry:2
-export KCTRL_E2E_IMAGE="localhost:$PORT/local-tests/test-repo"
+docker run -d -p 5000:5000 -e REGISTRY_VALIDATION_MANIFESTS_URLS_ALLOW='- ^https?://' --restart always --name registry-5000 registry:2
+export KCTRL_E2E_IMAGE="localhost:5000/local-tests/test-repo"
 ./hack/test-all.sh $@
