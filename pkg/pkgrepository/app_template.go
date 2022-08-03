@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -20,7 +22,19 @@ import (
 	sigsyaml "sigs.k8s.io/yaml"
 )
 
+var errInvalidPackageRepo = exec.NewCmdRunResultWithErr(fmt.Errorf("Invalid PackageRepository: must contain a packages directory"))
+
 func (a *App) template(dirPath string) exec.CmdRunResult {
+	fileInfo, err := os.Lstat(filepath.Join(dirPath, "packages"))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return errInvalidPackageRepo
+		}
+		return exec.NewCmdRunResultWithErr(err)
+	}
+	if !fileInfo.IsDir() {
+		return errInvalidPackageRepo
+	}
 	if len(a.app.Spec.Template) != 0 {
 		panic("Internal inconsistency: Package repository templates are not configurable")
 	}
