@@ -267,13 +267,8 @@ func (o *InitOptions) updatePackage(pkg *v1alpha1.Package, pkgBuild *PackageBuil
 		pkg.Spec.Template.Spec = &kcv1alpha1.AppSpec{}
 	}
 
-	if len(pkg.Spec.Template.Spec.Fetch) == 0 {
-		pkg.Spec.Template.Spec.Fetch = []kcv1alpha1.AppFetch{{Git: &kcv1alpha1.AppFetchGit{}}}
-	}
-
-	if len(pkg.Spec.Template.Spec.Template) == 0 {
-		pkg.Spec.Template.Spec.Template = pkgBuild.GetAppSpec().Template
-	}
+	pkg.Spec.Template.Spec.Fetch = []kcv1alpha1.AppFetch{{Git: &kcv1alpha1.AppFetchGit{}}}
+	pkg.Spec.Template.Spec.Template = pkgBuild.GetAppSpec().Template
 
 	if len(pkg.Spec.Template.Spec.Deploy) == 0 {
 		pkg.Spec.Template.Spec.Deploy = pkgBuild.GetAppSpec().Deploy
