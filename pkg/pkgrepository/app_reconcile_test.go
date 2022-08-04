@@ -166,17 +166,17 @@ func TestInvalidPackageRepositoryFormat(t *testing.T) {
 			Conditions: []v1alpha1.Condition{{
 				Type:    v1alpha1.ReconcileFailed,
 				Status:  corev1.ConditionTrue,
-				Message: "Invalid PackageRepository: must contain a packages directory",
+				Message: "Invalid package repository content: must contain 'packages/' directory but did not",
 			}},
 			ObservedGeneration:  0,
-			FriendlyDescription: "Reconcile failed: Invalid PackageRepository: must contain a packages directory",
-			UsefulErrorMessage:  "Invalid PackageRepository: must contain a packages directory",
+			FriendlyDescription: "Reconcile failed: Invalid package repository content: must contain 'packages/' directory but did not",
+			UsefulErrorMessage:  "Invalid package repository content: must contain 'packages/' directory but did not",
 		},
 		Fetch: &v1alpha1.AppStatusFetch{
 			ExitCode: 0,
 		},
 		Template: &v1alpha1.AppStatusTemplate{
-			Error:    "Invalid PackageRepository: must contain a packages directory",
+			Error:    "Invalid package repository content: must contain 'packages/' directory but did not",
 			ExitCode: -1,
 		},
 	}

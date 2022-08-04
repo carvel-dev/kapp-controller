@@ -22,7 +22,7 @@ import (
 	sigsyaml "sigs.k8s.io/yaml"
 )
 
-var errInvalidPackageRepo = exec.NewCmdRunResultWithErr(fmt.Errorf("Invalid PackageRepository: must contain a packages directory"))
+var errInvalidPackageRepo = exec.NewCmdRunResultWithErr(fmt.Errorf("Invalid package repository content: must contain 'packages/' directory but did not"))
 
 func (a *App) template(dirPath string) exec.CmdRunResult {
 	fileInfo, err := os.Lstat(filepath.Join(dirPath, "packages"))
