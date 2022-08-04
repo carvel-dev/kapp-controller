@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659536051476,
+  "lastUpdate": 1659626169494,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -4023,6 +4023,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6514667564,
             "unit": "ns/op\t         4.323 DeleteSeconds\t         2.140 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "benm@vmware.com",
+            "name": "Ben Moss",
+            "username": "benmoss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "699e59824c2eff853557939a21c091423820477e",
+          "message": "Check if pkgrs contain a packages directory (#818)\n\n* Check if pkgrs contain a packages directory\r\n\r\nFail more gracefully than ytt does if called on a non-existent directory",
+          "timestamp": "2022-08-04T11:04:54-04:00",
+          "tree_id": "9f4466a7e073fdea41ab97c18db5d1e7e047c0bc",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/699e59824c2eff853557939a21c091423820477e"
+        },
+        "date": 1659626168622,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36888881717,
+            "unit": "ns/op\t        19.21 DeleteSeconds\t        17.63 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9596203614,
+            "unit": "ns/op\t         5.360 DeleteSeconds\t         4.184 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6640011760,
+            "unit": "ns/op\t         4.327 DeleteSeconds\t         2.262 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
