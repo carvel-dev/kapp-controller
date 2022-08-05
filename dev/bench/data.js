@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659717801694,
+  "lastUpdate": 1659718424632,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -4107,6 +4107,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6460268431,
             "unit": "ns/op\t         4.244 DeleteSeconds\t         2.136 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "36f7a2a2cdbfbc0bf37ba7d027853afb5fbbbf10",
+          "message": "Read default ca cert data from os env KAPPCTRL_KUBERNETES_CA_DATA (#819)\n\nThis allows kctrl to inject CA data into the reconciler when dev deploy\r\nruns it locally to mimic the controller.",
+          "timestamp": "2022-08-05T12:39:53-04:00",
+          "tree_id": "2e09585dcc84de78cb5cb1ee34fbd8b38f71c130",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/36f7a2a2cdbfbc0bf37ba7d027853afb5fbbbf10"
+        },
+        "date": 1659718423365,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36904449942,
+            "unit": "ns/op\t        19.24 DeleteSeconds\t        17.63 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9664373773,
+            "unit": "ns/op\t         5.378 DeleteSeconds\t         4.247 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6548997710,
+            "unit": "ns/op\t         4.326 DeleteSeconds\t         2.182 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
