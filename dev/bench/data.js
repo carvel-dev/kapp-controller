@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659990662646,
+  "lastUpdate": 1659990721079,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -4275,6 +4275,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6408404563,
             "unit": "ns/op\t         4.243 DeleteSeconds\t         2.126 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b53fadb426f7623dab6a66b049fcf1a50945aced",
+          "message": "Bump k8s.io/kube-aggregator from 0.22.11 to 0.22.12 (#791)\n\nBumps [k8s.io/kube-aggregator](https://github.com/kubernetes/kube-aggregator) from 0.22.11 to 0.22.12.\r\n- [Release notes](https://github.com/kubernetes/kube-aggregator/releases)\r\n- [Commits](https://github.com/kubernetes/kube-aggregator/compare/v0.22.11...v0.22.12)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: k8s.io/kube-aggregator\r\n  dependency-type: direct:production\r\n  update-type: version-update:semver-patch\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\n\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2022-08-08T13:22:22-07:00",
+          "tree_id": "0d031023927a3a3d80e284c56ad40f43c1d49f9b",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/b53fadb426f7623dab6a66b049fcf1a50945aced"
+        },
+        "date": 1659990720057,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36460712422,
+            "unit": "ns/op\t        18.89 DeleteSeconds\t        17.53 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9594255934,
+            "unit": "ns/op\t         5.368 DeleteSeconds\t         4.184 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6413502424,
+            "unit": "ns/op\t         4.241 DeleteSeconds\t         2.132 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
