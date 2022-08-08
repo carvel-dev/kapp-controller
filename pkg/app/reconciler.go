@@ -34,7 +34,12 @@ type Reconciler struct {
 // NewReconciler constructs new Reconciler.
 func NewReconciler(appClient kcclient.Interface, log logr.Logger, crdAppFactory CRDAppFactory,
 	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *Reconciler {
-	return &Reconciler{appClient, log, crdAppFactory, appRefTracker, appUpdateStatus}
+	return &Reconciler{appClient: appClient,
+		log:             log,
+		crdAppFactory:   crdAppFactory,
+		appRefTracker:   appRefTracker,
+		appUpdateStatus: appUpdateStatus,
+	}
 }
 
 var _ reconcile.Reconciler = &Reconciler{}
