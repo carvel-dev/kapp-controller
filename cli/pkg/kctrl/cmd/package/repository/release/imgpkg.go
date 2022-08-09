@@ -27,8 +27,14 @@ func (r ImgpkgRunner) Run() (string, error) {
 		return "", err
 	}
 
+	packagesLoc := filepath.Join(tmpDir, "packages")
+	err = os.Mkdir(packagesLoc, os.ModePerm)
+	if err != nil {
+		return "", err
+	}
+
 	for _, path := range r.Paths {
-		err = dircopy.Copy(path, tmpDir)
+		err = dircopy.Copy(path, packagesLoc)
 		if err != nil {
 			return "", err
 		}
