@@ -161,7 +161,7 @@ func (o *ReleaseOptions) Run() error {
 	switch {
 	case pkgRepoBuild.Spec.Export.ImgpkgBundle != nil:
 		imgpkgRunner := ImgpkgRunner{
-			BundlePath:        fmt.Sprintf("%s:build-%d", pkgRepoBuild.Spec.Export.ImgpkgBundle.Image, time.Now().Unix()),
+			BundlePath:        fmt.Sprintf("%s:%s", pkgRepoBuild.Spec.Export.ImgpkgBundle.Image, o.pkgRepoVersion),
 			Paths:             []string{"packages"},
 			UseKbldImagesLock: true,
 			ImgLockFilepath:   tempImgpkgLockPath,
