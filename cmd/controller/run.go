@@ -37,9 +37,7 @@ const (
 	PprofListenAddr                  = "0.0.0.0:6060"
 	kappctrlAPIPORTEnvKey            = "KAPPCTRL_API_PORT"
 	kappctrlReconcileNamespaceEnvKey = "RECONCILE_NAMESPCE"
-	kappctrlReconcileScopeEnvKey     = "RECONCILE_SCOPE"
-	cluster                          = "cluster"
-	namespace                        = "namespace"
+	kappctrlStartApiServerEnvKey     = "KAPPCTRL_START_API_SERVER"
 )
 
 type Options struct {
@@ -63,26 +61,14 @@ func Run(opts Options, runLog logr.Logger) error {
 		restConfig.Timeout = opts.APIRequestTimeout
 	}
 
-	workForClusterResource := true
-	workForNamespaceResource := true
-	if reconcileScope, ok := os.LookupEnv(kappctrlReconcileScopeEnvKey); ok {
-		runLog.Info("Start for Reconcile Scope", "reconcileScope", reconcileScope)
-		if reconcileScope == cluster {
-			workForClusterResource = true
-			workForNamespaceResource = false
-		} else if reconcileScope == namespace {
-			workForClusterResource = false
-			workForNamespaceResource = true
-		} else if reconcileScope == "" {
-			workForClusterResource = true
-			workForNamespaceResource = true
-		} else {
-			return fmt.Errorf("invalid reconcile scope, should be cluster or namespace")
+	kappctrlStartApiServer := true
+	if kappctrlStartApiServerString, ok := os.LookupEnv(kappctrlStartApiServerEnvKey); ok {
+		if kappctrlStartApiServerString == "false" {
+			kappctrlStartApiServer = false
 		}
-		runLog.Info("Reconcile for resource", "cluster", workForClusterResource, "namespace", workForNamespaceResource)
-
+		runLog.Info("Start with api server", "kappctrlStartApiServer", kappctrlStartApiServer)
 	} else {
-		runLog.Info("Start for default reconcile scope, include cluster and namespace")
+		runLog.Info("Start with api server with default value", "kappctrlStartApiServer", kappctrlStartApiServer)
 	}
 
 	if namespaceWorkedFor, ok := os.LookupEnv(kappctrlReconcileNamespaceEnvKey); ok {
@@ -125,7 +111,7 @@ func Run(opts Options, runLog logr.Logger) error {
 	appMetrics.RegisterAllMetrics()
 
 	var server *apiserver.APIServer
-	if workForClusterResource {
+	if kappctrlStartApiServer {
 		// assign bindPort to env var KAPPCTRL_API_PORT if available
 		var bindPort int
 		if apiPort, ok := os.LookupEnv(kappctrlAPIPORTEnvKey); ok {
@@ -201,7 +187,7 @@ func Run(opts Options, runLog logr.Logger) error {
 	refTracker := reftracker.NewAppRefTracker()
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
 
-	if workForNamespaceResource { // add controller for apps
+	{ // add controller for apps
 		appFactory := app.CRDAppFactory{
 			CoreClient: coreClient,
 			AppClient:  kcClient,
@@ -229,7 +215,7 @@ func Run(opts Options, runLog logr.Logger) error {
 		}
 	}
 
-	if workForNamespaceResource { // add controller for PackageInstall
+	{ // add controller for PackageInstall
 		pkgToPkgInstallHandler := pkginstall.NewPackageInstallVersionHandler(
 			kcClient, opts.PackagingGloablNS, runLog.WithName("handler"))
 
@@ -250,7 +236,7 @@ func Run(opts Options, runLog logr.Logger) error {
 		}
 	}
 
-	if workForClusterResource { // add controller for pkgrepositories
+	{ // add controller for pkgrepositories
 		appFactory := pkgrepository.AppFactory{coreClient, kcClient, kcConfig, sidecarCmdExec}
 
 		reconciler := pkgrepository.NewReconciler(kcClient, coreClient,

@@ -32,8 +32,8 @@ spec:
           value: /etc/kappctrl-mem-tmp
         - name: KAPPCTRL_SIDECAREXEC_SOCK
           value: /etc/kappctrl-mem-tmp/sidecarexec.sock
-        - name: RECONCILE_SCOPE
-          value: #@ data.values.reconcile_scope
+        - name: KAPPCTRL_START_API_SERVER
+          value: #@ data.values.kappctrlStartApiServer
         - name: RECONCILE_NAMESPCE
           value: #@ data.values.reconcile_namespace
         - name: KAPPCTRL_SYSTEM_NAMESPACE
