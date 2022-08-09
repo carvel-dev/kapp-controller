@@ -115,12 +115,14 @@ func splitWithEscaping(s string, separator, escape byte) []string {
 var jsonRegexp = regexp.MustCompile(`^\{\.?([^{}]+)\}$|^\.?([^{}]+)$`)
 
 // RelaxedJSONPathExpression attempts to be flexible with JSONPath expressions, it accepts:
-//   * metadata.name (no leading '.' or curly braces '{...}'
-//   * {metadata.name} (no leading '.')
-//   * .metadata.name (no curly braces '{...}')
-//   * {.metadata.name} (complete expression)
+//   - metadata.name (no leading '.' or curly braces '{...}'
+//   - {metadata.name} (no leading '.')
+//   - .metadata.name (no curly braces '{...}')
+//   - {.metadata.name} (complete expression)
+//
 // And transforms them all into a valid jsonpath expression:
-//   {.metadata.name}
+//
+//	{.metadata.name}
 func relaxedJSONPathExpression(pathExpression string) (string, error) {
 	if len(pathExpression) == 0 {
 		return pathExpression, nil
