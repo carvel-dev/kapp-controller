@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659990721079,
+  "lastUpdate": 1660072375055,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -4317,6 +4317,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6413502424,
             "unit": "ns/op\t         4.241 DeleteSeconds\t         2.132 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "aaronshurley@users.noreply.github.com",
+            "name": "Aaron Hurley",
+            "username": "aaronshurley"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cd46fa2fea53c48621373d4ab496e920ab45de70",
+          "message": "Update trivy-scan alert slack channel (#821)",
+          "timestamp": "2022-08-09T15:02:58-04:00",
+          "tree_id": "b2dca111e4362600f6e447071209997919ab9b80",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/cd46fa2fea53c48621373d4ab496e920ab45de70"
+        },
+        "date": 1660072373946,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36450636541,
+            "unit": "ns/op\t        18.82 DeleteSeconds\t        17.59 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9452639047,
+            "unit": "ns/op\t         5.268 DeleteSeconds\t         4.144 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6408984984,
+            "unit": "ns/op\t         4.251 DeleteSeconds\t         2.120 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
