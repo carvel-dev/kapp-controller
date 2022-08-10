@@ -5,9 +5,7 @@ package release
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -65,11 +63,14 @@ func (o *ReleaseOptions) Run() error {
 		o.pkgVersion = fmt.Sprintf("build-%d", time.Now().Unix())
 	}
 
-	pkgBuild, err := cmdpkgbuild.NewPackageBuildFromFile("package-build.yml")
-	if err != nil {
-		return err
+	if o.chdir != "" {
+		err := os.Chdir(o.chdir)
+		if err != nil {
+			return err
+		}
 	}
-	pkg, err := cmdpkgbuild.GetPackage("package-resources.yml")
+
+	pkgBuild, err := cmdpkgbuild.NewPackageBuildFromFile("package-build.yml")
 	if err != nil {
 		return err
 	}
@@ -104,7 +105,7 @@ func (o *ReleaseOptions) Run() error {
 		BuildExport:   *pkgBuild.GetExport(),
 		Debug:         o.debug,
 	}
-	appSpec, err := cmdapprelease.NewAppSpecBuilder(wd, o.depsFactory, o.logger, o.ui, builderOpts).Build()
+	appSpec, err := cmdapprelease.NewAppSpecBuilder(o.depsFactory, o.logger, o.ui, builderOpts).Build()
 	if err != nil {
 		return err
 	}

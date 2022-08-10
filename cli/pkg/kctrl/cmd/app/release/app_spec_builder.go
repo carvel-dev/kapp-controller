@@ -18,11 +18,10 @@ import (
 )
 
 type AppSpecBuilder struct {
-	workingDirectory string
-	depsFactory      cmdcore.DepsFactory
-	logger           logger.Logger
-	ui               cmdcore.AuthoringUI
-	opts             AppSpecBuilderOpts
+	depsFactory cmdcore.DepsFactory
+	logger      logger.Logger
+	ui          cmdcore.AuthoringUI
+	opts        AppSpecBuilderOpts
 }
 
 type AppSpecBuilderOpts struct {
@@ -33,8 +32,8 @@ type AppSpecBuilderOpts struct {
 	Debug         bool
 }
 
-func NewAppSpecBuilder(workingDirectory string, depsFactory cmdcore.DepsFactory, logger logger.Logger, ui cmdcore.AuthoringUI, opts AppSpecBuilderOpts) *AppSpecBuilder {
-	return &AppSpecBuilder{workingDirectory, depsFactory, logger, ui, opts}
+func NewAppSpecBuilder(depsFactory cmdcore.DepsFactory, logger logger.Logger, ui cmdcore.AuthoringUI, opts AppSpecBuilderOpts) *AppSpecBuilder {
+	return &AppSpecBuilder{depsFactory, logger, ui, opts}
 }
 
 const (
@@ -68,7 +67,7 @@ func (b *AppSpecBuilder) Build() (kcv1alpha1.AppSpec, error) {
 	}
 
 	// Make lock output directory if it does not exist
-	tmpImgpkgFolder := filepath.Join(b.workingDirectory, LockOutputFolder)
+	tmpImgpkgFolder := LockOutputFolder
 	_, err := os.Stat(tmpImgpkgFolder)
 	if err != nil && os.IsNotExist(err) {
 		err := os.Mkdir(tmpImgpkgFolder, os.ModePerm)
@@ -76,10 +75,10 @@ func (b *AppSpecBuilder) Build() (kcv1alpha1.AppSpec, error) {
 			return kcv1alpha1.AppSpec{}, err
 		}
 	}
-	defer os.RemoveAll(filepath.Join(b.workingDirectory, LockOutputFolder))
+	defer os.RemoveAll(LockOutputFolder)
 
 	// Build images and resolve references using reconciler
-	tempImgpkgLockPath := filepath.Join(b.workingDirectory, LockOutputFolder, LockOutputFile)
+	tempImgpkgLockPath := filepath.Join(LockOutputFolder, LockOutputFile)
 	cmdRunner := NewReleaseCmdRunner(os.Stdout, b.opts.Debug, tempImgpkgLockPath, b.ui)
 	reconciler := cmdlocal.NewReconciler(b.depsFactory, cmdRunner, b.logger)
 

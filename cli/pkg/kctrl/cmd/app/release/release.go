@@ -56,10 +56,6 @@ func (o *ReleaseOptions) Run() error {
 		}
 	}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
 	o.printPrerequisites()
 
 	appBuild, err := cmdappinit.NewAppBuildFromFile(cmdappinit.FileName)
@@ -73,7 +69,7 @@ func (o *ReleaseOptions) Run() error {
 		BuildExport:   *appBuild.GetExport(),
 		Debug:         o.debug,
 	}
-	_, err = NewAppSpecBuilder(wd, o.depsFactory, o.logger, o.ui, builderOpts).Build()
+	_, err = NewAppSpecBuilder(o.depsFactory, o.logger, o.ui, builderOpts).Build()
 	if err != nil {
 		return err
 	}

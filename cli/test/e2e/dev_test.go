@@ -48,14 +48,14 @@ spec:
 `, appName)
 
 	cleanUp := func() {
-		kapp.Run([]string{"delete", "-a", fmt.Sprintf("%s-ctrl", appName)})
-		kapp.Run([]string{"delete", "-a", fmt.Sprintf("%s-ctrl", saAppName)})
+		kapp.Run([]string{"delete", "-a", fmt.Sprintf("%s.app", appName)})
+		kapp.Run([]string{"delete", "-a", saAppName})
 	}
 	cleanUp()
 	defer cleanUp()
 
 	logger.Section("create service accounts", func() {
-		kapp.RunWithOpts([]string{"deploy", "-a", saAppName, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(sa)})
+		kapp.RunWithOpts([]string{"deploy", "-a", saAppName, "-f", "-", "--debug"}, RunOpts{StdinReader: strings.NewReader(sa)})
 	})
 
 	logger.Section("dev deploy app", func() {
@@ -63,7 +63,7 @@ spec:
 	})
 
 	logger.Section("inspect app resources", func() {
-		out := kapp.Run([]string{"inspect", "-a", fmt.Sprintf("%s-ctrl", appName), "--json"})
+		out := kapp.Run([]string{"inspect", "-a", fmt.Sprintf("%s.app", appName), "--json"})
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expectedOutputRows := []map[string]string{

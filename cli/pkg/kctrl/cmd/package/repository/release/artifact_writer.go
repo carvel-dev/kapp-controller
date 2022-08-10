@@ -18,7 +18,7 @@ type ArtifactWriter struct {
 	TargetDir       string
 }
 
-func NewArtefactWriter(pkgRepoName string, directory string) *ArtifactWriter {
+func NewArtifactWriter(pkgRepoName string, directory string) *ArtifactWriter {
 	return &ArtifactWriter{PackageRepoName: pkgRepoName, TargetDir: directory}
 }
 

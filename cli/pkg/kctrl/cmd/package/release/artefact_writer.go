@@ -28,7 +28,7 @@ type ArtifactWriter struct {
 }
 
 const (
-	artefactDir = "carvel-artefacts"
+	artifactDir = "carvel-artifacts"
 	packageDir  = "packages"
 )
 
