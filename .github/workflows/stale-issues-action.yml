@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/stale@3cc123766321e9f15a6676375c154ccffb12a358
+    - uses: actions/stale@9c1b1c6e115ca2af09755448e0dbba24e5061cc8
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         stale-issue-message: 'This issue is being marked as stale due to a long period of inactivity and will be closed in 5 days if there is no response.'

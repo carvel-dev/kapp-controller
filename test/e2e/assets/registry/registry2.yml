@@ -9,6 +9,8 @@ kind: Service
 metadata:
   namespace: registry
   name: registry-svc
+  annotations:
+    kapp.k14s.io/change-group: server
 spec:
   selector:
     app: self-signed-registry
@@ -21,6 +23,8 @@ kind: Deployment
 metadata:
   name: self-signed-registry
   namespace: registry
+  annotations:
+    kapp.k14s.io/change-group: server
 spec:
   replicas: 1
   selector:
@@ -49,6 +53,11 @@ spec:
           value: /var/lib/tmp/registry
         ports:
         - containerPort: 443
+        startupProbe:
+          httpGet:
+            path: /
+            port: 443
+            scheme: HTTPS
         volumeMounts:
         - mountPath: /etc/ssl
           readOnly: true
@@ -79,3 +88,23 @@ spec:
           name: registry-contents
       - name: registry-sync
         emptyDir: {}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: check-registry-conn
+  namespace: default
+  annotations:
+    kapp.k14s.io/update-strategy: always-replace
+    kapp.k14s.io/change-rule: upsert after upserting server
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      name: check-registry-conn
+    spec:
+      containers:
+      - name: check
+        image: curlimages/curl
+        args: [-k, --connect-timeout, "1", https://registry-svc.registry]
+      restartPolicy: Never

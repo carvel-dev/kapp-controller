@@ -16,24 +16,23 @@ import (
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	kappipkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	kcpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type AddOrUpdateOptions struct {
 	ui          ui.UI
+	statusUI    cmdcore.StatusLoggingUI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	NamespaceFlags cmdcore.NamespaceFlags
-	Name           string
-	URL            string
+	NamespaceFlags       cmdcore.NamespaceFlags
+	SecureNamespaceFlags cmdcore.SecureNamespaceFlags
+	Name                 string
+	URL                  string
 
 	CreateRepository bool
 
@@ -43,7 +42,7 @@ type AddOrUpdateOptions struct {
 }
 
 func NewAddOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *AddOrUpdateOptions {
-	return &AddOrUpdateOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
+	return &AddOrUpdateOptions{ui: ui, statusUI: cmdcore.NewStatusLoggingUI(ui), depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
 }
 
 func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -60,6 +59,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	}
 
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
+	o.SecureNamespaceFlags.Set(cmd)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
@@ -92,9 +92,11 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 				[]string{"package", "repository", "update", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.2"}},
 		}.Description("-r", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
+		Annotations:  map[string]string{cmdapp.TTYByDefaultKey: ""},
 	}
 
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
+	o.SecureNamespaceFlags.Set(cmd)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
@@ -125,6 +127,11 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 
 	if len(o.URL) == 0 {
 		return fmt.Errorf("Expected package repository url to be non-empty")
+	}
+
+	err := o.SecureNamespaceFlags.CheckForDisallowedSharedNamespaces(o.NamespaceFlags.Name)
+	if err != nil {
+		return err
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
@@ -180,23 +187,23 @@ func (o *AddOrUpdateOptions) add(client kcclient.Interface) error {
 	return err
 }
 
-func (o *AddOrUpdateOptions) newPackageRepository() (*v1alpha1.PackageRepository, error) {
-	pkgr := &v1alpha1.PackageRepository{
+func (o *AddOrUpdateOptions) newPackageRepository() (*kcpkg.PackageRepository, error) {
+	pkgr := &kcpkg.PackageRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      o.Name,
 			Namespace: o.NamespaceFlags.Name,
 		},
-		Spec: kappipkg.PackageRepositorySpec{},
+		Spec: kcpkg.PackageRepositorySpec{},
 	}
 
 	return o.updateExistingPackageRepository(pkgr)
 }
 
-func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *v1alpha1.PackageRepository) (*v1alpha1.PackageRepository, error) {
+func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *kcpkg.PackageRepository) (*kcpkg.PackageRepository, error) {
 
 	pkgr = pkgr.DeepCopy()
 
-	pkgr.Spec.Fetch = &kappipkg.PackageRepositoryFetch{
+	pkgr.Spec.Fetch = &kcpkg.PackageRepositoryFetch{
 		ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: o.URL},
 	}
 
@@ -222,35 +229,12 @@ func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *v1alpha1.Pack
 }
 
 func (o *AddOrUpdateOptions) waitForPackageRepositoryInstallation(client kcclient.Interface) error {
-	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
-	description := getPackageRepositoryDescription(o.Name, o.NamespaceFlags.Name)
-	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
-		pkgr, err := client.PackagingV1alpha1().PackageRepositories(
-			o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
-		if err != nil {
-			return false, err
-		}
+	o.statusUI.PrintMessagef("Waiting for package repository reconciliation for '%s'", o.Name)
+	repoWatcher := NewRepoTailer(o.NamespaceFlags.Name, o.Name, o.ui, client)
 
-		if pkgr.Generation != pkgr.Status.ObservedGeneration {
-			// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
-			return false, nil
-		}
-
-		status := pkgr.Status.GenericStatus
-
-		for _, condition := range status.Conditions {
-			msgsUI.NotifySection("%s: %s", description, condition.Type)
-
-			switch {
-			case condition.Type == kappctrl.ReconcileSucceeded && condition.Status == corev1.ConditionTrue:
-				return true, nil
-			case condition.Type == kappctrl.ReconcileFailed && condition.Status == corev1.ConditionTrue:
-				return false, fmt.Errorf("%s. %s", status.UsefulErrorMessage, status.FriendlyDescription)
-			}
-		}
-		return false, nil
-	}); err != nil {
-		return fmt.Errorf("%s: Reconciling: %s", description, err)
+	err := repoWatcher.TailRepoStatus()
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -17,10 +17,10 @@ import (
 )
 
 type HelmTemplate struct {
-	opts        v1alpha1.AppTemplateHelmTemplate
-	genericOpts GenericOpts
-	coreClient  kubernetes.Interface
-	cmdRunner   exec.CmdRunner
+	opts       v1alpha1.AppTemplateHelmTemplate
+	appContext AppContext
+	coreClient kubernetes.Interface
+	cmdRunner  exec.CmdRunner
 }
 
 // HelmTemplateCmdArgs represents the binary and arguments used during templating
@@ -32,10 +32,10 @@ type HelmTemplateCmdArgs struct {
 var _ Template = &HelmTemplate{}
 
 func NewHelmTemplate(opts v1alpha1.AppTemplateHelmTemplate,
-	genericOpts GenericOpts, coreClient kubernetes.Interface,
+	appContext AppContext, coreClient kubernetes.Interface,
 	cmdRunner exec.CmdRunner) *HelmTemplate {
 
-	return &HelmTemplate{opts, genericOpts, coreClient, cmdRunner}
+	return &HelmTemplate{opts, appContext, coreClient, cmdRunner}
 }
 
 func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
@@ -59,12 +59,12 @@ func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResu
 		chartPath = checkedPath
 	}
 
-	name := t.genericOpts.Name
+	name := t.appContext.Name
 	if len(t.opts.Name) > 0 {
 		name = t.opts.Name
 	}
 
-	namespace := t.genericOpts.Namespace
+	namespace := t.appContext.Namespace
 	if len(t.opts.Namespace) > 0 {
 		namespace = t.opts.Namespace
 	}
@@ -72,7 +72,7 @@ func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResu
 	args := []string{"template", name, chartPath, "--namespace", namespace, "--include-crds"}
 
 	{ // Add values files
-		vals := Values{t.opts.ValuesFrom, t.genericOpts, t.coreClient}
+		vals := Values{t.opts.ValuesFrom, t.appContext, t.coreClient}
 
 		paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
 		if err != nil {
@@ -108,9 +108,4 @@ func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResu
 	result.AttachErrorf("Templating helm chart: %s", err)
 
 	return result
-}
-
-// auxiliary struct used for Chart.yaml unmarshalling
-type chartSpec struct {
-	APIVersion string
 }
