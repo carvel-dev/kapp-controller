@@ -29,6 +29,9 @@ type ServiceAccounts struct {
 // NewServiceAccounts provides access to the ServiceAccount Resource in kubernetes
 func NewServiceAccounts(coreClient kubernetes.Interface, log logr.Logger) *ServiceAccounts {
 	tokenMgr := satoken.NewManager(coreClient, log)
+
+	// The environment variable allows kctrl to inject a default value for CA data
+	// This is the only intended usage for 'KAPPCTRL_KUBERNETES_CA_DATA'
 	return &ServiceAccounts{coreClient: coreClient, log: log,
 		tokenManager: tokenMgr, caCert: []byte(os.Getenv("KAPPCTRL_KUBERNETES_CA_DATA"))}
 }
