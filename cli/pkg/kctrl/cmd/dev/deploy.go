@@ -42,7 +42,7 @@ func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.L
 func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "deploy",
-		Short: "Deploy App CR",
+		Short: "Deploy App CR and packaging resources (experimental)",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 

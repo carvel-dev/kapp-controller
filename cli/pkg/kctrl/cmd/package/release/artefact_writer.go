@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -18,9 +17,12 @@ import (
 )
 
 type ArtifactWriter struct {
-	Package     string
-	Version     string
-	ArtifactDir string
+	packageName string
+	version     string
+	artifactDir string
+
+	metadataTemplate *kcdatav1alpha1.PackageMetadata
+	packageTemplate  *kcdatav1alpha1.Package
 
 	ui cmdcore.AuthoringUI
 }
@@ -30,12 +32,14 @@ const (
 	packageDir  = "packages"
 )
 
-func NewArtifactWriter(pkg string, version string, artifactDir string, ui cmdcore.AuthoringUI) *ArtifactWriter {
-	return &ArtifactWriter{Package: pkg, Version: version, ArtifactDir: artifactDir, ui: ui}
+func NewArtifactWriter(pkg string, version string, packageTemplate *kcdatav1alpha1.Package,
+	metadataTemplate *kcdatav1alpha1.PackageMetadata, artifactDir string, ui cmdcore.AuthoringUI) *ArtifactWriter {
+	return &ArtifactWriter{packageName: pkg, version: version, artifactDir: artifactDir, metadataTemplate: metadataTemplate,
+		packageTemplate: packageTemplate, ui: ui}
 }
 
 func (w *ArtifactWriter) Write(appSpec *kcv1alpha1.AppSpec, valuesSchema kcdatav1alpha1.ValuesSchema) error {
-	path := filepath.Join(w.ArtifactDir, packageDir, w.Package)
+	path := filepath.Join(w.artifactDir, packageDir, w.packageName)
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
 		return err
@@ -54,7 +58,7 @@ func (w *ArtifactWriter) Write(appSpec *kcv1alpha1.AppSpec, valuesSchema kcdatav
 }
 
 func (w *ArtifactWriter) WriteRepoOutput(appSpec *kcv1alpha1.AppSpec, valuesSchema kcdatav1alpha1.ValuesSchema, path string) error {
-	path = filepath.Join(path, packageDir, w.Package)
+	path = filepath.Join(path, packageDir, w.packageName)
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
 		return err
@@ -64,7 +68,7 @@ func (w *ArtifactWriter) WriteRepoOutput(appSpec *kcv1alpha1.AppSpec, valuesSche
 	if err != nil {
 		return err
 	}
-	err = w.writePackage(filepath.Join(path, fmt.Sprintf("%s.yml", w.Version)), appSpec, valuesSchema)
+	err = w.writePackage(filepath.Join(path, fmt.Sprintf("%s.yml", w.version)), appSpec, valuesSchema)
 	if err != nil {
 		return err
 	}
@@ -73,71 +77,30 @@ func (w *ArtifactWriter) WriteRepoOutput(appSpec *kcv1alpha1.AppSpec, valuesSche
 }
 
 func (w *ArtifactWriter) writePackageMetadata(path string) error {
-	metadata := kcdatav1alpha1.PackageMetadata{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "data.packaging.carvel.dev/v1alpha1",
-			Kind:       "PackageMetadata",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: w.Package,
-		},
-		Spec: kcdatav1alpha1.PackageMetadataSpec{
-			DisplayName: w.Package[:strings.IndexByte(w.Package, '.')],
-		},
-	}
-	template := `# longDescription: Detailed description of package
-# shortDescription: Concise description of package
-# providerName: Organization/entity providing this package
-# maintainers:
-#   - name: Maintainer 1
-#   - name: Maintainer 2
-`
-	metadataBytes, err := yaml.Marshal(metadata)
+	metadataBytes, err := yaml.Marshal(w.metadataTemplate)
 	if err != nil {
 		return err
 	}
-	return w.createFileIfNotExists(path, append(metadataBytes, []byte(template)...))
+	return w.createOrOverwriteFile(path, metadataBytes)
 }
 
 func (w *ArtifactWriter) writePackage(path string, appSpec *kcv1alpha1.AppSpec, valuesSchema kcdatav1alpha1.ValuesSchema) error {
-	packageObj := kcdatav1alpha1.Package{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "data.packaging.carvel.dev/v1alpha1",
-			Kind:       "Package",
+	w.packageTemplate.SetName(fmt.Sprintf("%s.%s", w.packageName, w.version))
+	w.packageTemplate.Spec = kcdatav1alpha1.PackageSpec{
+		ReleasedAt: metav1.Now(),
+		Version:    w.version,
+		RefName:    w.packageName,
+		Template: kcdatav1alpha1.AppTemplateSpec{
+			Spec: appSpec,
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s.%s", w.Package, w.Version),
-		},
-		Spec: kcdatav1alpha1.PackageSpec{
-			ReleasedAt: metav1.Now(),
-			Version:    w.Version,
-			RefName:    w.Package,
-			Template: kcdatav1alpha1.AppTemplateSpec{
-				Spec: appSpec,
-			},
-			ValuesSchema: valuesSchema,
-		},
+		ValuesSchema: valuesSchema,
 	}
 
-	packageBytes, err := yaml.Marshal(packageObj)
+	packageBytes, err := yaml.Marshal(w.packageTemplate)
 	if err != nil {
 		return err
 	}
 	return w.createOrOverwriteFile(path, packageBytes)
-}
-
-func (w *ArtifactWriter) createFileIfNotExists(path string, data []byte) error {
-	_, err := os.Stat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			err := ioutil.WriteFile(path, data, os.ModePerm)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	w.ui.PrintHeaderWithContextText("Artifact created", path)
-	return nil
 }
 
 func (w *ArtifactWriter) createOrOverwriteFile(path string, data []byte) error {

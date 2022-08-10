@@ -129,12 +129,8 @@ metadata:
   name: testpackage.corp.dev
 spec:
   displayName: testpackage
-# longDescription: Detailed description of package
-# shortDescription: Concise description of package
-# providerName: Organization/entity providing this package
-# maintainers:
-#   - name: Maintainer 1
-#   - name: Maintainer 2
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
 `
 
 	expectedPackage := `

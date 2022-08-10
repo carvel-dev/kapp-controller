@@ -50,12 +50,12 @@ func NewReleaseOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.
 func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "release",
-		Short: "Build and create a package repository",
+		Short: "Build and create a package repository (experimental)",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.Run() },
 	}
 
 	cmd.Flags().StringVarP(&o.pkgRepoVersion, "version", "v", "", "Version to be released")
-	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Working directory with repo which needs to be bundles")
+	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Location of the working directory")
 	cmd.Flags().StringVar(&o.outputLocation, "copy-to", "", "Output location for pkgrepo-build.yml")
 	cmd.Flags().BoolVar(&o.debug, "debug", false, "Include debug output")
 

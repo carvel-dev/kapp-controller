@@ -43,11 +43,11 @@ func NewInitOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Log
 func NewInitCmd(o *InitOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
-		Short: "Initialize Package",
+		Short: "Initialize Package (experimental)",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 
-	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Working directory with package-build and other config")
+	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Location of the working directory")
 	return cmd
 }
 

@@ -17,8 +17,10 @@ import (
 	cmdapprelease "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/release"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdpkgbuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/init"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	kcdatav1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 )
 
 type ReleaseOptions struct {
@@ -45,12 +47,12 @@ func NewReleaseOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.
 func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "release",
-		Short: "Release package",
+		Short: "Release package (experimental)",
 		RunE:  func(cmd *cobra.Command, args []string) error { return o.Run() },
 	}
 
 	cmd.Flags().StringVarP(&o.pkgVersion, "version", "v", "", "Version to be released")
-	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Working directory with package-build and other config")
+	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Location of the working directory")
 	cmd.Flags().StringVar(&o.outputLocation, "copy-to", defaultArtifactDir, "Output location for artifacts")
 	cmd.Flags().StringVar(&o.repoOutputLocation, "repo-output", "", "Output location for artifacts in repository bundle format")
 	cmd.Flags().BoolVar(&o.debug, "debug", false, "Print verbose debug output")
@@ -70,6 +72,14 @@ func (o *ReleaseOptions) Run() error {
 	pkg, err := cmdpkgbuild.GetPackage("package-resources.yml")
 	if err != nil {
 		return err
+	}
+
+	pkgConfigs, err := local.NewConfigFromFiles([]string{"package-resources.yml"})
+	if err != nil {
+		return err
+	}
+	if len(pkgConfigs.PkgMetadatas) != 1 || len(pkgConfigs.PkgMetadatas) != 1 {
+		return fmt.Errorf("Reading package-resource.yml: file malformed. (hint: delete the file and run `kctrl package init` again)")
 	}
 
 	o.printPrerequisites()
@@ -102,7 +112,7 @@ func (o *ReleaseOptions) Run() error {
 	for _, release := range pkgBuild.Spec.Release {
 		switch {
 		case release.Resource != nil:
-			err = o.releaseResources(appSpec, *pkgBuild)
+			err = o.releaseResources(appSpec, *pkgBuild, &pkgConfigs.Pkgs[0], &pkgConfigs.PkgMetadatas[0])
 			if err != nil {
 				return nil
 			}
@@ -113,7 +123,8 @@ func (o *ReleaseOptions) Run() error {
 	return nil
 }
 
-func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild cmdpkgbuild.PackageBuild) error {
+func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild cmdpkgbuild.PackageBuild,
+	packageTemplate *kcdatav1alpha1.Package, metadataTemplate *kcdatav1alpha1.PackageMetadata) error {
 	var yttPaths []string
 	for _, templateStage := range pkgBuild.Spec.Template.Spec.App.Spec.Template {
 		if templateStage.Ytt != nil {
@@ -125,7 +136,7 @@ func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild c
 		return err
 	}
 
-	artifactWriter := NewArtifactWriter(pkgBuild.Name, o.pkgVersion, o.outputLocation, o.ui)
+	artifactWriter := NewArtifactWriter(pkgBuild.Name, o.pkgVersion, packageTemplate, metadataTemplate, o.outputLocation, o.ui)
 	err = artifactWriter.Write(&appSpec, *valuesSchema)
 	if err != nil {
 		return err
