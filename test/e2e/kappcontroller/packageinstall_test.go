@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
@@ -27,7 +28,7 @@ func Test_PackageInstalled_FromPackageInstall_Successfully(t *testing.T) {
 	sas := e2e.ServiceAccounts{env.Namespace}
 	name := "instl-pkg-test"
 
-	installPkgYaml := fmt.Sprintf(`---
+	installPkgYAML := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
 metadata:
@@ -71,7 +72,7 @@ spec:
           - "-"
           - ".imgpkg/images.yml"
       deploy:
-      - kapp: 
+      - kapp:
           inspect: {}
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
@@ -110,7 +111,7 @@ stringData:
 	defer cleanUp()
 
 	// Create Repo, PackageInstall, and App from YAML
-	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(installPkgYAML)})
 
 	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
 	kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
@@ -172,6 +173,164 @@ stringData:
 	assert.Equal(t, expectedStatus, cr.Status)
 }
 
+// helpers for the below tests allows us to "template" in and out version constraints
+// if kcVerC is "" then we omit that field, same for k8sVerC
+// annotations will be added to the PKGI, and are expected to be key-names only (vals will be "")
+func generatePkgYAML(kcVerC string, k8sVerC string, pkgVer string) string {
+	pkgYAML := fmt.Sprintf(`
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg.test.carvel.dev.%[1]s
+spec:
+`, pkgVer)
+	// too bad there's no tools for templating yaml.
+	if kcVerC != "" {
+		pkgYAML += fmt.Sprintf(`  kappControllerVersionSelection:
+    constraints: "%s"
+`, kcVerC)
+	}
+	if k8sVerC != "" {
+		pkgYAML += fmt.Sprintf(`  kubernetesVersionSelection:
+    constraints: "%s"
+`, k8sVerC)
+	}
+	pkgYAML += fmt.Sprintf(`  refName: pkg.test.carvel.dev
+  version: %[1]s
+  licenses:
+  - Apache 2.0
+  capactiyRequirementsDescription: "cpu: 1,RAM: 2, Disk: 3"
+  releaseNotes: |
+    - Introduce simple-app package
+  releasedAt: 2021-05-05T18:57:06Z
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v1.0.0
+      template:
+      - ytt: {}
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
+      deploy:
+      - kapp:
+          inspect: {}
+`, pkgVer)
+	return pkgYAML
+}
+
+func generatePkgiYAML(pkgiName, kcVerC, k8sVerC string, annotations []string) string {
+	installPkgYAML := generatePkgYAML(kcVerC, k8sVerC, "1.0.0") + fmt.Sprintf(`
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: %[1]s
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/packageinstalls
+`, pkgiName)
+	if len(annotations) > 0 {
+		for _, ann := range annotations {
+			installPkgYAML += fmt.Sprintf(`    "%s": ""`, ann)
+		}
+	}
+	installPkgYAML += `
+spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
+  packageRef:
+    refName: pkg.test.carvel.dev
+    versionSelection:
+      constraints: ">0.0.0"
+  values:
+  - secretRef:
+      name: pkg-demo-values
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pkg-demo-values
+stringData:
+  values.yml: |
+    hello_msg: "hi"
+`
+	return installPkgYAML
+}
+
+func Test_PackageInstalled_FromPackageInstall_VersionConstraints(t *testing.T) {
+	const (
+		kubernetesVersionOverrideAnnotation     = "packaging.carvel.dev/ignore-kubernetes-version-selection"
+		kappControllerVersionOverrideAnnotation = "packaging.carvel.dev/ignore-kapp-controller-version-selection"
+	)
+
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
+	name := "instl-pkg-test-version-constraints"
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("PackageInstall fails due to k8s version constraint", func() {
+		installPkgYAML := generatePkgiYAML(name, "", "<1.0.0", []string{}) + sas.ForNamespaceYAML()
+		out, err := kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
+			e2e.RunOpts{
+				StdinReader: strings.NewReader(installPkgYAML),
+				AllowError:  true})
+		assert.Contains(t, out, "after-kubernetes-version-check=0")
+		require.Error(t, err)
+		// Without calling cleanup after each stage, somehow it seems like the controller doesn't
+		// get the updated annotation.
+		cleanUp()
+	})
+
+	logger.Section("PackageInstall succeeds with a kubernetes version override annotation", func() {
+		installPkgYAML := generatePkgiYAML(name, "", "<1.0.0",
+			[]string{kubernetesVersionOverrideAnnotation}) + sas.ForNamespaceYAML()
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
+			e2e.RunOpts{StdinReader: strings.NewReader(installPkgYAML)})
+		cleanUp()
+	})
+
+	logger.Section("PackageInstall succeeds with a kubernetes version within a range", func() {
+		installPkgYAML := generatePkgiYAML(name, "", ">0.0.0 <10.0.0", []string{}) + sas.ForNamespaceYAML()
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
+			e2e.RunOpts{StdinReader: strings.NewReader(installPkgYAML)})
+		cleanUp()
+	})
+
+	logger.Section("PackageInstall fails due to kapp-controller version constraint", func() {
+		installPkgYAML := generatePkgiYAML(name, ">=3.0.0", "", []string{}) + sas.ForNamespaceYAML()
+		out, err := kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
+			e2e.RunOpts{
+				StdinReader: strings.NewReader(installPkgYAML),
+				AllowError:  true})
+		assert.Contains(t, out, "after-kapp-controller-version-check=0")
+		require.Error(t, err)
+		cleanUp()
+	})
+
+	logger.Section("PackageInstall succeeds with a kapp-controller version override annotation", func() {
+		installPkgYAML := generatePkgiYAML(name, ">=3.0.0", "",
+			[]string{kappControllerVersionOverrideAnnotation}) + sas.ForNamespaceYAML()
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
+			e2e.RunOpts{StdinReader: strings.NewReader(installPkgYAML)})
+		cleanUp()
+	})
+
+	logger.Section("PackageInstall succeeds with a kapp-controller version within a range", func() {
+		installPkgYAML := generatePkgiYAML(name, ">0.0.0 <10.0.0", "", []string{}) + sas.ForNamespaceYAML()
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
+			e2e.RunOpts{StdinReader: strings.NewReader(installPkgYAML)})
+	})
+}
+
 func Test_PackageInstallStatus_DisplaysUsefulErrorMessage_ForDeploymentFailure(t *testing.T) {
 	env := e2e.BuildEnv(t)
 	logger := e2e.Logger{}
@@ -180,7 +339,7 @@ func Test_PackageInstallStatus_DisplaysUsefulErrorMessage_ForDeploymentFailure(t
 	sas := e2e.ServiceAccounts{env.Namespace}
 	name := "instl-pkg-test-fail"
 
-	installPkgYaml := fmt.Sprintf(`---
+	installPkgYAML := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
 metadata:
@@ -256,7 +415,7 @@ stringData:
 
 	// Create Repo, PackageInstall, and App from YAML
 	kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
-		e2e.RunOpts{StdinReader: strings.NewReader(installPkgYaml), AllowError: true})
+		e2e.RunOpts{StdinReader: strings.NewReader(installPkgYAML), AllowError: true})
 
 	var cr pkgingv1alpha1.PackageInstall
 	out := kubectl.Run([]string{"get", fmt.Sprintf("pkgi/%s", name), "-o", "yaml"})
@@ -284,7 +443,7 @@ func Test_PackageInstalled_FromPackageInstall_DeletionFailureBlocks(t *testing.T
 
 	// contents of this bundle (k8slt/kappctrl-e2e-repo)
 	// under examples/packaging-demo
-	installPkgYaml := fmt.Sprintf(`---
+	installPkgYAML := fmt.Sprintf(`---
 apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
@@ -315,7 +474,7 @@ spec:
 	cleanUp := func() {
 		// Need to recreate ServiceAccount in event test fails
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-", "--filter-kind", "ServiceAccount"},
-			e2e.RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+			e2e.RunOpts{StdinReader: strings.NewReader(installPkgYAML)})
 		kapp.Run([]string{"delete", "-a", name})
 	}
 	cleanUp()
@@ -323,7 +482,7 @@ spec:
 
 	logger.Section("Create PackageRepository and PackageInstall", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"},
-			e2e.RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+			e2e.RunOpts{StdinReader: strings.NewReader(installPkgYAML)})
 	})
 
 	logger.Section("Delete service account so that PackageInstall deletion would fail", func() {
@@ -353,7 +512,7 @@ spec:
 
 	logger.Section("Bring back service account and see that kubectl delete succeeds", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-", "--filter-kind", "ServiceAccount"},
-			e2e.RunOpts{StdinReader: strings.NewReader(installPkgYaml)})
+			e2e.RunOpts{StdinReader: strings.NewReader(installPkgYAML)})
 		kubectl.Run([]string{"delete", "pkgi", name})
 	})
 }
@@ -366,7 +525,7 @@ func Test_PackageInstall_UsesExistingAppWithSameName(t *testing.T) {
 	sas := e2e.ServiceAccounts{env.Namespace}
 	name := "pkg-instl-uses-app"
 
-	appYaml := fmt.Sprintf(`
+	appYAML := fmt.Sprintf(`
 ---
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
@@ -390,7 +549,7 @@ spec:
     - kapp: {}
 `, name) + sas.ForNamespaceYAML()
 
-	pkginstallYaml := fmt.Sprintf(`---
+	pkginstallYAML := fmt.Sprintf(`---
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
 metadata:
@@ -447,12 +606,12 @@ spec:
 	defer cleanUp()
 
 	logger.Section("Create App CR", func() {
-		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
+		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(appYAML)})
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "app/" + name, "--timeout", "1m"})
 	})
 
 	logger.Section("Create PackageInstall with same name as App CR", func() {
-		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(pkginstallYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(pkginstallYAML)})
 	})
 
 	logger.Section("Assert that App spec is different from PackageInstall take over", func() {
@@ -506,8 +665,8 @@ func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
 	defer cleanUp()
 
 	logger.Section("Create PackageInstall using version Package version 1.0.0", func() {
-		pkgInstallYaml := packageInstallVersionInYAML(name, env.Namespace, "1.0.0")
-		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(pkgInstallYaml)})
+		pkgInstallYAML := packageInstallVersionInYAML(name, env.Namespace, "1.0.0")
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(pkgInstallYAML)})
 	})
 
 	logger.Section("Check PackageInstall with version 1.0.0 success", func() {
@@ -538,8 +697,8 @@ func Test_PackageInstall_UpgradesToNewVersion_Successfully(t *testing.T) {
 	})
 
 	logger.Section("Create PackageInstall using version Package version 2.0.0", func() {
-		pkgInstallYaml := packageInstallVersionInYAML(name, env.Namespace, "2.0.0")
-		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(pkgInstallYaml)})
+		pkgInstallYAML := packageInstallVersionInYAML(name, env.Namespace, "2.0.0")
+		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(pkgInstallYAML)})
 	})
 
 	logger.Section("Check PackageInstall with version 2.0.0 success", func() {

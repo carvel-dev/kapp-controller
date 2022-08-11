@@ -60,6 +60,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataSpec":  schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataSpec(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageSpec":          schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema":         schema_apiserver_apis_datapackaging_v1alpha1_ValuesSchema(ref),
+		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection":     schema_apiserver_apis_datapackaging_v1alpha1_VersionSelection(ref),
 		"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection":                           schema_pkg_vendir_versions_v1alpha1_VersionSelection(ref),
 		"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver":                     schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemver(ref),
 		"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases":          schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemverPrereleases(ref),
@@ -1934,11 +1935,23 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref common.Referen
 							},
 						},
 					},
+					"kappControllerVersionSelection": {
+						SchemaProps: spec.SchemaProps{
+							Description: "KappControllerVersionSelection specifies the versions of kapp-controller which can install this package",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection"),
+						},
+					},
+					"kubernetesVersionSelection": {
+						SchemaProps: spec.SchemaProps{
+							Description: "KubernetesVersionSelection specifies the versions of k8s which this package can be installed on",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
 	}
 }
 
@@ -1959,6 +1972,25 @@ func schema_apiserver_apis_datapackaging_v1alpha1_ValuesSchema(ref common.Refere
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/runtime.RawExtension"},
+	}
+}
+
+func schema_apiserver_apis_datapackaging_v1alpha1_VersionSelection(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "VersionSelection provides version range constraints but will always accept prereleases",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"constraints": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

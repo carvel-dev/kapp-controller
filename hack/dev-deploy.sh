@@ -2,9 +2,11 @@
 
 set -ex
 
+source $(dirname "$0")/version-util.sh
+
 rm -rf tmp/build
 mkdir -p tmp/build
-CGO_ENABLED=0 GOOS=linux go build -mod=vendor -ldflags="-X 'main.Version=develop'" -trimpath -o tmp/build ./cmd/...
+CGO_ENABLED=0 GOOS=linux go build -mod=vendor -ldflags="-X 'main.Version=$(get_kappctrl_ver)+develop'" -trimpath -o tmp/build ./cmd/...
 
 kc_latest_image=`docker image ls --filter=reference="*:kapp-controller-*" --format "{{.Repository}}:{{.Tag}}" | head -n 1`
 if [ -z "$kc_latest_image" ] ;
@@ -39,5 +41,5 @@ sources:
       pull: false
 EOF
 
-ytt -f config/ -f tmp/build/overlay.yml | kbld -f- | kapp deploy -a kc -f- -c -y
+ytt -f config/ -f tmp/build/overlay.yml -v kapp_controller_version="$(get_kappctrl_ver)+develop" | kbld -f- | kapp deploy -a kc -f- -c -y
 

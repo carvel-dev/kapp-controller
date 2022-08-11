@@ -4,6 +4,7 @@
 package packageinstall
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -12,12 +13,17 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+
 	fakeapiserver "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
 	fakekappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/version"
+	fakediscovery "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/kubernetes/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -25,6 +31,9 @@ import (
 // This test was developed for issue:
 // https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
 func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
+	log := logf.Log.WithName("kc")
+	fakek8s := fake.NewSimpleClientset()
+
 	// PackageMetadata with prerelease version
 	expectedPackageVersion := datapkgingv1alpha1.Package{
 		ObjectMeta: metav1.ObjectMeta{
@@ -38,6 +47,14 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 
 	// Load package into fake client
 	fakePkgClient := fakeapiserver.NewSimpleClientset(&expectedPackageVersion)
+
+	// mock the kubernetes server version
+	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.20.0",
+	}
+
+	deployFactory := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
 
 	// PackageInstall that has PackageRef with prerelease
 	ip := PackageInstallCR{
@@ -55,9 +72,12 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 						},
 					},
 				},
+				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 			},
 		},
-		pkgclient: fakePkgClient,
+		pkgclient:     fakePkgClient,
+		deployFactory: deployFactory,
+		log:           log,
 	}
 
 	out, err := ip.referencedPkgVersion()
@@ -68,6 +88,231 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 	if !reflect.DeepEqual(out, expectedPackageVersion) {
 		t.Fatalf("\nPackageVersion is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedPackageVersion, out)
 	}
+}
+
+func Test_PackageWithConstraints(t *testing.T) {
+	const (
+		kubernetesVersionOverrideAnnotation     = "packaging.carvel.dev/ignore-kubernetes-version-selection"
+		kappControllerVersionOverrideAnnotation = "packaging.carvel.dev/ignore-kapp-controller-version-selection"
+	)
+
+	log := logf.Log.WithName("kc")
+	fakek8s := fake.NewSimpleClientset()
+	pkg := generatePackageWithConstraints("pkg.test.carvel.dev", "0.0.0", ">1.0.0 <2.0.0", ">0.15.0")
+	fakePkgClient := fakeapiserver.NewSimpleClientset(&pkg)
+	deployFactory := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+
+	// mock the kubernetes server version
+	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.20.0",
+	}
+
+	ip := PackageInstallCR{
+		model: &pkgingv1alpha1.PackageInstall{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "instl-pkg-ignore-kc-constraint",
+			},
+			Spec: pkgingv1alpha1.PackageInstallSpec{
+				PackageRef: &pkgingv1alpha1.PackageRef{
+					RefName: "pkg.test.carvel.dev",
+					VersionSelection: &versions.VersionSelectionSemver{
+						Constraints: "0.0.0",
+					},
+				},
+				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
+			},
+		},
+		pkgclient:         fakePkgClient,
+		controllerVersion: "1.5.0",
+		log:               log,
+		coreClient:        fakek8s,
+		deployFactory:     deployFactory,
+	}
+
+	// all constraints met
+	_, err := ip.referencedPkgVersion()
+	require.NoError(t, err)
+
+	// kapp-controller version constraint fail
+	ip.controllerVersion = "3.0.0"
+	_, err = ip.referencedPkgVersion()
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "after-kubernetes-version-check=1")
+	assert.ErrorContains(t, err, "after-kapp-controller-version-check=0")
+
+	// kapp-controller version override annotation
+	ip.model.ObjectMeta.Annotations = map[string]string{
+		kappControllerVersionOverrideAnnotation: "",
+	}
+	_, err = ip.referencedPkgVersion()
+	require.NoError(t, err)
+
+	// kubernetes version constraint fail
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.0.0",
+	}
+	_, err = ip.referencedPkgVersion()
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "after-kubernetes-version-check=0")
+
+	// kubernetes version override annotation
+	ip.model.ObjectMeta.Annotations = map[string]string{
+		kappControllerVersionOverrideAnnotation: "",
+		kubernetesVersionOverrideAnnotation:     "",
+	}
+	_, err = ip.referencedPkgVersion()
+	require.NoError(t, err)
+}
+
+func Test_Package_NotFound(t *testing.T) {
+	log := logf.Log.WithName("kc")
+	fakek8s := fake.NewSimpleClientset()
+	fakePkgClient := fakeapiserver.NewSimpleClientset()
+	pkgName := "pkg.test.carvel.dev"
+
+	ip := PackageInstallCR{
+		model: &pkgingv1alpha1.PackageInstall{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "instl-pkg-no-pkg-found",
+			},
+			Spec: pkgingv1alpha1.PackageInstallSpec{
+				PackageRef: &pkgingv1alpha1.PackageRef{
+					RefName: pkgName,
+					VersionSelection: &versions.VersionSelectionSemver{
+						Constraints: "0.0.0",
+					},
+				},
+			},
+		},
+		pkgclient:         fakePkgClient,
+		controllerVersion: "0.42.0",
+		log:               log,
+		coreClient:        fakek8s,
+	}
+
+	_, err := ip.referencedPkgVersion()
+	require.Error(t, err)
+	assert.ErrorContains(t, err, fmt.Sprintf("Package %s not found", pkgName))
+}
+
+func Test_Package_ConstraintNotGiven_ErrorDoesNotContainMessage(t *testing.T) {
+	log := logf.Log.WithName("kc")
+	fakek8s := fake.NewSimpleClientset()
+	pkg := generatePackageWithConstraints("pkg.test.carvel.dev", "0.0.0", "1.0.0", "")
+	fakePkgClient := fakeapiserver.NewSimpleClientset(&pkg)
+	deployFactory := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+
+	ip := PackageInstallCR{
+		model: &pkgingv1alpha1.PackageInstall{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "instl-pkg-ignore-kc-constraint",
+			},
+			Spec: pkgingv1alpha1.PackageInstallSpec{
+				PackageRef: &pkgingv1alpha1.PackageRef{
+					RefName: "pkg.test.carvel.dev",
+					VersionSelection: &versions.VersionSelectionSemver{
+						Constraints: "0.0.0",
+					},
+				},
+				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
+			},
+		},
+		pkgclient:         fakePkgClient,
+		controllerVersion: "1.5.0",
+		log:               log,
+		coreClient:        fakek8s,
+		deployFactory:     deployFactory,
+	}
+
+	_, err := ip.referencedPkgVersion()
+	require.Error(t, err)
+	assert.NotContains(t, err.Error(), "after-kubernetes-version-check=1")
+	assert.ErrorContains(t, err, "after-kapp-controller-version-check=0")
+}
+
+func Test_PackageWithConstraintsWithPrerelease(t *testing.T) {
+	log := logf.Log.WithName("kc")
+	fakek8s := fake.NewSimpleClientset()
+	pkg := generatePackageWithConstraints("pkg.test.carvel.dev", "0.0.0", ">1.0.0 <2.0.0", "0.10.0")
+	pkg2 := generatePackageWithConstraints("pkg.test.carvel.dev", "2.0.0", ">1.0.0 <2.0.0", "0.20.0")
+	fakePkgClient := fakeapiserver.NewSimpleClientset(&pkg, &pkg2)
+	deployFactory := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+
+	// mock the kubernetes server version
+	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.20.0-gke.100",
+	}
+
+	ip := PackageInstallCR{
+		model: &pkgingv1alpha1.PackageInstall{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "instl-pkg-ignore-kc-constraint",
+			},
+			Spec: pkgingv1alpha1.PackageInstallSpec{
+				PackageRef: &pkgingv1alpha1.PackageRef{
+					RefName: "pkg.test.carvel.dev",
+					VersionSelection: &versions.VersionSelectionSemver{
+						Constraints: ">0.0.0",
+					},
+				},
+				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
+			},
+		},
+		pkgclient:         fakePkgClient,
+		controllerVersion: "1.5.0",
+		log:               log,
+		coreClient:        fakek8s,
+		deployFactory:     deployFactory,
+	}
+
+	out, err := ip.referencedPkgVersion()
+	assert.Equal(t, out, pkg2, "Pre-Release version of Package meeting constraints not chosen: \nExpected:\n%#v\nGot:\n%#v\n", pkg2, out)
+	require.NoError(t, err)
+}
+
+func Test_PackageWithConstraints_HighestMatch(t *testing.T) {
+	log := logf.Log.WithName("kc")
+	fakek8s := fake.NewSimpleClientset()
+	pkgName := "pkg.test.carvel.dev"
+	pkg1 := generatePackageWithConstraints(pkgName, "0.4.0", ">0.1.0", ">0.1.0") // this one is the lowest version but installable
+	pkg2 := generatePackageWithConstraints(pkgName, "0.5.0", ">0.1.0", ">0.1.0") // this one is the highest installable version
+	pkg3 := generatePackageWithConstraints(pkgName, "1.4.1", ">2.0.0", "")       // higher version uninstallable
+	fakePkgClient := fakeapiserver.NewSimpleClientset(&pkg1, &pkg2, &pkg3)
+	deployFactory := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+
+	// mock the kubernetes server version
+	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.20.0",
+	}
+
+	ip := PackageInstallCR{
+		model: &pkgingv1alpha1.PackageInstall{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "instl-pkg-multi-version-constraints",
+			},
+			Spec: pkgingv1alpha1.PackageInstallSpec{
+				PackageRef: &pkgingv1alpha1.PackageRef{
+					RefName: pkgName,
+					VersionSelection: &versions.VersionSelectionSemver{
+						Constraints: ">0.0.0",
+					},
+				},
+				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
+			},
+		},
+		pkgclient:         fakePkgClient,
+		controllerVersion: "1.5.0",
+		log:               log,
+		coreClient:        fakek8s,
+		deployFactory:     deployFactory,
+	}
+
+	out, err := ip.referencedPkgVersion()
+	assert.Equal(t, out, pkg2, "Highest version of Package meeting constraints not chosen: \nExpected:\n%#v\nGot:\n%#v\n", pkg2, out)
+	require.NoError(t, err)
 }
 
 func Test_PackageRefWithPrerelease_DoesNotRequirePrereleaseMarker(t *testing.T) {
@@ -81,7 +326,16 @@ func Test_PackageRefWithPrerelease_DoesNotRequirePrereleaseMarker(t *testing.T) 
 		},
 	}
 
+	log := logf.Log.WithName("kc")
+	fakek8s := fake.NewSimpleClientset()
 	fakePkgClient := fakeapiserver.NewSimpleClientset(&expectedPackageVersion)
+	deployFactory := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+
+	// mock the kubernetes server version
+	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.20.0",
+	}
 
 	ip := PackageInstallCR{
 		model: &pkgingv1alpha1.PackageInstall{
@@ -95,9 +349,12 @@ func Test_PackageRefWithPrerelease_DoesNotRequirePrereleaseMarker(t *testing.T) 
 						Constraints: "3.0.0-rc.1",
 					},
 				},
+				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 			},
 		},
-		pkgclient: fakePkgClient,
+		pkgclient:     fakePkgClient,
+		deployFactory: deployFactory,
+		log:           log,
 	}
 
 	out, err := ip.referencedPkgVersion()
@@ -129,6 +386,15 @@ func Test_PackageRefUsesName(t *testing.T) {
 
 	// Load package into fake client
 	fakePkgClient := fakeapiserver.NewSimpleClientset(&expectedPackageVersion, &alternatePackageVersion)
+	log := logf.Log.WithName("kc")
+	fakek8s := fake.NewSimpleClientset()
+	deployFactory := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+
+	// mock the kubernetes server version
+	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.20.0",
+	}
 
 	// PackageInstall that has PackageRef with prerelease
 	ip := PackageInstallCR{
@@ -143,9 +409,12 @@ func Test_PackageRefUsesName(t *testing.T) {
 						Constraints: "1.0.0",
 					},
 				},
+				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 			},
 		},
-		pkgclient: fakePkgClient,
+		pkgclient:     fakePkgClient,
+		log:           log,
+		deployFactory: deployFactory,
 	}
 
 	out, err := ip.referencedPkgVersion()
@@ -195,12 +464,21 @@ func Test_PlaceHolderSecretCreated_WhenPackageHasNoSecretRef(t *testing.T) {
 					Constraints: "1.0.0",
 				},
 			},
+			ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 		},
 	}
 	log := logf.Log.WithName("kc")
 	fakekctrl := fakekappctrl.NewSimpleClientset(model)
 	fakek8s := fake.NewSimpleClientset()
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s)
+	deployFac := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+
+	// mock the kubernetes server version
+	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.20.0",
+	}
+
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, "0.42.31337", deployFac)
 
 	_, err := ip.Reconcile()
 	assert.Nil(t, err)
@@ -267,12 +545,20 @@ func Test_PlaceHolderSecretsCreated_WhenPackageHasMultipleFetchStages(t *testing
 					Constraints: "1.0.0",
 				},
 			},
+			ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 		},
 	}
 	log := logf.Log.WithName("kc")
 	fakekctrl := fakekappctrl.NewSimpleClientset(model)
 	fakek8s := fake.NewSimpleClientset()
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s)
+	deployFac := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+	// mock the kubernetes server version
+	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.20.0",
+	}
+
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, "0.42.31337", deployFac)
 
 	_, err := ip.Reconcile()
 	assert.Nil(t, err)
@@ -349,12 +635,21 @@ func Test_PlaceHolderSecretsNotCreated_WhenFetchStagesHaveSecrets(t *testing.T) 
 					Constraints: "1.0.0",
 				},
 			},
+			ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 		},
 	}
 	log := logf.Log.WithName("kc")
 	fakekctrl := fakekappctrl.NewSimpleClientset(model)
 	fakek8s := fake.NewSimpleClientset()
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s)
+	deployFac := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+
+	// mock the kubernetes server version
+	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.20.0",
+	}
+
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, "0.42.31337", deployFac)
 
 	_, err := ip.Reconcile()
 	assert.Nil(t, err)
@@ -412,6 +707,7 @@ func Test_PlaceHolderSecretCreated_WhenPackageInstallUpdated(t *testing.T) {
 					Constraints: "1.0.0",
 				},
 			},
+			ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 		},
 	}
 	log := logf.Log.WithName("kc")
@@ -430,7 +726,14 @@ func Test_PlaceHolderSecretCreated_WhenPackageInstallUpdated(t *testing.T) {
 
 	fakekctrl := fakekappctrl.NewSimpleClientset(model, existingApp)
 	fakek8s := fake.NewSimpleClientset()
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s)
+	deployFac := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, "0.42.31337", deployFac)
+
+	// mock the kubernetes server version
+	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.20.0",
+	}
 
 	_, err := ip.Reconcile()
 	assert.Nil(t, err)
@@ -453,4 +756,22 @@ func Test_PlaceHolderSecretCreated_WhenPackageInstallUpdated(t *testing.T) {
 	assert.NotNil(t, app.Spec.Fetch[0].ImgpkgBundle.SecretRef, "expected ImgpkgBundle secretRef to be non nil but was nil")
 
 	assert.Equal(t, "instl-pkg-fetch-0", app.Spec.Fetch[0].ImgpkgBundle.SecretRef.Name)
+}
+
+func generatePackageWithConstraints(name, version, kcConstraint string, k8sConstraint string) datapkgingv1alpha1.Package {
+	return datapkgingv1alpha1.Package{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name + "." + version,
+		},
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: name,
+			Version: version,
+			KappControllerVersionSelection: &datapkgingv1alpha1.VersionSelection{
+				Constraints: kcConstraint,
+			},
+			KubernetesVersionSelection: &datapkgingv1alpha1.VersionSelection{
+				Constraints: k8sConstraint,
+			},
+		},
+	}
 }
