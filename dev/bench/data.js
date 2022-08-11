@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660221372230,
+  "lastUpdate": 1660236571369,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -4401,6 +4401,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6448394808,
             "unit": "ns/op\t         4.266 DeleteSeconds\t         2.139 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7f275ed6b635be93a6d2c22f022cea8c3d291bce",
+          "message": "Merge pull request #824 from vmware-tanzu/bump-dependencies\n\nBump dependencies",
+          "timestamp": "2022-08-11T10:37:47-06:00",
+          "tree_id": "0d0d24127f6628c287862e25fe2e16b52b8594c8",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/7f275ed6b635be93a6d2c22f022cea8c3d291bce"
+        },
+        "date": 1660236569611,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36946418082,
+            "unit": "ns/op\t        19.25 DeleteSeconds\t        17.64 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9587065694,
+            "unit": "ns/op\t         5.340 DeleteSeconds\t         4.200 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6665276229,
+            "unit": "ns/op\t         4.423 DeleteSeconds\t         2.191 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
