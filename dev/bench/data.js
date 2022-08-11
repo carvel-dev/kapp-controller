@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660072375055,
+  "lastUpdate": 1660221372230,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -4359,6 +4359,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6408984984,
             "unit": "ns/op\t         4.251 DeleteSeconds\t         2.120 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cppforlife@gmail.com",
+            "name": "Dmitriy Kalinin",
+            "username": "cppforlife"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "61ce44784f54b3b401416889284f28f5ce530678",
+          "message": "add kctrl dev command (#638)\n\n* prep cli/vendor for dev deploy\r\n\r\n* introduce app dev deploy\r\n\r\n* add packageinstall support for dev\r\n\r\n* support in mem secret creation\r\n\r\n* move app dev deploy to dev deploy\r\n\r\n* support local fetch and kbld build\r\n\r\n* configure kubernetes dst\r\n\r\n* add debug logs to show what commands are running\r\n\r\n* add examples/cert-manager-tce-pkg\r\n\r\n* expose CreateToken in minimal dev deploy core client\r\n\r\n* WIP print errors in AppTailer\r\n\r\n* WIP provide k8s ca cert over env var\r\n\r\n* extract local deploy operations into a package\r\n\r\n* inject cmd runner\r\n\r\n* dev deploy => dev. Added a test for dev command.\r\n\r\nCo-authored-by: Dmitriy Kalinin <dkalinin@vmware.com>\r\nCo-authored-by: Praveen Rewar <8457124+praveenrewar@users.noreply.github.com>\r\nCo-authored-by: Soumik Majumder <soumikm@vmware.com>",
+          "timestamp": "2022-08-11T17:56:15+05:30",
+          "tree_id": "370180ebdcd0abc6ca498ae59eabc05e36b93f91",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/61ce44784f54b3b401416889284f28f5ce530678"
+        },
+        "date": 1660221371112,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36770698757,
+            "unit": "ns/op\t        19.07 DeleteSeconds\t        17.66 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9500636254,
+            "unit": "ns/op\t         5.291 DeleteSeconds\t         4.171 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6448394808,
+            "unit": "ns/op\t         4.266 DeleteSeconds\t         2.139 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
