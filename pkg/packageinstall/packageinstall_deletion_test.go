@@ -11,6 +11,8 @@ import (
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	fakeapiserver "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
 	fakekappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
@@ -63,8 +65,9 @@ func Test_PackageInstallDeletion(t *testing.T) {
 		pkgClient := fakeapiserver.NewSimpleClientset()
 		appClient := fakekappctrl.NewSimpleClientset(pkgInstall, existingApp)
 		coreClient := fake.NewSimpleClientset()
+		deployFac := deploy.NewFactory(coreClient, nil, exec.NewPlainCmdRunner(), log)
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, coreClient)
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, coreClient, "0.42.31337", deployFac)
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 

@@ -23,6 +23,8 @@ jobs:
         go-version: "1.18"
     - name: Check out code
       uses: actions/checkout@v3.0.1
+      with:
+          fetch-depth: 0
     - name: Install Carvel Tools
       run: ./hack/install-deps.sh
     - name: Run Tests

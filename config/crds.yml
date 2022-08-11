@@ -108,6 +108,18 @@ spec:
                       type: string
                   type: object
                 type: array
+              kappControllerVersionSelection:
+                description: KappControllerVersionSelection specifies the versions of kapp-controller which can install this package
+                properties:
+                  constraints:
+                    type: string
+                type: object
+              kubernetesVersionSelection:
+                description: KubernetesVersionSelection specifies the versions of k8s which this package can be installed on
+                properties:
+                  constraints:
+                    type: string
+                type: object
               licenses:
                 description: Description of the licenses that apply to the package software (optional; Array of strings)
                 items:

@@ -26,6 +26,7 @@ type CRDAppFactory struct {
 	VendirConfigHook func(vendirconf.Config) vendirconf.Config
 	KbldAllowBuild   bool
 	CmdRunner        exec.CmdRunner
+	DeployFactory    deploy.Factory
 }
 
 // NewCRDApp creates a CRDApp injecting necessary dependencies.
@@ -36,6 +37,5 @@ func (f *CRDAppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *CRDApp 
 	}
 	fetchFactory := fetch.NewFactory(f.CoreClient, vendirOpts, f.CmdRunner)
 	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, f.KbldAllowBuild, f.CmdRunner)
-	deployFactory := deploy.NewFactory(f.CoreClient, f.KcConfig, f.CmdRunner, log)
-	return NewCRDApp(app, log, f.AppMetrics, f.AppClient, fetchFactory, templateFactory, deployFactory)
+	return NewCRDApp(app, log, f.AppMetrics, f.AppClient, fetchFactory, templateFactory, f.DeployFactory)
 }

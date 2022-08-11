@@ -6,6 +6,7 @@ package validation_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -144,6 +145,14 @@ func TestValidatePackageSpecPackageNameValid(t *testing.T) {
 	if len(errList) != 0 {
 		t.Fatalf("Expected no error when spec.packageName is valid")
 	}
+}
+
+func TestValidatePackageVersionConstraints(t *testing.T) {
+	errList := validation.ValidatePackageVersionConstraints(">=1.21.0", field.NewPath("spec", "kubernetesVersionSelection", "constraints"))
+	assert.Empty(t, errList)
+
+	errList = validation.ValidatePackageVersionConstraints("my cat's breath smells like cat food", field.NewPath("spec", "kubernetesVersionSelection", "constraints"))
+	assert.Equal(t, 1, len(errList))
 }
 
 // Searches for Error in ErrorList by Type + Field, but not details

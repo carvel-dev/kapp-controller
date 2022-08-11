@@ -18,6 +18,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
@@ -165,13 +166,17 @@ func Run(opts Options, runLog logr.Logger) error {
 	refTracker := reftracker.NewAppRefTracker()
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
 
+	// initialize deploy factory once - the deploy factory contains a service account token cache which should be only setup once.
+	deployFactory := deploy.NewFactory(coreClient, kcConfig, sidecarCmdExec, runLog)
+
 	{ // add controller for apps
 		appFactory := app.CRDAppFactory{
-			CoreClient: coreClient,
-			AppClient:  kcClient,
-			KcConfig:   kcConfig,
-			AppMetrics: appMetrics,
-			CmdRunner:  sidecarCmdExec,
+			CoreClient:    coreClient,
+			AppClient:     kcClient,
+			KcConfig:      kcConfig,
+			AppMetrics:    appMetrics,
+			CmdRunner:     sidecarCmdExec,
+			DeployFactory: deployFactory,
 		}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 			appFactory, refTracker, updateStatusTracker)
@@ -197,8 +202,7 @@ func Run(opts Options, runLog logr.Logger) error {
 		pkgToPkgInstallHandler := pkginstall.NewPackageInstallVersionHandler(
 			kcClient, opts.PackagingGloablNS, runLog.WithName("handler"))
 
-		reconciler := pkginstall.NewReconciler(
-			kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, runLog.WithName("pkgi"))
+		reconciler := pkginstall.NewReconciler(deployFactory, kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, runLog.WithName("pkgi"), Version)
 
 		ctrl, err := controller.New("pkgi", mgr, controller.Options{
 			Reconciler:              reconciler,

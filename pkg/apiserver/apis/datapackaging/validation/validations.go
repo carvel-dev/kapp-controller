@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	semver "github.com/k14s/semver/v4"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -44,6 +45,28 @@ func ValidatePackage(pkg datapackaging.Package) field.ErrorList {
 
 	allErrs = append(allErrs,
 		ValidatePackageName(pkg.ObjectMeta.Name, pkg.Spec.RefName, pkg.Spec.Version, field.NewPath("metadata").Child("name"))...)
+
+	if pkg.Spec.KubernetesVersionSelection != nil {
+		allErrs = append(allErrs,
+			ValidatePackageVersionConstraints(pkg.Spec.KubernetesVersionSelection.Constraints, field.NewPath("spec", "kubernetesVersionSelection", "constraints"))...)
+	}
+
+	if pkg.Spec.KappControllerVersionSelection != nil {
+		allErrs = append(allErrs,
+			ValidatePackageVersionConstraints(pkg.Spec.KappControllerVersionSelection.Constraints, field.NewPath("spec", "kappControllerVersionSelection", "constraints"))...)
+	}
+
+	return allErrs
+}
+
+// ValidatePackageVersionConstraints checks that the user given constrain range is valid
+func ValidatePackageVersionConstraints(constraints string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	_, err := semver.ParseRange(constraints)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, constraints, err.Error()))
+	}
 
 	return allErrs
 }

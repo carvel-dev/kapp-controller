@@ -103,21 +103,20 @@ kind: Config
 clusters:
 - name: dst-cluster
   cluster:
-    certificate-authority-data: "%s"
+    certificate-authority-data: "%[1]s"
     server: https://${KAPP_KUBERNETES_SERVICE_HOST_PORT}
 users:
 - name: dst-user
   user:
-    token: "%s"
+    token: "%[2]s"
 contexts:
 - name: dst-ctx
   context:
     cluster: dst-cluster
-    namespace: "%s"
+    namespace: "%[3]s"
     user: dst-user
 current-context: dst-ctx
 `
-
 	caB64Encoded := base64.StdEncoding.EncodeToString(caCert)
 
 	return fmt.Sprintf(kubeconfigYAMLTpl, caB64Encoded, []byte(token), []byte(nsBytes)), nil

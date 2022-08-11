@@ -13,9 +13,13 @@ import (
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	fakeapiserver "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
 	fakekappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/version"
+	fakediscovery "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/kubernetes/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -78,6 +82,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 						Constraints: "1.0.0",
 					},
 				},
+				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 			},
 			Status: pkgingv1alpha1.PackageInstallStatus{
 				LastAttemptedVersion: "1.0.0",
@@ -86,9 +91,16 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 
 		pkgClient := fakeapiserver.NewSimpleClientset(&pkg1, &pkg2)
 		appClient := fakekappctrl.NewSimpleClientset(pkgInstall, existingApp)
-		coreClient := fake.NewSimpleClientset()
+		fakek8s := fake.NewSimpleClientset()
+		deployFac := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, coreClient)
+		// mock the kubernetes server version
+		fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+		fakeDiscovery.FakedServerVersion = &version.Info{
+			GitVersion: "v0.20.0",
+		}
+
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, "0.42.31337", deployFac)
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
@@ -120,6 +132,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 						Constraints: "2.0.0",
 					},
 				},
+				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 			},
 			Status: pkgingv1alpha1.PackageInstallStatus{
 				LastAttemptedVersion: "1.0.0",
@@ -128,9 +141,16 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 
 		pkgClient := fakeapiserver.NewSimpleClientset(&pkg1, &pkg2)
 		appClient := fakekappctrl.NewSimpleClientset(pkgInstall, existingApp)
-		coreClient := fake.NewSimpleClientset()
+		fakek8s := fake.NewSimpleClientset()
+		deployFac := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, coreClient)
+		// mock the kubernetes server version
+		fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+		fakeDiscovery.FakedServerVersion = &version.Info{
+			GitVersion: "v0.20.0",
+		}
+
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, "0.42.31337", deployFac)
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
@@ -162,6 +182,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 						Constraints: "1.0.0",
 					},
 				},
+				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 			},
 			Status: pkgingv1alpha1.PackageInstallStatus{
 				LastAttemptedVersion: "2.0.0", // higher than 1.0.0
@@ -170,9 +191,16 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 
 		pkgClient := fakeapiserver.NewSimpleClientset(&pkg1, &pkg2)
 		appClient := fakekappctrl.NewSimpleClientset(pkgInstall, existingApp)
-		coreClient := fake.NewSimpleClientset()
+		fakek8s := fake.NewSimpleClientset()
+		deployFac := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, coreClient)
+		// mock the kubernetes server version
+		fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+		fakeDiscovery.FakedServerVersion = &version.Info{
+			GitVersion: "v0.20.0",
+		}
+
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, "0.42.31337", deployFac)
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
@@ -210,6 +238,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 						Constraints: "1.0.0",
 					},
 				},
+				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 			},
 			Status: pkgingv1alpha1.PackageInstallStatus{
 				LastAttemptedVersion: "2.0.0", // higher than 1.0.0
@@ -218,9 +247,16 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 
 		pkgClient := fakeapiserver.NewSimpleClientset(&pkg1, &pkg2)
 		appClient := fakekappctrl.NewSimpleClientset(pkgInstall, existingApp)
-		coreClient := fake.NewSimpleClientset()
+		fakek8s := fake.NewSimpleClientset()
+		deployFac := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, coreClient)
+		// mock the kubernetes server version
+		fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+		fakeDiscovery.FakedServerVersion = &version.Info{
+			GitVersion: "v0.20.0",
+		}
+
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, "0.42.31337", deployFac)
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 

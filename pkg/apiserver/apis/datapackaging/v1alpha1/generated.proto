@@ -115,6 +115,14 @@ message PackageSpec {
   // This is especially useful if the underlying versions do not match the Package version
   // +optional
   repeated IncludedSoftware includedSoftware = 9;
+
+  // KappControllerVersionSelection specifies the versions of kapp-controller which can install this package
+  // +optional
+  optional VersionSelection kappControllerVersionSelection = 10;
+
+  // KubernetesVersionSelection specifies the versions of k8s which this package can be installed on
+  // +optional
+  optional VersionSelection kubernetesVersionSelection = 11;
 }
 
 message ValuesSchema {
@@ -122,5 +130,10 @@ message ValuesSchema {
   // +nullable
   // +kubebuilder:pruning:PreserveUnknownFields
   optional k8s.io.apimachinery.pkg.runtime.RawExtension openAPIv3 = 1;
+}
+
+// VersionSelection provides version range constraints but will always accept prereleases
+message VersionSelection {
+  optional string constraints = 1;
 }
 
