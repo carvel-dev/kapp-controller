@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660236571369,
+  "lastUpdate": 1660245116458,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -4443,6 +4443,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6665276229,
             "unit": "ns/op\t         4.423 DeleteSeconds\t         2.191 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86852107+joe-kimmel-vmw@users.noreply.github.com",
+            "name": "Joe Kimmel",
+            "username": "joe-kimmel-vmw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4d3e251b256db552c8457330de3e6e5ae4cbe882",
+          "message": "Packages can constrain k8s and kc versions (#798)\n\n- kubernetes and kapp-controller version constraints can be overridden by annotations\r\n- range version selection of a Package chooses the highest version of\r\n  that package which also satisfies kc and k8s version constraints\r\n- Error messages if no package satisfies constraints provides detail of\r\n  which constraints failed.\r\n- simplified error message for the case where you just have zero\r\n  packages.\r\n- kapp-controller version is threaded through into the PKGI reconciler\r\n- refactor factories out to main thread, pass them down via dep injection (fixes a bug in the app factory where service account\r\n  token cache was reinitialized each reconcile\r\n- if PKGI specifies a different cluster, that cluster's version of k8s\r\n  is checked for the constraints (manually verified - no automated test\r\n  of this)\r\n- Error on no packages found\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\r\nCo-authored-by: Neil Hickey <nhickey@vmware.com>",
+          "timestamp": "2022-08-11T15:02:17-04:00",
+          "tree_id": "b463600ab52fcb75e39b5319e914532b1c0c3786",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/4d3e251b256db552c8457330de3e6e5ae4cbe882"
+        },
+        "date": 1660245114592,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36404179668,
+            "unit": "ns/op\t        18.89 DeleteSeconds\t        17.48 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9490609527,
+            "unit": "ns/op\t         5.277 DeleteSeconds\t         4.163 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6424828917,
+            "unit": "ns/op\t         4.245 DeleteSeconds\t         2.141 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
