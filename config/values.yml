@@ -16,5 +16,3 @@ platform: ""
 
 api_port: 10350
 kapp_controller_version: "develop"
-reconcile_namespace: ""
-kappctrlStartApiServer: "true"
