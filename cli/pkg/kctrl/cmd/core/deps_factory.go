@@ -18,6 +18,7 @@ import (
 )
 
 type DepsFactory interface {
+	RESTHost() (string, error)
 	DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error)
 	CoreClient() (kubernetes.Interface, error)
 	KappCtrlClient() (kcclient.Interface, error)
@@ -40,6 +41,15 @@ func NewDepsFactoryImpl(configFactory ConfigFactory, ui ui.UI) *DepsFactoryImpl 
 }
 
 type DynamicClientOpts struct{}
+
+// RESTHost ideally should be on ConfigFactory (TODO remove)
+func (f *DepsFactoryImpl) RESTHost() (string, error) {
+	config, err := f.configFactory.RESTConfig()
+	if err != nil {
+		return "", err
+	}
+	return config.Host, nil
+}
 
 func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error) {
 	config, err := f.configFactory.RESTConfig()
