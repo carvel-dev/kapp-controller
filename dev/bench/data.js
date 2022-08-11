@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660245116458,
+  "lastUpdate": 1660245243794,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -4485,6 +4485,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6424828917,
             "unit": "ns/op\t         4.245 DeleteSeconds\t         2.141 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cd5e07973c67cd31b08dc73c12763eaeeef652cd",
+          "message": "Upgrade GoLang from 1.18 to 1.19 (#822)\n\n* Upgrade GoLang from 1.18 to 1.19\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\r\n\r\n* Re-run generators\r\n\r\n- Upgrade go-lint for go 1.19 support\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>",
+          "timestamp": "2022-08-11T15:03:01-04:00",
+          "tree_id": "e15e95a3ff9be3bf93892254d77809212664de41",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/cd5e07973c67cd31b08dc73c12763eaeeef652cd"
+        },
+        "date": 1660245242371,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37202962177,
+            "unit": "ns/op\t        19.35 DeleteSeconds\t        17.78 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9863945011,
+            "unit": "ns/op\t         5.506 DeleteSeconds\t         4.296 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 7592908348,
+            "unit": "ns/op\t         4.366 DeleteSeconds\t         3.180 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
