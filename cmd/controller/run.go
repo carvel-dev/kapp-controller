@@ -34,10 +34,8 @@ import (
 )
 
 const (
-	PprofListenAddr                  = "0.0.0.0:6060"
-	kappctrlAPIPORTEnvKey            = "KAPPCTRL_API_PORT"
-	kappctrlReconcileNamespaceEnvKey = "RECONCILE_NAMESPCE"
-	kappctrlStartApiServerEnvKey     = "KAPPCTRL_START_API_SERVER"
+	PprofListenAddr       = "0.0.0.0:6060"
+	kappctrlAPIPORTEnvKey = "KAPPCTRL_API_PORT"
 )
 
 type Options struct {
@@ -48,6 +46,7 @@ type Options struct {
 	PackagingGloablNS      string
 	MetricsBindAddress     string
 	APIPriorityAndFairness bool
+	StartAPIServer         bool
 }
 
 // Based on https://github.com/kubernetes-sigs/controller-runtime/blob/8f633b179e1c704a6e40440b528252f147a3362a/examples/builtins/main.go
@@ -59,23 +58,6 @@ func Run(opts Options, runLog logr.Logger) error {
 
 	if opts.APIRequestTimeout != 0 {
 		restConfig.Timeout = opts.APIRequestTimeout
-	}
-
-	kappctrlStartApiServer := true
-	if kappctrlStartApiServerString, ok := os.LookupEnv(kappctrlStartApiServerEnvKey); ok {
-		if kappctrlStartApiServerString == "false" {
-			kappctrlStartApiServer = false
-		}
-		runLog.Info("Start with api server", "kappctrlStartApiServer", kappctrlStartApiServer)
-	} else {
-		runLog.Info("Start with api server with default value", "kappctrlStartApiServer", kappctrlStartApiServer)
-	}
-
-	if namespaceWorkedFor, ok := os.LookupEnv(kappctrlReconcileNamespaceEnvKey); ok {
-		opts.Namespace = namespaceWorkedFor
-		runLog.Info("Reconcile for namespace", "namespace", opts.Namespace)
-	} else {
-		runLog.Info("Reconcile for all namespace", "namespace", namespaceWorkedFor)
 	}
 
 	mgr, err := manager.New(restConfig, manager.Options{Namespace: opts.Namespace,
@@ -111,7 +93,7 @@ func Run(opts Options, runLog logr.Logger) error {
 	appMetrics.RegisterAllMetrics()
 
 	var server *apiserver.APIServer
-	if kappctrlStartApiServer {
+	if opts.StartAPIServer {
 		// assign bindPort to env var KAPPCTRL_API_PORT if available
 		var bindPort int
 		if apiPort, ok := os.LookupEnv(kappctrlAPIPORTEnvKey); ok {
