@@ -5,14 +5,18 @@ package deploy
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"os"
 	goexec "os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 )
 
 const (
@@ -28,6 +32,7 @@ type Kapp struct {
 	globalDeployRawOpts []string
 	cancelCh            chan struct{}
 	cmdRunner           exec.CmdRunner
+	appMeta             *Meta
 }
 
 var _ Deploy = &Kapp{}
@@ -38,7 +43,7 @@ var _ Deploy = &Kapp{}
 func NewKapp(appSuffix string, opts v1alpha1.AppDeployKapp, genericOpts ProcessedGenericOpts,
 	globalDeployRawOpts []string, cancelCh chan struct{}, cmdRunner exec.CmdRunner) *Kapp {
 
-	return &Kapp{appSuffix, opts, genericOpts, globalDeployRawOpts, cancelCh, cmdRunner}
+	return &Kapp{appSuffix, opts, genericOpts, globalDeployRawOpts, cancelCh, cmdRunner, nil}
 }
 
 // Deploy takes the output from templating, and the app name,
@@ -46,7 +51,17 @@ func NewKapp(appSuffix string, opts v1alpha1.AppDeployKapp, genericOpts Processe
 func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 	changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 
-	args, err := a.addDeployArgs([]string{"deploy", "--prev-app", a.oldManagedName(), "-f", "-"})
+	tmpMetadataDir := memdir.NewTmpDir("app_metadata")
+	defer tmpMetadataDir.Remove()
+
+	err := tmpMetadataDir.Create()
+	if err != nil {
+		return exec.NewCmdRunResultWithErr(err)
+	}
+
+	metadataFile := filepath.Join(tmpMetadataDir.Path(), "app-metadata.yml")
+
+	args, err := a.addDeployArgs([]string{"deploy", "--app-metadata-file-output", metadataFile, "--prev-app", a.oldManagedName(), "-f", "-"})
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(err)
 	}
@@ -64,6 +79,9 @@ func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 
 	result := resultBuf.Copy()
 	result.AttachErrorf("Deploying: %s", err)
+
+	a.appMeta = nil
+	a.trySaveAppMeta(metadataFile)
 
 	return result
 }
@@ -123,6 +141,28 @@ func (a *Kapp) Inspect() exec.CmdRunResult {
 	result.AttachErrorf("Inspecting: %s", err)
 
 	return result
+}
+
+// Meta contains app meta allowing for an AppCR to surface the associated namespaces and GKs
+type Meta struct {
+	LabelKey   string `yaml:"labelKey"`
+	LabelValue string `yaml:"labelValue"`
+	LastChange struct {
+		Namespaces []string `yaml:"namespaces"`
+	} `yaml:"lastChange"`
+	UsedGKs []struct {
+		Group string `yaml:"Group"`
+		Kind  string `yaml:"Kind"`
+	} `yaml:"usedGKs"`
+}
+
+// InternalAppMeta exposes the internal configmap kapp maintains on every app deploy
+func (a *Kapp) InternalAppMeta() (*Meta, error) {
+	if a.appMeta == nil {
+		return nil, errors.New("Unable to retrieve kapp internal config map")
+	}
+
+	return a.appMeta, nil
 }
 
 func (a *Kapp) trackCmdOutput(cmd *goexec.Cmd, startedApplyingFunc func(),
@@ -230,4 +270,20 @@ func (a *Kapp) addGenericArgs(args []string, appName string) ([]string, []string
 	args = append(args, "--yes")
 
 	return args, env
+}
+
+// trySaveAppMeta if unable to save the kapp configmap metadata, then continue and do not fail the deploy.
+func (a *Kapp) trySaveAppMeta(metadataFileName string) {
+	metadataFile, err := os.ReadFile(metadataFileName)
+	if err != nil {
+		return
+	}
+
+	appMetadata := Meta{}
+	err = yaml.Unmarshal(metadataFile, &appMetadata)
+	if err != nil {
+		return
+	}
+
+	a.appMeta = &appMetadata
 }

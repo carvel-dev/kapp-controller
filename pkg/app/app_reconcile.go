@@ -164,7 +164,26 @@ func (a *App) updateLastDeploy(result exec.CmdRunResult) exec.CmdRunResult {
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
 
-	a.updateStatus("marking last deploy")
+	defer a.updateStatus("marking last deploy")
+
+	if a.metadata == nil {
+		return result
+	}
+
+	usedGKs := []metav1.GroupKind{}
+	for _, gk := range a.metadata.UsedGKs {
+		usedGKs = append(usedGKs, metav1.GroupKind{
+			gk.Group, gk.Kind,
+		})
+	}
+
+	a.app.Status.Deploy.KappDeployStatus = &v1alpha1.KappDeployStatus{
+		AssociatedResources: v1alpha1.AssociatedResources{
+			Label:      fmt.Sprintf("%s=%s", a.metadata.LabelKey, a.metadata.LabelValue),
+			Namespaces: a.metadata.LastChange.Namespaces,
+			GroupKinds: usedGKs,
+		},
+	}
 
 	return result
 }

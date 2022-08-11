@@ -125,6 +125,7 @@ stringData:
 					cr.Status.Deploy.StartedAt = metav1.Time{}
 					cr.Status.Deploy.UpdatedAt = metav1.Time{}
 					cr.Status.Deploy.Stdout = ""
+					cr.Status.Deploy.KappDeployStatus = nil
 
 					// fetch
 					if !strings.Contains(cr.Status.Fetch.Stdout, "kind: LockConfig") {

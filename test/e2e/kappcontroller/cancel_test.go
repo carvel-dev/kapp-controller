@@ -158,6 +158,7 @@ data: {}
 		app.Status.Deploy.StartedAt = metav1.Time{}
 		app.Status.Deploy.UpdatedAt = metav1.Time{}
 		app.Status.Deploy.Stdout = ""
+		app.Status.Deploy.KappDeployStatus = nil
 
 		if !reflect.DeepEqual(expectedDeploy, app.Status.Deploy) {
 			t.Fatalf("Status deploy is not same: %#v vs %#v", expectedDeploy, app.Status.Deploy)
