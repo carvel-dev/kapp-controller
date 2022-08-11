@@ -1,0 +1,12 @@
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: cert-manager
+  annotations:
+    kctrl.carvel.dev/local-fetch-0: "bundle"
+spec:
+  serviceAccountName: cluster-admin-sa
+  packageRef:
+    refName: cert-manager.community.tanzu.vmware.com
+    versionSelection:
+      constraints: 1.8.0

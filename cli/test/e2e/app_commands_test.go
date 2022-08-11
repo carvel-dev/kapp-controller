@@ -158,6 +158,8 @@ func replaceAgeAndSinceDeployed(result []map[string]string) []map[string]string 
 	for i, row := range result {
 		if len(row["age"]) > 0 {
 			row["age"] = "<replaced>"
+		}
+		if len(row["since_deploy"]) > 0 {
 			row["since_deploy"] = "<replaced>"
 		}
 		result[i] = row

@@ -1,0 +1,17 @@
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: kc
+  namespace: default
+  annotations:
+    kctrl.carvel.dev/local-fetch-0: "config/"
+spec:
+  serviceAccountName: cluster-admin-sa
+  fetch:
+  - http:
+      url: https://github.com/vmware-tanzu/carvel-kapp-controller/releases/download/v0.35.0/release.yml
+  template:
+  - ytt: {}
+  - kbld: {}
+  deploy:
+  - kapp: {}

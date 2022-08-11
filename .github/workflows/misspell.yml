@@ -16,3 +16,4 @@ jobs:
             ./vendor/*
             ./cli/vendor/*
             *generated*
+            ./examples/cert-manager-tce-pkg/bundle/*
