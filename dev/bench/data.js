@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660245243794,
+  "lastUpdate": 1660245422929,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -4527,6 +4527,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 7592908348,
             "unit": "ns/op\t         4.366 DeleteSeconds\t         3.180 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "leonde@vmware.com",
+            "name": "Dennis Leon",
+            "username": "DennisDenuto"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "04c7e27c3f1a1252fbc7edd45d3de7a7f8e9f709",
+          "message": "feat: Surface App resources associated to a deploy (#799)\n\n- Uses kapp metadata file to list on the AppCR status the app label, namespaces and GK's\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>",
+          "timestamp": "2022-08-11T15:05:07-04:00",
+          "tree_id": "0c6b5fc94d10f6a897ff57d20e6a3d20f84c1130",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/04c7e27c3f1a1252fbc7edd45d3de7a7f8e9f709"
+        },
+        "date": 1660245421611,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37327775144,
+            "unit": "ns/op\t        19.53 DeleteSeconds\t        17.75 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9608945510,
+            "unit": "ns/op\t         5.360 DeleteSeconds\t         4.201 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6564816676,
+            "unit": "ns/op\t         4.321 DeleteSeconds\t         2.183 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
