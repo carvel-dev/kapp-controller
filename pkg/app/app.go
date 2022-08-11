@@ -37,6 +37,7 @@ type App struct {
 
 	pendingStatusUpdate   bool
 	flushAllStatusUpdates bool
+	metadata              *deploy.Meta
 }
 
 func NewApp(app v1alpha1.App, hooks Hooks,

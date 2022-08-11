@@ -35,6 +35,7 @@ func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec
 			}
 
 			result = kapp.Deploy(tplOutput, a.startFlushingAllStatusUpdates, changedFunc)
+			a.trySaveMetadata(kapp)
 
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to deploy"))
@@ -120,6 +121,16 @@ func (a *App) inspect() exec.CmdRunResult {
 	}
 
 	return result
+}
+
+// trySaveMetadata if unable to save the kapp metadata into an App meta continue and do not fail the deploy.
+func (a *App) trySaveMetadata(kapp *ctldep.Kapp) {
+	meta, err := kapp.InternalAppMeta()
+	if err != nil {
+		return
+	}
+
+	a.metadata = meta
 }
 
 func (a *App) newKapp(kapp v1alpha1.AppDeployKapp, cancelCh chan struct{}) (*ctldep.Kapp, error) {
