@@ -168,7 +168,7 @@ func parseResources(paths []string, resourceFunc func([]byte) error) error {
 			}
 		}
 
-		reader := kyaml.NewYAMLReader(bufio.NewReaderSize(bytes.NewReader(bs), 4096))
+		reader := kyaml.NewYAMLReader(bufio.NewReader(bytes.NewReader(bs)))
 
 		for {
 			docBytes, err := reader.Read()

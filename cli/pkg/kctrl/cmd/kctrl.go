@@ -94,9 +94,7 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 	appCmd.AddCommand(app.NewDeleteCmd(app.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(appCmd)
 
-	devCmd := dev.NewCmd()
-	devCmd.AddCommand(dev.NewDeployCmd(dev.NewDeployOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	cmd.AddCommand(devCmd)
+	cmd.AddCommand(dev.NewCmd(dev.NewDevOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 
 	configureGlobalFlags(o, cmd, flagsFactory, pkgOpts.PositionalArgs)
 
