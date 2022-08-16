@@ -132,6 +132,9 @@ spec:
               fieldPath: metadata.labels['expectedLabel']
             - name: allAnnotations
               fieldPath: metadata.annotations
+            - name: kubernetesVersion
+              kubernetesVersion:
+                version: 1.0.0
   deploy:
     - kapp: {}
 ---
@@ -185,6 +188,7 @@ label: "expectedLabelValue"
 allAnnotations:
   expectedAnnotation: expectedAnnotationValue
   anotherExpectedAnnotation: anotherExpectedAnnotationValue
+kubernetesVersion: 1.0.0
 `, name, env.Namespace, uid)
 
 		actual := cm.Data["values"]

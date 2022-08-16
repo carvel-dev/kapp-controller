@@ -69,15 +69,22 @@ type AppTemplateValuesSourceRef struct {
 }
 
 // +k8s:openapi-gen=true
+type AppTemplateValuesDownwardAPI struct {
+	Items []AppTemplateValuesDownwardAPIItem `json:"items,omitempty" protobuf:"bytes,1,opt,name=items"`
+}
+
+// +k8s:openapi-gen=true
 type AppTemplateValuesDownwardAPIItem struct {
 	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
 	// Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.
 	FieldPath string `json:"fieldPath,omitempty" protobuf:"bytes,2,opt,name=fieldPath"`
+	// Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster.
+	// Can be manually overridden to a value instead.
+	KubernetesVersion *version `json:"kubernetesVersion,omitempty" protobuf:"bytes,3,opt,name=kubernetesVersion"`
 }
 
-// +k8s:openapi-gen=true
-type AppTemplateValuesDownwardAPI struct {
-	Items []AppTemplateValuesDownwardAPIItem `json:"items,omitempty" protobuf:"bytes,1,opt,name=items"`
+type version struct {
+	Version string `json:"version,omitempty" protobut:"bytes,1,opt,version=version"`
 }
 
 // TODO implement kustomize

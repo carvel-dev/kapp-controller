@@ -24,25 +24,43 @@ type DownwardAPIValues struct {
 // AsYAMLs returns many key-values queried (using jsonpath) against an object metadata provided.
 func (a DownwardAPIValues) AsYAMLs() ([][]byte, error) {
 	dataValues := [][]byte{}
+	keyValueContent := []byte{}
+
 	for _, item := range a.items {
 		err := a.validateName(item.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		fieldPathExpression, err := relaxedJSONPathExpression(item.FieldPath)
-		if err != nil {
-			return nil, err
+		switch {
+		case item.FieldPath != "":
+			fieldPathExpression, err := relaxedJSONPathExpression(item.FieldPath)
+			if err != nil {
+				return nil, err
+			}
+			keyValueContent, err = a.extractFieldPathAsKeyValue(item.Name, fieldPathExpression)
+			if err != nil {
+				return nil, err
+			}
+		case item.KubernetesVersion != nil:
+			if item.KubernetesVersion.Version != "" {
+				keyValueContent, err = a.addKeyValueContent(item.Name, item.KubernetesVersion.Version)
+			}
+			if err != nil {
+				return nil, err
+			}
+		default:
+			return nil, fmt.Errorf("Invalid downward API item given")
 		}
 
-		keyValueContent, err := a.extractFieldPathAsKeyValue(item.Name, fieldPathExpression)
-		if err != nil {
-			return nil, err
-		}
 		dataValues = append(dataValues, keyValueContent)
 	}
 
 	return dataValues, nil
+}
+
+func (a DownwardAPIValues) addKeyValueContent(key, val string) ([]byte, error) {
+	return yaml.Marshal(map[string]string{key: val})
 }
 
 func (a DownwardAPIValues) validateName(name string) error {
