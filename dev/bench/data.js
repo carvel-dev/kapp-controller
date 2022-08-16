@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660245422929,
+  "lastUpdate": 1660637417007,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -4569,6 +4569,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6564816676,
             "unit": "ns/op\t         4.321 DeleteSeconds\t         2.183 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "55523204+rohitagg2020@users.noreply.github.com",
+            "name": "rohitagg2020",
+            "username": "rohitagg2020"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7c77dfac8d113d2d6502d8c9d974e219d4c1ceca",
+          "message": "Add package authoring commands(#766)\n\n* introduce app dev deploy\r\n\r\n* add packageinstall support for dev\r\n\r\n* support in mem secret creation\r\n\r\n* move app dev deploy to dev deploy\r\n\r\n* add debug logs to show what commands are running\r\n\r\n* expose CreateToken in minimal dev deploy core client\r\n\r\n* extract local deploy operations into a package\r\n\r\n* introduce app dev deploy\r\n\r\n* add packageinstall support for dev\r\n\r\n* support in mem secret creation\r\n\r\n* move app dev deploy to dev deploy\r\n\r\n* configure kubernetes dst\r\n\r\n* add debug logs to show what commands are running\r\n\r\n* expose CreateToken in minimal dev deploy core client\r\n\r\n* WIP provide k8s ca cert over env var\r\n\r\n* extract local deploy operations into a package\r\n\r\n* Bump kapp controller. tidy and vendor dependencies\r\n\r\n* Adding app init and pkg init\r\n\r\n* Fixing misspelling github action\r\n\r\nFixing misspelling github action\r\n\r\n* Fixing the case where vendir.yml doesnt exist\r\n\r\n* Adopting review comments\r\n\r\n* refactored informational text for pkg and app init\r\n\r\n* Add kctrl package release command\r\n\r\n* Add kctrl package release command\r\n\r\n* Adopting review comments.\r\n\r\nAdopting review comments.\r\n\r\n* Adding App template transform\r\n\r\nAdding App template transform\r\n\r\n* Changes to release command to ensure it produces usable bundles and package resources\r\n\r\n* Added test case\r\n\r\nAdded test case\r\n\r\n* Making template section simpler\r\n\r\nMaking template section simpler\r\n\r\n* Adopted Text comments.\r\n\r\nAdopted Text comments.\r\n\r\n* Adopted review comment.\r\n\r\nAdopted review comment.\r\n\r\n* pkg repo release\r\n\r\n* pkg repo release\r\n\r\n* Formatting release command output. copy-to => repo-output\r\n\r\n* Adding the question for includePaths in case of Local directory.\r\n\r\nAdding the question for includePaths in case of Local directory.\r\n\r\n* Fixed bug.\r\n\r\nFixed bug.\r\n\r\n* Fixed path issue.\r\n\r\nFixed path issue.\r\n\r\n* Move release logic to app release. Cleanup artifact generation. Add repo output flag.\r\n\r\n* Add release section to package build. Spell fixes.\r\n\r\n* Add release section to package build. Spell fixes.\r\n\r\n* Fixed test case\r\n\r\nFixed test case\r\n\r\n* Add test for package release command. Set up local registry for tests\r\n\r\n* added e2e test for pkg repo release\r\n\r\n* Refactoring\r\n\r\nRefactoring\r\n\r\n* Add ValuesSchemaGen to generate calues schema for packages\r\n\r\n* Stricter checks on binary names. Refactoring and fixing typos. Kbld paths are clobbered if user wants to use lockfile.\r\n\r\n* Use otiai10/copy for copying directories. Tidy vendored files. Cleanup imgpkg runner.\r\n\r\n* Tighten package init test. Remove unused constant.\r\n\r\n* Adopting review comments.\r\n\r\nAdopting review comments.\r\n\r\n* dir copy using otiai10/copy in pkg repo release\r\n\r\n* Fix bad filepath base checks. Fix typos.\r\n\r\n* Refactor package init\r\n\r\n* Remove helmVersion from vendirExpectedOutput in e2e test\r\n\r\n* Refactor package init and release e2e test\r\n\r\n* Ensure that folder structure is retained while copying over files\r\n\r\n* Refactoring and clean up\r\n\r\n* Ensure that package-resources generated enables dev deploy\r\n\r\n* Update workflow to use hack script\r\n\r\n* Update workflow to use hack script\r\n\r\n* Fixing rerun case of Local Directory\r\n\r\nFixing rerun case of Local Directory\r\n\r\n* Ensure repo release creates valid repo bundle\r\n\r\n* Copy over pkg and pkg metadata from pkg-resources. Mark commands as experimental.\r\n\r\n* push the correct tag in repo release\r\n\r\n* Rebase on develop+kctrl-dev-deploy. Vendor and tidy.\r\n\r\nCo-authored-by: Dmitriy Kalinin <dkalinin@vmware.com>\r\nCo-authored-by: Soumik Majumder <soumikm@vmware.com>\r\nCo-authored-by: Yash Sethiya <ysethiya@Yashs-MacBook-Pro.local>\r\nCo-authored-by: sethiyash <yashsethiya97@gmail.com>\r\nCo-authored-by: Praveen Rewar <8457124+praveenrewar@users.noreply.github.com>",
+          "timestamp": "2022-08-16T13:28:24+05:30",
+          "tree_id": "6bb7010cd425a09a6e04760447938239d6e942d6",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/7c77dfac8d113d2d6502d8c9d974e219d4c1ceca"
+        },
+        "date": 1660637415463,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37178055613,
+            "unit": "ns/op\t        19.41 DeleteSeconds\t        17.71 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9667199436,
+            "unit": "ns/op\t         5.402 DeleteSeconds\t         4.206 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6643977419,
+            "unit": "ns/op\t         4.367 DeleteSeconds\t         2.190 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
