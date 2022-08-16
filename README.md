@@ -6,7 +6,7 @@ Kubernetes native continuous delivery and package management experience through 
 
 <p>
 <a href="https://carvel.dev/kapp-controller/docs/latest">Documentation</a> ·
-<a href="https://app.zenhub.com/workspaces/carvel-backlog-6013063a24147d0011410709/board?repos=220090417">Backlog</a> ·
+<a href="https://github.com/orgs/vmware-tanzu/projects/16/views/1?filterQuery=repo%3A%22vmware-tanzu%2Fcarvel-kapp-controller%22">Backlog</a> ·
 <a href="https://kubernetes.slack.com/archives/CH8KCCKA5">Slack</a> ·
 <a href="https://twitter.com/carvel_dev">Twitter</a>
 </p>
