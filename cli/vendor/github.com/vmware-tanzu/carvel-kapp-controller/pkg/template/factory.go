@@ -25,25 +25,28 @@ func NewFactory(coreClient kubernetes.Interface, fetchFactory fetch.Factory,
 	return Factory{coreClient, fetchFactory, kbldAllowBuild, cmdRunner}
 }
 
-func (f Factory) NewYtt(opts v1alpha1.AppTemplateYtt, genericOpts GenericOpts) *Ytt {
-	return NewYtt(opts, genericOpts, f.coreClient, f.fetchFactory, f.cmdRunner)
+// NewYtt returns ytt template.
+func (f Factory) NewYtt(opts v1alpha1.AppTemplateYtt, appContext AppContext) *Ytt {
+	return NewYtt(opts, appContext, f.coreClient, f.fetchFactory, f.cmdRunner)
 }
 
-func (f Factory) NewKbld(opts v1alpha1.AppTemplateKbld, genericOpts GenericOpts) *Kbld {
-	return NewKbld(opts, genericOpts, KbldOpts{AllowBuild: f.kbldAllowBuild}, f.cmdRunner)
+// NewKbld returns kbld template.
+func (f Factory) NewKbld(opts v1alpha1.AppTemplateKbld, appContext AppContext) *Kbld {
+	return NewKbld(opts, appContext, KbldOpts{AllowBuild: f.kbldAllowBuild}, f.cmdRunner)
 }
 
+// NewHelmTemplate returns helm template.
 func (f Factory) NewHelmTemplate(
-	opts v1alpha1.AppTemplateHelmTemplate, genericOpts GenericOpts) *HelmTemplate {
-	return NewHelmTemplate(opts, genericOpts, f.coreClient, f.cmdRunner)
+	opts v1alpha1.AppTemplateHelmTemplate, appContext AppContext) *HelmTemplate {
+	return NewHelmTemplate(opts, appContext, f.coreClient, f.cmdRunner)
 }
 
 func (f Factory) NewSops(
-	opts v1alpha1.AppTemplateSops, genericOpts GenericOpts) *Sops {
-	return NewSops(opts, genericOpts, f.coreClient, f.cmdRunner)
+	opts v1alpha1.AppTemplateSops, appContext AppContext) *Sops {
+	return NewSops(opts, appContext, f.coreClient, f.cmdRunner)
 }
 
 // NewCue returns a Cue templater
-func (f Factory) NewCue(opts v1alpha1.AppTemplateCue, genericOpts GenericOpts) Template {
-	return newCue(opts, genericOpts, f.coreClient, f.cmdRunner)
+func (f Factory) NewCue(opts v1alpha1.AppTemplateCue, appContext AppContext) Template {
+	return newCue(opts, appContext, f.coreClient, f.cmdRunner)
 }

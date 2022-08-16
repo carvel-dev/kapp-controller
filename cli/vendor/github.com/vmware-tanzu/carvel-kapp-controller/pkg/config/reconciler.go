@@ -21,15 +21,16 @@ import (
 // Reconciler is responsible for reconciling kapp-controllers config.
 type Reconciler struct {
 	coreClient kubernetes.Interface
+	config     *Config
 	osConfig   OSConfig
 	log        logr.Logger
 }
 
 // NewReconciler constructs new Reconciler.
 func NewReconciler(coreClient kubernetes.Interface,
-	osConfig OSConfig, log logr.Logger) *Reconciler {
+	config *Config, osConfig OSConfig, log logr.Logger) *Reconciler {
 
-	return &Reconciler{coreClient, osConfig, log}
+	return &Reconciler{coreClient, config, osConfig, log}
 }
 
 var _ reconcile.Reconciler = &Reconciler{}
@@ -58,7 +59,7 @@ func (r *Reconciler) AttachWatches(controller controller.Controller, ns string) 
 func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
-	kcConfig, err := GetConfig(r.coreClient)
+	err := r.config.Reload()
 	if err != nil {
 		log.Error(err, "Getting kapp-controller config")
 		return reconcile.Result{}, nil // no re-queue
@@ -66,13 +67,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 
 	log.Info("Applying new config")
 
-	err = r.osConfig.ApplyCACerts(kcConfig.CACerts())
+	err = r.osConfig.ApplyCACerts(r.config.CACerts())
 	if err != nil {
 		log.Error(err, "Failed applying CA certificates")
 		// continue on
 	}
 
-	err = r.osConfig.ApplyProxy(kcConfig.ProxyOpts())
+	err = r.osConfig.ApplyProxy(r.config.ProxyOpts())
 	if err != nil {
 		log.Error(err, "Failed applying proxy opts")
 		// continue on

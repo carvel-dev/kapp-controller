@@ -10,12 +10,16 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app"
+	appinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/dev"
 	cmdpkg "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package"
 	pkgavail "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/available"
+	pkginit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/init"
 	pkginst "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
+	pkgrel "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/release"
 	pkgrepo "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository"
+	pkgreporel "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository/release"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/version"
 )
@@ -92,6 +96,7 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 	appCmd.AddCommand(app.NewPauseCmd(app.NewPauseOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	appCmd.AddCommand(app.NewKickCmd(app.NewKickOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	appCmd.AddCommand(app.NewDeleteCmd(app.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	appCmd.AddCommand(appinit.NewInitCmd(appinit.NewInitOptions(o.ui, o.depsFactory, o.logger)))
 	cmd.AddCommand(appCmd)
 
 	cmd.AddCommand(dev.NewCmd(dev.NewDevOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
@@ -168,6 +173,7 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 	pkgrepoCmd.AddCommand(pkgrepo.NewAddCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgrepoCmd.AddCommand(pkgrepo.NewUpdateCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgrepoCmd.AddCommand(pkgrepo.NewKickCmd(pkgrepo.NewKickOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgreporel.NewReleaseCmd(pkgreporel.NewReleaseOptions(o.ui, o.depsFactory, o.logger)))
 
 	pkgiCmd := pkginst.NewCmd()
 	pkgiCmd.AddCommand(pkginst.NewListCmd(pkginst.NewListOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
@@ -187,6 +193,9 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 	cmd.AddCommand(pkgiCmd)
 	cmd.AddCommand(pkgaCmd)
 	cmd.AddCommand(pkginst.NewInstallCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
+	cmd.AddCommand(pkginit.NewInitCmd(pkginit.NewInitOptions(o.ui, o.depsFactory, o.logger)))
+	cmd.AddCommand(pkgrel.NewReleaseCmd(pkgrel.NewReleaseOptions(o.ui, o.depsFactory, o.logger)))
+
 }
 
 func AttachGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opts cmdcore.PackageCommandTreeOpts) {
