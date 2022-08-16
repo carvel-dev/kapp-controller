@@ -1,0 +1,8 @@
+apiVersion: vendir.k14s.io/v1alpha1
+directories:
+- contents:
+  - githubRelease:
+      url: https://api.github.com/repos/Dynatrace/dynatrace-operator/releases/66218800
+    path: .
+  path: upstream
+kind: LockConfig

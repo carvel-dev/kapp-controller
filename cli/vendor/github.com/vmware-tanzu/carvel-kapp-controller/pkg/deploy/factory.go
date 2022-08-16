@@ -43,6 +43,7 @@ func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
 
 	var err error
 	var processedGenericOpts ProcessedGenericOpts
+	const suffix string = ".app"
 
 	switch {
 	case len(saName) > 0:
@@ -61,14 +62,16 @@ func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
 		return nil, fmt.Errorf("Expected service account or cluster specified")
 	}
 
-	return NewKapp(opts, processedGenericOpts,
+	return NewKapp(suffix, opts, processedGenericOpts,
 		f.globalKappDeployRawOpts(), cancelCh, f.cmdRunner), nil
 }
 
 // NewKappPrivileged is used for package repositories where users aren't required to provide
 // a service account, so it will install resources using its own privileges.
-func (f Factory) NewKappPrivileged(opts v1alpha1.AppDeployKapp,
+func (f Factory) NewKappPrivilegedForPackageRepository(opts v1alpha1.AppDeployKapp,
 	genericOpts GenericOpts, cancelCh chan struct{}) (*Kapp, error) {
+
+	const suffix string = ".pkgr"
 
 	pgo := ProcessedGenericOpts{
 		Name:      genericOpts.Name,
@@ -80,7 +83,7 @@ func (f Factory) NewKappPrivileged(opts v1alpha1.AppDeployKapp,
 		DangerousUsePodServiceAccount: true,
 	}
 
-	return NewKapp(opts, pgo, f.globalKappDeployRawOpts(), cancelCh, f.cmdRunner), nil
+	return NewKapp(suffix, opts, pgo, f.globalKappDeployRawOpts(), cancelCh, f.cmdRunner), nil
 }
 
 func (f Factory) globalKappDeployRawOpts() []string {

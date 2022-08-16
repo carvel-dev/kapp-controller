@@ -11,6 +11,7 @@ import (
 
 type Env struct {
 	Namespace       string
+	Image           string
 	KappBinaryPath  string
 	KctrlBinaryPath string
 }
@@ -28,6 +29,7 @@ func BuildEnv(t *testing.T) Env {
 
 	env := Env{
 		Namespace:       os.Getenv("KCTRL_E2E_NAMESPACE"),
+		Image:           os.Getenv("KCTRL_E2E_IMAGE"),
 		KappBinaryPath:  kappPath,
 		KctrlBinaryPath: kctrlPath,
 	}
@@ -40,6 +42,10 @@ func (e Env) Validate(t *testing.T) {
 
 	if len(e.Namespace) == 0 {
 		errStrs = append(errStrs, "Expected Namespace to be non-empty (hint: kubectl create namespace kctrl-test; export KCTRL_E2E_NAMESPACE=kctrl-test)")
+	}
+
+	if len(e.Image) == 0 {
+		errStrs = append(errStrs, "Test image to be non-empty (hint: export KCTRL_E2E_IMAGE=repo/kctrl-test)")
 	}
 
 	if len(errStrs) > 0 {

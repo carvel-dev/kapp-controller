@@ -207,6 +207,9 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 	}
 
 	semverConfig := pi.model.Spec.PackageRef.VersionSelection
+	if semverConfig == nil {
+		return datapkgingv1alpha1.Package{}, fmt.Errorf("Expected non-empty version selection")
+	}
 
 	pkgList, err := pi.pkgclient.DataV1alpha1().Packages(pi.model.Namespace).List(
 		context.Background(), metav1.ListOptions{})

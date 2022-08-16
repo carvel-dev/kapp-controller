@@ -1,0 +1,21 @@
+apiVersion: kctrl.carvel.dev/v1alpha1
+kind: PackageBuild
+metadata:
+  creationTimestamp: "2022-07-12T15:55:33Z"
+  name: dynatrace.corp.com
+spec:
+  template:
+    spec:
+      app:
+        spec:
+          template:
+          - ytt:
+              paths:
+              - upstream
+          - kbld: {}
+      export:
+      - imgpkgBundle:
+          image: rohitagg2020/demo-bundle
+          useKbldImagesLock: true
+        includePaths:
+        - upstream
