@@ -308,8 +308,6 @@ func (p promptOutput) StringWriter() io.Writer { return p.stringWriter }
 func (p promptOutput) StringReader() io.Reader { return p.stringReader }
 
 func (p promptOutput) Write(val string) {
-	// Adding the sleep intentionally to remove the race condition.
-	time.Sleep(3 * time.Second)
 	p.stringWriter.Write([]byte(val + "\n"))
 }
 
@@ -319,7 +317,8 @@ func (p promptOutput) WaitFor(text string) {
 		fmt.Println(scanner.Text())
 		// Cannot easily wait for prompt as it's not NL terminated
 		if strings.Contains(scanner.Text(), text) {
-			break
+			time.Sleep(3 * time.Second)
+			return
 		}
 	}
 	err := scanner.Err()

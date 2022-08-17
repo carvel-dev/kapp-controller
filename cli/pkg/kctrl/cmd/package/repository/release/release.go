@@ -98,7 +98,7 @@ func (o *ReleaseOptions) Run() error {
 	}
 	pkgRepoBuild.Name = pkgRepoName
 
-	o.ui.PrintHeaderText("\nRegistry URL")
+	o.ui.PrintHeaderText("Registry URL")
 	o.ui.PrintInformationalText("The bundle created needs to be pushed to an OCI registry." +
 		" Registry URL format: <REGISTRY_URL/REPOSITORY_NAME> e.g. index.docker.io/k8slt/sample-bundle")
 	defaultRegistryURL := pkgRepoBuild.Spec.Export.ImgpkgBundle.Image
