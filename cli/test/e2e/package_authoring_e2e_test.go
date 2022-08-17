@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -314,10 +313,9 @@ func (p promptOutput) Write(val string) {
 func (p promptOutput) WaitFor(text string) {
 	scanner := bufio.NewScanner(p.outputReader)
 	for scanner.Scan() {
-		fmt.Println(scanner.Text())
 		// Cannot easily wait for prompt as it's not NL terminated
 		if strings.Contains(scanner.Text(), text) {
-			time.Sleep(3 * time.Second)
+			time.Sleep( 5* time.Second)
 			return
 		}
 	}
