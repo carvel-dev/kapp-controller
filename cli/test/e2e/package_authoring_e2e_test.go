@@ -310,6 +310,7 @@ func (p promptOutput) Write(val string) {
 }
 
 func (p promptOutput) WaitFor(text string) {
-	// Adding hardcore wait for now. 
+	// Adding hardcode wait as waiting on text turns out to be flaky.
+	// TODO need to revisit this logic
 	time.Sleep(10*time.Second)
 }
