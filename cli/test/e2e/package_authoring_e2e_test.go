@@ -1,6 +1,8 @@
 package e2e
 
 import (
+	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -166,24 +168,22 @@ spec:
 	logger.Section("creating a package interactively using pkg init", func() {
 		promptOutput := newPromptOutput(t)
 
-		// TODO: Figure out a way to wait for prompts properly as the go-interact library used
-		// for prompt output doesn't print in non tty environments
 		go func() {
-			promptOutput.WaitFor("A package reference name must be")
+			promptOutput.WaitFor("Enter the package reference name")
 			promptOutput.Write("testpackage.corp.dev")
-			promptOutput.WaitFor("Please provide the location from where your Kubernetes manifests")
-			promptOutput.Write("3")
 			promptOutput.WaitFor("Enter source")
-			promptOutput.Write("https://mongodb.github.io/helm-charts")
+			promptOutput.Write("3")
 			promptOutput.WaitFor("Enter helm chart repository URL")
-			promptOutput.Write("enterprise-operator")
+			promptOutput.Write("https://mongodb.github.io/helm-charts")
 			promptOutput.WaitFor("Enter helm chart name")
+			promptOutput.Write("enterprise-operator")
+			promptOutput.WaitFor("Enter helm chart version")
 			promptOutput.Write("1.16.0")
 		}()
 
 		kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
-				StdoutWriter: promptOutput.OutputWriter(), Interactive: true})
+				StdoutWriter: promptOutput.BufferedWriter(), Interactive: true})
 
 		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:"}
 
@@ -220,13 +220,13 @@ spec:
 		promptOutput := newPromptOutput(t)
 
 		go func() {
-			promptOutput.WaitFor("The bundle created needs to be pushed ")
+			promptOutput.WaitFor("Enter the registry URL")
 			promptOutput.Write(env.Image)
 		}()
 
 		kappCtrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
-				StdoutWriter: promptOutput.OutputWriter(), Interactive: true})
+				StdoutWriter: promptOutput.BufferedWriter(), Interactive: true})
 
 		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image"}
 
@@ -284,6 +284,9 @@ type promptOutput struct {
 	stringReader io.Reader
 	outputWriter io.Writer
 	outputReader io.Reader
+
+	bufferedWriter io.Writer
+	bufferedStdout *bytes.Buffer
 }
 
 func newPromptOutput(t *testing.T) promptOutput {
@@ -293,24 +296,43 @@ func newPromptOutput(t *testing.T) promptOutput {
 	outputReader, outputWriter, err := os.Pipe()
 	require.NoError(t, err)
 
-	return promptOutput{t, stringWriter, stringReader, outputWriter, outputReader}
+	bufferedStdout := bytes.Buffer{}
+	bufferedWriter := io.MultiWriter(outputWriter, &bufferedStdout)
+
+	return promptOutput{t, stringWriter, stringReader, outputWriter,
+		outputReader, bufferedWriter, &bufferedStdout}
 }
 
 func (p promptOutput) WritePkgRefName() {
 	p.stringWriter.Write([]byte("afc.def.ghi\n"))
 }
 
-func (p promptOutput) OutputWriter() io.Writer { return p.outputWriter }
-func (p promptOutput) OutputReader() io.Reader { return p.outputReader }
-func (p promptOutput) StringWriter() io.Writer { return p.stringWriter }
-func (p promptOutput) StringReader() io.Reader { return p.stringReader }
+func (p promptOutput) OutputWriter() io.Writer   { return p.outputWriter }
+func (p promptOutput) OutputReader() io.Reader   { return p.outputReader }
+func (p promptOutput) StringWriter() io.Writer   { return p.stringWriter }
+func (p promptOutput) StringReader() io.Reader   { return p.stringReader }
+func (p promptOutput) BufferedWriter() io.Writer { return p.bufferedWriter }
 
 func (p promptOutput) Write(val string) {
 	p.stringWriter.Write([]byte(val + "\n"))
 }
 
 func (p promptOutput) WaitFor(text string) {
-	// Adding hardcode wait as waiting on text turns out to be flaky.
-	// TODO need to revisit this logic
-	time.Sleep(10*time.Second)
+	// Poll buffered output till desired string is found
+	for {
+		found := strings.Contains(p.bufferedStdout.String(), text)
+
+		if os.Getenv("KCTRL_DEBUG_BUFERED_OUTPUT_TESTS") == "true" {
+			fmt.Printf("\n==> \t Buffered Output (Waiting for '%s' | found=%t)\n", text, found)
+			fmt.Println(p.bufferedStdout)
+			fmt.Printf("=\t=\t=\t=\t=\t=\t=\t=\t=\t=\n\n")
+		}
+
+		// Stop waiting if desired string is found
+		if found {
+			break
+		}
+		// Poll interval
+		time.Sleep(1 * time.Second)
+	}
 }
