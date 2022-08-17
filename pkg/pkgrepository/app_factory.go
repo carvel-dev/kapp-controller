@@ -26,8 +26,8 @@ type AppFactory struct {
 
 // NewCRDPackageRepo constructs "hidden" App to reconcile PackageRepository.
 func (f *AppFactory) NewCRDPackageRepo(app *kcv1alpha1.App, pkgr *pkgv1alpha1.PackageRepository, log logr.Logger) *CRDApp {
-	fetchFactory := fetch.NewFactory(f.CoreClient, fetch.VendirOpts{SkipTLSConfig: f.KcConfig}, f.CmdRunner)
-	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, false, f.CmdRunner)
 	deployFactory := deploy.NewFactory(f.CoreClient, nil, f.CmdRunner, log)
+	fetchFactory := fetch.NewFactory(f.CoreClient, fetch.VendirOpts{SkipTLSConfig: f.KcConfig}, f.CmdRunner)
+	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, deployFactory, false, f.CmdRunner, log)
 	return NewCRDApp(app, pkgr, log, f.AppClient, fetchFactory, templateFactory, deployFactory)
 }

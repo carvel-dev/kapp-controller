@@ -18,9 +18,11 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 	}
 
 	appContext := ctltpl.AppContext{
-		Name:      a.app.Name,
-		Namespace: a.app.Namespace,
-		Metadata:  asPartialObjectMetadata(a.app),
+		Name:               a.app.Name,
+		Namespace:          a.app.Namespace,
+		Metadata:           asPartialObjectMetadata(a.app),
+		ServiceAccountName: a.app.Spec.ServiceAccountName,
+		AppSpec:            a.app.Spec,
 	}
 
 	var result exec.CmdRunResult

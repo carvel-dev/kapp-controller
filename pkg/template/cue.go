@@ -9,26 +9,30 @@ import (
 	"io"
 	goexec "os/exec"
 
+	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 	"k8s.io/client-go/kubernetes"
 )
 
 type cue struct {
-	opts       v1alpha1.AppTemplateCue
-	coreClient kubernetes.Interface
-	appContext AppContext
-	cmdRunner  exec.CmdRunner
+	opts          v1alpha1.AppTemplateCue
+	coreClient    kubernetes.Interface
+	appContext    AppContext
+	cmdRunner     exec.CmdRunner
+	deployFactory deploy.Factory
+	log           logr.Logger
 }
 
 var _ Template = &cue{}
 
 func newCue(opts v1alpha1.AppTemplateCue, appContext AppContext,
-	coreClient kubernetes.Interface, cmdRunner exec.CmdRunner) *cue {
+	coreClient kubernetes.Interface, cmdRunner exec.CmdRunner, deployFactory deploy.Factory, log logr.Logger) *cue {
 
 	return &cue{opts: opts, appContext: appContext,
-		coreClient: coreClient, cmdRunner: cmdRunner}
+		coreClient: coreClient, cmdRunner: cmdRunner, deployFactory: deployFactory, log: log}
 }
 
 // TemplateDir works on directory returning templating result,
@@ -59,7 +63,7 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		args = append(args, c.opts.Paths...)
 	}
 
-	vals := Values{c.opts.ValuesFrom, c.appContext, c.coreClient}
+	vals := Values{c.opts.ValuesFrom, c.appContext, c.coreClient, c.deployFactory, c.log}
 	paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Writing values: %w", err))

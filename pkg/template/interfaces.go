@@ -6,6 +6,7 @@ package template
 import (
 	"io"
 
+	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -28,9 +29,11 @@ type Template interface {
 // AppContext carries App information used across API boundaries.
 // Primarily used in a context when templating with values
 type AppContext struct {
-	Name      string
-	Namespace string
-	Metadata  PartialObjectMetadata
+	Name               string
+	Namespace          string
+	Metadata           PartialObjectMetadata
+	ServiceAccountName string
+	AppSpec            v1alpha1.AppSpec
 }
 
 // PartialObjectMetadata represents an v1alpha1.App with a subset of Metadata fields exposed.

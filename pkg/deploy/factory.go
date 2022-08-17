@@ -7,10 +7,9 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	semver "github.com/k14s/semver/v4"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -107,28 +106,38 @@ func (f Factory) globalKappDeployRawOpts() []string {
 }
 
 // GetClusterVersion returns the kubernetes API version for the cluster which has been supplied to kapp-controller via a kubeconfig
-func (f Factory) GetClusterVersion(saName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta, log logr.Logger) (*version.Info, error) {
+func (f Factory) GetClusterVersion(saName string, specCluster *v1alpha1.AppCluster, genericOpts GenericOpts, log logr.Logger) (semver.Version, error) {
 	switch {
 	case len(saName) > 0:
-		return f.coreClient.Discovery().ServerVersion()
-	case specCluster != nil:
-		processedGenericOpts, err := f.processOpts(saName, specCluster, GenericOpts{Name: objMeta.Name, Namespace: objMeta.Namespace})
+		version, err := f.coreClient.Discovery().ServerVersion()
 		if err != nil {
-			return nil, err
+			return semver.Version{}, err
+		}
+
+		return semver.ParseTolerant(version.GitVersion)
+	case specCluster != nil:
+		processedGenericOpts, err := f.processOpts(saName, specCluster, GenericOpts{Name: genericOpts.Name, Namespace: genericOpts.Namespace})
+		if err != nil {
+			return semver.Version{}, err
 		}
 
 		config, err := clientcmd.RESTConfigFromKubeConfig([]byte(processedGenericOpts.Kubeconfig.AsYAML()))
 		if err != nil {
-			return nil, err
+			return semver.Version{}, err
 		}
 
 		clientset, err := kubernetes.NewForConfig(config)
 		if err != nil {
-			return nil, err
+			return semver.Version{}, err
 		}
 
-		return clientset.Discovery().ServerVersion()
+		version, err := clientset.Discovery().ServerVersion()
+		if err != nil {
+			return semver.Version{}, err
+		}
+
+		return semver.ParseTolerant(version.GitVersion)
 	default:
-		return nil, fmt.Errorf("Expected service account or cluster specified")
+		return semver.Version{}, fmt.Errorf("Expected service account or cluster specified")
 	}
 }

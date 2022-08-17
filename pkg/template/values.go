@@ -9,7 +9,10 @@ import (
 	"io/ioutil"
 	"sort"
 
+	"github.com/go-logr/logr"
+	semver "github.com/k14s/semver/v4"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -18,8 +21,10 @@ import (
 type Values struct {
 	ValuesFrom []v1alpha1.AppTemplateValuesSource
 
-	appContext AppContext
-	coreClient kubernetes.Interface
+	appContext    AppContext
+	coreClient    kubernetes.Interface
+	deployFactory deploy.Factory
+	log           logr.Logger
 }
 
 func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
@@ -68,6 +73,9 @@ func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
 			downwardAPIValues := DownwardAPIValues{
 				items:    source.DownwardAPI.Items,
 				metadata: t.appContext.Metadata,
+				kubernetesVersion: func() (semver.Version, error) {
+					return t.deployFactory.GetClusterVersion(t.appContext.ServiceAccountName, t.appContext.AppSpec.Cluster, deploy.GenericOpts{Name: t.appContext.Name, Namespace: t.appContext.Namespace}, t.log)
+				},
 			}
 			paths, err = t.writeFromDownwardAPI(valuesDir.Path(), downwardAPIValues)
 

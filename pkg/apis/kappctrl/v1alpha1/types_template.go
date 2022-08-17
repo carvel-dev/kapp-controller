@@ -80,10 +80,10 @@ type AppTemplateValuesDownwardAPIItem struct {
 	FieldPath string `json:"fieldPath,omitempty" protobuf:"bytes,2,opt,name=fieldPath"`
 	// Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster.
 	// Can be manually overridden to a value instead.
-	KubernetesVersion *version `json:"kubernetesVersion,omitempty" protobuf:"bytes,3,opt,name=kubernetesVersion"`
+	KubernetesVersion *Version `json:"kubernetesVersion,omitempty" protobuf:"bytes,3,opt,name=kubernetesVersion"`
 }
 
-type version struct {
+type Version struct {
 	Version string `json:"version,omitempty" protobut:"bytes,1,opt,version=version"`
 }
 

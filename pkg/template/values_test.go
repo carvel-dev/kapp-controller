@@ -11,13 +11,30 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"k8s.io/apimachinery/pkg/version"
+	fakediscovery "k8s.io/client-go/discovery/fake"
+	k8sfake "k8s.io/client-go/kubernetes/fake"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func TestValues(t *testing.T) {
+	log := logf.Log.WithName("kc")
+	fakek8s := k8sfake.NewSimpleClientset()
+	deployFac := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+
+	// mock the kubernetes server version
+	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.20.0",
+	}
+
 	subject := Values{
-		ValuesFrom: nil,
-		appContext: AppContext{},
-		coreClient: nil,
+		ValuesFrom:    nil,
+		appContext:    AppContext{},
+		coreClient:    nil,
+		deployFactory: deployFac,
 	}
 
 	t.Run("Downward API values", func(t *testing.T) {
@@ -208,6 +225,23 @@ func TestValues(t *testing.T) {
 			_, _, err := subject.AsPaths(os.TempDir())
 			require.Error(t, err)
 			assert.ErrorContains(t, err, "Writing paths: Invalid field spec provided to DownwardAPI. Only single supported fields are allowed")
+		})
+
+		t.Run("return kubernetes cluster version if not supplied", func(t *testing.T) {
+			subject := subject
+			subject.appContext = AppContext{ServiceAccountName: "test-sa"}
+			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
+				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
+					{Name: "k8s-version", KubernetesVersion: &v1alpha1.Version{Version: ""}},
+				}},
+			}}
+
+			paths, cleanup, err := subject.AsPaths(os.TempDir())
+			require.NoError(t, err)
+			t.Cleanup(cleanup)
+
+			require.Len(t, paths, 1)
+			assertFileContents(t, paths[0], "k8s-version: 0.20.0\n")
 		})
 	})
 }

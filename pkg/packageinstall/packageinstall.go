@@ -225,17 +225,6 @@ func (pi *PackageInstallCR) clusterVersionConstraintsSatisfied(pkg *datapkgingv1
 	return constraintsFunc(clusterVersion)
 }
 
-func dropVersionPreReleaseAndBuild(versionStr string) (semver.Version, error) {
-	v, err := semver.ParseTolerant(versionStr)
-	if err != nil {
-		return v, err
-	}
-	v.Pre = semver.PRVersion{}
-	v.Build = semver.BuildMeta{}
-
-	return v, nil
-}
-
 func (pi *PackageInstallCR) kcVersionConstraintsSatisfied(pkg *datapkgingv1alpha1.Package) bool {
 	if pkg.Spec.KappControllerVersionSelection == nil || pkg.Spec.KappControllerVersionSelection.Constraints == "" {
 		return true
@@ -248,11 +237,14 @@ func (pi *PackageInstallCR) kcVersionConstraintsSatisfied(pkg *datapkgingv1alpha
 		return true
 	}
 
-	v, err := dropVersionPreReleaseAndBuild(pi.controllerVersion)
+	v, err := semver.ParseTolerant(pi.controllerVersion)
 	if err != nil {
 		pi.log.Error(err, "Unable to parse kapp-controller version", "version string", pi.controllerVersion)
 		return false
 	}
+
+	v.Pre = semver.PRVersion{}
+	v.Build = semver.BuildMeta{}
 
 	constraints, _ := semver.ParseRange(pkg.Spec.KappControllerVersionSelection.Constraints) // ignore err because validation should have already caught it
 	return constraints(v)
@@ -305,19 +297,15 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 	vcc := []versions.ConstraintCallback{}
 
 	// we only need to populate the versionInfo we know that the packages have constraints that will require this info.
-	v := semver.Version{}
 	if requiresClusterVersion {
-		vi, err := pi.deployFactory.GetClusterVersion(pi.model.Spec.ServiceAccountName, pi.model.Spec.Cluster, &pi.model.ObjectMeta, pi.log)
+		v, err := pi.deployFactory.GetClusterVersion(pi.model.Spec.ServiceAccountName, pi.model.Spec.Cluster, deploy.GenericOpts{Name: pi.model.ObjectMeta.Name, Namespace: pi.model.ObjectMeta.Namespace}, pi.log)
 		if err != nil {
 			pi.log.Error(err, "Unable to retrieve cluster kubernetes version")
 			return datapkgingv1alpha1.Package{}, err
 		}
 
-		v, err = dropVersionPreReleaseAndBuild(vi.GitVersion)
-		if err != nil {
-			pi.log.Error(err, "Unable to parse cluster kubernetes version", "version string", vi.GitVersion)
-			return datapkgingv1alpha1.Package{}, err
-		}
+		v.Pre = semver.PRVersion{}
+		v.Build = semver.BuildMeta{}
 
 		k8sConstraint := func(pkgVer string) bool {
 			pkg := versionToPkg[pkgVer]

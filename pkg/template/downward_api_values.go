@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	semver "github.com/k14s/semver/v4"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/util/jsonpath"
@@ -17,8 +18,9 @@ import (
 // DownwardAPIValues produces multiple key-values based on the DownwardAPI config
 // queried against the object metadata
 type DownwardAPIValues struct {
-	items    []v1alpha1.AppTemplateValuesDownwardAPIItem
-	metadata PartialObjectMetadata
+	items             []v1alpha1.AppTemplateValuesDownwardAPIItem
+	metadata          PartialObjectMetadata
+	kubernetesVersion func() (semver.Version, error)
 }
 
 // AsYAMLs returns many key-values queried (using jsonpath) against an object metadata provided.
@@ -43,11 +45,20 @@ func (a DownwardAPIValues) AsYAMLs() ([][]byte, error) {
 				return nil, err
 			}
 		case item.KubernetesVersion != nil:
-			if item.KubernetesVersion.Version != "" {
+			if item.KubernetesVersion.Version == "" {
+				v, err := a.kubernetesVersion()
+				if err != nil {
+					return nil, err
+				}
+				keyValueContent, err = a.addKeyValueContent(item.Name, v.String())
+				if err != nil {
+					return nil, err
+				}
+			} else {
 				keyValueContent, err = a.addKeyValueContent(item.Name, item.KubernetesVersion.Version)
-			}
-			if err != nil {
-				return nil, err
+				if err != nil {
+					return nil, err
+				}
 			}
 		default:
 			return nil, fmt.Errorf("Invalid downward API item given")
