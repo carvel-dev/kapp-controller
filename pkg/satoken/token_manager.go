@@ -28,13 +28,25 @@ const (
 	maxJitter = 10 * time.Second
 )
 
-// NewManager returns a new token manager.
+var (
+	manCache map[clientset.Interface]map[string]*authenticationv1.TokenRequest
+)
+
+// NewManager returns a new token manager. It is not thread safe. It will re-use the same cache of tokens based on the coreClient passed in
 func NewManager(c clientset.Interface, log logr.Logger) *Manager {
+	if manCache == nil {
+		manCache = make(map[clientset.Interface]map[string]*authenticationv1.TokenRequest)
+	}
+	cache := manCache[c]
+	if cache == nil {
+		cache = make(map[string]*authenticationv1.TokenRequest)
+		manCache[c] = cache
+	}
 	m := &Manager{
 		getToken: func(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
 			return c.CoreV1().ServiceAccounts(namespace).CreateToken(context.TODO(), name, tr, metav1.CreateOptions{})
 		},
-		cache: make(map[string]*authenticationv1.TokenRequest),
+		cache: cache,
 		clock: clock.RealClock{},
 		log:   log,
 	}

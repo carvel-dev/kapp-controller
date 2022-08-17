@@ -26,6 +26,7 @@ type Factory struct {
 	serviceAccounts   *ServiceAccounts
 
 	cmdRunner exec.CmdRunner
+	log       logr.Logger
 }
 
 // KappConfiguration provides a way to inject shared kapp settings.
@@ -38,7 +39,7 @@ func NewFactory(coreClient kubernetes.Interface,
 	kappConfig KappConfiguration, cmdRunner exec.CmdRunner, log logr.Logger) Factory {
 
 	return Factory{coreClient, kappConfig,
-		NewKubeconfigSecrets(coreClient), NewServiceAccounts(coreClient, log), cmdRunner}
+		NewKubeconfigSecrets(coreClient), NewServiceAccounts(coreClient, log), cmdRunner, log}
 }
 
 // NewKapp configures and returns a deployer of type Kapp
@@ -54,7 +55,7 @@ func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
 		f.globalKappDeployRawOpts(), cancelCh, f.cmdRunner), nil
 }
 
-// processOpts takes generic opts and a ServiceAccount Name, and returns a populated kubeconfig that can connect to a cluster.
+// ProcessOpts takes generic opts and a ServiceAccount Name, and returns a populated kubeconfig that can connect to a cluster.
 // if the saName is empty then you'll connect to a cluster via the clusterOpts inside the genericOpts, otherwise you'll use the specified SA.
 func (f Factory) processOpts(saName string, clusterOpts *v1alpha1.AppCluster, genericOpts GenericOpts) (ProcessedGenericOpts, error) {
 	var err error
@@ -62,13 +63,13 @@ func (f Factory) processOpts(saName string, clusterOpts *v1alpha1.AppCluster, ge
 
 	switch {
 	case len(saName) > 0:
-		processedGenericOpts, err = f.serviceAccounts.Find(genericOpts, saName)
+		processedGenericOpts, err = NewServiceAccounts(f.coreClient, f.log).Find(genericOpts, saName)
 		if err != nil {
 			return ProcessedGenericOpts{}, err
 		}
 
 	case clusterOpts != nil:
-		processedGenericOpts, err = f.kubeconfigSecrets.Find(genericOpts, clusterOpts)
+		processedGenericOpts, err = NewKubeconfigSecrets(f.coreClient).Find(genericOpts, clusterOpts)
 		if err != nil {
 			return ProcessedGenericOpts{}, err
 		}
@@ -107,10 +108,10 @@ func (f Factory) globalKappDeployRawOpts() []string {
 }
 
 // GetClusterVersion returns the kubernetes API version for the cluster which has been supplied to kapp-controller via a kubeconfig
-func (f Factory) GetClusterVersion(saName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta, log logr.Logger) (*version.Info, error) {
+func (f Factory) GetClusterVersion(saName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta, log logr.Logger, coreClient kubernetes.Interface) (*version.Info, error) {
 	switch {
 	case len(saName) > 0:
-		return f.coreClient.Discovery().ServerVersion()
+		return coreClient.Discovery().ServerVersion()
 	case specCluster != nil:
 		processedGenericOpts, err := f.processOpts(saName, specCluster, GenericOpts{Name: objMeta.Name, Namespace: objMeta.Namespace})
 		if err != nil {
