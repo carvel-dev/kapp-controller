@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660676346830,
+  "lastUpdate": 1660771468188,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -4695,6 +4695,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6492832543,
             "unit": "ns/op\t         4.281 DeleteSeconds\t         2.158 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "55523204+rohitagg2020@users.noreply.github.com",
+            "name": "rohitagg2020",
+            "username": "rohitagg2020"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "73543413caf5f532fb3dd4d13b6d0658df1984c4",
+          "message": "Kctrl pkg init release text rephrase (#830)\n\n* Rephrasing the text.\r\n\r\nRephrasing the text.\r\n\r\n* Fixing the test case\r\n\r\nFixing the test case\r\n\r\n* Fixing the test case\r\n\r\n* Fixing package Repo Test case\r\n\r\nFixing package Repo Test case\r\n\r\n* Removed Step\r\n\r\nRemoved Step\r\n\r\n* Update package_authoring_e2e_test.go\r\n\r\n* Increasing the sleep\r\n\r\n* Removing extra line from text\r\n\r\nRemoving extra line from text\r\n\r\n* Removing fmt\r\n\r\n* Printing the interactive text in test\r\n\r\nPrinting the interactive text in test\r\n\r\n* Update package_authoring_e2e_test.go\r\n\r\n* Update package_authoring_e2e_test.go\r\n\r\n* Update package_authoring_e2e_test.go",
+          "timestamp": "2022-08-18T02:44:41+05:30",
+          "tree_id": "d2a1eb4db930e02ece13400fea52ae3d8a3cb78c",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/73543413caf5f532fb3dd4d13b6d0658df1984c4"
+        },
+        "date": 1660771467394,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36509278170,
+            "unit": "ns/op\t        18.97 DeleteSeconds\t        17.50 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9490914197,
+            "unit": "ns/op\t         5.289 DeleteSeconds\t         4.159 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6446979442,
+            "unit": "ns/op\t         4.253 DeleteSeconds\t         2.138 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
