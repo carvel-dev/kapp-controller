@@ -35,9 +35,9 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 		promptOutput := newPromptOutput(t)
 
 		go func() {
-			promptOutput.WaitFor("The host must be authorized to push images to a registry")
+			promptOutput.WaitFor("Enter the package repository name")
 			promptOutput.Write("testpackagerepo.corp.dev")
-			promptOutput.WaitFor("The bundle created needs to be pushed to an OCI registry")
+			promptOutput.WaitFor("Enter the registry url")
 			promptOutput.Write(env.Image)
 		}()
 
@@ -48,7 +48,7 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 
 		kappCtrl.RunWithOpts([]string{"pkg", "repo", "release", "--tty=true", "--chdir", workingDir},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
-				StdoutWriter: promptOutput.OutputWriter(), Interactive: true})
+				StdoutWriter: promptOutput.BufferedWriter(), Interactive: true})
 
 		keysToBeIgnored := []string{"creationTimestamp:", "image"}
 		verifyPackageRepoBuild(t, keysToBeIgnored)
