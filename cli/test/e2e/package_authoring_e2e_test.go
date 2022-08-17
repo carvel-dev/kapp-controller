@@ -310,6 +310,6 @@ func (p promptOutput) Write(val string) {
 }
 
 func (p promptOutput) WaitFor(text string) {
-	// Adding hardcore wait for now
+	// Adding hardcore wait for now. 
 	time.Sleep(10*time.Second)
 }
