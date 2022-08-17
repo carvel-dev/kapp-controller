@@ -41,7 +41,7 @@ func (f *FetchStep) PreInteract() error { return nil }
 
 func (f *FetchStep) Interact() error {
 	f.ui.PrintHeaderText("Content (Step 2/3)")
-	f.ui.PrintInformationalText("We need to fetch the manifest which defines how the package would be deployed in a K8s cluster. This manifest can be in the form of a yaml file used with `kubectl apply ...` or it could be a helm chart used with `helm install ...`. They can be available in any of the following locations. Please select one among them")
+	f.ui.PrintInformationalText("Please provide the location from where your Kubernetes manifests or Helm chart can be fetched. This will be bundled as a part of the package.")
 
 	vendirConfig, err := ReadVendirConfig()
 	if err != nil {
@@ -54,7 +54,7 @@ func (f *FetchStep) Interact() error {
 	previousFetchOptionIndex := getPreviousFetchOptionIndex(options, previousFetchOptionSelected)
 	defaultFetchOptionIndex := previousFetchOptionIndex
 	choiceOpts := ui.ChoiceOpts{
-		Label:   "Enter configuration source",
+		Label:   "Enter source",
 		Default: defaultFetchOptionIndex,
 		Choices: options,
 	}

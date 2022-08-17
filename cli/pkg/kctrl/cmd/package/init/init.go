@@ -67,10 +67,7 @@ func (o *InitOptions) Run() error {
 
 	pkg, pkgMetadata, pkgInstall, err := o.newOrExistingPackageResources()
 
-	o.ui.PrintHeaderText("Prerequisites")
-	o.ui.PrintInformationalText(`Welcome! Before we start, please ensure the following pre-requisites are met:
-- The Carvel suite of tools are installed and you are familiar with them: ytt, imgpkg, vendir, and kbld.
-`)
+	o.ui.PrintInformationalText("\nWelcome! Before we start, do install the latest Carvel suite of tools, specifically ytt, imgpkg, vendir and kbld as these will be used by kctrl.\n")
 
 	o.ui.PrintHeaderText("\nBasic Information (Step 1/3)")
 
@@ -138,11 +135,11 @@ func (o *InitOptions) Run() error {
 
 	o.ui.PrintInformationalText("Successfully updated package-build.yml\n")
 	o.ui.PrintInformationalText("Successfully updated package-resources.yml\n")
-	o.ui.PrintHeaderText("\n**Next steps**")
+	o.ui.PrintHeaderText("\nNext steps")
 	o.ui.PrintInformationalText(`Created files can be consumed in following ways:
-1. Optionally, use 'kctrl dev deploy' to iterate on the package and deploy locally.
+1. Optionally, use 'kctrl dev' to deploy and test the package.
 2. Use 'kctrl pkg release' to release the package.
-3. Use 'kctrl pkg release --repo-output repo/' to release and add package to package repository.
+3. Use 'kctrl pkg release --repo-output repo/' to release the package and add it to the package repository directory.
 `)
 	return nil
 }
@@ -216,8 +213,8 @@ func (o *InitOptions) newOrExistingPackageResources() (*v1alpha1.Package,
 }
 
 func (o *InitOptions) readPackageRefName(packageMetadataName string) (string, error) {
-	o.ui.PrintInformationalText(`A package reference name must be a valid DNS subdomain name (https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names)
- - at least three segments separated by a '.', no trailing '.' e.g. samplepackage.corp.com`)
+	o.ui.PrintInformationalText(`A package reference name must be at least three '.' separated segments,
+e.g. samplepackage.corp.com`)
 
 	defaultPkgRefName := "samplepackage.corp.com"
 	if len(packageMetadataName) > 0 {
