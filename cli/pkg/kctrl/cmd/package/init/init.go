@@ -69,7 +69,7 @@ func (o *InitOptions) Run() error {
 
 	o.ui.PrintInformationalText("\nWelcome! Before we start, do install the latest Carvel suite of tools, specifically ytt, imgpkg, vendir and kbld as these will be used by kctrl.\n")
 
-	o.ui.PrintHeaderText("\nBasic Information (Step 1/3)")
+	o.ui.PrintHeaderText("\nBasic Information")
 
 	pkgRefName, err := o.readPackageRefName(pkgMetadata.Name)
 	if err != nil {
@@ -114,7 +114,7 @@ func (o *InitOptions) Run() error {
 
 	// TODO: @praveenrewar Remove the header text as we are only saving data to files and doesn't require user input
 	// hence shouldn't be called as Step 3/3
-	o.ui.PrintHeaderText("\nOutput (Step 3/3)")
+	o.ui.PrintHeaderText("\nOutput")
 
 	pkgBuild.SetObjectMeta(&metav1.ObjectMeta{
 		Name: pkg.Spec.RefName,

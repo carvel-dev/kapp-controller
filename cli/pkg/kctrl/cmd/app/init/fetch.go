@@ -40,7 +40,7 @@ func NewFetchStep(ui cmdcore.AuthoringUI, build Build, isAppCommandRunExplicitly
 func (f *FetchStep) PreInteract() error { return nil }
 
 func (f *FetchStep) Interact() error {
-	f.ui.PrintHeaderText("Content (Step 2/3)")
+	f.ui.PrintHeaderText("Content")
 	f.ui.PrintInformationalText("Please provide the location from where your Kubernetes manifests or Helm chart can be fetched. This will be bundled as a part of the package.")
 
 	vendirConfig, err := ReadVendirConfig()
