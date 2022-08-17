@@ -2,12 +2,14 @@ package e2e
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -306,12 +308,14 @@ func (p promptOutput) StringWriter() io.Writer { return p.stringWriter }
 func (p promptOutput) StringReader() io.Reader { return p.stringReader }
 
 func (p promptOutput) Write(val string) {
+	time.Sleep(2 * time.Second)
 	p.stringWriter.Write([]byte(val + "\n"))
 }
 
 func (p promptOutput) WaitFor(text string) {
 	scanner := bufio.NewScanner(p.outputReader)
 	for scanner.Scan() {
+		fmt.Println(scanner.Text())
 		// Cannot easily wait for prompt as it's not NL terminated
 		if strings.Contains(scanner.Text(), text) {
 			break
