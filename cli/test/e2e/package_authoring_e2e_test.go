@@ -308,7 +308,7 @@ func (p promptOutput) StringWriter() io.Writer { return p.stringWriter }
 func (p promptOutput) StringReader() io.Reader { return p.stringReader }
 
 func (p promptOutput) Write(val string) {
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
 	p.stringWriter.Write([]byte(val + "\n"))
 }
 
