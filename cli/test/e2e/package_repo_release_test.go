@@ -35,9 +35,9 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 		promptOutput := newPromptOutput(t)
 
 		go func() {
-			promptOutput.WaitFor("A package repository name is the name with which it will be referenced")
+			promptOutput.WaitFor("The host must be authorized to push images to a registry")
 			promptOutput.Write("testpackagerepo.corp.dev")
-			promptOutput.WaitFor("A package repository bundle is an imgpkg bundle that holds PackageMetadata")
+			promptOutput.WaitFor("The bundle created needs to be pushed to an OCI registry")
 			promptOutput.Write(env.Image)
 		}()
 

@@ -60,6 +60,7 @@ func (g *GitStep) initializeGit() error {
 }
 
 func (g *GitStep) configureGitURL() error {
+	g.ui.PrintInformationalText("Both https and ssh URL's are supported, e.g. https://github.com/vmware-tanzu/carvel-kapp-controller")
 	gitContent := g.vendirConfig.Directories[0].Contents[0].Git
 	defaultURL := gitContent.URL
 	textOpts := ui.TextOpts{
@@ -77,7 +78,7 @@ func (g *GitStep) configureGitURL() error {
 }
 
 func (g *GitStep) configureGitRef() error {
-	g.ui.PrintInformationalText("A git reference can be any branch, tag, commit; origin is the name of the remote (required)")
+	g.ui.PrintInformationalText("A git reference can be any branch, tag, commit; origin is the name of the remote.")
 	gitContent := g.vendirConfig.Directories[0].Contents[0].Git
 	defaultRef := gitContent.Ref
 	if defaultRef == "" {

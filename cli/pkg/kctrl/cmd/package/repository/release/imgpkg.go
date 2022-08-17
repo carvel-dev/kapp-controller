@@ -53,7 +53,7 @@ func (r ImgpkgRunner) Run() (string, error) {
 
 	r.UI.PrintInformationalText("\nAn imgpkg bundle consists of all required YAML configuration bundled into an OCI image " +
 		"that can be pushed to an image registry and consumed by the package.\n")
-	r.UI.PrintHeaderText("Pushing imgpkg bundle (Step 3/3)")
+	r.UI.PrintHeaderText("Pushing imgpkg bundle")
 
 	imgpkgCmdRunner := exec.NewPlainCmdRunner()
 	cmd := goexec.Command("imgpkg", "push", "-b", r.BundlePath, "-f", tmpDir, "--tty=true")

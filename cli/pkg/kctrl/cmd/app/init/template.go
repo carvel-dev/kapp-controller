@@ -104,9 +104,9 @@ func (t *TemplateStep) Interact() error {
 }
 
 func (t *TemplateStep) getYttPathsForLocalDirectory(defaultIncludedPath string) ([]string, error) {
-	t.ui.PrintInformationalText("We need to include files/directory which should be part of this package. Multiple values can be included using a comma separator.")
+	t.ui.PrintInformationalText("We need to include files/ directories which contain Kubernetes manifests. Multiple values can be included using a comma separator.")
 	textOpts := ui.TextOpts{
-		Label:        "Enter the paths which need to be included as part of this package",
+		Label:        "Enter the paths which contain Kubernetes manifests",
 		Default:      defaultIncludedPath,
 		ValidateFunc: nil,
 	}

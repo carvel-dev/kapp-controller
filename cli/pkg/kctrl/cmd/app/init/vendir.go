@@ -104,14 +104,14 @@ func (v *VendirStep) initializeVendirDirectorySection() []vendirconf.Directory {
 }
 
 func (v *VendirStep) getIncludedPaths() ([]string, error) {
-	v.ui.PrintInformationalText("We need exact manifest files from the above provided repository which should be included. Multiple files can be included using a comma separator. If you want to include all the files, enter *.")
+	v.ui.PrintInformationalText("We need to know which files contain Kubernetes manifests. Multiple files can be included using a comma separator. If you want to include all the files, enter *.")
 	includedPaths := v.config.Directories[0].Contents[0].IncludePaths
 	defaultIncludedPath := strings.Join(includedPaths, ",")
 	if len(includedPaths) == 0 {
 		defaultIncludedPath = IncludeAllFiles
 	}
 	textOpts := ui.TextOpts{
-		Label:        "Enter the paths which need to be included as part of this package",
+		Label:        "Enter the paths which contain Kubernetes manifests",
 		Default:      defaultIncludedPath,
 		ValidateFunc: nil,
 	}
@@ -128,7 +128,7 @@ func (v *VendirStep) getIncludedPaths() ([]string, error) {
 }
 
 func (v *VendirStep) PostInteract() error {
-	v.ui.PrintInformationalText("We will use vendir to fetch the data from source to local directory. Vendir allows to declaratively state what should be in a directory and sync data sources into it. All the information entered above has been persisted into vendir.yml file.")
+	v.ui.PrintInformationalText("We will use vendir to fetch the data from the source to the local directory. Vendir allows us to declaratively state what should be in a directory and sync data sources into it. All the information entered above has been persisted into a vendir.yml file.")
 	err := v.printVendirFile()
 	if err != nil {
 		return err
@@ -167,7 +167,7 @@ func (v *VendirStep) printFile(filePath string) error {
 
 // TODO vendir sync failure. Reproduce: In case of 429 from github, we dont show errors today.
 func (v *VendirStep) runVendirSync() error {
-	v.ui.PrintInformationalText("\nNext step is to run `vendir sync` to fetch the data from source to local directory. Vendir will sync the data into the upstream folder.")
+	v.ui.PrintInformationalText("\nNext step is to run `vendir sync` to fetch the data from the source to the local directory. Vendir will sync the data into the upstream folder.")
 	v.ui.PrintActionableText("Running vendir sync")
 	v.ui.PrintCmdExecutionText("vendir sync -f vendir.yml")
 	var stdoutBs, stderrBs bytes.Buffer
