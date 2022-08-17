@@ -169,11 +169,11 @@ spec:
 		// TODO: Figure out a way to wait for prompts properly as the go-interact library used
 		// for prompt output doesn't print in non tty environments
 		go func() {
-			promptOutput.WaitFor("A package reference name must be a valid DNS subdomain name")
+			promptOutput.WaitFor("A package reference name must be")
 			promptOutput.Write("testpackage.corp.dev")
-			promptOutput.WaitFor("need to fetch the manifest which defines")
+			promptOutput.WaitFor("Please provide the location from where your Kubernetes manifests")
 			promptOutput.Write("3")
-			promptOutput.WaitFor("Enter configuration source")
+			promptOutput.WaitFor("Enter source")
 			promptOutput.Write("https://mongodb.github.io/helm-charts")
 			promptOutput.WaitFor("Enter helm chart repository URL")
 			promptOutput.Write("enterprise-operator")
