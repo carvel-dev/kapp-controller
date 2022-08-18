@@ -60,7 +60,7 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 
 func (o *ReleaseOptions) Run() error {
 	if o.pkgVersion == "" {
-		o.pkgVersion = fmt.Sprintf("build-%d", time.Now().Unix())
+		o.pkgVersion = fmt.Sprintf(defaultVersion, time.Now().Unix())
 	}
 
 	if o.chdir != "" {
@@ -99,9 +99,13 @@ func (o *ReleaseOptions) Run() error {
 		}
 	}
 
+	buildAppSpec := pkgBuild.GetAppSpec()
+	if buildAppSpec == nil {
+		return fmt.Errorf("Releasing package: `kctrl pkg init` was not run successfully. (hint: re-run the `init` command)")
+	}
 	builderOpts := cmdapprelease.AppSpecBuilderOpts{
-		BuildTemplate: pkgBuild.GetAppSpec().Template,
-		BuildDeploy:   pkgBuild.GetAppSpec().Deploy,
+		BuildTemplate: buildAppSpec.Template,
+		BuildDeploy:   buildAppSpec.Deploy,
 		BuildExport:   *pkgBuild.GetExport(),
 		Debug:         o.debug,
 	}
