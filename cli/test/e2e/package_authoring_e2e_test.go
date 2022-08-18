@@ -183,7 +183,7 @@ spec:
 
 		kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
-				StdoutWriter: promptOutput.BufferedWriter(), Interactive: true})
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
 
 		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:"}
 
@@ -226,7 +226,7 @@ spec:
 
 		kappCtrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
-				StdoutWriter: promptOutput.BufferedWriter(), Interactive: true})
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
 
 		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image"}
 
@@ -282,10 +282,7 @@ type promptOutput struct {
 	t            *testing.T
 	stringWriter io.Writer
 	stringReader io.Reader
-	outputWriter io.Writer
-	outputReader io.Reader
 
-	bufferedWriter io.Writer
 	bufferedStdout *bytes.Buffer
 }
 
@@ -293,31 +290,25 @@ func newPromptOutput(t *testing.T) promptOutput {
 	stringReader, stringWriter, err := os.Pipe()
 	require.NoError(t, err)
 
-	outputReader, outputWriter, err := os.Pipe()
-	require.NoError(t, err)
-
 	bufferedStdout := bytes.Buffer{}
-	bufferedWriter := io.MultiWriter(outputWriter, &bufferedStdout)
 
-	return promptOutput{t, stringWriter, stringReader, outputWriter,
-		outputReader, bufferedWriter, &bufferedStdout}
+	return promptOutput{t, stringWriter, stringReader, &bufferedStdout}
 }
 
 func (p promptOutput) WritePkgRefName() {
 	p.stringWriter.Write([]byte("afc.def.ghi\n"))
 }
 
-func (p promptOutput) OutputWriter() io.Writer   { return p.outputWriter }
-func (p promptOutput) OutputReader() io.Reader   { return p.outputReader }
-func (p promptOutput) StringWriter() io.Writer   { return p.stringWriter }
-func (p promptOutput) StringReader() io.Reader   { return p.stringReader }
-func (p promptOutput) BufferedWriter() io.Writer { return p.bufferedWriter }
+func (p promptOutput) StringWriter() io.Writer         { return p.stringWriter }
+func (p promptOutput) StringReader() io.Reader         { return p.stringReader }
+func (p promptOutput) BufferedOutputWriter() io.Writer { return p.bufferedStdout }
 
 func (p promptOutput) Write(val string) {
 	p.stringWriter.Write([]byte(val + "\n"))
 }
 
 func (p promptOutput) WaitFor(text string) {
+	attempts := 0
 	// Poll buffered output till desired string is found
 	for {
 		found := strings.Contains(p.bufferedStdout.String(), text)
@@ -325,12 +316,18 @@ func (p promptOutput) WaitFor(text string) {
 		if os.Getenv("KCTRL_DEBUG_BUFERED_OUTPUT_TESTS") == "true" {
 			fmt.Printf("\n==> \t Buffered Output (Waiting for '%s' | found=%t)\n", text, found)
 			fmt.Println(p.bufferedStdout)
-			fmt.Printf("=\t=\t=\t=\t=\t=\t=\t=\t=\t=\n\n")
+			fmt.Printf("--------------------------------------\n\n")
 		}
 
 		// Stop waiting if desired string is found
 		if found {
 			break
+		}
+		attempts++
+
+		if attempts > 60 {
+			fmt.Printf("Timed out waiting for text '%s'", text)
+			p.t.Fail()
 		}
 		// Poll interval
 		time.Sleep(1 * time.Second)

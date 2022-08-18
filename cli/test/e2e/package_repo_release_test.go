@@ -48,7 +48,7 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 
 		kappCtrl.RunWithOpts([]string{"pkg", "repo", "release", "--tty=true", "--chdir", workingDir},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
-				StdoutWriter: promptOutput.BufferedWriter(), Interactive: true})
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
 
 		keysToBeIgnored := []string{"creationTimestamp:", "image"}
 		verifyPackageRepoBuild(t, keysToBeIgnored)
