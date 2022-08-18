@@ -37,5 +37,5 @@ func (f *CRDAppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *CRDApp 
 	}
 	fetchFactory := fetch.NewFactory(f.CoreClient, vendirOpts, f.CmdRunner)
 	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, f.KbldAllowBuild, f.CmdRunner)
-	return NewCRDApp(app, log, f.AppMetrics, f.AppClient, fetchFactory, templateFactory, f.DeployFactory)
+	return NewCRDApp(app, log, f.AppMetrics, f.AppClient, fetchFactory, templateFactory, f.DeployFactory, f.CoreClient)
 }

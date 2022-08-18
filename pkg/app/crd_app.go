@@ -11,12 +11,14 @@ import (
 	"github.com/go-logr/logr"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterstuff"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -31,16 +33,18 @@ type CRDApp struct {
 // NewCRDApp creates new CRD app
 func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger, appMetrics *metrics.AppMetrics,
 	appClient kcclient.Interface, fetchFactory fetch.Factory,
-	templateFactory template.Factory, deployFactory deploy.Factory) *CRDApp {
+	templateFactory template.Factory, deployFactory deploy.Factory, coreClient kubernetes.Interface) *CRDApp {
 
 	crdApp := &CRDApp{appModel: appModel, log: log, appMetrics: appMetrics, appClient: appClient}
 
+	//func GetClusterVersionLater (saName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta, log logr.Logger, coreClient kubernetes.Interface) GetsVersion {
+	clusterVersionGetter := clusterstuff.GetClusterVersionLater(appModel.Spec.ServiceAccountName, appModel.Spec.Cluster, &appModel.ObjectMeta, log, coreClient)
 	crdApp.app = NewApp(*appModel, Hooks{
 		BlockDeletion:   crdApp.blockDeletion,
 		UnblockDeletion: crdApp.unblockDeletion,
 		UpdateStatus:    crdApp.updateStatus,
 		WatchChanges:    crdApp.watchChanges,
-	}, fetchFactory, templateFactory, deployFactory, log, appMetrics)
+	}, fetchFactory, templateFactory, deployFactory, log, appMetrics, clusterVersionGetter)
 
 	return crdApp
 }

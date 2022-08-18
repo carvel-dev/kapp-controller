@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterstuff"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/util/jsonpath"
 )
@@ -17,8 +18,9 @@ import (
 // DownwardAPIValues produces multiple key-values based on the DownwardAPI config
 // queried against the object metadata
 type DownwardAPIValues struct {
-	items    []v1alpha1.AppTemplateValuesDownwardAPIItem
-	metadata PartialObjectMetadata
+	items            []v1alpha1.AppTemplateValuesDownwardAPIItem
+	metadata         PartialObjectMetadata
+	k8sversionGetter clusterstuff.GetsVersion
 }
 
 // AsYAMLs returns many key-values queried (using jsonpath) against an object metadata provided.
@@ -41,6 +43,13 @@ func (a DownwardAPIValues) AsYAMLs() ([][]byte, error) {
 		}
 		dataValues = append(dataValues, keyValueContent)
 	}
+	// temporary, just focused on wiring through the k8s version. TODO includes dealing with variable names, conditional call, etc.
+	ver, err := a.k8sversionGetter()
+	if err != nil {
+		panic("oh god oh god oh god oh god")
+	}
+	val, _ := yaml.Marshal(map[string]string{"kubernetesVersion": ver.GitVersion})
+	dataValues = append(dataValues, val)
 
 	return dataValues, nil
 }

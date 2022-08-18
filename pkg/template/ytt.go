@@ -12,6 +12,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterstuff"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 	"k8s.io/client-go/kubernetes"
 )
@@ -22,15 +23,16 @@ type Ytt struct {
 	coreClient   kubernetes.Interface
 	fetchFactory fetch.Factory
 	cmdRunner    exec.CmdRunner
+	clusterVersionGetter clusterstuff.GetsVersion
 }
 
 var _ Template = &Ytt{}
 
 // NewYtt returns ytt template.
 func NewYtt(opts v1alpha1.AppTemplateYtt, appContext AppContext,
-	coreClient kubernetes.Interface, fetchFactory fetch.Factory, cmdRunner exec.CmdRunner) *Ytt {
+	coreClient kubernetes.Interface, fetchFactory fetch.Factory, cmdRunner exec.CmdRunner, gettygetter clusterstuff.GetsVersion) *Ytt {
 
-	return &Ytt{opts, appContext, coreClient, fetchFactory, cmdRunner}
+	return &Ytt{opts, appContext, coreClient, fetchFactory, cmdRunner, gettygetter}
 }
 
 func (t *Ytt) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {

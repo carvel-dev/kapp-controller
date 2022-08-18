@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterstuff"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
@@ -28,9 +29,10 @@ type App struct {
 	appPrev v1alpha1.App
 	hooks   Hooks
 
-	fetchFactory    fetch.Factory
-	templateFactory template.Factory
-	deployFactory   deploy.Factory
+	fetchFactory         fetch.Factory
+	templateFactory      template.Factory
+	deployFactory        deploy.Factory
+	clusterVersionGetter clusterstuff.GetsVersion
 
 	log        logr.Logger
 	appMetrics *metrics.AppMetrics
@@ -42,11 +44,13 @@ type App struct {
 
 func NewApp(app v1alpha1.App, hooks Hooks,
 	fetchFactory fetch.Factory, templateFactory template.Factory,
-	deployFactory deploy.Factory, log logr.Logger, appMetrics *metrics.AppMetrics) *App {
+	deployFactory deploy.Factory, log logr.Logger, appMetrics *metrics.AppMetrics, clusterVersionGetter clusterstuff.GetsVersion) *App {
+
+
 
 	return &App{app: app, appPrev: *(app.DeepCopy()), hooks: hooks,
 		fetchFactory: fetchFactory, templateFactory: templateFactory,
-		deployFactory: deployFactory, log: log, appMetrics: appMetrics}
+		deployFactory: deployFactory, log: log, appMetrics: appMetrics, clusterVersionGetter: clusterVersionGetter}
 }
 
 func (a *App) Name() string      { return a.app.Name }
