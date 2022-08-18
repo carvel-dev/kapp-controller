@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660771468188,
+  "lastUpdate": 1660824440198,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -4737,6 +4737,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6446979442,
             "unit": "ns/op\t         4.253 DeleteSeconds\t         2.138 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ae4bff9c3a5f589040eab71fd12edfd35b846133",
+          "message": "Ensure that default version is valid semver. Add error check in case of malformed package-build (#834)",
+          "timestamp": "2022-08-18T17:24:55+05:30",
+          "tree_id": "f240a0d2b04881f144f541a6acf6394106dfcc97",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/ae4bff9c3a5f589040eab71fd12edfd35b846133"
+        },
+        "date": 1660824438792,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37013891562,
+            "unit": "ns/op\t        19.29 DeleteSeconds\t        17.66 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9755719509,
+            "unit": "ns/op\t         5.498 DeleteSeconds\t         4.198 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6621318464,
+            "unit": "ns/op\t         4.361 DeleteSeconds\t         2.180 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
