@@ -31,13 +31,13 @@ func (e runError) ExitCode() int { return e.exitCode }
 func (e runError) Error() string { return e.message }
 
 // Run makes a CmdExec.Run RPC call. kapp command run locally though.
-func (r CmdExecClient) Run(cmd *goexec.Cmd) error {
+func (r CmdExecClient) Run(cmd *goexec.Cmd, opts exec.RunOpts) error {
 	// TODO is there better way to "undo" path resolution done by exec.Command
 	cmdName := filepath.Base(cmd.Path)
 	args := cmd.Args[1:]
 
 	if cmdName == "kapp" {
-		return r.local.Run(cmd)
+		return r.local.Run(cmd, opts)
 	}
 
 	input := CmdInput{
@@ -45,6 +45,8 @@ func (r CmdExecClient) Run(cmd *goexec.Cmd) error {
 		Args:    args,
 		Env:     cmd.Env,
 		Dir:     cmd.Dir,
+
+		VisiblePaths: opts.VisiblePaths,
 	}
 
 	if cmd.Stdin != nil {
@@ -76,11 +78,11 @@ func (r CmdExecClient) Run(cmd *goexec.Cmd) error {
 }
 
 // RunWithCancel is not supported except for kapp which runs locally.
-func (r CmdExecClient) RunWithCancel(cmd *goexec.Cmd, cancelCh chan struct{}) error {
+func (r CmdExecClient) RunWithCancel(cmd *goexec.Cmd, cancelCh chan struct{}, opts exec.RunOpts) error {
 	cmdName := filepath.Base(cmd.Path)
 
 	if cmdName == "kapp" {
-		return r.local.RunWithCancel(cmd, cancelCh)
+		return r.local.RunWithCancel(cmd, cancelCh, opts)
 	}
 
 	panic("Internal inconsistency: RunWithCancel not supported")

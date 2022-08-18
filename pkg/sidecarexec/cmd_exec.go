@@ -7,7 +7,9 @@ import (
 	"bytes"
 	"fmt"
 	goexec "os/exec"
+	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
 
@@ -18,6 +20,8 @@ type CmdInput struct {
 	Stdin   []byte
 	Env     []string
 	Dir     string
+
+	VisiblePaths []string
 }
 
 // CmdOutput describes an command execution result.
@@ -30,8 +34,9 @@ type CmdOutput struct {
 
 // CmdExec provides RPC interface for command execution.
 type CmdExec struct {
-	local           exec.CmdRunner
+	cmdRunner       exec.CmdRunner
 	allowedCmdNames map[string]struct{}
+	log             logr.Logger
 }
 
 // Run executes a command (out of a set of allowed ones).
@@ -39,6 +44,10 @@ func (r CmdExec) Run(input CmdInput, output *CmdOutput) error {
 	if _, found := r.allowedCmdNames[input.Command]; !found {
 		return fmt.Errorf("Command '%s' is not allowed", input.Command)
 	}
+
+	t1 := time.Now()
+	r.log.Info("Start command", "cmd", input.Command)
+	defer func() { r.log.Info("Finish command", "cmd", input.Command, "dur", time.Now().Sub(t1).String()) }()
 
 	cmd := goexec.Command(input.Command, input.Args...)
 
@@ -56,7 +65,7 @@ func (r CmdExec) Run(input CmdInput, output *CmdOutput) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	err := r.local.Run(cmd)
+	err := r.cmdRunner.Run(cmd, exec.RunOpts{VisiblePaths: input.VisiblePaths})
 	if err != nil {
 		output.Error = err.Error()
 		output.ExitCode = -1

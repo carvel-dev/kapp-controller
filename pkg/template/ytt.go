@@ -42,6 +42,7 @@ func (t *Ytt) TemplateStream(input io.Reader, dirPath string) exec.CmdRunResult 
 }
 
 func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
+	visiblePaths := []string{dirPath}
 	args := t.addArgs([]string{})
 
 	args, err := t.addPaths(dirPath, input, args)
@@ -51,6 +52,7 @@ func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
 
 	args, inlineDir, err := t.addInlinePaths(args)
 	if inlineDir != nil {
+		visiblePaths = append(visiblePaths, inlineDir.Path())
 		defer inlineDir.Remove()
 	}
 	if err != nil {
@@ -62,12 +64,13 @@ func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	{ // Add values files
 		vals := Values{t.opts.ValuesFrom, t.appContext, t.coreClient}
 
-		paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
+		paths, valuesDir, err := vals.AsPaths(dirPath)
 		if err != nil {
 			return exec.NewCmdRunResultWithErr(err)
 		}
 
-		defer valuesCleanUpFunc()
+		defer valuesDir.Remove()
+		visiblePaths = append(visiblePaths, valuesDir.Path())
 
 		for _, path := range paths {
 			args = append(args, []string{"--data-values-file", path}...)
@@ -81,7 +84,7 @@ func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
-	err = t.cmdRunner.Run(cmd)
+	err = t.cmdRunner.Run(cmd, exec.RunOpts{VisiblePaths: visiblePaths})
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),

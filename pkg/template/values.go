@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"sort"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -22,37 +24,36 @@ type Values struct {
 	coreClient kubernetes.Interface
 }
 
-func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
-	var valuesDirs []*memdir.TmpDir
+// AsPaths returns set of paths that store values, and a single
+// temp directory that acts as a shared parent (used for cleanup of all values).
+func (t Values) AsPaths(dirPath string) ([]string, *memdir.TmpDir, error) {
+	rootDir := memdir.NewTmpDir("template-values")
 
-	cleanUpFunc := func() {
-		for _, valDir := range valuesDirs {
-			_ = valDir.Remove()
-		}
+	err := rootDir.Create()
+	if err != nil {
+		return nil, nil, err
 	}
 
 	var allPaths []string
 
-	for _, source := range t.ValuesFrom {
+	for idx, source := range t.ValuesFrom {
 		var paths []string
 		var err error
 
-		valuesDir := memdir.NewTmpDir("template-values")
+		dstPath := filepath.Join(rootDir.Path(), fmt.Sprintf("%d", idx))
 
-		err = valuesDir.Create()
+		err = os.Mkdir(dstPath, 0700)
 		if err != nil {
-			cleanUpFunc()
-			return nil, nil, err
+			rootDir.Remove()
+			return nil, nil, fmt.Errorf("Creating subdir: %s", err)
 		}
-
-		valuesDirs = append(valuesDirs, valuesDir)
 
 		switch {
 		case source.SecretRef != nil:
-			paths, err = t.writeFromSecret(valuesDir.Path(), *source.SecretRef)
+			paths, err = t.writeFromSecret(dstPath, *source.SecretRef)
 
 		case source.ConfigMapRef != nil:
-			paths, err = t.writeFromConfigMap(valuesDir.Path(), *source.ConfigMapRef)
+			paths, err = t.writeFromConfigMap(dstPath, *source.ConfigMapRef)
 
 		case len(source.Path) > 0:
 			if source.Path == stdinPath {
@@ -69,20 +70,20 @@ func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
 				items:    source.DownwardAPI.Items,
 				metadata: t.appContext.Metadata,
 			}
-			paths, err = t.writeFromDownwardAPI(valuesDir.Path(), downwardAPIValues)
+			paths, err = t.writeFromDownwardAPI(dstPath, downwardAPIValues)
 
 		default:
 			err = fmt.Errorf("Expected either secretRef, configMapRef or path as a source")
 		}
 		if err != nil {
-			cleanUpFunc()
+			rootDir.Remove()
 			return nil, nil, fmt.Errorf("Writing paths: %s", err)
 		}
 
 		allPaths = append(allPaths, paths...)
 	}
 
-	return allPaths, cleanUpFunc, nil
+	return allPaths, rootDir, nil
 }
 
 func (t Values) writeFromSecret(dstPath string,

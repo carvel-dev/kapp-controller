@@ -49,6 +49,7 @@ func (t *HelmTemplate) TemplateStream(stream io.Reader, dirPath string) exec.Cmd
 }
 
 func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResult {
+	visiblePaths := []string{dirPath}
 	chartPath := dirPath
 
 	if len(t.opts.Path) > 0 {
@@ -74,12 +75,13 @@ func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResu
 	{ // Add values files
 		vals := Values{t.opts.ValuesFrom, t.appContext, t.coreClient}
 
-		paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
+		paths, valuesDir, err := vals.AsPaths(dirPath)
 		if err != nil {
 			return exec.NewCmdRunResultWithErr(err)
 		}
 
-		defer valuesCleanUpFunc()
+		defer valuesDir.Remove()
+		visiblePaths = append(visiblePaths, valuesDir.Path())
 
 		for _, path := range paths {
 			if path == stdinPath && input == nil {
@@ -99,7 +101,7 @@ func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResu
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
-	err := t.cmdRunner.Run(cmd)
+	err := t.cmdRunner.Run(cmd, exec.RunOpts{VisiblePaths: visiblePaths})
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),

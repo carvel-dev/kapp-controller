@@ -5,9 +5,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"time"
 
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/sidecarexec"
 	"k8s.io/klog/v2"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -18,7 +20,7 @@ var Version = "develop"
 
 func main() {
 	ctrlOpts := Options{}
-	var sidecarexec bool
+	var isSidecarexec, isSidecarexecDebug, isSidecarexecWrap bool
 
 	flag.IntVar(&ctrlOpts.Concurrency, "concurrency", 10, "Max concurrent reconciles")
 	flag.StringVar(&ctrlOpts.Namespace, "namespace", "", "Namespace to watch")
@@ -27,11 +29,22 @@ func main() {
 	flag.BoolVar(&ctrlOpts.EnablePprof, "dangerous-enable-pprof", false, "If set to true, enable pprof on "+PprofListenAddr)
 	flag.DurationVar(&ctrlOpts.APIRequestTimeout, "api-request-timeout", time.Duration(0), "HTTP timeout for Kubernetes API requests")
 	flag.BoolVar(&ctrlOpts.APIPriorityAndFairness, "enable-api-priority-and-fairness", true, "Enable/disable APIPriorityAndFairness feature gate for apiserver. Recommended to disable for <= k8s 1.19.")
-	flag.BoolVar(&sidecarexec, "sidecarexec", false, "Run sidecarexec")
+	flag.BoolVar(&isSidecarexec, "sidecarexec", false, "Run sidecarexec")
+	flag.BoolVar(&isSidecarexecDebug, "sidecarexecdebug", false, "Run sidecarexecdebug")
+	flag.BoolVar(&isSidecarexecWrap, "sidecarexecwrap", false, "Run sidecarexecwrap")
 	flag.Parse()
 
-	if sidecarexec {
-		sidecarexecMain()
+	if isSidecarexec || isSidecarexecDebug {
+		sidecarexecMain(isSidecarexecDebug, flag.Args())
+		return
+	}
+	if isSidecarexecWrap {
+		err := sidecarexec.SandboxWrap{}.ExecuteCmd(flag.Args())
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "sidecarexecwrap: Error: %s\n", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
 		return
 	}
 

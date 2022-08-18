@@ -15,6 +15,10 @@ spec:
   revisionHistoryLimit: 0
   template:
     metadata:
+      annotations:
+        #! Necessary at least on GKE (which includes a default apparmor policy)
+        #! which seems to prevent execution of mount syscall even within a user namespace
+        container.apparmor.security.beta.kubernetes.io/kapp-controller-sidecarexec: unconfined
       labels:
         app: kapp-controller
     spec:
@@ -66,6 +70,8 @@ spec:
             cpu: 120m
             memory: 100Mi
         env:
+        - name: KAPPCTRL_SIDECAREXEC_LIMIT_DIR
+          value: /etc/kappctrl-mem-tmp
         - name: KAPPCTRL_SIDECAREXEC_SOCK
           value: /etc/kappctrl-mem-tmp/sidecarexec.sock
         volumeMounts:

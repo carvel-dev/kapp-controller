@@ -73,7 +73,9 @@ func (t *Sops) decryptDir(dirPath string, input io.Reader) exec.CmdRunResult {
 		return result
 	}
 
-	err = t.decryptPathsWithinDir(dirPath, args, env)
+	visiblePaths := []string{dirPath, config.CryptoHomeDir.Path()}
+
+	err = t.decryptPathsWithinDir(dirPath, args, env, visiblePaths)
 	if err != nil {
 		result.AttachErrorf("Decrypting dir: %s", err)
 	}
@@ -81,7 +83,7 @@ func (t *Sops) decryptDir(dirPath string, input io.Reader) exec.CmdRunResult {
 	return result
 }
 
-func (t *Sops) decryptPathsWithinDir(dirPath string, args, env []string) error {
+func (t *Sops) decryptPathsWithinDir(dirPath string, args, env []string, visiblePaths []string) error {
 	var selectedDirPaths []string
 
 	if len(t.opts.Paths) == 0 {
@@ -98,7 +100,7 @@ func (t *Sops) decryptPathsWithinDir(dirPath string, args, env []string) error {
 				return err
 			}
 
-			isDir, err := t.checkDirOrDecryptSopsFile(info, checkedPath, args, env)
+			isDir, err := t.checkDirOrDecryptSopsFile(info, checkedPath, args, env, visiblePaths)
 			if err != nil {
 				return err
 			} else if isDir {
@@ -112,7 +114,7 @@ func (t *Sops) decryptPathsWithinDir(dirPath string, args, env []string) error {
 			if err != nil {
 				return err
 			}
-			_, err = t.checkDirOrDecryptSopsFile(info, path, args, env)
+			_, err = t.checkDirOrDecryptSopsFile(info, path, args, env, visiblePaths)
 			return err
 		})
 		if err != nil {
@@ -123,13 +125,15 @@ func (t *Sops) decryptPathsWithinDir(dirPath string, args, env []string) error {
 	return nil
 }
 
-func (t *Sops) checkDirOrDecryptSopsFile(info os.FileInfo, path string, args, env []string) (bool, error) {
+func (t *Sops) checkDirOrDecryptSopsFile(
+	info os.FileInfo, path string, args, env []string, visiblePaths []string) (bool, error) {
+
 	if info.IsDir() {
 		return true, nil
 	}
 	matched, newPath := t.isSopsFile(path)
 	if matched {
-		err := t.decryptSopsFile(path, newPath, args, env)
+		err := t.decryptSopsFile(path, newPath, args, env, visiblePaths)
 		if err != nil {
 			return false, fmt.Errorf("Decrypting file '%s': %s", path, err)
 		}
@@ -137,7 +141,7 @@ func (t *Sops) checkDirOrDecryptSopsFile(info os.FileInfo, path string, args, en
 	return false, nil
 }
 
-func (t *Sops) decryptSopsFile(path, newPath string, args, env []string) error {
+func (t *Sops) decryptSopsFile(path, newPath string, args, env []string, visiblePaths []string) error {
 	decryptArgs := append(append([]string{}, args...), "--decrypt", path)
 
 	var stdoutBs, stderrBs bytes.Buffer
@@ -147,7 +151,7 @@ func (t *Sops) decryptSopsFile(path, newPath string, args, env []string) error {
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
-	err := t.cmdRunner.Run(cmd)
+	err := t.cmdRunner.Run(cmd, exec.RunOpts{VisiblePaths: visiblePaths})
 	if err != nil {
 		return fmt.Errorf("Running sops: %s, %v", stderrBs.String(), err)
 	}

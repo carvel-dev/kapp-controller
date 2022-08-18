@@ -74,7 +74,7 @@ func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 
 	resultBuf, doneTrackingOutputCh := a.trackCmdOutput(cmd, startedApplyingFunc, changedFunc)
 
-	err = a.cmdRunner.RunWithCancel(cmd, a.cancelCh)
+	err = a.cmdRunner.RunWithCancel(cmd, a.cancelCh, exec.RunOpts{})
 	close(doneTrackingOutputCh)
 
 	result := resultBuf.Copy()
@@ -100,7 +100,7 @@ func (a *Kapp) Delete(startedApplyingFunc func(), changedFunc func(exec.CmdRunRe
 
 	resultBuf, doneTrackingOutputCh := a.trackCmdOutput(cmd, startedApplyingFunc, changedFunc)
 
-	err = a.cmdRunner.RunWithCancel(cmd, a.cancelCh)
+	err = a.cmdRunner.RunWithCancel(cmd, a.cancelCh, exec.RunOpts{})
 	close(doneTrackingOutputCh)
 
 	result := resultBuf.Copy()
@@ -132,7 +132,7 @@ func (a *Kapp) Inspect() exec.CmdRunResult {
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
-	err = a.cmdRunner.RunWithCancel(cmd, a.cancelCh)
+	err = a.cmdRunner.RunWithCancel(cmd, a.cancelCh, exec.RunOpts{})
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),

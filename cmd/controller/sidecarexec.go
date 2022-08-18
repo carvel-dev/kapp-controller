@@ -4,6 +4,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	goexec "os/exec"
 	"syscall"
 	"time"
 
@@ -13,14 +16,40 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
-func sidecarexecMain() {
+func sidecarexecMain(debug bool, debugArgs []string) {
+	localCmdRunner := exec.NewPlainCmdRunner()
+	sandboxCmdRunner := sidecarexec.NewSandboxCmdRunner(localCmdRunner, sidecarexec.SandboxCmdRunnerOpts{
+		RequiresPosix: map[string]bool{
+			"vendir": true,
+			"bash":   true, // for debugging
+		},
+		RequiresNetwork: map[string]bool{
+			"vendir": true,
+			"kbld":   true,
+		},
+	})
+
+	if debug {
+		cmd := goexec.Command("bash")
+		if len(debugArgs) > 0 {
+			cmd = goexec.Command(debugArgs[0], debugArgs[1:]...)
+		}
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err := sandboxCmdRunner.Run(cmd, exec.RunOpts{})
+		if err != nil {
+			fmt.Printf("Exit error: %s\n", err)
+		}
+		return
+	}
+
 	mainLog := zap.New(zap.UseDevMode(false)).WithName("kc-sidecarexec")
 	mainLog.Info("start sidecarexec", "version", Version)
 
 	go reapZombies(mainLog)
 
-	localCmdRunner := exec.NewPlainCmdRunner()
-	opts := sidecarexec.ServerOpts{
+	serverOpts := sidecarexec.ServerOpts{
 		AllowedCmdNames: []string{
 			// Fetch (calls impgkg and others internally)
 			"vendir",
@@ -28,8 +57,7 @@ func sidecarexecMain() {
 			"ytt", "kbld", "sops", "helm", "cue",
 		},
 	}
-
-	server := sidecarexec.NewServer(localCmdRunner, opts, mainLog)
+	server := sidecarexec.NewServer(sandboxCmdRunner, serverOpts, mainLog)
 
 	err := server.Serve()
 	if err != nil {

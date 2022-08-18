@@ -391,7 +391,7 @@ func (v *Vendir) Run(conf []byte, workingDir string) exec.CmdRunResult {
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
 
-	err := v.cmdRunner.Run(cmd)
+	err := v.cmdRunner.Run(cmd, exec.RunOpts{VisiblePaths: []string{workingDir}})
 
 	result := exec.CmdRunResult{
 		Stdout: stdoutBs.String(),
