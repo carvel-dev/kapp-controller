@@ -6,7 +6,7 @@ set -e -x -u
 
 export KCTRL_BINARY_PATH="$PWD/kctrl"
 
-# Enable todebug tests using prompt output in the workflow
+# Enable to debug tests using prompt output in the workflow
 # export KCTRL_DEBUG_BUFERED_OUTPUT_TESTS=true
 
 ./hack/test.sh
