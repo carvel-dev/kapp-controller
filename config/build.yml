@@ -1,7 +1,7 @@
 #@ load("@ytt:data", "data")
 
 apiVersion: kbld.k14s.io/v1alpha1
-kind: Sources
+kind: Config
 sources:
 - image: kapp-controller
   path: .
@@ -18,7 +18,7 @@ sources:
 #@ if/end data.values.push_images:
 ---
 apiVersion: kbld.k14s.io/v1alpha1
-kind: ImageDestinations
+kind: Config
 destinations:
 - image: kapp-controller
   newImage: #@ data.values.image_repo
