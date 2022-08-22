@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661190681593,
+  "lastUpdate": 1661192602405,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -4905,6 +4905,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6499051006,
             "unit": "ns/op\t         4.289 DeleteSeconds\t         2.137 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "63df2dbb56af2c3f948a54044cfe1de74e0b04ae",
+          "message": "Merge pull request #839 from vmware-tanzu/nh-fix-case-start-api-server\n\nfix case in `start-api-server` flag",
+          "timestamp": "2022-08-22T12:13:11-06:00",
+          "tree_id": "b89981ea72d14eefafb8704c2d6560042983c473",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/63df2dbb56af2c3f948a54044cfe1de74e0b04ae"
+        },
+        "date": 1661192601263,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36742883328,
+            "unit": "ns/op\t        19.09 DeleteSeconds\t        17.57 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9704037126,
+            "unit": "ns/op\t         5.433 DeleteSeconds\t         4.219 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6498540097,
+            "unit": "ns/op\t         4.305 DeleteSeconds\t         2.149 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
