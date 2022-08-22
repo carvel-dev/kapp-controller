@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661190561356,
+  "lastUpdate": 1661190681593,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -4863,6 +4863,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6444829300,
             "unit": "ns/op\t         4.272 DeleteSeconds\t         2.131 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "iamlizhiyong@outlook.com",
+            "name": "Zhiyong Li",
+            "username": "showpune"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e997c38972eb8c3b24368c29e814c59d1ff8a81f",
+          "message": "Namespace isolation (#826)\n\n* Add Namespace isolation\r\n\r\n* Fix the issue from merge comment\r\n\r\n* Remove the unncessary change\r\n\r\n* remove teh namespace deploy script\r\n\r\n* Change to use KAPPCTRL_START_API_SERVER  env\r\n\r\n* Use flag instead of env\r\n\r\n* Use flag instead of env\r\n\r\n* rename feature flag to start-api-server",
+          "timestamp": "2022-08-22T10:40:52-07:00",
+          "tree_id": "9584142407d17d8ccd64d0864180a716e173bc45",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/e997c38972eb8c3b24368c29e814c59d1ff8a81f"
+        },
+        "date": 1661190680714,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36529225752,
+            "unit": "ns/op\t        18.96 DeleteSeconds\t        17.53 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9676484943,
+            "unit": "ns/op\t         5.456 DeleteSeconds\t         4.175 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6499051006,
+            "unit": "ns/op\t         4.289 DeleteSeconds\t         2.137 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
