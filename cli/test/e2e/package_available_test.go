@@ -133,12 +133,12 @@ spec:
 			{
 				"name":        packageName,
 				"version":     "1.0.0",
-				"released_at": "0001-01-01 00:00:00 +0000 UTC",
+				"released_at": "-",
 			},
 			{
 				"name":        packageName,
 				"version":     "1.1.0",
-				"released_at": "0001-01-01 00:00:00 +0000 UTC",
+				"released_at": "-",
 			},
 		}
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
@@ -164,11 +164,11 @@ spec:
 		expectedOutputRows = []map[string]string{
 			{
 				"version":     "1.0.0",
-				"released_at": "0001-01-01 00:00:00 +0000 UTC",
+				"released_at": "-",
 			},
 			{
 				"version":     "1.1.0",
-				"released_at": "0001-01-01 00:00:00 +0000 UTC",
+				"released_at": "-",
 			},
 		}
 		require.Exactly(t, expectedOutputRows, output.Tables[1].Rows)
