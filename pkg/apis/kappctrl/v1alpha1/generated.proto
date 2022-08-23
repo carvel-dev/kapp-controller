@@ -331,6 +331,9 @@ message AppTemplateHelmTemplate {
 
   // One or more secrets, config maps, paths that provide values (optional)
   repeated AppTemplateValuesSource valuesFrom = 4;
+
+  // Use kubernetes version from live cluster
+  optional Version kubernetesVersion = 5;
 }
 
 // TODO implement jsonnet

@@ -341,10 +341,20 @@ spec:
               {{- range $k, $v := .Values }}
                 {{ $k }}: {{ $v }}
               {{- end }}
+          testchart/templates/versions.yaml: |
+            {{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.Version -}}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: k8s-version
+              annotations:
+                k8s-version: {{ .Capabilities.KubeVersion.Version }}
+            {{- end }}
   template:
   - helmTemplate:
       path: testchart/
       name: testchart
+      kubernetesVersion: {}
       valuesFrom:
       - secretRef:
           name: secret-values
@@ -411,6 +421,17 @@ uid: "%s"
 		actualOut, err := yaml.Marshal(configMapData)
 		require.NoError(t, err)
 		require.YAMLEq(t, expectedOut, string(actualOut))
+	})
+
+	logger.Section("ensuring kubernetes version is templated", func() {
+		out := kubectl.Run([]string{"get", "configmap", "k8s-version", "-o", "yaml"})
+
+		var cm corev1.ConfigMap
+
+		err := yaml.Unmarshal([]byte(out), &cm)
+		if err != nil {
+			t.Fatalf("Unmarshaling result config map: %s", err)
+		}
 	})
 }
 

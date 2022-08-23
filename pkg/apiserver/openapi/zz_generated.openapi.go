@@ -1155,11 +1155,17 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateHelmTemplate(ref common.Refere
 							},
 						},
 					},
+					"kubernetesVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Use kubernetes version from live cluster",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource"},
+			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"},
 	}
 }
 

@@ -45,7 +45,7 @@ func (f Factory) NewHelmTemplate(opts v1alpha1.AppTemplateHelmTemplate, appConte
 		coreClient:   f.clusterClient.CoreClient(),
 		fetchFactory: f.fetchFactory,
 	}
-	return NewHelmTemplate(opts, appContext, f.cmdRunner, valuesFactory)
+	return NewHelmTemplate(opts, appContext, f.cmdRunner, valuesFactory, f.fetchFactory)
 }
 
 func (f Factory) NewSops(

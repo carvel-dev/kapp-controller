@@ -53,6 +53,8 @@ type AppTemplateHelmTemplate struct {
 	Path string `json:"path,omitempty" protobuf:"bytes,3,opt,name=path"`
 	// One or more secrets, config maps, paths that provide values (optional)
 	ValuesFrom []AppTemplateValuesSource `json:"valuesFrom,omitempty" protobuf:"bytes,4,rep,name=valuesFrom"`
+	// Use kubernetes version from live cluster
+	KubernetesVersion *Version `json:"kubernetesVersion,omitempty" protobuf:"bytes,5,opt,name=kubernetesVersion"`
 }
 
 // +k8s:openapi-gen=true

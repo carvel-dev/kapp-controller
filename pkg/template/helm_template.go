@@ -6,6 +6,8 @@ package template
 import (
 	"bytes"
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterclient"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"io"
 	"os"
 	goexec "os/exec"
@@ -20,6 +22,7 @@ type HelmTemplate struct {
 	appContext    AppContext
 	cmdRunner     exec.CmdRunner
 	valuesFactory ValuesFactory
+	fetchFactory  fetch.Factory
 }
 
 // HelmTemplateCmdArgs represents the binary and arguments used during templating
@@ -31,9 +34,9 @@ type HelmTemplateCmdArgs struct {
 var _ Template = &HelmTemplate{}
 
 func NewHelmTemplate(opts v1alpha1.AppTemplateHelmTemplate,
-	appContext AppContext, cmdRunner exec.CmdRunner, valuesFactory ValuesFactory) *HelmTemplate {
+	appContext AppContext, cmdRunner exec.CmdRunner, valuesFactory ValuesFactory, fetchFactory fetch.Factory) *HelmTemplate {
 
-	return &HelmTemplate{opts, appContext, cmdRunner, valuesFactory}
+	return &HelmTemplate{opts, appContext, cmdRunner, valuesFactory, fetchFactory}
 }
 
 func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
@@ -68,6 +71,10 @@ func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResu
 	}
 
 	args := []string{"template", name, chartPath, "--namespace", namespace, "--include-crds"}
+	if t.opts.KubernetesVersion != nil {
+		kubernetesVersion, _ := t.fetchFactory.NewVersionFetcher().GetKubernetesVersion(t.appContext.ServiceAccountName, t.appContext.AppSpec.Cluster, clusterclient.GenericOpts{Name: t.appContext.Name, Namespace: t.appContext.Namespace})
+		args = append(args, []string{"--kube-version", kubernetesVersion.String()}...)
+	}
 
 	{ // Add values files
 		vals := t.valuesFactory.NewValues(t.opts.ValuesFrom, t.appContext)

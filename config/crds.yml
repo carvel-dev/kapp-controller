@@ -457,6 +457,12 @@ spec:
                             helmTemplate:
                               description: Use helm template command to render helm chart
                               properties:
+                                kubernetesVersion:
+                                  description: Use kubernetes version from live cluster
+                                  properties:
+                                    version:
+                                      type: string
+                                  type: object
                                 name:
                                   description: Set name explicitly, default is App CR's name (optional; v0.13.0+)
                                   type: string
@@ -1032,6 +1038,12 @@ spec:
                     helmTemplate:
                       description: Use helm template command to render helm chart
                       properties:
+                        kubernetesVersion:
+                          description: Use kubernetes version from live cluster
+                          properties:
+                            version:
+                              type: string
+                          type: object
                         name:
                           description: Set name explicitly, default is App CR's name (optional; v0.13.0+)
                           type: string

@@ -731,6 +731,11 @@ func (in *AppTemplateHelmTemplate) DeepCopyInto(out *AppTemplateHelmTemplate) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.KubernetesVersion != nil {
+		in, out := &in.KubernetesVersion, &out.KubernetesVersion
+		*out = new(Version)
+		**out = **in
+	}
 	return
 }
 
