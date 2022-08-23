@@ -9,32 +9,29 @@ import (
 	"io"
 	goexec "os/exec"
 
-	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterclient"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
-	"k8s.io/client-go/kubernetes"
 )
 
 type Ytt struct {
 	opts          v1alpha1.AppTemplateYtt
 	appContext    AppContext
-	coreClient    kubernetes.Interface
+	clusterClient *clusterclient.ClusterClient
 	fetchFactory  fetch.Factory
-	deployFactory deploy.Factory
 	cmdRunner     exec.CmdRunner
-	log           logr.Logger
+	valuesFactory ValuesFactory
 }
 
 var _ Template = &Ytt{}
 
 // NewYtt returns ytt template.
 func NewYtt(opts v1alpha1.AppTemplateYtt, appContext AppContext,
-	coreClient kubernetes.Interface, fetchFactory fetch.Factory, deployFactory deploy.Factory, cmdRunner exec.CmdRunner, log logr.Logger) *Ytt {
+	clusterClient *clusterclient.ClusterClient, fetchFactory fetch.Factory, cmdRunner exec.CmdRunner, valuesFactory ValuesFactory) *Ytt {
 
-	return &Ytt{opts, appContext, coreClient, fetchFactory, deployFactory, cmdRunner, log}
+	return &Ytt{opts: opts, appContext: appContext, clusterClient: clusterClient, fetchFactory: fetchFactory, cmdRunner: cmdRunner, valuesFactory: valuesFactory}
 }
 
 func (t *Ytt) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
@@ -64,8 +61,7 @@ func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	args = t.addFileMarks(args)
 
 	{ // Add values files
-		vals := Values{t.opts.ValuesFrom, t.appContext, t.coreClient, t.deployFactory, t.log}
-
+		vals := t.valuesFactory.NewValues(t.opts.ValuesFrom, t.appContext)
 		paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
 		if err != nil {
 			return exec.NewCmdRunResultWithErr(err)

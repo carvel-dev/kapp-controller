@@ -13,7 +13,7 @@ import (
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -25,26 +25,22 @@ import (
 
 // Reconciler is responsible for reconciling PackageInstalls.
 type Reconciler struct {
-	deployFactory          deploy.Factory
+	fetchFactory           fetch.Factory
 	kcClient               kcclient.Interface
 	pkgClient              pkgclient.Interface
 	coreClient             kubernetes.Interface
 	pkgToPkgInstallHandler *PackageInstallVersionHandler
-	controllerVersion      string
 	log                    logr.Logger
 }
 
 // NewReconciler is the constructor for the Reconciler struct
-func NewReconciler(deployFactory deploy.Factory, kcClient kcclient.Interface, pkgClient pkgclient.Interface,
-	coreClient kubernetes.Interface, pkgToPkgInstallHandler *PackageInstallVersionHandler,
-	log logr.Logger, controllerVersion string) *Reconciler {
+func NewReconciler(fetchFactory fetch.Factory, kcClient kcclient.Interface, pkgClient pkgclient.Interface, coreClient kubernetes.Interface, pkgToPkgInstallHandler *PackageInstallVersionHandler, log logr.Logger) *Reconciler {
 
-	return &Reconciler{deployFactory: deployFactory,
+	return &Reconciler{fetchFactory: fetchFactory,
 		kcClient:               kcClient,
 		pkgClient:              pkgClient,
 		coreClient:             coreClient,
 		pkgToPkgInstallHandler: pkgToPkgInstallHandler,
-		controllerVersion:      controllerVersion,
 		log:                    log}
 }
 
@@ -88,5 +84,5 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 		return reconcile.Result{}, err
 	}
 
-	return NewPackageInstallCR(existingPkgInstall, log, r.kcClient, r.pkgClient, r.coreClient, r.controllerVersion, r.deployFactory).Reconcile()
+	return NewPackageInstallCR(existingPkgInstall, log, r.kcClient, r.pkgClient, r.coreClient, r.fetchFactory).Reconcile()
 }

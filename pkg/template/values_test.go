@@ -11,8 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterclient"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"k8s.io/apimachinery/pkg/version"
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
@@ -22,7 +23,8 @@ import (
 func TestValues(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	fakek8s := k8sfake.NewSimpleClientset()
-	deployFac := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(fakek8s, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "0.42.31337")
 
 	// mock the kubernetes server version
 	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
@@ -31,10 +33,10 @@ func TestValues(t *testing.T) {
 	}
 
 	subject := Values{
-		ValuesFrom:    nil,
-		appContext:    AppContext{},
-		coreClient:    nil,
-		deployFactory: deployFac,
+		ValuesFrom:     nil,
+		appContext:     AppContext{},
+		coreClient:     nil,
+		versionFetcher: fetchFactory.NewVersionFetcher(),
 	}
 
 	t.Run("Downward API values", func(t *testing.T) {
@@ -242,6 +244,23 @@ func TestValues(t *testing.T) {
 
 			require.Len(t, paths, 1)
 			assertFileContents(t, paths[0], "k8s-version: 0.20.0\n")
+		})
+
+		t.Run("return kapp-controller version", func(t *testing.T) {
+			subject := subject
+			subject.appContext = AppContext{ServiceAccountName: "test-sa"}
+			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
+				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
+					{Name: "kc-version", KappControllerVersion: &v1alpha1.Version{}},
+				}},
+			}}
+
+			paths, cleanup, err := subject.AsPaths(os.TempDir())
+			require.NoError(t, err)
+			t.Cleanup(cleanup)
+
+			require.Len(t, paths, 1)
+			assertFileContents(t, paths[0], "kc-version: 0.42.31337\n")
 		})
 	})
 }

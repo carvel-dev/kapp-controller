@@ -26,7 +26,7 @@ type Inline struct {
 }
 
 func NewInline(opts v1alpha1.AppFetchInline, nsName string, coreClient kubernetes.Interface) *Inline {
-	return &Inline{opts, nsName, coreClient}
+	return &Inline{opts: opts, nsName: nsName, coreClient: coreClient}
 }
 
 func (t *Inline) Retrieve(dstPath string) error {

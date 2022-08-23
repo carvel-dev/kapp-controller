@@ -5,6 +5,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterclient"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	ctldep "github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
@@ -134,7 +135,7 @@ func (a *App) trySaveMetadata(kapp *ctldep.Kapp) {
 }
 
 func (a *App) newKapp(kapp v1alpha1.AppDeployKapp, cancelCh chan struct{}) (*ctldep.Kapp, error) {
-	genericOpts := ctldep.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
+	genericOpts := clusterclient.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
 
 	return a.deployFactory.NewKapp(kapp, a.app.Spec.ServiceAccountName,
 		a.app.Spec.Cluster, genericOpts, cancelCh)

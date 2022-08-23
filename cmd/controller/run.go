@@ -17,9 +17,10 @@ import (
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterclient"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
@@ -166,20 +167,18 @@ func Run(opts Options, runLog logr.Logger) error {
 	refTracker := reftracker.NewAppRefTracker()
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
 
-	// initialize deploy factory once - the deploy factory contains a service account token cache which should be only setup once.
-	deployFactory := deploy.NewFactory(coreClient, kcConfig, sidecarCmdExec, runLog)
+	clusterClient := clusterclient.NewClusterClient(coreClient, runLog)
 
 	{ // add controller for apps
 		appFactory := app.CRDAppFactory{
-			CoreClient:    coreClient,
+			ClusterClient: clusterClient,
 			AppClient:     kcClient,
 			KcConfig:      kcConfig,
 			AppMetrics:    appMetrics,
 			CmdRunner:     sidecarCmdExec,
-			DeployFactory: deployFactory,
 		}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
-			appFactory, refTracker, updateStatusTracker)
+			appFactory, refTracker, updateStatusTracker, Version)
 
 		ctrl, err := controller.New("app", mgr, controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
@@ -202,7 +201,8 @@ func Run(opts Options, runLog logr.Logger) error {
 		pkgToPkgInstallHandler := pkginstall.NewPackageInstallVersionHandler(
 			kcClient, opts.PackagingGloablNS, runLog.WithName("handler"))
 
-		reconciler := pkginstall.NewReconciler(deployFactory, kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, runLog.WithName("pkgi"), Version)
+		fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, sidecarCmdExec, Version)
+		reconciler := pkginstall.NewReconciler(fetchFactory, kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, runLog.WithName("pkgi"))
 
 		ctrl, err := controller.New("pkgi", mgr, controller.Options{
 			Reconciler:              reconciler,
@@ -219,7 +219,7 @@ func Run(opts Options, runLog logr.Logger) error {
 	}
 
 	{ // add controller for pkgrepositories
-		appFactory := pkgrepository.AppFactory{coreClient, kcClient, kcConfig, sidecarCmdExec}
+		appFactory := pkgrepository.AppFactory{ClusterClient: clusterClient, AppClient: kcClient, KcConfig: kcConfig, CmdRunner: sidecarCmdExec, ControllerVersion: Version}
 
 		reconciler := pkgrepository.NewReconciler(kcClient, coreClient,
 			runLog.WithName("pkgr"), appFactory, refTracker, updateStatusTracker)

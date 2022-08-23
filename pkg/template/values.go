@@ -6,27 +6,40 @@ package template
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"sort"
 
-	"github.com/go-logr/logr"
 	semver "github.com/k14s/semver/v4"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterclient"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
+// Values contains the appContext and the ability to fetch the values
 type Values struct {
 	ValuesFrom []v1alpha1.AppTemplateValuesSource
 
-	appContext    AppContext
-	coreClient    kubernetes.Interface
-	deployFactory deploy.Factory
-	log           logr.Logger
+	appContext     AppContext
+	versionFetcher *fetch.VersionFetch
+	coreClient     kubernetes.Interface
 }
 
+// ValuesFactory abstracts the factories for fetching the values away from the template factory
+type ValuesFactory struct {
+	appContext   AppContext
+	fetchFactory fetch.Factory
+	coreClient   kubernetes.Interface
+}
+
+// NewValues returns a Values struct based on the app template source and the app context
+func (vf ValuesFactory) NewValues(valuesFrom []v1alpha1.AppTemplateValuesSource, appContext AppContext) Values {
+	return Values{ValuesFrom: valuesFrom, appContext: appContext, versionFetcher: vf.fetchFactory.NewVersionFetcher(), coreClient: vf.coreClient}
+}
+
+// AsPaths returns a list of directories containing values files which are passed to the various templating tools
 func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
 	var valuesDirs []*memdir.TmpDir
 
@@ -74,8 +87,9 @@ func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
 				items:    source.DownwardAPI.Items,
 				metadata: t.appContext.Metadata,
 				kubernetesVersion: func() (semver.Version, error) {
-					return t.deployFactory.GetClusterVersion(t.appContext.ServiceAccountName, t.appContext.AppSpec.Cluster, deploy.GenericOpts{Name: t.appContext.Name, Namespace: t.appContext.Namespace}, t.log)
+					return t.versionFetcher.GetKubernetesVersion(t.appContext.ServiceAccountName, t.appContext.AppSpec.Cluster, clusterclient.GenericOpts{Name: t.appContext.Name, Namespace: t.appContext.Namespace})
 				},
+				kappControllerVersion: t.versionFetcher.GetKappControllerVersion(),
 			}
 			paths, err = t.writeFromDownwardAPI(valuesDir.Path(), downwardAPIValues)
 
@@ -120,7 +134,7 @@ func (t Values) writeFromSecret(dstPath string,
 func (t Values) writeFromDownwardAPI(dstPath string, valuesExtractor DownwardAPIValues) ([]string, error) {
 	var result []string
 
-	dataValues, err := valuesExtractor.AsYAMLs()
+	dataValues, err := valuesExtractor.AsYAML()
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +156,7 @@ func (t Values) writeFile(dstPath, subPath string, content []byte) (string, erro
 		return "", err
 	}
 
-	err = ioutil.WriteFile(newPath, content, 0600)
+	err = os.WriteFile(newPath, content, 0600)
 	if err != nil {
 		return "", fmt.Errorf("Writing file '%s': %s", newPath, err)
 	}
@@ -150,9 +164,7 @@ func (t Values) writeFile(dstPath, subPath string, content []byte) (string, erro
 	return newPath, nil
 }
 
-func (t Values) writeFromConfigMap(dstPath string,
-	configMapRef v1alpha1.AppTemplateValuesSourceRef) ([]string, error) {
-
+func (t Values) writeFromConfigMap(dstPath string, configMapRef v1alpha1.AppTemplateValuesSourceRef) ([]string, error) {
 	configMap, err := t.coreClient.CoreV1().ConfigMaps(t.appContext.Namespace).Get(
 		context.Background(), configMapRef.Name, metav1.GetOptions{})
 	if err != nil {
@@ -160,7 +172,6 @@ func (t Values) writeFromConfigMap(dstPath string,
 	}
 
 	var result []string
-
 	for name, val := range configMap.Data {
 		path, err := t.writeFile(dstPath, name, []byte(val))
 		if err != nil {

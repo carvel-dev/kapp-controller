@@ -4,6 +4,7 @@
 package pkgrepository_test
 
 import (
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterclient"
 	"reflect"
 	"testing"
 
@@ -46,9 +47,10 @@ func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	}
 
 	k8scs := k8sfake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
-	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(k8scs, log)
+	fetchFac := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "")
+	tmpFac := template.NewFactory(clusterClient, fetchFac, false, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(clusterClient, nil, exec.NewPlainCmdRunner())
 
 	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
 
@@ -72,9 +74,10 @@ func Test_SecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 	}
 
 	k8scs := k8sfake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
-	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(k8scs, log)
+	fetchFac := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "")
+	tmpFac := template.NewFactory(clusterClient, fetchFac, false, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(clusterClient, nil, exec.NewPlainCmdRunner())
 
 	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
 

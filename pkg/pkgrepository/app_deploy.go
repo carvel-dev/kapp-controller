@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterclient"
 	ctldep "github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
@@ -71,6 +72,6 @@ func (a *App) delete() exec.CmdRunResult {
 }
 
 func (a *App) newKapp(kapp v1alpha1.AppDeployKapp, cancelCh chan struct{}) (*ctldep.Kapp, error) {
-	genericOpts := ctldep.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
+	genericOpts := clusterclient.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
 	return a.deployFactory.NewKappPrivilegedForPackageRepository(kapp, genericOpts, cancelCh)
 }

@@ -4,6 +4,8 @@
 package packageinstall
 
 import (
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterclient"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,7 +13,6 @@ import (
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	fakeapiserver "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
 	fakekappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,9 +66,10 @@ func Test_PackageInstallDeletion(t *testing.T) {
 		pkgClient := fakeapiserver.NewSimpleClientset()
 		appClient := fakekappctrl.NewSimpleClientset(pkgInstall, existingApp)
 		coreClient := fake.NewSimpleClientset()
-		deployFac := deploy.NewFactory(coreClient, nil, exec.NewPlainCmdRunner(), log)
+		clusterClient := clusterclient.NewClusterClient(coreClient, log)
+		fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "0.42.31337")
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, coreClient, "0.42.31337", deployFac)
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, coreClient, fetchFactory)
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 

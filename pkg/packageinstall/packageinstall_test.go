@@ -13,11 +13,11 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
-
 	fakeapiserver "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
 	fakekappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterclient"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,7 +54,8 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 		GitVersion: "v0.20.0",
 	}
 
-	deployFactory := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(fakek8s, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "0.42.31337")
 
 	// PackageInstall that has PackageRef with prerelease
 	ip := PackageInstallCR{
@@ -75,9 +76,9 @@ func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 			},
 		},
-		pkgclient:     fakePkgClient,
-		deployFactory: deployFactory,
-		log:           log,
+		pkgclient:    fakePkgClient,
+		fetchFactory: fetchFactory,
+		log:          log,
 	}
 
 	out, err := ip.referencedPkgVersion()
@@ -100,7 +101,9 @@ func Test_PackageWithConstraints(t *testing.T) {
 	fakek8s := fake.NewSimpleClientset()
 	pkg := generatePackageWithConstraints("pkg.test.carvel.dev", "0.0.0", ">1.0.0 <2.0.0", ">0.15.0")
 	fakePkgClient := fakeapiserver.NewSimpleClientset(&pkg)
-	deployFactory := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+
+	clusterClient := clusterclient.NewClusterClient(fakek8s, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "1.5.0")
 
 	// mock the kubernetes server version
 	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
@@ -123,11 +126,10 @@ func Test_PackageWithConstraints(t *testing.T) {
 				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 			},
 		},
-		pkgclient:         fakePkgClient,
-		controllerVersion: "1.5.0",
-		log:               log,
-		coreClient:        fakek8s,
-		deployFactory:     deployFactory,
+		pkgclient:    fakePkgClient,
+		log:          log,
+		coreClient:   fakek8s,
+		fetchFactory: fetchFactory,
 	}
 
 	// all constraints met
@@ -135,7 +137,7 @@ func Test_PackageWithConstraints(t *testing.T) {
 	require.NoError(t, err)
 
 	// kapp-controller version constraint fail
-	ip.controllerVersion = "3.0.0"
+	ip.fetchFactory = fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "3.0.0")
 	_, err = ip.referencedPkgVersion()
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "after-kubernetes-version-check=1")
@@ -170,6 +172,8 @@ func Test_Package_NotFound(t *testing.T) {
 	fakek8s := fake.NewSimpleClientset()
 	fakePkgClient := fakeapiserver.NewSimpleClientset()
 	pkgName := "pkg.test.carvel.dev"
+	clusterClient := clusterclient.NewClusterClient(fakek8s, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "0.42.0")
 
 	ip := PackageInstallCR{
 		model: &pkgingv1alpha1.PackageInstall{
@@ -185,10 +189,10 @@ func Test_Package_NotFound(t *testing.T) {
 				},
 			},
 		},
-		pkgclient:         fakePkgClient,
-		controllerVersion: "0.42.0",
-		log:               log,
-		coreClient:        fakek8s,
+		pkgclient:    fakePkgClient,
+		log:          log,
+		coreClient:   fakek8s,
+		fetchFactory: fetchFactory,
 	}
 
 	_, err := ip.referencedPkgVersion()
@@ -201,7 +205,8 @@ func Test_Package_ConstraintNotGiven_ErrorDoesNotContainMessage(t *testing.T) {
 	fakek8s := fake.NewSimpleClientset()
 	pkg := generatePackageWithConstraints("pkg.test.carvel.dev", "0.0.0", "1.0.0", "")
 	fakePkgClient := fakeapiserver.NewSimpleClientset(&pkg)
-	deployFactory := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(fakek8s, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "1.5.0")
 
 	ip := PackageInstallCR{
 		model: &pkgingv1alpha1.PackageInstall{
@@ -218,11 +223,10 @@ func Test_Package_ConstraintNotGiven_ErrorDoesNotContainMessage(t *testing.T) {
 				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 			},
 		},
-		pkgclient:         fakePkgClient,
-		controllerVersion: "1.5.0",
-		log:               log,
-		coreClient:        fakek8s,
-		deployFactory:     deployFactory,
+		pkgclient:    fakePkgClient,
+		log:          log,
+		coreClient:   fakek8s,
+		fetchFactory: fetchFactory,
 	}
 
 	_, err := ip.referencedPkgVersion()
@@ -237,7 +241,8 @@ func Test_PackageWithConstraintsWithPrerelease(t *testing.T) {
 	pkg := generatePackageWithConstraints("pkg.test.carvel.dev", "0.0.0", ">1.0.0 <2.0.0", "0.10.0")
 	pkg2 := generatePackageWithConstraints("pkg.test.carvel.dev", "2.0.0", ">1.0.0 <2.0.0", "0.20.0")
 	fakePkgClient := fakeapiserver.NewSimpleClientset(&pkg, &pkg2)
-	deployFactory := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(fakek8s, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "1.5.0")
 
 	// mock the kubernetes server version
 	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
@@ -260,11 +265,10 @@ func Test_PackageWithConstraintsWithPrerelease(t *testing.T) {
 				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 			},
 		},
-		pkgclient:         fakePkgClient,
-		controllerVersion: "1.5.0",
-		log:               log,
-		coreClient:        fakek8s,
-		deployFactory:     deployFactory,
+		pkgclient:    fakePkgClient,
+		log:          log,
+		coreClient:   fakek8s,
+		fetchFactory: fetchFactory,
 	}
 
 	out, err := ip.referencedPkgVersion()
@@ -280,7 +284,8 @@ func Test_PackageWithConstraints_HighestMatch(t *testing.T) {
 	pkg2 := generatePackageWithConstraints(pkgName, "0.5.0", ">0.1.0", ">0.1.0") // this one is the highest installable version
 	pkg3 := generatePackageWithConstraints(pkgName, "1.4.1", ">2.0.0", "")       // higher version uninstallable
 	fakePkgClient := fakeapiserver.NewSimpleClientset(&pkg1, &pkg2, &pkg3)
-	deployFactory := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(fakek8s, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "1.5.0")
 
 	// mock the kubernetes server version
 	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
@@ -303,11 +308,10 @@ func Test_PackageWithConstraints_HighestMatch(t *testing.T) {
 				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 			},
 		},
-		pkgclient:         fakePkgClient,
-		controllerVersion: "1.5.0",
-		log:               log,
-		coreClient:        fakek8s,
-		deployFactory:     deployFactory,
+		pkgclient:    fakePkgClient,
+		log:          log,
+		coreClient:   fakek8s,
+		fetchFactory: fetchFactory,
 	}
 
 	out, err := ip.referencedPkgVersion()
@@ -329,7 +333,8 @@ func Test_PackageRefWithPrerelease_DoesNotRequirePrereleaseMarker(t *testing.T) 
 	log := logf.Log.WithName("kc")
 	fakek8s := fake.NewSimpleClientset()
 	fakePkgClient := fakeapiserver.NewSimpleClientset(&expectedPackageVersion)
-	deployFactory := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(fakek8s, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "")
 
 	// mock the kubernetes server version
 	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
@@ -352,9 +357,9 @@ func Test_PackageRefWithPrerelease_DoesNotRequirePrereleaseMarker(t *testing.T) 
 				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 			},
 		},
-		pkgclient:     fakePkgClient,
-		deployFactory: deployFactory,
-		log:           log,
+		pkgclient:    fakePkgClient,
+		fetchFactory: fetchFactory,
+		log:          log,
 	}
 
 	out, err := ip.referencedPkgVersion()
@@ -388,7 +393,8 @@ func Test_PackageRefUsesName(t *testing.T) {
 	fakePkgClient := fakeapiserver.NewSimpleClientset(&expectedPackageVersion, &alternatePackageVersion)
 	log := logf.Log.WithName("kc")
 	fakek8s := fake.NewSimpleClientset()
-	deployFactory := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(fakek8s, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "")
 
 	// mock the kubernetes server version
 	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
@@ -412,9 +418,9 @@ func Test_PackageRefUsesName(t *testing.T) {
 				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
 			},
 		},
-		pkgclient:     fakePkgClient,
-		log:           log,
-		deployFactory: deployFactory,
+		pkgclient:    fakePkgClient,
+		log:          log,
+		fetchFactory: fetchFactory,
 	}
 
 	out, err := ip.referencedPkgVersion()
@@ -470,7 +476,8 @@ func Test_PlaceHolderSecretCreated_WhenPackageHasNoSecretRef(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	fakekctrl := fakekappctrl.NewSimpleClientset(model)
 	fakek8s := fake.NewSimpleClientset()
-	deployFac := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(fakek8s, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "0.42.31337")
 
 	// mock the kubernetes server version
 	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
@@ -478,7 +485,7 @@ func Test_PlaceHolderSecretCreated_WhenPackageHasNoSecretRef(t *testing.T) {
 		GitVersion: "v0.20.0",
 	}
 
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, "0.42.31337", deployFac)
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, fetchFactory)
 
 	_, err := ip.Reconcile()
 	assert.Nil(t, err)
@@ -551,14 +558,16 @@ func Test_PlaceHolderSecretsCreated_WhenPackageHasMultipleFetchStages(t *testing
 	log := logf.Log.WithName("kc")
 	fakekctrl := fakekappctrl.NewSimpleClientset(model)
 	fakek8s := fake.NewSimpleClientset()
-	deployFac := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(fakek8s, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "0.42.31337")
+
 	// mock the kubernetes server version
 	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
 	fakeDiscovery.FakedServerVersion = &version.Info{
 		GitVersion: "v0.20.0",
 	}
 
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, "0.42.31337", deployFac)
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, fetchFactory)
 
 	_, err := ip.Reconcile()
 	assert.Nil(t, err)
@@ -641,7 +650,8 @@ func Test_PlaceHolderSecretsNotCreated_WhenFetchStagesHaveSecrets(t *testing.T) 
 	log := logf.Log.WithName("kc")
 	fakekctrl := fakekappctrl.NewSimpleClientset(model)
 	fakek8s := fake.NewSimpleClientset()
-	deployFac := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(fakek8s, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "0.42.31337")
 
 	// mock the kubernetes server version
 	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
@@ -649,7 +659,7 @@ func Test_PlaceHolderSecretsNotCreated_WhenFetchStagesHaveSecrets(t *testing.T) 
 		GitVersion: "v0.20.0",
 	}
 
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, "0.42.31337", deployFac)
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, fetchFactory)
 
 	_, err := ip.Reconcile()
 	assert.Nil(t, err)
@@ -726,8 +736,9 @@ func Test_PlaceHolderSecretCreated_WhenPackageInstallUpdated(t *testing.T) {
 
 	fakekctrl := fakekappctrl.NewSimpleClientset(model, existingApp)
 	fakek8s := fake.NewSimpleClientset()
-	deployFac := deploy.NewFactory(fakek8s, nil, exec.NewPlainCmdRunner(), log)
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, "0.42.31337", deployFac)
+	clusterClient := clusterclient.NewClusterClient(fakek8s, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "0.42.31337")
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, fetchFactory)
 
 	// mock the kubernetes server version
 	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)

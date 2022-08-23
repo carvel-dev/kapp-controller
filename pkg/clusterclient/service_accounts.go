@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package deploy
+package clusterclient
 
 import (
 	"context"
@@ -18,6 +18,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// ServiceAccounts contains information related to kubernetes access via a service account
+// It also contains a cache for the Service Account Token Manager which use the kubernetes TokenAPI to
+// request access via a short-lived token
 type ServiceAccounts struct {
 	coreClient   kubernetes.Interface
 	log          logr.Logger
@@ -36,6 +39,7 @@ func NewServiceAccounts(coreClient kubernetes.Interface, log logr.Logger) *Servi
 		tokenManager: tokenMgr, caCert: []byte(os.Getenv("KAPPCTRL_KUBERNETES_CA_DATA"))}
 }
 
+// Find generates a kubeconfig using the service-account supplied
 func (s *ServiceAccounts) Find(genericOpts GenericOpts, saName string) (ProcessedGenericOpts, error) {
 	kubeconfigYAML, err := s.fetchServiceAccount(genericOpts.Namespace, saName)
 	if err != nil {

@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package deploy
+package clusterclient
 
 import (
 	"context"
@@ -13,19 +13,22 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// KubeconfigSecrets allows fetching of kubeconfig from a kubernetes secret
 type KubeconfigSecrets struct {
 	coreClient kubernetes.Interface
 }
 
+// NewKubeconfigSecrets returns a KubeconfigSecrets which allows fetching of kubeconfig from a kubernetes secret
 func NewKubeconfigSecrets(coreClient kubernetes.Interface) *KubeconfigSecrets {
 	return &KubeconfigSecrets{coreClient}
 }
 
+// Find generates a kubeconfig based on the secret referenced in the kubernetes cluster
 func (s *KubeconfigSecrets) Find(genericOpts GenericOpts,
 	clusterOpts *v1alpha1.AppCluster) (ProcessedGenericOpts, error) {
 
 	if clusterOpts == nil {
-		return ProcessedGenericOpts{}, fmt.Errorf("Internal inconsistency: Expected cluster to not be nil")
+		return ProcessedGenericOpts{}, fmt.Errorf("Internal inconsistency: Expected clusterOpts to not be nil")
 	}
 
 	if clusterOpts.KubeconfigSecretRef == nil {

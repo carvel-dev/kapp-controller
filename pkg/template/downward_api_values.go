@@ -18,13 +18,14 @@ import (
 // DownwardAPIValues produces multiple key-values based on the DownwardAPI config
 // queried against the object metadata
 type DownwardAPIValues struct {
-	items             []v1alpha1.AppTemplateValuesDownwardAPIItem
-	metadata          PartialObjectMetadata
-	kubernetesVersion func() (semver.Version, error)
+	items                 []v1alpha1.AppTemplateValuesDownwardAPIItem
+	metadata              PartialObjectMetadata
+	kubernetesVersion     func() (semver.Version, error)
+	kappControllerVersion string
 }
 
-// AsYAMLs returns many key-values queried (using jsonpath) against an object metadata provided.
-func (a DownwardAPIValues) AsYAMLs() ([][]byte, error) {
+// AsYAML returns many key-values queried against AppCR metadata or fetch-able information (such as the kubernetes version)
+func (a DownwardAPIValues) AsYAML() ([][]byte, error) {
 	dataValues := [][]byte{}
 	keyValueContent := []byte{}
 
@@ -50,16 +51,18 @@ func (a DownwardAPIValues) AsYAMLs() ([][]byte, error) {
 				if err != nil {
 					return nil, err
 				}
-				keyValueContent, err = a.addKeyValueContent(item.Name, v.String())
+				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: v.String()})
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				keyValueContent, err = a.addKeyValueContent(item.Name, item.KubernetesVersion.Version)
+				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: item.KubernetesVersion.Version})
 				if err != nil {
 					return nil, err
 				}
 			}
+		case item.KappControllerVersion != nil:
+			keyValueContent, err = yaml.Marshal(map[string]string{item.Name: a.kappControllerVersion})
 		default:
 			return nil, fmt.Errorf("Invalid downward API item given")
 		}
@@ -68,10 +71,6 @@ func (a DownwardAPIValues) AsYAMLs() ([][]byte, error) {
 	}
 
 	return dataValues, nil
-}
-
-func (a DownwardAPIValues) addKeyValueContent(key, val string) ([]byte, error) {
-	return yaml.Marshal(map[string]string{key: val})
 }
 
 func (a DownwardAPIValues) validateName(name string) error {
@@ -118,8 +117,7 @@ func (DownwardAPIValues) nestedKeyValue(name string, val interface{}) ([]byte, e
 		nestedMap = nextLevel
 	}
 
-	yamlContent, err := yaml.Marshal(root)
-	return yamlContent, err
+	return yaml.Marshal(root)
 }
 
 func splitWithEscaping(s string, separator, escape byte) []string {
@@ -136,8 +134,7 @@ func splitWithEscaping(s string, separator, escape byte) []string {
 			token = append(token, s[i])
 		}
 	}
-	tokens = append(tokens, string(token))
-	return tokens
+	return append(tokens, string(token))
 }
 
 // Copied from https://github.com/kubernetes/kubectl/blob/ac26f503e81287d9903761a1a8ded25fdebec6a7/pkg/cmd/get/customcolumn.go#L38

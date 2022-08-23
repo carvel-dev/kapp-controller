@@ -37,7 +37,7 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 	appKey := reftracker.NewAppKey(app.Name, app.Namespace)
 	appRefTracker.ReconcileRefs(refKeyMap, appKey)
 
-	ar := apppkg.NewReconciler(nil, nil, apppkg.CRDAppFactory{}, appRefTracker, nil)
+	ar := apppkg.NewReconciler(nil, nil, apppkg.CRDAppFactory{}, appRefTracker, nil, "")
 
 	// This map represents the secrets the App has on its spec
 	refMap := map[reftracker.RefKey]struct{}{
@@ -89,7 +89,7 @@ func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
 	appKey := reftracker.NewAppKey(app.Name, app.Namespace)
 	appRefTracker.ReconcileRefs(refKeyMap, appKey)
 
-	ar := apppkg.NewReconciler(nil, nil, apppkg.CRDAppFactory{}, appRefTracker, nil)
+	ar := apppkg.NewReconciler(nil, nil, apppkg.CRDAppFactory{}, appRefTracker, nil, "")
 
 	// This map represents the secrets the App has
 	// on its spec

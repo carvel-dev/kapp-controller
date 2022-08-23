@@ -50,6 +50,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSourceRef":          schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesSourceRef(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateYtt":                      schema_pkg_apis_kappctrl_v1alpha1_AppTemplateYtt(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Condition":                           schema_pkg_apis_kappctrl_v1alpha1_Condition(ref),
+		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Version":                             schema_pkg_apis_kappctrl_v1alpha1_Version(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec":      schema_apiserver_apis_datapackaging_v1alpha1_AppTemplateSpec(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware":     schema_apiserver_apis_datapackaging_v1alpha1_IncludedSoftware(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Maintainer":           schema_apiserver_apis_datapackaging_v1alpha1_Maintainer(ref),
@@ -1352,9 +1353,23 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesDownwardAPIItem(ref comm
 							Format:      "",
 						},
 					},
+					"kubernetesVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster. Can be manually overridden to a value instead.",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"),
+						},
+					},
+					"kappControllerVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional:",
+							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"),
+						},
+					},
 				},
 			},
 		},
+		Dependencies: []string{
+			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"},
 	}
 }
 
@@ -1525,6 +1540,24 @@ func schema_pkg_apis_kappctrl_v1alpha1_Condition(ref common.ReferenceCallback) c
 					},
 				},
 				Required: []string{"type", "status"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_kappctrl_v1alpha1_Version(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
 			},
 		},
 	}

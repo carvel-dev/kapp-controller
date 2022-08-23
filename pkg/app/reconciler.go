@@ -24,21 +24,23 @@ import (
 
 // Reconciler is responsible for reconciling Apps.
 type Reconciler struct {
-	appClient       kcclient.Interface
-	log             logr.Logger
-	crdAppFactory   CRDAppFactory
-	appRefTracker   *reftracker.AppRefTracker
-	appUpdateStatus *reftracker.AppUpdateStatus
+	appClient         kcclient.Interface
+	log               logr.Logger
+	crdAppFactory     CRDAppFactory
+	appRefTracker     *reftracker.AppRefTracker
+	appUpdateStatus   *reftracker.AppUpdateStatus
+	controllerVersion string
 }
 
 // NewReconciler constructs new Reconciler.
 func NewReconciler(appClient kcclient.Interface, log logr.Logger, crdAppFactory CRDAppFactory,
-	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *Reconciler {
+	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus, controllerVersion string) *Reconciler {
 	return &Reconciler{appClient: appClient,
-		log:             log,
-		crdAppFactory:   crdAppFactory,
-		appRefTracker:   appRefTracker,
-		appUpdateStatus: appUpdateStatus,
+		log:               log,
+		crdAppFactory:     crdAppFactory,
+		appRefTracker:     appRefTracker,
+		appUpdateStatus:   appUpdateStatus,
+		controllerVersion: controllerVersion,
 	}
 }
 

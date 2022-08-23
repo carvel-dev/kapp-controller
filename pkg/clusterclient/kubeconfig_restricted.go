@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package deploy
+package clusterclient
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+// KubeconfigRestricted holds a kubeconfig as a string
 type KubeconfigRestricted struct {
 	result string
 }
@@ -83,4 +84,5 @@ func NewKubeconfigRestricted(input string) (*KubeconfigRestricted, error) {
 	return &KubeconfigRestricted{string(bs)}, nil
 }
 
+// AsYAML returns the kubeconfig as a YAML encoded string
 func (r *KubeconfigRestricted) AsYAML() string { return r.result }

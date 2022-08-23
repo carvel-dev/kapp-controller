@@ -4,6 +4,7 @@
 package pkgrepository
 
 import (
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterclient"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,9 +39,10 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 
 	k8scs := k8sfake.NewSimpleClientset()
 	kappcs := fake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
-	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(k8scs, log)
+	fetchFac := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "")
+	tmpFac := template.NewFactory(clusterClient, fetchFac, false, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(clusterClient, nil, exec.NewPlainCmdRunner())
 	pkgr := v1alpha12.PackageRepository{}
 
 	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, fetchFac, tmpFac, deployFac)
@@ -93,9 +95,10 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 
 	k8scs := k8sfake.NewSimpleClientset()
 	kappcs := fake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
-	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(k8scs, log)
+	fetchFac := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "")
+	tmpFac := template.NewFactory(clusterClient, fetchFac, false, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(clusterClient, nil, exec.NewPlainCmdRunner())
 	pkgr := v1alpha12.PackageRepository{}
 
 	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, fetchFac, tmpFac, deployFac)
@@ -148,9 +151,10 @@ func TestInvalidPackageRepositoryFormat(t *testing.T) {
 
 	k8scs := k8sfake.NewSimpleClientset()
 	kappcs := fake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
-	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(k8scs, log)
+	fetchFac := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "")
+	tmpFac := template.NewFactory(clusterClient, fetchFac, false, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(clusterClient, nil, exec.NewPlainCmdRunner())
 	pkgr := v1alpha12.PackageRepository{}
 
 	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, fetchFac, tmpFac, deployFac)

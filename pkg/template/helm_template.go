@@ -10,21 +10,16 @@ import (
 	"os"
 	goexec "os/exec"
 
-	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
-	"k8s.io/client-go/kubernetes"
 )
 
 type HelmTemplate struct {
 	opts          v1alpha1.AppTemplateHelmTemplate
 	appContext    AppContext
-	coreClient    kubernetes.Interface
 	cmdRunner     exec.CmdRunner
-	deployFactory deploy.Factory
-	log           logr.Logger
+	valuesFactory ValuesFactory
 }
 
 // HelmTemplateCmdArgs represents the binary and arguments used during templating
@@ -36,10 +31,9 @@ type HelmTemplateCmdArgs struct {
 var _ Template = &HelmTemplate{}
 
 func NewHelmTemplate(opts v1alpha1.AppTemplateHelmTemplate,
-	appContext AppContext, coreClient kubernetes.Interface,
-	cmdRunner exec.CmdRunner, deployFactory deploy.Factory, log logr.Logger) *HelmTemplate {
+	appContext AppContext, cmdRunner exec.CmdRunner, valuesFactory ValuesFactory) *HelmTemplate {
 
-	return &HelmTemplate{opts, appContext, coreClient, cmdRunner, deployFactory, log}
+	return &HelmTemplate{opts, appContext, cmdRunner, valuesFactory}
 }
 
 func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
@@ -76,7 +70,7 @@ func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResu
 	args := []string{"template", name, chartPath, "--namespace", namespace, "--include-crds"}
 
 	{ // Add values files
-		vals := Values{t.opts.ValuesFrom, t.appContext, t.coreClient, t.deployFactory, t.log}
+		vals := t.valuesFactory.NewValues(t.opts.ValuesFrom, t.appContext)
 
 		paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
 		if err != nil {

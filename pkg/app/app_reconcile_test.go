@@ -5,6 +5,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/clusterclient"
 	"reflect"
 	"testing"
 
@@ -42,11 +43,12 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 
 	k8scs := k8sfake.NewSimpleClientset()
 	kappcs := fake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
-	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(k8scs, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "")
+	tmpFac := template.NewFactory(clusterClient, fetchFactory, false, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(clusterClient, nil, exec.NewPlainCmdRunner())
 
-	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFactory, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "unexpected error with reconciling", err)
 
@@ -108,11 +110,12 @@ func Test_NoInspectReconcile_IfInspectNotEnabled(t *testing.T) {
 
 	k8scs := k8sfake.NewSimpleClientset()
 	kappcs := fake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
-	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(k8scs, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "")
+	tmpFac := template.NewFactory(clusterClient, fetchFactory, false, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(clusterClient, nil, exec.NewPlainCmdRunner())
 
-	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFactory, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "unexpected error with reconciling", err)
 
@@ -179,11 +182,12 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 
 	k8scs := k8sfake.NewSimpleClientset()
 	kappcs := fake.NewSimpleClientset()
-	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
-	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	clusterClient := clusterclient.NewClusterClient(k8scs, log)
+	fetchFactory := fetch.NewFactory(clusterClient, fetch.VendirOpts{}, exec.NewPlainCmdRunner(), "")
+	tmpFac := template.NewFactory(clusterClient, fetchFactory, false, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(clusterClient, nil, exec.NewPlainCmdRunner())
 
-	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFactory, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "Unexpected error with reconciling", err)
 
