@@ -173,7 +173,7 @@ func (o *GetOptions) show(client pkgclient.Interface, pkgName, pkgVersion string
 
 		row = append(row, []uitable.Value{
 			uitable.NewValueString(pkg.Spec.Version),
-			uitable.NewValueString(pkg.Spec.ReleasedAt.String()),
+			uitable.NewValueString(formatTimestamp(pkg.Spec.ReleasedAt)),
 			uitable.NewValueString(wordwrap.WrapString(pkg.Spec.CapactiyRequirementsDescription, 80)),
 			uitable.NewValueString(wordwrap.WrapString(pkg.Spec.ReleaseNotes, 80)),
 			uitable.NewValueStrings(pkg.Spec.Licenses),
@@ -228,7 +228,7 @@ func (o *GetOptions) showVersions(pkgList *v1alpha1.PackageList) error {
 	for _, pkg := range pkgList.Items {
 		table.Rows = append(table.Rows, []uitable.Value{
 			uitable.NewValueString(pkg.Spec.Version),
-			uitable.NewValueString(pkg.Spec.ReleasedAt.String()),
+			uitable.NewValueString(formatTimestamp(pkg.Spec.ReleasedAt)),
 		})
 	}
 

@@ -4,9 +4,11 @@
 package release
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	appinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
@@ -14,6 +16,7 @@ import (
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	fakekc "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -83,9 +86,13 @@ func (b *AppSpecBuilder) Build() (kcv1alpha1.AppSpec, error) {
 	reconciler := cmdlocal.NewReconciler(b.depsFactory, cmdRunner, b.logger)
 
 	err = reconciler.Reconcile(buildConfigs, cmdlocal.ReconcileOpts{
-		Local:     true,
-		KbldBuild: true,
+		Local:             true,
+		KbldBuild:         true,
+		AfterAppReconcile: b.checkForErrorsAfterReconciliation,
 	})
+	if err != nil {
+		return kcv1alpha1.AppSpec{}, err
+	}
 
 	bundleURL := ""
 	useKbldImagesLock := false
@@ -130,4 +137,17 @@ func (b *AppSpecBuilder) Build() (kcv1alpha1.AppSpec, error) {
 	}
 
 	return appSpec, nil
+}
+
+func (b *AppSpecBuilder) checkForErrorsAfterReconciliation(app kcv1alpha1.App, fakeClient *fakekc.Clientset) error {
+	existingApp, err := fakeClient.KappctrlV1alpha1().Apps(app.Namespace).Get(context.Background(), app.Name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	// TODO: How can we prevent reconciler from trying to prepare kapp?
+	if existingApp.Status.UsefulErrorMessage != "" && !strings.Contains(existingApp.Status.UsefulErrorMessage, "Preparing kapp") {
+		return fmt.Errorf("Reconciling: %s", existingApp.Status.UsefulErrorMessage)
+	}
+	return nil
 }

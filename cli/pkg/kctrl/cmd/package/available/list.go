@@ -194,11 +194,18 @@ func (o *ListOptions) listPackages() error {
 			cmdcore.NewValueNamespace(pkg.Namespace),
 			uitable.NewValueString(pkg.Spec.RefName),
 			cmdcore.NewValueSemver(pkg.Spec.Version),
-			uitable.NewValueString(pkg.Spec.ReleasedAt.String()),
+			uitable.NewValueString(formatTimestamp(pkg.Spec.ReleasedAt)),
 		})
 	}
 
 	o.ui.PrintTable(table)
 
 	return err
+}
+
+func formatTimestamp(timestamp metav1.Time) string {
+	if timestamp.IsZero() {
+		return "-"
+	}
+	return timestamp.String()
 }
