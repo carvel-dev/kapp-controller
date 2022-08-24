@@ -34,7 +34,7 @@ import (
 const (
 	valuesFileKey        = "values.yaml"
 	yttOverlayPrefix     = "ext.packaging.carvel.dev/ytt-paths-from-secret-name"
-	yttOverlayAnnotation = yttOverlayPrefix + ".kctrl.carvel.dev"
+	yttOverlayAnnotation = yttOverlayPrefix + ".kctrl-overlay-secret"
 )
 
 type CreateOrUpdateOptions struct {

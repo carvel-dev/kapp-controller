@@ -40,7 +40,7 @@ func (o *YttOverlays) OverlaysSecret() (*corev1.Secret, error) {
 
 	filePathsMap := map[string][]byte{}
 	for i, file := range o.files {
-		// Omit stdin input
+		// Pick up stdin input, without trying to traverse `-`
 		if file == "-" {
 			bytes, err := cmdcore.NewInputFile(file).Bytes()
 			if err != nil {
@@ -63,24 +63,29 @@ func (o *YttOverlays) OverlaysSecret() (*corev1.Secret, error) {
 				ext := filepath.Ext(path)
 				for _, allowedExt := range fileResourcesAllowedExts {
 					if allowedExt == ext {
-						bytes, err := cmdcore.NewInputFile(path).Bytes()
-						if err != nil {
-							return fmt.Errorf("Reading file: %s", err.Error())
-						}
-
 						relPath, err := filepath.Rel(file, path)
 						if err != nil {
 							return err
 						}
 
-						key := fmt.Sprintf("%04d-%s", i, relPath)
-						// Ensure valid secret keys
-						key = strings.ReplaceAll(key, "/", "_")
+						// Ensures that nested directories are not allowed
+						// Accounts for windows environments
+						if strings.Count(relPath, "/") > 0 {
+							return fmt.Errorf("Nested directories are not supported by `--ytt-overlay-file`")
+						}
 
-						// Handle windows file paths
-						key = strings.ReplaceAll(key, ":\\", "_")
-						key = strings.ReplaceAll(key, "\\", "_")
-						key = strings.ReplaceAll(key, "$", ".")
+						// Ignore hidden files like `.git`
+						// TODO: Should we explicitly exclude hidden files in Windows?
+						if filepath.Base(relPath)[0:1] == "." {
+							continue
+						}
+
+						bytes, err := cmdcore.NewInputFile(path).Bytes()
+						if err != nil {
+							return fmt.Errorf("Reading file: %s", err.Error())
+						}
+
+						key := fmt.Sprintf("%04d-%s", i, relPath)
 
 						filePathsMap[key] = bytes
 					}
@@ -88,7 +93,7 @@ func (o *YttOverlays) OverlaysSecret() (*corev1.Secret, error) {
 				return nil
 			})
 			if err != nil {
-				return nil, fmt.Errorf("Recursing through directory: %s", file)
+				return nil, fmt.Errorf("Recursing through directory: %s: %s", file, err)
 			}
 		} else {
 			for _, allowedExt := range fileResourcesAllowedExts {
