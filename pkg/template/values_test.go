@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/k14s/semver/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -208,6 +209,44 @@ func TestValues(t *testing.T) {
 			_, _, err := subject.AsPaths(os.TempDir())
 			require.Error(t, err)
 			assert.ErrorContains(t, err, "Writing paths: Invalid field spec provided to DownwardAPI. Only single supported fields are allowed")
+		})
+
+		t.Run("return kubernetes cluster version if not supplied", func(t *testing.T) {
+			subject := subject
+			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
+				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
+					{Name: "k8s-version", KubernetesVersion: &v1alpha1.Version{}},
+				}},
+			}}
+			subject.additionalDownwardAPIValues = AdditionalDownwardAPIValues{
+				KubernetesVersion: semver.MustParse("0.20.0"),
+			}
+
+			paths, cleanup, err := subject.AsPaths(os.TempDir())
+			require.NoError(t, err)
+			t.Cleanup(cleanup)
+
+			require.Len(t, paths, 1)
+			assertFileContents(t, paths[0], "k8s-version: 0.20.0\n")
+		})
+
+		t.Run("return kapp-controller version", func(t *testing.T) {
+			subject := subject
+			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
+				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
+					{Name: "kc-version", KappControllerVersion: &v1alpha1.Version{}},
+				}},
+			}}
+			subject.additionalDownwardAPIValues = AdditionalDownwardAPIValues{
+				KappControllerVersion: semver.MustParse("0.42.31337"),
+			}
+
+			paths, cleanup, err := subject.AsPaths(os.TempDir())
+			require.NoError(t, err)
+			t.Cleanup(cleanup)
+
+			require.Len(t, paths, 1)
+			assertFileContents(t, paths[0], "kc-version: 0.42.31337\n")
 		})
 	})
 }

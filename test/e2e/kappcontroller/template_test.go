@@ -132,6 +132,9 @@ spec:
               fieldPath: metadata.labels['expectedLabel']
             - name: allAnnotations
               fieldPath: metadata.annotations
+            - name: kubernetesVersion
+              kubernetesVersion:
+                version: 1.0.0
   deploy:
     - kapp: {}
 ---
@@ -185,6 +188,7 @@ label: "expectedLabelValue"
 allAnnotations:
   expectedAnnotation: expectedAnnotationValue
   anotherExpectedAnnotation: anotherExpectedAnnotationValue
+kubernetesVersion: "1.0.0"
 `, name, env.Namespace, uid)
 
 		actual := cm.Data["values"]
@@ -250,6 +254,9 @@ spec:
             fieldPath: metadata.annotations['expectedAnnotation']
           - name: label
             fieldPath: metadata.labels['expectedLabel']
+          - name: kubernetesVersion
+            kubernetesVersion:
+              version: 1.0.0
   deploy:
     - kapp: {}
 ---
@@ -292,6 +299,7 @@ label: "expectedLabelValue"
 name: "%s"
 namespace: "%s"
 uid: "%s"
+kubernetesVersion: "1.0.0"
 `, name, env.Namespace, uid)
 		configMapData, err := yaml.Marshal(cm.Data)
 		require.NoError(t, err)
@@ -337,10 +345,28 @@ spec:
               {{- range $k, $v := .Values }}
                 {{ $k }}: {{ $v }}
               {{- end }}
+          testchart/templates/versions.yaml: |
+            {{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.Version -}}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: k8s-version
+              annotations:
+                k8s-version: {{ .Capabilities.KubeVersion.Version }}
+            {{- end }}
+          testchart/templates/group-versions-api.yaml: |
+            {{- if .Capabilities.APIVersions.Has "apps/v1" }}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: carvel-group
+            {{- end }}
   template:
   - helmTemplate:
       path: testchart/
       name: testchart
+      kubernetesVersion: {}
+      kuberetesAPIs: {}
       valuesFrom:
       - secretRef:
           name: secret-values
@@ -407,6 +433,30 @@ uid: "%s"
 		actualOut, err := yaml.Marshal(configMapData)
 		require.NoError(t, err)
 		require.YAMLEq(t, expectedOut, string(actualOut))
+	})
+
+	logger.Section("ensuring kubernetes version is templated", func() {
+		// assume that the presence of the configmap based on semver filtering, then the live k8s version was used
+		out := kubectl.Run([]string{"get", "configmap", "k8s-version", "-o", "yaml"})
+
+		var cm corev1.ConfigMap
+
+		err := yaml.Unmarshal([]byte(out), &cm)
+		if err != nil {
+			t.Fatalf("Unmarshaling result config map: %s", err)
+		}
+	})
+
+	logger.Section("ensuring kubernetes group/version apis are templated", func() {
+		// assume that the presence of the configmap based on semver filtering, then the live k8s version was used
+		out := kubectl.Run([]string{"get", "configmap", "carvel-group", "-o", "yaml"})
+
+		var cm corev1.ConfigMap
+
+		err := yaml.Unmarshal([]byte(out), &cm)
+		if err != nil {
+			t.Fatalf("Unmarshaling result config map: %s", err)
+		}
 	})
 }
 

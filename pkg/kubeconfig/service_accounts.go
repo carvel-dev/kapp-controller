@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package deploy
+package kubeconfig
 
 import (
 	"context"
@@ -36,19 +36,19 @@ func NewServiceAccounts(coreClient kubernetes.Interface, log logr.Logger) *Servi
 		tokenManager: tokenMgr, caCert: []byte(os.Getenv("KAPPCTRL_KUBERNETES_CA_DATA"))}
 }
 
-func (s *ServiceAccounts) Find(genericOpts GenericOpts, saName string) (ProcessedGenericOpts, error) {
-	kubeconfigYAML, err := s.fetchServiceAccount(genericOpts.Namespace, saName)
+func (s *ServiceAccounts) Find(accessLocation AccessLocation, saName string) (AccessInfo, error) {
+	kubeconfigYAML, err := s.fetchServiceAccount(accessLocation.Namespace, saName)
 	if err != nil {
-		return ProcessedGenericOpts{}, err
+		return AccessInfo{}, err
 	}
 
 	kubeconfigRestricted, err := NewKubeconfigRestricted(kubeconfigYAML)
 	if err != nil {
-		return ProcessedGenericOpts{}, err
+		return AccessInfo{}, err
 	}
 
-	pgoForSA := ProcessedGenericOpts{
-		Name:       genericOpts.Name,
+	pgoForSA := AccessInfo{
+		Name:       accessLocation.Name,
 		Namespace:  "", // Assume kubeconfig contains preferred namespace from SA
 		Kubeconfig: kubeconfigRestricted,
 	}

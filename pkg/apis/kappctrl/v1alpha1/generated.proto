@@ -331,6 +331,13 @@ message AppTemplateHelmTemplate {
 
   // One or more secrets, config maps, paths that provide values (optional)
   repeated AppTemplateValuesSource valuesFrom = 4;
+
+  // Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster.
+  // Can be manually overridden to a value instead.
+  optional Version kubernetesVersion = 5;
+
+  // Optional: Use kubernetes group/versions resources available in the live cluster
+  optional Version kubernetesAPIs = 6;
 }
 
 // TODO implement jsonnet
@@ -387,6 +394,16 @@ message AppTemplateValuesDownwardAPIItem {
 
   // Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.
   optional string fieldPath = 2;
+
+  // Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster.
+  // Can be manually overridden to a value instead.
+  optional Version kubernetesVersion = 3;
+
+  // Optional: Use kapp-controller version from live cluster
+  optional Version kappControllerVersion = 4;
+
+  // Optional: Use kubernetes group/versions resources available in the live cluster
+  optional Version kubernetesAPIs = 5;
 }
 
 // +k8s:openapi-gen=true
@@ -461,5 +478,10 @@ message GenericStatus {
 
   // +optional
   optional string usefulErrorMessage = 4;
+}
+
+// +k8s:openapi-gen=true
+message Version {
+  optional string version = 1;
 }
 

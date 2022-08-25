@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	goexec "os/exec"
+	"strings"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
@@ -17,10 +18,11 @@ import (
 )
 
 type HelmTemplate struct {
-	opts       v1alpha1.AppTemplateHelmTemplate
-	appContext AppContext
-	coreClient kubernetes.Interface
-	cmdRunner  exec.CmdRunner
+	opts          v1alpha1.AppTemplateHelmTemplate
+	appContext    AppContext
+	coreClient    kubernetes.Interface
+	cmdRunner     exec.CmdRunner
+	valuesFactory ValuesFactory
 }
 
 // HelmTemplateCmdArgs represents the binary and arguments used during templating
@@ -31,11 +33,11 @@ type HelmTemplateCmdArgs struct {
 
 var _ Template = &HelmTemplate{}
 
-func NewHelmTemplate(opts v1alpha1.AppTemplateHelmTemplate,
-	appContext AppContext, coreClient kubernetes.Interface,
-	cmdRunner exec.CmdRunner) *HelmTemplate {
+func NewHelmTemplate(opts v1alpha1.AppTemplateHelmTemplate, appContext AppContext, coreClient kubernetes.Interface,
+	cmdRunner exec.CmdRunner, valuesFactory ValuesFactory) *HelmTemplate {
 
-	return &HelmTemplate{opts, appContext, coreClient, cmdRunner}
+	return &HelmTemplate{opts: opts, appContext: appContext, coreClient: coreClient, cmdRunner: cmdRunner,
+		valuesFactory: valuesFactory}
 }
 
 func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
@@ -71,8 +73,15 @@ func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResu
 
 	args := []string{"template", name, chartPath, "--namespace", namespace, "--include-crds"}
 
+	if t.opts.KubernetesVersion != nil {
+		args = append(args, []string{"--kube-version", t.valuesFactory.additionaDownwardAPIValues.KubernetesVersion.String()}...)
+	}
+	if t.opts.KubernetesAPIs != nil {
+		args = append(args, []string{"--api-versions", strings.Join(t.valuesFactory.additionaDownwardAPIValues.KubernetesAPIs, ",")}...)
+	}
+
 	{ // Add values files
-		vals := Values{t.opts.ValuesFrom, t.appContext, t.coreClient}
+		vals := t.valuesFactory.NewValues(t.opts.ValuesFrom, t.appContext)
 
 		paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
 		if err != nil {

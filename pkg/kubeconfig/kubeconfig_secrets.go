@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package deploy
+package kubeconfig
 
 import (
 	"context"
@@ -21,29 +21,29 @@ func NewKubeconfigSecrets(coreClient kubernetes.Interface) *KubeconfigSecrets {
 	return &KubeconfigSecrets{coreClient}
 }
 
-func (s *KubeconfigSecrets) Find(genericOpts GenericOpts,
-	clusterOpts *v1alpha1.AppCluster) (ProcessedGenericOpts, error) {
+func (s *KubeconfigSecrets) Find(accessLocation AccessLocation,
+	clusterOpts *v1alpha1.AppCluster) (AccessInfo, error) {
 
 	if clusterOpts == nil {
-		return ProcessedGenericOpts{}, fmt.Errorf("Internal inconsistency: Expected cluster to not be nil")
+		return AccessInfo{}, fmt.Errorf("Internal inconsistency: Expected cluster to not be nil")
 	}
 
 	if clusterOpts.KubeconfigSecretRef == nil {
-		return ProcessedGenericOpts{}, fmt.Errorf("Expected kubeconfig secret reference to be specified")
+		return AccessInfo{}, fmt.Errorf("Expected kubeconfig secret reference to be specified")
 	}
 
-	kubeconfigYAML, err := s.fetchKubeconfigYAML(genericOpts.Namespace, clusterOpts.KubeconfigSecretRef)
+	kubeconfigYAML, err := s.fetchKubeconfigYAML(accessLocation.Namespace, clusterOpts.KubeconfigSecretRef)
 	if err != nil {
-		return ProcessedGenericOpts{}, err
+		return AccessInfo{}, err
 	}
 
 	kubeconfigRestricted, err := NewKubeconfigRestricted(kubeconfigYAML)
 	if err != nil {
-		return ProcessedGenericOpts{}, err
+		return AccessInfo{}, err
 	}
 
-	pgoForCluster := ProcessedGenericOpts{
-		Name: genericOpts.Name,
+	pgoForCluster := AccessInfo{
+		Name: accessLocation.Name,
 		// Override destination namespace; if it's empty
 		// assume kubeconfig contains preferred namespace
 		Namespace:  clusterOpts.Namespace,

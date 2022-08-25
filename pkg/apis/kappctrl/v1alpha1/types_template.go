@@ -53,6 +53,11 @@ type AppTemplateHelmTemplate struct {
 	Path string `json:"path,omitempty" protobuf:"bytes,3,opt,name=path"`
 	// One or more secrets, config maps, paths that provide values (optional)
 	ValuesFrom []AppTemplateValuesSource `json:"valuesFrom,omitempty" protobuf:"bytes,4,rep,name=valuesFrom"`
+	// Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster.
+	// Can be manually overridden to a value instead.
+	KubernetesVersion *Version `json:"kubernetesVersion,omitempty" protobuf:"bytes,5,opt,name=kubernetesVersion"`
+	// Optional: Use kubernetes group/versions resources available in the live cluster
+	KubernetesAPIs *Version `json:"kubernetesAPIs,omitempty" protobuf:"bytes,6,opt,name=kubernetesAPIs"`
 }
 
 // +k8s:openapi-gen=true
@@ -69,15 +74,27 @@ type AppTemplateValuesSourceRef struct {
 }
 
 // +k8s:openapi-gen=true
+type AppTemplateValuesDownwardAPI struct {
+	Items []AppTemplateValuesDownwardAPIItem `json:"items,omitempty" protobuf:"bytes,1,opt,name=items"`
+}
+
+// +k8s:openapi-gen=true
 type AppTemplateValuesDownwardAPIItem struct {
 	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
 	// Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.
 	FieldPath string `json:"fieldPath,omitempty" protobuf:"bytes,2,opt,name=fieldPath"`
+	// Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster.
+	// Can be manually overridden to a value instead.
+	KubernetesVersion *Version `json:"kubernetesVersion,omitempty" protobuf:"bytes,3,opt,name=kubernetesVersion"`
+	// Optional: Use kapp-controller version from live cluster
+	KappControllerVersion *Version `json:"kappControllerVersion,omitempty" protobuf:"bytes,4,opt,name=kappControllerVersion"`
+	// Optional: Use kubernetes group/versions resources available in the live cluster
+	KubernetesAPIs *Version `json:"kubernetesAPIs,omitempty" protobuf:"bytes,5,opt,name=kubernetesAPIs"`
 }
 
 // +k8s:openapi-gen=true
-type AppTemplateValuesDownwardAPI struct {
-	Items []AppTemplateValuesDownwardAPIItem `json:"items,omitempty" protobuf:"bytes,1,opt,name=items"`
+type Version struct {
+	Version string `json:"version,omitempty" protobut:"bytes,1,opt,version=version" protobuf:"bytes,1,opt,name=version"`
 }
 
 // TODO implement kustomize

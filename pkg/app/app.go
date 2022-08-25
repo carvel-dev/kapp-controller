@@ -4,6 +4,7 @@
 package app
 
 import (
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/componentInfo"
 	"sync"
 
 	"github.com/go-logr/logr"
@@ -31,6 +32,7 @@ type App struct {
 	fetchFactory    fetch.Factory
 	templateFactory template.Factory
 	deployFactory   deploy.Factory
+	compInfo        componentInfo.Info
 
 	log        logr.Logger
 	appMetrics *metrics.AppMetrics
@@ -42,11 +44,11 @@ type App struct {
 
 func NewApp(app v1alpha1.App, hooks Hooks,
 	fetchFactory fetch.Factory, templateFactory template.Factory,
-	deployFactory deploy.Factory, log logr.Logger, appMetrics *metrics.AppMetrics) *App {
+	deployFactory deploy.Factory, log logr.Logger, appMetrics *metrics.AppMetrics, compInfo componentInfo.Info) *App {
 
 	return &App{app: app, appPrev: *(app.DeepCopy()), hooks: hooks,
 		fetchFactory: fetchFactory, templateFactory: templateFactory,
-		deployFactory: deployFactory, log: log, appMetrics: appMetrics}
+		deployFactory: deployFactory, log: log, appMetrics: appMetrics, compInfo: compInfo}
 }
 
 func (a *App) Name() string      { return a.app.Name }

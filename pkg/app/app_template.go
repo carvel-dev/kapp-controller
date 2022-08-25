@@ -26,20 +26,40 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 	var result exec.CmdRunResult
 	var isStream bool
 
+	kubernetesVersion, err := a.compInfo.KubernetesVersion(a.app.Spec.ServiceAccountName, a.app.Spec.Cluster, &a.app.ObjectMeta)
+	if err != nil {
+		result.AttachErrorf("%s", fmt.Errorf("Unable to get kubernetes version before templating"))
+		return result
+	}
+
+	kappControllerVersion, err := a.compInfo.KappControllerVersion()
+	if err != nil {
+		result.AttachErrorf("%s", fmt.Errorf("Unable to get kapp-controller version before templating"))
+		return result
+	}
+
+	k8sAPIs, err := a.compInfo.KubernetesAPIs()
+	if err != nil {
+		result.AttachErrorf("%s", fmt.Errorf("Unable to list all server apigroups/version before templating"))
+		return result
+	}
+
+	additionalValues := ctltpl.AdditionalDownwardAPIValues{KubernetesVersion: kubernetesVersion, KappControllerVersion: kappControllerVersion, KubernetesAPIs: k8sAPIs}
+
 	for _, tpl := range a.app.Spec.Template {
 		var template ctltpl.Template
 
 		switch {
 		case tpl.Ytt != nil:
-			template = a.templateFactory.NewYtt(*tpl.Ytt, appContext)
+			template = a.templateFactory.NewYtt(*tpl.Ytt, appContext, additionalValues)
 		case tpl.Kbld != nil:
 			template = a.templateFactory.NewKbld(*tpl.Kbld, appContext)
 		case tpl.HelmTemplate != nil:
-			template = a.templateFactory.NewHelmTemplate(*tpl.HelmTemplate, appContext)
+			template = a.templateFactory.NewHelmTemplate(*tpl.HelmTemplate, appContext, additionalValues)
 		case tpl.Sops != nil:
 			template = a.templateFactory.NewSops(*tpl.Sops, appContext)
 		case tpl.Cue != nil:
-			template = a.templateFactory.NewCue(*tpl.Cue, appContext)
+			template = a.templateFactory.NewCue(*tpl.Cue, appContext, additionalValues)
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to template"))
 			return result

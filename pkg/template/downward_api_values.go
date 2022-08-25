@@ -6,6 +6,7 @@ package template
 import (
 	"errors"
 	"fmt"
+	"github.com/k14s/semver/v4"
 	"regexp"
 	"strings"
 
@@ -14,31 +15,54 @@ import (
 	"k8s.io/client-go/util/jsonpath"
 )
 
+type AdditionalDownwardAPIValues struct {
+	KappControllerVersion semver.Version
+	KubernetesVersion     semver.Version
+	KubernetesAPIs        []string
+}
+
 // DownwardAPIValues produces multiple key-values based on the DownwardAPI config
 // queried against the object metadata
 type DownwardAPIValues struct {
-	items    []v1alpha1.AppTemplateValuesDownwardAPIItem
-	metadata PartialObjectMetadata
+	items                       []v1alpha1.AppTemplateValuesDownwardAPIItem
+	metadata                    PartialObjectMetadata
+	additionalDownwardAPIValues AdditionalDownwardAPIValues
 }
 
 // AsYAMLs returns many key-values queried (using jsonpath) against an object metadata provided.
 func (a DownwardAPIValues) AsYAMLs() ([][]byte, error) {
 	dataValues := [][]byte{}
+	keyValueContent := []byte{}
+
 	for _, item := range a.items {
 		err := a.validateName(item.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		fieldPathExpression, err := relaxedJSONPathExpression(item.FieldPath)
-		if err != nil {
-			return nil, err
+		switch {
+		case item.FieldPath != "":
+			fieldPathExpression, err := relaxedJSONPathExpression(item.FieldPath)
+			if err != nil {
+				return nil, err
+			}
+			keyValueContent, err = a.extractFieldPathAsKeyValue(item.Name, fieldPathExpression)
+			if err != nil {
+				return nil, err
+			}
+		case item.KubernetesVersion != nil:
+			keyValueContent, err = yaml.Marshal(map[string]string{item.Name: a.additionalDownwardAPIValues.KubernetesVersion.String()})
+			if err != nil {
+				return nil, err
+			}
+		case item.KappControllerVersion != nil:
+			keyValueContent, err = yaml.Marshal(map[string]string{item.Name: a.additionalDownwardAPIValues.KappControllerVersion.String()})
+		case item.KubernetesAPIs != nil:
+			keyValueContent, err = yaml.Marshal(map[string]string{item.Name: strings.Join(a.additionalDownwardAPIValues.KubernetesAPIs, ",")})
+		default:
+			return nil, fmt.Errorf("Invalid downward API item given")
 		}
 
-		keyValueContent, err := a.extractFieldPathAsKeyValue(item.Name, fieldPathExpression)
-		if err != nil {
-			return nil, err
-		}
 		dataValues = append(dataValues, keyValueContent)
 	}
 
@@ -89,8 +113,7 @@ func (DownwardAPIValues) nestedKeyValue(name string, val interface{}) ([]byte, e
 		nestedMap = nextLevel
 	}
 
-	yamlContent, err := yaml.Marshal(root)
-	return yamlContent, err
+	return yaml.Marshal(root)
 }
 
 func splitWithEscaping(s string, separator, escape byte) []string {
@@ -107,8 +130,7 @@ func splitWithEscaping(s string, separator, escape byte) []string {
 			token = append(token, s[i])
 		}
 	}
-	tokens = append(tokens, string(token))
-	return tokens
+	return append(tokens, string(token))
 }
 
 // Copied from https://github.com/kubernetes/kubectl/blob/ac26f503e81287d9903761a1a8ded25fdebec6a7/pkg/cmd/get/customcolumn.go#L38

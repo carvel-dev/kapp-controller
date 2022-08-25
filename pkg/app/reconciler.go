@@ -6,6 +6,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/componentInfo"
 
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -29,16 +30,18 @@ type Reconciler struct {
 	crdAppFactory   CRDAppFactory
 	appRefTracker   *reftracker.AppRefTracker
 	appUpdateStatus *reftracker.AppUpdateStatus
+	componentInfo   componentInfo.Info
 }
 
 // NewReconciler constructs new Reconciler.
 func NewReconciler(appClient kcclient.Interface, log logr.Logger, crdAppFactory CRDAppFactory,
-	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *Reconciler {
+	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus, componentInfo componentInfo.Info) *Reconciler {
 	return &Reconciler{appClient: appClient,
 		log:             log,
 		crdAppFactory:   crdAppFactory,
 		appRefTracker:   appRefTracker,
 		appUpdateStatus: appUpdateStatus,
+		componentInfo:   componentInfo,
 	}
 }
 

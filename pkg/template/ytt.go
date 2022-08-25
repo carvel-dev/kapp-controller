@@ -17,20 +17,21 @@ import (
 )
 
 type Ytt struct {
-	opts         v1alpha1.AppTemplateYtt
-	appContext   AppContext
-	coreClient   kubernetes.Interface
-	fetchFactory fetch.Factory
-	cmdRunner    exec.CmdRunner
+	opts          v1alpha1.AppTemplateYtt
+	appContext    AppContext
+	coreClient    kubernetes.Interface
+	fetchFactory  fetch.Factory
+	valuesFactory ValuesFactory
+	cmdRunner     exec.CmdRunner
 }
 
 var _ Template = &Ytt{}
 
 // NewYtt returns ytt template.
 func NewYtt(opts v1alpha1.AppTemplateYtt, appContext AppContext,
-	coreClient kubernetes.Interface, fetchFactory fetch.Factory, cmdRunner exec.CmdRunner) *Ytt {
+	coreClient kubernetes.Interface, fetchFactory fetch.Factory, cmdRunner exec.CmdRunner, valuesFactory ValuesFactory) *Ytt {
 
-	return &Ytt{opts, appContext, coreClient, fetchFactory, cmdRunner}
+	return &Ytt{opts: opts, appContext: appContext, coreClient: coreClient, fetchFactory: fetchFactory, cmdRunner: cmdRunner, valuesFactory: valuesFactory}
 }
 
 func (t *Ytt) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
@@ -60,7 +61,7 @@ func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	args = t.addFileMarks(args)
 
 	{ // Add values files
-		vals := Values{t.opts.ValuesFrom, t.appContext, t.coreClient}
+		vals := t.valuesFactory.NewValues(t.opts.ValuesFrom, t.appContext)
 
 		paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
 		if err != nil {

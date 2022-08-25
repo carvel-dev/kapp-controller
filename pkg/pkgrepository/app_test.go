@@ -4,6 +4,7 @@
 package pkgrepository_test
 
 import (
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 	"reflect"
 	"testing"
 
@@ -48,9 +49,9 @@ func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	k8scs := k8sfake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
+	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil, nil)
 
 	out := app.SecretRefs()
 	if !reflect.DeepEqual(out, expected) {
@@ -74,9 +75,9 @@ func Test_SecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 	k8scs := k8sfake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
+	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil, nil)
 
 	out := app.SecretRefs()
 	if len(out) != 0 {
