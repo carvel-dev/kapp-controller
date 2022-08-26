@@ -33,6 +33,7 @@ type HelmTemplateCmdArgs struct {
 
 var _ Template = &HelmTemplate{}
 
+// NewHelmTemplate returns a HelmTemplate
 func NewHelmTemplate(opts v1alpha1.AppTemplateHelmTemplate, appContext AppContext, coreClient kubernetes.Interface,
 	cmdRunner exec.CmdRunner, valuesFactory ValuesFactory) *HelmTemplate {
 
@@ -40,6 +41,7 @@ func NewHelmTemplate(opts v1alpha1.AppTemplateHelmTemplate, appContext AppContex
 		valuesFactory: valuesFactory}
 }
 
+// TemplateDir runs helm template against a directory of files
 func (t *HelmTemplate) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
 	return t.template(dirPath, nil), true
 }

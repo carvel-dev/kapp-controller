@@ -4,7 +4,6 @@
 package pkgrepository_test
 
 import (
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 	"reflect"
 	"testing"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

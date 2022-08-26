@@ -5,10 +5,10 @@ package packageinstall
 
 import (
 	"fmt"
-	"github.com/k14s/semver/v4"
 	"reflect"
 	"testing"
 
+	"github.com/k14s/semver/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"

@@ -5,11 +5,11 @@ package pkgrepository
 
 import (
 	"fmt"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	ctldep "github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 )
 
 func (a *App) deploy(tplOutput string) exec.CmdRunResult {

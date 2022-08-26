@@ -13,15 +13,18 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type KubeconfigSecrets struct {
+// Secrets gets cluster access based on a secret
+type Secrets struct {
 	coreClient kubernetes.Interface
 }
 
-func NewKubeconfigSecrets(coreClient kubernetes.Interface) *KubeconfigSecrets {
-	return &KubeconfigSecrets{coreClient}
+// NewKubeconfigSecrets returns a Secrets
+func NewKubeconfigSecrets(coreClient kubernetes.Interface) *Secrets {
+	return &Secrets{coreClient}
 }
 
-func (s *KubeconfigSecrets) Find(accessLocation AccessLocation,
+// Find takes the location of the credentials secret and returns information to access the cluster
+func (s *Secrets) Find(accessLocation AccessLocation,
 	clusterOpts *v1alpha1.AppCluster) (AccessInfo, error) {
 
 	if clusterOpts == nil {
@@ -53,7 +56,7 @@ func (s *KubeconfigSecrets) Find(accessLocation AccessLocation,
 	return pgoForCluster, nil
 }
 
-func (s *KubeconfigSecrets) fetchKubeconfigYAML(nsName string,
+func (s *Secrets) fetchKubeconfigYAML(nsName string,
 	secretRef *v1alpha1.AppClusterKubeconfigSecretRef) (string, error) {
 
 	if len(nsName) == 0 {

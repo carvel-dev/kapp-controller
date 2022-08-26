@@ -135,6 +135,14 @@ spec:
             - name: kubernetesVersion
               kubernetesVersion:
                 version: 1.0.0
+            - name: kcVersion
+              kappControllerVersion:
+                version: 2.0.0
+            - name: k8sAPIs
+              kubernetesAPIs: 
+                groupVersions:
+                - "test/test"
+                - "test2/test2"
   deploy:
     - kapp: {}
 ---
@@ -189,6 +197,8 @@ allAnnotations:
   expectedAnnotation: expectedAnnotationValue
   anotherExpectedAnnotation: anotherExpectedAnnotationValue
 kubernetesVersion: "1.0.0"
+kcVersion: "2.0.0"
+k8sAPIs: "test/test,test2/test2"
 `, name, env.Namespace, uid)
 
 		actual := cm.Data["values"]
@@ -257,6 +267,14 @@ spec:
           - name: kubernetesVersion
             kubernetesVersion:
               version: 1.0.0
+          - name: kcVersion
+            kappControllerVersion:
+              version: 2.0.0
+          - name: k8sAPIs
+            kubernetesAPIs: 
+              groupVersions:
+              - "test/test"
+              - "test2/test2"
   deploy:
     - kapp: {}
 ---
@@ -300,6 +318,8 @@ name: "%s"
 namespace: "%s"
 uid: "%s"
 kubernetesVersion: "1.0.0"
+kcVersion: "2.0.0"
+k8sAPIs: "test/test,test2/test2"
 `, name, env.Namespace, uid)
 		configMapData, err := yaml.Marshal(cm.Data)
 		require.NoError(t, err)

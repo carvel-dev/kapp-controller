@@ -7,8 +7,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
-	"gopkg.in/yaml.v2"
 	"os"
 	goexec "os/exec"
 	"path/filepath"
@@ -17,7 +15,9 @@ import (
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
+	"gopkg.in/yaml.v2"
 )
 
 const (

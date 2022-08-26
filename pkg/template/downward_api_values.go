@@ -6,15 +6,16 @@ package template
 import (
 	"errors"
 	"fmt"
-	"github.com/k14s/semver/v4"
 	"regexp"
 	"strings"
 
+	"github.com/k14s/semver/v4"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/util/jsonpath"
 )
 
+// AdditionalDownwardAPIValues holds values that are not computed discoverable on the resource itself
 type AdditionalDownwardAPIValues struct {
 	KappControllerVersion semver.Version
 	KubernetesVersion     semver.Version
@@ -29,40 +30,51 @@ type DownwardAPIValues struct {
 	additionalDownwardAPIValues AdditionalDownwardAPIValues
 }
 
-// AsYAMLs returns many key-values queried (using jsonpath) against an object metadata provided.
+// AsYAMLs returns many key-values queried (using jsonpath) against an object metadata provided, and use additionalValues.
 func (a DownwardAPIValues) AsYAMLs() ([][]byte, error) {
 	dataValues := [][]byte{}
 	keyValueContent := []byte{}
+	var err error
 
 	for _, item := range a.items {
-		err := a.validateName(item.Name)
+		err = a.validateName(item.Name)
 		if err != nil {
 			return nil, err
 		}
 
 		switch {
 		case item.FieldPath != "":
-			fieldPathExpression, err := relaxedJSONPathExpression(item.FieldPath)
+			var fieldPathExpression string
+			fieldPathExpression, err = relaxedJSONPathExpression(item.FieldPath)
 			if err != nil {
 				return nil, err
 			}
 			keyValueContent, err = a.extractFieldPathAsKeyValue(item.Name, fieldPathExpression)
-			if err != nil {
-				return nil, err
-			}
 		case item.KubernetesVersion != nil:
-			keyValueContent, err = yaml.Marshal(map[string]string{item.Name: a.additionalDownwardAPIValues.KubernetesVersion.String()})
-			if err != nil {
-				return nil, err
+			if item.KubernetesVersion.Version == "" { // I wish there was a ternary operator in Go
+				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: a.additionalDownwardAPIValues.KubernetesVersion.String()})
+			} else {
+				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: item.KubernetesVersion.Version})
 			}
 		case item.KappControllerVersion != nil:
-			keyValueContent, err = yaml.Marshal(map[string]string{item.Name: a.additionalDownwardAPIValues.KappControllerVersion.String()})
+			if item.KappControllerVersion.Version == "" {
+				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: a.additionalDownwardAPIValues.KappControllerVersion.String()})
+			} else {
+				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: item.KappControllerVersion.Version})
+			}
 		case item.KubernetesAPIs != nil:
-			keyValueContent, err = yaml.Marshal(map[string]string{item.Name: strings.Join(a.additionalDownwardAPIValues.KubernetesAPIs, ",")})
+			if item.KubernetesAPIs.GroupVersions == nil {
+				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: strings.Join(a.additionalDownwardAPIValues.KubernetesAPIs, ",")})
+			} else {
+				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: strings.Join(item.KubernetesAPIs.GroupVersions, ",")})
+			}
 		default:
 			return nil, fmt.Errorf("Invalid downward API item given")
 		}
 
+		if err != nil {
+			return nil, err
+		}
 		dataValues = append(dataValues, keyValueContent)
 	}
 

@@ -6,8 +6,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/componentInfo"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 	"net/http"         // Pprof related
 	_ "net/http/pprof" // Pprof related
 	"os"
@@ -19,8 +17,10 @@ import (
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/componentInfo"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"

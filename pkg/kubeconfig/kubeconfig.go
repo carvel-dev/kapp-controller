@@ -5,6 +5,7 @@ package kubeconfig
 
 import (
 	"fmt"
+
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"k8s.io/client-go/kubernetes"
@@ -13,21 +14,24 @@ import (
 // Kubeconfig provides access to the kubernetes cluster
 // It initializes the service-account token cache
 type Kubeconfig struct {
-	kubeconfigSecrets *KubeconfigSecrets
+	kubeconfigSecrets *Secrets
 	serviceAccounts   *ServiceAccounts
 	log               logr.Logger
 }
 
+// AccessLocation contains the name/namespace of the resource which provides cluster access
+// for example, a service account has a name and namespace
 type AccessLocation struct {
 	Name      string
 	Namespace string
 }
 
+// AccessInfo provides a kubernetes kubeconfig for use to access the cluster
 type AccessInfo struct {
 	Name      string
 	Namespace string
 
-	Kubeconfig                    *KubeconfigRestricted
+	Kubeconfig                    *Restricted
 	DangerousUsePodServiceAccount bool
 }
 

@@ -83,18 +83,25 @@ type AppTemplateValuesDownwardAPIItem struct {
 	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
 	// Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.
 	FieldPath string `json:"fieldPath,omitempty" protobuf:"bytes,2,opt,name=fieldPath"`
-	// Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster.
-	// Can be manually overridden to a value instead.
+	// Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster.
+	// Can be manually supplied instead.
 	KubernetesVersion *Version `json:"kubernetesVersion,omitempty" protobuf:"bytes,3,opt,name=kubernetesVersion"`
-	// Optional: Use kapp-controller version from live cluster
+	// Optional: Get running KappController version, defaults (empty) to retrieving the current running version..
+	// Can be manually supplied instead.
 	KappControllerVersion *Version `json:"kappControllerVersion,omitempty" protobuf:"bytes,4,opt,name=kappControllerVersion"`
-	// Optional: Use kubernetes group/versions resources available in the live cluster
-	KubernetesAPIs *Version `json:"kubernetesAPIs,omitempty" protobuf:"bytes,5,opt,name=kubernetesAPIs"`
+	// Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster.
+	// Can be manually supplied instead, e.g ["group/version", "group2/version2"]
+	KubernetesAPIs *GroupVersion `json:"kubernetesAPIs,omitempty" protobuf:"bytes,5,opt,name=kubernetesAPIs"`
 }
 
 // +k8s:openapi-gen=true
 type Version struct {
-	Version string `json:"version,omitempty" protobut:"bytes,1,opt,version=version" protobuf:"bytes,1,opt,name=version"`
+	Version string `json:"version,omitempty" protobuf:"bytes,1,opt,name=version"`
+}
+
+// +k8s:openapi-gen=true
+type GroupVersion struct {
+	GroupVersions []string `json:"groupVersions,omitempty" protobuf:"bytes,1,opt,name=groupVersions"`
 }
 
 // TODO implement kustomize

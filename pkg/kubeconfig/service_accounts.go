@@ -18,6 +18,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// ServiceAccounts gets cluster access based on a serviceaccount
+// It provides a tokenManager to cache service account tokens
 type ServiceAccounts struct {
 	coreClient   kubernetes.Interface
 	log          logr.Logger
@@ -36,6 +38,7 @@ func NewServiceAccounts(coreClient kubernetes.Interface, log logr.Logger) *Servi
 		tokenManager: tokenMgr, caCert: []byte(os.Getenv("KAPPCTRL_KUBERNETES_CA_DATA"))}
 }
 
+// Find takes the location of the credentials service account and returns information to access the cluster
 func (s *ServiceAccounts) Find(accessLocation AccessLocation, saName string) (AccessInfo, error) {
 	kubeconfigYAML, err := s.fetchServiceAccount(accessLocation.Namespace, saName)
 	if err != nil {
