@@ -88,9 +88,9 @@ func TestE2EInitAndReleaseCases(t *testing.T) {
 
 	env := BuildEnv(t)
 	logger := Logger{}
-	kappCli := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	//kappCli := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
+	//kubectl := Kubectl{t, env.Namespace, logger}
 
 	expectedOutputs := ExpectedOutputYaml{
 		PackageBuild: []string{
