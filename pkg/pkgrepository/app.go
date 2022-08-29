@@ -10,6 +10,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
+	types "k8s.io/apimachinery/pkg/types"
 )
 
 type Hooks struct {
@@ -19,9 +20,10 @@ type Hooks struct {
 }
 
 type App struct {
-	app     v1alpha1.App
-	appPrev v1alpha1.App
-	hooks   Hooks
+	app        v1alpha1.App
+	appPrev    v1alpha1.App
+	pkgRepoUID types.UID
+	hooks      Hooks
 
 	fetchFactory    fetch.Factory
 	templateFactory template.Factory
@@ -33,13 +35,11 @@ type App struct {
 	flushAllStatusUpdates bool
 }
 
-func NewApp(app v1alpha1.App, hooks Hooks,
-	fetchFactory fetch.Factory, templateFactory template.Factory,
-	deployFactory deploy.Factory, log logr.Logger) *App {
-
+// NewApp creates a new instance of an App based on v1alpha1.App
+func NewApp(app v1alpha1.App, hooks Hooks, fetchFactory fetch.Factory, templateFactory template.Factory, deployFactory deploy.Factory, log logr.Logger, pkgRepoUID types.UID) *App {
 	return &App{app: app, appPrev: *(app.DeepCopy()), hooks: hooks,
 		fetchFactory: fetchFactory, templateFactory: templateFactory,
-		deployFactory: deployFactory, log: log}
+		deployFactory: deployFactory, log: log, pkgRepoUID: pkgRepoUID}
 }
 
 func (a *App) Name() string      { return a.app.Name }
