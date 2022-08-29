@@ -8,6 +8,12 @@ fi
 
 set -u
 
-go test ./pkg/... ./cmd/... ./hack/... $@
+GO=go
+if command -v richgo &> /dev/null
+then
+    GO=richgo
+fi
+
+$GO test ./pkg/... ./cmd/... ./hack/... $@
 
 echo UNIT SUCCESS
