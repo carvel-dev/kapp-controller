@@ -231,7 +231,7 @@ func (c CreateStep) configureExportSection() {
 		includePaths := []string{}
 		for _, appTemplate := range appTemplates {
 			if appTemplate.HelmTemplate != nil {
-				includePaths = append(includePaths, appTemplate.HelmTemplate.Path)
+				includePaths = append(includePaths, UpstreamFolderName)
 			}
 
 			if appTemplate.Ytt != nil {
