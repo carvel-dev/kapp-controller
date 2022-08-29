@@ -66,7 +66,7 @@ spec:
 				}},
 				ObservedGeneration:  1,
 				FriendlyDescription: "Reconcile failed: Fetching resources: Error (see .status.usefulErrorMessage for details)",
-				UsefulErrorMessage:  "vendir: Error: Syncing directory '0':\n  Syncing directory '.' with imgpkgBundle contents:\n    Imgpkg: exit status 1 (stderr: imgpkg: Error: Checking if image is bundle:\n  Fetching image:\n    GET https://index.docker.io/v2/k8slt/i-dont-exist/manifests/latest:\n      UNAUTHORIZED: authentication required; [map[Action:pull Class: Name:k8slt/i-dont-exist Type:repository]]\n)\n",
+				UsefulErrorMessage:  "vendir: Error: Syncing directory '0':\n  Syncing directory '.' with imgpkgBundle contents:\n    Imgpkg: exit status 1 (stderr: imgpkg: Error: Fetching image:\n  GET https://index.docker.io/v2/k8slt/i-dont-exist/manifests/latest:\n    UNAUTHORIZED: authentication required; [map[Action:pull Class: Name:k8slt/i-dont-exist Type:repository]]\n)\n",
 			},
 			ConsecutiveReconcileFailures: 1,
 		}

@@ -33,15 +33,15 @@
   version: v0.52.0
 - checksums:
     darwin:
-      amd64: 80dc36566ed41638a120434091490d6d46ee68422592f8003025211b16009c13
+      amd64: bf839a539c90a22287904e2a83c4322bf00da3150d8d47cb9fb5eb59dfe41111
     linux:
-      amd64: 0b067b406775ce3b3b4ac668a6d1b89184b8339480f07a48de74a338b334e7b4
-      arm64: b1613051cc1c2d432d8daca4e96fe67ce1fa2ac41eec6a49f60e8f6da3b56a95
+      amd64: e8a9a3d37a125eca49b8c074ee2f5c84616e765f20ee6c6d60f79dae8f19af10
+      arm64: c5d7b4a39250778f1dd5f9763d3854003c44bb9622d3ac72f58b41aa92d55f7a
   dev: true
   name: imgpkg
   repo: vmware-tanzu/carvel-imgpkg
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.30.0
+  version: v0.31.0
 - checksums:
     darwin:
       amd64: 5ee954207d6324f336341b2a81c0cb6147f08e7f892fbc52c28effc81bc2302f
@@ -55,14 +55,14 @@
   version: v0.30.0
 - checksums:
     linux:
-      amd64: 2d07360a9d93b18488f1ddb9de818b92ba738acbec6e1c66885a88703fa7b21c
-      arm64: 59168c08c32293759005d0c509ce4be9038d7663827e05564c779e59658d8299
+      amd64: 31960ff2f76a7379d9bac526ddf889fb79241191f1dbe2a24f7864ddcb3f6560
+      arm64: d24163e466f7884c55079d1050968e80a05b633830047116cdfd8ae28d35b0c0
   dev: false
   name: helm
   repo: helm/helm
   tarballSubpath: '{{.OS}}-{{.Arch}}/helm'
   urlTemplate: https://get.helm.sh/helm-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
-  version: v3.9.3
+  version: v3.9.4
 - checksums:
     linux:
       amd64: 53aec65e45f62a769ff24b7e5384f0c82d62668dd96ed56685f649da114b4dbb
