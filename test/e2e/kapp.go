@@ -32,12 +32,15 @@ type RunOpts struct {
 	OnErrKubectl []string
 }
 
-func (k Kapp) Run(args []string) string {
+// Run executes kapp with the provided arguments
+func (k *Kapp) Run(args []string) string {
 	out, _ := k.RunWithOpts(args, RunOpts{})
 	return out
 }
 
-func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
+// RunWithOpts executes kapp with the provided arguments and allow for extra options
+func (k *Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
+	k.T.Helper()
 	if !opts.NoNamespace {
 		args = append(args, []string{"-n", k.Namespace}...)
 	}
@@ -99,7 +102,7 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	return stdoutStr, err
 }
 
-func (k Kapp) cmdDesc(args []string, opts RunOpts) string {
+func (k *Kapp) cmdDesc(args []string, opts RunOpts) string {
 	prefix := "kapp"
 	if opts.Redact {
 		return prefix + " -redacted-"
