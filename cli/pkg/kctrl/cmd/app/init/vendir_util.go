@@ -53,6 +53,9 @@ func GetFetchOptionFromVendir(config vendirconf.Config, ishelmTemplateExist bool
 	if config.Directories == nil || config.Directories[0].Contents == nil {
 		return ""
 	}
+	if len(config.Directories) > 1 || len(config.Directories[0].Contents) > 1 {
+		return "MultipleFetchOptions"
+	}
 	content := config.Directories[0].Contents[0]
 	var selectedVendirOption string
 	switch {
@@ -65,8 +68,9 @@ func GetFetchOptionFromVendir(config vendirconf.Config, ishelmTemplateExist bool
 	case content.Git != nil:
 		if ishelmTemplateExist {
 			selectedVendirOption = FetchChartFromGit
+		} else {
+			selectedVendirOption = FetchFromGit
 		}
-		selectedVendirOption = FetchFromGit
 	}
 	return selectedVendirOption
 }

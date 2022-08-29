@@ -4,6 +4,7 @@
 package init
 
 import (
+	"path/filepath"
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -64,12 +65,12 @@ func (t *TemplateStep) Interact() error {
 		appTemplates := []v1alpha1.AppTemplate{}
 
 		// Add helmTemplate
-		if fetchSource == FetchFromHelmRepo || fetchSource == FetchChartFromGit {
-			appTemplateWithHelm := v1alpha1.AppTemplate{
-				HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{
-					Path: UpstreamFolderName,
-				}}
-			appTemplates = append(appTemplates, appTemplateWithHelm)
+		if fetchSource == FetchChartFromGit || fetchSource == FetchFromHelmRepo {
+			appTemplate, err := t.getHelmAppTemplate(fetchSource)
+			if err != nil {
+				return err
+			}
+			appTemplates = append(appTemplates, appTemplate)
 		}
 
 		//  Define YttPaths
@@ -103,8 +104,29 @@ func (t *TemplateStep) Interact() error {
 	return nil
 }
 
+func (t *TemplateStep) getHelmAppTemplate(fetchSource string) (v1alpha1.AppTemplate, error) {
+	var pathFromVendir string
+	if fetchSource == FetchChartFromGit {
+		vendirConf, err := ReadVendirConfig()
+		if err != nil {
+			return v1alpha1.AppTemplate{}, err
+		}
+		pathFromVendir = vendirConf.Directories[0].Contents[0].IncludePaths[0]
+		// TODO Create regex and match against that.
+		pathFromVendir = strings.TrimSuffix(pathFromVendir, "/**/*")
+		pathFromVendir = strings.TrimSuffix(pathFromVendir, "/**")
+		pathFromVendir = strings.TrimSuffix(pathFromVendir, "/*")
+	}
+	appTemplateWithHelm := v1alpha1.AppTemplate{
+		HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{
+			Path: filepath.Join(UpstreamFolderName, pathFromVendir),
+		}}
+	return appTemplateWithHelm, nil
+}
+
 func (t *TemplateStep) getYttPathsForLocalDirectory(defaultIncludedPath string) ([]string, error) {
-	t.ui.PrintInformationalText("We need to include files/ directories which contain Kubernetes manifests. Multiple values can be included using a comma separator.")
+	t.ui.PrintInformationalText("We need to include files/ directories which contain Kubernetes manifests. " +
+		"Multiple values can be included using a comma separator.")
 	textOpts := ui.TextOpts{
 		Label:        "Enter the paths which contain Kubernetes manifests",
 		Default:      defaultIncludedPath,

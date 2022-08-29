@@ -93,7 +93,7 @@ func (c *CreateStep) PreInteract() error { return nil }
 
 func (c *CreateStep) Interact() error {
 	if c.isAppCommandRunExplicitly {
-		c.ui.PrintHeaderText("\nBasic Information (Step 1/3)")
+		c.ui.PrintHeaderText("\nBasic Information")
 		wd, err := os.Getwd()
 		if err != nil {
 			return err
@@ -161,7 +161,7 @@ func (c *CreateStep) PostInteract() error {
 		if err != nil {
 			return err
 		}
-		c.ui.PrintHeaderText("\nOutput (Step 3/3)")
+		c.ui.PrintHeaderText("\nOutput")
 		c.ui.PrintInformationalText("Successfully updated app-build.yml\n")
 		c.ui.PrintInformationalText("Successfully updated app.yml\n")
 		c.ui.PrintHeaderText("\n**Next steps**")
@@ -222,6 +222,10 @@ func (c CreateStep) createAppFromAppBuild() kcv1alpha1.App {
 func (c CreateStep) configureExportSection() {
 	fetchSource := c.build.GetObjectMeta().Annotations[FetchContentAnnotationKey]
 	exportSection := *c.build.GetExport()
+	// TODO not handling the case: In case of pkg init rerun with FetchFromLocalDirectory,
+	// not handling below scenarios as they become quite complex esp Scenario 2,
+	// Scenario 1: During rerun, something is added in the template
+	// Scenario 2: During rerun, something is removed from the template
 	if exportSection == nil || len(exportSection) == 0 || fetchSource == FetchFromLocalDirectory {
 		appTemplates := c.build.GetAppSpec().Template
 		includePaths := []string{}

@@ -49,7 +49,11 @@ func (g *GithubStep) Interact() error {
 		return err
 	}
 
-	return g.configureVersion()
+	err = g.configureVersion()
+	if err != nil {
+		return err
+	}
+	return g.getIncludedPaths()
 }
 
 func (g *GithubStep) configureRepoSlug() error {
@@ -117,4 +121,31 @@ func (g *GithubStep) initializeContentWithGithubRelease() error {
 	//TODO Rohit need to check this how it should be done. It is giving path as empty.
 	g.vendirConfig.Directories[0].Contents = append(g.vendirConfig.Directories[0].Contents, vendirconf.DirectoryContents{})
 	return g.initializeGithubRelease()
+}
+
+func (g *GithubStep) getIncludedPaths() error {
+	g.ui.PrintInformationalText("We need to know which files contain Kubernetes manifests. Multiple files can be included using a comma separator. To include all the files, enter *")
+	includedPaths := g.vendirConfig.Directories[0].Contents[0].IncludePaths
+	defaultIncludedPath := strings.Join(includedPaths, ",")
+	if len(includedPaths) == 0 {
+		defaultIncludedPath = IncludeAllFiles
+	}
+	textOpts := ui.TextOpts{
+		Label:        "Enter the paths which contain Kubernetes manifests",
+		Default:      defaultIncludedPath,
+		ValidateFunc: nil,
+	}
+	path, err := g.ui.AskForText(textOpts)
+	if err != nil {
+		return err
+	}
+	paths := strings.Split(path, ",")
+	if path == IncludeAllFiles {
+		paths = nil
+	}
+	for i := 0; i < len(paths); i++ {
+		paths[i] = strings.TrimSpace(paths[i])
+	}
+	g.vendirConfig.Directories[0].Contents[0].IncludePaths = paths
+	return SaveVendir(g.vendirConfig)
 }

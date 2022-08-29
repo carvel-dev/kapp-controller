@@ -6,6 +6,7 @@ package init
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -114,7 +115,6 @@ func (o *InitOptions) Run() error {
 
 	// TODO: @praveenrewar Remove the header text as we are only saving data to files and doesn't require user input
 	// hence shouldn't be called as Step 3/3
-	o.ui.PrintHeaderText("\nOutput")
 
 	pkgBuild.SetObjectMeta(&metav1.ObjectMeta{
 		Name: pkg.Spec.RefName,
@@ -122,7 +122,10 @@ func (o *InitOptions) Run() error {
 
 	// TODO: @praveeenrewar Refactor the updates
 	o.updatePackageInstall(pkgInstall, pkg.Spec.RefName, pkgMetadata.Spec.DisplayName)
-	o.updatePackage(pkg, pkgBuild)
+	err = o.updatePackage(pkg, pkgBuild)
+	if err != nil {
+		return err
+	}
 
 	err = o.SavePackageResources(pkg, pkgMetadata, pkgInstall)
 	if err != nil {
@@ -132,7 +135,7 @@ func (o *InitOptions) Run() error {
 	if err != nil {
 		return err
 	}
-
+	o.ui.PrintHeaderText("Output")
 	o.ui.PrintInformationalText("Successfully updated package-build.yml\n")
 	o.ui.PrintInformationalText("Successfully updated package-resources.yml\n")
 	o.ui.PrintHeaderText("\nNext steps")
@@ -254,7 +257,7 @@ func (o *InitOptions) updatePackageInstall(pkgInstall *pkgv1alpha1.PackageInstal
 	}
 }
 
-func (o *InitOptions) updatePackage(pkg *v1alpha1.Package, pkgBuild *PackageBuild) {
+func (o *InitOptions) updatePackage(pkg *v1alpha1.Package, pkgBuild *PackageBuild) error {
 	if len(pkg.Spec.Version) == 0 {
 		pkg.Spec.Version = "0.0.0"
 	}
@@ -262,14 +265,42 @@ func (o *InitOptions) updatePackage(pkg *v1alpha1.Package, pkgBuild *PackageBuil
 
 	if pkg.Spec.Template.Spec == nil {
 		pkg.Spec.Template.Spec = &kcv1alpha1.AppSpec{}
-	}
-
-	pkg.Spec.Template.Spec.Fetch = []kcv1alpha1.AppFetch{{Git: &kcv1alpha1.AppFetchGit{}}}
-	pkg.Spec.Template.Spec.Template = pkgBuild.GetAppSpec().Template
-
-	if len(pkg.Spec.Template.Spec.Deploy) == 0 {
+		pkg.Spec.Template.Spec.Fetch = []kcv1alpha1.AppFetch{{Git: &kcv1alpha1.AppFetchGit{}}}
+		pkg.Spec.Template.Spec.Template = pkgBuild.GetAppSpec().Template
 		pkg.Spec.Template.Spec.Deploy = pkgBuild.GetAppSpec().Deploy
+	} else {
+		if !isAppSpecSame(pkg, pkgBuild) {
+			o.ui.PrintInformationalText("AppSpec section of Package(inside package-resources.yml) and " +
+				"PackageBuild(inside package-build.yml) is different. " +
+				"Either choose to overwrite the Package AppSpec or leave as it is.")
+			overrideOptions := []string{"Yes", "No"}
+			choiceOpts := ui.ChoiceOpts{
+				Label:   "Overwrite the Package AppSpec from PackageBuild",
+				Default: 1,
+				Choices: overrideOptions,
+			}
+			selectedIndex, err := o.ui.AskForChoice(choiceOpts)
+			if err != nil {
+				return err
+			}
+			if overrideOptions[selectedIndex] == "Yes" {
+				pkg.Spec.Template.Spec.Template = pkgBuild.GetAppSpec().Template
+				pkg.Spec.Template.Spec.Deploy = pkgBuild.GetAppSpec().Deploy
+			}
+		}
 	}
+	return nil
+}
+
+// isAppSpecSame compares the template and deploy section of package and packageBuild.
+// It doesn't consider fetch as this will always be different because PackageBuild doesn't
+// define fetch section.
+func isAppSpecSame(pkg *v1alpha1.Package, pkgBuild *PackageBuild) bool {
+	pkgBuildAppTemplates := pkgBuild.GetAppSpec().Template
+	pkgAppTemplates := pkg.Spec.Template.Spec.Template
+	pkgBuildAppDeploys := pkgBuild.GetAppSpec().Deploy
+	pkgAppDeploys := pkg.Spec.Template.Spec.Deploy
+	return reflect.DeepEqual(pkgBuildAppTemplates, pkgAppTemplates) && reflect.DeepEqual(pkgBuildAppDeploys, pkgAppDeploys)
 }
 
 func (o *InitOptions) SavePackageResources(pkg *v1alpha1.Package,

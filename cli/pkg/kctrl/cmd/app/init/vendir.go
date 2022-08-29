@@ -9,9 +9,7 @@ import (
 	"fmt"
 	"os"
 	goexec "os/exec"
-	"strings"
 
-	"github.com/cppforlife/go-cli-ui/ui"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
@@ -58,32 +56,17 @@ func (v *VendirStep) Interact() error {
 	switch currentFetchOptionSelected {
 	case FetchFromGithubRelease:
 		githubStep := NewGithubStep(v.ui, v.config)
-		err := Run(githubStep)
-		if err != nil {
-			return err
-		}
+		return Run(githubStep)
 	case FetchFromHelmRepo:
 		helmStep := NewHelmStep(v.ui, v.config)
 		return Run(helmStep)
 	case FetchFromGit:
 		gitStep := NewGitStep(v.ui, v.config)
-		err := Run(gitStep)
-		if err != nil {
-			return err
-		}
+		return Run(gitStep)
 	case FetchChartFromGit:
 		gitStep := NewGitStep(v.ui, v.config)
-		err := Run(gitStep)
-		if err != nil {
-			return err
-		}
+		return Run(gitStep)
 	}
-	includedPaths, err := v.getIncludedPaths()
-	if err != nil {
-		return err
-	}
-	v.config.Directories[0].Contents[0].IncludePaths = includedPaths
-	return SaveVendir(v.config)
 	return nil
 }
 
@@ -101,30 +84,6 @@ func (v *VendirStep) initializeVendirDirectorySection() []vendirconf.Directory {
 	v.config.Directories = directories
 	SaveVendir(v.config)
 	return directories
-}
-
-func (v *VendirStep) getIncludedPaths() ([]string, error) {
-	v.ui.PrintInformationalText("We need to know which files contain Kubernetes manifests. Multiple files can be included using a comma separator. If you want to include all the files, enter *.")
-	includedPaths := v.config.Directories[0].Contents[0].IncludePaths
-	defaultIncludedPath := strings.Join(includedPaths, ",")
-	if len(includedPaths) == 0 {
-		defaultIncludedPath = IncludeAllFiles
-	}
-	textOpts := ui.TextOpts{
-		Label:        "Enter the paths which contain Kubernetes manifests",
-		Default:      defaultIncludedPath,
-		ValidateFunc: nil,
-	}
-	path, err := v.ui.AskForText(textOpts)
-	path = strings.TrimSpace(path)
-	if err != nil {
-		return nil, err
-	}
-	if path == IncludeAllFiles {
-		return []string{}, nil
-	}
-	paths := strings.Split(path, ",")
-	return paths, nil
 }
 
 func (v *VendirStep) PostInteract() error {
@@ -169,7 +128,7 @@ func (v *VendirStep) printFile(filePath string) error {
 func (v *VendirStep) runVendirSync() error {
 	v.ui.PrintInformationalText("\nNext step is to run `vendir sync` to fetch the data from the source to the local directory. Vendir will sync the data into the upstream folder.")
 	v.ui.PrintActionableText("Running vendir sync")
-	v.ui.PrintCmdExecutionText("vendir sync -f vendir.yml")
+	v.ui.PrintCmdExecutionText("vendir sync -f vendir.yml\n")
 	var stdoutBs, stderrBs bytes.Buffer
 
 	localCmdRunner := exec.NewPlainCmdRunner()

@@ -49,7 +49,11 @@ func (f *FetchStep) Interact() error {
 	}
 	isHelmTemplateExistInPreviousOption := f.helmTemplateExistInAppBuild()
 	previousFetchOptionSelected := GetFetchOptionFromVendir(vendirConfig, isHelmTemplateExistInPreviousOption)
-
+	if previousFetchOptionSelected == "MultipleFetchOptions" {
+		// As this is advanced use case, we dont know how to handle it.
+		f.ui.PrintInformationalText("Since vendir is syncing data from multiple resources, we will not reconfigure vendir.yml and run vendir sync.")
+		return nil
+	}
 	options := []string{FetchFromLocalDirectory, FetchFromGithubRelease, FetchFromHelmRepo, FetchFromGit, FetchChartFromGit}
 	previousFetchOptionIndex := getPreviousFetchOptionIndex(options, previousFetchOptionSelected)
 	defaultFetchOptionIndex := previousFetchOptionIndex
