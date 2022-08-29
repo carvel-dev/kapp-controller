@@ -30,7 +30,13 @@ EOF
 cat << EOF > tmp/build/overlay.yml
 #@ load("@ytt:overlay", "overlay")
 
-#@overlay/match by=overlay.subset({"kind":"Sources"})
+#@ def find_image_sources():
+kind: Config
+sources:
+  - image: kapp-controller
+#@ end
+
+#@overlay/match by=overlay.subset(find_image_sources())
 ---
 sources:
 #@overlay/match by="image"
