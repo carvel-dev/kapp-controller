@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661752066409,
+  "lastUpdate": 1661801190120,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5031,6 +5031,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6614795488,
             "unit": "ns/op\t         4.382 DeleteSeconds\t         2.173 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "24ff00581ec57dea9430e66aab4582711914fbeb",
+          "message": "Merge pull request #840 from vmware-tanzu/dependabot/github_actions/softprops/action-gh-release-1e07f4398721186383de40550babbdf2b84acfc5\n\nBump softprops/action-gh-release from 17cd0d34deddf848fc0e7d9be5202c148c270a0a to 1",
+          "timestamp": "2022-08-29T13:14:37-06:00",
+          "tree_id": "714071160832162c4d6ae48ac0036de722a5c4f5",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/24ff00581ec57dea9430e66aab4582711914fbeb"
+        },
+        "date": 1661801189054,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37281763590,
+            "unit": "ns/op\t        19.43 DeleteSeconds\t        17.79 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9613331803,
+            "unit": "ns/op\t         5.371 DeleteSeconds\t         4.192 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6552334462,
+            "unit": "ns/op\t         4.322 DeleteSeconds\t         2.178 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
