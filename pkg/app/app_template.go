@@ -44,7 +44,7 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 		return result
 	}
 
-	additionalValues := ctltpl.AdditionalDownwardAPIValues{KubernetesVersion: kubernetesVersion, KappControllerVersion: kappControllerVersion, KubernetesAPIs: k8sAPIs}
+	additionalValues := ctltpl.AdditionalDownwardAPIValues{KubernetesVersion: kubernetesVersion.String(), KappControllerVersion: kappControllerVersion.String(), KubernetesAPIs: k8sAPIs}
 
 	for _, tpl := range a.app.Spec.Template {
 		var template ctltpl.Template

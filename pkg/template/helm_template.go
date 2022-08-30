@@ -18,11 +18,11 @@ import (
 )
 
 type HelmTemplate struct {
-	opts          v1alpha1.AppTemplateHelmTemplate
-	appContext    AppContext
-	coreClient    kubernetes.Interface
-	cmdRunner     exec.CmdRunner
-	valuesFactory ValuesFactory
+	opts             v1alpha1.AppTemplateHelmTemplate
+	appContext       AppContext
+	coreClient       kubernetes.Interface
+	cmdRunner        exec.CmdRunner
+	additionalValues AdditionalDownwardAPIValues
 }
 
 // HelmTemplateCmdArgs represents the binary and arguments used during templating
@@ -35,10 +35,10 @@ var _ Template = &HelmTemplate{}
 
 // NewHelmTemplate returns a HelmTemplate
 func NewHelmTemplate(opts v1alpha1.AppTemplateHelmTemplate, appContext AppContext, coreClient kubernetes.Interface,
-	cmdRunner exec.CmdRunner, valuesFactory ValuesFactory) *HelmTemplate {
+	cmdRunner exec.CmdRunner, additionalValues AdditionalDownwardAPIValues) *HelmTemplate {
 
 	return &HelmTemplate{opts: opts, appContext: appContext, coreClient: coreClient, cmdRunner: cmdRunner,
-		valuesFactory: valuesFactory}
+		additionalValues: additionalValues}
 }
 
 // TemplateDir runs helm template against a directory of files
@@ -74,17 +74,17 @@ func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResu
 	}
 
 	args := []string{"template", name, chartPath, "--namespace", namespace, "--include-crds"}
+	vals := Values{t.opts.ValuesFrom, t.additionalValues, t.appContext, t.coreClient}
 
 	if t.opts.KubernetesVersion != nil {
-		args = append(args, []string{"--kube-version", t.valuesFactory.additionaDownwardAPIValues.KubernetesVersion.String()}...)
+		// vals.DownwardAPI.KubernetesVersion()
+		args = append(args, []string{"--kube-version", vals.AdditionalValues.KubernetesVersion}...)
 	}
 	if t.opts.KubernetesAPIs != nil {
-		args = append(args, []string{"--api-versions", strings.Join(t.valuesFactory.additionaDownwardAPIValues.KubernetesAPIs, ",")}...)
+		args = append(args, []string{"--api-versions", strings.Join(vals.AdditionalValues.KubernetesAPIs, ",")}...)
 	}
 
-	{ // Add values files
-		vals := t.valuesFactory.NewValues(t.opts.ValuesFrom, t.appContext)
-
+	{
 		paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
 		if err != nil {
 			return exec.NewCmdRunResultWithErr(err)

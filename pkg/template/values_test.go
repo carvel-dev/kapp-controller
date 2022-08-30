@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/k14s/semver/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -218,8 +217,8 @@ func TestValues(t *testing.T) {
 					{Name: "k8s-version", KubernetesVersion: &v1alpha1.Version{}},
 				}},
 			}}
-			subject.additionalDownwardAPIValues = AdditionalDownwardAPIValues{
-				KubernetesVersion: semver.MustParse("0.20.0"),
+			subject.AdditionalValues = AdditionalDownwardAPIValues{
+				KubernetesVersion: "0.20.0",
 			}
 
 			paths, cleanup, err := subject.AsPaths(os.TempDir())
@@ -237,8 +236,8 @@ func TestValues(t *testing.T) {
 					{Name: "kc-version", KappControllerVersion: &v1alpha1.Version{}},
 				}},
 			}}
-			subject.additionalDownwardAPIValues = AdditionalDownwardAPIValues{
-				KappControllerVersion: semver.MustParse("0.42.31337"),
+			subject.AdditionalValues = AdditionalDownwardAPIValues{
+				KappControllerVersion: "0.42.31337",
 			}
 
 			paths, cleanup, err := subject.AsPaths(os.TempDir())

@@ -17,21 +17,21 @@ import (
 )
 
 type Ytt struct {
-	opts          v1alpha1.AppTemplateYtt
-	appContext    AppContext
-	coreClient    kubernetes.Interface
-	fetchFactory  fetch.Factory
-	valuesFactory ValuesFactory
-	cmdRunner     exec.CmdRunner
+	opts             v1alpha1.AppTemplateYtt
+	appContext       AppContext
+	coreClient       kubernetes.Interface
+	fetchFactory     fetch.Factory
+	additionalValues AdditionalDownwardAPIValues
+	cmdRunner        exec.CmdRunner
 }
 
 var _ Template = &Ytt{}
 
 // NewYtt returns ytt template.
 func NewYtt(opts v1alpha1.AppTemplateYtt, appContext AppContext,
-	coreClient kubernetes.Interface, fetchFactory fetch.Factory, cmdRunner exec.CmdRunner, valuesFactory ValuesFactory) *Ytt {
+	coreClient kubernetes.Interface, fetchFactory fetch.Factory, cmdRunner exec.CmdRunner, additionalValues AdditionalDownwardAPIValues) *Ytt {
 
-	return &Ytt{opts: opts, appContext: appContext, coreClient: coreClient, fetchFactory: fetchFactory, cmdRunner: cmdRunner, valuesFactory: valuesFactory}
+	return &Ytt{opts: opts, appContext: appContext, coreClient: coreClient, fetchFactory: fetchFactory, cmdRunner: cmdRunner, additionalValues: additionalValues}
 }
 
 func (t *Ytt) TemplateDir(dirPath string) (exec.CmdRunResult, bool) {
@@ -61,7 +61,7 @@ func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
 	args = t.addFileMarks(args)
 
 	{ // Add values files
-		vals := t.valuesFactory.NewValues(t.opts.ValuesFrom, t.appContext)
+		vals := Values{t.opts.ValuesFrom, t.additionalValues, t.appContext, t.coreClient}
 
 		paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
 		if err != nil {

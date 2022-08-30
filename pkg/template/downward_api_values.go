@@ -9,7 +9,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/k14s/semver/v4"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/util/jsonpath"
@@ -17,8 +16,8 @@ import (
 
 // AdditionalDownwardAPIValues holds values that are not computed discoverable on the resource itself
 type AdditionalDownwardAPIValues struct {
-	KappControllerVersion semver.Version
-	KubernetesVersion     semver.Version
+	KappControllerVersion string
+	KubernetesVersion     string
 	KubernetesAPIs        []string
 }
 
@@ -52,13 +51,13 @@ func (a DownwardAPIValues) AsYAMLs() ([][]byte, error) {
 			keyValueContent, err = a.extractFieldPathAsKeyValue(item.Name, fieldPathExpression)
 		case item.KubernetesVersion != nil:
 			if item.KubernetesVersion.Version == "" { // I wish there was a ternary operator in Go
-				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: a.additionalDownwardAPIValues.KubernetesVersion.String()})
+				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: a.additionalDownwardAPIValues.KubernetesVersion})
 			} else {
 				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: item.KubernetesVersion.Version})
 			}
 		case item.KappControllerVersion != nil:
 			if item.KappControllerVersion.Version == "" {
-				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: a.additionalDownwardAPIValues.KappControllerVersion.String()})
+				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: a.additionalDownwardAPIValues.KappControllerVersion})
 			} else {
 				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: item.KappControllerVersion.Version})
 			}

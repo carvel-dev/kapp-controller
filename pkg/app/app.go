@@ -7,15 +7,23 @@ import (
 	"sync"
 
 	"github.com/go-logr/logr"
+	"github.com/k14s/semver/v4"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/componentInfo"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
+
+// ComponentInfo provides information about components of the system required by templating stage
+type ComponentInfo interface {
+	KappControllerVersion() (semver.Version, error)
+	KubernetesVersion(serviceAccountName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta) (semver.Version, error)
+	KubernetesAPIs() ([]string, error)
+}
 
 type Hooks struct {
 	BlockDeletion   func() error
@@ -32,7 +40,7 @@ type App struct {
 	fetchFactory    fetch.Factory
 	templateFactory template.Factory
 	deployFactory   deploy.Factory
-	compInfo        componentInfo.Info
+	compInfo        ComponentInfo
 
 	log        logr.Logger
 	appMetrics *metrics.AppMetrics
@@ -44,7 +52,7 @@ type App struct {
 
 func NewApp(app v1alpha1.App, hooks Hooks,
 	fetchFactory fetch.Factory, templateFactory template.Factory,
-	deployFactory deploy.Factory, log logr.Logger, appMetrics *metrics.AppMetrics, compInfo componentInfo.Info) *App {
+	deployFactory deploy.Factory, log logr.Logger, appMetrics *metrics.AppMetrics, compInfo ComponentInfo) *App {
 
 	return &App{app: app, appPrev: *(app.DeepCopy()), hooks: hooks,
 		fetchFactory: fetchFactory, templateFactory: templateFactory,

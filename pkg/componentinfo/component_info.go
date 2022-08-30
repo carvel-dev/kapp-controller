@@ -1,7 +1,7 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package componentInfo
+package componentinfo
 
 import (
 	"fmt"
@@ -14,18 +14,12 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-// Info provides information about components of the system
-type Info interface {
-	KappControllerVersion() (semver.Version, error)
-	KubernetesVersion(serviceAccountName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta) (semver.Version, error)
-	KubernetesAPIs() ([]string, error)
-}
-
 // ComponentInfo provides information about components of system
 type ComponentInfo struct {
-	coreClient            kubernetes.Interface
-	clusterAccess         *kubeconfig.Kubeconfig
-	kappControllerVersion string
+	coreClient                kubernetes.Interface
+	clusterAccess             *kubeconfig.Kubeconfig
+	kappControllerVersion     string
+	memoizedKubernetesVersion semver.Version
 }
 
 // NewComponentInfo returns a ComponentInfo
@@ -47,11 +41,22 @@ func (ci *ComponentInfo) KappControllerVersion() (semver.Version, error) {
 func (ci *ComponentInfo) KubernetesVersion(serviceAccountName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta) (semver.Version, error) {
 	switch {
 	case len(serviceAccountName) > 0:
+		if !ci.memoizedKubernetesVersion.Equals(semver.Version{}) {
+			return ci.memoizedKubernetesVersion, nil
+		}
+
 		v, err := ci.coreClient.Discovery().ServerVersion()
 		if err != nil {
 			return semver.Version{}, err
 		}
-		return semver.ParseTolerant(v.String())
+
+		version, err := semver.ParseTolerant(v.String())
+		if err != nil {
+			return semver.Version{}, err
+		}
+
+		ci.memoizedKubernetesVersion = version
+		return version, nil
 	case specCluster != nil:
 		accessInfo, err := ci.clusterAccess.ClusterAccess(serviceAccountName, specCluster, kubeconfig.AccessLocation{Name: objMeta.Name, Namespace: objMeta.Namespace})
 		if err != nil {

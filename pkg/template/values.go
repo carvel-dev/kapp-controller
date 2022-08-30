@@ -16,11 +16,11 @@ import (
 )
 
 type Values struct {
-	ValuesFrom []v1alpha1.AppTemplateValuesSource
+	ValuesFrom       []v1alpha1.AppTemplateValuesSource
+	AdditionalValues AdditionalDownwardAPIValues
 
-	appContext                  AppContext
-	coreClient                  kubernetes.Interface
-	additionalDownwardAPIValues AdditionalDownwardAPIValues
+	appContext AppContext
+	coreClient kubernetes.Interface
 }
 
 func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
@@ -69,7 +69,7 @@ func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
 			downwardAPIValues := DownwardAPIValues{
 				items:                       source.DownwardAPI.Items,
 				metadata:                    t.appContext.Metadata,
-				additionalDownwardAPIValues: t.additionalDownwardAPIValues,
+				additionalDownwardAPIValues: t.AdditionalValues,
 			}
 			paths, err = t.writeFromDownwardAPI(valuesDir.Path(), downwardAPIValues)
 

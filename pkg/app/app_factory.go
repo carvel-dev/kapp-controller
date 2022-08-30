@@ -7,7 +7,6 @@ import (
 	"github.com/go-logr/logr"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/componentInfo"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
@@ -29,7 +28,7 @@ type CRDAppFactory struct {
 	KbldAllowBuild   bool
 	CmdRunner        exec.CmdRunner
 	Kubeconf         *kubeconfig.Kubeconfig
-	CompInfo         componentInfo.Info
+	CompInfo         ComponentInfo
 }
 
 // NewCRDApp creates a CRDApp injecting necessary dependencies.

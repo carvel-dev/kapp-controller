@@ -17,7 +17,7 @@ import (
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/componentInfo"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/componentinfo"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
@@ -173,7 +173,7 @@ func Run(opts Options, runLog logr.Logger) error {
 
 	// initialize cluster access once - it contains a service account token cache which should be only setup once.
 	kubeconf := kubeconfig.NewKubeconfig(coreClient, runLog)
-	compInfo := componentInfo.NewComponentInfo(coreClient, kubeconf, Version)
+	compInfo := componentinfo.NewComponentInfo(coreClient, kubeconf, Version)
 
 	{ // add controller for apps
 		appFactory := app.CRDAppFactory{

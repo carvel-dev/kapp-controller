@@ -16,20 +16,20 @@ import (
 )
 
 type cue struct {
-	opts          v1alpha1.AppTemplateCue
-	coreClient    kubernetes.Interface
-	appContext    AppContext
-	cmdRunner     exec.CmdRunner
-	valuesFactory ValuesFactory
+	opts             v1alpha1.AppTemplateCue
+	coreClient       kubernetes.Interface
+	appContext       AppContext
+	cmdRunner        exec.CmdRunner
+	additionalValues AdditionalDownwardAPIValues
 }
 
 var _ Template = &cue{}
 
 func newCue(opts v1alpha1.AppTemplateCue, appContext AppContext,
-	coreClient kubernetes.Interface, cmdRunner exec.CmdRunner, valuesFactory ValuesFactory) *cue {
+	coreClient kubernetes.Interface, cmdRunner exec.CmdRunner, additionalValues AdditionalDownwardAPIValues) *cue {
 
 	return &cue{opts: opts, appContext: appContext,
-		coreClient: coreClient, cmdRunner: cmdRunner, valuesFactory: valuesFactory}
+		coreClient: coreClient, cmdRunner: cmdRunner, additionalValues: additionalValues}
 }
 
 // TemplateDir works on directory returning templating result,
@@ -60,7 +60,8 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		args = append(args, c.opts.Paths...)
 	}
 
-	vals := c.valuesFactory.NewValues(c.opts.ValuesFrom, c.appContext)
+	vals := Values{c.opts.ValuesFrom, c.additionalValues, c.appContext, c.coreClient}
+
 	paths, valuesCleanUpFunc, err := vals.AsPaths(dirPath)
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Writing values: %w", err))

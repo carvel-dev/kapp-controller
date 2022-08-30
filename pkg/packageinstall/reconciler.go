@@ -13,7 +13,6 @@ import (
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/componentInfo"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -29,14 +28,14 @@ type Reconciler struct {
 	pkgClient              pkgclient.Interface
 	coreClient             kubernetes.Interface
 	pkgToPkgInstallHandler *PackageInstallVersionHandler
-	compInfo               componentInfo.Info
+	compInfo               ComponentInfo
 	log                    logr.Logger
 }
 
 // NewReconciler is the constructor for the Reconciler struct
 func NewReconciler(kcClient kcclient.Interface, pkgClient pkgclient.Interface,
 	coreClient kubernetes.Interface, pkgToPkgInstallHandler *PackageInstallVersionHandler,
-	log logr.Logger, compInfo componentInfo.Info) *Reconciler {
+	log logr.Logger, compInfo ComponentInfo) *Reconciler {
 
 	return &Reconciler{kcClient: kcClient,
 		pkgClient:              pkgClient,
