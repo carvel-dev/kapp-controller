@@ -28,19 +28,19 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 
 	kubernetesVersion, err := a.compInfo.KubernetesVersion(a.app.Spec.ServiceAccountName, a.app.Spec.Cluster, &a.app.ObjectMeta)
 	if err != nil {
-		result.AttachErrorf("%s", fmt.Errorf("Unable to get kubernetes version before templating"))
+		result.AttachErrorf("%s", fmt.Errorf("Unable to get kubernetes version before templating: %s", err))
 		return result
 	}
 
 	kappControllerVersion, err := a.compInfo.KappControllerVersion()
 	if err != nil {
-		result.AttachErrorf("%s", fmt.Errorf("Unable to get kapp-controller version before templating"))
+		result.AttachErrorf("%s", fmt.Errorf("Unable to get kapp-controller version before templating: %s", err))
 		return result
 	}
 
 	k8sAPIs, err := a.compInfo.KubernetesAPIs()
 	if err != nil {
-		result.AttachErrorf("%s", fmt.Errorf("Unable to list all server apigroups/version before templating"))
+		result.AttachErrorf("%s", fmt.Errorf("Unable to list all server apigroups/version before templating: %s", err))
 		return result
 	}
 
