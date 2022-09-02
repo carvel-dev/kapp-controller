@@ -301,7 +301,18 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 
 	// we only need to populate the versionInfo we know that the packages have constraints that will require this info.
 	if requiresClusterVersion {
-		v, err := pi.compInfo.KubernetesVersion(pi.model.Spec.ServiceAccountName, pi.model.Spec.Cluster, &pi.model.ObjectMeta)
+		kubernetesVersion := func() (semver.Version, error) {
+			memoizedKubernetesVersion := semver.Version{}
+			if memoizedKubernetesVersion.Equals(semver.Version{}) {
+				v, err := pi.compInfo.KubernetesVersion(pi.model.Spec.ServiceAccountName, pi.model.Spec.Cluster, &pi.model.ObjectMeta)
+				if err != nil {
+					return semver.Version{}, fmt.Errorf("Unable to get kubernetes version: %s", err)
+				}
+				memoizedKubernetesVersion = v
+			}
+			return memoizedKubernetesVersion, nil
+		}
+		v, err := kubernetesVersion()
 		if err != nil {
 			pi.log.Error(err, "Unable to retrieve cluster kubernetes version")
 			return datapkgingv1alpha1.Package{}, err

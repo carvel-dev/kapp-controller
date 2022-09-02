@@ -337,7 +337,7 @@ message AppTemplateHelmTemplate {
   optional Version kubernetesVersion = 5;
 
   // Optional: Use kubernetes group/versions resources available in the live cluster
-  optional Version kubernetesAPIs = 6;
+  optional KubernetesGroupVersions kubernetesAPIs = 6;
 }
 
 // TODO implement jsonnet
@@ -405,7 +405,7 @@ message AppTemplateValuesDownwardAPIItem {
 
   // Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster.
   // Can be manually supplied instead, e.g ["group/version", "group2/version2"]
-  optional GroupVersion kubernetesAPIs = 5;
+  optional KubernetesGroupVersions kubernetesAPIs = 5;
 }
 
 // +k8s:openapi-gen=true
@@ -483,8 +483,8 @@ message GenericStatus {
 }
 
 // +k8s:openapi-gen=true
-message GroupVersion {
-  repeated string groupVersions = 1;
+message KubernetesGroupVersions {
+  repeated string kubernetesGroupVersions = 1;
 }
 
 // +k8s:openapi-gen=true

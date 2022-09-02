@@ -57,7 +57,7 @@ type AppTemplateHelmTemplate struct {
 	// Can be manually overridden to a value instead.
 	KubernetesVersion *Version `json:"kubernetesVersion,omitempty" protobuf:"bytes,5,opt,name=kubernetesVersion"`
 	// Optional: Use kubernetes group/versions resources available in the live cluster
-	KubernetesAPIs *Version `json:"kubernetesAPIs,omitempty" protobuf:"bytes,6,opt,name=kubernetesAPIs"`
+	KubernetesAPIs *KubernetesGroupVersions `json:"kubernetesAPIs,omitempty" protobuf:"bytes,6,opt,name=kubernetesAPIs"`
 }
 
 // +k8s:openapi-gen=true
@@ -91,7 +91,7 @@ type AppTemplateValuesDownwardAPIItem struct {
 	KappControllerVersion *Version `json:"kappControllerVersion,omitempty" protobuf:"bytes,4,opt,name=kappControllerVersion"`
 	// Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster.
 	// Can be manually supplied instead, e.g ["group/version", "group2/version2"]
-	KubernetesAPIs *GroupVersion `json:"kubernetesAPIs,omitempty" protobuf:"bytes,5,opt,name=kubernetesAPIs"`
+	KubernetesAPIs *KubernetesGroupVersions `json:"kubernetesAPIs,omitempty" protobuf:"bytes,5,opt,name=kubernetesAPIs"`
 }
 
 // +k8s:openapi-gen=true
@@ -100,8 +100,8 @@ type Version struct {
 }
 
 // +k8s:openapi-gen=true
-type GroupVersion struct {
-	GroupVersions []string `json:"groupVersions,omitempty" protobuf:"bytes,1,opt,name=groupVersions"`
+type KubernetesGroupVersions struct {
+	KubernetesGroupVersions []string `json:"kubernetesGroupVersions,omitempty" protobuf:"bytes,1,opt,name=kubernetesGroupVersions"`
 }
 
 // TODO implement kustomize

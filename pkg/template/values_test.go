@@ -218,7 +218,9 @@ func TestValues(t *testing.T) {
 				}},
 			}}
 			subject.AdditionalValues = AdditionalDownwardAPIValues{
-				KubernetesVersion: "0.20.0",
+				KubernetesVersion: func() (string, error) {
+					return "0.20.0", nil
+				},
 			}
 
 			paths, cleanup, err := subject.AsPaths(os.TempDir())
@@ -237,7 +239,9 @@ func TestValues(t *testing.T) {
 				}},
 			}}
 			subject.AdditionalValues = AdditionalDownwardAPIValues{
-				KappControllerVersion: "0.42.31337",
+				KappControllerVersion: func() (string, error) {
+					return "0.42.31337", nil
+				},
 			}
 
 			paths, cleanup, err := subject.AsPaths(os.TempDir())

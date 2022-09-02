@@ -227,19 +227,25 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 }
 
 type FakeComponentInfo struct {
-	KCVersion  semver.Version
-	K8sVersion semver.Version
-	K8sAPIs    []string
+	KCVersion       semver.Version
+	KCVersionCount  *int
+	K8sVersion      semver.Version
+	K8sVersionCount *int
+	K8sAPIs         []string
+	K8sAPIsCount    *int
 }
 
 func (f FakeComponentInfo) KubernetesAPIs() ([]string, error) {
+	*f.K8sAPIsCount++
 	return f.K8sAPIs, nil
 }
 
 func (f FakeComponentInfo) KappControllerVersion() (semver.Version, error) {
+	*f.KCVersionCount++
 	return f.KCVersion, nil
 }
 
 func (f FakeComponentInfo) KubernetesVersion(serviceAccountName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta) (semver.Version, error) {
+	*f.K8sVersionCount++
 	return f.K8sVersion, nil
 }

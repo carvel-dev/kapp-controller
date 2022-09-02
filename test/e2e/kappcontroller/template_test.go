@@ -140,7 +140,7 @@ spec:
                 version: 2.0.0
             - name: k8sAPIs
               kubernetesAPIs: 
-                groupVersions:
+                kubernetesGroupVersions:
                 - "test/test"
                 - "test2/test2"
   deploy:
@@ -272,7 +272,7 @@ spec:
               version: 2.0.0
           - name: k8sAPIs
             kubernetesAPIs: 
-              groupVersions:
+              kubernetesGroupVersions:
               - "test/test"
               - "test2/test2"
   deploy:

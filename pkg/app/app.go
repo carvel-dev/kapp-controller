@@ -42,6 +42,9 @@ type App struct {
 	deployFactory   deploy.Factory
 	compInfo        ComponentInfo
 
+	memoizedKubernetesVersion string
+	memoizedKubernetesAPIs    []string
+
 	log        logr.Logger
 	appMetrics *metrics.AppMetrics
 

@@ -26,25 +26,7 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 	var result exec.CmdRunResult
 	var isStream bool
 
-	kubernetesVersion, err := a.compInfo.KubernetesVersion(a.app.Spec.ServiceAccountName, a.app.Spec.Cluster, &a.app.ObjectMeta)
-	if err != nil {
-		result.AttachErrorf("%s", fmt.Errorf("Unable to get kubernetes version before templating: %s", err))
-		return result
-	}
-
-	kappControllerVersion, err := a.compInfo.KappControllerVersion()
-	if err != nil {
-		result.AttachErrorf("%s", fmt.Errorf("Unable to get kapp-controller version before templating: %s", err))
-		return result
-	}
-
-	k8sAPIs, err := a.compInfo.KubernetesAPIs()
-	if err != nil {
-		result.AttachErrorf("%s", fmt.Errorf("Unable to list all server apigroups/version before templating: %s", err))
-		return result
-	}
-
-	additionalValues := ctltpl.AdditionalDownwardAPIValues{KubernetesVersion: kubernetesVersion.String(), KappControllerVersion: kappControllerVersion.String(), KubernetesAPIs: k8sAPIs}
+	additionalValues := a.buildDownwardAPIAdditionalValues()
 
 	for _, tpl := range a.app.Spec.Template {
 		var template ctltpl.Template
@@ -86,6 +68,38 @@ func asPartialObjectMetadata(m v1alpha1.App) ctltpl.PartialObjectMetadata {
 			UID:         m.GetUID(),
 			Labels:      m.GetLabels(),
 			Annotations: m.GetAnnotations(),
+		},
+	}
+}
+
+func (a *App) buildDownwardAPIAdditionalValues() ctltpl.AdditionalDownwardAPIValues {
+	return ctltpl.AdditionalDownwardAPIValues{
+		KubernetesVersion: func() (string, error) {
+			if a.memoizedKubernetesVersion == "" {
+				v, err := a.compInfo.KubernetesVersion(a.app.Spec.ServiceAccountName, a.app.Spec.Cluster, &a.app.ObjectMeta)
+				if err != nil {
+					return "", fmt.Errorf("Unable to get kubernetes version: %s", err)
+				}
+				a.memoizedKubernetesVersion = v.String()
+			}
+			return a.memoizedKubernetesVersion, nil
+		},
+		KappControllerVersion: func() (string, error) {
+			v, err := a.compInfo.KappControllerVersion()
+			if err != nil {
+				return "", fmt.Errorf("Unable to get kapp-controller version: %s", err)
+			}
+			return v.String(), nil
+		},
+		KubernetesAPIs: func() ([]string, error) {
+			if len(a.memoizedKubernetesAPIs) == 0 {
+				v, err := a.compInfo.KubernetesAPIs()
+				if err != nil {
+					return []string{}, fmt.Errorf("Unable to list all server apigroups/version: %s", err)
+				}
+				a.memoizedKubernetesAPIs = v
+			}
+			return a.memoizedKubernetesAPIs, nil
 		},
 	}
 }

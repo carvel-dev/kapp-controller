@@ -76,12 +76,22 @@ func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResu
 	args := []string{"template", name, chartPath, "--namespace", namespace, "--include-crds"}
 	vals := Values{t.opts.ValuesFrom, t.additionalValues, t.appContext, t.coreClient}
 
+	var result exec.CmdRunResult
 	if t.opts.KubernetesVersion != nil {
-		// vals.DownwardAPI.KubernetesVersion()
-		args = append(args, []string{"--kube-version", vals.AdditionalValues.KubernetesVersion}...)
+		v, err := vals.AdditionalValues.KubernetesVersion()
+		if err != nil {
+			result.AttachErrorf("%s", fmt.Errorf("Unable to get kubernetes version during helm template: %s", err))
+			return result
+		}
+		args = append(args, []string{"--kube-version", v}...)
 	}
 	if t.opts.KubernetesAPIs != nil {
-		args = append(args, []string{"--api-versions", strings.Join(vals.AdditionalValues.KubernetesAPIs, ",")}...)
+		v, err := vals.AdditionalValues.KubernetesAPIs()
+		if err != nil {
+			result.AttachErrorf("%s", fmt.Errorf("Unable to get kubernetes APIs during helm template: %s", err))
+			return result
+		}
+		args = append(args, []string{"--api-versions", strings.Join(v, ",")}...)
 	}
 
 	{
@@ -112,7 +122,7 @@ func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResu
 
 	err := t.cmdRunner.Run(cmd)
 
-	result := exec.CmdRunResult{
+	result = exec.CmdRunResult{
 		Stdout: stdoutBs.String(),
 		Stderr: stderrBs.String(),
 	}
