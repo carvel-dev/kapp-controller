@@ -304,8 +304,13 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 		return fmt.Errorf("Expected package install to be non-empty")
 	}
 
-	if len(o.version) == 0 && len(o.valuesFile) == 0 && o.values &&
-		o.YttOverlayFlags.yttOverlays && len(o.YttOverlayFlags.yttOverlayFiles) == 0 {
+	switch {
+	case len(o.version) != 0: // Continue if version is changed
+	case len(o.valuesFile) != 0: // Continue if supplied values might have changed
+	case !o.values: // Continue if supplied values might be getting removed
+	case !o.YttOverlayFlags.yttOverlays: // Continue if supplied overlays might be getting removed
+	case len(o.YttOverlayFlags.yttOverlayFiles) != 0: // Continue if supplied overlays might be getting changed
+	default:
 		return fmt.Errorf("Expected either package version, values file or overlays to update the package")
 	}
 
@@ -346,8 +351,13 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		return err
 	}
 
-	if o.valuesFile == "" && !changed && o.values &&
-		o.YttOverlayFlags.yttOverlays && len(o.YttOverlayFlags.yttOverlayFiles) == 0 {
+	switch {
+	case changed: // Continue if package install resource is changed
+	case len(o.valuesFile) != 0: // Continue if supplied values might have changed
+	case !o.values: // Continue if supplied values might be getting removed
+	case !o.YttOverlayFlags.yttOverlays: // Continue if supplied overlays might be getting removed
+	case len(o.YttOverlayFlags.yttOverlayFiles) != 0: // Continue if supplied overlays might be getting changed
+	default:
 		o.statusUI.PrintMessagef("No changes to package install '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 		return nil
 	}

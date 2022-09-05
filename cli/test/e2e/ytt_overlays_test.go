@@ -132,3 +132,38 @@ metadata:
 		require.Exactly(t, false, found)
 	})
 }
+
+func TestOverlaySecretCleanup(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+
+	pkgiName := "overlay-test"
+	appName := "test-secret"
+
+	secretYaml := fmt.Sprintf(`
+apiVersion: v1
+kind: Secret
+metadata:
+  name: %s-%s-overlays
+  annotations:
+    packaging.carvel.dev/package: %s-%s
+type: Opaque
+data:
+  username: YWRtaW4=
+`, pkgiName, env.Namespace, pkgiName, env.Namespace)
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", appName})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("testing overlay secret cleanup", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(secretYaml)})
+
+		out := kappCtrl.Run([]string{"p", "i", "delete", "-i", pkgiName})
+		require.Contains(t, out, fmt.Sprintf("Deleting 'secrets': %s-%s-overlays", pkgiName, env.Namespace))
+	})
+}

@@ -271,8 +271,8 @@ func (o *DeleteOptions) cleanUpIfInstallNotFound(dynamicClient dynamic.Interface
 	//Delete ytt overlays secret created by kctrl if any
 	err = o.deleteIfExistsAndOwned(
 		schema.GroupVersionResource{
-			Group:    rbacv1.SchemeGroupVersion.Group,
-			Version:  rbacv1.SchemeGroupVersion.Version,
+			Group:    corev1.SchemeGroupVersion.Group,
+			Version:  corev1.SchemeGroupVersion.Version,
 			Resource: KindSecret.Resource(),
 		}, fmt.Sprintf("%s-%s-overlays", o.Name, o.NamespaceFlags.Name), o.NamespaceFlags.Name, dynamicClient)
 	if err != nil {
