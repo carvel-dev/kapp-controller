@@ -15,10 +15,11 @@ import (
 // DataValueProperty holds the details of each property under Carvel package.spec.valuesSchema.openAPIv3.properties.
 // The example of the schema could be found at: https://carvel.dev/kapp-controller/docs/latest/packaging/#package-1
 // From above example, we would have the following:
-//   DataValueProperty.Key = "namespace"
-//   DataValueProperty.Type = "string"
-//   DataValueProperty.Description = "Namespace where fluent-bit will be installed."
-//   DataValueProperty.Default = "fluent-bit"
+//
+//	DataValueProperty.Key = "namespace"
+//	DataValueProperty.Type = "string"
+//	DataValueProperty.Description = "Namespace where fluent-bit will be installed."
+//	DataValueProperty.Default = "fluent-bit"
 type DataValueProperty struct {
 	Key         string
 	Type        string
