@@ -31,11 +31,11 @@ type Interaction struct {
 }
 
 type ExpectedOutputYaml struct {
-	PackageBuild []string
+	PackageBuild    []string
 	PackageResource []string
-	Vendir []string
+	Vendir          []string
 	PackageMetadata []string
-	Package []string
+	Package         []string
 }
 
 func (i Interaction) Run(promptOutputObj promptOutput) {
@@ -65,7 +65,7 @@ func TestE2EInitAndReleaseCases(t *testing.T) {
 					"1.16.0",
 				},
 			},
-		},{
+		}, {
 			Name: "Github Release Flow",
 			InitInteraction: Interaction{
 				Prompts: []string{
@@ -83,14 +83,32 @@ func TestE2EInitAndReleaseCases(t *testing.T) {
 					"kubernetes.yaml",
 				},
 			},
+		}, {
+			Name: "Git Repository Flow",
+			InitInteraction: Interaction{
+				Prompts: []string{
+					"Enter the package reference name",
+					"Enter source",
+					"Enter Git URL",
+					"Enter Git Reference",
+					"Enter the paths which contain Kubernetes manifests",
+				},
+				Inputs: []string{
+					"testpackage.corp.dev",
+					"4",
+					"https://github.com/RedisLabs/redis-enterprise-k8s-docs",
+					"origin/master",
+					"role.yaml,role_binding.yaml,service_account.yaml,crds/v1/rec_crd.yaml,crds/v1alpha1/redb_crd.yaml,admission-service.yaml,operator.yaml",
+				},
+			},
 		},
 	}
 
 	env := BuildEnv(t)
 	logger := Logger{}
-	//kappCli := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kappCli := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
-	//kubectl := Kubectl{t, env.Namespace, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
 
 	expectedOutputs := ExpectedOutputYaml{
 		PackageBuild: []string{
@@ -112,6 +130,27 @@ spec:
           - ytt:
               paths:
               - '-'
+          - kbld: {}
+      export:
+      - includePaths:
+        - upstream
+`,
+			`
+apiVersion: kctrl.carvel.dev/v1alpha1
+kind: PackageBuild
+metadata:
+  name: testpackage.corp.dev
+spec:
+  template:
+    spec:
+      app:
+        spec:
+          deploy:
+          - kapp: {}
+          template:
+          - ytt:
+              paths:
+              - upstream
           - kbld: {}
       export:
       - includePaths:
@@ -238,7 +277,54 @@ status:
   friendlyDescription: ""
   observedGeneration: 0
 `,
-
+			`
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.0.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - git: {}
+      template:
+      - ytt:
+          paths:
+          - upstream
+      - kbld: {}
+  valuesSchema:
+    openAPIv3: null
+  version: 0.0.0
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  annotations:
+    kctrl.carvel.dev/local-fetch-0: .
+  name: testpackage
+spec:
+  packageRef:
+    refName: testpackage.corp.dev
+    versionSelection:
+      constraints: 0.0.0
+  serviceAccountName: testpackage-sa
+status:
+  conditions: null
+  friendlyDescription: ""
+  observedGeneration: 0
+`,
 		},
 		Vendir: []string{
 			`
@@ -270,8 +356,38 @@ directories:
 kind: Config
 minimumRequiredVersion: ""
 `,
+			`
+apiVersion: vendir.k14s.io/v1alpha1
+directories:
+- contents:
+  - git:
+      ref: origin/master
+      url: https://github.com/RedisLabs/redis-enterprise-k8s-docs
+    includePaths:
+    - role.yaml
+    - role_binding.yaml
+    - service_account.yaml
+    - crds/v1/rec_crd.yaml
+    - crds/v1alpha1/redb_crd.yaml
+    - admission-service.yaml
+    - operator.yaml
+    path: .
+  path: upstream
+kind: Config
+minimumRequiredVersion: ""
+`,
 		},
 		PackageMetadata: []string{
+			`
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+`,
 			`
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
@@ -348,7 +464,35 @@ spec:
     openAPIv3:
       default: null
       nullable: true
-  version: 1.0.0`,
+  version: 1.0.0
+`,
+			`
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.1.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - imgpkgBundle:
+      template:
+      - ytt:
+          paths:
+          - upstream
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/
+  valuesSchema:
+    openAPIv3:
+      default: null
+      nullable: true
+  version: 1.0.0
+`,
 		},
 	}
 
@@ -372,7 +516,7 @@ spec:
 
 		go testcase.InitInteraction.Run(promptOutput)
 
-		logger.Section(fmt.Sprintf("%s: Package init",testcase.Name), func() {
+		logger.Section(fmt.Sprintf("%s: Package init", testcase.Name), func() {
 			kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
 				RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 					StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
@@ -409,8 +553,7 @@ spec:
 			require.Equal(t, expectedVendirOutput, out, "Expected vendir output to match")
 		})
 
-
-		logger.Section(fmt.Sprintf("%s: Package release",testcase.Name), func() {
+		logger.Section(fmt.Sprintf("%s: Package release", testcase.Name), func() {
 			releaseInteraction := Interaction{
 				Prompts: []string{"Enter the registry URL"},
 				Inputs:  []string{env.Image},
@@ -443,34 +586,34 @@ spec:
 			require.Equal(t, expectedPackage, out, "Expected Package to match")
 		})
 
-		//logger.Section(fmt.Sprintf("%s: Testing and installing created Package",testcase.Name), func() {
-		//
-		//	switch testcase.Name {
-		//	case "Github Release Flow":
-		//		kubectl.Run([]string{"create", "ns", "dynatrace"})
-		//	}
-		//	kappCli.RunWithOpts([]string{"deploy", "-a", "test-package", "-f", fmt.Sprintf("%s/carvel-artifacts/packages/testpackage.corp.dev", workingDir)},
-		//		RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-		//
-		//	kappCtrl.RunWithOpts([]string{"pkg", "available", "list"},
-		//		RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-		//
-		//	kappCtrl.RunWithOpts([]string{"pkg", "install", "-p", "testpackage.corp.dev", "-i", "test", "--version", "1.0.0"},
-		//		RunOpts{ StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-		//
-		//	kappCtrl.RunWithOpts([]string{"pkg", "installed", "delete",  "-i", "test"},
-		//		RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-		//
-		//	kappCli.RunWithOpts([]string{"delete", "-a", "test-package"},
-		//		RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-		//
-		//	// clean
-		//	switch testcase.Name {
-		//	case "Github Release Flow":
-		//		kubectl.Run([]string{"delete", "ns", "dynatrace"})
-		//	}
-		//})
-		cleanUp()
+		logger.Section(fmt.Sprintf("%s: Testing and installing created Package", testcase.Name), func() {
+
+			switch testcase.Name {
+			case "Github Release Flow":
+				kubectl.RunWithOpts([]string{"create", "ns", "dynatrace"}, RunOpts{NoNamespace: true})
+			}
+
+			kappCli.RunWithOpts([]string{"deploy", "-a", "test-package", "-f", fmt.Sprintf("%s/carvel-artifacts/packages/testpackage.corp.dev", workingDir), "-c"},
+				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+
+			kappCtrl.RunWithOpts([]string{"pkg", "available", "list"},
+				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+
+			kappCtrl.RunWithOpts([]string{"pkg", "install", "-p", "testpackage.corp.dev", "-i", "test", "--version", "1.0.0"},
+				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+
+			kappCtrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
+				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+
+			kappCli.RunWithOpts([]string{"delete", "-a", "test-package"},
+				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+
+			// clean
+			switch testcase.Name {
+			case "Github Release Flow":
+				kubectl.RunWithOpts([]string{"delete", "ns", "dynatrace"}, RunOpts{NoNamespace: true})
+			}
+		})
 	}
 }
 
