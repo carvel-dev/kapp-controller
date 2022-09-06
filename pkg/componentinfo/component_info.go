@@ -16,10 +16,9 @@ import (
 
 // ComponentInfo provides information about components of system
 type ComponentInfo struct {
-	coreClient                kubernetes.Interface
-	clusterAccess             *kubeconfig.Kubeconfig
-	kappControllerVersion     string
-	memoizedKubernetesVersion semver.Version
+	coreClient            kubernetes.Interface
+	clusterAccess         *kubeconfig.Kubeconfig
+	kappControllerVersion string
 }
 
 // NewComponentInfo returns a ComponentInfo
@@ -41,22 +40,12 @@ func (ci *ComponentInfo) KappControllerVersion() (semver.Version, error) {
 func (ci *ComponentInfo) KubernetesVersion(serviceAccountName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta) (semver.Version, error) {
 	switch {
 	case len(serviceAccountName) > 0:
-		if !ci.memoizedKubernetesVersion.Equals(semver.Version{}) {
-			return ci.memoizedKubernetesVersion, nil
-		}
-
 		v, err := ci.coreClient.Discovery().ServerVersion()
 		if err != nil {
 			return semver.Version{}, err
 		}
+		return semver.ParseTolerant(v.String())
 
-		version, err := semver.ParseTolerant(v.String())
-		if err != nil {
-			return semver.Version{}, err
-		}
-
-		ci.memoizedKubernetesVersion = version
-		return version, nil
 	case specCluster != nil:
 		accessInfo, err := ci.clusterAccess.ClusterAccess(serviceAccountName, specCluster, kubeconfig.AccessLocation{Name: objMeta.Name, Namespace: objMeta.Namespace})
 		if err != nil {
@@ -77,6 +66,7 @@ func (ci *ComponentInfo) KubernetesVersion(serviceAccountName string, specCluste
 			return semver.Version{}, err
 		}
 		return semver.ParseTolerant(v.String())
+
 	default:
 		return semver.Version{}, fmt.Errorf("Expected service account or cluster specified")
 	}
