@@ -35,16 +35,16 @@ func Test_BuildAdditionalDownwardAPIValues_MemoizedCallCount(t *testing.T) {
 				{Ytt: &v1alpha1.AppTemplateYtt{ValuesFrom: []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
 					{KubernetesVersion: &v1alpha1.Version{}},
 					{KappControllerVersion: &v1alpha1.Version{}},
-					{KubernetesAPIs: &v1alpha1.KubernetesGroupVersions{}}},
+					{KubernetesAPIs: &v1alpha1.KubernetesAPIs{}}},
 				}}}}},
 				{Ytt: &v1alpha1.AppTemplateYtt{ValuesFrom: []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
 					{KubernetesVersion: &v1alpha1.Version{}},
 					{KappControllerVersion: &v1alpha1.Version{}},
-					{KubernetesAPIs: &v1alpha1.KubernetesGroupVersions{}}},
+					{KubernetesAPIs: &v1alpha1.KubernetesAPIs{}}},
 				}}}}},
 				{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{
 					KubernetesVersion: &v1alpha1.Version{},
-					KubernetesAPIs:    &v1alpha1.KubernetesGroupVersions{},
+					KubernetesAPIs:    &v1alpha1.KubernetesAPIs{},
 				}},
 			},
 		},

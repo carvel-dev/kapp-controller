@@ -70,14 +70,14 @@ func (a DownwardAPIValues) AsYAMLs() ([][]byte, error) {
 				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: item.KappControllerVersion.Version})
 			}
 		case item.KubernetesAPIs != nil:
-			if item.KubernetesAPIs.KubernetesGroupVersions == nil {
+			if item.KubernetesAPIs.GroupVersions == nil {
 				v, err := a.additionalDownwardAPIValues.KubernetesAPIs()
 				if err != nil {
 					return nil, err
 				}
 				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: strings.Join(v, ",")})
 			} else {
-				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: strings.Join(item.KubernetesAPIs.KubernetesGroupVersions, ",")})
+				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: strings.Join(item.KubernetesAPIs.GroupVersions, ",")})
 			}
 		default:
 			return nil, fmt.Errorf("Invalid downward API item given")

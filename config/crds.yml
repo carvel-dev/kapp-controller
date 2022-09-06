@@ -436,7 +436,7 @@ spec:
                                                 kubernetesAPIs:
                                                   description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
                                                   properties:
-                                                    kubernetesGroupVersions:
+                                                    groupVersions:
                                                       items:
                                                         type: string
                                                       type: array
@@ -468,7 +468,7 @@ spec:
                                 kubernetesAPIs:
                                   description: 'Optional: Use kubernetes group/versions resources available in the live cluster'
                                   properties:
-                                    kubernetesGroupVersions:
+                                    groupVersions:
                                       items:
                                         type: string
                                       type: array
@@ -514,7 +514,7 @@ spec:
                                                 kubernetesAPIs:
                                                   description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
                                                   properties:
-                                                    kubernetesGroupVersions:
+                                                    groupVersions:
                                                       items:
                                                         type: string
                                                       type: array
@@ -658,7 +658,7 @@ spec:
                                                 kubernetesAPIs:
                                                   description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
                                                   properties:
-                                                    kubernetesGroupVersions:
+                                                    groupVersions:
                                                       items:
                                                         type: string
                                                       type: array
@@ -1049,7 +1049,7 @@ spec:
                                         kubernetesAPIs:
                                           description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
                                           properties:
-                                            kubernetesGroupVersions:
+                                            groupVersions:
                                               items:
                                                 type: string
                                               type: array
@@ -1081,7 +1081,7 @@ spec:
                         kubernetesAPIs:
                           description: 'Optional: Use kubernetes group/versions resources available in the live cluster'
                           properties:
-                            kubernetesGroupVersions:
+                            groupVersions:
                               items:
                                 type: string
                               type: array
@@ -1127,7 +1127,7 @@ spec:
                                         kubernetesAPIs:
                                           description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
                                           properties:
-                                            kubernetesGroupVersions:
+                                            groupVersions:
                                               items:
                                                 type: string
                                               type: array
@@ -1271,7 +1271,7 @@ spec:
                                         kubernetesAPIs:
                                           description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
                                           properties:
-                                            kubernetesGroupVersions:
+                                            groupVersions:
                                               items:
                                                 type: string
                                               type: array
