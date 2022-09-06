@@ -83,7 +83,8 @@ func TestE2EInitAndReleaseCases(t *testing.T) {
 					"kubernetes.yaml",
 				},
 			},
-		}, {
+		},
+		{
 			Name: "Git Repository Flow",
 			InitInteraction: Interaction{
 				Prompts: []string{
@@ -510,8 +511,6 @@ spec:
 			t.Fatal(err)
 		}
 
-		// run init using prompts
-
 		promptOutput := newPromptOutput(t)
 
 		go testcase.InitInteraction.Run(promptOutput)
@@ -559,14 +558,12 @@ spec:
 				Inputs:  []string{env.Image},
 			}
 
-			// new prompt output
 			go releaseInteraction.Run(promptOutput)
 
 			kappCtrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir},
 				RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 					StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
 
-			// verify package and package metadata
 			keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image"}
 
 			// Verify PackageMetadata artifact
@@ -588,6 +585,21 @@ spec:
 
 		logger.Section(fmt.Sprintf("%s: Testing and installing created Package", testcase.Name), func() {
 
+			cleanUpInstalledPkg := func() {
+				switch testcase.Name {
+				case "Git Repository Flow":
+					out := kubectl.Run([]string{"get", "deployment/redis-enterprise-operator", "-o", "yaml"})
+					require.Equal(t, "", out)
+				}
+
+				kappCli.RunWithOpts([]string{"delete", "-a", "test-package"},
+					RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+				kappCtrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
+					RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+			}
+
+			defer cleanUpInstalledPkg()
+
 			switch testcase.Name {
 			case "Github Release Flow":
 				kubectl.RunWithOpts([]string{"create", "ns", "dynatrace"}, RunOpts{NoNamespace: true})
@@ -602,17 +614,21 @@ spec:
 			kappCtrl.RunWithOpts([]string{"pkg", "install", "-p", "testpackage.corp.dev", "-i", "test", "--version", "1.0.0"},
 				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
 
-			kappCtrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
-				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-
-			kappCli.RunWithOpts([]string{"delete", "-a", "test-package"},
-				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-
-			// clean
+			// clean ns created for dynatrace in GitHub release flow
 			switch testcase.Name {
 			case "Github Release Flow":
 				kubectl.RunWithOpts([]string{"delete", "ns", "dynatrace"}, RunOpts{NoNamespace: true})
+			//case "Git Repository Flow":
+			//	out := kubectl.Run([]string{"get", "deployment/redis-enterprise-operator", "-o", "yaml"})
+			//	require.Equal(t, "", out)
 			}
+
+			//if testcase.Name != "Git Repository Flow" {
+			//	kappCli.RunWithOpts([]string{"delete", "-a", "test-package"},
+			//		RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+			//	kappCtrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
+			//		RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+			//}
 		})
 	}
 }
