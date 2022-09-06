@@ -75,9 +75,9 @@ func (a DownwardAPIValues) AsYAMLs() ([][]byte, error) {
 				if err != nil {
 					return nil, err
 				}
-				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: strings.Join(v, ",")})
+				keyValueContent, err = yaml.Marshal(map[string]interface{}{item.Name: v})
 			} else {
-				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: strings.Join(item.KubernetesAPIs.GroupVersions, ",")})
+				keyValueContent, err = yaml.Marshal(map[string]interface{}{item.Name: item.KubernetesAPIs.GroupVersions})
 			}
 		default:
 			return nil, fmt.Errorf("Invalid downward API item given")

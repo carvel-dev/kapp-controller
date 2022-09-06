@@ -198,7 +198,9 @@ allAnnotations:
   anotherExpectedAnnotation: anotherExpectedAnnotationValue
 kubernetesVersion: "1.0.0"
 kcVersion: "2.0.0"
-k8sAPIs: "test/test,test2/test2"
+k8sAPIs:
+- test/test
+- test2/test2
 `, name, env.Namespace, uid)
 
 		actual := cm.Data["values"]
@@ -240,15 +242,43 @@ spec:
           cm.cue: |
             package cm
 
-            apiVersion: "v1"
-            kind: "ConfigMap"
-            metadata:
-              name: "cm-result"
-            data:
-              value: "cool"
+            import "encoding/json"
+
+            vals: {
+              namespace: string
+              name: string
+              uid: string
+              annotation: string
+              label: string
+              kubernetesVersion: string
+              kcVersion: string
+              k8sAPIs: [...string]
+              password: string
+            }
+
+            cm: {
+              apiVersion: "v1"
+              kind: "ConfigMap"
+              metadata: {
+                name: "cm-result"
+              }
+              data: {
+                value: "cool"
+                namespace: vals.namespace
+                name: vals.name
+                uid: vals.uid
+                annotation: vals.annotation
+                label: vals.label
+                kubernetesVersion: vals.kubernetesVersion
+                kcVersion: vals.kcVersion
+                k8sAPIs: json.Marshal(vals.k8sAPIs)
+                password: vals.password
+              }
+            }
   template:
   - cue:
-      inputExpression: "data:"
+      inputExpression: "vals:"
+      outputExpression: "cm"
       valuesFrom:
       - secretRef:
           name: secret-values
@@ -271,8 +301,8 @@ spec:
             kappControllerVersion:
               version: 2.0.0
           - name: k8sAPIs
-            kubernetesAPIs: 
-              kubernetesGroupVersions:
+            kubernetesAPIs:
+              groupVersions:
               - "test/test"
               - "test2/test2"
   deploy:
@@ -295,7 +325,10 @@ stringData:
 	t.Cleanup(cleanUp)
 
 	logger.Section("deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{
+      StdinReader: strings.NewReader(appYaml),
+      OnErrKubectl: []string{"get", "app", name, "-oyaml"},
+    })
 	})
 
 	logger.Section("check ConfigMap exists", func() {
@@ -319,7 +352,7 @@ namespace: "%s"
 uid: "%s"
 kubernetesVersion: "1.0.0"
 kcVersion: "2.0.0"
-k8sAPIs: "test/test,test2/test2"
+k8sAPIs: "[\"test/test\",\"test2/test2\"]"
 `, name, env.Namespace, uid)
 		configMapData, err := yaml.Marshal(cm.Data)
 		require.NoError(t, err)
