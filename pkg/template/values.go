@@ -6,7 +6,7 @@ package template
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"sort"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -16,7 +16,8 @@ import (
 )
 
 type Values struct {
-	ValuesFrom []v1alpha1.AppTemplateValuesSource
+	ValuesFrom       []v1alpha1.AppTemplateValuesSource
+	AdditionalValues AdditionalDownwardAPIValues
 
 	appContext AppContext
 	coreClient kubernetes.Interface
@@ -66,8 +67,9 @@ func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
 
 		case source.DownwardAPI != nil:
 			downwardAPIValues := DownwardAPIValues{
-				items:    source.DownwardAPI.Items,
-				metadata: t.appContext.Metadata,
+				items:                       source.DownwardAPI.Items,
+				metadata:                    t.appContext.Metadata,
+				additionalDownwardAPIValues: t.AdditionalValues,
 			}
 			paths, err = t.writeFromDownwardAPI(valuesDir.Path(), downwardAPIValues)
 
@@ -134,7 +136,7 @@ func (t Values) writeFile(dstPath, subPath string, content []byte) (string, erro
 		return "", err
 	}
 
-	err = ioutil.WriteFile(newPath, content, 0600)
+	err = os.WriteFile(newPath, content, 0600)
 	if err != nil {
 		return "", fmt.Errorf("Writing file '%s': %s", newPath, err)
 	}

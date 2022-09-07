@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package deploy
+package kubeconfig
 
 import (
 	"context"
@@ -13,37 +13,40 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type KubeconfigSecrets struct {
+// Secrets gets cluster access based on a secret
+type Secrets struct {
 	coreClient kubernetes.Interface
 }
 
-func NewKubeconfigSecrets(coreClient kubernetes.Interface) *KubeconfigSecrets {
-	return &KubeconfigSecrets{coreClient}
+// NewKubeconfigSecrets returns a Secrets
+func NewKubeconfigSecrets(coreClient kubernetes.Interface) *Secrets {
+	return &Secrets{coreClient}
 }
 
-func (s *KubeconfigSecrets) Find(genericOpts GenericOpts,
-	clusterOpts *v1alpha1.AppCluster) (ProcessedGenericOpts, error) {
+// Find takes the location of the credentials secret and returns information to access the cluster
+func (s *Secrets) Find(accessLocation AccessLocation,
+	clusterOpts *v1alpha1.AppCluster) (AccessInfo, error) {
 
 	if clusterOpts == nil {
-		return ProcessedGenericOpts{}, fmt.Errorf("Internal inconsistency: Expected cluster to not be nil")
+		return AccessInfo{}, fmt.Errorf("Internal inconsistency: Expected cluster to not be nil")
 	}
 
 	if clusterOpts.KubeconfigSecretRef == nil {
-		return ProcessedGenericOpts{}, fmt.Errorf("Expected kubeconfig secret reference to be specified")
+		return AccessInfo{}, fmt.Errorf("Expected kubeconfig secret reference to be specified")
 	}
 
-	kubeconfigYAML, err := s.fetchKubeconfigYAML(genericOpts.Namespace, clusterOpts.KubeconfigSecretRef)
+	kubeconfigYAML, err := s.fetchKubeconfigYAML(accessLocation.Namespace, clusterOpts.KubeconfigSecretRef)
 	if err != nil {
-		return ProcessedGenericOpts{}, err
+		return AccessInfo{}, err
 	}
 
 	kubeconfigRestricted, err := NewKubeconfigRestricted(kubeconfigYAML)
 	if err != nil {
-		return ProcessedGenericOpts{}, err
+		return AccessInfo{}, err
 	}
 
-	pgoForCluster := ProcessedGenericOpts{
-		Name: genericOpts.Name,
+	pgoForCluster := AccessInfo{
+		Name: accessLocation.Name,
 		// Override destination namespace; if it's empty
 		// assume kubeconfig contains preferred namespace
 		Namespace:  clusterOpts.Namespace,
@@ -53,7 +56,7 @@ func (s *KubeconfigSecrets) Find(genericOpts GenericOpts,
 	return pgoForCluster, nil
 }
 
-func (s *KubeconfigSecrets) fetchKubeconfigYAML(nsName string,
+func (s *Secrets) fetchKubeconfigYAML(nsName string,
 	secretRef *v1alpha1.AppClusterKubeconfigSecretRef) (string, error) {
 
 	if len(nsName) == 0 {

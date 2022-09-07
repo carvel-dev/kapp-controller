@@ -9,6 +9,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	ctldep "github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 )
 
 func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
@@ -134,10 +135,9 @@ func (a *App) trySaveMetadata(kapp *ctldep.Kapp) {
 }
 
 func (a *App) newKapp(kapp v1alpha1.AppDeployKapp, cancelCh chan struct{}) (*ctldep.Kapp, error) {
-	genericOpts := ctldep.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
 
 	return a.deployFactory.NewKapp(kapp, a.app.Spec.ServiceAccountName,
-		a.app.Spec.Cluster, genericOpts, cancelCh)
+		a.app.Spec.Cluster, cancelCh, kubeconfig.AccessLocation{Name: a.app.Name, Namespace: a.app.Namespace})
 }
 
 type cancelCondition func(v1alpha1.App) bool

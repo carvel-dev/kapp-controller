@@ -49,7 +49,9 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 		IgnoreUnknownComments: true,
 		Paths:                 []string{"packages"},
 	}
-	result, _ := a.templateFactory.NewYtt(template1, appContext).TemplateDir(dirPath)
+	additionalValues := ctltpl.AdditionalDownwardAPIValues{}
+
+	result, _ := a.templateFactory.NewYtt(template1, appContext, additionalValues).TemplateDir(dirPath)
 	if result.Error != nil {
 		return result
 	}
@@ -58,7 +60,7 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 	// some of which could be migrated to go code
 	stream := strings.NewReader(result.Stdout)
 	result = a.templateFactory.NewYtt(
-		a.yttTemplateCleanRs(), appContext).TemplateStream(stream, dirPath)
+		a.yttTemplateCleanRs(), appContext, additionalValues).TemplateStream(stream, dirPath)
 	if result.Error != nil {
 		return result
 	}
@@ -75,7 +77,7 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 	// on identical resources provided by multiple pkgrs
 	stream = strings.NewReader(resources)
 	result = a.templateFactory.NewYtt(
-		a.yttTemplateAddIdenticalRsRebase(), appContext).TemplateStream(stream, dirPath)
+		a.yttTemplateAddIdenticalRsRebase(), appContext, additionalValues).TemplateStream(stream, dirPath)
 	if result.Error != nil {
 		return result
 	}

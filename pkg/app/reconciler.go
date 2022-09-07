@@ -29,16 +29,18 @@ type Reconciler struct {
 	crdAppFactory   CRDAppFactory
 	appRefTracker   *reftracker.AppRefTracker
 	appUpdateStatus *reftracker.AppUpdateStatus
+	componentInfo   ComponentInfo
 }
 
 // NewReconciler constructs new Reconciler.
 func NewReconciler(appClient kcclient.Interface, log logr.Logger, crdAppFactory CRDAppFactory,
-	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus) *Reconciler {
+	appRefTracker *reftracker.AppRefTracker, appUpdateStatus *reftracker.AppUpdateStatus, componentInfo ComponentInfo) *Reconciler {
 	return &Reconciler{appClient: appClient,
 		log:             log,
 		crdAppFactory:   crdAppFactory,
 		appRefTracker:   appRefTracker,
 		appUpdateStatus: appUpdateStatus,
+		componentInfo:   componentInfo,
 	}
 }
 
