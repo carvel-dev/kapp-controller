@@ -4,15 +4,15 @@
 package kappcontroller
 
 import (
-	"testing"
-	"strings"
-	"time"
 	"fmt"
+	"strings"
+	"testing"
+	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
+	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	"sigs.k8s.io/yaml"
 )
 
@@ -226,7 +226,7 @@ stringData:
 
 	logger.Section("deploy app that fetches content from http server", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(yaml1),
+			StdinReader:  strings.NewReader(yaml1),
 			OnErrKubectl: []string{"get", "app/test-https", "-oyaml"},
 		})
 
@@ -250,7 +250,7 @@ spec:
 `
 
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgrName}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgrConfig),
+			StdinReader:  strings.NewReader(pkgrConfig),
 			OnErrKubectl: []string{"get", "pkgr/test-https-pkgr", "-oyaml"},
 		})
 

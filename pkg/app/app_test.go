@@ -7,12 +7,14 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/k14s/semver/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	apppkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -59,9 +61,9 @@ func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	k8scs := k8sfake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
+	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil, FakeComponentInfo{})
 
 	out := app.SecretRefs()
 	assert.Truef(t, reflect.DeepEqual(out, expected), "Expected: %s\nGot: %s\n", expected, out)
@@ -83,9 +85,9 @@ func Test_SecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 	k8scs := k8sfake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
+	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil, FakeComponentInfo{})
 
 	out := app.SecretRefs()
 	assert.Equal(t, 0, len(out), "No SecretRefs to be returned")
@@ -121,9 +123,9 @@ func Test_ConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 	k8scs := k8sfake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
+	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil, FakeComponentInfo{})
 
 	out := app.ConfigMapRefs()
 	assert.Truef(t, reflect.DeepEqual(out, expected), "Expected: %s\nGot: %s\n", expected, out)
@@ -145,10 +147,28 @@ func Test_ConfigMapRefs_RetrievesNoConfigMapRefs_WhenNonePresent(t *testing.T) {
 	k8scs := k8sfake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil)
+	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, nil, FakeComponentInfo{})
 
 	out := app.ConfigMapRefs()
 	assert.Lenf(t, out, 0, "Expected: %s\nGot: %s\n", "No ConfigMapRefs to be returned", out)
+}
+
+type FakeComponentInfo struct {
+	KCVersion  semver.Version
+	K8sVersion semver.Version
+	K8sAPIs    []string
+}
+
+func (f FakeComponentInfo) KubernetesAPIs() ([]string, error) {
+	return f.K8sAPIs, nil
+}
+
+func (f FakeComponentInfo) KappControllerVersion() (semver.Version, error) {
+	return f.KCVersion, nil
+}
+
+func (f FakeComponentInfo) KubernetesVersion(serviceAccountName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta) (semver.Version, error) {
+	return f.K8sVersion, nil
 }

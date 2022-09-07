@@ -9,6 +9,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	ctldep "github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 )
 
 func (a *App) deploy(tplOutput string) exec.CmdRunResult {
@@ -71,6 +72,6 @@ func (a *App) delete() exec.CmdRunResult {
 }
 
 func (a *App) newKapp(kapp v1alpha1.AppDeployKapp, cancelCh chan struct{}) (*ctldep.Kapp, error) {
-	genericOpts := ctldep.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
+	genericOpts := kubeconfig.AccessInfo{Name: a.app.Name, Namespace: a.app.Namespace}
 	return a.deployFactory.NewKappPrivilegedForPackageRepository(kapp, genericOpts, cancelCh)
 }
