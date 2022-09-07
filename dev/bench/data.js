@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662466129521,
+  "lastUpdate": 1662575677578,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5241,6 +5241,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6696436890,
             "unit": "ns/op\t         4.402 DeleteSeconds\t         2.219 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "870f5a1049190121451eb79f8a1835b9e960649f",
+          "message": "Pass additional information to downward API (k8s version, kc version, k8s g/v) (#846)\n\n* WIP: Retrieve version information prior to fet,temp,deploy steps\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\r\n\r\n* Fix linter / import statements\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\r\n\r\n* Address review comments\r\n\r\n- renaming some things\r\n- moved away from a values factory back to values struct\r\n- minor fixups\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\r\n\r\n* Fixup errors in app_template\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\r\n\r\n* Add memoized fetching of versions\r\n\r\n- Add template() test to validate memoizing works\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\r\n\r\n* remove unnecessary memoization\r\n\r\n- memoizing within packageinstall didnt actually memoize\r\n- memoizing within componentinfo was too aggressive so controller would not receive updated version after cluster is updated\r\n\r\n* rename kubernetesGroupVersions to kubernetesAPIs\r\n\r\n* use array as type of values for kubernetesAPIs\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\r\nCo-authored-by: Dmitriy Kalinin <dkalinin@vmware.com>",
+          "timestamp": "2022-09-07T14:24:30-04:00",
+          "tree_id": "44f498040c6217a0f7fc965bf4f4bbcd730f0463",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/870f5a1049190121451eb79f8a1835b9e960649f"
+        },
+        "date": 1662575676374,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36465320966,
+            "unit": "ns/op\t        18.91 DeleteSeconds\t        17.52 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9462344267,
+            "unit": "ns/op\t         5.273 DeleteSeconds\t         4.150 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6416754079,
+            "unit": "ns/op\t         4.242 DeleteSeconds\t         2.134 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
