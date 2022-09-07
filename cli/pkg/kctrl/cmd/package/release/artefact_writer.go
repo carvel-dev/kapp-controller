@@ -86,15 +86,11 @@ func (w *ArtifactWriter) writePackageMetadata(path string) error {
 
 func (w *ArtifactWriter) writePackage(path string, appSpec *kcv1alpha1.AppSpec, valuesSchema kcdatav1alpha1.ValuesSchema) error {
 	w.packageTemplate.SetName(fmt.Sprintf("%s.%s", w.packageName, w.version))
-	w.packageTemplate.Spec = kcdatav1alpha1.PackageSpec{
-		ReleasedAt: metav1.Now(),
-		Version:    w.version,
-		RefName:    w.packageName,
-		Template: kcdatav1alpha1.AppTemplateSpec{
-			Spec: appSpec,
-		},
-		ValuesSchema: valuesSchema,
-	}
+	w.packageTemplate.Spec.ReleasedAt = metav1.Now()
+	w.packageTemplate.Spec.Version = w.version
+	w.packageTemplate.Spec.RefName = w.packageName
+	w.packageTemplate.Spec.Template = kcdatav1alpha1.AppTemplateSpec{Spec: appSpec}
+	w.packageTemplate.Spec.ValuesSchema = valuesSchema
 
 	packageBytes, err := yaml.Marshal(w.packageTemplate)
 	if err != nil {
