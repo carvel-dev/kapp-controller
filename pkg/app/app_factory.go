@@ -41,5 +41,9 @@ func (f *CRDAppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *CRDApp 
 	fetchFactory := fetch.NewFactory(f.CoreClient, vendirOpts, f.CmdRunner)
 	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, f.KbldAllowBuild, f.CmdRunner)
 	deployFactory := deploy.NewFactory(f.CoreClient, f.Kubeconf, f.KcConfig, f.CmdRunner, log)
-	return NewCRDApp(app, log, f.AppMetrics, f.AppClient, fetchFactory, templateFactory, deployFactory, f.CompInfo)
+
+	return NewCRDApp(app, log, f.AppMetrics, f.AppClient, fetchFactory, templateFactory, deployFactory, f.CompInfo, Opts{
+		DefaultSyncPeriod: f.KcConfig.AppDefaultSyncPeriod(),
+		MinimumSyncPeriod: f.KcConfig.AppMinimumSyncPeriod(),
+	})
 }
