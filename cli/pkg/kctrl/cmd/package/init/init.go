@@ -45,6 +45,9 @@ func NewInitCmd(o *InitOptions) *cobra.Command {
 		Use:   "init",
 		Short: "Initialize Package (experimental)",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{
+			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageAuthoringCommandsHelpGroup.Value,
+		},
 	}
 
 	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Location of the working directory")

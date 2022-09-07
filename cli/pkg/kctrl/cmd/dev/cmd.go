@@ -44,6 +44,9 @@ func NewCmd(o *DevOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 		Use:   "dev",
 		Short: "Deploy App CRs and packaging CRs",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{
+			cmdcore.DevHelpGroup.Key: cmdcore.DevHelpGroup.Value,
+		},
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

@@ -42,7 +42,8 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 				[]string{"package", "repository", "get", "-r", "tce"}},
 		}.Description("-r", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
-		Annotations:  map[string]string{"table": ""},
+		Annotations: map[string]string{"table": "",
+			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
 

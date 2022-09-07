@@ -45,7 +45,8 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 				[]string{"package", "repository", "delete", "-r", "tce"}},
 		}.Description("-r", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
-		Annotations:  map[string]string{cmdapp.TTYByDefaultKey: ""},
+		Annotations: map[string]string{cmdapp.TTYByDefaultKey: "",
+			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
 
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
