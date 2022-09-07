@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -30,6 +31,9 @@ type Config struct {
 	proxyOpts            ProxyOpts
 	kappDeployRawOptions []string
 	skipTLSVerify        string
+
+	appDefaultSyncPeriod time.Duration
+	appMinimumSyncPeriod time.Duration
 }
 
 const (
@@ -160,6 +164,27 @@ func (gc *Config) KappDeployRawOptions() []string {
 	return append([]string{"--app-changes-max-to-keep=5"}, gc.kappDeployRawOptions...)
 }
 
+// AppDefaultSyncPeriod returns duration that is used by Apps
+// that do not explicitly specify sync period.
+func (gc *Config) AppDefaultSyncPeriod() time.Duration {
+	const lowestDefault = 30 * time.Second
+	if gc.appDefaultSyncPeriod > lowestDefault {
+		return gc.appDefaultSyncPeriod
+	}
+	return lowestDefault
+}
+
+// AppMinimumSyncPeriod returns duration that is used as a lowest
+// sync period App would use for reconciliation. This value
+// takes precedence over any sync period that is lower.
+func (gc *Config) AppMinimumSyncPeriod() time.Duration {
+	const lowestMin = 30 * time.Second
+	if gc.appMinimumSyncPeriod > lowestMin {
+		return gc.appMinimumSyncPeriod
+	}
+	return lowestMin
+}
+
 func (gc *Config) addSecretDataToConfig(secret *v1.Secret) error {
 	extractedValues := map[string]string{}
 	for key, value := range secret.Data {
@@ -177,6 +202,22 @@ func (gc *Config) addDataToConfig(data map[string]string) error {
 		HTTPProxy:  data["httpProxy"],
 		HTTPSProxy: data["httpsProxy"],
 		NoProxy:    gc.replaceServiceHostPlaceholder(data["noProxy"]),
+	}
+
+	if val := data["appDefaultSyncPeriod"]; len(val) > 0 {
+		dur, err := time.ParseDuration(val)
+		if err != nil {
+			return fmt.Errorf("Unmarshaling appDefaultSyncPeriod as duration: %s", err)
+		}
+		gc.appDefaultSyncPeriod = dur
+	}
+
+	if val := data["appMinimumSyncPeriod"]; len(val) > 0 {
+		dur, err := time.ParseDuration(val)
+		if err != nil {
+			return fmt.Errorf("Unmarshaling appMinimumSyncPeriod as duration: %s", err)
+		}
+		gc.appMinimumSyncPeriod = dur
 	}
 
 	if val := data["kappDeployRawOptions"]; len(val) > 0 {
