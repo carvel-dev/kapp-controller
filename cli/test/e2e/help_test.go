@@ -10,13 +10,13 @@ import (
 
 func TestHelpCommandGroup(t *testing.T) {
 	env := BuildEnv(t)
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
+	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, Logger{}}
 
-	_, err := kapp.RunWithOpts([]string{"app-group"}, RunOpts{NoNamespace: true, AllowError: true})
+	_, err := kappCtrl.RunWithOpts([]string{"package"}, RunOpts{NoNamespace: true, AllowError: true})
 	if err == nil {
 		t.Fatalf("Expected error")
 	}
-	if !strings.Contains(err.Error(), "Error: Use one of available subcommands: delete, deploy") {
+	if !strings.Contains(err.Error(), "Error: Use one of available subcommands: available, init, install, installed, release, repository") {
 		t.Fatalf("Expected helpful error message, but was '%s'", err.Error())
 	}
 }
