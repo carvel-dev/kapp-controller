@@ -231,7 +231,7 @@ func Test_PackageWithConstraintsWithPrerelease(t *testing.T) {
 			},
 		},
 		pkgclient:  fakePkgClient,
-		compInfo:   FakeComponentInfo{KCVersion: semver.MustParse("1.5.0"), K8sVersion: semver.MustParse("0.20.0-gke.100")},
+		compInfo:   FakeComponentInfo{KCVersion: semver.MustParse("1.5.0"), K8sVersion: semver.MustParse("0.20.0")},
 		log:        log,
 		coreClient: fakek8s,
 	}
