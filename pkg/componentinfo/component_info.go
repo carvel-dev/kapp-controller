@@ -65,7 +65,13 @@ func (ci *ComponentInfo) KubernetesVersion(serviceAccountName string, specCluste
 		if err != nil {
 			return semver.Version{}, err
 		}
-		return semver.ParseTolerant(v.String())
+		retv, err := semver.ParseTolerant(v.String())
+		if err != nil {
+			return retv, err
+		}
+		retv.Pre = semver.PRVersion{}
+		retv.Build = semver.BuildMeta{}
+		return retv, nil
 
 	default:
 		return semver.Version{}, fmt.Errorf("Expected service account or cluster specified")
