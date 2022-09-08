@@ -1,0 +1,52 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: dynatrace.carvel.dev.0.0.0
+spec:
+  refName: dynatrace.carvel.dev
+  releasedAt: null
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - git: {}
+      template:
+      - ytt:
+          paths:
+          - upstream
+      - kbld: {}
+  valuesSchema:
+    openAPIv3: null
+  version: 0.0.0
+
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  creationTimestamp: null
+  name: dynatrace.carvel.dev
+spec:
+  displayName: dynatrace
+  longDescription: dynatrace.carvel.dev
+  shortDescription: dynatrace.carvel.dev
+
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  annotations:
+    kctrl.carvel.dev/local-fetch-0: .
+  creationTimestamp: null
+  name: dynatrace
+spec:
+  packageRef:
+    refName: dynatrace.carvel.dev
+    versionSelection:
+      constraints: 0.0.0
+  serviceAccountName: dynatrace-sa
+status:
+  conditions: null
+  friendlyDescription: ""
+  observedGeneration: 0

@@ -1,0 +1,25 @@
+apiVersion: kctrl.carvel.dev/v1alpha1
+kind: PackageBuild
+metadata:
+  creationTimestamp: null
+  name: redis-enterprise-operator.carvel.dev
+spec:
+  release:
+  - resource: {}
+  template:
+    spec:
+      app:
+        spec:
+          deploy:
+          - kapp: {}
+          template:
+          - ytt:
+              paths:
+              - upstream
+          - kbld: {}
+      export:
+      - imgpkgBundle:
+          image: docker.io/rohitagg2020/redis-enterprise-operator-bundle
+          useKbldImagesLock: true
+        includePaths:
+        - upstream

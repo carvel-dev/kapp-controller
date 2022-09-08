@@ -1,0 +1,54 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: redis-enterprise-operator
+rules:
+  - apiGroups: ["rbac.authorization.k8s.io", ""]
+    resources: ["roles", "serviceaccounts", "rolebindings"]
+    verbs: ["bind", "escalate", "impersonate", "userextras", "create", "get",
+            "list", "watch", "update", "patch", "delete", "deletecollection"]
+  - apiGroups: ["app.redislabs.com"]
+    resources: ["redisenterpriseclusters", "redisenterpriseclusters/status", "redisenterpriseclusters/finalizers",
+                "redisenterprisedatabases", "redisenterprisedatabases/status", "redisenterprisedatabases/finalizers",
+                "redisenterpriseremoteclusters", "redisenterpriseremoteclusters/status",
+                "redisenterpriseremoteclusters/finalizers"]
+    verbs: ["delete", "deletecollection", "get", "list", "patch", "create", "update", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["update", "get", "read", "list", "listallnamespaces", "watch", "watchlist",
+            "watchlistallnamespaces", "create", "patch", "replace", "delete", "deletecollection"]
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "replicasets"]
+    verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["create", "delete", "get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create", "delete", "get" , "update", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["create", "delete", "get" , "update", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "watch", "list", "update", "patch", "create", "delete"]
+  - apiGroups: ["policy"]
+    resources: ["podsecuritypolicies"]
+    resourceNames: ["redis-enterprise-psp"]
+    verbs: ["use"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["create", "patch", "replace", "delete", "deletecollection", "read", "list", "listallnamespaces",
+            "watch", "watchlist", "watchlistallnamespaces", "patchstatus", "readstatus", "replacestatus", "update"]
+  - apiGroups: ["networking.istio.io"]
+    resources: ["gateways", "virtualservices"]
+    verbs: ["get", "watch", "list", "update", "patch", "create", "delete"]

@@ -1,0 +1,11 @@
+apiVersion: vendir.k14s.io/v1alpha1
+directories:
+- contents:
+  - git:
+      commitTitle: 'Merge pull request #241 from RedisLabs/heinrich-redislabs-fix-log-collector-RED-79996...'
+      sha: 60f623f4ae58293bb64f98b742e3a34e74a3165f
+      tags:
+      - v6.2.10-45-2-g60f623f
+    path: .
+  path: upstream
+kind: LockConfig
