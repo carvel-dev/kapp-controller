@@ -97,9 +97,9 @@ func TestE2EInitAndReleaseCases(t *testing.T) {
 				Inputs: []string{
 					"testpackage.corp.dev",
 					"4",
-					"https://github.com/RedisLabs/redis-enterprise-k8s-docs",
-					"origin/master",
-					"role.yaml,role_binding.yaml,service_account.yaml,crds/v1/rec_crd.yaml,crds/v1alpha1/redb_crd.yaml,admission-service.yaml,operator.yaml",
+					"https://github.com/vmware-tanzu/carvel-kapp",
+					"origin/develop",
+					"examples/simple-app-example/config-1.yml",
 				},
 			},
 		},
@@ -362,16 +362,10 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      ref: origin/master
-      url: https://github.com/RedisLabs/redis-enterprise-k8s-docs
+      ref: origin/develop
+      url: https://github.com/vmware-tanzu/carvel-kapp
     includePaths:
-    - role.yaml
-    - role_binding.yaml
-    - service_account.yaml
-    - crds/v1/rec_crd.yaml
-    - crds/v1alpha1/redb_crd.yaml
-    - admission-service.yaml
-    - operator.yaml
+    - examples/simple-app-example/config-1.yml
     path: .
   path: upstream
 kind: Config
@@ -586,12 +580,6 @@ spec:
 		logger.Section(fmt.Sprintf("%s: Testing and installing created Package", testcase.Name), func() {
 
 			cleanUpInstalledPkg := func() {
-				switch testcase.Name {
-				case "Git Repository Flow":
-					out := kubectl.Run([]string{"get", "deployment/redis-enterprise-operator", "-o", "yaml"})
-					require.Equal(t, "", out)
-				}
-
 				kappCli.RunWithOpts([]string{"delete", "-a", "test-package"},
 					RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
 				kappCtrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
@@ -618,17 +606,7 @@ spec:
 			switch testcase.Name {
 			case "Github Release Flow":
 				kubectl.RunWithOpts([]string{"delete", "ns", "dynatrace"}, RunOpts{NoNamespace: true})
-			//case "Git Repository Flow":
-			//	out := kubectl.Run([]string{"get", "deployment/redis-enterprise-operator", "-o", "yaml"})
-			//	require.Equal(t, "", out)
 			}
-
-			//if testcase.Name != "Git Repository Flow" {
-			//	kappCli.RunWithOpts([]string{"delete", "-a", "test-package"},
-			//		RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-			//	kappCtrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
-			//		RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-			//}
 		})
 	}
 }
