@@ -13,6 +13,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var (
+	defaultTimerOpts = ReconcileTimerOpts{
+		DefaultSyncPeriod: 30 * time.Second,
+		MinimumSyncPeriod: 30 * time.Second,
+	}
+)
+
 func TestSucceededDurationUntilReady(t *testing.T) {
 	syncPeriod := 1 * time.Minute
 	app := v1alpha1.App{
@@ -27,7 +34,7 @@ func TestSucceededDurationUntilReady(t *testing.T) {
 	}
 
 	for i := 0; i < 100; i++ {
-		durationUntilReady := NewReconcileTimer(app).DurationUntilReady(nil)
+		durationUntilReady := NewReconcileTimer(app, defaultTimerOpts).DurationUntilReady(nil)
 		assert.False(
 			t,
 			durationUntilReady < syncPeriod || durationUntilReady > (syncPeriod+10*time.Second),
@@ -50,7 +57,7 @@ func TestFailureSyncMathOverflowGuard(t *testing.T) {
 		},
 	}
 
-	delay := NewReconcileTimer(app).DurationUntilReady(nil)
+	delay := NewReconcileTimer(app, defaultTimerOpts).DurationUntilReady(nil)
 
 	// In the overflow case, delay would be negative due to the 2^x overflow,
 	// which would be less than syncPeriod and would be returned. This checks
@@ -72,7 +79,7 @@ func TestConsecutiveFailuresOverflowGuard(t *testing.T) {
 		},
 	}
 
-	delay := NewReconcileTimer(app).DurationUntilReady(nil)
+	delay := NewReconcileTimer(app, defaultTimerOpts).DurationUntilReady(nil)
 
 	// make sure that if consecutive failed reconciles has overflowed, we just
 	// return syncPeriod instead of a fractional duration (due to neg exp in 2^x)
@@ -109,7 +116,7 @@ func TestFailedDurationUntilReady(t *testing.T) {
 	for _, m := range measurements {
 		app.Status.ConsecutiveReconcileFailures = m.NumberOfFailedReconciles
 
-		durationUntilReady := NewReconcileTimer(app).DurationUntilReady(nil)
+		durationUntilReady := NewReconcileTimer(app, defaultTimerOpts).DurationUntilReady(nil)
 		assert.Equalf(
 			t,
 			m.ExpectedDuration,
@@ -141,13 +148,13 @@ func TestSucceededIsReadyAt(t *testing.T) {
 		},
 	}
 
-	isReady := NewReconcileTimer(app).IsReadyAt(timeOfReady)
+	isReady := NewReconcileTimer(app, defaultTimerOpts).IsReadyAt(timeOfReady)
 	assert.True(t, isReady, "Expected app to be ready after syncPeriod of 30s")
 
-	isReady = NewReconcileTimer(app).IsReadyAt(timeOfReady.Add(1 * time.Second))
+	isReady = NewReconcileTimer(app, defaultTimerOpts).IsReadyAt(timeOfReady.Add(1 * time.Second))
 	assert.True(t, isReady, "Expected app to be ready after exceeding syncPeriod of 30s")
 
-	isReady = NewReconcileTimer(app).IsReadyAt(timeOfReady.Add(-1 * time.Second))
+	isReady = NewReconcileTimer(app, defaultTimerOpts).IsReadyAt(timeOfReady.Add(-1 * time.Second))
 	assert.False(t, isReady, "Expected app to not be ready under syncPeriod of 30s")
 }
 
@@ -171,13 +178,13 @@ func TestFailedIsReadyAt(t *testing.T) {
 		},
 	}
 
-	isReady := NewReconcileTimer(app).IsReadyAt(timeOfReady)
+	isReady := NewReconcileTimer(app, defaultTimerOpts).IsReadyAt(timeOfReady)
 	assert.True(t, isReady, "Expected app to be ready after syncPeriod of 2s")
 
-	isReady = NewReconcileTimer(app).IsReadyAt(timeOfReady.Add(1 * time.Second))
+	isReady = NewReconcileTimer(app, defaultTimerOpts).IsReadyAt(timeOfReady.Add(1 * time.Second))
 	assert.True(t, isReady, "Expected app to be ready after exceeding syncPeriod of 2s")
 
-	isReady = NewReconcileTimer(app).IsReadyAt(timeOfReady.Add(-1 * time.Second))
+	isReady = NewReconcileTimer(app, defaultTimerOpts).IsReadyAt(timeOfReady.Add(-1 * time.Second))
 	assert.False(t, isReady, "Expected app to not be ready under syncPeriod of 2s")
 }
 
@@ -205,6 +212,6 @@ func TestIsReadyAtWithStaleDeployTime(t *testing.T) {
 		},
 	}
 
-	isReady := NewReconcileTimer(app).IsReadyAt(timeOfReady.Add(1 * time.Second))
+	isReady := NewReconcileTimer(app, defaultTimerOpts).IsReadyAt(timeOfReady.Add(1 * time.Second))
 	require.False(t, isReady, "Expected app not to be ready, because deploy time is stale")
 }
