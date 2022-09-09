@@ -5,6 +5,7 @@ package app
 
 import (
 	"sync"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/k14s/semver/v4"
@@ -32,6 +33,12 @@ type Hooks struct {
 	WatchChanges    func(func(v1alpha1.App), chan struct{}) error
 }
 
+// Opts keeps App reconciliation options
+type Opts struct {
+	DefaultSyncPeriod time.Duration
+	MinimumSyncPeriod time.Duration
+}
+
 type App struct {
 	app     v1alpha1.App
 	appPrev v1alpha1.App
@@ -46,6 +53,7 @@ type App struct {
 	memoizedKubernetesAPIs    []string
 
 	log        logr.Logger
+	opts       Opts
 	appMetrics *metrics.AppMetrics
 
 	pendingStatusUpdate   bool
@@ -55,11 +63,11 @@ type App struct {
 
 func NewApp(app v1alpha1.App, hooks Hooks,
 	fetchFactory fetch.Factory, templateFactory template.Factory,
-	deployFactory deploy.Factory, log logr.Logger, appMetrics *metrics.AppMetrics, compInfo ComponentInfo) *App {
+	deployFactory deploy.Factory, log logr.Logger, opts Opts, appMetrics *metrics.AppMetrics, compInfo ComponentInfo) *App {
 
 	return &App{app: app, appPrev: *(app.DeepCopy()), hooks: hooks,
 		fetchFactory: fetchFactory, templateFactory: templateFactory,
-		deployFactory: deployFactory, log: log, appMetrics: appMetrics, compInfo: compInfo}
+		deployFactory: deployFactory, log: log, opts: opts, appMetrics: appMetrics, compInfo: compInfo}
 }
 
 func (a *App) Name() string      { return a.app.Name }
