@@ -38,25 +38,13 @@ func (ci *ComponentInfo) KappControllerVersion() (semver.Version, error) {
 // KubernetesVersion returns the running K8s version depending on AppSpec
 // If AppSpec points to external cluster, we use that k8s version instead
 func (ci *ComponentInfo) KubernetesVersion(serviceAccountName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta) (semver.Version, error) {
-
-	// parses and then scrubs Pre and Build from the version
-	parseAndScrub := func(s string) (semver.Version, error) {
-		retv, err := semver.ParseTolerant(s)
-		if err != nil {
-			return retv, err
-		}
-		retv.Pre = semver.PRVersion{}
-		retv.Build = semver.BuildMeta{}
-		return retv, nil
-	}
-
 	switch {
 	case len(serviceAccountName) > 0:
 		v, err := ci.coreClient.Discovery().ServerVersion()
 		if err != nil {
 			return semver.Version{}, err
 		}
-		return parseAndScrub(v.String())
+		return ci.parseAndScrubVersion(v.String())
 
 	case specCluster != nil:
 		accessInfo, err := ci.clusterAccess.ClusterAccess(serviceAccountName, specCluster, kubeconfig.AccessLocation{Name: objMeta.Name, Namespace: objMeta.Namespace})
@@ -77,7 +65,7 @@ func (ci *ComponentInfo) KubernetesVersion(serviceAccountName string, specCluste
 		if err != nil {
 			return semver.Version{}, err
 		}
-		return parseAndScrub(v.String())
+		return ci.parseAndScrubVersion(v.String())
 
 	default:
 		return semver.Version{}, fmt.Errorf("Expected service account or cluster specified")
@@ -92,4 +80,15 @@ func (ci *ComponentInfo) KubernetesAPIs() ([]string, error) {
 	}
 
 	return metav1.ExtractGroupVersions(groups), nil
+}
+
+// parseAndScrubVersion parses version string and removes Pre and Build from the version
+func (*ComponentInfo) parseAndScrubVersion(version string) (semver.Version, error) {
+	retv, err := semver.ParseTolerant(version)
+	if err != nil {
+		return retv, err
+	}
+	retv.Pre = semver.PRVersion{}
+	retv.Build = semver.BuildMeta{}
+	return retv, nil
 }
