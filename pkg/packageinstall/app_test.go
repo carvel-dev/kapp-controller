@@ -562,3 +562,46 @@ func TestAppCustomFetchSecretNames(t *testing.T) {
 
 	require.Equal(t, expectedApp, app, "App does not match expected app")
 }
+
+func TestAppPackageDetailsAnnotations(t *testing.T) {
+	ipkg := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "app",
+			Namespace: "default",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{},
+	}
+
+	pkgVersion := datapkgingv1alpha1.Package{
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "expec-pkg",
+			Version: "1.5.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &kcv1alpha1.AppSpec{},
+			},
+		},
+	}
+
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	require.NoError(t, err)
+
+	trueVal := true
+	expectedObjectMeta := metav1.ObjectMeta{
+		Name:      "app",
+		Namespace: "default",
+		Annotations: map[string]string{
+			"packaging.carvel.dev/package-ref-name": "expec-pkg",
+			"packaging.carvel.dev/package-version":  "1.5.0",
+		},
+		OwnerReferences: []metav1.OwnerReference{{
+			APIVersion:         "packaging.carvel.dev/v1alpha1",
+			Kind:               "PackageInstall",
+			Name:               "app",
+			UID:                "",
+			Controller:         &trueVal,
+			BlockOwnerDeletion: &trueVal,
+		}},
+	}
+
+	require.Equal(t, expectedObjectMeta, app.ObjectMeta)
+}
