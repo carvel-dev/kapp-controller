@@ -53,7 +53,8 @@ spec:
 
 	logger.Section("deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+			e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1),
+				OnErrKubectl: []string{"get", "app", "-oyaml"}})
 
 		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
 

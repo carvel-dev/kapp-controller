@@ -106,7 +106,7 @@ stringData:
 
 			logger.Section("deploy", func() {
 				kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", tc.appCRName},
-					e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(tc.deploymentYAML), OnErrKubectl: []string{"kubectl", "get", "app", "-oyaml"}})
+					e2e.RunOpts{IntoNs: true, StdinReader: strings.NewReader(tc.deploymentYAML), OnErrKubectl: []string{"get", "app", "-oyaml"}})
 
 				out := kapp.Run([]string{"inspect", "-a", tc.appCRName, "--raw", "--tty=false", "--filter-kind=App"})
 
