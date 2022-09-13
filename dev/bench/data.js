@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662740562745,
+  "lastUpdate": 1663082072519,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5367,6 +5367,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6675231351,
             "unit": "ns/op\t         4.373 DeleteSeconds\t         2.249 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86852107+joe-kimmel-vmw@users.noreply.github.com",
+            "name": "Joe Kimmel",
+            "username": "joe-kimmel-vmw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "80be13ad451b6d06e9fd8e2846c240f376a5e6ab",
+          "message": "never report the kubernetes version with the pre or buildmeta (#862)\n\n* never report the kubernetes version with the pre or buildmeta\r\n\r\n* test should pass but its a wip bc weve reduced test coverage\r\n\r\n* adds new test for component_info\r\n\r\nasserts prerelease gets scrubbed at that level",
+          "timestamp": "2022-09-13T11:04:41-04:00",
+          "tree_id": "a224ea954dad370be8b72ac42a4612cbbf563b57",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/80be13ad451b6d06e9fd8e2846c240f376a5e6ab"
+        },
+        "date": 1663082071654,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36489057263,
+            "unit": "ns/op\t        18.94 DeleteSeconds\t        17.50 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9508824500,
+            "unit": "ns/op\t         5.304 DeleteSeconds\t         4.160 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6629166632,
+            "unit": "ns/op\t         4.346 DeleteSeconds\t         2.240 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
