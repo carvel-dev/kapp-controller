@@ -74,11 +74,11 @@ func (t Values) AsPaths(dirPath string) ([]string, func(), error) {
 			paths, err = t.writeFromDownwardAPI(valuesDir.Path(), downwardAPIValues)
 
 		default:
-			err = fmt.Errorf("Expected either secretRef, configMapRef or path as a source")
+			err = fmt.Errorf("Expected one of secretRef, configMapRef, downwardAPI, or path as a source")
 		}
 		if err != nil {
 			cleanUpFunc()
-			return nil, nil, fmt.Errorf("Writing paths: %s", err)
+			return nil, nil, fmt.Errorf("Preparing template values: %s", err)
 		}
 
 		allPaths = append(allPaths, paths...)
