@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663082072519,
+  "lastUpdate": 1663082164936,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5409,6 +5409,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6629166632,
             "unit": "ns/op\t         4.346 DeleteSeconds\t         2.240 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cppforlife@gmail.com",
+            "name": "Dmitriy Kalinin",
+            "username": "cppforlife"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c0eaf6da0d2c3f4a12b06a720b8b2e6a256ee752",
+          "message": "add package details to child app cr annotations so that they can be used in app cr downward api (#864)\n\nCo-authored-by: Dmitriy Kalinin <dkalinin@vmware.com>",
+          "timestamp": "2022-09-13T11:05:53-04:00",
+          "tree_id": "859b781b011bf201278452a4347fa51e34ef4162",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/c0eaf6da0d2c3f4a12b06a720b8b2e6a256ee752"
+        },
+        "date": 1663082163577,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36466094757,
+            "unit": "ns/op\t        18.92 DeleteSeconds\t        17.51 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9534263451,
+            "unit": "ns/op\t         5.343 DeleteSeconds\t         4.152 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6466250278,
+            "unit": "ns/op\t         4.275 DeleteSeconds\t         2.152 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
