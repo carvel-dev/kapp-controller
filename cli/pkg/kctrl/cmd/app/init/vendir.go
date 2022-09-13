@@ -60,10 +60,7 @@ func (v *VendirStep) Interact() error {
 	case FetchFromHelmRepo:
 		helmStep := NewHelmStep(v.ui, v.config)
 		return Run(helmStep)
-	case FetchFromGit:
-		gitStep := NewGitStep(v.ui, v.config)
-		return Run(gitStep)
-	case FetchChartFromGit:
+	case FetchFromGit, FetchChartFromGit:
 		gitStep := NewGitStep(v.ui, v.config)
 		return Run(gitStep)
 	}

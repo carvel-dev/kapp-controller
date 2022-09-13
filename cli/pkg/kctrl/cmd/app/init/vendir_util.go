@@ -54,7 +54,7 @@ func GetFetchOptionFromVendir(config vendirconf.Config, ishelmTemplateExist bool
 		return ""
 	}
 	if len(config.Directories) > 1 || len(config.Directories[0].Contents) > 1 {
-		return "MultipleFetchOptions"
+		return MultipleFetchOptionsSelected
 	}
 	content := config.Directories[0].Contents[0]
 	var selectedVendirOption string

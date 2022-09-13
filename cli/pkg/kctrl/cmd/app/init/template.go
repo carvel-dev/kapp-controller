@@ -112,7 +112,8 @@ func (t *TemplateStep) getHelmAppTemplate(fetchSource string) (v1alpha1.AppTempl
 			return v1alpha1.AppTemplate{}, err
 		}
 		pathFromVendir = vendirConf.Directories[0].Contents[0].IncludePaths[0]
-		// TODO Create regex and match against that.
+		// Remove all the trailing `/` from the string
+		pathFromVendir = strings.TrimRight(pathFromVendir, "/")
 		pathFromVendir = strings.TrimSuffix(pathFromVendir, "/**/*")
 		pathFromVendir = strings.TrimSuffix(pathFromVendir, "/**")
 		pathFromVendir = strings.TrimSuffix(pathFromVendir, "/*")

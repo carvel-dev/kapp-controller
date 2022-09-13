@@ -113,9 +113,6 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	// TODO: @praveenrewar Remove the header text as we are only saving data to files and doesn't require user input
-	// hence shouldn't be called as Step 3/3
-
 	pkgBuild.SetObjectMeta(&metav1.ObjectMeta{
 		Name: pkg.Spec.RefName,
 	})

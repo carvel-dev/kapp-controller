@@ -222,10 +222,12 @@ func (c CreateStep) createAppFromAppBuild() kcv1alpha1.App {
 func (c CreateStep) configureExportSection() {
 	fetchSource := c.build.GetObjectMeta().Annotations[FetchContentAnnotationKey]
 	exportSection := *c.build.GetExport()
-	// TODO not handling the case: In case of pkg init rerun with FetchFromLocalDirectory,
-	// not handling below scenarios as they become quite complex esp Scenario 2,
-	// Scenario 1: During rerun, something is added in the template
-	// Scenario 2: During rerun, something is removed from the template
+	// In case of pkg init rerun with FetchFromLocalDirectory, today we overwrite the includePaths
+	// with what we get from template section.
+	// Alternatively, we can merge the includePaths with template section.
+	// It becomes complex to merge already existing includePaths with template section especially scenario 2
+	// Scenario 1: During rerun, something is added in the app template section
+	// Scenario 2: During rerun, something is removed from the app template section
 	if exportSection == nil || len(exportSection) == 0 || fetchSource == FetchFromLocalDirectory {
 		appTemplates := c.build.GetAppSpec().Template
 		includePaths := []string{}
