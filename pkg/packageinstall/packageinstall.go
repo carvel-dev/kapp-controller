@@ -305,8 +305,6 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 		if err != nil {
 			return datapkgingv1alpha1.Package{}, fmt.Errorf("Unable to get kubernetes version: %s", err)
 		}
-		v.Pre = semver.PRVersion{}
-		v.Build = semver.BuildMeta{}
 
 		k8sConstraint := func(pkgVer string) bool {
 			pkg := versionToPkg[pkgVer]
