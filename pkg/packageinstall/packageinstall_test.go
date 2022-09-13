@@ -208,39 +208,6 @@ func Test_Package_ConstraintNotGiven_ErrorDoesNotContainMessage(t *testing.T) {
 	assert.ErrorContains(t, err, "after-kapp-controller-version-check=0")
 }
 
-func Test_PackageWithConstraintsWithPrerelease(t *testing.T) {
-	log := logf.Log.WithName("kc")
-	fakek8s := fake.NewSimpleClientset()
-	pkg := generatePackageWithConstraints("pkg.test.carvel.dev", "0.0.0", ">1.0.0 <2.0.0", "0.10.0")
-	pkg2 := generatePackageWithConstraints("pkg.test.carvel.dev", "2.0.0", ">1.0.0 <2.0.0", "0.20.0")
-	fakePkgClient := fakeapiserver.NewSimpleClientset(&pkg, &pkg2)
-
-	ip := PackageInstallCR{
-		model: &pkgingv1alpha1.PackageInstall{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "instl-pkg-ignore-kc-constraint",
-			},
-			Spec: pkgingv1alpha1.PackageInstallSpec{
-				PackageRef: &pkgingv1alpha1.PackageRef{
-					RefName: "pkg.test.carvel.dev",
-					VersionSelection: &versions.VersionSelectionSemver{
-						Constraints: ">0.0.0",
-					},
-				},
-				ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
-			},
-		},
-		pkgclient:  fakePkgClient,
-		compInfo:   FakeComponentInfo{KCVersion: semver.MustParse("1.5.0"), K8sVersion: semver.MustParse("0.20.0-gke.100")},
-		log:        log,
-		coreClient: fakek8s,
-	}
-
-	out, err := ip.referencedPkgVersion()
-	assert.Equal(t, out, pkg2, "Pre-Release version of Package meeting constraints not chosen: \nExpected:\n%#v\nGot:\n%#v\n", pkg2, out)
-	require.NoError(t, err)
-}
-
 func Test_PackageWithConstraints_HighestMatch(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	fakek8s := fake.NewSimpleClientset()
