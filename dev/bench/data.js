@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663082164936,
+  "lastUpdate": 1663105952971,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5451,6 +5451,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6466250278,
             "unit": "ns/op\t         4.275 DeleteSeconds\t         2.152 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86852107+joe-kimmel-vmw@users.noreply.github.com",
+            "name": "Joe Kimmel",
+            "username": "joe-kimmel-vmw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "68ecccad508e4498188631d31089747ce5743fd8",
+          "message": "changes to make it easier to see where tests fail (#865)",
+          "timestamp": "2022-09-13T14:39:44-07:00",
+          "tree_id": "0a877a0ede16bd9970cda966275222d75ee92806",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/68ecccad508e4498188631d31089747ce5743fd8"
+        },
+        "date": 1663105950638,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37167839938,
+            "unit": "ns/op\t        19.47 DeleteSeconds\t        17.65 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9698607891,
+            "unit": "ns/op\t         5.455 DeleteSeconds\t         4.192 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6542682964,
+            "unit": "ns/op\t         4.345 DeleteSeconds\t         2.155 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
