@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663105952971,
+  "lastUpdate": 1663177218091,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5493,6 +5493,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6542682964,
             "unit": "ns/op\t         4.345 DeleteSeconds\t         2.155 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86852107+joe-kimmel-vmw@users.noreply.github.com",
+            "name": "Joe Kimmel",
+            "username": "joe-kimmel-vmw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7d217d8238f4fa8a53d2052bb05246998b915644",
+          "message": "template values AsPaths: clearer error msg (#871)",
+          "timestamp": "2022-09-14T13:28:41-04:00",
+          "tree_id": "d7be04ab6641dd9b8747566b7eb5187fea13faf9",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/7d217d8238f4fa8a53d2052bb05246998b915644"
+        },
+        "date": 1663177215788,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37121786757,
+            "unit": "ns/op\t        19.38 DeleteSeconds\t        17.67 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9692134154,
+            "unit": "ns/op\t         5.435 DeleteSeconds\t         4.209 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6540709763,
+            "unit": "ns/op\t         4.320 DeleteSeconds\t         2.168 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
