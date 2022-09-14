@@ -107,10 +107,8 @@ func (o *RecommendedOptions) ApplyTo(config *server.RecommendedConfig) error {
 	if err := o.EgressSelector.ApplyTo(&config.Config); err != nil {
 		return err
 	}
-	if feature.DefaultFeatureGate.Enabled(features.APIServerTracing) {
-		if err := o.Traces.ApplyTo(config.Config.EgressSelector, &config.Config); err != nil {
-			return err
-		}
+	if err := o.Traces.ApplyTo(config.Config.EgressSelector, &config.Config); err != nil {
+		return err
 	}
 	if err := o.SecureServing.ApplyTo(&config.Config.SecureServing, &config.Config.LoopbackClientConfig); err != nil {
 		return err
@@ -143,7 +141,7 @@ func (o *RecommendedOptions) ApplyTo(config *server.RecommendedConfig) error {
 			}
 			config.FlowControl = utilflowcontrol.New(
 				config.SharedInformerFactory,
-				kubernetes.NewForConfigOrDie(config.ClientConfig).FlowcontrolV1beta1(),
+				kubernetes.NewForConfigOrDie(config.ClientConfig).FlowcontrolV1beta2(),
 				config.MaxRequestsInFlight+config.MaxMutatingRequestsInFlight,
 				config.RequestTimeout/4,
 			)
