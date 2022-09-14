@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663177282413,
+  "lastUpdate": 1663178611432,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5577,6 +5577,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6605900613,
             "unit": "ns/op\t         4.393 DeleteSeconds\t         2.163 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "soumikm@vmware.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "distinct": true,
+          "id": "ccdb1be9bdbff5ed826ebf0b8a5bf629c16e3a41",
+          "message": "Ensure that ytt overlays secrets are garbage collected. Refactor lengthy conditionals",
+          "timestamp": "2022-09-14T23:21:21+05:30",
+          "tree_id": "ce94970b768e62166ce4566fb28a26f651b0ae3b",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/ccdb1be9bdbff5ed826ebf0b8a5bf629c16e3a41"
+        },
+        "date": 1663178608865,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37387033452,
+            "unit": "ns/op\t        19.71 DeleteSeconds\t        17.63 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9647542903,
+            "unit": "ns/op\t         5.390 DeleteSeconds\t         4.206 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6602486961,
+            "unit": "ns/op\t         4.357 DeleteSeconds\t         2.190 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
