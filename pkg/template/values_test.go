@@ -166,7 +166,7 @@ func TestValues(t *testing.T) {
 
 			_, _, err := subject.AsPaths(os.TempDir())
 			require.Error(t, err)
-			assert.ErrorContains(t, err, "Writing paths: INVALID_SUBPATH is not found")
+			assert.ErrorContains(t, err, "INVALID_SUBPATH is not found")
 		})
 
 		t.Run("return helpful error if an unsupported downward api field spec is provided", func(t *testing.T) {
@@ -179,7 +179,7 @@ func TestValues(t *testing.T) {
 
 			_, _, err := subject.AsPaths(os.TempDir())
 			require.Error(t, err)
-			assert.ErrorContains(t, err, "Writing paths: creationTimestamp is not found")
+			assert.ErrorContains(t, err, "creationTimestamp is not found")
 		})
 
 		t.Run("return helpful error if invalid nested key structure is provided", func(t *testing.T) {
@@ -207,7 +207,7 @@ func TestValues(t *testing.T) {
 
 			_, _, err := subject.AsPaths(os.TempDir())
 			require.Error(t, err)
-			assert.ErrorContains(t, err, "Writing paths: Invalid field spec provided to DownwardAPI. Only single supported fields are allowed")
+			assert.ErrorContains(t, err, "Invalid field spec provided to DownwardAPI. Only single supported fields are allowed")
 		})
 
 		t.Run("return kubernetes cluster version if not supplied", func(t *testing.T) {
