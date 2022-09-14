@@ -52,6 +52,11 @@ func (r *PackageMetadataCRDREST) New() runtime.Object {
 	return &datapackaging.PackageMetadata{}
 }
 
+// Destroy satisfies the apiserver.registry.rest.Storage interface but it's a no-op
+func (r *PackageMetadataCRDREST) Destroy() {
+	return
+}
+
 func (r *PackageMetadataCRDREST) NewList() runtime.Object {
 	return &datapackaging.PackageMetadataList{}
 }
