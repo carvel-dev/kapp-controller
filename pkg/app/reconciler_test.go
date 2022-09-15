@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/go-logr/logr/testr"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	apppkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
@@ -37,7 +38,7 @@ func Test_AppRefTracker_HasAppRemovedForSecrets_ThatAreNoLongerUsedByApp(t *test
 	appKey := reftracker.NewAppKey(app.Name, app.Namespace)
 	appRefTracker.ReconcileRefs(refKeyMap, appKey)
 
-	ar := apppkg.NewReconciler(nil, nil, apppkg.CRDAppFactory{}, appRefTracker, nil, FakeComponentInfo{})
+	ar := apppkg.NewReconciler(nil, testr.New(t), apppkg.CRDAppFactory{}, appRefTracker, nil, FakeComponentInfo{})
 
 	// This map represents the secrets the App has on its spec
 	refMap := map[reftracker.RefKey]struct{}{
@@ -89,7 +90,7 @@ func Test_AppRefTracker_HasNoAppsRemoved_WhenRefsRemainSame(t *testing.T) {
 	appKey := reftracker.NewAppKey(app.Name, app.Namespace)
 	appRefTracker.ReconcileRefs(refKeyMap, appKey)
 
-	ar := apppkg.NewReconciler(nil, nil, apppkg.CRDAppFactory{}, appRefTracker, nil, FakeComponentInfo{})
+	ar := apppkg.NewReconciler(nil, testr.New(t), apppkg.CRDAppFactory{}, appRefTracker, nil, FakeComponentInfo{})
 
 	// This map represents the secrets the App has
 	// on its spec

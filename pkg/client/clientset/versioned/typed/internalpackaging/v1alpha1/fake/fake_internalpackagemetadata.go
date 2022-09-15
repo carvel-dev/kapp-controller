@@ -89,7 +89,7 @@ func (c *FakeInternalPackageMetadatas) Update(ctx context.Context, internalPacka
 // Delete takes name of the internalPackageMetadata and deletes it. Returns an error if one occurs.
 func (c *FakeInternalPackageMetadatas) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(internalpackagemetadatasResource, c.ns, name), &v1alpha1.InternalPackageMetadata{})
+		Invokes(testing.NewDeleteActionWithOptions(internalpackagemetadatasResource, c.ns, name, opts), &v1alpha1.InternalPackageMetadata{})
 
 	return err
 }

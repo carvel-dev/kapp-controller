@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
-	"path"
+	"path/filepath"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -47,7 +47,7 @@ func init() {
 // It also applies saner defaults for QPS and burst based on the Kubernetes
 // controller manager defaults (20 QPS, 30 burst)
 //
-// Config precedence
+// Config precedence:
 //
 // * --kubeconfig flag pointing at a file
 //
@@ -67,7 +67,7 @@ func GetConfig() (*rest.Config, error) {
 // It also applies saner defaults for QPS and burst based on the Kubernetes
 // controller manager defaults (20 QPS, 30 burst)
 //
-// Config precedence
+// Config precedence:
 //
 // * --kubeconfig flag pointing at a file
 //
@@ -123,9 +123,9 @@ func loadConfig(context string) (*rest.Config, error) {
 	if _, ok := os.LookupEnv("HOME"); !ok {
 		u, err := user.Current()
 		if err != nil {
-			return nil, fmt.Errorf("could not get current user: %v", err)
+			return nil, fmt.Errorf("could not get current user: %w", err)
 		}
-		loadingRules.Precedence = append(loadingRules.Precedence, path.Join(u.HomeDir, clientcmd.RecommendedHomeDir, clientcmd.RecommendedFileName))
+		loadingRules.Precedence = append(loadingRules.Precedence, filepath.Join(u.HomeDir, clientcmd.RecommendedHomeDir, clientcmd.RecommendedFileName))
 	}
 
 	return loadConfigWithContext("", loadingRules, context)

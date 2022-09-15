@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/go-logr/logr"
+	"github.com/go-logr/logr/testr"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
@@ -53,7 +53,7 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 
 	// Load installed package into fake client
 	kappcs := fake.NewSimpleClientset(&eligibleInstalledPkg, &ineligibleInstalledPkg)
-	ipvh := pkginstall.NewPackageInstallVersionHandler(kappcs, "", &EmptyLog{})
+	ipvh := pkginstall.NewPackageInstallVersionHandler(kappcs, "", testr.New(t))
 
 	event := event.GenericEvent{
 		Object: &datapkgingv1alpha1.Package{
@@ -76,17 +76,3 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 	}
 
 }
-
-type EmptyLog struct{}
-
-func (l *EmptyLog) Info(msg string, keysAndValues ...interface{}) {}
-
-func (l *EmptyLog) Enabled() bool { return false }
-
-func (l *EmptyLog) Error(err error, msg string, keysAndValues ...interface{}) {}
-
-func (l *EmptyLog) V(level int) logr.InfoLogger { return l }
-
-func (l *EmptyLog) WithValues(keysAndValues ...interface{}) logr.Logger { return l }
-
-func (l *EmptyLog) WithName(name string) logr.Logger { return l }
