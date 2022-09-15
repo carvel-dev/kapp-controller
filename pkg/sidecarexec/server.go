@@ -56,6 +56,15 @@ func (r *Server) Serve() error {
 
 	rpc.HandleHTTP()
 
+	// Socket file may not be cleaned up upon unexpected process termination
+	// and without removal will result in "already in use" error messages.
+	if serverListenType == "unix" {
+		err = os.RemoveAll(serverListenAddr)
+		if err != nil {
+			return fmt.Errorf("Removing (unbinding) all listen addr: %s", err)
+		}
+	}
+
 	listener, err := net.Listen(serverListenType, serverListenAddr)
 	if err != nil {
 		return fmt.Errorf("Listening RPC: %s", err)

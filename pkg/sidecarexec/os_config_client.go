@@ -5,14 +5,13 @@ package sidecarexec
 
 import (
 	"fmt"
-	"net/rpc"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 )
 
 // OSConfigClient communicates over RPC client to configure runtime environment.
 type OSConfigClient struct {
-	rpcClient *rpc.Client
+	rpcClient rpcClient
 }
 
 var _ config.OSConfig = OSConfigClient{}
