@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663281150389,
+  "lastUpdate": 1663285347734,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5661,6 +5661,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6499953564,
             "unit": "ns/op\t         4.269 DeleteSeconds\t         2.187 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86852107+joe-kimmel-vmw@users.noreply.github.com",
+            "name": "Joe Kimmel",
+            "username": "joe-kimmel-vmw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5a87cb30016d322d4276bf46df61eaca20088703",
+          "message": "test k8s 1.20 and 1.25 (#880)",
+          "timestamp": "2022-09-15T19:30:54-04:00",
+          "tree_id": "d3c2e885d8b21659600fac59ed95575d19f712a1",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/5a87cb30016d322d4276bf46df61eaca20088703"
+        },
+        "date": 1663285345458,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36742342972,
+            "unit": "ns/op\t        19.07 DeleteSeconds\t        17.63 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9637171559,
+            "unit": "ns/op\t         5.403 DeleteSeconds\t         4.188 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6461986422,
+            "unit": "ns/op\t         4.274 DeleteSeconds\t         2.141 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
