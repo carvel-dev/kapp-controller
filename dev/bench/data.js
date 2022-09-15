@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663178611432,
+  "lastUpdate": 1663281150389,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5619,6 +5619,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6602486961,
             "unit": "ns/op\t         4.357 DeleteSeconds\t         2.190 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cppforlife@gmail.com",
+            "name": "Dmitriy Kalinin",
+            "username": "cppforlife"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "560aaea259bc7deef959fca65f0b70506712330f",
+          "message": "Merge pull request #876 from vmware-tanzu/depsup\n\nbump k8s libraries to 1.25",
+          "timestamp": "2022-09-15T18:21:12-04:00",
+          "tree_id": "d06f525953d5ab72862bf21f5a45eb2c65055bf1",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/560aaea259bc7deef959fca65f0b70506712330f"
+        },
+        "date": 1663281149561,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36700000125,
+            "unit": "ns/op\t        19.11 DeleteSeconds\t        17.54 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9620625546,
+            "unit": "ns/op\t         5.382 DeleteSeconds\t         4.161 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6499953564,
+            "unit": "ns/op\t         4.269 DeleteSeconds\t         2.187 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
