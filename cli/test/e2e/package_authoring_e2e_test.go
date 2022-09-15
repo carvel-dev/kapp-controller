@@ -21,6 +21,9 @@ const (
 type E2EAuthoringTestCase struct {
 	Name                    string
 	InitInteraction         Interaction
+	ExpectedPkgBuild        string
+	ExpectedPkgResource     string
+	ExpectedVendir          string
 	ExpectedPackage         string
 	ExpectedPackageMetadata string
 }
@@ -65,55 +68,7 @@ func TestE2EInitAndReleaseCases(t *testing.T) {
 					"1.16.0",
 				},
 			},
-		}, {
-			Name: "Github Release Flow",
-			InitInteraction: Interaction{
-				Prompts: []string{
-					"Enter the package reference name",
-					"Enter source",
-					"Enter slug for repository",
-					"Enter the release tag to be used",
-					"Enter the paths which contain Kubernetes manifests",
-				},
-				Inputs: []string{
-					"testpackage.corp.dev",
-					"2",
-					"Dynatrace/dynatrace-operator",
-					"v0.6.0",
-					"kubernetes.yaml",
-				},
-			},
-		},
-		{
-			Name: "Git Repository Flow",
-			InitInteraction: Interaction{
-				Prompts: []string{
-					"Enter the package reference name",
-					"Enter source",
-					"Enter Git URL",
-					"Enter Git Reference",
-					"Enter the paths which contain Kubernetes manifests",
-				},
-				Inputs: []string{
-					"testpackage.corp.dev",
-					"4",
-					"https://github.com/vmware-tanzu/carvel-kapp",
-					"origin/develop",
-					"examples/simple-app-example/config-1.yml",
-				},
-			},
-		},
-	}
-
-	env := BuildEnv(t)
-	logger := Logger{}
-	kappCli := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
-
-	expectedOutputs := ExpectedOutputYaml{
-		PackageBuild: []string{
-			`
+			ExpectedPkgBuild: `
 apiVersion: kctrl.carvel.dev/v1alpha1
 kind: PackageBuild
 metadata:
@@ -136,51 +91,7 @@ spec:
       - includePaths:
         - upstream
 `,
-			`
-apiVersion: kctrl.carvel.dev/v1alpha1
-kind: PackageBuild
-metadata:
-  name: testpackage.corp.dev
-spec:
-  template:
-    spec:
-      app:
-        spec:
-          deploy:
-          - kapp: {}
-          template:
-          - ytt:
-              paths:
-              - upstream
-          - kbld: {}
-      export:
-      - includePaths:
-        - upstream
-`,
-			`
-apiVersion: kctrl.carvel.dev/v1alpha1
-kind: PackageBuild
-metadata:
-  name: testpackage.corp.dev
-spec:
-  template:
-    spec:
-      app:
-        spec:
-          deploy:
-          - kapp: {}
-          template:
-          - ytt:
-              paths:
-              - upstream
-          - kbld: {}
-      export:
-      - includePaths:
-        - upstream
-`,
-		},
-		PackageResource: []string{
-			`
+			ExpectedPkgResource: `
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
@@ -230,105 +141,7 @@ status:
   friendlyDescription: ""
   observedGeneration: 0
 `,
-			`
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
-metadata:
-  name: testpackage.corp.dev.0.0.0
-spec:
-  refName: testpackage.corp.dev
-  template:
-    spec:
-      deploy:
-      - kapp: {}
-      fetch:
-      - git: {}
-      template:
-      - ytt:
-          paths:
-          - upstream
-      - kbld: {}
-  valuesSchema:
-    openAPIv3: null
-  version: 0.0.0
----
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageMetadata
-metadata:
-  name: testpackage.corp.dev
-spec:
-  displayName: testpackage
-  longDescription: testpackage.corp.dev
-  shortDescription: testpackage.corp.dev
----
-apiVersion: packaging.carvel.dev/v1alpha1
-kind: PackageInstall
-metadata:
-  annotations:
-    kctrl.carvel.dev/local-fetch-0: .
-  name: testpackage
-spec:
-  packageRef:
-    refName: testpackage.corp.dev
-    versionSelection:
-      constraints: 0.0.0
-  serviceAccountName: testpackage-sa
-status:
-  conditions: null
-  friendlyDescription: ""
-  observedGeneration: 0
-`,
-			`
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
-metadata:
-  name: testpackage.corp.dev.0.0.0
-spec:
-  refName: testpackage.corp.dev
-  template:
-    spec:
-      deploy:
-      - kapp: {}
-      fetch:
-      - git: {}
-      template:
-      - ytt:
-          paths:
-          - upstream
-      - kbld: {}
-  valuesSchema:
-    openAPIv3: null
-  version: 0.0.0
----
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageMetadata
-metadata:
-  name: testpackage.corp.dev
-spec:
-  displayName: testpackage
-  longDescription: testpackage.corp.dev
-  shortDescription: testpackage.corp.dev
----
-apiVersion: packaging.carvel.dev/v1alpha1
-kind: PackageInstall
-metadata:
-  annotations:
-    kctrl.carvel.dev/local-fetch-0: .
-  name: testpackage
-spec:
-  packageRef:
-    refName: testpackage.corp.dev
-    versionSelection:
-      constraints: 0.0.0
-  serviceAccountName: testpackage-sa
-status:
-  conditions: null
-  friendlyDescription: ""
-  observedGeneration: 0
-`,
-		},
-		Vendir: []string{
-			`
+			ExpectedVendir: `
 apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
@@ -342,7 +155,134 @@ directories:
 kind: Config
 minimumRequiredVersion: ""
 `,
-			`
+			ExpectedPackageMetadata: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+`,
+			ExpectedPackage: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.1.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - imgpkgBundle:
+      template:
+      - helmTemplate:
+          path: upstream
+      - ytt:
+          paths:
+          - '-'
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/
+  valuesSchema:
+    openAPIv3:
+      default: null
+      nullable: true
+  version: 1.0.0
+`,
+		},
+		{
+			Name: "Github Release Flow",
+			InitInteraction: Interaction{
+				Prompts: []string{
+					"Enter the package reference name",
+					"Enter source",
+					"Enter slug for repository",
+					"Enter the release tag to be used",
+					"Enter the paths which contain Kubernetes manifests",
+				},
+				Inputs: []string{
+					"testpackage.corp.dev",
+					"2",
+					"Dynatrace/dynatrace-operator",
+					"v0.6.0",
+					"kubernetes.yaml",
+				},
+			},
+			ExpectedPkgBuild: `
+apiVersion: kctrl.carvel.dev/v1alpha1
+kind: PackageBuild
+metadata:
+  name: testpackage.corp.dev
+spec:
+  template:
+    spec:
+      app:
+        spec:
+          deploy:
+          - kapp: {}
+          template:
+          - ytt:
+              paths:
+              - upstream
+          - kbld: {}
+      export:
+      - includePaths:
+        - upstream
+`,
+			ExpectedPkgResource: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.0.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - git: {}
+      template:
+      - ytt:
+          paths:
+          - upstream
+      - kbld: {}
+  valuesSchema:
+    openAPIv3: null
+  version: 0.0.0
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  annotations:
+    kctrl.carvel.dev/local-fetch-0: .
+  name: testpackage
+spec:
+  packageRef:
+    refName: testpackage.corp.dev
+    versionSelection:
+      constraints: 0.0.0
+  serviceAccountName: testpackage-sa
+status:
+  conditions: null
+  friendlyDescription: ""
+  observedGeneration: 0
+`,
+			ExpectedVendir: `
 apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
@@ -357,23 +297,7 @@ directories:
 kind: Config
 minimumRequiredVersion: ""
 `,
-			`
-apiVersion: vendir.k14s.io/v1alpha1
-directories:
-- contents:
-  - git:
-      ref: origin/develop
-      url: https://github.com/vmware-tanzu/carvel-kapp
-    includePaths:
-    - examples/simple-app-example/config-1.yml
-    path: .
-  path: upstream
-kind: Config
-minimumRequiredVersion: ""
-`,
-		},
-		PackageMetadata: []string{
-			`
+			ExpectedPackageMetadata: `
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
 metadata:
@@ -383,58 +307,7 @@ spec:
   longDescription: testpackage.corp.dev
   shortDescription: testpackage.corp.dev
 `,
-			`
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageMetadata
-metadata:
-  name: testpackage.corp.dev
-spec:
-  displayName: testpackage
-  longDescription: testpackage.corp.dev
-  shortDescription: testpackage.corp.dev
-`,
-			`
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageMetadata
-metadata:
-  name: testpackage.corp.dev
-spec:
-  displayName: testpackage
-  longDescription: testpackage.corp.dev
-  shortDescription: testpackage.corp.dev
-`,
-		},
-		Package: []string{
-			`
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
-metadata:
-  name: testpackage.corp.dev.1.0.0
-spec:
-  refName: testpackage.corp.dev
-  template:
-    spec:
-      deploy:
-      - kapp: {}
-      fetch:
-      - imgpkgBundle:
-      template:
-      - helmTemplate:
-          path: upstream
-      - ytt:
-          paths:
-          - '-'
-      - kbld:
-          paths:
-          - '-'
-          - .imgpkg/
-  valuesSchema:
-    openAPIv3:
-      default: null
-      nullable: true
-  version: 1.0.0
-`,
-			`
+			ExpectedPackage: `
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
@@ -461,7 +334,119 @@ spec:
       nullable: true
   version: 1.0.0
 `,
-			`
+		},
+		{
+			Name: "Git Repository Flow",
+			InitInteraction: Interaction{
+				Prompts: []string{
+					"Enter the package reference name",
+					"Enter source",
+					"Enter Git URL",
+					"Enter Git Reference",
+					"Enter the paths which contain Kubernetes manifests",
+				},
+				Inputs: []string{
+					"testpackage.corp.dev",
+					"4",
+					"https://github.com/vmware-tanzu/carvel-kapp",
+					"origin/develop",
+					"examples/simple-app-example/config-1.yml",
+				},
+			},
+			ExpectedPkgBuild: `
+apiVersion: kctrl.carvel.dev/v1alpha1
+kind: PackageBuild
+metadata:
+  name: testpackage.corp.dev
+spec:
+  template:
+    spec:
+      app:
+        spec:
+          deploy:
+          - kapp: {}
+          template:
+          - ytt:
+              paths:
+              - upstream
+          - kbld: {}
+      export:
+      - includePaths:
+        - upstream
+`,
+			ExpectedPkgResource: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.0.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - git: {}
+      template:
+      - ytt:
+          paths:
+          - upstream
+      - kbld: {}
+  valuesSchema:
+    openAPIv3: null
+  version: 0.0.0
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  annotations:
+    kctrl.carvel.dev/local-fetch-0: .
+  name: testpackage
+spec:
+  packageRef:
+    refName: testpackage.corp.dev
+    versionSelection:
+      constraints: 0.0.0
+  serviceAccountName: testpackage-sa
+status:
+  conditions: null
+  friendlyDescription: ""
+  observedGeneration: 0
+`,
+			ExpectedVendir: `
+apiVersion: vendir.k14s.io/v1alpha1
+directories:
+- contents:
+  - git:
+      ref: origin/develop
+      url: https://github.com/vmware-tanzu/carvel-kapp
+    includePaths:
+    - examples/simple-app-example/config-1.yml
+    path: .
+  path: upstream
+kind: Config
+minimumRequiredVersion: ""
+`,
+			ExpectedPackageMetadata: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+`,
+			ExpectedPackage: `
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
@@ -491,7 +476,13 @@ spec:
 		},
 	}
 
-	for index, testcase := range testcases {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kappCli := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+
+	for _, testcase := range testcases {
 		// verify prompts and input are of same length
 		require.EqualValues(t, len(testcase.InitInteraction.Prompts), len(testcase.InitInteraction.Inputs))
 
@@ -525,7 +516,7 @@ spec:
 			out, err := readFile("package-build.yml")
 			require.NoErrorf(t, err, "Expected to read package-build.yml")
 
-			expectedPackageBuild := strings.TrimSpace(replaceSpaces(expectedOutputs.PackageBuild[index]))
+			expectedPackageBuild := strings.TrimSpace(replaceSpaces(testcase.ExpectedPkgBuild))
 			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
 			require.Equal(t, expectedPackageBuild, out, "Expected PackageBuild output to match")
 
@@ -533,7 +524,7 @@ spec:
 			out, err = readFile("package-resources.yml")
 			require.NoErrorf(t, err, "Expected to read package-resources.yml")
 
-			expectedPackageResources := strings.TrimSpace(replaceSpaces(expectedOutputs.PackageResource[index]))
+			expectedPackageResources := strings.TrimSpace(replaceSpaces(testcase.ExpectedPkgResource))
 			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
 			require.Equal(t, expectedPackageResources, out, "Expected package resources output to match")
 
@@ -541,7 +532,7 @@ spec:
 			out, err = readFile("vendir.yml")
 			require.NoErrorf(t, err, "Expected to read vendir.yml")
 
-			expectedVendirOutput := strings.TrimSpace(replaceSpaces(expectedOutputs.Vendir[index]))
+			expectedVendirOutput := strings.TrimSpace(replaceSpaces(testcase.ExpectedVendir))
 			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
 			require.Equal(t, expectedVendirOutput, out, "Expected vendir output to match")
 		})
@@ -564,7 +555,7 @@ spec:
 			out, err := readFile("./carvel-artifacts/packages/testpackage.corp.dev/metadata.yml")
 			require.NoErrorf(t, err, "Expected to read metadata.yml")
 
-			expectedPackageMetadata := strings.TrimSpace(replaceSpaces(expectedOutputs.PackageMetadata[index]))
+			expectedPackageMetadata := strings.TrimSpace(replaceSpaces(testcase.ExpectedPackageMetadata))
 			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
 			require.Equal(t, expectedPackageMetadata, out, "Expected PackageMetadata to match")
 
@@ -572,7 +563,7 @@ spec:
 			out, err = readFile("./carvel-artifacts/packages/testpackage.corp.dev/package.yml")
 			require.NoErrorf(t, err, "Expected to read package.yml")
 
-			expectedPackage := strings.TrimSpace(replaceSpaces(expectedOutputs.Package[index]))
+			expectedPackage := strings.TrimSpace(replaceSpaces(testcase.ExpectedPackage))
 			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
 			require.Equal(t, expectedPackage, out, "Expected Package to match")
 		})
