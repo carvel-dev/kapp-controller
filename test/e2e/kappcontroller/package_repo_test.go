@@ -66,7 +66,7 @@ spec:
 				}},
 				ObservedGeneration:  1,
 				FriendlyDescription: "Reconcile failed: Fetching resources: Error (see .status.usefulErrorMessage for details)",
-				UsefulErrorMessage:  "vendir: Error: Syncing directory '0':\n  Syncing directory '.' with imgpkgBundle contents:\n    Imgpkg: exit status 1 (stderr: imgpkg: Error: Fetching image:\n  GET https://index.docker.io/v2/k8slt/i-dont-exist/manifests/latest:\n    UNAUTHORIZED: authentication required; [map[Action:pull Class: Name:k8slt/i-dont-exist Type:repository]]\n)\n",
+				UsefulErrorMessage:  "vendir: Error: Syncing directory '0':\n  Syncing directory '.' with imgpkgBundle contents:\n    Fetching image:\n      GET https://index.docker.io/v2/k8slt/i-dont-exist/manifests/latest:\n        UNAUTHORIZED: authentication required; [map[Action:pull Class: Name:k8slt/i-dont-exist Type:repository]]\n",
 			},
 			ConsecutiveReconcileFailures: 1,
 		}
@@ -177,16 +177,15 @@ spec:
 
 	verifyPkg := func(resourceName, imgRef string) {
 		out := kubectl.Run([]string{"get", resourceName, "-o", "yaml"})
-		assert.Contains(t, out, "packaging.carvel.dev/package-repository-ref: kappctrl-test/basic.test.carvel.dev")
-		assert.Contains(t, out, "image: "+imgRef+"\n")
+		require.Contains(t, out, "packaging.carvel.dev/package-repository-ref: kappctrl-test/basic.test.carvel.dev")
+		require.Contains(t, out, "image: "+imgRef+"\n")
 	}
 
 	logger.Section("deploy pkg repository", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(yamlRepo)})
 
 		out := kubectl.Run([]string{"get", "pkgm/pkg.test.carvel.dev", "-o", "yaml"})
-		assert.Contains(t, out, "packaging.carvel.dev/package-repository-ref: kappctrl-test/basic.test.carvel.dev")
-
+		require.Contains(t, out, "packaging.carvel.dev/package-repository-ref: kappctrl-test/basic.test.carvel.dev")
 		verifyPkg("pkg/pkg.test.carvel.dev.1.0.0", "index.docker.io/k8slt/kctrl-example-pkg@sha256:8ffa7f9352149dba1d539d0006b38eda357917edcdd39b82497a61dab2c27b75")
 		verifyPkg("pkg/pkg.test.carvel.dev.2.0.0", "index.docker.io/k8slt/kctrl-example-pkg@sha256:73713d922b5f561c0db2a7ea5f4f6384f7d2d6289886f8400a8aaf5e8fdf134a")
 	})
@@ -207,7 +206,7 @@ spec:
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, e2e.RunOpts{StdinReader: strings.NewReader(updatedRepo)})
 
 		out := kubectl.Run([]string{"get", "pkgm/pkg.test.carvel.dev", "-o", "yaml"})
-		assert.Contains(t, out, "packaging.carvel.dev/package-repository-ref: kappctrl-test/basic.test.carvel.dev")
+		require.Contains(t, out, "packaging.carvel.dev/package-repository-ref: kappctrl-test/basic.test.carvel.dev")
 
 		// Note that location of Packages has also changed to k8slt/kc-e2e-test-repo-copied
 		// since kbld is being applied with imgpkg's images.yml relocation data
