@@ -60,7 +60,13 @@ func (a *App) reconcileDelete() error {
 	a.markObservedLatest()
 	a.setDeleting()
 
-	err := a.updateStatus("marking deleting")
+	vendir := a.fetchFactory.NewVendir(a.app.Namespace)
+	err := vendir.ClearCache(a.cacheID())
+	if err != nil {
+		return err
+	}
+
+	err = a.updateStatus("marking deleting")
 	if err != nil {
 		return err
 	}
