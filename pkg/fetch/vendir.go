@@ -405,6 +405,11 @@ func (v *Vendir) Run(conf []byte, workingDir string, cacheID string) exec.CmdRun
 	return result
 }
 
+// ClearCache removes all cache entries for the cacheID
+func (v *Vendir) ClearCache(cacheID string) error {
+	return os.RemoveAll(filepath.Join(v.opts.BaseCacheFolder, cacheID))
+}
+
 // ExtractImageRegistry returns the registry portion of a Docker image reference
 func ExtractImageRegistry(name string) string {
 	parts := strings.SplitN(name, "/", 2)
