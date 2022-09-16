@@ -187,13 +187,14 @@ func Run(opts Options, runLog logr.Logger) error {
 
 	{ // add controller for apps
 		appFactory := app.CRDAppFactory{
-			CoreClient: coreClient,
-			AppClient:  kcClient,
-			KcConfig:   kcConfig,
-			AppMetrics: appMetrics,
-			CmdRunner:  sidecarCmdExec,
-			Kubeconf:   kubeconf,
-			CompInfo:   compInfo,
+			CoreClient:  coreClient,
+			AppClient:   kcClient,
+			KcConfig:    kcConfig,
+			AppMetrics:  appMetrics,
+			CmdRunner:   sidecarCmdExec,
+			Kubeconf:    kubeconf,
+			CompInfo:    compInfo,
+
 		}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 			appFactory, refTracker, updateStatusTracker, compInfo)
@@ -236,7 +237,7 @@ func Run(opts Options, runLog logr.Logger) error {
 	}
 
 	{ // add controller for pkgrepositories
-		appFactory := pkgrepository.AppFactory{coreClient, kcClient, kcConfig, sidecarCmdExec, kubeconf}
+		appFactory := pkgrepository.AppFactory{coreClient, kcClient, kcConfig, sidecarCmdExec,    kubeconf}
 
 		reconciler := pkgrepository.NewReconciler(kcClient, coreClient,
 			runLog.WithName("pkgr"), appFactory, refTracker, updateStatusTracker)
