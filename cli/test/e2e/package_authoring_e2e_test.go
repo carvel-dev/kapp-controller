@@ -551,8 +551,10 @@ spec:
 
 			keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image"}
 
+			var pkgDir = "./carvel-artifacts/packages/testpackage.corp.dev/"
+
 			// Verify PackageMetadata artifact
-			out, err := readFile("./carvel-artifacts/packages/testpackage.corp.dev/metadata.yml")
+			out, err := readFile(pkgDir + "metadata.yml")
 			require.NoErrorf(t, err, "Expected to read metadata.yml")
 
 			expectedPackageMetadata := strings.TrimSpace(replaceSpaces(testcase.ExpectedPackageMetadata))
@@ -560,7 +562,7 @@ spec:
 			require.Equal(t, expectedPackageMetadata, out, "Expected PackageMetadata to match")
 
 			// Verify Package artifact
-			out, err = readFile("./carvel-artifacts/packages/testpackage.corp.dev/package.yml")
+			out, err = readFile(pkgDir + "package.yml")
 			require.NoErrorf(t, err, "Expected to read package.yml")
 
 			expectedPackage := strings.TrimSpace(replaceSpaces(testcase.ExpectedPackage))
@@ -571,6 +573,10 @@ spec:
 		logger.Section(fmt.Sprintf("%s: Testing and installing created Package", testcase.Name), func() {
 
 			cleanUpInstalledPkg := func() {
+				switch testcase.Name {
+				case "Github Release Flow":
+					kubectl.RunWithOpts([]string{"delete", "ns", "dynatrace"}, RunOpts{NoNamespace: true})
+				}
 				kappCli.RunWithOpts([]string{"delete", "-a", "test-package"},
 					RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
 				kappCtrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
@@ -592,12 +598,6 @@ spec:
 
 			kappCtrl.RunWithOpts([]string{"pkg", "install", "-p", "testpackage.corp.dev", "-i", "test", "--version", "1.0.0"},
 				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-
-			// clean ns created for dynatrace in GitHub release flow
-			switch testcase.Name {
-			case "Github Release Flow":
-				kubectl.RunWithOpts([]string{"delete", "ns", "dynatrace"}, RunOpts{NoNamespace: true})
-			}
 		})
 	}
 }
