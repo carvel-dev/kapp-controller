@@ -226,7 +226,7 @@ spec:
 `, env.Namespace, pkgiName, registryNamespace) + sas.ForNamespaceYAML()
 
 		kapp.RunWithOpts([]string{"deploy", "-a", pkgiName, "-f", "-"}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgiYaml),
+			StdinReader:  strings.NewReader(pkgiYaml),
 			OnErrKubectl: []string{"get", "app", "placeholder-private-auth", "-oyaml"},
 		})
 
@@ -250,7 +250,7 @@ spec:
 `, env.Namespace, pkgrName, registryNamespace) + sas.ForNamespaceYAML()
 
 		kapp.RunWithOpts([]string{"deploy", "-a", pkgrName, "-f", "-"}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgrYaml),
+			StdinReader:  strings.NewReader(pkgrYaml),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 

@@ -23,6 +23,11 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 
 	a.appMetrics.InitMetrics(a.Name(), a.Namespace())
 
+	timerOpts := ReconcileTimerOpts{
+		DefaultSyncPeriod: a.opts.DefaultSyncPeriod,
+		MinimumSyncPeriod: a.opts.MinimumSyncPeriod,
+	}
+
 	switch {
 	case a.app.DeletionTimestamp != nil:
 		a.log.Info("Started delete")
@@ -38,7 +43,7 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 
 		err = a.updateStatus("app canceled/paused")
 
-	case force || NewReconcileTimer(a.app).IsReadyAt(time.Now()):
+	case force || NewReconcileTimer(a.app, timerOpts).IsReadyAt(time.Now()):
 		a.log.Info("Started deploy")
 		defer func() { a.log.Info("Completed deploy") }()
 
@@ -48,7 +53,7 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 		a.log.Info("Reconcile noop")
 	}
 
-	return reconcile.Result{RequeueAfter: NewReconcileTimer(a.app).DurationUntilReady(err)}, err
+	return reconcile.Result{RequeueAfter: NewReconcileTimer(a.app, timerOpts).DurationUntilReady(err)}, err
 }
 
 func (a *App) reconcileDelete() error {

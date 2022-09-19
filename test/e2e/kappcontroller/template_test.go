@@ -132,6 +132,17 @@ spec:
               fieldPath: metadata.labels['expectedLabel']
             - name: allAnnotations
               fieldPath: metadata.annotations
+            - name: kubernetesVersion
+              kubernetesVersion:
+                version: 1.0.0
+            - name: kcVersion
+              kappControllerVersion:
+                version: 2.0.0
+            - name: k8sAPIs
+              kubernetesAPIs: 
+                groupVersions:
+                - "test/test"
+                - "test2/test2"
   deploy:
     - kapp: {}
 ---
@@ -185,6 +196,11 @@ label: "expectedLabelValue"
 allAnnotations:
   expectedAnnotation: expectedAnnotationValue
   anotherExpectedAnnotation: anotherExpectedAnnotationValue
+kubernetesVersion: "1.0.0"
+kcVersion: "2.0.0"
+k8sAPIs:
+- test/test
+- test2/test2
 `, name, env.Namespace, uid)
 
 		actual := cm.Data["values"]
@@ -226,15 +242,43 @@ spec:
           cm.cue: |
             package cm
 
-            apiVersion: "v1"
-            kind: "ConfigMap"
-            metadata:
-              name: "cm-result"
-            data:
-              value: "cool"
+            import "encoding/json"
+
+            vals: {
+              namespace: string
+              name: string
+              uid: string
+              annotation: string
+              label: string
+              kubernetesVersion: string
+              kcVersion: string
+              k8sAPIs: [...string]
+              password: string
+            }
+
+            cm: {
+              apiVersion: "v1"
+              kind: "ConfigMap"
+              metadata: {
+                name: "cm-result"
+              }
+              data: {
+                value: "cool"
+                namespace: vals.namespace
+                name: vals.name
+                uid: vals.uid
+                annotation: vals.annotation
+                label: vals.label
+                kubernetesVersion: vals.kubernetesVersion
+                kcVersion: vals.kcVersion
+                k8sAPIs: json.Marshal(vals.k8sAPIs)
+                password: vals.password
+              }
+            }
   template:
   - cue:
-      inputExpression: "data:"
+      inputExpression: "vals:"
+      outputExpression: "cm"
       valuesFrom:
       - secretRef:
           name: secret-values
@@ -250,6 +294,17 @@ spec:
             fieldPath: metadata.annotations['expectedAnnotation']
           - name: label
             fieldPath: metadata.labels['expectedLabel']
+          - name: kubernetesVersion
+            kubernetesVersion:
+              version: 1.0.0
+          - name: kcVersion
+            kappControllerVersion:
+              version: 2.0.0
+          - name: k8sAPIs
+            kubernetesAPIs:
+              groupVersions:
+              - "test/test"
+              - "test2/test2"
   deploy:
     - kapp: {}
 ---
@@ -270,7 +325,10 @@ stringData:
 	t.Cleanup(cleanUp)
 
 	logger.Section("deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(appYaml)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{
+      StdinReader: strings.NewReader(appYaml),
+      OnErrKubectl: []string{"get", "app", name, "-oyaml"},
+    })
 	})
 
 	logger.Section("check ConfigMap exists", func() {
@@ -292,6 +350,9 @@ label: "expectedLabelValue"
 name: "%s"
 namespace: "%s"
 uid: "%s"
+kubernetesVersion: "1.0.0"
+kcVersion: "2.0.0"
+k8sAPIs: "[\"test/test\",\"test2/test2\"]"
 `, name, env.Namespace, uid)
 		configMapData, err := yaml.Marshal(cm.Data)
 		require.NoError(t, err)
@@ -337,10 +398,28 @@ spec:
               {{- range $k, $v := .Values }}
                 {{ $k }}: {{ $v }}
               {{- end }}
+          testchart/templates/versions.yaml: |
+            {{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.Version -}}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: k8s-version
+              annotations:
+                k8s-version: {{ .Capabilities.KubeVersion.Version }}
+            {{- end }}
+          testchart/templates/group-versions-api.yaml: |
+            {{- if .Capabilities.APIVersions.Has "apps/v1" }}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: carvel-group
+            {{- end }}
   template:
   - helmTemplate:
       path: testchart/
       name: testchart
+      kubernetesVersion: {}
+      kuberetesAPIs: {}
       valuesFrom:
       - secretRef:
           name: secret-values
@@ -407,6 +486,30 @@ uid: "%s"
 		actualOut, err := yaml.Marshal(configMapData)
 		require.NoError(t, err)
 		require.YAMLEq(t, expectedOut, string(actualOut))
+	})
+
+	logger.Section("ensuring kubernetes version is templated", func() {
+		// assume that the presence of the configmap based on semver filtering, then the live k8s version was used
+		out := kubectl.Run([]string{"get", "configmap", "k8s-version", "-o", "yaml"})
+
+		var cm corev1.ConfigMap
+
+		err := yaml.Unmarshal([]byte(out), &cm)
+		if err != nil {
+			t.Fatalf("Unmarshaling result config map: %s", err)
+		}
+	})
+
+	logger.Section("ensuring kubernetes group/version apis are templated", func() {
+		// assume that the presence of the configmap based on semver filtering, then the live k8s version was used
+		out := kubectl.Run([]string{"get", "configmap", "carvel-group", "-o", "yaml"})
+
+		var cm corev1.ConfigMap
+
+		err := yaml.Unmarshal([]byte(out), &cm)
+		if err != nil {
+			t.Fatalf("Unmarshaling result config map: %s", err)
+		}
 	})
 }
 

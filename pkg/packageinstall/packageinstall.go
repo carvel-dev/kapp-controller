@@ -16,7 +16,6 @@ import (
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reconciler"
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	verv1alpha1 "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
@@ -30,6 +29,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+// ComponentInfo provides information about components of the system required by a PKGI
+type ComponentInfo interface {
+	KappControllerVersion() (semver.Version, error)
+	KubernetesVersion(serviceAccountName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta) (semver.Version, error)
+}
+
 const (
 	// DowngradableAnnKey specifies annotation that user can place on
 	// PackageInstall to indicate that lower version of the package
@@ -42,19 +47,18 @@ type PackageInstallCR struct {
 	model           *pkgingv1alpha1.PackageInstall
 	unmodifiedModel *pkgingv1alpha1.PackageInstall
 
-	log               logr.Logger
-	kcclient          kcclient.Interface
-	pkgclient         pkgclient.Interface
-	coreClient        kubernetes.Interface
-	controllerVersion string
-	deployFactory     deploy.Factory
+	log        logr.Logger
+	kcclient   kcclient.Interface
+	pkgclient  pkgclient.Interface
+	coreClient kubernetes.Interface
+	compInfo   ComponentInfo
 }
 
 func NewPackageInstallCR(model *pkgingv1alpha1.PackageInstall, log logr.Logger,
-	kcclient kcclient.Interface, pkgclient pkgclient.Interface, coreClient kubernetes.Interface, controllerVersion string, deployFactory deploy.Factory) *PackageInstallCR {
+	kcclient kcclient.Interface, pkgclient pkgclient.Interface, coreClient kubernetes.Interface, compInfo ComponentInfo) *PackageInstallCR {
 
 	return &PackageInstallCR{model: model, unmodifiedModel: model.DeepCopy(), log: log,
-		kcclient: kcclient, pkgclient: pkgclient, coreClient: coreClient, controllerVersion: controllerVersion, deployFactory: deployFactory}
+		kcclient: kcclient, pkgclient: pkgclient, coreClient: coreClient, compInfo: compInfo}
 }
 
 func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
@@ -225,17 +229,6 @@ func (pi *PackageInstallCR) clusterVersionConstraintsSatisfied(pkg *datapkgingv1
 	return constraintsFunc(clusterVersion)
 }
 
-func dropVersionPreReleaseAndBuild(versionStr string) (semver.Version, error) {
-	v, err := semver.ParseTolerant(versionStr)
-	if err != nil {
-		return v, err
-	}
-	v.Pre = semver.PRVersion{}
-	v.Build = semver.BuildMeta{}
-
-	return v, nil
-}
-
 func (pi *PackageInstallCR) kcVersionConstraintsSatisfied(pkg *datapkgingv1alpha1.Package) bool {
 	if pkg.Spec.KappControllerVersionSelection == nil || pkg.Spec.KappControllerVersionSelection.Constraints == "" {
 		return true
@@ -248,11 +241,13 @@ func (pi *PackageInstallCR) kcVersionConstraintsSatisfied(pkg *datapkgingv1alpha
 		return true
 	}
 
-	v, err := dropVersionPreReleaseAndBuild(pi.controllerVersion)
+	v, err := pi.compInfo.KappControllerVersion()
 	if err != nil {
-		pi.log.Error(err, "Unable to parse kapp-controller version", "version string", pi.controllerVersion)
 		return false
 	}
+
+	v.Pre = semver.PRVersion{}
+	v.Build = semver.BuildMeta{}
 
 	constraints, _ := semver.ParseRange(pkg.Spec.KappControllerVersionSelection.Constraints) // ignore err because validation should have already caught it
 	return constraints(v)
@@ -305,18 +300,10 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 	vcc := []versions.ConstraintCallback{}
 
 	// we only need to populate the versionInfo we know that the packages have constraints that will require this info.
-	v := semver.Version{}
 	if requiresClusterVersion {
-		vi, err := pi.deployFactory.GetClusterVersion(pi.model.Spec.ServiceAccountName, pi.model.Spec.Cluster, &pi.model.ObjectMeta, pi.log)
+		v, err := pi.compInfo.KubernetesVersion(pi.model.Spec.ServiceAccountName, pi.model.Spec.Cluster, &pi.model.ObjectMeta)
 		if err != nil {
-			pi.log.Error(err, "Unable to retrieve cluster kubernetes version")
-			return datapkgingv1alpha1.Package{}, err
-		}
-
-		v, err = dropVersionPreReleaseAndBuild(vi.GitVersion)
-		if err != nil {
-			pi.log.Error(err, "Unable to parse cluster kubernetes version", "version string", vi.GitVersion)
-			return datapkgingv1alpha1.Package{}, err
+			return datapkgingv1alpha1.Package{}, fmt.Errorf("Unable to get kubernetes version: %s", err)
 		}
 
 		k8sConstraint := func(pkgVer string) bool {

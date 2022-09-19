@@ -7,13 +7,16 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
+	"github.com/k14s/semver/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	corev1 "k8s.io/api/core/v1"
@@ -44,9 +47,9 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	kappcs := fake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac, FakeComponentInfo{}, Opts{MinimumSyncPeriod: 30 * time.Second})
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "unexpected error with reconciling", err)
 
@@ -110,9 +113,9 @@ func Test_NoInspectReconcile_IfInspectNotEnabled(t *testing.T) {
 	kappcs := fake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac, FakeComponentInfo{}, Opts{MinimumSyncPeriod: 30 * time.Second})
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "unexpected error with reconciling", err)
 
@@ -181,9 +184,9 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	kappcs := fake.NewSimpleClientset()
 	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
-	deployFac := deploy.NewFactory(k8scs, nil, exec.NewPlainCmdRunner(), log)
+	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac, FakeComponentInfo{}, Opts{MinimumSyncPeriod: 30 * time.Second})
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "Unexpected error with reconciling", err)
 
@@ -222,4 +225,28 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	assert.True(t,
 		reflect.DeepEqual(expectedStatus, crdApp.app.Status()),
 		fmt.Sprintf("Status is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, crdApp.app.Status()))
+}
+
+type FakeComponentInfo struct {
+	KCVersion       semver.Version
+	KCVersionCount  *int
+	K8sVersion      semver.Version
+	K8sVersionCount *int
+	K8sAPIs         []string
+	K8sAPIsCount    *int
+}
+
+func (f FakeComponentInfo) KubernetesAPIs() ([]string, error) {
+	*f.K8sAPIsCount++
+	return f.K8sAPIs, nil
+}
+
+func (f FakeComponentInfo) KappControllerVersion() (semver.Version, error) {
+	*f.KCVersionCount++
+	return f.KCVersion, nil
+}
+
+func (f FakeComponentInfo) KubernetesVersion(serviceAccountName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta) (semver.Version, error) {
+	*f.K8sVersionCount++
+	return f.K8sVersion, nil
 }

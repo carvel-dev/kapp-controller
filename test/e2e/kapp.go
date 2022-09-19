@@ -51,6 +51,9 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
+	if args[0] == "deploy" {
+		args = append(args, []string{"--wait-timeout", "3m"}...)
+	}
 
 	k.L.Debugf("Running '%s'...\n", k.cmdDesc(args, opts))
 
