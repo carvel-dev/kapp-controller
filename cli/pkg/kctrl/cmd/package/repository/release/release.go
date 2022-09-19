@@ -154,7 +154,7 @@ func (o *ReleaseOptions) Run() error {
 	}
 	o.ui.PrintCmdExecutionOutput(fmt.Sprintf("\n$ %s", strings.Join(cmd.Args, " ")))
 
-	var bundleURL string
+	var bundleURLWithSHARef string
 
 	switch {
 	case pkgRepoBuild.Spec.Export.ImgpkgBundle != nil:
@@ -165,14 +165,16 @@ func (o *ReleaseOptions) Run() error {
 			ImgLockFilepath:   tempImgpkgLockPath,
 			UI:                o.ui,
 		}
-		bundleURL, err = imgpkgRunner.Run()
+		bundleURLWithSHARef, err = imgpkgRunner.Run()
 		if err != nil {
 			return err
 		}
 	}
 
 	artifactWriter := NewArtifactWriter(pkgRepoName, wd)
-	err = artifactWriter.WritePackageRepositoryFile(bundleURL)
+	repoURL := strings.Split(bundleURLWithSHARef, "@sha")[0]
+	bundleURLWithVerRef := strings.Join([]string{repoURL, o.pkgRepoVersion}, ":")
+	err = artifactWriter.WritePackageRepositoryFile(bundleURLWithSHARef, bundleURLWithVerRef)
 	if err != nil {
 		return err
 	}
