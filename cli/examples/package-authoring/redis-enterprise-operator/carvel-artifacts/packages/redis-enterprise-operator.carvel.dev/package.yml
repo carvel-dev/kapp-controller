@@ -1,0 +1,28 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: redis-enterprise-operator.carvel.dev.1.0.0
+spec:
+  refName: redis-enterprise-operator.carvel.dev
+  releasedAt: "2022-09-07T06:33:10Z"
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - imgpkgBundle:
+          image: index.docker.io/rohitagg2020/redis-enterprise-operator-bundle@sha256:67ab2757dbac426605ed887d279e16b826e665ecada250742638cff3358e2a35
+      template:
+      - ytt:
+          paths:
+          - upstream
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/images.yml
+  valuesSchema:
+    openAPIv3:
+      default: null
+      nullable: true
+  version: 1.0.0

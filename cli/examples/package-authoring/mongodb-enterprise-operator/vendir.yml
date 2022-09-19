@@ -1,0 +1,12 @@
+apiVersion: vendir.k14s.io/v1alpha1
+directories:
+- contents:
+  - helmChart:
+      name: enterprise-operator
+      repository:
+        url: https://mongodb.github.io/helm-charts
+      version: 1.16.0
+    path: .
+  path: upstream
+kind: Config
+minimumRequiredVersion: ""
