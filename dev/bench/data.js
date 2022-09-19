@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663604086068,
+  "lastUpdate": 1663604501198,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5871,6 +5871,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6468148161,
             "unit": "ns/op\t         4.278 DeleteSeconds\t         2.138 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cppforlife@gmail.com",
+            "name": "Dmitriy Kalinin",
+            "username": "cppforlife"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b6153d09c5f94e932bbdd03bd2c65270387f15c4",
+          "message": "clean up sidecarexec socket file in case of previous unclean process termination (#881)\n\nCo-authored-by: Dmitriy Kalinin <dkalinin@vmware.com>",
+          "timestamp": "2022-09-19T12:11:09-04:00",
+          "tree_id": "429c50ffd5c00752c8aff16eb43eb0bbffaf434a",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/b6153d09c5f94e932bbdd03bd2c65270387f15c4"
+        },
+        "date": 1663604500343,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36485285001,
+            "unit": "ns/op\t        18.91 DeleteSeconds\t        17.54 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9540810629,
+            "unit": "ns/op\t         5.347 DeleteSeconds\t         4.155 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6465152859,
+            "unit": "ns/op\t         4.259 DeleteSeconds\t         2.136 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
