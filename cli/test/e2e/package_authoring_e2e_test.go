@@ -491,7 +491,6 @@ spec:
 apiVersion: kctrl.carvel.dev/v1alpha1
 kind: PackageBuild
 metadata:
-  creationTimestamp: null
   name: testpackage.corp.dev
 spec:
   template:
@@ -515,11 +514,9 @@ spec:
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
-  creationTimestamp: null
   name: testpackage.corp.dev.0.0.0
 spec:
   refName: testpackage.corp.dev
-  releasedAt: null
   template:
     spec:
       deploy:
@@ -536,25 +533,21 @@ spec:
   valuesSchema:
     openAPIv3: null
   version: 0.0.0
-
 ---
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
 metadata:
-  creationTimestamp: null
   name: testpackage.corp.dev
 spec:
   displayName: testpackage
   longDescription: testpackage.corp.dev
   shortDescription: testpackage.corp.dev
-
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageInstall
 metadata:
   annotations:
     kctrl.carvel.dev/local-fetch-0: .
-  creationTimestamp: null
   name: testpackage
 spec:
   packageRef:
@@ -605,9 +598,11 @@ spec:
       fetch:
       - imgpkgBundle:
       template:
+      - helmTemplate:
+          path: upstream/simple-app
       - ytt:
           paths:
-          - upstream
+          - '-'
       - kbld:
           paths:
           - '-'
