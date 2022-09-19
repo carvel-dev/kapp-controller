@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663574456352,
+  "lastUpdate": 1663604086068,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5829,6 +5829,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6548834420,
             "unit": "ns/op\t         4.317 DeleteSeconds\t         2.183 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "53a8b441c112c25e1b15d260a17602d135f86fa6",
+          "message": "Add new kapp flags to allowed change opts (#887)\n\n- --exit-early-on-apply-error\r\n- --exit-early-on-wait-error",
+          "timestamp": "2022-09-19T12:04:10-04:00",
+          "tree_id": "83911c64cb28019ddcfa4e7ce320ce3adf8cce39",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/53a8b441c112c25e1b15d260a17602d135f86fa6"
+        },
+        "date": 1663604084968,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36528870222,
+            "unit": "ns/op\t        18.93 DeleteSeconds\t        17.56 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9543386954,
+            "unit": "ns/op\t         5.350 DeleteSeconds\t         4.155 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6468148161,
+            "unit": "ns/op\t         4.278 DeleteSeconds\t         2.138 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
