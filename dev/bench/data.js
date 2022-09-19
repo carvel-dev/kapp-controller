@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663332984516,
+  "lastUpdate": 1663573508685,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5745,6 +5745,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6722036090,
             "unit": "ns/op\t         4.367 DeleteSeconds\t         2.299 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "55523204+rohitagg2020@users.noreply.github.com",
+            "name": "rohitagg2020",
+            "username": "rohitagg2020"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2f3288952790273095601900f953ae08e52eab8c",
+          "message": "Adding examples of package authoring (#861)\n\n* Adding examples of package authoring\r\n\r\nAdding examples of package authoring\r\n\r\n* Moved to another folder\r\n\r\nMoved to another folder\r\n\r\n* Adopting comments.\r\n\r\nAdopting comments.",
+          "timestamp": "2022-09-19T13:04:42+05:30",
+          "tree_id": "ae2a4a511c69c3a4ae2a450a1a2554b88265d51b",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/2f3288952790273095601900f953ae08e52eab8c"
+        },
+        "date": 1663573507801,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36497691147,
+            "unit": "ns/op\t        18.90 DeleteSeconds\t        17.56 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9535286992,
+            "unit": "ns/op\t         5.346 DeleteSeconds\t         4.150 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6423418592,
+            "unit": "ns/op\t         4.249 DeleteSeconds\t         2.132 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
