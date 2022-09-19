@@ -69,7 +69,7 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 		// TODO bash completion
 	}
 
-	cmd.SetOutput(uiBlockWriter{o.ui}) // setting output for cmd.Help()
+	cmd.SetOut(uiBlockWriter{o.ui}) // setting output for cmd.Help()
 
 	cmd.SetUsageTemplate(cobrautil.HelpSectionsUsageTemplate([]cobrautil.HelpSection{
 		cmdcore.PackageHelpGroup,
