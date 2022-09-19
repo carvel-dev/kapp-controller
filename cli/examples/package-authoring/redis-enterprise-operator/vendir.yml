@@ -1,0 +1,17 @@
+apiVersion: vendir.k14s.io/v1alpha1
+directories:
+- contents:
+  - git:
+      ref: origin/master
+      url: https://github.com/RedisLabs/redis-enterprise-k8s-docs
+    includePaths:
+    - role.yaml
+    - role_binding.yaml
+    - service_account.yaml
+    - admission-service.yaml
+    - operator.yaml
+    - crds/*
+    path: .
+  path: upstream
+kind: Config
+minimumRequiredVersion: ""

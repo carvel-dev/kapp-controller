@@ -1,0 +1,30 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: mongodb-enterprise-operator.carvel.dev.1.0.0
+spec:
+  refName: mongodb-enterprise-operator.carvel.dev
+  releasedAt: "2022-09-07T06:32:06Z"
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - imgpkgBundle:
+          image: index.docker.io/rohitagg2020/mongodb-enterprise-operator-bundle@sha256:81a472d4959de1526c9de9ff8686073a9eaeb6caf8cbd0c6ed2e8a1703d49e17
+      template:
+      - helmTemplate:
+          path: upstream
+      - ytt:
+          paths:
+          - '-'
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/images.yml
+  valuesSchema:
+    openAPIv3:
+      default: null
+      nullable: true
+  version: 1.0.0

@@ -1,0 +1,15 @@
+apiVersion: v2
+description: MongoDB Kubernetes Enterprise Operator
+home: https://github.com/mongodb/mongodb-enterprise-kubernetes
+icon: https://mongodb-images-new.s3.eu-west-1.amazonaws.com/leaf-green-dark.png
+keywords:
+- mongodb
+- database
+- nosql
+kubeVersion: '>=1.16-0'
+maintainers:
+- email: support@mongodb.com
+  name: MongoDB
+name: enterprise-operator
+type: application
+version: 1.16.0

@@ -1,0 +1,27 @@
+apiVersion: kctrl.carvel.dev/v1alpha1
+kind: PackageBuild
+metadata:
+  creationTimestamp: null
+  name: mongodb-enterprise-operator.carvel.dev
+spec:
+  release:
+  - resource: {}
+  template:
+    spec:
+      app:
+        spec:
+          deploy:
+          - kapp: {}
+          template:
+          - helmTemplate:
+              path: upstream
+          - ytt:
+              paths:
+              - '-'
+          - kbld: {}
+      export:
+      - imgpkgBundle:
+          image: docker.io/rohitagg2020/mongodb-enterprise-operator-bundle
+          useKbldImagesLock: true
+        includePaths:
+        - upstream

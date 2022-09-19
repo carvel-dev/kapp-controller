@@ -1,0 +1,28 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: dynatrace.carvel.dev.1.0.0
+spec:
+  refName: dynatrace.carvel.dev
+  releasedAt: "2022-09-07T06:30:18Z"
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - imgpkgBundle:
+          image: index.docker.io/rohitagg2020/dynatrace-bundle@sha256:3265e5c82ba788080d5e615fa0338d71c4947dbcfd720425a3047b6a79fae8fe
+      template:
+      - ytt:
+          paths:
+          - upstream
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/images.yml
+  valuesSchema:
+    openAPIv3:
+      default: null
+      nullable: true
+  version: 1.0.0

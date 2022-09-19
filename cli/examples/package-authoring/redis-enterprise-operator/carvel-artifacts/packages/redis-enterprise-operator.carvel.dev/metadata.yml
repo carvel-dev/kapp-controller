@@ -1,0 +1,9 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  creationTimestamp: null
+  name: redis-enterprise-operator.carvel.dev
+spec:
+  displayName: redis-enterprise-operator
+  longDescription: redis-enterprise-operator.carvel.dev
+  shortDescription: redis-enterprise-operator.carvel.dev

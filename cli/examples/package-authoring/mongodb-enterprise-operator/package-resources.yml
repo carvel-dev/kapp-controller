@@ -1,0 +1,54 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: mongodb-enterprise-operator.carvel.dev.0.0.0
+spec:
+  refName: mongodb-enterprise-operator.carvel.dev
+  releasedAt: null
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - git: {}
+      template:
+      - helmTemplate:
+          path: upstream
+      - ytt:
+          paths:
+          - '-'
+      - kbld: {}
+  valuesSchema:
+    openAPIv3: null
+  version: 0.0.0
+
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  creationTimestamp: null
+  name: mongodb-enterprise-operator.carvel.dev
+spec:
+  displayName: mongodb-enterprise-operator
+  longDescription: mongodb-enterprise-operator.carvel.dev
+  shortDescription: mongodb-enterprise-operator.carvel.dev
+
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  annotations:
+    kctrl.carvel.dev/local-fetch-0: .
+  creationTimestamp: null
+  name: mongodb-enterprise-operator
+spec:
+  packageRef:
+    refName: mongodb-enterprise-operator.carvel.dev
+    versionSelection:
+      constraints: 0.0.0
+  serviceAccountName: mongodb-enterprise-operator-sa
+status:
+  conditions: null
+  friendlyDescription: ""
+  observedGeneration: 0

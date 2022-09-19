@@ -1,0 +1,9 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  creationTimestamp: null
+  name: mongodb-enterprise-operator.carvel.dev
+spec:
+  displayName: mongodb-enterprise-operator
+  longDescription: mongodb-enterprise-operator.carvel.dev
+  shortDescription: mongodb-enterprise-operator.carvel.dev

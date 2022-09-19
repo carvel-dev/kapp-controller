@@ -1,0 +1,9 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  creationTimestamp: null
+  name: dynatrace.carvel.dev
+spec:
+  displayName: dynatrace
+  longDescription: dynatrace.carvel.dev
+  shortDescription: dynatrace.carvel.dev
