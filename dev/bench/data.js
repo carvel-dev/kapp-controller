@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663573508685,
+  "lastUpdate": 1663574456352,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5787,6 +5787,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6423418592,
             "unit": "ns/op\t         4.249 DeleteSeconds\t         2.132 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yashsethiya97@gmail.com",
+            "name": "Yash Sethiya",
+            "username": "sethiyash"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b533f41b0d99d50313b5aff7ab284dcad2f7ab1e",
+          "message": "kctrl: Tightning  up the pkg authoring e2e testcases (#850)\n\n* added pkg authoring e2e testcases flow\r\n\r\n* commented installing pkg\r\n\r\n* added git repo flow\r\n\r\n* cleaning up installed pkg with defer\r\n\r\n* using simple-app for git repo flow\r\n\r\n* adding expected outputs in testcases struct\r\n\r\n* adopted nits",
+          "timestamp": "2022-09-19T13:18:55+05:30",
+          "tree_id": "d040a5759af4767f1701136e2b7bba7fddfc46fd",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/b533f41b0d99d50313b5aff7ab284dcad2f7ab1e"
+        },
+        "date": 1663574454937,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37172053228,
+            "unit": "ns/op\t        19.30 DeleteSeconds\t        17.81 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9619585418,
+            "unit": "ns/op\t         5.356 DeleteSeconds\t         4.207 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6548834420,
+            "unit": "ns/op\t         4.317 DeleteSeconds\t         2.183 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
