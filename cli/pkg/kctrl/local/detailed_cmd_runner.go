@@ -6,7 +6,6 @@ package local
 import (
 	"fmt"
 	"io"
-	"net"
 	goexec "os/exec"
 	"strings"
 
@@ -59,13 +58,9 @@ func addServerDetailsToKubeConfig(cmd *goexec.Cmd) {
 			envMap[envKeyVal[0]] = ""
 		}
 	}
-	if kubeConfigYAML, found := envMap["KAPP_KUBECONFIG_YAML"]; found {
-		var envHostPort string
-		if port, found := envMap["KUBERNETES_SERVICE_PORT"]; found {
-			envHostPort = net.JoinHostPort(envMap["KUBERNETES_SERVICE_HOST"], port)
-		} else {
-			envHostPort = envMap["KUBERNETES_SERVICE_HOST"]
-		}
+	kubeConfigYAML, found := envMap["KAPP_KUBECONFIG_YAML"]
+	if found && len(envMap["KUBERNETES_SERVICE_PORT"]) == 0 {
+		envHostPort := envMap["KUBERNETES_SERVICE_HOST"]
 		envMap["KAPP_KUBECONFIG_YAML"] = strings.ReplaceAll(kubeConfigYAML, "${KAPP_KUBERNETES_SERVICE_HOST_PORT}", envHostPort)
 		var envList []string
 		for key, val := range envMap {
