@@ -26,6 +26,9 @@ func main() {
 	flag.BoolVar(&ctrlOpts.EnablePprof, "dangerous-enable-pprof", false, "If set to true, enable pprof on "+PprofListenAddr)
 	flag.DurationVar(&ctrlOpts.APIRequestTimeout, "api-request-timeout", time.Duration(0), "HTTP timeout for Kubernetes API requests")
 	flag.BoolVar(&ctrlOpts.APIPriorityAndFairness, "enable-api-priority-and-fairness", true, "Enable/disable APIPriorityAndFairness feature gate for apiserver. Recommended to disable for <= k8s 1.19.")
+	flag.BoolVar(&sidecarexec, "sidecarexec", false, "Run sidecarexec")
+	flag.BoolVar(&ctrlOpts.StartAPIServer, "start-api-server", true, "Start apiserver")
+	flag.StringVar(&ctrlOpts.TLSCipherSuites, "tls-cipher-suites", "", "comma separated list of acceptable cipher suites. Empty list will use defaults from underlying libraries.")
 	flag.Parse()
 
 	log := zap.New(zap.UseDevMode(false)).WithName("kc")
