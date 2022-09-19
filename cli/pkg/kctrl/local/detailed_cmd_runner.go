@@ -59,22 +59,19 @@ func addServerDetailsToKubeConfig(cmd *goexec.Cmd) {
 			envMap[envKeyVal[0]] = ""
 		}
 	}
-
-	var envList []string
-	for key, val := range envMap {
-		if key == "KAPP_KUBECONFIG_YAML" {
-			var envHostPort string
-			if len(envMap["KUBERNETES_SERVICE_PORT"]) != 0 {
-				envHostPort = net.JoinHostPort(envMap["KUBERNETES_SERVICE_HOST"], envMap["KUBERNETES_SERVICE_PORT"])
-			} else {
-				envHostPort = envMap["KUBERNETES_SERVICE_HOST"]
-			}
-			// Is it with https? what are the implications
-			val = strings.ReplaceAll(val, "${KAPP_KUBERNETES_SERVICE_HOST_PORT}", envHostPort)
+	if kubeConfigYAML, found := envMap["KAPP_KUBECONFIG_YAML"]; found {
+		var envHostPort string
+		if port, found := envMap["KUBERNETES_SERVICE_PORT"]; found {
+			envHostPort = net.JoinHostPort(envMap["KUBERNETES_SERVICE_HOST"], port)
+		} else {
+			envHostPort = envMap["KUBERNETES_SERVICE_HOST"]
 		}
-		envList = append(envList, strings.Join([]string{key, val}, "="))
+		envMap["KAPP_KUBECONFIG_YAML"] = strings.ReplaceAll(kubeConfigYAML, "${KAPP_KUBERNETES_SERVICE_HOST_PORT}", envHostPort)
+		var envList []string
+		for key, val := range envMap {
+			envList = append(envList, strings.Join([]string{key, val}, "="))
 
+		}
+		cmd.Env = envList
 	}
-	cmd.Env = envList
-
 }
