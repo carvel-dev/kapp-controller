@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663628238497,
+  "lastUpdate": 1663631739570,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -6207,6 +6207,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6613354530,
             "unit": "ns/op\t         4.388 DeleteSeconds\t         2.177 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jryan@pivotal.io",
+            "name": "John S. Ryan",
+            "username": "pivotaljohn"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1f9c74299ca0c49ba386178767dacfaddf07d5da",
+          "message": "Bump ytt, kbld, kapp (not imgpkg,vendir) (#891)\n\nimgpkg and vendir are not ready to be released.\r\n\r\nCo-authored-by: John Ryan <jtigger@infosysengr.com>",
+          "timestamp": "2022-09-19T16:42:59-07:00",
+          "tree_id": "058a7cc818889152a46bc67f62a0977d1fefa580",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/1f9c74299ca0c49ba386178767dacfaddf07d5da"
+        },
+        "date": 1663631737171,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37226761338,
+            "unit": "ns/op\t        19.39 DeleteSeconds\t        17.76 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9777850576,
+            "unit": "ns/op\t         5.433 DeleteSeconds\t         4.288 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6609487697,
+            "unit": "ns/op\t         4.343 DeleteSeconds\t         2.211 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
