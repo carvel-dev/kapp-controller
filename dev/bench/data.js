@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663614696058,
+  "lastUpdate": 1663625570075,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -6123,6 +6123,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6587401011,
             "unit": "ns/op\t         4.352 DeleteSeconds\t         2.185 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2e523c0c504dc133ec5f324307c96fd00297eb8b",
+          "message": "Bump actions/checkout from 3.0.1 to 3.0.2 (#869)\n\nBumps [actions/checkout](https://github.com/actions/checkout) from 3.0.1 to 3.0.2.\r\n- [Release notes](https://github.com/actions/checkout/releases)\r\n- [Changelog](https://github.com/actions/checkout/blob/main/CHANGELOG.md)\r\n- [Commits](https://github.com/actions/checkout/compare/v3.0.1...v3.0.2)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: actions/checkout\r\n  dependency-type: direct:production\r\n  update-type: version-update:semver-patch\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2022-09-19T14:59:10-07:00",
+          "tree_id": "dfa8a58700cddb0755cf0a0856187226240c78f1",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/2e523c0c504dc133ec5f324307c96fd00297eb8b"
+        },
+        "date": 1663625567669,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 38106696921,
+            "unit": "ns/op\t        19.31 DeleteSeconds\t        18.74 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9744962531,
+            "unit": "ns/op\t         5.459 DeleteSeconds\t         4.235 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6721326452,
+            "unit": "ns/op\t         4.428 DeleteSeconds\t         2.208 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
