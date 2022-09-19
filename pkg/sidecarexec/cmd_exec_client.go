@@ -6,7 +6,6 @@ package sidecarexec
 import (
 	"fmt"
 	"io/ioutil"
-	"net/rpc"
 	goexec "os/exec"
 	"path/filepath"
 
@@ -17,7 +16,7 @@ import (
 // except for kapp commands which continue to run locally.
 type CmdExecClient struct {
 	local     exec.CmdRunner
-	rpcClient *rpc.Client
+	rpcClient rpcClient
 }
 
 var _ exec.CmdRunner = CmdExecClient{}
