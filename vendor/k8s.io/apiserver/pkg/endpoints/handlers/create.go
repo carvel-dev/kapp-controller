@@ -43,10 +43,11 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/util/dryrun"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
+	"k8s.io/klog/v2"
 	utiltrace "k8s.io/utils/trace"
 )
 
-var namespaceGVK = schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Namespace"}
+var namespaceGVR = schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
 
 func createHandler(r rest.NamedCreater, scope *RequestScope, admit admission.Interface, includeName bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -92,9 +93,8 @@ func createHandler(r rest.NamedCreater, scope *RequestScope, admit admission.Int
 			return
 		}
 
-		decoder := scope.Serializer.DecoderToVersion(s.Serializer, scope.HubGroupVersion)
-
 		body, err := limitedReadBody(req, scope.MaxRequestBodyBytes)
+		trace.Step("limitedReadBody done", utiltrace.Field{"len", len(body)}, utiltrace.Field{"err", err})
 		if err != nil {
 			scope.err(err, w, req)
 			return
@@ -116,12 +116,29 @@ func createHandler(r rest.NamedCreater, scope *RequestScope, admit admission.Int
 
 		defaultGVK := scope.Kind
 		original := r.New()
+
+		validationDirective := fieldValidation(options.FieldValidation)
+		decodeSerializer := s.Serializer
+		if validationDirective == metav1.FieldValidationWarn || validationDirective == metav1.FieldValidationStrict {
+			decodeSerializer = s.StrictSerializer
+		}
+
+		decoder := scope.Serializer.DecoderToVersion(decodeSerializer, scope.HubGroupVersion)
 		trace.Step("About to convert to expected version")
 		obj, gvk, err := decoder.Decode(body, &defaultGVK, original)
 		if err != nil {
-			err = transformDecodeError(scope.Typer, err, original, gvk, body)
-			scope.err(err, w, req)
-			return
+			strictError, isStrictError := runtime.AsStrictDecodingError(err)
+			switch {
+			case isStrictError && obj != nil && validationDirective == metav1.FieldValidationWarn:
+				addStrictDecodingWarnings(req.Context(), strictError.Errors())
+			case isStrictError && validationDirective == metav1.FieldValidationIgnore:
+				klog.Warningf("unexpected strict error when field validation is set to ignore")
+				fallthrough
+			default:
+				err = transformDecodeError(scope.Typer, err, original, gvk, body)
+				scope.err(err, w, req)
+				return
+			}
 		}
 
 		objGV := gvk.GroupVersion()
@@ -136,16 +153,26 @@ func createHandler(r rest.NamedCreater, scope *RequestScope, admit admission.Int
 		if len(name) == 0 {
 			_, name, _ = scope.Namer.ObjectName(obj)
 		}
-		if len(namespace) == 0 && *gvk == namespaceGVK {
+		if len(namespace) == 0 && scope.Resource == namespaceGVR {
 			namespace = name
 		}
 		ctx = request.WithNamespace(ctx, namespace)
 
-		ae := request.AuditEventFrom(ctx)
-		admit = admission.WithAudit(admit, ae)
-		audit.LogRequestObject(ae, obj, objGV, scope.Resource, scope.Subresource, scope.Serializer)
+		admit = admission.WithAudit(admit)
+		audit.LogRequestObject(req.Context(), obj, objGV, scope.Resource, scope.Subresource, scope.Serializer)
 
 		userInfo, _ := request.UserFrom(ctx)
+
+		if objectMeta, err := meta.Accessor(obj); err == nil {
+			// Wipe fields which cannot take user-provided values
+			rest.WipeObjectMetaSystemFields(objectMeta)
+
+			// ensure namespace on the object is correct, or error if a conflicting namespace was set in the object
+			if err := rest.EnsureObjectNamespaceMatchesRequestNamespace(rest.ExpectedNamespaceForResource(namespace, scope.Resource), objectMeta); err != nil {
+				scope.err(err, w, req)
+				return
+			}
+		}
 
 		trace.Step("About to store object in database")
 		admissionAttributes := admission.NewAttributesRecord(obj, nil, scope.Kind, namespace, name, scope.Resource, scope.Subresource, admission.Create, options, dryrun.IsDryRun(options.DryRun), userInfo)
@@ -187,18 +214,20 @@ func createHandler(r rest.NamedCreater, scope *RequestScope, admit admission.Int
 			}
 			return result, err
 		})
+		trace.Step("Write to database call finished", utiltrace.Field{"len", len(body)}, utiltrace.Field{"err", err})
 		if err != nil {
 			scope.err(err, w, req)
 			return
 		}
-		trace.Step("Object stored in database")
 
 		code := http.StatusCreated
 		status, ok := result.(*metav1.Status)
-		if ok && err == nil && status.Code == 0 {
+		if ok && status.Code == 0 {
 			status.Code = int32(code)
 		}
 
+		trace.Step("About to write a response")
+		defer trace.Step("Writing http response done")
 		transformResponseObject(ctx, scope, trace, req, w, code, outputMediaType, result)
 	}
 }

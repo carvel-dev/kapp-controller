@@ -88,6 +88,7 @@ func StreamObject(statusCode int, gv schema.GroupVersion, s runtime.NegotiatedSe
 // a client and the feature gate for APIResponseCompression is enabled.
 func SerializeObject(mediaType string, encoder runtime.Encoder, hw http.ResponseWriter, req *http.Request, statusCode int, object runtime.Object) {
 	trace := utiltrace.New("SerializeObject",
+		utiltrace.Field{"audit-id", request.GetAuditIDTruncated(req.Context())},
 		utiltrace.Field{"method", req.Method},
 		utiltrace.Field{"url", req.URL.Path},
 		utiltrace.Field{"protocol", req.Proto},
@@ -201,7 +202,8 @@ func (w *deferredResponseWriter) Write(p []byte) (n int, err error) {
 			w.trace.Step("Write call finished",
 				utiltrace.Field{"writer", fmt.Sprintf("%T", w.w)},
 				utiltrace.Field{"size", len(p)},
-				utiltrace.Field{"firstWrite", firstWrite})
+				utiltrace.Field{"firstWrite", firstWrite},
+				utiltrace.Field{"err", err})
 		}()
 	}
 	if w.hasWritten {
@@ -267,12 +269,12 @@ func WriteObjectNegotiated(s runtime.NegotiatedSerializer, restrictions negotiat
 		return
 	}
 
-	if ae := request.AuditEventFrom(req.Context()); ae != nil {
-		audit.LogResponseObject(ae, object, gv, s)
-	}
+	audit.LogResponseObject(req.Context(), object, gv, s)
 
 	encoder := s.EncoderForVersion(serializer.Serializer, gv)
-	SerializeObject(serializer.MediaType, encoder, w, req, statusCode, object)
+	request.TrackSerializeResponseObjectLatency(req.Context(), func() {
+		SerializeObject(serializer.MediaType, encoder, w, req, statusCode, object)
+	})
 }
 
 // ErrorNegotiated renders an error to the response. Returns the HTTP status code of the error.
