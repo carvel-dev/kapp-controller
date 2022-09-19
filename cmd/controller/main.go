@@ -29,6 +29,7 @@ func main() {
 	flag.BoolVar(&ctrlOpts.APIPriorityAndFairness, "enable-api-priority-and-fairness", true, "Enable/disable APIPriorityAndFairness feature gate for apiserver. Recommended to disable for <= k8s 1.19.")
 	flag.BoolVar(&sidecarexec, "sidecarexec", false, "Run sidecarexec")
 	flag.BoolVar(&ctrlOpts.StartAPIServer, "start-api-server", true, "Start apiserver")
+	flag.StringVar(&ctrlOpts.TLSCipherSuites, "tls-cipher-suites", "", "comma separated list of acceptable cipher suites. Empty list will use defaults from underlying libraries.")
 	flag.Parse()
 
 	if sidecarexec {

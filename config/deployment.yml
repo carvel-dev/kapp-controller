@@ -27,6 +27,7 @@ spec:
         #@ if/end data.values.dangerous_enable_pprof:
         - -dangerous-enable-pprof=true
         - #@ "-enable-api-priority-and-fairness={}".format(data.values.enable_api_priority_and_fairness)
+        - #@ "-tls-cipher-suites={}".format(data.values.tls_cipher_suites)
         env:
         - name: KAPPCTRL_MEM_TMP_DIR
           value: /etc/kappctrl-mem-tmp
