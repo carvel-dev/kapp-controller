@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663613583111,
+  "lastUpdate": 1663614696058,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -6081,6 +6081,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6380474913,
             "unit": "ns/op\t         4.224 DeleteSeconds\t         2.120 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6d0bf536e2d95a6eb1e0b7ed6ba2c230f05035ec",
+          "message": "Bump golang from 1.19.0 to 1.19.1 (#857)\n\nBumps golang from 1.19.0 to 1.19.1.\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: golang\r\n  dependency-type: direct:production\r\n  update-type: version-update:semver-patch\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2022-09-19T11:57:17-07:00",
+          "tree_id": "51d6a238e86d7746a76b9e6ecd408db29d1b2ac5",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/6d0bf536e2d95a6eb1e0b7ed6ba2c230f05035ec"
+        },
+        "date": 1663614694452,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37149776792,
+            "unit": "ns/op\t        19.31 DeleteSeconds\t        17.79 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9725758448,
+            "unit": "ns/op\t         5.422 DeleteSeconds\t         4.254 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6587401011,
+            "unit": "ns/op\t         4.352 DeleteSeconds\t         2.185 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
