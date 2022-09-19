@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663604501198,
+  "lastUpdate": 1663604552529,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5913,6 +5913,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6465152859,
             "unit": "ns/op\t         4.259 DeleteSeconds\t         2.136 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86852107+joe-kimmel-vmw@users.noreply.github.com",
+            "name": "Joe Kimmel",
+            "username": "joe-kimmel-vmw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "882eeb50389ea1d18ee4e1278d27719adf785523",
+          "message": "configurable tls cipher suites (#882)",
+          "timestamp": "2022-09-19T12:07:20-04:00",
+          "tree_id": "8688064c4cca447b3ef97d7b8c32a01bcfdfe5fc",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/882eeb50389ea1d18ee4e1278d27719adf785523"
+        },
+        "date": 1663604550665,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37715593497,
+            "unit": "ns/op\t        19.58 DeleteSeconds\t        18.07 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9789044440,
+            "unit": "ns/op\t         5.423 DeleteSeconds\t         4.301 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6751839123,
+            "unit": "ns/op\t         4.463 DeleteSeconds\t         2.239 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
