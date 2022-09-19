@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-enterprise-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: redis-enterprise-operator
+  template:
+    metadata:
+      labels:
+        name: redis-enterprise-operator
+    spec:
+      serviceAccountName: redis-enterprise-operator
+      containers:
+        - name: redis-enterprise-operator
+          image: redislabs/operator:6.2.10-45
+          command:
+          - redis-enterprise-operator
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: operator-environment-config
+                optional: true
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "redis-enterprise-operator"
+          resources:
+            limits:
+              cpu: 4000m
+              memory: 512Mi
+            requests:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            failureThreshold: 3
+            successThreshold: 1
+            periodSeconds: 10
+            timeoutSeconds: 5
+            httpGet:
+              path: /healthz
+              port: 8080
+              scheme: HTTP
+        - name: admission
+          image: redislabs/operator:6.2.10-45
+          command:
+            - /usr/local/bin/admission
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: operator-environment-config
+                optional: true
+          ports:
+            - containerPort: 8443
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          readinessProbe:
+            failureThreshold: 3
+            successThreshold: 1
+            periodSeconds: 10
+            timeoutSeconds: 5
+            httpGet:
+              path: /healthz
+              port: 8443
+              scheme: HTTPS
+          livenessProbe:
+            failureThreshold: 3
+            successThreshold: 1
+            periodSeconds: 10
+            timeoutSeconds: 5
+            initialDelaySeconds: 15
+            httpGet:
+              path: /liveness
+              port: 8443
+              scheme: HTTPS
