@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663609581326,
+  "lastUpdate": 1663611555373,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5997,6 +5997,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6471259746,
             "unit": "ns/op\t         4.288 DeleteSeconds\t         2.144 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ca9fa4e3e4641dcf022ae64ad9dd0fc02bf99f12",
+          "message": "Bump slackapi/slack-github-action from 1.21.0 to 1.22.0 (#879)\n\nBumps [slackapi/slack-github-action](https://github.com/slackapi/slack-github-action) from 1.21.0 to 1.22.0.\r\n- [Release notes](https://github.com/slackapi/slack-github-action/releases)\r\n- [Commits](https://github.com/slackapi/slack-github-action/compare/v1.21.0...v1.22.0)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: slackapi/slack-github-action\r\n  dependency-type: direct:production\r\n  update-type: version-update:semver-minor\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2022-09-19T11:08:49-07:00",
+          "tree_id": "fd73802efd84d3c2506d2baa478196580201ba97",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/ca9fa4e3e4641dcf022ae64ad9dd0fc02bf99f12"
+        },
+        "date": 1663611554175,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36621163471,
+            "unit": "ns/op\t        19.04 DeleteSeconds\t        17.54 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9550863843,
+            "unit": "ns/op\t         5.357 DeleteSeconds\t         4.154 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6493662290,
+            "unit": "ns/op\t         4.297 DeleteSeconds\t         2.132 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
