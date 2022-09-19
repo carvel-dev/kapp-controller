@@ -21,23 +21,57 @@ const (
 	workingDir = "kctrl-test"
 )
 
-func TestPackageInitAndRelease(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+type E2EAuthoringTestCase struct {
+	Name                    string
+	InitInteraction         Interaction
+	ExpectedPkgBuild        string
+	ExpectedPkgResource     string
+	ExpectedVendir          string
+	ExpectedPackage         string
+	ExpectedPackageMetadata string
+}
 
-	cleanUp := func() {
-		os.RemoveAll(workingDir)
+type Interaction struct {
+	Prompts []string
+	Inputs  []string
+}
+
+type ExpectedOutputYaml struct {
+	PackageBuild    []string
+	PackageResource []string
+	Vendir          []string
+	PackageMetadata []string
+	Package         []string
+}
+
+func (i Interaction) Run(promptOutputObj promptOutput) {
+	for ind, prompt := range i.Prompts {
+		promptOutputObj.WaitFor(prompt)
+		promptOutputObj.Write(i.Inputs[ind])
 	}
-	cleanUp()
-	defer cleanUp()
+}
 
-	err := os.Mkdir(workingDir, os.ModePerm)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	expectedPackageBuild := `
+func TestE2EInitAndReleaseCases(t *testing.T) {
+	testcases := []E2EAuthoringTestCase{
+		{
+			Name: "Helm Chart Flow",
+			InitInteraction: Interaction{
+				Prompts: []string{
+					"Enter the package reference name",
+					"Enter source",
+					"Enter helm chart repository URL",
+					"Enter helm chart name",
+					"Enter helm chart version",
+				},
+				Inputs: []string{
+					"testpackage.corp.dev",
+					"3",
+					"https://mongodb.github.io/helm-charts",
+					"enterprise-operator",
+					"1.16.0",
+				},
+			},
+			ExpectedPkgBuild: `
 apiVersion: kctrl.carvel.dev/v1alpha1
 kind: PackageBuild
 metadata:
@@ -59,9 +93,8 @@ spec:
       export:
       - includePaths:
         - upstream
-`
-
-	expectedPackageResources := `
+`,
+			ExpectedPkgResource: `
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
@@ -110,9 +143,8 @@ status:
   conditions: null
   friendlyDescription: ""
   observedGeneration: 0
-`
-
-	expectedVendirOutput := `
+`,
+			ExpectedVendir: `
 apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
@@ -125,9 +157,8 @@ directories:
   path: upstream
 kind: Config
 minimumRequiredVersion: ""
-`
-
-	expectedPackageMetadata := `
+`,
+			ExpectedPackageMetadata: `
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
 metadata:
@@ -136,9 +167,8 @@ spec:
   displayName: testpackage
   longDescription: testpackage.corp.dev
   shortDescription: testpackage.corp.dev
-`
-
-	expectedPackage := `
+`,
+			ExpectedPackage: `
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
@@ -166,89 +196,413 @@ spec:
       default: null
       nullable: true
   version: 1.0.0
-`
+`,
+		},
+		{
+			Name: "Github Release Flow",
+			InitInteraction: Interaction{
+				Prompts: []string{
+					"Enter the package reference name",
+					"Enter source",
+					"Enter slug for repository",
+					"Enter the release tag to be used",
+					"Enter the paths which contain Kubernetes manifests",
+				},
+				Inputs: []string{
+					"testpackage.corp.dev",
+					"2",
+					"Dynatrace/dynatrace-operator",
+					"v0.6.0",
+					"kubernetes.yaml",
+				},
+			},
+			ExpectedPkgBuild: `
+apiVersion: kctrl.carvel.dev/v1alpha1
+kind: PackageBuild
+metadata:
+  name: testpackage.corp.dev
+spec:
+  template:
+    spec:
+      app:
+        spec:
+          deploy:
+          - kapp: {}
+          template:
+          - ytt:
+              paths:
+              - upstream
+          - kbld: {}
+      export:
+      - includePaths:
+        - upstream
+`,
+			ExpectedPkgResource: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.0.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - git: {}
+      template:
+      - ytt:
+          paths:
+          - upstream
+      - kbld: {}
+  valuesSchema:
+    openAPIv3: null
+  version: 0.0.0
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  annotations:
+    kctrl.carvel.dev/local-fetch-0: .
+  name: testpackage
+spec:
+  packageRef:
+    refName: testpackage.corp.dev
+    versionSelection:
+      constraints: 0.0.0
+  serviceAccountName: testpackage-sa
+status:
+  conditions: null
+  friendlyDescription: ""
+  observedGeneration: 0
+`,
+			ExpectedVendir: `
+apiVersion: vendir.k14s.io/v1alpha1
+directories:
+- contents:
+  - githubRelease:
+      disableAutoChecksumValidation: true
+      slug: Dynatrace/dynatrace-operator
+      tag: v0.6.0
+    includePaths:
+    - kubernetes.yaml
+    path: .
+  path: upstream
+kind: Config
+minimumRequiredVersion: ""
+`,
+			ExpectedPackageMetadata: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+`,
+			ExpectedPackage: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.1.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - imgpkgBundle:
+      template:
+      - ytt:
+          paths:
+          - upstream
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/
+  valuesSchema:
+    openAPIv3:
+      default: null
+      nullable: true
+  version: 1.0.0
+`,
+		},
+		{
+			Name: "Git Repository Flow",
+			InitInteraction: Interaction{
+				Prompts: []string{
+					"Enter the package reference name",
+					"Enter source",
+					"Enter Git URL",
+					"Enter Git Reference",
+					"Enter the paths which contain Kubernetes manifests",
+				},
+				Inputs: []string{
+					"testpackage.corp.dev",
+					"4",
+					"https://github.com/vmware-tanzu/carvel-kapp",
+					"origin/develop",
+					"examples/simple-app-example/config-1.yml",
+				},
+			},
+			ExpectedPkgBuild: `
+apiVersion: kctrl.carvel.dev/v1alpha1
+kind: PackageBuild
+metadata:
+  name: testpackage.corp.dev
+spec:
+  template:
+    spec:
+      app:
+        spec:
+          deploy:
+          - kapp: {}
+          template:
+          - ytt:
+              paths:
+              - upstream
+          - kbld: {}
+      export:
+      - includePaths:
+        - upstream
+`,
+			ExpectedPkgResource: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.0.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - git: {}
+      template:
+      - ytt:
+          paths:
+          - upstream
+      - kbld: {}
+  valuesSchema:
+    openAPIv3: null
+  version: 0.0.0
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  annotations:
+    kctrl.carvel.dev/local-fetch-0: .
+  name: testpackage
+spec:
+  packageRef:
+    refName: testpackage.corp.dev
+    versionSelection:
+      constraints: 0.0.0
+  serviceAccountName: testpackage-sa
+status:
+  conditions: null
+  friendlyDescription: ""
+  observedGeneration: 0
+`,
+			ExpectedVendir: `
+apiVersion: vendir.k14s.io/v1alpha1
+directories:
+- contents:
+  - git:
+      ref: origin/develop
+      url: https://github.com/vmware-tanzu/carvel-kapp
+    includePaths:
+    - examples/simple-app-example/config-1.yml
+    path: .
+  path: upstream
+kind: Config
+minimumRequiredVersion: ""
+`,
+			ExpectedPackageMetadata: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+`,
+			ExpectedPackage: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.1.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - imgpkgBundle:
+      template:
+      - ytt:
+          paths:
+          - upstream
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/
+  valuesSchema:
+    openAPIv3:
+      default: null
+      nullable: true
+  version: 1.0.0
+`,
+		},
+	}
 
-	logger.Section("creating a package interactively using pkg init", func() {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kappCli := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+
+	for _, testcase := range testcases {
+		// verify prompts and input are of same length
+		require.EqualValues(t, len(testcase.InitInteraction.Prompts), len(testcase.InitInteraction.Inputs))
+
+		cleanUp := func() {
+			os.RemoveAll(workingDir)
+		}
+		cleanUp()
+
+		err := os.Mkdir(workingDir, os.ModePerm)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		promptOutput := newPromptOutput(t)
 
-		go func() {
-			promptOutput.WaitFor("Enter the package reference name")
-			promptOutput.Write("testpackage.corp.dev")
-			promptOutput.WaitFor("Enter source")
-			promptOutput.Write("3")
-			promptOutput.WaitFor("Enter helm chart repository URL")
-			promptOutput.Write("https://mongodb.github.io/helm-charts")
-			promptOutput.WaitFor("Enter helm chart name")
-			promptOutput.Write("enterprise-operator")
-			promptOutput.WaitFor("Enter helm chart version")
-			promptOutput.Write("1.16.0")
-		}()
+		go testcase.InitInteraction.Run(promptOutput)
 
-		kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
-			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
-				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+		logger.Section(fmt.Sprintf("%s: Package init", testcase.Name), func() {
+			kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
+				RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+					StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
 
-		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:"}
+			// Verifying package-build, package-resource, vendir
+			keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:"}
 
-		// To handle case till errors on failed syncs are handled better
-		_, err := os.Stat(filepath.Join(workingDir, "upstream"))
-		require.NoError(t, err)
+			// To handle case till errors on failed syncs are handled better
+			_, err = os.Stat(filepath.Join(workingDir, "upstream"))
+			require.NoError(t, err)
 
-		// Verify PackageBuild
-		out, err := readFile("package-build.yml")
-		require.NoErrorf(t, err, "Expected to read package-build.yml")
+			// Verify PackageBuild
+			out, err := readFile("package-build.yml")
+			require.NoErrorf(t, err, "Expected to read package-build.yml")
 
-		expectedPackageBuild = strings.TrimSpace(replaceSpaces(expectedPackageBuild))
-		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
-		require.Equal(t, expectedPackageBuild, out, "Expected PackageBuild output to match")
+			expectedPackageBuild := strings.TrimSpace(replaceSpaces(testcase.ExpectedPkgBuild))
+			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+			require.Equal(t, expectedPackageBuild, out, "Expected PackageBuild output to match")
 
-		// Verify package resources
-		out, err = readFile("package-resources.yml")
-		require.NoErrorf(t, err, "Expected to read package-resources.yml")
+			// Verify package resources
+			out, err = readFile("package-resources.yml")
+			require.NoErrorf(t, err, "Expected to read package-resources.yml")
 
-		expectedPackageResources = strings.TrimSpace(replaceSpaces(expectedPackageResources))
-		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
-		require.Equal(t, expectedPackageResources, out, "Expected package resources output to match")
+			expectedPackageResources := strings.TrimSpace(replaceSpaces(testcase.ExpectedPkgResource))
+			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+			require.Equal(t, expectedPackageResources, out, "Expected package resources output to match")
 
-		// Verify vendir
-		out, err = readFile("vendir.yml")
-		require.NoErrorf(t, err, "Expected to read vendir.yml")
+			// Verify vendir
+			out, err = readFile("vendir.yml")
+			require.NoErrorf(t, err, "Expected to read vendir.yml")
 
-		expectedVendirOutput = strings.TrimSpace(replaceSpaces(expectedVendirOutput))
-		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
-		require.Equal(t, expectedVendirOutput, out, "Expected vendir output to match")
-	})
+			expectedVendirOutput := strings.TrimSpace(replaceSpaces(testcase.ExpectedVendir))
+			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+			require.Equal(t, expectedVendirOutput, out, "Expected vendir output to match")
+		})
 
-	logger.Section("releasing package using kctrl package release", func() {
-		promptOutput := newPromptOutput(t)
+		logger.Section(fmt.Sprintf("%s: Package release", testcase.Name), func() {
+			releaseInteraction := Interaction{
+				Prompts: []string{"Enter the registry URL"},
+				Inputs:  []string{env.Image},
+			}
 
-		go func() {
-			promptOutput.WaitFor("Enter the registry URL")
-			promptOutput.Write(env.Image)
-		}()
+			go releaseInteraction.Run(promptOutput)
 
-		kappCtrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir},
-			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
-				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+			kappCtrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir},
+				RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+					StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
 
-		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image"}
+			keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image"}
 
-		// Verify PackageMetadata artifact
-		out, err := readFile("./carvel-artifacts/packages/testpackage.corp.dev/metadata.yml")
-		require.NoErrorf(t, err, "Expected to read metadata.yml")
+			var pkgDir = "./carvel-artifacts/packages/testpackage.corp.dev/"
 
-		expectedPackageMetadata = strings.TrimSpace(replaceSpaces(expectedPackageMetadata))
-		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
-		require.Equal(t, expectedPackageMetadata, out, "Expected PackageMetadata to match")
+			// Verify PackageMetadata artifact
+			out, err := readFile(pkgDir + "metadata.yml")
+			require.NoErrorf(t, err, "Expected to read metadata.yml")
 
-		// Verify Package artifact
-		out, err = readFile("./carvel-artifacts/packages/testpackage.corp.dev/package.yml")
-		require.NoErrorf(t, err, "Expected to read package.yml")
+			expectedPackageMetadata := strings.TrimSpace(replaceSpaces(testcase.ExpectedPackageMetadata))
+			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+			require.Equal(t, expectedPackageMetadata, out, "Expected PackageMetadata to match")
 
-		expectedPackage = strings.TrimSpace(replaceSpaces(expectedPackage))
-		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
-		require.Equal(t, expectedPackage, out, "Expected Package to match")
-	})
+			// Verify Package artifact
+			out, err = readFile(pkgDir + "package.yml")
+			require.NoErrorf(t, err, "Expected to read package.yml")
+
+			expectedPackage := strings.TrimSpace(replaceSpaces(testcase.ExpectedPackage))
+			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+			require.Equal(t, expectedPackage, out, "Expected Package to match")
+		})
+
+		logger.Section(fmt.Sprintf("%s: Testing and installing created Package", testcase.Name), func() {
+
+			cleanUpInstalledPkg := func() {
+				switch testcase.Name {
+				case "Github Release Flow":
+					kubectl.RunWithOpts([]string{"delete", "ns", "dynatrace"}, RunOpts{NoNamespace: true})
+				}
+				kappCli.RunWithOpts([]string{"delete", "-a", "test-package"},
+					RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+				kappCtrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
+					RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+			}
+
+			defer cleanUpInstalledPkg()
+
+			switch testcase.Name {
+			case "Github Release Flow":
+				kubectl.RunWithOpts([]string{"create", "ns", "dynatrace"}, RunOpts{NoNamespace: true})
+			}
+
+			kappCli.RunWithOpts([]string{"deploy", "-a", "test-package", "-f", fmt.Sprintf("%s/carvel-artifacts/packages/testpackage.corp.dev", workingDir), "-c"},
+				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+
+			kappCtrl.RunWithOpts([]string{"pkg", "available", "list"},
+				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+
+			kappCtrl.RunWithOpts([]string{"pkg", "install", "-p", "testpackage.corp.dev", "-i", "test", "--version", "1.0.0"},
+				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+		})
+	}
 }
 
 func readFile(fileName string) (string, error) {
