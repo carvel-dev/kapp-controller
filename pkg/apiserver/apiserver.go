@@ -72,13 +72,20 @@ type APIServer struct {
 	aggClient aggregatorclient.Interface
 }
 
-func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, globalNamespace string, bindPort int) (*APIServer, error) {
+// NewAPIServer makes a new api server.
+// TLSCipherSuites is the list of cipher suites the api server will be willing to use. Empty list defaults to the underlying
+// libraries' defaults, which is usually fine especially if you don't expose the APIServer outside the cluster.
+// see also: https://golang.org/pkg/crypto/tls/#pkg-constants
+// According to Antrea, who we mostly copied:
+// Note that TLS1.3 Cipher Suites cannot be added to the list. But the apiserver will always
+// prefer TLS1.3 Cipher Suites whenever possible.
+func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, globalNamespace string, bindPort int, TLSCipherSuites []string) (*APIServer, error) {
 	aggClient, err := aggregatorclient.NewForConfig(clientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("building aggregation client: %v", err)
 	}
 
-	config, err := newServerConfig(aggClient, bindPort)
+	config, err := newServerConfig(aggClient, bindPort, TLSCipherSuites)
 	if err != nil {
 		return nil, err
 	}
@@ -145,13 +152,14 @@ func (as *APIServer) isReady() (bool, error) {
 	return false, nil
 }
 
-func newServerConfig(aggClient aggregatorclient.Interface, bindPort int) (*genericapiserver.RecommendedConfig, error) {
+func newServerConfig(aggClient aggregatorclient.Interface, bindPort int, TLSCipherSuites []string) (*genericapiserver.RecommendedConfig, error) {
 	recommendedOptions := genericoptions.NewRecommendedOptions("", Codecs.LegacyCodec(v1alpha1.SchemeGroupVersion))
 	recommendedOptions.Etcd = nil
 
 	// Set the PairName and CertDirectory to generate the certificate files.
 	recommendedOptions.SecureServing.ServerCert.CertDirectory = selfSignedCertDir
 	recommendedOptions.SecureServing.ServerCert.PairName = "kapp-controller"
+	recommendedOptions.SecureServing.CipherSuites = TLSCipherSuites
 
 	// ports below 1024 are probably the wrong port, see https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Well-known_ports
 	if bindPort < 1024 {
