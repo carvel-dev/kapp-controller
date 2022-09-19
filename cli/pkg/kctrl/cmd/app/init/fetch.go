@@ -16,11 +16,11 @@ const (
 )
 
 const (
-	FetchFromGithubRelease  string = "Github Release"
-	FetchFromGit            string = "Git Repository"
-	FetchFromHelmRepo       string = "Helm Chart from Helm Repository"
-	FetchChartFromGit       string = "Helm Chart from Git Repository"
-	FetchFromLocalDirectory string = "Local Directory"
+	FetchFromGithubRelease       string = "Github Release"
+	FetchFromGit                 string = "Git Repository"
+	FetchFromHelmRepo            string = "Helm Chart from Helm Repository"
+	FetchChartFromGit            string = "Helm Chart from Git Repository"
+	FetchFromLocalDirectory      string = "Local Directory"
 	MultipleFetchOptionsSelected string = "MultipleFetchOptionsSelected"
 )
 
