@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663604552529,
+  "lastUpdate": 1663609581326,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -5955,6 +5955,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6751839123,
             "unit": "ns/op\t         4.463 DeleteSeconds\t         2.239 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2299295239a426ba6db05d2874944b4e67aa80df",
+          "message": "Fix bash completion for kctrl (#889)\n\n- Do not print Succeeded for the help command\r\n- Use SetOut from cobra to set output for cmd.Help()",
+          "timestamp": "2022-09-19T13:35:43-04:00",
+          "tree_id": "66887d9801eeb6b9cb2840e255fc5788fb131a7e",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/2299295239a426ba6db05d2874944b4e67aa80df"
+        },
+        "date": 1663609580027,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36569708861,
+            "unit": "ns/op\t        19.00 DeleteSeconds\t        17.53 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9578577917,
+            "unit": "ns/op\t         5.370 DeleteSeconds\t         4.162 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6471259746,
+            "unit": "ns/op\t         4.288 DeleteSeconds\t         2.144 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
