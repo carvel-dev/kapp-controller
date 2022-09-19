@@ -49,7 +49,7 @@ jobs:
         ./hack/deploy-test.sh
 
         export KCTRL_E2E_NAMESPACE=kctrl-test
-        export KCTRL_E2E_IMAGE="localhost:5000/test-repo/testimage-$GITHUB_RUN_ID"
+        export KCTRL_E2E_IMAGE="`ifconfig | grep inet | grep -E '\b10\.' | awk '{ print $2}'`:5000/test-repo/testimage-$GITHUB_RUN_ID"
         kubectl create ns $KCTRL_E2E_NAMESPACE
 
         cd cli
