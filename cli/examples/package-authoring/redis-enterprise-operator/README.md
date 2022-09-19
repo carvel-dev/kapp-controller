@@ -1,6 +1,6 @@
 # redis-enterprise-operator
 
-This example demonstrate how to package [`redis-enterprise-operator`](https://github.com/RedisLabs/redis-enterprise-k8s-docs). It gets the required kubernetes manifest from the [`git`](https://github.com/RedisLabs/redis-enterprise-k8s-docs) repository. 
+This example demonstrates how to package [`redis-enterprise-operator`](https://github.com/RedisLabs/redis-enterprise-k8s-docs). It gets the required kubernetes manifest from the [`git`](https://github.com/RedisLabs/redis-enterprise-k8s-docs) repository. 
 
 This example uses the `master` branch to fetch required manifest.
 

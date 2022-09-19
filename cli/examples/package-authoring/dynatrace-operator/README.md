@@ -1,6 +1,6 @@
 # dynatrace-operator
 
-This example demonstrate how to package [`dynatrace-operator`](https://github.com/Dynatrace/dynatrace-operator) Kubernetes manifest. Dynatrace operator releases `kubernetes.yaml` file which can be packaged into a Carvel package. `kubernetes.yml` can be fetched from the [`github release artifact`](https://github.com/Dynatrace/dynatrace-operator/releases). 
+This example demonstrates how to package [`dynatrace-operator`](https://github.com/Dynatrace/dynatrace-operator) Kubernetes manifest. Dynatrace operator releases `kubernetes.yaml` file which can be packaged into a Carvel package. `kubernetes.yml` can be fetched from the [`github release artifact`](https://github.com/Dynatrace/dynatrace-operator/releases). 
 
 This example uses the `v0.6.0` release.
 

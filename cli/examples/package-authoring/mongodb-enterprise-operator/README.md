@@ -1,6 +1,6 @@
 # mongodb-enterprise-operator
 
-This example demonstrate how to package [`mongodb-enterprise-operator`](https://github.com/mongodb/helm-charts/tree/main/charts/enterprise-operator) helm chart.
+This example demonstrates how to package [`mongodb-enterprise-operator`](https://github.com/mongodb/helm-charts/tree/main/charts/enterprise-operator) helm chart.
 
 This example uses the version `1.16.0` of the `mongodb` helm chart.
 
