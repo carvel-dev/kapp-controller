@@ -55,7 +55,8 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 				[]string{"package", "available", "get", "-p", "cert-manager.community.tanzu.vmware.com/1.0.0", "--values-schema"}},
 		}.Description("-p", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
-		Annotations:  map[string]string{"table": ""},
+		Annotations: map[string]string{"table": "",
+			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
 
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)

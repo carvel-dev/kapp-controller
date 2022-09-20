@@ -38,10 +38,11 @@ func NewKickOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Log
 
 func NewKickCmd(o *KickOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:         "kick",
-		Short:       "Trigger reconciliation for repository",
-		RunE:        func(_ *cobra.Command, _ []string) error { return o.Run() },
-		Annotations: map[string]string{cmdapp.TTYByDefaultKey: ""},
+		Use:   "kick",
+		Short: "Trigger reconciliation for repository",
+		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{cmdapp.TTYByDefaultKey: "",
+			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

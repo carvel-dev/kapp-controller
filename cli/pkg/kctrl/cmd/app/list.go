@@ -35,6 +35,9 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Aliases: []string{"l", "ls"},
 		Short:   "List Apps",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{
+			cmdcore.AppManagementCommandsHelpGroup.Key: cmdcore.AppManagementCommandsHelpGroup.Value,
+		},
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

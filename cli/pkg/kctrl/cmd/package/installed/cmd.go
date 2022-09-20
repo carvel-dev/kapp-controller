@@ -5,6 +5,7 @@ package installed
 
 import (
 	"github.com/spf13/cobra"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 )
 
 func NewCmd() *cobra.Command {
@@ -12,6 +13,9 @@ func NewCmd() *cobra.Command {
 		Use:     "installed",
 		Aliases: []string{"i"},
 		Short:   "Manage installed packages",
+		Annotations: map[string]string{
+			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value,
+		},
 	}
 	return cmd
 }

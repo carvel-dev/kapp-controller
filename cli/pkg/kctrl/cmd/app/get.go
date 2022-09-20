@@ -36,6 +36,9 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		Aliases: []string{"g"},
 		Short:   "Get details for app",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{
+			cmdcore.AppManagementCommandsHelpGroup.Key: cmdcore.AppManagementCommandsHelpGroup.Value,
+		},
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

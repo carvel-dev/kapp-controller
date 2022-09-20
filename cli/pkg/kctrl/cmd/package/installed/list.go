@@ -44,7 +44,8 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 				[]string{"package", "installed", "list", "-A"}},
 		}.Description("", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
-		Annotations:  map[string]string{"table": ""},
+		Annotations: map[string]string{"table": "",
+			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List installed packages in all namespaces")

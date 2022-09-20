@@ -60,7 +60,8 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 				[]string{"package", "available", "list", "-p", "cert-manager.community.tanzu.vmware.com"}},
 		}.Description("-p", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
-		Annotations:  map[string]string{"table": ""},
+		Annotations: map[string]string{"table": "",
+			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List available packages in all namespaces")
