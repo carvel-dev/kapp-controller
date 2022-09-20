@@ -16,11 +16,12 @@ const (
 )
 
 const (
-	FetchFromGithubRelease  string = "Github Release"
-	FetchFromGit            string = "Git Repository"
-	FetchFromHelmRepo       string = "Helm Chart from Helm Repository"
-	FetchChartFromGit       string = "Helm Chart from Git Repository"
-	FetchFromLocalDirectory string = "Local Directory"
+	FetchFromGithubRelease       string = "Github Release"
+	FetchFromGit                 string = "Git Repository"
+	FetchFromHelmRepo            string = "Helm Chart from Helm Repository"
+	FetchChartFromGit            string = "Helm Chart from Git Repository"
+	FetchFromLocalDirectory      string = "Local Directory"
+	MultipleFetchOptionsSelected string = "MultipleFetchOptionsSelected"
 )
 
 type FetchStep struct {
@@ -49,7 +50,11 @@ func (f *FetchStep) Interact() error {
 	}
 	isHelmTemplateExistInPreviousOption := f.helmTemplateExistInAppBuild()
 	previousFetchOptionSelected := GetFetchOptionFromVendir(vendirConfig, isHelmTemplateExistInPreviousOption)
-
+	if previousFetchOptionSelected == MultipleFetchOptionsSelected {
+		// As this is advanced use case, we dont know how to handle it.
+		f.ui.PrintInformationalText("Since vendir is syncing data from multiple resources, we will not reconfigure vendir.yml and run vendir sync.")
+		return nil
+	}
 	options := []string{FetchFromLocalDirectory, FetchFromGithubRelease, FetchFromHelmRepo, FetchFromGit, FetchChartFromGit}
 	previousFetchOptionIndex := getPreviousFetchOptionIndex(options, previousFetchOptionSelected)
 	defaultFetchOptionIndex := previousFetchOptionIndex
