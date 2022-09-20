@@ -93,7 +93,7 @@ func (c *CreateStep) PreInteract() error { return nil }
 
 func (c *CreateStep) Interact() error {
 	if c.isAppCommandRunExplicitly {
-		c.ui.PrintHeaderText("\nBasic Information (Step 1/3)")
+		c.ui.PrintHeaderText("\nBasic Information")
 		wd, err := os.Getwd()
 		if err != nil {
 			return err
@@ -161,7 +161,7 @@ func (c *CreateStep) PostInteract() error {
 		if err != nil {
 			return err
 		}
-		c.ui.PrintHeaderText("\nOutput (Step 3/3)")
+		c.ui.PrintHeaderText("\nOutput")
 		c.ui.PrintInformationalText("Successfully updated app-build.yml\n")
 		c.ui.PrintInformationalText("Successfully updated app.yml\n")
 		c.ui.PrintHeaderText("\n**Next steps**")
@@ -222,12 +222,18 @@ func (c CreateStep) createAppFromAppBuild() kcv1alpha1.App {
 func (c CreateStep) configureExportSection() {
 	fetchSource := c.build.GetObjectMeta().Annotations[FetchContentAnnotationKey]
 	exportSection := *c.build.GetExport()
+	// In case of pkg init rerun with FetchFromLocalDirectory, today we overwrite the includePaths
+	// with what we get from template section.
+	// Alternatively, we can merge the includePaths with template section.
+	// It becomes complex to merge already existing includePaths with template section especially scenario 2
+	// Scenario 1: During rerun, something is added in the app template section
+	// Scenario 2: During rerun, something is removed from the app template section
 	if exportSection == nil || len(exportSection) == 0 || fetchSource == FetchFromLocalDirectory {
 		appTemplates := c.build.GetAppSpec().Template
 		includePaths := []string{}
 		for _, appTemplate := range appTemplates {
 			if appTemplate.HelmTemplate != nil {
-				includePaths = append(includePaths, appTemplate.HelmTemplate.Path)
+				includePaths = append(includePaths, UpstreamFolderName)
 			}
 
 			if appTemplate.Ytt != nil {

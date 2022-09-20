@@ -43,7 +43,11 @@ func (g *GitStep) Interact() error {
 	if err != nil {
 		return err
 	}
-	return g.configureGitRef()
+	err = g.configureGitRef()
+	if err != nil {
+		return err
+	}
+	return g.getIncludedPaths()
 }
 
 func (g *GitStep) PostInteract() error { return nil }
@@ -95,5 +99,35 @@ func (g *GitStep) configureGitRef() error {
 	}
 
 	gitContent.Ref = strings.TrimSpace(name)
+	return SaveVendir(g.vendirConfig)
+}
+
+func (g *GitStep) getIncludedPaths() error {
+	g.ui.PrintInformationalText(`We need to know which files contain Kubernetes manifests. Multiple files can be included using a comma separator. 
+- To include all the files, enter * 
+- To include a folder with all the sub-folders and files, enter <FOLDER_NAME>/**/*
+- To include all the files inside a folder, enter <FOLDER_NAME>/*`)
+	includedPaths := g.vendirConfig.Directories[0].Contents[0].IncludePaths
+	defaultIncludedPath := strings.Join(includedPaths, ",")
+	if len(includedPaths) == 0 {
+		defaultIncludedPath = IncludeAllFiles
+	}
+	textOpts := ui.TextOpts{
+		Label:        "Enter the paths which contain Kubernetes manifests",
+		Default:      defaultIncludedPath,
+		ValidateFunc: nil,
+	}
+	path, err := g.ui.AskForText(textOpts)
+	if err != nil {
+		return err
+	}
+	paths := strings.Split(path, ",")
+	if path == IncludeAllFiles {
+		paths = nil
+	}
+	for i := 0; i < len(paths); i++ {
+		paths[i] = strings.TrimSpace(paths[i])
+	}
+	g.vendirConfig.Directories[0].Contents[0].IncludePaths = paths
 	return SaveVendir(g.vendirConfig)
 }
