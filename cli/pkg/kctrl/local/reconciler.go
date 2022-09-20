@@ -172,7 +172,11 @@ func (o *Reconciler) hackyConfigureKubernetesDst(coreClient kubernetes.Interface
 		return fmt.Errorf("Parsing host: %s", err)
 	}
 	os.Setenv("KUBERNETES_SERVICE_HOST", hostURL.Hostname())
-	os.Setenv("KUBERNETES_SERVICE_PORT", hostURL.Port())
+	if hostURL.Port() == "" {
+		os.Setenv("KUBERNETES_SERVICE_PORT", "443")
+	} else {
+		os.Setenv("KUBERNETES_SERVICE_PORT", hostURL.Port())
+	}
 
 	cm, err := coreClient.CoreV1().ConfigMaps("kube-public").Get(context.TODO(), "kube-root-ca.crt", metav1.GetOptions{})
 	if err != nil {
