@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	cmdGroupKey = "kapp-group"
+	cmdGroupKey = "kctrl-group"
 )
 
 var (
