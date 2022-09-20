@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663631739570,
+  "lastUpdate": 1663643581380,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -6249,6 +6249,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6609487697,
             "unit": "ns/op\t         4.343 DeleteSeconds\t         2.211 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "55523204+rohitagg2020@users.noreply.github.com",
+            "name": "rohitagg2020",
+            "username": "rohitagg2020"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c3eb24d9ee59ab3bc48cdb18c87186676ecadba4",
+          "message": "Ensure that  For option helm Chart from Git, pkg init sync's properly (#852)\n\n* Fixing the bug - For option helm Chart from Git, pkg init is not syncing the helm charts.\r\n\r\n* Update init.go\r\n\r\n* Adopting review comments.\r\n\r\nAdopting review comments.\r\n\r\n* Adding test case\r\n\r\nAdding test case\r\n\r\n* Update package_authoring_e2e_test.go",
+          "timestamp": "2022-09-20T08:32:34+05:30",
+          "tree_id": "4ab72603101f41625c0b4d987e6b50cbb14e5b1a",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/c3eb24d9ee59ab3bc48cdb18c87186676ecadba4"
+        },
+        "date": 1663643580439,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36579934114,
+            "unit": "ns/op\t        19.04 DeleteSeconds\t        17.48 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9655249220,
+            "unit": "ns/op\t         5.381 DeleteSeconds\t         4.231 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6428575124,
+            "unit": "ns/op\t         4.252 DeleteSeconds\t         2.137 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
