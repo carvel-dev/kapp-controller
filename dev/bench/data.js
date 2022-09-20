@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663656938443,
+  "lastUpdate": 1663663893801,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -6375,6 +6375,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6698107411,
             "unit": "ns/op\t         4.426 DeleteSeconds\t         2.203 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8b093174e9139a277101a8104091a6070e6eb77b",
+          "message": "Restructure help sections for all commands (#860)\n\n* Restructure help sections for all commands\r\n\r\n* Fix help test\r\n\r\n* Renaming annotation key. Deferring removal of app init",
+          "timestamp": "2022-09-20T14:10:21+05:30",
+          "tree_id": "c9d451cc1ea72a4fe776123e8b77886a788b09c7",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/8b093174e9139a277101a8104091a6070e6eb77b"
+        },
+        "date": 1663663892446,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36881701204,
+            "unit": "ns/op\t        19.28 DeleteSeconds\t        17.55 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9546099524,
+            "unit": "ns/op\t         5.331 DeleteSeconds\t         4.169 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6603231043,
+            "unit": "ns/op\t         4.376 DeleteSeconds\t         2.166 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
