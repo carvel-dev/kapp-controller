@@ -82,7 +82,8 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 				[]string{"package", "installed", "create", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--service-account-name", "existing-sa"}},
 		}.Description("-i", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
-		Annotations:  map[string]string{cmdapp.TTYByDefaultKey: ""},
+		Annotations: map[string]string{cmdapp.TTYByDefaultKey: "",
+			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
 	o.SecureNamespaceFlags.Set(cmd)
@@ -126,7 +127,8 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 				[]string{"package", "install", "-i", "cert-man", "-p", "cert-manager.community.tanzu.vmware.com", "--version", "1.6.1", "--service-account-name", "existing-sa"}},
 		}.Description("-i", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
-		Annotations:  map[string]string{cmdapp.TTYByDefaultKey: ""},
+		Annotations: map[string]string{cmdapp.TTYByDefaultKey: "",
+			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
 	o.SecureNamespaceFlags.Set(cmd)
@@ -169,7 +171,8 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 				[]string{"package", "installed", "update", "-i", "cert-man", "--values", "false"}},
 		}.Description("-i", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
-		Annotations:  map[string]string{cmdapp.TTYByDefaultKey: ""},
+		Annotations: map[string]string{cmdapp.TTYByDefaultKey: "",
+			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
 	o.SecureNamespaceFlags.Set(cmd)

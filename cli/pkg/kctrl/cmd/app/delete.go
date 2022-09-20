@@ -43,10 +43,11 @@ func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.L
 
 func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:         "delete",
-		Short:       "Delete app",
-		RunE:        func(_ *cobra.Command, _ []string) error { return o.Run() },
-		Annotations: map[string]string{TTYByDefaultKey: ""},
+		Use:   "delete",
+		Short: "Delete app",
+		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{TTYByDefaultKey: "",
+			cmdcore.AppManagementCommandsHelpGroup.Key: cmdcore.AppManagementCommandsHelpGroup.Value},
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

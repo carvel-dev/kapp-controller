@@ -52,7 +52,8 @@ func NewPauseCmd(o *PauseOrKickOptions, flagsFactory cmdcore.FlagsFactory) *cobr
 			},
 		}.Description("-i", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
-		Annotations:  map[string]string{cmdapp.TTYByDefaultKey: ""},
+		Annotations: map[string]string{cmdapp.TTYByDefaultKey: "",
+			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
@@ -78,7 +79,8 @@ func NewKickCmd(o *PauseOrKickOptions, flagsFactory cmdcore.FlagsFactory) *cobra
 			},
 		}.Description("-i", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
-		Annotations:  map[string]string{cmdapp.TTYByDefaultKey: ""},
+		Annotations: map[string]string{cmdapp.TTYByDefaultKey: "",
+			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)

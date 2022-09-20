@@ -47,6 +47,9 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 		Use:   "release",
 		Short: "Release package (experimental)",
 		RunE:  func(cmd *cobra.Command, args []string) error { return o.Run() },
+		Annotations: map[string]string{
+			cmdcore.PackageAuthoringCommandsHelpGroup.Key: cmdcore.PackageAuthoringCommandsHelpGroup.Value,
+		},
 	}
 
 	cmd.Flags().StringVarP(&o.pkgVersion, "version", "v", "", "Version to be released")

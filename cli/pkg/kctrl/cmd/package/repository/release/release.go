@@ -52,6 +52,9 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 		Use:   "release",
 		Short: "Build and create a package repository (experimental)",
 		RunE:  func(_ *cobra.Command, args []string) error { return o.Run() },
+		Annotations: map[string]string{
+			cmdcore.PackageAuthoringCommandsHelpGroup.Key: cmdcore.PackageAuthoringCommandsHelpGroup.Value,
+		},
 	}
 
 	cmd.Flags().StringVarP(&o.pkgRepoVersion, "version", "v", "", "Version to be released")

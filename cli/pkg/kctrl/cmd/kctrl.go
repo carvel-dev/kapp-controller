@@ -73,6 +73,8 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 
 	cmd.SetUsageTemplate(cobrautil.HelpSectionsUsageTemplate([]cobrautil.HelpSection{
 		cmdcore.PackageHelpGroup,
+		cmdcore.AppHelpGroup,
+		cmdcore.DevHelpGroup,
 		cmdcore.RestOfCommandsHelpGroup,
 	}))
 
@@ -85,11 +87,21 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 	cmd.AddCommand(NewVersionCmd(NewVersionOptions(o.ui, o.depsFactory), flagsFactory))
 
 	pkgCmd := cmdpkg.NewCmd()
+	pkgCmd.SetUsageTemplate(cobrautil.HelpSectionsUsageTemplate([]cobrautil.HelpSection{
+		cmdcore.PackageManagementCommandsHelpGroup,
+		cmdcore.PackageAuthoringCommandsHelpGroup,
+		cmdcore.PackageRepoHelpGroup,
+		cmdcore.RestOfCommandsHelpGroup,
+	}))
 	AddPackageCommands(o, pkgCmd, flagsFactory, pkgOpts)
 
 	cmd.AddCommand(pkgCmd)
 
 	appCmd := app.NewCmd()
+	appCmd.SetUsageTemplate(cobrautil.HelpSectionsUsageTemplate([]cobrautil.HelpSection{
+		cmdcore.AppManagementCommandsHelpGroup,
+		cmdcore.RestOfCommandsHelpGroup,
+	}))
 	appCmd.AddCommand(app.NewGetCmd(app.NewGetOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	appCmd.AddCommand(app.NewListCmd(app.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	appCmd.AddCommand(app.NewStatusCmd(app.NewStatusOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
@@ -167,6 +179,10 @@ func configureTTY(o *KctrlOptions, cmd *cobra.Command) {
 
 func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory, opts cmdcore.PackageCommandTreeOpts) {
 	pkgrepoCmd := pkgrepo.NewCmd()
+	pkgrepoCmd.SetUsageTemplate(cobrautil.HelpSectionsUsageTemplate([]cobrautil.HelpSection{
+		cmdcore.PackageManagementCommandsHelpGroup,
+		cmdcore.PackageAuthoringCommandsHelpGroup,
+	}))
 	pkgrepoCmd.AddCommand(pkgrepo.NewListCmd(pkgrepo.NewListOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgrepoCmd.AddCommand(pkgrepo.NewGetCmd(pkgrepo.NewGetOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgrepoCmd.AddCommand(pkgrepo.NewDeleteCmd(pkgrepo.NewDeleteOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
@@ -176,6 +192,9 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 	pkgrepoCmd.AddCommand(pkgreporel.NewReleaseCmd(pkgreporel.NewReleaseOptions(o.ui, o.depsFactory, o.logger)))
 
 	pkgiCmd := pkginst.NewCmd()
+	pkgiCmd.SetUsageTemplate(cobrautil.HelpSectionsUsageTemplate([]cobrautil.HelpSection{
+		cmdcore.PackageManagementCommandsHelpGroup,
+	}))
 	pkgiCmd.AddCommand(pkginst.NewListCmd(pkginst.NewListOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgiCmd.AddCommand(pkginst.NewGetCmd(pkginst.NewGetOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgiCmd.AddCommand(pkginst.NewCreateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
@@ -186,6 +205,9 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 	pkgiCmd.AddCommand(pkginst.NewStatusCmd(pkginst.NewStatusOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 
 	pkgaCmd := pkgavail.NewCmd()
+	pkgaCmd.SetUsageTemplate(cobrautil.HelpSectionsUsageTemplate([]cobrautil.HelpSection{
+		cmdcore.PackageManagementCommandsHelpGroup,
+	}))
 	pkgaCmd.AddCommand(pkgavail.NewListCmd(pkgavail.NewListOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgaCmd.AddCommand(pkgavail.NewGetCmd(pkgavail.NewGetOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 
