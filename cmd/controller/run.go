@@ -24,6 +24,7 @@ import (
 	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/satoken"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/sidecarexec"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp" // Initialize gcp client auth plugin
@@ -174,14 +175,16 @@ func Run(opts Options, runLog logr.Logger) error {
 
 	refTracker := reftracker.NewAppRefTracker()
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
+	tokenMan := satoken.NewManager(coreClient, runLog.WithName("saTokenManager"))
 
 	{ // add controller for apps
 		appFactory := app.CRDAppFactory{
-			CoreClient: coreClient,
-			AppClient:  kcClient,
-			KcConfig:   kcConfig,
-			AppMetrics: appMetrics,
-			CmdRunner:  sidecarCmdExec,
+			CoreClient:   coreClient,
+			AppClient:    kcClient,
+			KcConfig:     kcConfig,
+			AppMetrics:   appMetrics,
+			CmdRunner:    sidecarCmdExec,
+			TokenManager: tokenMan,
 		}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 			appFactory, refTracker, updateStatusTracker)
@@ -225,7 +228,7 @@ func Run(opts Options, runLog logr.Logger) error {
 	}
 
 	{ // add controller for pkgrepositories
-		appFactory := pkgrepository.AppFactory{coreClient, kcClient, kcConfig, sidecarCmdExec}
+		appFactory := pkgrepository.AppFactory{coreClient, kcClient, kcConfig, sidecarCmdExec, tokenMan}
 
 		reconciler := pkgrepository.NewReconciler(kcClient, coreClient,
 			runLog.WithName("pkgr"), appFactory, refTracker, updateStatusTracker)
