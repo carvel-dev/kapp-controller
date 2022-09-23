@@ -110,7 +110,8 @@ func Run(opts Options, runLog logr.Logger) {
 
 	cSuites, err := parseTLSCipherSuites(opts.TLSCipherSuites)
 	if err != nil {
-		return err
+		runLog.Error(err, "creating API server %s", err)
+		os.Exit(1)
 	}
 
 	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, opts.PackagingGloablNS, bindPort, cSuites)
