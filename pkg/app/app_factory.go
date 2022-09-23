@@ -12,6 +12,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/satoken"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	"k8s.io/client-go/kubernetes"
@@ -26,6 +27,7 @@ type CRDAppFactory struct {
 	VendirConfigHook func(vendirconf.Config) vendirconf.Config
 	KbldAllowBuild   bool
 	CmdRunner        exec.CmdRunner
+	TokenManager     *satoken.Manager
 }
 
 // NewCRDApp creates a CRDApp injecting necessary dependencies.
@@ -36,6 +38,6 @@ func (f *CRDAppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *CRDApp 
 	}
 	fetchFactory := fetch.NewFactory(f.CoreClient, vendirOpts, f.CmdRunner)
 	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, f.KbldAllowBuild, f.CmdRunner)
-	deployFactory := deploy.NewFactory(f.CoreClient, f.KcConfig, f.CmdRunner, log)
+	deployFactory := deploy.NewFactory(f.CoreClient, f.KcConfig, f.CmdRunner, log, f.TokenManager)
 	return NewCRDApp(app, log, f.AppMetrics, f.AppClient, fetchFactory, templateFactory, deployFactory)
 }
