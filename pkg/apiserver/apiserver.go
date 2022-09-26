@@ -85,15 +85,6 @@ type NewAPIServerOpts struct {
 	// v1.19 and earlier clusters - our libraries use the beta version of those APIs but they used to be alpha.
 	EnableAPIPriorityAndFairness bool
 
-	// TLSCipherSuites is the list of cipher suites the api server will be willing to use. Empty list defaults to the underlying
-	// libraries' defaults, which is usually fine especially if you don't expose the APIServer outside the cluster.
-	// see also: https://golang.org/pkg/crypto/tls/#pkg-constants
-	// According to Antrea, who we mostly copied:
-	// Note that TLS1.3 Cipher Suites cannot be added to the list. But the apiserver will always
-	// prefer TLS1.3 Cipher Suites whenever possible.
-	TLSCipherSuites []string
-
-	// Logger is a logger
 	Logger logr.Logger
 }
 
@@ -171,7 +162,6 @@ func newServerConfig(aggClient aggregatorclient.Interface, opts NewAPIServerOpts
 	// Set the PairName and CertDirectory to generate the certificate files.
 	recommendedOptions.SecureServing.ServerCert.CertDirectory = selfSignedCertDir
 	recommendedOptions.SecureServing.ServerCert.PairName = "kapp-controller"
-	recommendedOptions.SecureServing.CipherSuites = opts.TLSCipherSuites
 
 	// ports below 1024 are probably the wrong port, see https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Well-known_ports
 	if opts.BindPort < 1024 {

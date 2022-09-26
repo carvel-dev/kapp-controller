@@ -34,7 +34,6 @@ require (
 	github.com/go-logr/logr v0.4.0
 	github.com/spf13/cobra v1.2.1
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	k8s.io/component-base v0.22.10
 	k8s.io/klog/v2 v2.9.0
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
 )
@@ -118,6 +117,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/apiextensions-apiserver v0.22.2 // indirect
+	k8s.io/component-base v0.22.10 // indirect
 	k8s.io/gengo v0.0.0-20210813121822-485abfe95c7c // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.30 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect

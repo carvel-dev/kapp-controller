@@ -9,9 +9,6 @@ enable_api_priority_and_fairness: true
 
 dangerous_enable_pprof: false
 
-#! comma separated list of cipher suites - empty for language defaults
-tls_cipher_suites: ""
-
 push_images: false
 image_cache: true
 image_repo: docker.io/k14stest/kapp-controller-test
