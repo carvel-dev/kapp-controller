@@ -133,13 +133,7 @@ func (o *ReleaseOptions) Run() error {
 
 func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild cmdpkgbuild.PackageBuild,
 	packageTemplate *kcdatav1alpha1.Package, metadataTemplate *kcdatav1alpha1.PackageMetadata) error {
-	var yttPaths []string
-	for _, templateStage := range pkgBuild.Spec.Template.Spec.App.Spec.Template {
-		if templateStage.Ytt != nil {
-			yttPaths = append(yttPaths, templateStage.Ytt.Paths...)
-		}
-	}
-	valuesSchema, err := NewValuesSchemaGen(yttPaths).Schema()
+	valuesSchema, err := generateValuesSchema(pkgBuild)
 	if err != nil {
 		return err
 	}
@@ -157,6 +151,18 @@ func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild c
 		}
 	}
 	return nil
+}
+
+func generateValuesSchema(pkgBuild cmdpkgbuild.PackageBuild) (*kcdatav1alpha1.ValuesSchema, error) {
+	var yttPaths []string
+	for _, templateStage := range pkgBuild.Spec.Template.Spec.App.Spec.Template {
+		if templateStage.HelmTemplate != nil {
+			return NewHelmValuesSchemaGen(templateStage.HelmTemplate.Path).Schema()
+		} else if templateStage.Ytt != nil {
+			yttPaths = append(yttPaths, templateStage.Ytt.Paths...)
+		}
+	}
+	return NewValuesSchemaGen(yttPaths).Schema()
 }
 
 func (o *ReleaseOptions) loadExportData(pkgBuild *cmdpkgbuild.PackageBuild) error {
