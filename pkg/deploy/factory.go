@@ -9,6 +9,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/satoken"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -32,10 +33,10 @@ type KappConfiguration interface {
 
 // NewFactory returns deploy factory.
 func NewFactory(coreClient kubernetes.Interface,
-	kappConfig KappConfiguration, cmdRunner exec.CmdRunner, log logr.Logger) Factory {
+	kappConfig KappConfiguration, cmdRunner exec.CmdRunner, log logr.Logger, tokenMan *satoken.Manager) Factory {
 
 	return Factory{coreClient, kappConfig,
-		NewKubeconfigSecrets(coreClient), NewServiceAccounts(coreClient, log), cmdRunner}
+		NewKubeconfigSecrets(coreClient), NewServiceAccounts(coreClient, log, tokenMan), cmdRunner}
 }
 
 func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
