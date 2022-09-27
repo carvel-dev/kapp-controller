@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1664298980111,
+  "lastUpdate": 1664302860890,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -6501,6 +6501,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6509694925,
             "unit": "ns/op\t         4.304 DeleteSeconds\t         2.145 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "daefad6a35fa41cc7b07304202e84ecebef06e5e",
+          "message": "Fixes trivy installation (#905)",
+          "timestamp": "2022-09-27T11:08:07-07:00",
+          "tree_id": "ac989128f380273c8a56a1ce373aecd9bf94fa6c",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/daefad6a35fa41cc7b07304202e84ecebef06e5e"
+        },
+        "date": 1664302858234,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 38145611084,
+            "unit": "ns/op\t        19.38 DeleteSeconds\t        18.71 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8720357835,
+            "unit": "ns/op\t         4.429 DeleteSeconds\t         4.224 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6559801207,
+            "unit": "ns/op\t         4.332 DeleteSeconds\t         2.162 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
