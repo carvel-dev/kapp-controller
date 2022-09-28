@@ -247,7 +247,7 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 						}
 					}
 				case yaml3.ScalarNode:
-					val, err := h.getDefaultValue(h.openAPITypeFor(value.Content[0].Tag), v.Value)
+					val, err := h.getDefaultValue(h.openAPITypeFor(value.Content[0].Tag, value.Content[0].Value), v.Value)
 					if err != nil {
 						return nil, err
 					}
@@ -280,7 +280,7 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 					&MapItem{Key: itemsProp, Value: properties}}}
 			case yaml3.ScalarNode:
 				itemsProperties = &Map{[]*MapItem{
-					&MapItem{Key: typeProp, Value: h.openAPITypeFor(value.Content[0].Tag)}}}
+					&MapItem{Key: typeProp, Value: h.openAPITypeFor(value.Content[0].Tag, value.Content[0].Value)}}}
 			}
 			apiKeys = append(apiKeys, &MapItem{Key: itemsProp, Value: itemsProperties})
 		}
@@ -298,7 +298,7 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 			apiKeys = append(apiKeys, &MapItem{Key: descriptionProp, Value: description})
 		}
 
-		valType := h.openAPITypeFor(value.Tag)
+		valType := h.openAPITypeFor(value.Tag, value.Value)
 		defaultVal, err := h.getDefaultValue(valType, value.Value)
 		if err != nil {
 			return nil, err
@@ -340,7 +340,7 @@ func (h HelmValuesSchemaGen) getDescriptionFromNode(node *yaml3.Node) (string, b
 	return "", false
 }
 
-func (h HelmValuesSchemaGen) openAPITypeFor(tag string) string {
+func (h HelmValuesSchemaGen) openAPITypeFor(tag, value string) string {
 	switch tag {
 	case boolTag:
 		return "boolean"
@@ -349,10 +349,12 @@ func (h HelmValuesSchemaGen) openAPITypeFor(tag string) string {
 	case intTag:
 		return "integer"
 	case nullTag:
-		return "null"
-	default:
-		return "string"
+		if value == "null" {
+			return "null"
+		}
 	}
+	return "string"
+
 }
 
 func (h HelmValuesSchemaGen) getDefaultValue(tag, value string) (interface{}, error) {

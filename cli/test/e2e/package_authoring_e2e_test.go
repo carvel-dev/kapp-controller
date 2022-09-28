@@ -182,7 +182,7 @@ spec:
       - kbld:
           paths:
           - '-'
-          - .imgpkg/
+          - .imgpkg/images.yml
   valuesSchema:
     openAPIv3:
       properties:
@@ -500,7 +500,7 @@ spec:
       - kbld:
           paths:
           - '-'
-          - .imgpkg/
+          - .imgpkg/images.yml
   valuesSchema:
     openAPIv3:
       default: null
@@ -639,7 +639,7 @@ spec:
       - kbld:
           paths:
           - '-'
-          - .imgpkg/
+          - .imgpkg/images.yml
   valuesSchema:
     openAPIv3:
       default: null
@@ -784,7 +784,7 @@ spec:
       - kbld:
           paths:
           - '-'
-          - .imgpkg/
+          - .imgpkg/images.yml
   valuesSchema:
     openAPIv3:
       properties:
@@ -925,7 +925,7 @@ spec:
 					StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
 
 			// Below key's values will be changed during every run, hence adding these keys to be ignored
-			keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image"}
+			keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image:"}
 
 			// Verify PackageMetadata artifact
 			out, err := readFile(pkgDir + "metadata.yml")
@@ -984,7 +984,6 @@ func replaceSpaces(result string) string {
 	return result
 }
 
-// TODO: Make regex more strict. Removes 'images.yaml' from '.imgpkg/images.yml' right now
 func clearKeys(keys []string, out string) string {
 	for _, key := range keys {
 		r := regexp.MustCompile(key + ".*")
