@@ -852,6 +852,7 @@ k8s.io/code-generator/pkg/namer
 k8s.io/code-generator/pkg/util
 k8s.io/code-generator/third_party/forked/golang/reflect
 # k8s.io/component-base v0.19.2
+## explicit
 k8s.io/component-base/cli/flag
 k8s.io/component-base/config
 k8s.io/component-base/config/v1alpha1
