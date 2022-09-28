@@ -47,7 +47,7 @@ type Options struct {
 	Namespace              string
 	EnablePprof            bool
 	APIRequestTimeout      time.Duration
-	PackagingGloablNS      string
+	PackagingGlobalNS      string
 	MetricsBindAddress     string
 	APIPriorityAndFairness bool
 	StartAPIServer         bool
@@ -125,7 +125,7 @@ func Run(opts Options, runLog logr.Logger) error {
 		}
 
 		server, err := apiserver.NewAPIServer(pkgRestConfig, coreClient, pkgKcClient, apiserver.NewAPIServerOpts{
-			GlobalNamespace:              opts.PackagingGloablNS,
+			GlobalNamespace:              opts.PackagingGlobalNS,
 			BindPort:                     bindPort,
 			EnableAPIPriorityAndFairness: opts.APIPriorityAndFairness,
 			Logger:                       runLog.WithName("apiserver"),
@@ -217,7 +217,7 @@ func Run(opts Options, runLog logr.Logger) error {
 
 	{ // add controller for PackageInstall
 		pkgToPkgInstallHandler := pkginstall.NewPackageInstallVersionHandler(
-			kcClient, opts.PackagingGloablNS, runLog.WithName("handler"))
+			kcClient, opts.PackagingGlobalNS, runLog.WithName("handler"))
 
 		reconciler := pkginstall.NewReconciler(kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, runLog.WithName("pkgi"), compInfo)
 
