@@ -185,9 +185,187 @@ spec:
           - .imgpkg/
   valuesSchema:
     openAPIv3:
-      default: null
-      nullable: true
+      properties:
+        agent:
+          properties:
+            name:
+              default: mongodb-agent
+              type: string
+            version:
+              default: 11.12.0.7388-1
+              type: string
+          type: object
+        database:
+          description: Database
+          properties:
+            name:
+              default: mongodb-enterprise-database
+              type: string
+            version:
+              default: 2.0.2
+              type: string
+          type: object
+        initAppDb:
+          description: Application Database
+          properties:
+            name:
+              default: mongodb-enterprise-init-appdb
+              type: string
+            version:
+              default: 1.0.9
+              type: string
+          type: object
+        initDatabase:
+          properties:
+            name:
+              default: mongodb-enterprise-init-database
+              type: string
+            version:
+              default: 1.0.9
+              type: string
+          type: object
+        initOpsManager:
+          properties:
+            name:
+              default: mongodb-enterprise-init-ops-manager
+              type: string
+            version:
+              default: 1.0.7
+              type: string
+          type: object
+        managedSecurityContext:
+          default: false
+          description: Set this to true if your cluster is managing SecurityContext
+            for you. If running OpenShift (Cloud, Minishift, etc.), set this to true.
+          type: boolean
+        mongodb:
+          properties:
+            name:
+              default: mongodb-enterprise-appdb-database
+              type: string
+            repo:
+              default: quay.io/mongodb
+              type: string
+          type: object
+        multiCluster:
+          properties:
+            clusters:
+              default: []
+              type: array
+            kubeConfigSecretName:
+              default: mongodb-enterprise-operator-multi-cluster-kubeconfig
+              type: string
+          type: object
+        operator:
+          properties:
+            affinity:
+              default: '{}'
+              type: object
+            createOperatorServiceAccount:
+              default: true
+              description: Create operator-service account
+              type: boolean
+            deployment_name:
+              default: mongodb-enterprise-operator
+              description: Name of the deployment of the operator pod
+              type: string
+            env:
+              default: prod
+              description: Execution environment for the operator, dev or prod. Use
+                dev for more verbose logging
+              type: string
+            name:
+              default: mongodb-enterprise-operator
+              description: Name that will be assigned to most of internal Kubernetes
+                objects like Deployment, ServiceAccount, Role etc.
+              type: string
+            nodeSelector:
+              default: '{}'
+              type: object
+            operator_image_name:
+              default: mongodb-enterprise-operator
+              description: Name of the operator image
+              type: string
+            tolerations:
+              default: []
+              type: array
+            vaultSecretBackend:
+              properties:
+                enabled:
+                  default: false
+                  description: set to true if you want the operator to store secrets
+                    in Vault
+                  type: boolean
+                tlsSecretRef:
+                  default: ""
+                  type: string
+              type: object
+            version:
+              default: 1.16.0
+              description: Version of mongodb-enterprise-operator
+              type: string
+            watchedResources:
+              default:
+              - mongodb
+              - opsmanagers
+              - mongodbusers
+              description: The Custom Resources that will be watched by the Operator.
+                Needs to be changed if only some of the CRDs are installed
+              items:
+                type: string
+              type: array
+          type: object
+        opsManager:
+          description: Ops Manager
+          properties:
+            name:
+              default: mongodb-enterprise-ops-manager
+              type: string
+          type: object
+        registry:
+          description: Registry
+          properties:
+            agent:
+              default: quay.io/mongodb
+              type: string
+            appDb:
+              default: quay.io/mongodb
+              type: string
+            database:
+              default: quay.io/mongodb
+              type: string
+            imagePullSecrets:
+              default: ""
+              type: string
+            initAppDb:
+              default: quay.io/mongodb
+              type: string
+            initDatabase:
+              default: quay.io/mongodb
+              type: string
+            initOpsManager:
+              default: quay.io/mongodb
+              type: string
+            operator:
+              default: quay.io/mongodb
+              description: Specify if images are pulled from private registry
+              type: string
+            opsManager:
+              default: quay.io/mongodb
+              type: string
+            pullPolicy:
+              default: Always
+              description: 'TODO: specify for each image and move there?'
+              type: string
+          type: object
+        subresourceEnabled:
+          default: true
+          description: Set this to false to disable subresource utilization It might
+            be required on some versions of Openshift
+          type: boolean
+      type: object
   version: 1.0.0
+
 `,
 		},
 		{
@@ -609,8 +787,68 @@ spec:
           - .imgpkg/
   valuesSchema:
     openAPIv3:
-      default: null
-      nullable: true
+      properties:
+        env:
+          properties:
+            hello_msg:
+              default: hello
+              description: response provided by the server
+              type: string
+          type: object
+        fullnameOverride:
+          default: ""
+          type: string
+        image:
+          properties:
+            pullPolicy:
+              default: IfNotPresent
+              type: string
+            repository:
+              default: docker.io/dkalinin/k8s-simple-app
+              type: string
+            tag:
+              default: latest
+              description: Overrides the image tag whose default is the chart appVersion.
+              type: string
+          type: object
+        imagePullSecrets:
+          default: []
+          type: array
+        nameOverride:
+          default: ""
+          type: string
+        podAnnotations:
+          default: '{}'
+          type: object
+        replicaCount:
+          default: 1
+          type: integer
+        service:
+          properties:
+            port:
+              default: 80
+              type: integer
+            type:
+              default: ClusterIP
+              type: string
+          type: object
+        serviceAccount:
+          properties:
+            annotations:
+              default: '{}'
+              description: Annotations to add to the service account
+              type: object
+            create:
+              default: true
+              description: Specifies whether a service account should be created
+              type: boolean
+            name:
+              default: ""
+              description: The name of the service account to use. If not set and
+                create is true, a name is generated using the fullname template
+              type: string
+          type: object
+      type: object
   version: 1.0.0
 `,
 		},

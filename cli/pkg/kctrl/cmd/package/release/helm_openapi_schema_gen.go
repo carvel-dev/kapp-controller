@@ -348,6 +348,8 @@ func (h HelmValuesSchemaGen) openAPITypeFor(tag string) string {
 		return "number"
 	case intTag:
 		return "integer"
+	case nullTag:
+		return "null"
 	default:
 		return "string"
 	}
