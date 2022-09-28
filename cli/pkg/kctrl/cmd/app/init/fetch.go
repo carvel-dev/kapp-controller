@@ -24,23 +24,16 @@ const (
 	MultipleFetchOptionsSelected string = "MultipleFetchOptionsSelected"
 )
 
-type FetchStep struct {
-	ui                        cmdcore.AuthoringUI
-	build                     Build
-	isAppCommandRunExplicitly bool
+type FetchConfiguration struct {
+	ui    cmdcore.AuthoringUI
+	build Build
 }
 
-func NewFetchStep(ui cmdcore.AuthoringUI, build Build, isAppCommandRunExplicitly bool) *FetchStep {
-	return &FetchStep{
-		ui:                        ui,
-		build:                     build,
-		isAppCommandRunExplicitly: isAppCommandRunExplicitly,
-	}
+func NewFetchConfiguration(ui cmdcore.AuthoringUI, build Build) FetchConfiguration {
+	return FetchConfiguration{ui: ui, build: build}
 }
 
-func (f *FetchStep) PreInteract() error { return nil }
-
-func (f *FetchStep) Interact() error {
+func (f FetchConfiguration) Configure() error {
 	f.ui.PrintHeaderText("Content")
 	f.ui.PrintInformationalText("Please provide the location from where your Kubernetes manifests or Helm chart can be fetched. This will be bundled as a part of the package.")
 
@@ -50,15 +43,16 @@ func (f *FetchStep) Interact() error {
 		return err
 	}
 
-	isHelmTemplateExistInPreviousOption := f.helmTemplateExistInAppBuild()
+	isHelmTemplateExistInPreviousOption := f.build.HasHelmTemplate()
 	previousFetchOptionSelected := vendirConfig.FetchMode(isHelmTemplateExistInPreviousOption)
 	if previousFetchOptionSelected == MultipleFetchOptionsSelected {
 		// As this is advanced use case, we dont know how to handle it.
 		f.ui.PrintInformationalText("Since vendir is syncing data from multiple resources, we will not reconfigure vendir.yml and run vendir sync.")
 		return nil
 	}
+
 	options := []string{FetchFromLocalDirectory, FetchFromGithubRelease, FetchFromHelmRepo, FetchFromGit, FetchChartFromGit}
-	previousFetchOptionIndex := getPreviousFetchOptionIndex(options, previousFetchOptionSelected)
+	previousFetchOptionIndex := f.getPreviousFetchOptionIndex(options, previousFetchOptionSelected)
 	defaultFetchOptionIndex := previousFetchOptionIndex
 	choiceOpts := ui.ChoiceOpts{
 		Label:   "Enter source",
@@ -90,7 +84,7 @@ func (f *FetchStep) Interact() error {
 	return Run(vendirStep)
 }
 
-func getPreviousFetchOptionIndex(manifestOptions []string, previousFetchOption string) int {
+func (f FetchConfiguration) getPreviousFetchOptionIndex(manifestOptions []string, previousFetchOption string) int {
 	var previousFetchOptionIndex int
 	if previousFetchOption == "" {
 		previousFetchOptionIndex = 0
@@ -104,19 +98,3 @@ func getPreviousFetchOptionIndex(manifestOptions []string, previousFetchOption s
 	}
 	return previousFetchOptionIndex
 }
-
-func (f *FetchStep) helmTemplateExistInAppBuild() bool {
-	appSpec := f.build.GetAppSpec()
-	if appSpec == nil || appSpec.Template == nil {
-		return false
-	}
-	appTemplates := appSpec.Template
-	for _, appTemplate := range appTemplates {
-		if appTemplate.HelmTemplate != nil {
-			return true
-		}
-	}
-	return false
-}
-
-func (f *FetchStep) PostInteract() error { return nil }

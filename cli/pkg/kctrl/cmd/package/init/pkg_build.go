@@ -28,7 +28,7 @@ type Template struct {
 	Spec appbuild.Spec `json:"spec"`
 }
 
-func (b PackageBuild) Save() error {
+func (b *PackageBuild) Save() error {
 	content, err := yaml.Marshal(b)
 	if err != nil {
 		return err
@@ -50,7 +50,11 @@ func NewPackageBuildFromFile(filePath string) (*PackageBuild, error) {
 	return &packageBuild, nil
 }
 
-func (b PackageBuild) GetAppSpec() *v1alpha12.AppSpec {
+func (b *PackageBuild) GetAppSpec() *v1alpha12.AppSpec {
+	return b.getAppSpec()
+}
+
+func (b *PackageBuild) getAppSpec() *v1alpha12.AppSpec {
 	if b.Spec.Template.Spec.App == nil || b.Spec.Template.Spec.App.Spec == nil {
 		return nil
 	}
@@ -64,7 +68,7 @@ func (b *PackageBuild) SetAppSpec(appSpec *v1alpha12.AppSpec) {
 	b.Spec.Template.Spec.App.Spec = appSpec
 }
 
-func (b PackageBuild) GetObjectMeta() *metav1.ObjectMeta {
+func (b *PackageBuild) GetObjectMeta() *metav1.ObjectMeta {
 	return &b.ObjectMeta
 }
 
@@ -73,11 +77,61 @@ func (b *PackageBuild) SetObjectMeta(metaObj *metav1.ObjectMeta) {
 	return
 }
 
-func (b PackageBuild) GetExport() *[]appbuild.Export {
+func (b *PackageBuild) GetExport() *[]appbuild.Export {
 	return &b.Spec.Template.Spec.Export
 }
 
 func (b *PackageBuild) SetExport(exportObj *[]appbuild.Export) {
 	b.Spec.Template.Spec.Export = *exportObj
 	return
+}
+
+func (b *PackageBuild) HasHelmTemplate() bool {
+	appSpec := b.getAppSpec()
+	if appSpec == nil || appSpec.Template == nil {
+		return false
+	}
+	appTemplates := appSpec.Template
+	for _, appTemplate := range appTemplates {
+		if appTemplate.HelmTemplate != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func (b *PackageBuild) ConfigureExportSection() {
+	fetchSource := b.GetObjectMeta().Annotations[appbuild.FetchContentAnnotationKey]
+	exportSection := *b.GetExport()
+	// In case of pkg init rerun with FetchFromLocalDirectory, today we overwrite the includePaths
+	// with what we get from template section.
+	// Alternatively, we can merge the includePaths with template section.
+	// It becomes complex to merge already existing includePaths with template section especially scenario 2
+	// Scenario 1: During rerun, something is added in the app template section
+	// Scenario 2: During rerun, something is removed from the app template section
+	if exportSection == nil || len(exportSection) == 0 || fetchSource == appbuild.FetchFromLocalDirectory {
+		appTemplates := b.GetAppSpec().Template
+		includePaths := []string{}
+		for _, appTemplate := range appTemplates {
+			if appTemplate.HelmTemplate != nil {
+				includePaths = append(includePaths, appbuild.UpstreamFolderName)
+			}
+
+			if appTemplate.Ytt != nil {
+				for _, path := range appTemplate.Ytt.Paths {
+					if path == appbuild.StdIn {
+						continue
+					}
+					includePaths = append(includePaths, path)
+				}
+			}
+		}
+
+		if len(exportSection) == 0 {
+			exportSection = []appbuild.Export{{}}
+		}
+		exportSection[0].IncludePaths = includePaths
+
+		b.SetExport(&exportSection)
+	}
 }

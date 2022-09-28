@@ -16,6 +16,8 @@ type Build interface {
 	SetObjectMeta(*metav1.ObjectMeta)
 	SetExport(export *[]Export)
 	GetExport() *[]Export
+	HasHelmTemplate() bool
+	ConfigureExportSection()
 }
 
 type Step interface {

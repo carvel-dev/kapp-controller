@@ -72,7 +72,6 @@ func (o *InitOptions) Run() error {
 	pkg, pkgMetadata, pkgInstall, err := o.newOrExistingPackageResources()
 
 	o.ui.PrintInformationalText("\nWelcome! Before we start, do install the latest Carvel suite of tools, specifically ytt, imgpkg, vendir and kbld as these will be used by kctrl.\n")
-
 	o.ui.PrintHeaderText("\nBasic Information")
 
 	pkgRefName, err := o.readPackageRefName(pkgMetadata.Name)
@@ -99,19 +98,31 @@ func (o *InitOptions) Run() error {
 	if err != nil {
 		return err
 	}
-	pkgBuild.Save()
+	err = pkgBuild.Save()
 	if err != nil {
 		return err
 	}
 
 	// TODO: @praveenrewar Remove the step part and use only relevant code from Fetch
-	appCreateStep := appinit.NewCreateStep(o.ui, pkgBuild, o.logger, o.depsFactory, false)
-	err = interfaces.Run(appCreateStep)
+	err = interfaces.NewFetchConfiguration(o.ui, pkgBuild).Configure()
 	if err != nil {
 		return err
 	}
 
-	pkgBuild.Save()
+	templateConfiguration := interfaces.NewTemplateStep(o.ui, pkgBuild)
+	err = interfaces.Run(templateConfiguration)
+	if err != nil {
+		return err
+	}
+
+	appSpec := pkgBuild.GetAppSpec()
+	if appSpec.Deploy == nil {
+		appSpec.Deploy = []kcv1alpha1.AppDeploy{{Kapp: &kcv1alpha1.AppDeployKapp{}}}
+	}
+	pkgBuild.SetAppSpec(appSpec)
+
+	pkgBuild.ConfigureExportSection()
+	err = pkgBuild.Save()
 	if err != nil {
 		return err
 	}

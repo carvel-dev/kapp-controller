@@ -51,7 +51,7 @@ type ReleaseResource struct {
 }
 
 // Save will persist the appBuild onto the fileSystem. Before saving, it will remove the Annotations from the AppBuild.
-func (b AppBuild) Save() error {
+func (b *AppBuild) Save() error {
 	// We dont want to persist the annotations.
 	b.ObjectMeta.Annotations = nil
 	content, err := yaml.Marshal(b)
@@ -62,17 +62,17 @@ func (b AppBuild) Save() error {
 	return WriteFile(FileName, content)
 }
 
-func NewAppBuild() (AppBuild, error) {
-	var appBuild AppBuild
+func NewAppBuild() (*AppBuild, error) {
+	var appBuild *AppBuild
 	exists, err := IsFileExists(FileName)
 	if err != nil {
-		return AppBuild{}, err
+		return &AppBuild{}, err
 	}
 
 	if exists {
 		appBuild, err = NewAppBuildFromFile(FileName)
 		if err != nil {
-			return AppBuild{}, err
+			return &AppBuild{}, err
 		}
 
 		// In case user has manually removed the app section from the app-build
@@ -86,14 +86,14 @@ func NewAppBuild() (AppBuild, error) {
 	return appBuild, nil
 }
 
-func NewAppBuildFromFile(filePath string) (AppBuild, error) {
+func NewAppBuildFromFile(filePath string) (*AppBuild, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		return AppBuild{}, err
+		return &AppBuild{}, err
 	}
 	var appBuild AppBuild
 	err = yaml.Unmarshal(content, &appBuild)
-	return appBuild, err
+	return &appBuild, err
 }
 
 func NewDefaultAppTemplateSpec() *v1alpha1.AppTemplateSpec {
@@ -108,8 +108,8 @@ func NewDefaultAppTemplateSpec() *v1alpha1.AppTemplateSpec {
 	}
 }
 
-func NewDefaultAppBuild() AppBuild {
-	return AppBuild{
+func NewDefaultAppBuild() *AppBuild {
+	return &AppBuild{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "AppBuild",
 			APIVersion: "kctrl.carvel.dev/v1alpha1",
@@ -120,7 +120,11 @@ func NewDefaultAppBuild() AppBuild {
 	}
 }
 
-func (b AppBuild) GetAppSpec() *kcv1alpha1.AppSpec {
+func (b *AppBuild) GetAppSpec() *kcv1alpha1.AppSpec {
+	return b.getAppSpec()
+}
+
+func (b *AppBuild) getAppSpec() *kcv1alpha1.AppSpec {
 	return b.Spec.App.Spec
 }
 
@@ -131,7 +135,7 @@ func (b *AppBuild) SetAppSpec(appSpec *kcv1alpha1.AppSpec) {
 	b.Spec.App.Spec = appSpec
 }
 
-func (b AppBuild) GetObjectMeta() *metav1.ObjectMeta {
+func (b *AppBuild) GetObjectMeta() *metav1.ObjectMeta {
 	return &b.ObjectMeta
 }
 
@@ -140,11 +144,61 @@ func (b *AppBuild) SetObjectMeta(metaObj *metav1.ObjectMeta) {
 	return
 }
 
-func (b AppBuild) GetExport() *[]Export {
+func (b *AppBuild) GetExport() *[]Export {
 	return &b.Spec.Export
 }
 
 func (b *AppBuild) SetExport(exportObj *[]Export) {
 	b.Spec.Export = *exportObj
 	return
+}
+
+func (b *AppBuild) HasHelmTemplate() bool {
+	appSpec := b.getAppSpec()
+	if appSpec == nil || appSpec.Template == nil {
+		return false
+	}
+	appTemplates := appSpec.Template
+	for _, appTemplate := range appTemplates {
+		if appTemplate.HelmTemplate != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func (b *AppBuild) ConfigureExportSection() {
+	fetchSource := b.GetObjectMeta().Annotations[FetchContentAnnotationKey]
+	exportSection := *b.GetExport()
+	// In case of pkg init rerun with FetchFromLocalDirectory, today we overwrite the includePaths
+	// with what we get from template section.
+	// Alternatively, we can merge the includePaths with template section.
+	// It becomes complex to merge already existing includePaths with template section especially scenario 2
+	// Scenario 1: During rerun, something is added in the app template section
+	// Scenario 2: During rerun, something is removed from the app template section
+	if exportSection == nil || len(exportSection) == 0 || fetchSource == FetchFromLocalDirectory {
+		appTemplates := b.GetAppSpec().Template
+		includePaths := []string{}
+		for _, appTemplate := range appTemplates {
+			if appTemplate.HelmTemplate != nil {
+				includePaths = append(includePaths, UpstreamFolderName)
+			}
+
+			if appTemplate.Ytt != nil {
+				for _, path := range appTemplate.Ytt.Paths {
+					if path == StdIn {
+						continue
+					}
+					includePaths = append(includePaths, path)
+				}
+			}
+		}
+
+		if len(exportSection) == 0 {
+			exportSection = []Export{Export{}}
+		}
+		exportSection[0].IncludePaths = includePaths
+
+		b.SetExport(&exportSection)
+	}
 }

@@ -58,12 +58,29 @@ func (o *InitOptions) Run() error {
 	if err != nil {
 		return err
 	}
-	createStep := NewCreateStep(o.ui, &appBuild, o.logger, o.depsFactory, true)
-	err = Run(createStep)
+
+	err = NewFetchConfiguration(o.ui, appBuild).Configure()
 	if err != nil {
 		return err
 	}
 
+	templateConfiguration := NewTemplateStep(o.ui, appBuild)
+	err = Run(templateConfiguration)
+	if err != nil {
+		return err
+	}
+
+	appSpec := appBuild.GetAppSpec()
+	if appSpec.Deploy == nil {
+		appSpec.Deploy = []kcv1alpha1.AppDeploy{{Kapp: &kcv1alpha1.AppDeployKapp{}}}
+	}
+	appBuild.SetAppSpec(appSpec)
+
+	appBuild.ConfigureExportSection()
+	err = appBuild.Save()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -89,43 +106,39 @@ func (c CreateStep) GetAppBuild() Build {
 	return c.build
 }
 
-func (c *CreateStep) PreInteract() error { return nil }
-
 func (c *CreateStep) Interact() error {
-	if c.isAppCommandRunExplicitly {
-		c.ui.PrintHeaderText("\nBasic Information")
-		wd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		defaultAppName := filepath.Base(wd)
-		appBuildObjectMeta := c.build.GetObjectMeta()
-		if appBuildObjectMeta == nil {
-			appBuildObjectMeta = &metav1.ObjectMeta{}
-		}
-		if len(appBuildObjectMeta.Name) != 0 {
-			defaultAppName = appBuildObjectMeta.Name
-		}
 
-		textOpts := ui.TextOpts{
-			Label:        "Enter the app name",
-			Default:      defaultAppName,
-			ValidateFunc: nil,
-		}
-		appName, err := c.ui.AskForText(textOpts)
-		if err != nil {
-			return err
-		}
-		appBuildObjectMeta.Name = appName
-		c.build.SetObjectMeta(appBuildObjectMeta)
-		err = c.build.Save()
-		if err != nil {
-			return err
-		}
+	c.ui.PrintHeaderText("\nBasic Information")
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	defaultAppName := filepath.Base(wd)
+	appBuildObjectMeta := c.build.GetObjectMeta()
+	if appBuildObjectMeta == nil {
+		appBuildObjectMeta = &metav1.ObjectMeta{}
+	}
+	if len(appBuildObjectMeta.Name) != 0 {
+		defaultAppName = appBuildObjectMeta.Name
 	}
 
-	fetchConfiguration := NewFetchStep(c.ui, c.build, c.isAppCommandRunExplicitly)
-	err := Run(fetchConfiguration)
+	textOpts := ui.TextOpts{
+		Label:        "Enter the app name",
+		Default:      defaultAppName,
+		ValidateFunc: nil,
+	}
+	appName, err := c.ui.AskForText(textOpts)
+	if err != nil {
+		return err
+	}
+	appBuildObjectMeta.Name = appName
+	c.build.SetObjectMeta(appBuildObjectMeta)
+	err = c.build.Save()
+	if err != nil {
+		return err
+	}
+
+	err = NewFetchConfiguration(c.ui, c.build).Configure()
 	if err != nil {
 		return err
 	}
