@@ -9,6 +9,7 @@ import (
 	_ "net/http/pprof" // Pprof related
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -23,6 +24,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp" // Initialize gcp client auth plugin
+	"k8s.io/component-base/cli/flag"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -40,6 +42,7 @@ type Options struct {
 	EnablePprof       bool
 	APIRequestTimeout time.Duration
 	PackagingGloablNS string
+	TLSCipherSuites   string
 }
 
 // Based on https://github.com/kubernetes-sigs/controller-runtime/blob/8f633b179e1c704a6e40440b528252f147a3362a/examples/builtins/main.go
@@ -97,7 +100,12 @@ func Run(opts Options, runLog logr.Logger) error {
 		return fmt.Errorf("Expected to find %s env var", kappctrlAPIPORTEnvKey)
 	}
 
-	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, opts.PackagingGloablNS, bindPort)
+	cSuites, err := parseTLSCipherSuites(opts.TLSCipherSuites)
+	if err != nil {
+		return fmt.Errorf("parsing TLS Cipher Suites %s", err)
+	}
+
+	server, err := apiserver.NewAPIServer(restConfig, coreClient, kcClient, opts.PackagingGloablNS, bindPort, cSuites)
 	if err != nil {
 		return fmt.Errorf("Building API server: %s", err)
 	}
@@ -205,4 +213,21 @@ func logProxies(runLog logr.Logger) {
 	if noProxyVal := os.Getenv("no_proxy"); noProxyVal != "" {
 		runLog.Info(fmt.Sprintf("No proxy set for: %s", noProxyVal))
 	}
+}
+
+// parseTLSCipherSuites tries to validate and return the user-input ciphers or returns a default list
+// implementation largely stolen from: https://github.com/antrea-io/antrea/blob/25ff93d8987c6b9e3a2062254da6d7d70c623410/pkg/util/cipher/cipher.go#L32
+func parseTLSCipherSuites(opts string) ([]string, error) {
+	csStrList := strings.Split(strings.ReplaceAll(opts, " ", ""), ",")
+	if len(csStrList) == 1 && csStrList[0] == "" {
+		return nil, nil
+	}
+
+	// check to make sure they all parse - this just a fail-fast
+	_, err := flag.TLSCipherSuites(csStrList)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse TLSCipherSuites: %s", err)
+	}
+
+	return csStrList, nil
 }

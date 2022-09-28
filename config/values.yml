@@ -11,5 +11,8 @@ push_images: false
 image_cache: true
 image_repo: docker.io/k14stest/kapp-controller-test
 
+#! comma separated list of cipher suites - empty for language defaults
+tls_cipher_suites: ""
+
 api_port: 10350
 kapp_controller_version: "develop"
