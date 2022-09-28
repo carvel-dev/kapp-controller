@@ -107,11 +107,12 @@ func (t *TemplateStep) Interact() error {
 func (t *TemplateStep) getHelmAppTemplate(fetchSource string) (v1alpha1.AppTemplate, error) {
 	var pathFromVendir string
 	if fetchSource == FetchChartFromGit {
-		vendirConf, err := ReadVendirConfig()
+		vendirConfig := NewVendirConfig(VendirFileName)
+		err := vendirConfig.Load()
 		if err != nil {
 			return v1alpha1.AppTemplate{}, err
 		}
-		pathFromVendir = vendirConf.Directories[0].Contents[0].IncludePaths[0]
+		pathFromVendir = vendirConfig.Contents()[0].IncludePaths[0]
 		// Remove all the trailing `/` from the string
 		pathFromVendir = strings.TrimRight(pathFromVendir, "/")
 		pathFromVendir = strings.TrimSuffix(pathFromVendir, "/**/*")

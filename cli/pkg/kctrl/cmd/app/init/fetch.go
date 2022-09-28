@@ -44,12 +44,14 @@ func (f *FetchStep) Interact() error {
 	f.ui.PrintHeaderText("Content")
 	f.ui.PrintInformationalText("Please provide the location from where your Kubernetes manifests or Helm chart can be fetched. This will be bundled as a part of the package.")
 
-	vendirConfig, err := ReadVendirConfig()
+	vendirConfig := NewVendirConfig(VendirFileName)
+	err := vendirConfig.Load()
 	if err != nil {
 		return err
 	}
+
 	isHelmTemplateExistInPreviousOption := f.helmTemplateExistInAppBuild()
-	previousFetchOptionSelected := GetFetchOptionFromVendir(vendirConfig, isHelmTemplateExistInPreviousOption)
+	previousFetchOptionSelected := vendirConfig.FetchMode(isHelmTemplateExistInPreviousOption)
 	if previousFetchOptionSelected == MultipleFetchOptionsSelected {
 		// As this is advanced use case, we dont know how to handle it.
 		f.ui.PrintInformationalText("Since vendir is syncing data from multiple resources, we will not reconfigure vendir.yml and run vendir sync.")

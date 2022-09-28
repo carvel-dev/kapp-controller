@@ -13,10 +13,10 @@ import (
 
 type HelmStep struct {
 	ui           cmdcore.AuthoringUI
-	vendirConfig vendirconf.Config
+	vendirConfig *VendirConfig
 }
 
-func NewHelmStep(ui cmdcore.AuthoringUI, vendirConfig vendirconf.Config) *HelmStep {
+func NewHelmStep(ui cmdcore.AuthoringUI, vendirConfig *VendirConfig) *HelmStep {
 	return &HelmStep{
 		ui:           ui,
 		vendirConfig: vendirConfig,
@@ -26,45 +26,44 @@ func NewHelmStep(ui cmdcore.AuthoringUI, vendirConfig vendirconf.Config) *HelmSt
 func (h *HelmStep) PreInteract() error { return nil }
 
 func (h *HelmStep) Interact() error {
-	contents := h.vendirConfig.Directories[0].Contents
+	contents := h.vendirConfig.Contents()
 	if contents == nil {
-		err := h.initializeContentWithHelmRelease()
+		err := h.initializeContentWithHelmRelease(contents)
 		if err != nil {
 			return err
 		}
 	} else if contents[0].HelmChart == nil {
-		err := h.initializeHelmRelease()
+		err := h.initializeHelmRelease(contents)
 		if err != nil {
 			return err
 		}
 	}
 
-	err := h.configureHelmChartRepositoryURL()
+	err := h.configureHelmChartRepositoryURL(contents)
 	if err != nil {
 		return err
 	}
-	err = h.configureHelmChartName()
+	err = h.configureHelmChartName(contents)
 	if err != nil {
 		return err
 	}
-	return h.configureHelmChartVersion()
+	return h.configureHelmChartVersion(contents)
 }
 
-func (h *HelmStep) initializeHelmRelease() error {
-	helmChartContent := vendirconf.DirectoryContentsHelmChart{}
-	h.vendirConfig.Directories[0].Contents[0].HelmChart = &helmChartContent
-	return SaveVendir(h.vendirConfig)
+func (h *HelmStep) initializeHelmRelease(contents []vendirconf.DirectoryContents) error {
+	contents[0].HelmChart = &vendirconf.DirectoryContentsHelmChart{}
+	h.vendirConfig.SetContents(contents)
+	return h.vendirConfig.Save()
 }
 
-func (h *HelmStep) initializeContentWithHelmRelease() error {
+func (h *HelmStep) initializeContentWithHelmRelease(contents []vendirconf.DirectoryContents) error {
 	//TODO Rohit need to check this how it should be done. It is giving path as empty.
-	h.vendirConfig.Directories[0].Contents = append(h.vendirConfig.Directories[0].Contents, vendirconf.DirectoryContents{})
-	return h.initializeHelmRelease()
+	h.vendirConfig.SetContents(append(h.vendirConfig.Contents(), vendirconf.DirectoryContents{}))
+	return h.initializeHelmRelease(contents)
 }
 
-func (h *HelmStep) configureHelmChartName() error {
-	helmChartContent := h.vendirConfig.Directories[0].Contents[0].HelmChart
-	defaultName := helmChartContent.Name
+func (h *HelmStep) configureHelmChartName(contents []vendirconf.DirectoryContents) error {
+	defaultName := contents[0].HelmChart.Name
 	textOpts := ui.TextOpts{
 		Label:        "Enter helm chart name",
 		Default:      defaultName,
@@ -75,13 +74,13 @@ func (h *HelmStep) configureHelmChartName() error {
 		return err
 	}
 
-	helmChartContent.Name = strings.TrimSpace(name)
-	return SaveVendir(h.vendirConfig)
+	contents[0].HelmChart.Name = strings.TrimSpace(name)
+	h.vendirConfig.SetContents(contents)
+	return h.vendirConfig.Save()
 }
 
-func (h *HelmStep) configureHelmChartVersion() error {
-	helmChartContent := h.vendirConfig.Directories[0].Contents[0].HelmChart
-	defaultVersion := helmChartContent.Version
+func (h *HelmStep) configureHelmChartVersion(contents []vendirconf.DirectoryContents) error {
+	defaultVersion := contents[0].HelmChart.Version
 	textOpts := ui.TextOpts{
 		Label:        "Enter helm chart version",
 		Default:      defaultVersion,
@@ -92,12 +91,13 @@ func (h *HelmStep) configureHelmChartVersion() error {
 		return err
 	}
 
-	helmChartContent.Version = strings.TrimSpace(version)
-	return SaveVendir(h.vendirConfig)
+	contents[0].HelmChart.Version = strings.TrimSpace(version)
+	h.vendirConfig.SetContents(contents)
+	return h.vendirConfig.Save()
 }
 
-func (h *HelmStep) configureHelmChartRepositoryURL() error {
-	helmChartContent := h.vendirConfig.Directories[0].Contents[0].HelmChart
+func (h *HelmStep) configureHelmChartRepositoryURL(contents []vendirconf.DirectoryContents) error {
+	helmChartContent := contents[0].HelmChart
 	if helmChartContent.Repository == nil {
 		helmChartContent.Repository = &vendirconf.DirectoryContentsHelmChartRepo{}
 	}
@@ -113,7 +113,9 @@ func (h *HelmStep) configureHelmChartRepositoryURL() error {
 	}
 
 	helmChartContent.Repository.URL = strings.TrimSpace(url)
-	return SaveVendir(h.vendirConfig)
+	contents[0].HelmChart = helmChartContent
+	h.vendirConfig.SetContents(contents)
+	return h.vendirConfig.Save()
 }
 
 func (h *HelmStep) PostInteract() error { return nil }

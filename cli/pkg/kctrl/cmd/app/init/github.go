@@ -17,10 +17,10 @@ const (
 
 type GithubStep struct {
 	ui           cmdcore.AuthoringUI
-	vendirConfig vendirconf.Config
+	vendirConfig *VendirConfig
 }
 
-func NewGithubStep(ui cmdcore.AuthoringUI, vendirConfig vendirconf.Config) *GithubStep {
+func NewGithubStep(ui cmdcore.AuthoringUI, vendirConfig *VendirConfig) *GithubStep {
 	return &GithubStep{
 		ui:           ui,
 		vendirConfig: vendirConfig,
@@ -30,35 +30,34 @@ func NewGithubStep(ui cmdcore.AuthoringUI, vendirConfig vendirconf.Config) *Gith
 func (g *GithubStep) PreInteract() error { return nil }
 
 func (g *GithubStep) Interact() error {
-	contents := g.vendirConfig.Directories[0].Contents
+	contents := g.vendirConfig.Contents()
 	if contents == nil {
-		err := g.initializeContentWithGithubRelease()
+		err := g.initializeContentWithGithubRelease(contents)
 		if err != nil {
 			return err
 		}
 	} else if contents[0].GithubRelease == nil {
-		err := g.initializeGithubRelease()
+		err := g.initializeGithubRelease(contents)
 		if err != nil {
 			return err
 		}
 	}
 	g.ui.PrintHeaderText("Repository details")
 
-	err := g.configureRepoSlug()
+	err := g.configureRepoSlug(contents)
 	if err != nil {
 		return err
 	}
 
-	err = g.configureVersion()
+	err = g.configureVersion(contents)
 	if err != nil {
 		return err
 	}
-	return g.getIncludedPaths()
+	return g.getIncludedPaths(contents)
 }
 
-func (g *GithubStep) configureRepoSlug() error {
-	githubReleaseContent := g.vendirConfig.Directories[0].Contents[0].GithubRelease
-	defaultSlug := githubReleaseContent.Slug
+func (g *GithubStep) configureRepoSlug(contents []vendirconf.DirectoryContents) error {
+	defaultSlug := contents[0].GithubRelease.Slug
 	g.ui.PrintInformationalText("Slug format is org/repo e.g. vmware-tanzu/simple-app")
 	textOpts := ui.TextOpts{
 		Label:        "Enter slug for repository",
@@ -70,13 +69,14 @@ func (g *GithubStep) configureRepoSlug() error {
 		return err
 	}
 
-	githubReleaseContent.Slug = strings.TrimSpace(repoSlug)
-	return SaveVendir(g.vendirConfig)
+	contents[0].GithubRelease.Slug = strings.TrimSpace(repoSlug)
+	g.vendirConfig.SetContents(contents)
+	return g.vendirConfig.Save()
 }
 
-func (g *GithubStep) configureVersion() error {
-	githubReleaseContent := g.vendirConfig.Directories[0].Contents[0].GithubRelease
-	defaultReleaseTag := g.getDefaultReleaseTag()
+func (g *GithubStep) configureVersion(contents []vendirconf.DirectoryContents) error {
+	githubReleaseContent := contents[0].GithubRelease
+	defaultReleaseTag := g.getDefaultReleaseTag(contents)
 	textOpts := ui.TextOpts{
 		Label:        "Enter the release tag to be used",
 		Default:      defaultReleaseTag,
@@ -96,36 +96,40 @@ func (g *GithubStep) configureVersion() error {
 		githubReleaseContent.Tag = releaseTag
 		githubReleaseContent.Latest = false
 	}
-	return SaveVendir(g.vendirConfig)
+
+	contents[0].GithubRelease = githubReleaseContent
+	g.vendirConfig.SetContents(contents)
+	return g.vendirConfig.Save()
 }
 
 func (g *GithubStep) PostInteract() error { return nil }
 
-func (g *GithubStep) initializeGithubRelease() error {
+func (g *GithubStep) initializeGithubRelease(contents []vendirconf.DirectoryContents) error {
 	githubReleaseContent := vendirconf.DirectoryContentsGithubRelease{
 		DisableAutoChecksumValidation: true,
 	}
-	g.vendirConfig.Directories[0].Contents[0].GithubRelease = &githubReleaseContent
-	return SaveVendir(g.vendirConfig)
+	contents[0].GithubRelease = &githubReleaseContent
+	g.vendirConfig.SetContents(contents)
+	return g.vendirConfig.Save()
 }
 
-func (g *GithubStep) getDefaultReleaseTag() string {
-	releaseTag := g.vendirConfig.Directories[0].Contents[0].GithubRelease.Tag
+func (g *GithubStep) getDefaultReleaseTag(contents []vendirconf.DirectoryContents) string {
+	releaseTag := g.vendirConfig.Contents()[0].GithubRelease.Tag
 	if len(releaseTag) > 0 {
 		return releaseTag
 	}
 	return LatestVersion
 }
 
-func (g *GithubStep) initializeContentWithGithubRelease() error {
+func (g *GithubStep) initializeContentWithGithubRelease(contents []vendirconf.DirectoryContents) error {
 	//TODO Rohit need to check this how it should be done. It is giving path as empty.
-	g.vendirConfig.Directories[0].Contents = append(g.vendirConfig.Directories[0].Contents, vendirconf.DirectoryContents{})
-	return g.initializeGithubRelease()
+	g.vendirConfig.SetContents(append(contents, vendirconf.DirectoryContents{}))
+	return g.initializeGithubRelease(contents)
 }
 
-func (g *GithubStep) getIncludedPaths() error {
+func (g *GithubStep) getIncludedPaths(contents []vendirconf.DirectoryContents) error {
 	g.ui.PrintInformationalText("We need to know which files contain Kubernetes manifests. Multiple files can be included using a comma separator. To include all the files, enter *")
-	includedPaths := g.vendirConfig.Directories[0].Contents[0].IncludePaths
+	includedPaths := contents[0].IncludePaths
 	defaultIncludedPath := strings.Join(includedPaths, ",")
 	if len(includedPaths) == 0 {
 		defaultIncludedPath = IncludeAllFiles
@@ -146,6 +150,7 @@ func (g *GithubStep) getIncludedPaths() error {
 	for i := 0; i < len(paths); i++ {
 		paths[i] = strings.TrimSpace(paths[i])
 	}
-	g.vendirConfig.Directories[0].Contents[0].IncludePaths = paths
-	return SaveVendir(g.vendirConfig)
+	contents[0].IncludePaths = paths
+	g.vendirConfig.SetContents(contents)
+	return g.vendirConfig.Save()
 }

@@ -23,11 +23,11 @@ const (
 
 type VendirStep struct {
 	ui          cmdcore.AuthoringUI
-	config      vendirconf.Config
+	config      *VendirConfig
 	fetchOption string
 }
 
-func NewVendirStep(ui cmdcore.AuthoringUI, config vendirconf.Config, fetchOption string) *VendirStep {
+func NewVendirStep(ui cmdcore.AuthoringUI, config *VendirConfig, fetchOption string) *VendirStep {
 	vendirStep := VendirStep{
 		ui:          ui,
 		config:      config,
@@ -39,13 +39,16 @@ func NewVendirStep(ui cmdcore.AuthoringUI, config vendirconf.Config, fetchOption
 func (v *VendirStep) PreInteract() error { return nil }
 
 func (v *VendirStep) Interact() error {
-	vendirDirectories := v.config.Directories
+	vendirDirectories := v.config.Directories()
 	if len(vendirDirectories) > 1 {
 		return fmt.Errorf("More than 1 directory config found in the vendir file. (hint: Run vendir sync manually)")
 
 	}
 	if len(vendirDirectories) == 0 {
-		vendirDirectories = v.initializeVendirDirectorySection()
+		err := v.initializeVendirDirectorySection()
+		if err != nil {
+			return err
+		}
 	} else {
 		directory := vendirDirectories[0]
 		if len(directory.Contents) > 1 {
@@ -67,7 +70,7 @@ func (v *VendirStep) Interact() error {
 	return nil
 }
 
-func (v *VendirStep) initializeVendirDirectorySection() []vendirconf.Directory {
+func (v *VendirStep) initializeVendirDirectorySection() error {
 	var directory vendirconf.Directory
 	directory = vendirconf.Directory{
 		Path: VendirSyncDirectory,
@@ -78,9 +81,12 @@ func (v *VendirStep) initializeVendirDirectorySection() []vendirconf.Directory {
 		},
 	}
 	directories := []vendirconf.Directory{directory}
-	v.config.Directories = directories
-	SaveVendir(v.config)
-	return directories
+	v.config.SetDirectories(directories)
+	err := v.config.Save()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (v *VendirStep) PostInteract() error {
