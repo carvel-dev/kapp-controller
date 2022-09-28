@@ -20,7 +20,7 @@ jobs:
       - name: Update Dependencies File
         run: go run ./hack/dependencies.go update
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@18f90432bedd2afd6a825469ffd38aa24712a91d
+        uses: peter-evans/create-pull-request@171dd555b9ab6b18fa02519fdfacbb8bf671e1b4
         with:
           token: ${{ secrets.CARVEL_BOT_ACCESS_TOKEN }}
           committer: Carvel Bot <svc.bot.carvel@vmware.com>
