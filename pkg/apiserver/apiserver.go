@@ -82,6 +82,14 @@ type NewAPIServerOpts struct {
 	// EnableAPIPriorityAndFairness sets a featuregate to allow us backwards compatibility with
 	// v1.19 and earlier clusters - our libraries use the beta version of those APIs but they used to be alpha.
 	EnableAPIPriorityAndFairness bool
+
+	// TLSCipherSuites is the list of cipher suites the api server will be willing to use. Empty list defaults to the underlying
+	// libraries' defaults, which is usually fine especially if you don't expose the APIServer outside the cluster.
+	// see also: https://golang.org/pkg/crypto/tls/#pkg-constants
+	// According to Antrea, who we mostly copied:
+	// Note that TLS1.3 Cipher Suites cannot be added to the list. But the apiserver will always
+	// prefer TLS1.3 Cipher Suites whenever possible.
+	TLSCipherSuites []string
 }
 
 func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, opts NewAPIServerOpts) (*APIServer, error) { //nolint
@@ -90,7 +98,7 @@ func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kc
 		return nil, fmt.Errorf("building aggregation client: %v", err)
 	}
 
-	config, err := newServerConfig(aggClient, opts.BindPort, opts.EnableAPIPriorityAndFairness)
+	config, err := newServerConfig(aggClient, opts.BindPort, opts.EnableAPIPriorityAndFairness, opts.TLSCipherSuites)
 	if err != nil {
 		return nil, err
 	}
@@ -157,13 +165,14 @@ func (as *APIServer) isReady() (bool, error) {
 	return false, nil
 }
 
-func newServerConfig(aggClient aggregatorclient.Interface, bindPort int, enableAPIPriorityAndFairness bool) (*genericapiserver.RecommendedConfig, error) {
+func newServerConfig(aggClient aggregatorclient.Interface, bindPort int, enableAPIPriorityAndFairness bool, cSuites []string) (*genericapiserver.RecommendedConfig, error) {
 	recommendedOptions := genericoptions.NewRecommendedOptions("", Codecs.LegacyCodec(v1alpha1.SchemeGroupVersion))
 	recommendedOptions.Etcd = nil
 
 	// Set the PairName and CertDirectory to generate the certificate files.
 	recommendedOptions.SecureServing.ServerCert.CertDirectory = selfSignedCertDir
 	recommendedOptions.SecureServing.ServerCert.PairName = "kapp-controller"
+	recommendedOptions.SecureServing.CipherSuites = cSuites
 
 	// ports below 1024 are probably the wrong port, see https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Well-known_ports
 	if bindPort < 1024 {

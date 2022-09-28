@@ -30,6 +30,7 @@ require (
 
 require (
 	github.com/go-logr/logr v0.4.0
+	k8s.io/component-base v0.22.4
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.9.0
 )
@@ -114,7 +115,6 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/apiextensions-apiserver v0.22.2 // indirect
-	k8s.io/component-base v0.22.4 // indirect
 	k8s.io/gengo v0.0.0-20210813121822-485abfe95c7c // indirect
 	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.22 // indirect
