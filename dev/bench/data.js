@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1664302860890,
+  "lastUpdate": 1664326181887,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -6543,6 +6543,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6559801207,
             "unit": "ns/op\t         4.332 DeleteSeconds\t         2.162 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a9148583b9e7f9cf02da5f2d7c94e33edc2daca4",
+          "message": "Bump peter-evans/create-pull-request from 4.1.1 to 4.1.2 (#901)\n\nBumps [peter-evans/create-pull-request](https://github.com/peter-evans/create-pull-request) from 4.1.1 to 4.1.2.\r\n- [Release notes](https://github.com/peter-evans/create-pull-request/releases)\r\n- [Commits](https://github.com/peter-evans/create-pull-request/compare/18f90432bedd2afd6a825469ffd38aa24712a91d...171dd555b9ab6b18fa02519fdfacbb8bf671e1b4)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: peter-evans/create-pull-request\r\n  dependency-type: direct:production\r\n  update-type: version-update:semver-patch\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2022-09-27T17:39:22-07:00",
+          "tree_id": "d1f9c03127f96d78ba76631f6092e5cf0dcfc2c9",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/a9148583b9e7f9cf02da5f2d7c94e33edc2daca4"
+        },
+        "date": 1664326180942,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36540524667,
+            "unit": "ns/op\t        19.02 DeleteSeconds\t        17.48 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8495956005,
+            "unit": "ns/op\t         4.287 DeleteSeconds\t         4.168 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6419913048,
+            "unit": "ns/op\t         4.251 DeleteSeconds\t         2.129 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
