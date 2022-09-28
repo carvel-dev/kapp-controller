@@ -3,6 +3,8 @@
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -12,22 +14,21 @@ import (
 	testing "k8s.io/client-go/testing"
 )
 
-
 // FakePackages implements PackageInterface
 type FakePackages struct {
 	Fake *FakeDataV1alpha1
-	ns     string
+	ns   string
 }
 
-var packagesResource = schema.GroupVersionResource{Group: "data.packaging.carvel.dev", Version: "v1alpha1", Resource: "packages"}
+var PackagesResource = schema.GroupVersionResource{Group: "data.packaging.carvel.dev", Version: "v1alpha1", Resource: "packages"}
 
-var packagesKind = schema.GroupVersionKind{Group: "data.packaging.carvel.dev", Version: "v1alpha1", Kind: "Package"}
+var PackagesKind = schema.GroupVersionKind{Group: "data.packaging.carvel.dev", Version: "v1alpha1", Kind: "Package"}
 
-// Get takes name of the package, and returns the corresponding package object, and an error if there is any.
+// Get takes name of the Package, and returns the corresponding Package object, and an error if there is any.
 func (c *FakePackages) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.Package, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(packagesResource, c.ns, name), &v1alpha1.Package{})
-		
+		Invokes(testing.NewGetAction(PackagesResource, c.ns, name), &v1alpha1.Package{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -37,8 +38,8 @@ func (c *FakePackages) Get(ctx context.Context, name string, options v1.GetOptio
 // List takes label and field selectors, and returns the list of Packages that match those selectors.
 func (c *FakePackages) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.PackageList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(packagesResource, packagesKind, c.ns, opts), &v1alpha1.PackageList{})
-		
+		Invokes(testing.NewListAction(PackagesResource, PackagesKind, c.ns, opts), &v1alpha1.PackageList{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -56,56 +57,56 @@ func (c *FakePackages) List(ctx context.Context, opts v1.ListOptions) (result *v
 	return list, err
 }
 
-// Watch returns a watch.Interface that watches the requested packages.
+// Watch returns a watch.Interface that watches the requested Packages.
 func (c *FakePackages) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(packagesResource, c.ns, opts))
-		
+		InvokesWatch(testing.NewWatchAction(PackagesResource, c.ns, opts))
+
 }
 
-// Create takes the representation of a package and creates it.  Returns the server's representation of the package, and an error, if there is any.
-func (c *FakePackages) Create(ctx context.Context, package *v1alpha1.Package, opts v1.CreateOptions) (result *v1alpha1.Package, err error) {
+// Create takes the representation of a Package and creates it.  Returns the server's representation of the Package, and an error, if there is any.
+func (c *FakePackages) Create(ctx context.Context, Package *v1alpha1.Package, opts v1.CreateOptions) (result *v1alpha1.Package, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(packagesResource, c.ns, package), &v1alpha1.Package{})
-		
+		Invokes(testing.NewCreateAction(PackagesResource, c.ns, Package), &v1alpha1.Package{})
+
 	if obj == nil {
 		return nil, err
 	}
 	return obj.(*v1alpha1.Package), err
 }
 
-// Update takes the representation of a package and updates it. Returns the server's representation of the package, and an error, if there is any.
-func (c *FakePackages) Update(ctx context.Context, package *v1alpha1.Package, opts v1.UpdateOptions) (result *v1alpha1.Package, err error) {
+// Update takes the representation of a Package and updates it. Returns the server's representation of the Package, and an error, if there is any.
+func (c *FakePackages) Update(ctx context.Context, Package *v1alpha1.Package, opts v1.UpdateOptions) (result *v1alpha1.Package, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(packagesResource, c.ns, package), &v1alpha1.Package{})
-		
+		Invokes(testing.NewUpdateAction(PackagesResource, c.ns, Package), &v1alpha1.Package{})
+
 	if obj == nil {
 		return nil, err
 	}
 	return obj.(*v1alpha1.Package), err
 }
 
-// Delete takes name of the package and deletes it. Returns an error if one occurs.
+// Delete takes name of the Package and deletes it. Returns an error if one occurs.
 func (c *FakePackages) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(packagesResource, c.ns, name), &v1alpha1.Package{})
-		
+		Invokes(testing.NewDeleteAction(PackagesResource, c.ns, name), &v1alpha1.Package{})
+
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakePackages) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(packagesResource, c.ns, listOpts)
-	
+	action := testing.NewDeleteCollectionAction(PackagesResource, c.ns, listOpts)
+
 	_, err := c.Fake.Invokes(action, &v1alpha1.PackageList{})
 	return err
 }
 
-// Patch applies the patch and returns the patched package.
+// Patch applies the patch and returns the patched Package.
 func (c *FakePackages) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.Package, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(packagesResource, c.ns, name, pt, data, subresources... ), &v1alpha1.Package{})
-		
+		Invokes(testing.NewPatchSubresourceAction(PackagesResource, c.ns, name, pt, data, subresources...), &v1alpha1.Package{})
+
 	if obj == nil {
 		return nil, err
 	}
