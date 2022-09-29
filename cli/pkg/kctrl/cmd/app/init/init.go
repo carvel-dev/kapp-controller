@@ -59,7 +59,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	err = o.configureAppBuild(appBuild)
+	err = o.getAppBuildName(appBuild)
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (o *InitOptions) Run() error {
 	return nil
 }
 
-func (o *InitOptions) configureAppBuild(appBuild *AppBuild) error {
+func (o *InitOptions) getAppBuildName(appBuild *AppBuild) error {
 	o.ui.PrintHeaderText("\nBasic Information")
 	wd, err := os.Getwd()
 	if err != nil {
@@ -126,18 +126,10 @@ func (o *InitOptions) configureAppBuild(appBuild *AppBuild) error {
 	appBuildObjectMeta.Name = appName
 	appBuild.SetObjectMeta(appBuildObjectMeta)
 
-	appSpec := appBuild.GetAppSpec()
-	if appSpec.Deploy == nil {
-		appSpec.Deploy = []kcv1alpha1.AppDeploy{kcv1alpha1.AppDeploy{Kapp: &kcv1alpha1.AppDeployKapp{}}}
-	}
-	appBuild.SetAppSpec(appSpec)
-	appBuild.ConfigureExportSection()
-
 	err = appBuild.Save()
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
