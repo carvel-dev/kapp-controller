@@ -7,6 +7,7 @@ import (
 	"os"
 
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -15,6 +16,18 @@ import (
 const (
 	FileName = "app-build.yml"
 )
+
+type Build interface {
+	Save() error
+	GetAppSpec() *v1alpha12.AppSpec
+	SetAppSpec(*v1alpha12.AppSpec)
+	GetObjectMeta() *metav1.ObjectMeta
+	SetObjectMeta(*metav1.ObjectMeta)
+	SetExport(export *[]Export)
+	GetExport() *[]Export
+	HasHelmTemplate() bool
+	ConfigureExportSection()
+}
 
 type AppBuild struct {
 	metav1.TypeMeta   `json:",inline"`
