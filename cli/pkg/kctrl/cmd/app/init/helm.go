@@ -11,21 +11,16 @@ import (
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
-type HelmStep struct {
+type HelmConfiguration struct {
 	ui           cmdcore.AuthoringUI
 	vendirConfig *VendirConfig
 }
 
-func NewHelmStep(ui cmdcore.AuthoringUI, vendirConfig *VendirConfig) *HelmStep {
-	return &HelmStep{
-		ui:           ui,
-		vendirConfig: vendirConfig,
-	}
+func NewHelmConfiguration(ui cmdcore.AuthoringUI, vendirConfig *VendirConfig) *HelmConfiguration {
+	return &HelmConfiguration{ui: ui, vendirConfig: vendirConfig}
 }
 
-func (h *HelmStep) PreInteract() error { return nil }
-
-func (h *HelmStep) Interact() error {
+func (h *HelmConfiguration) Configure() error {
 	contents := h.vendirConfig.Contents()
 	if contents == nil {
 		err := h.initializeContentWithHelmRelease(contents)
@@ -50,19 +45,19 @@ func (h *HelmStep) Interact() error {
 	return h.configureHelmChartVersion(contents)
 }
 
-func (h *HelmStep) initializeHelmRelease(contents []vendirconf.DirectoryContents) error {
+func (h *HelmConfiguration) initializeHelmRelease(contents []vendirconf.DirectoryContents) error {
 	contents[0].HelmChart = &vendirconf.DirectoryContentsHelmChart{}
 	h.vendirConfig.SetContents(contents)
 	return h.vendirConfig.Save()
 }
 
-func (h *HelmStep) initializeContentWithHelmRelease(contents []vendirconf.DirectoryContents) error {
+func (h *HelmConfiguration) initializeContentWithHelmRelease(contents []vendirconf.DirectoryContents) error {
 	//TODO Rohit need to check this how it should be done. It is giving path as empty.
 	h.vendirConfig.SetContents(append(h.vendirConfig.Contents(), vendirconf.DirectoryContents{}))
 	return h.initializeHelmRelease(contents)
 }
 
-func (h *HelmStep) configureHelmChartName(contents []vendirconf.DirectoryContents) error {
+func (h *HelmConfiguration) configureHelmChartName(contents []vendirconf.DirectoryContents) error {
 	defaultName := contents[0].HelmChart.Name
 	textOpts := ui.TextOpts{
 		Label:        "Enter helm chart name",
@@ -79,7 +74,7 @@ func (h *HelmStep) configureHelmChartName(contents []vendirconf.DirectoryContent
 	return h.vendirConfig.Save()
 }
 
-func (h *HelmStep) configureHelmChartVersion(contents []vendirconf.DirectoryContents) error {
+func (h *HelmConfiguration) configureHelmChartVersion(contents []vendirconf.DirectoryContents) error {
 	defaultVersion := contents[0].HelmChart.Version
 	textOpts := ui.TextOpts{
 		Label:        "Enter helm chart version",
@@ -96,7 +91,7 @@ func (h *HelmStep) configureHelmChartVersion(contents []vendirconf.DirectoryCont
 	return h.vendirConfig.Save()
 }
 
-func (h *HelmStep) configureHelmChartRepositoryURL(contents []vendirconf.DirectoryContents) error {
+func (h *HelmConfiguration) configureHelmChartRepositoryURL(contents []vendirconf.DirectoryContents) error {
 	helmChartContent := contents[0].HelmChart
 	if helmChartContent.Repository == nil {
 		helmChartContent.Repository = &vendirconf.DirectoryContentsHelmChartRepo{}
@@ -117,5 +112,3 @@ func (h *HelmStep) configureHelmChartRepositoryURL(contents []vendirconf.Directo
 	h.vendirConfig.SetContents(contents)
 	return h.vendirConfig.Save()
 }
-
-func (h *HelmStep) PostInteract() error { return nil }

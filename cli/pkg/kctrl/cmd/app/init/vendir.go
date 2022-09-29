@@ -48,8 +48,7 @@ func (v VendirConfigBuilder) Configure() error {
 	case FetchFromGithubRelease:
 		return NewGithubReleaseConfiguration(v.ui, v.config).Configure()
 	case FetchFromHelmRepo:
-		helmStep := NewHelmStep(v.ui, v.config)
-		return Run(helmStep)
+		return NewHelmConfiguration(v.ui, v.config).Configure()
 	case FetchFromGit, FetchChartFromGit:
 		return NewGitConfiguration(v.ui, v.config).Configure()
 	}
