@@ -15,21 +15,16 @@ const (
 	LatestVersion = "latest"
 )
 
-type GithubStep struct {
+type GithubReleaseConfiguration struct {
 	ui           cmdcore.AuthoringUI
 	vendirConfig *VendirConfig
 }
 
-func NewGithubStep(ui cmdcore.AuthoringUI, vendirConfig *VendirConfig) *GithubStep {
-	return &GithubStep{
-		ui:           ui,
-		vendirConfig: vendirConfig,
-	}
+func NewGithubReleaseConfiguration(ui cmdcore.AuthoringUI, vendirConfig *VendirConfig) *GithubReleaseConfiguration {
+	return &GithubReleaseConfiguration{ui: ui, vendirConfig: vendirConfig}
 }
 
-func (g *GithubStep) PreInteract() error { return nil }
-
-func (g *GithubStep) Interact() error {
+func (g *GithubReleaseConfiguration) Configure() error {
 	contents := g.vendirConfig.Contents()
 	if contents == nil {
 		err := g.initializeContentWithGithubRelease(contents)
@@ -56,7 +51,22 @@ func (g *GithubStep) Interact() error {
 	return g.getIncludedPaths(contents)
 }
 
-func (g *GithubStep) configureRepoSlug(contents []vendirconf.DirectoryContents) error {
+func (g *GithubReleaseConfiguration) initializeGithubRelease(contents []vendirconf.DirectoryContents) error {
+	githubReleaseContent := vendirconf.DirectoryContentsGithubRelease{
+		DisableAutoChecksumValidation: true,
+	}
+	contents[0].GithubRelease = &githubReleaseContent
+	g.vendirConfig.SetContents(contents)
+	return g.vendirConfig.Save()
+}
+
+func (g *GithubReleaseConfiguration) initializeContentWithGithubRelease(contents []vendirconf.DirectoryContents) error {
+	//TODO Rohit need to check this how it should be done. It is giving path as empty.
+	g.vendirConfig.SetContents(append(contents, vendirconf.DirectoryContents{}))
+	return g.initializeGithubRelease(contents)
+}
+
+func (g *GithubReleaseConfiguration) configureRepoSlug(contents []vendirconf.DirectoryContents) error {
 	defaultSlug := contents[0].GithubRelease.Slug
 	g.ui.PrintInformationalText("Slug format is org/repo e.g. vmware-tanzu/simple-app")
 	textOpts := ui.TextOpts{
@@ -74,7 +84,7 @@ func (g *GithubStep) configureRepoSlug(contents []vendirconf.DirectoryContents) 
 	return g.vendirConfig.Save()
 }
 
-func (g *GithubStep) configureVersion(contents []vendirconf.DirectoryContents) error {
+func (g *GithubReleaseConfiguration) configureVersion(contents []vendirconf.DirectoryContents) error {
 	githubReleaseContent := contents[0].GithubRelease
 	defaultReleaseTag := g.getDefaultReleaseTag(contents)
 	textOpts := ui.TextOpts{
@@ -102,18 +112,7 @@ func (g *GithubStep) configureVersion(contents []vendirconf.DirectoryContents) e
 	return g.vendirConfig.Save()
 }
 
-func (g *GithubStep) PostInteract() error { return nil }
-
-func (g *GithubStep) initializeGithubRelease(contents []vendirconf.DirectoryContents) error {
-	githubReleaseContent := vendirconf.DirectoryContentsGithubRelease{
-		DisableAutoChecksumValidation: true,
-	}
-	contents[0].GithubRelease = &githubReleaseContent
-	g.vendirConfig.SetContents(contents)
-	return g.vendirConfig.Save()
-}
-
-func (g *GithubStep) getDefaultReleaseTag(contents []vendirconf.DirectoryContents) string {
+func (g *GithubReleaseConfiguration) getDefaultReleaseTag(contents []vendirconf.DirectoryContents) string {
 	releaseTag := g.vendirConfig.Contents()[0].GithubRelease.Tag
 	if len(releaseTag) > 0 {
 		return releaseTag
@@ -121,13 +120,7 @@ func (g *GithubStep) getDefaultReleaseTag(contents []vendirconf.DirectoryContent
 	return LatestVersion
 }
 
-func (g *GithubStep) initializeContentWithGithubRelease(contents []vendirconf.DirectoryContents) error {
-	//TODO Rohit need to check this how it should be done. It is giving path as empty.
-	g.vendirConfig.SetContents(append(contents, vendirconf.DirectoryContents{}))
-	return g.initializeGithubRelease(contents)
-}
-
-func (g *GithubStep) getIncludedPaths(contents []vendirconf.DirectoryContents) error {
+func (g *GithubReleaseConfiguration) getIncludedPaths(contents []vendirconf.DirectoryContents) error {
 	g.ui.PrintInformationalText("We need to know which files contain Kubernetes manifests. Multiple files can be included using a comma separator. To include all the files, enter *")
 	includedPaths := contents[0].IncludePaths
 	defaultIncludedPath := strings.Join(includedPaths, ",")

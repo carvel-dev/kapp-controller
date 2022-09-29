@@ -46,8 +46,7 @@ func (v VendirConfigBuilder) Configure() error {
 	currentFetchOptionSelected := v.fetchOption
 	switch currentFetchOptionSelected {
 	case FetchFromGithubRelease:
-		githubStep := NewGithubStep(v.ui, v.config)
-		return Run(githubStep)
+		return NewGithubReleaseConfiguration(v.ui, v.config).Configure()
 	case FetchFromHelmRepo:
 		helmStep := NewHelmStep(v.ui, v.config)
 		return Run(helmStep)
