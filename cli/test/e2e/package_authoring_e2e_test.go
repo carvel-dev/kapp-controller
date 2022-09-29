@@ -798,7 +798,7 @@ spec:
         fullnameOverride:
           default: ""
           type: string
-        image:
+        imageProp:
           properties:
             pullPolicy:
               default: IfNotPresent
