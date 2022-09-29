@@ -17,22 +17,16 @@ const (
 	StdIn              = "-"
 )
 
-type TemplateStep struct {
+type TemplateConfiguration struct {
 	ui    cmdcore.AuthoringUI
 	build Build
 }
 
-func NewTemplateStep(ui cmdcore.AuthoringUI, build Build) *TemplateStep {
-	templateStep := TemplateStep{
-		ui:    ui,
-		build: build,
-	}
-	return &templateStep
+func NewTemplateConfiguration(ui cmdcore.AuthoringUI, build Build) *TemplateConfiguration {
+	return &TemplateConfiguration{ui: ui, build: build}
 }
 
-func (t *TemplateStep) PreInteract() error { return nil }
-
-func (t *TemplateStep) Interact() error {
+func (t *TemplateConfiguration) Configure() error {
 	appSpec := t.build.GetAppSpec()
 	if appSpec == nil {
 		appSpec = &v1alpha1.AppSpec{}
@@ -104,7 +98,7 @@ func (t *TemplateStep) Interact() error {
 	return nil
 }
 
-func (t *TemplateStep) getHelmAppTemplate(fetchSource string) (v1alpha1.AppTemplate, error) {
+func (t *TemplateConfiguration) getHelmAppTemplate(fetchSource string) (v1alpha1.AppTemplate, error) {
 	var pathFromVendir string
 	if fetchSource == FetchChartFromGit {
 		vendirConfig := NewVendirConfig(VendirFileName)
@@ -126,7 +120,7 @@ func (t *TemplateStep) getHelmAppTemplate(fetchSource string) (v1alpha1.AppTempl
 	return appTemplateWithHelm, nil
 }
 
-func (t *TemplateStep) getYttPathsForLocalDirectory(defaultIncludedPath string) ([]string, error) {
+func (t *TemplateConfiguration) getYttPathsForLocalDirectory(defaultIncludedPath string) ([]string, error) {
 	t.ui.PrintInformationalText("We need to include files/ directories which contain Kubernetes manifests. " +
 		"Multiple values can be included using a comma separator.")
 	textOpts := ui.TextOpts{
@@ -144,5 +138,3 @@ func (t *TemplateStep) getYttPathsForLocalDirectory(defaultIncludedPath string) 
 	}
 	return defaultYttPaths, nil
 }
-
-func (t *TemplateStep) PostInteract() error { return nil }

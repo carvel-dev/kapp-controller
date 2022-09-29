@@ -12,7 +12,6 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 	appinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
-	interfaces "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
@@ -103,19 +102,17 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	err = interfaces.NewFetchConfiguration(o.ui, pkgBuild).Configure()
+	err = appinit.NewFetchConfiguration(o.ui, pkgBuild).Configure()
 	if err != nil {
 		return err
 	}
 
-	// TODO: Rename interfaces
-	err = interfaces.NewVendirRunner(o.ui).RunSync()
+	err = appinit.NewVendirRunner(o.ui).RunSync()
 	if err != nil {
 		return err
 	}
 
-	templateConfiguration := interfaces.NewTemplateStep(o.ui, pkgBuild)
-	err = interfaces.Run(templateConfiguration)
+	err = appinit.NewTemplateConfiguration(o.ui, pkgBuild).Configure()
 	if err != nil {
 		return err
 	}

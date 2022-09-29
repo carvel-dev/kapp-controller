@@ -79,8 +79,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	templateConfiguration := NewTemplateStep(o.ui, appBuild)
-	err = Run(templateConfiguration)
+	err = NewTemplateConfiguration(o.ui, appBuild).Configure()
 	if err != nil {
 		return err
 	}
