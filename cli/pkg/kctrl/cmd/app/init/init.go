@@ -64,6 +64,11 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
+	err = NewVendirRunner(o.ui).RunSync()
+	if err != nil {
+		return err
+	}
+
 	templateConfiguration := NewTemplateStep(o.ui, appBuild)
 	err = Run(templateConfiguration)
 	if err != nil {

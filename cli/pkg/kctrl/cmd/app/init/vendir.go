@@ -171,3 +171,64 @@ func (v *VendirStep) listFiles(dir string) error {
 	v.ui.PrintCmdExecutionOutput(result.Stdout)
 	return nil
 }
+
+type VendirConfigBuilder struct {
+	ui          cmdcore.AuthoringUI
+	config      *VendirConfig
+	fetchOption string
+}
+
+func NewVendirConfigBuilder(ui cmdcore.AuthoringUI, config *VendirConfig, fetchOption string) VendirConfigBuilder {
+	return VendirConfigBuilder{ui: ui, config: config, fetchOption: fetchOption}
+}
+
+func (v VendirConfigBuilder) Configure() error {
+	vendirDirectories := v.config.Directories()
+	if len(vendirDirectories) > 1 {
+		return fmt.Errorf("More than 1 directory config found in the vendir file. (hint: Run vendir sync manually)")
+
+	}
+	if len(vendirDirectories) == 0 {
+		err := v.initializeVendirDirectorySection()
+		if err != nil {
+			return err
+		}
+	} else {
+		directory := vendirDirectories[0]
+		if len(directory.Contents) > 1 {
+			return fmt.Errorf("More than 1 content config found in the vendir file. (hint: Run vendir sync manually)")
+		}
+	}
+	currentFetchOptionSelected := v.fetchOption
+	switch currentFetchOptionSelected {
+	case FetchFromGithubRelease:
+		githubStep := NewGithubStep(v.ui, v.config)
+		return Run(githubStep)
+	case FetchFromHelmRepo:
+		helmStep := NewHelmStep(v.ui, v.config)
+		return Run(helmStep)
+	case FetchFromGit, FetchChartFromGit:
+		gitStep := NewGitStep(v.ui, v.config)
+		return Run(gitStep)
+	}
+	return fmt.Errorf("Unexppected: Invalid fetch mode encountered while configuring vendir")
+}
+
+func (v *VendirConfigBuilder) initializeVendirDirectorySection() error {
+	var directory vendirconf.Directory
+	directory = vendirconf.Directory{
+		Path: VendirSyncDirectory,
+		Contents: []vendirconf.DirectoryContents{
+			{
+				Path: ".",
+			},
+		},
+	}
+	directories := []vendirconf.Directory{directory}
+	v.config.SetDirectories(directories)
+	err := v.config.Save()
+	if err != nil {
+		return err
+	}
+	return nil
+}

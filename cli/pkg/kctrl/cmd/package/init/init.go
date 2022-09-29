@@ -103,8 +103,13 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	// TODO: @praveenrewar Remove the step part and use only relevant code from Fetch
 	err = interfaces.NewFetchConfiguration(o.ui, pkgBuild).Configure()
+	if err != nil {
+		return err
+	}
+
+	// TODO: Rename interfaces
+	err = interfaces.NewVendirRunner(o.ui).RunSync()
 	if err != nil {
 		return err
 	}

@@ -80,8 +80,7 @@ func (f FetchConfiguration) Configure() error {
 		return nil
 	}
 
-	vendirStep := NewVendirStep(f.ui, vendirConfig, currentFetchOptionSelected)
-	return Run(vendirStep)
+	return NewVendirConfigBuilder(f.ui, vendirConfig, currentFetchOptionSelected).Configure()
 }
 
 func (f FetchConfiguration) getPreviousFetchOptionIndex(manifestOptions []string, previousFetchOption string) int {
