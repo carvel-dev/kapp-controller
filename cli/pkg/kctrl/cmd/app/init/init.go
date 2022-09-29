@@ -59,6 +59,16 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
+	err = o.configureAppBuild(appBuild)
+	if err != nil {
+		return err
+	}
+
+	err = o.writeAppFile(appBuild)
+	if err != nil {
+		return err
+	}
+
 	err = NewFetchConfiguration(o.ui, appBuild).Configure()
 	if err != nil {
 		return err
@@ -89,37 +99,14 @@ func (o *InitOptions) Run() error {
 	return nil
 }
 
-type CreateStep struct {
-	ui                        cmdcore.AuthoringUI
-	build                     Build
-	logger                    logger.Logger
-	depsFactory               cmdcore.DepsFactory
-	isAppCommandRunExplicitly bool
-}
-
-func NewCreateStep(ui cmdcore.AuthoringUI, build Build, logger logger.Logger, depsFactory cmdcore.DepsFactory, isAppCommandRunExplicitly bool) *CreateStep {
-	return &CreateStep{
-		ui:                        ui,
-		build:                     build,
-		logger:                    logger,
-		depsFactory:               depsFactory,
-		isAppCommandRunExplicitly: isAppCommandRunExplicitly,
-	}
-}
-
-func (c CreateStep) GetAppBuild() Build {
-	return c.build
-}
-
-func (c *CreateStep) Interact() error {
-
-	c.ui.PrintHeaderText("\nBasic Information")
+func (o *InitOptions) configureAppBuild(appBuild *AppBuild) error {
+	o.ui.PrintHeaderText("\nBasic Information")
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 	defaultAppName := filepath.Base(wd)
-	appBuildObjectMeta := c.build.GetObjectMeta()
+	appBuildObjectMeta := appBuild.GetObjectMeta()
 	if appBuildObjectMeta == nil {
 		appBuildObjectMeta = &metav1.ObjectMeta{}
 	}
@@ -132,64 +119,51 @@ func (c *CreateStep) Interact() error {
 		Default:      defaultAppName,
 		ValidateFunc: nil,
 	}
-	appName, err := c.ui.AskForText(textOpts)
+	appName, err := o.ui.AskForText(textOpts)
 	if err != nil {
 		return err
 	}
 	appBuildObjectMeta.Name = appName
-	c.build.SetObjectMeta(appBuildObjectMeta)
-	err = c.build.Save()
-	if err != nil {
-		return err
-	}
+	appBuild.SetObjectMeta(appBuildObjectMeta)
 
-	err = NewFetchConfiguration(c.ui, c.build).Configure()
-	if err != nil {
-		return err
-	}
-
-	templateConfiguration := NewTemplateStep(c.ui, c.build)
-	err = Run(templateConfiguration)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *CreateStep) PostInteract() error {
-	appSpec := c.build.GetAppSpec()
+	appSpec := appBuild.GetAppSpec()
 	if appSpec.Deploy == nil {
 		appSpec.Deploy = []kcv1alpha1.AppDeploy{kcv1alpha1.AppDeploy{Kapp: &kcv1alpha1.AppDeployKapp{}}}
 	}
-	c.build.SetAppSpec(appSpec)
-	c.configureExportSection()
+	appBuild.SetAppSpec(appSpec)
+	appBuild.ConfigureExportSection()
 
-	if c.isAppCommandRunExplicitly {
-		appConfig, err := c.generateApp()
-		if err != nil {
-			return err
-		}
-
-		appContent, err := yaml.Marshal(appConfig)
-		if err != nil {
-			return err
-		}
-		err = WriteFile(AppFileName, appContent)
-		if err != nil {
-			return err
-		}
-		c.ui.PrintHeaderText("\nOutput")
-		c.ui.PrintInformationalText("Successfully updated app-build.yml\n")
-		c.ui.PrintInformationalText("Successfully updated app.yml\n")
-		c.ui.PrintHeaderText("\n**Next steps**")
-		c.ui.PrintInformationalText("Created files can be consumed in following ways:\n1. Optionally, use 'kctrl dev deploy' to iterate on the app and deploy locally.\n2. Use 'kctrl app release' to release the app.\n")
+	err = appBuild.Save()
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (c CreateStep) generateApp() (kcv1alpha1.App, error) {
+func (o *InitOptions) writeAppFile(appBuild *AppBuild) error {
+	appConfig, err := o.generateApp(appBuild)
+	if err != nil {
+		return err
+	}
+
+	appContent, err := yaml.Marshal(appConfig)
+	if err != nil {
+		return err
+	}
+	err = WriteFile(AppFileName, appContent)
+	if err != nil {
+		return err
+	}
+	o.ui.PrintHeaderText("\nOutput")
+	o.ui.PrintInformationalText("Successfully updated app-build.yml\n")
+	o.ui.PrintInformationalText("Successfully updated app.yml\n")
+	o.ui.PrintHeaderText("\n**Next steps**")
+	o.ui.PrintInformationalText("Created files can be consumed in following ways:\n1. Optionally, use 'kctrl dev deploy' to iterate on the app and deploy locally.\n2. Use 'kctrl app release' to release the app.\n")
+	return nil
+}
+
+func (o *InitOptions) generateApp(appBuild *AppBuild) (kcv1alpha1.App, error) {
 	var app kcv1alpha1.App
 	exists, err := IsFileExists(AppFileName)
 	if err != nil {
@@ -206,20 +180,20 @@ func (c CreateStep) generateApp() (kcv1alpha1.App, error) {
 			return kcv1alpha1.App{}, err
 		}
 	} else {
-		app = c.createAppFromAppBuild()
+		app = o.createAppFromAppBuild(appBuild)
 	}
 	return app, nil
 
 }
 
-func (c CreateStep) createAppFromAppBuild() kcv1alpha1.App {
+func (o *InitOptions) createAppFromAppBuild(appBuild *AppBuild) kcv1alpha1.App {
 	appName := "microservices-demo"
 	serviceAccountName := fmt.Sprintf("%s-sa", appName)
 	appAnnotation := map[string]string{
 		LocalFetchAnnotationKey: ".",
 	}
-	appTemplateSection := c.build.GetAppSpec().Template
-	appDeploySection := c.build.GetAppSpec().Deploy
+	appTemplateSection := appBuild.GetAppSpec().Template
+	appDeploySection := appBuild.GetAppSpec().Deploy
 	return kcv1alpha1.App{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "kappctrl.k14s.io/v1alpha1",
@@ -235,41 +209,4 @@ func (c CreateStep) createAppFromAppBuild() kcv1alpha1.App {
 			Deploy:             appDeploySection,
 		},
 	}
-}
-
-func (c CreateStep) configureExportSection() {
-	fetchSource := c.build.GetObjectMeta().Annotations[FetchContentAnnotationKey]
-	exportSection := *c.build.GetExport()
-	// In case of pkg init rerun with FetchFromLocalDirectory, today we overwrite the includePaths
-	// with what we get from template section.
-	// Alternatively, we can merge the includePaths with template section.
-	// It becomes complex to merge already existing includePaths with template section especially scenario 2
-	// Scenario 1: During rerun, something is added in the app template section
-	// Scenario 2: During rerun, something is removed from the app template section
-	if exportSection == nil || len(exportSection) == 0 || fetchSource == FetchFromLocalDirectory {
-		appTemplates := c.build.GetAppSpec().Template
-		includePaths := []string{}
-		for _, appTemplate := range appTemplates {
-			if appTemplate.HelmTemplate != nil {
-				includePaths = append(includePaths, UpstreamFolderName)
-			}
-
-			if appTemplate.Ytt != nil {
-				for _, path := range appTemplate.Ytt.Paths {
-					if path == StdIn {
-						continue
-					}
-					includePaths = append(includePaths, path)
-				}
-			}
-		}
-
-		if len(exportSection) == 0 {
-			exportSection = []Export{Export{}}
-		}
-		exportSection[0].IncludePaths = includePaths
-
-		c.build.SetExport(&exportSection)
-	}
-	return
 }
