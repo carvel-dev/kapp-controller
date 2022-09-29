@@ -1,3 +1,6 @@
+// Copyright 2022 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package release
 
 import (
@@ -112,7 +115,6 @@ func (h HelmValuesSchemaGen) Schema() (*kcdatav1alpha1.ValuesSchema, error) {
 		return nil, fmt.Errorf("invalid node kind supplied: %d", document.Kind)
 	}
 	if document.Content[0].Kind != yaml3.MappingNode {
-		// return proper error message
 		return nil, fmt.Errorf("values file must resolve to a map (was %d)", document.Content[0].Kind)
 	}
 	openAPIProperties, err := h.calculateProperties(nil, document.Content[0])
