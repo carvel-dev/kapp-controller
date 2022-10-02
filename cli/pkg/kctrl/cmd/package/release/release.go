@@ -26,11 +26,12 @@ type ReleaseOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	pkgVersion         string
-	chdir              string
-	outputLocation     string
-	repoOutputLocation string
-	debug              bool
+	pkgVersion            string
+	chdir                 string
+	outputLocation        string
+	repoOutputLocation    string
+	debug                 bool
+	generateOpenAPISchema bool
 }
 
 const (
@@ -57,6 +58,7 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 	cmd.Flags().StringVar(&o.outputLocation, "copy-to", defaultArtifactDir, "Output location for artifacts")
 	cmd.Flags().StringVar(&o.repoOutputLocation, "repo-output", "", "Output location for artifacts in repository bundle format")
 	cmd.Flags().BoolVar(&o.debug, "debug", false, "Print verbose debug output")
+	cmd.Flags().BoolVar(&o.generateOpenAPISchema, "generate-openapi-schema", true, "Generates openapi schema for ytt and helm templated files and add it to package.yml")
 
 	return cmd
 }
@@ -133,9 +135,13 @@ func (o *ReleaseOptions) Run() error {
 
 func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild cmdpkgbuild.PackageBuild,
 	packageTemplate *kcdatav1alpha1.Package, metadataTemplate *kcdatav1alpha1.PackageMetadata) error {
-	valuesSchema, err := generateValuesSchema(pkgBuild)
-	if err != nil {
-		return err
+	valuesSchema := &kcdatav1alpha1.ValuesSchema{}
+	var err error
+	if o.generateOpenAPISchema {
+		valuesSchema, err = generateValuesSchema(pkgBuild)
+		if err != nil {
+			return err
+		}
 	}
 
 	artifactWriter := NewArtifactWriter(pkgBuild.Name, o.pkgVersion, packageTemplate, metadataTemplate, o.outputLocation, o.ui)
