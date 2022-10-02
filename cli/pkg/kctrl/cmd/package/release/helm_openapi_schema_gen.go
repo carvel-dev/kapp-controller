@@ -136,33 +136,25 @@ func (h HelmValuesSchemaGen) Schema() (*kcdatav1alpha1.ValuesSchema, error) {
 }
 
 func (h HelmValuesSchemaGen) readValuesFile() ([]byte, error) {
-	helmChartDir := h.dirPath
-	fileInfo, err := os.Stat(helmChartDir)
+	fileInfo, err := os.Stat(h.dirPath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read %s: %s", h.dirPath, err.Error())
+		return nil, err
 	}
 	if !fileInfo.IsDir() {
 		return nil, fmt.Errorf("expected %s to be directory", h.dirPath)
 	}
 
-	_, err = os.Stat(filepath.Join(helmChartDir, "values.yaml"))
+	fileData, err := os.ReadFile(filepath.Join(h.dirPath, "values.yaml"))
 	if err != nil {
 		// It is possible that helm chart doesn't have values.yml file.
-		if os.IsNotExist(err) {
+		if os.IsNotExist(err){
 			return nil, nil
 		}
 		return nil, err
 	}
-	return os.ReadFile(filepath.Join(helmChartDir, "values.yaml"))
+	return fileData, nil
 }
 
-func (h HelmValuesSchemaGen) fileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return !info.IsDir()
-}
 func (h HelmValuesSchemaGen) convertToYAML(val interface{}) interface{} {
 	switch typedVal := val.(type) {
 	case *Map:
@@ -210,8 +202,7 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 		if key == nil {
 			return &Map{Items: apiKeys}, nil
 		}
-		mi := &MapItem{Key: key.Value, Value: &Map{Items: apiKeys}}
-		return &Map{Items: []*MapItem{mi}}, nil
+		return &Map{Items: []*MapItem{&MapItem{Key: key.Value, Value: &Map{Items: apiKeys}}}}, nil
 	case yaml3.SequenceNode:
 		var defaultVals []interface{}
 		var apiKeys openAPIKeys
@@ -291,8 +282,7 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 		if key == nil {
 			return &Map{Items: apiKeys}, nil
 		}
-		mi := &MapItem{Key: key.Value, Value: &Map{Items: apiKeys}}
-		return &Map{Items: []*MapItem{mi}}, nil
+		return &Map{Items: []*MapItem{&MapItem{Key: key.Value, Value: &Map{Items: apiKeys}}}}, nil
 	case yaml3.ScalarNode:
 		var apiKeys openAPIKeys
 		description, isPresent := h.getDescriptionFromNode(key)
@@ -312,8 +302,7 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 		}
 
 		sort.Sort(apiKeys)
-		mi := &MapItem{Key: key.Value, Value: &Map{Items: apiKeys}}
-		return &Map{Items: []*MapItem{mi}}, nil
+		return &Map{Items: []*MapItem{&MapItem{Key: key.Value, Value: &Map{Items: apiKeys}}}}, nil
 	case yaml3.AliasNode:
 		return h.calculateProperties(key, value.Alias)
 	default:
