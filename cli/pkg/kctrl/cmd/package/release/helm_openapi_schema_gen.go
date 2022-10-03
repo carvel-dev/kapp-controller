@@ -20,21 +20,21 @@ import (
 
 // keys used when generating an OpenAPI Document
 const (
-	typeProp        = "type"
-	formatProp      = "format"
-	descriptionProp = "description"
-	itemsProp       = "items"
-	propertiesProp  = "properties"
-	defaultProp     = "default"
+	typeKey         = "type"
+	formatKey      = "format"
+	descriptionKey = "description"
+	itemsKey      = "items"
+	propertiesKey = "properties"
+	defaultKey    = "default"
 )
 
 var propOrder = map[string]int{
-	typeProp:        1,
-	formatProp:      2,
-	descriptionProp: 3,
-	itemsProp:       4,
-	propertiesProp:  5,
-	defaultProp:     6,
+	typeKey:        1,
+	formatKey:      2,
+	descriptionKey: 3,
+	itemsKey:       4,
+	propertiesKey:  5,
+	defaultKey:     6,
 }
 
 const (
@@ -177,25 +177,25 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 		var apiKeys openAPIKeys
 		description, isPresent := h.getDescriptionFromNode(key)
 		if isPresent {
-			apiKeys = append(apiKeys, &MapItem{Key: descriptionProp, Value: description})
+			apiKeys = append(apiKeys, &MapItem{Key: descriptionKey, Value: description})
 		}
-		apiKeys = append(apiKeys, &MapItem{Key: typeProp, Value: objectVal})
+		apiKeys = append(apiKeys, &MapItem{Key: typeKey, Value: objectVal})
 
-		if len(value.Content) == 0 {
-			apiKeys = append(apiKeys, &MapItem{Key: defaultProp, Value: "{}"})
-		} else {
-			var properties openAPIKeys
-			for i := 0; i < len(value.Content); i += 2 {
-				k := value.Content[i]
-				v := value.Content[i+1]
-				calculatedProperties, err := h.calculateProperties(k, v)
-				if err != nil {
-					return nil, err
-				}
-				valueItems := calculatedProperties.Items[0]
-				properties = append(properties, &MapItem{Key: valueItems.Key, Value: valueItems.Value})
+		var properties openAPIKeys
+		for i := 0; i < len(value.Content); i += 2 {
+			k := value.Content[i]
+			v := value.Content[i+1]
+			calculatedProperties, err := h.calculateProperties(k, v)
+			if err != nil {
+				return nil, err
 			}
-			apiKeys = append(apiKeys, &MapItem{Key: propertiesProp, Value: &Map{Items: properties}})
+			valueItems := calculatedProperties.Items[0]
+			properties = append(properties, &MapItem{Key: valueItems.Key, Value: valueItems.Value})
+		}
+		if len(value.Content) == 0 {
+			apiKeys = append(apiKeys, &MapItem{Key: defaultKey, Value: "{}"})
+		} else {
+			apiKeys = append(apiKeys, &MapItem{Key: propertiesKey, Value: &Map{Items: properties}})
 		}
 
 		sort.Sort(apiKeys)
@@ -206,10 +206,10 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 	case yaml3.SequenceNode:
 		var defaultVals []interface{}
 		var apiKeys openAPIKeys
-		apiKeys = append(apiKeys, &MapItem{Key: typeProp, Value: arrayVal})
+		apiKeys = append(apiKeys, &MapItem{Key: typeKey, Value: arrayVal})
 		description, isPresent := h.getDescriptionFromNode(key)
 		if isPresent {
-			apiKeys = append(apiKeys, &MapItem{Key: descriptionProp, Value: description})
+			apiKeys = append(apiKeys, &MapItem{Key: descriptionKey, Value: description})
 		}
 
 		if len(value.Content) != 0 {
@@ -225,7 +225,7 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 						return nil, err
 					}
 					for _, item := range calculatedProperties.Items {
-						if item.Key == propertiesProp {
+						if item.Key == propertiesKey {
 							properties.Items = append(properties.Items, item.Value.(*Map).Items...)
 						}
 					}
@@ -235,7 +235,7 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 						return nil, err
 					}
 					for _, item := range calculatedProperties.Items {
-						if item.Key == itemsProp {
+						if item.Key == itemsKey {
 							properties.Items = append(properties.Items, item.Value.(*Map).Items...)
 						}
 					}
@@ -251,7 +251,7 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 						return nil, err
 					}
 					for _, item := range calculatedProperties.Items {
-						if item.Key == itemsProp {
+						if item.Key == itemsKey {
 							properties.Items = append(properties.Items, item.Value.(*Map).Items...)
 						}
 					}
@@ -264,20 +264,20 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 			switch value.Content[0].Kind {
 			case yaml3.MappingNode, yaml3.AliasNode:
 				itemsProperties = &Map{[]*MapItem{
-					&MapItem{Key: typeProp, Value: "object"},
-					&MapItem{Key: propertiesProp, Value: properties}}}
+					&MapItem{Key: typeKey, Value: "object"},
+					&MapItem{Key: propertiesKey, Value: properties}}}
 			case yaml3.SequenceNode:
 				itemsProperties = &Map{[]*MapItem{
-					&MapItem{Key: typeProp, Value: "array"},
-					&MapItem{Key: defaultProp, Value: "[]"},
-					&MapItem{Key: itemsProp, Value: properties}}}
+					&MapItem{Key: typeKey, Value: "array"},
+					&MapItem{Key: defaultKey, Value: "[]"},
+					&MapItem{Key: itemsKey, Value: properties}}}
 			case yaml3.ScalarNode:
 				itemsProperties = &Map{[]*MapItem{
-					&MapItem{Key: typeProp, Value: h.openAPITypeFor(value.Content[0].Tag, value.Content[0].Value)}}}
+					&MapItem{Key: typeKey, Value: h.openAPITypeFor(value.Content[0].Tag, value.Content[0].Value)}}}
 			}
-			apiKeys = append(apiKeys, &MapItem{Key: itemsProp, Value: itemsProperties})
+			apiKeys = append(apiKeys, &MapItem{Key: itemsKey, Value: itemsProperties})
 		}
-		apiKeys = append(apiKeys, &MapItem{Key: defaultProp, Value: defaultVals})
+		apiKeys = append(apiKeys, &MapItem{Key: defaultKey, Value: defaultVals})
 		sort.Sort(apiKeys)
 		if key == nil {
 			return &Map{Items: apiKeys}, nil
@@ -287,7 +287,7 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 		var apiKeys openAPIKeys
 		description, isPresent := h.getDescriptionFromNode(key)
 		if isPresent {
-			apiKeys = append(apiKeys, &MapItem{Key: descriptionProp, Value: description})
+			apiKeys = append(apiKeys, &MapItem{Key: descriptionKey, Value: description})
 		}
 
 		valType := h.openAPITypeFor(value.Tag, value.Value)
@@ -295,10 +295,10 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 		if err != nil {
 			return nil, err
 		}
-		apiKeys = append(apiKeys, &MapItem{Key: typeProp, Value: valType})
-		apiKeys = append(apiKeys, &MapItem{Key: defaultProp, Value: defaultVal})
+		apiKeys = append(apiKeys, &MapItem{Key: typeKey, Value: valType})
+		apiKeys = append(apiKeys, &MapItem{Key: defaultKey, Value: defaultVal})
 		if value.Tag == floatTag {
-			apiKeys = append(apiKeys, &MapItem{Key: formatProp, Value: floatVal})
+			apiKeys = append(apiKeys, &MapItem{Key: formatKey, Value: floatVal})
 		}
 
 		sort.Sort(apiKeys)
