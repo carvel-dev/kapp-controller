@@ -16,7 +16,7 @@ assignees: ''
     - [ ] [Check if Update Homebrew](https://hackmd.io/uVpvITUuR4Cbwzkzb7MEpQ?view#Update-Homebrew)
     - [ ] [Check if Update Website Installation Script](https://hackmd.io/uVpvITUuR4Cbwzkzb7MEpQ?view#Update-Website-Installation-Script)
     - [ ] [Check Github Action](https://hackmd.io/uVpvITUuR4Cbwzkzb7MEpQ?view#Update-Github-Action)
-- [ ] Update Documentation by [generating a new docs version](#Generate-new-docs-version)
+- [ ] Update Documentation by [generating a new docs version](https://hackmd.io/uVpvITUuR4Cbwzkzb7MEpQ?view#Generate-new-docs-version)
 - [ ] [Push any artifacts to a registry](https://hackmd.io/uVpvITUuR4Cbwzkzb7MEpQ?view#Push-OCI-Images-to-Registry)
 - [ ] [Communicate in Slack](https://hackmd.io/uVpvITUuR4Cbwzkzb7MEpQ?view#Communicate-in-Slack)
 - [ ] Communicate to the Carvel India team so they can update the release notes.
@@ -45,5 +45,5 @@ assignees: ''
     - [ ] Make the necessary fixes / cherry-picks.
     - [ ] `git push origin v0.38.<next-patch-version>`.
     - [ ] Make a PR.
-    - [ ] Once approved, merge the changes back to the `v0.38.x` branch and `git push` the branch and delete your branch.
+    - [ ] Once approved, merge the changes back to the `v0.38.x` branch and `git push` the branch and delete your temporary branch used in the PR.
     - [ ] To Release: follow the instructions FROM THE BRANCH YOU ARE UPDATING at `docs/dev.md#release` in the repository. These will contain the relevant steps at each point of time in the project's history, e.g when updating `v0.25.x` the url will look like: https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.25.x/docs/dev.md#release
