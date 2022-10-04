@@ -1,7 +1,7 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package release
+package release_test
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/release"
 	"sigs.k8s.io/yaml"
 )
 
@@ -174,7 +175,7 @@ type: object
 			fileName := "values.yaml"
 			err = createFile(filepath.Join(dirName, fileName), []byte(test.input))
 			require.NoError(t, err)
-			valuesSchema, err := NewHelmValuesSchemaGen("tmp").Schema()
+			valuesSchema, err := release.NewHelmValuesSchemaGen("tmp").Schema()
 			output, err := yaml.JSONToYAML(valuesSchema.OpenAPIv3.Raw)
 			require.Equal(t, test.want, string(output), "Expected valuesSchema to match")
 		})
@@ -189,7 +190,7 @@ func TestHelmValuesSchemaGen_Schema_EmptyFile(t *testing.T) {
 	fileName := "values.yaml"
 	err = createFile(filepath.Join(dirName, fileName), []byte(""))
 	require.NoError(t, err)
-	valuesSchema, err := NewHelmValuesSchemaGen("tmp").Schema()
+	valuesSchema, err := release.NewHelmValuesSchemaGen("tmp").Schema()
 	require.Equal(t, 0, len(valuesSchema.OpenAPIv3.Raw), "Expected valuesSchema.OpenAPIv3.Raw to be empty")
 }
 
@@ -199,7 +200,7 @@ func TestHelmValuesSchemaGen_Schema_File_Not_Present(t *testing.T) {
 	dirName := "tmp"
 	err := createDir(dirName)
 	require.NoError(t, err)
-	valuesSchema, err := NewHelmValuesSchemaGen("tmp").Schema()
+	valuesSchema, err := release.NewHelmValuesSchemaGen("tmp").Schema()
 	require.Equal(t, 0, len(valuesSchema.OpenAPIv3.Raw), "Expected valuesSchema.OpenAPIv3.Raw to be empty")
 }
 
