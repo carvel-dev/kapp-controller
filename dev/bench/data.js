@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1664989983035,
+  "lastUpdate": 1664990013641,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -6753,6 +6753,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6457589339,
             "unit": "ns/op\t         4.269 DeleteSeconds\t         2.131 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "110162484be8dc0327d0825b3e47a77543c2a0b5",
+          "message": "Merge pull request #915 from vmware-tanzu/nh-add-release-checklist\n\nAdd release checklist Issue Template",
+          "timestamp": "2022-10-05T10:37:37-06:00",
+          "tree_id": "18213a7a60f173d20dd8f858576f0d744e4e14ac",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/110162484be8dc0327d0825b3e47a77543c2a0b5"
+        },
+        "date": 1664990012223,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 38717397096,
+            "unit": "ns/op\t        19.74 DeleteSeconds\t        18.87 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8852140157,
+            "unit": "ns/op\t         4.485 DeleteSeconds\t         4.303 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 7747934661,
+            "unit": "ns/op\t         4.442 DeleteSeconds\t         3.244 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
