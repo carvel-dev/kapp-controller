@@ -1,7 +1,7 @@
 apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
-  name: simple-app
+  name: simple-ap2
   namespace: default
 spec:
   serviceAccountName: default-ns-sa
