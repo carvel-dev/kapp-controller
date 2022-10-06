@@ -22,9 +22,8 @@ spec:
               - '-'
       export:
       - imgpkgBundle:
-          image: ghcr.io/vmware-tanzu/carvel-kapp-controller
+          image: ysethiya/kappctrltest
           useKbldImagesLock: true
         includePaths:
         - config
         - config-release
-        
