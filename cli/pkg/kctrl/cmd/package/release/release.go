@@ -154,15 +154,18 @@ func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild c
 }
 
 func generateValuesSchema(pkgBuild cmdpkgbuild.PackageBuild) (*kcdatav1alpha1.ValuesSchema, error) {
-	var yttPaths []string
-	for _, templateStage := range pkgBuild.Spec.Template.Spec.App.Spec.Template {
-		if templateStage.HelmTemplate != nil {
+	if pkgBuild.Spec.Template.Spec.App.Spec.Template != nil{
+		// As of today, PackageInstall values file is applicable only for the first templating step.
+		// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/pkg/packageinstall/app.go#L103
+		templateStage := pkgBuild.Spec.Template.Spec.App.Spec.Template[0]
+		switch {
+		case templateStage.HelmTemplate != nil:
 			return NewHelmValuesSchemaGen(templateStage.HelmTemplate.Path).Schema()
-		} else if templateStage.Ytt != nil {
-			yttPaths = append(yttPaths, templateStage.Ytt.Paths...)
+		case templateStage.Ytt != nil:
+				return NewValuesSchemaGen(templateStage.Ytt.Paths).Schema()
 		}
 	}
-	return NewValuesSchemaGen(yttPaths).Schema()
+	return nil, nil
 }
 
 func (o *ReleaseOptions) loadExportData(pkgBuild *cmdpkgbuild.PackageBuild) error {
