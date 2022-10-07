@@ -110,18 +110,20 @@ func (h HelmValuesSchemaGen) Schema() (*kcdatav1alpha1.ValuesSchema, error) {
 			OpenAPIv3: runtime.RawExtension{Raw: nil},
 		}, nil
 	}
+
 	if document.Kind != yaml3.DocumentNode {
 		return nil, fmt.Errorf("invalid node kind supplied: %d", document.Kind)
 	}
 	if document.Content[0].Kind != yaml3.MappingNode {
 		return nil, fmt.Errorf("values file must resolve to a map (was %d)", document.Content[0].Kind)
 	}
+
 	openAPIProperties, err := h.calculateProperties(nil, document.Content[0])
 	if err != nil {
 		return nil, err
 	}
 
-	bytes, err := yaml2.Marshal(h.convertToYAML(openAPIProperties))
+	bytes, err := yaml2.Marshal(h.toYAML(openAPIProperties))
 	if err != nil {
 		return nil, err
 	}
@@ -154,14 +156,14 @@ func (h HelmValuesSchemaGen) readValuesFile() ([]byte, error) {
 	return fileData, nil
 }
 
-func (h HelmValuesSchemaGen) convertToYAML(val interface{}) interface{} {
+func (h HelmValuesSchemaGen) toYAML(val interface{}) interface{} {
 	switch typedVal := val.(type) {
 	case *Map:
 		result := yaml2.MapSlice{}
 		typedVal.Iterate(func(k string, v interface{}) {
 			result = append(result, yaml2.MapItem{
 				Key:   k,
-				Value: h.convertToYAML(v),
+				Value: h.toYAML(v),
 			})
 		})
 		return result

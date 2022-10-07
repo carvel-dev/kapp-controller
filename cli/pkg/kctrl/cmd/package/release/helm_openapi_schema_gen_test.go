@@ -4,7 +4,6 @@
 package release_test
 
 import (
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -170,10 +169,10 @@ type: object
 		t.Run(test.name, func(t *testing.T) {
 			defer cleanup()
 			dirName := "tmp"
-			err := createDir(dirName)
+			err := os.Mkdir(dirName, fs.ModePerm)
 			require.NoError(t, err)
 			fileName := "values.yaml"
-			err = createFile(filepath.Join(dirName, fileName), []byte(test.input))
+			err = os.WriteFile(filepath.Join(dirName, fileName), []byte(test.input), fs.ModePerm)
 			require.NoError(t, err)
 			valuesSchema, err := release.NewHelmValuesSchemaGen("tmp").Schema()
 			output, err := yaml.JSONToYAML(valuesSchema.OpenAPIv3.Raw)
@@ -185,10 +184,10 @@ type: object
 func TestHelmValuesSchemaGen_Schema_EmptyFile(t *testing.T) {
 	defer cleanup()
 	dirName := "tmp"
-	err := createDir(dirName)
+	err := os.Mkdir(dirName, fs.ModePerm)
 	require.NoError(t, err)
 	fileName := "values.yaml"
-	err = createFile(filepath.Join(dirName, fileName), []byte(""))
+	err = os.WriteFile(filepath.Join(dirName, fileName), []byte(""), fs.ModePerm)
 	require.NoError(t, err)
 	valuesSchema, err := release.NewHelmValuesSchemaGen("tmp").Schema()
 	require.Equal(t, 0, len(valuesSchema.OpenAPIv3.Raw), "Expected valuesSchema.OpenAPIv3.Raw to be empty")
@@ -198,24 +197,8 @@ func TestHelmValuesSchemaGen_Schema_File_Not_Present(t *testing.T) {
 	defer cleanup()
 	cleanup()
 	dirName := "tmp"
-	err := createDir(dirName)
+	err := os.Mkdir(dirName, fs.ModePerm)
 	require.NoError(t, err)
 	valuesSchema, err := release.NewHelmValuesSchemaGen("tmp").Schema()
 	require.Equal(t, 0, len(valuesSchema.OpenAPIv3.Raw), "Expected valuesSchema.OpenAPIv3.Raw to be empty")
-}
-
-func createDir(dirName string) error {
-	err := os.Mkdir(dirName, fs.ModePerm)
-	if err != nil {
-		return fmt.Errorf("unable to create %s directory: %s", dirName, err.Error())
-	}
-	return nil
-}
-
-func createFile(filePath string, fileData []byte) error {
-	err := os.WriteFile(filePath, fileData, fs.ModePerm)
-	if err != nil {
-		return fmt.Errorf("unable to create %s file: %s", fileData, err.Error())
-	}
-	return nil
 }
