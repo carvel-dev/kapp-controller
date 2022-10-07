@@ -173,30 +173,28 @@ func (h HelmValuesSchemaGen) toYAML(val interface{}) interface{} {
 }
 
 func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.Node) (*Map, error) {
+	var apiKeys []*MapItem
+	description, isPresent := h.getDescriptionFromNode(key)
+	if isPresent {
+		apiKeys = append(apiKeys, &MapItem{Key: descriptionKey, Value: description})
+	}
+
 	switch value.Kind {
 	case yaml3.MappingNode:
-		var apiKeys []*MapItem
-		description, isPresent := h.getDescriptionFromNode(key)
-		if isPresent {
-			apiKeys = append(apiKeys, &MapItem{Key: descriptionKey, Value: description})
-		}
+		var properties []*MapItem
 		apiKeys = append(apiKeys, &MapItem{Key: typeKey, Value: objectVal})
 
-		var properties []*MapItem
 		for i := 0; i < len(value.Content); i += 2 {
-			k := value.Content[i]
-			v := value.Content[i+1]
-			calculatedProperties, err := h.calculateProperties(k, v)
+			calculatedProperties, err := h.calculateProperties(value.Content[i], value.Content[i+1])
 			if err != nil {
 				return nil, err
 			}
-			valueItems := calculatedProperties.Items[0]
-			properties = append(properties, &MapItem{Key: valueItems.Key, Value: valueItems.Value})
+			properties = append(properties, &MapItem{Key: calculatedProperties.Items[0].Key, Value: calculatedProperties.Items[0].Value})
 		}
-		if len(value.Content) == 0 {
-			apiKeys = append(apiKeys, &MapItem{Key: defaultKey, Value: "{}"})
-		} else {
+		if len(properties) > 0 {
 			apiKeys = append(apiKeys, &MapItem{Key: propertiesKey, Value: &Map{Items: properties}})
+		} else {
+			apiKeys = append(apiKeys, &MapItem{Key: defaultKey, Value: "{}"})
 		}
 
 		sort.Sort(byKey(apiKeys))
@@ -206,14 +204,9 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 		return &Map{Items: []*MapItem{&MapItem{Key: key.Value, Value: &Map{Items: apiKeys}}}}, nil
 	case yaml3.SequenceNode:
 		var defaultVals []interface{}
-		var apiKeys []*MapItem
-		apiKeys = append(apiKeys, &MapItem{Key: typeKey, Value: arrayVal})
-		description, isPresent := h.getDescriptionFromNode(key)
-		if isPresent {
-			apiKeys = append(apiKeys, &MapItem{Key: descriptionKey, Value: description})
-		}
-
 		properties := &Map{[]*MapItem{}}
+		apiKeys = append(apiKeys, &MapItem{Key: typeKey, Value: arrayVal})
+
 		for _, v := range value.Content {
 			if len(v.Content) > 0 && len(v.Content[0].HeadComment) == 0 {
 				v.Content[0].HeadComment = v.HeadComment
@@ -285,12 +278,6 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 		}
 		return &Map{Items: []*MapItem{&MapItem{Key: key.Value, Value: &Map{Items: apiKeys}}}}, nil
 	case yaml3.ScalarNode:
-		var apiKeys []*MapItem
-		description, isPresent := h.getDescriptionFromNode(key)
-		if isPresent {
-			apiKeys = append(apiKeys, &MapItem{Key: descriptionKey, Value: description})
-		}
-
 		defaultVal, err := h.getDefaultValue(value.Tag, value.Value)
 		if err != nil {
 			return nil, err
