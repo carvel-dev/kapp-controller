@@ -58,7 +58,7 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 	cmd.Flags().StringVar(&o.outputLocation, "copy-to", defaultArtifactDir, "Output location for artifacts")
 	cmd.Flags().StringVar(&o.repoOutputLocation, "repo-output", "", "Output location for artifacts in repository bundle format")
 	cmd.Flags().BoolVar(&o.debug, "debug", false, "Print verbose debug output")
-	cmd.Flags().BoolVar(&o.generateOpenAPISchema, "generate-openapi-schema", true, "Generates openapi schema for ytt and helm templated files and add it to package.yml")
+	cmd.Flags().BoolVar(&o.generateOpenAPISchema, "openapi-schema", true, "Generates openapi schema for ytt and helm templated files and add it to package.yml")
 
 	return cmd
 }

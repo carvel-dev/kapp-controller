@@ -1048,7 +1048,6 @@ func (p promptOutput) WaitFor(text string) {
 }
 
 func TestE2EInitAndReleaseCaseDisableOpenAPISchemaGeneration(t *testing.T) {
-
 	input := E2EAuthoringTestCase{
 		Name: "Disable OpenAPI Schema generation while releasing the package",
 		InitInteraction: Interaction{
