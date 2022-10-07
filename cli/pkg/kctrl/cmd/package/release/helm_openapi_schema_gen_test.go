@@ -163,6 +163,53 @@ containers:
     type: object
 type: object
 `},
+  		{
+			name: "Alias Node",
+			input: `
+# alias Example
+aliasExample: &aliasEx
+  # foo bar example
+  foo: bar
+
+# global Example
+global:
+  - *aliasEx
+
+# alaisex as key, not an aliasNode here
+aliasEx:
+  # foo1bar1 Example
+  foo1: bar1
+`,
+			want: `properties:
+  aliasEx:
+    description: alaisex as key, not an aliasNode here
+    properties:
+      foo1:
+        default: bar1
+        description: bar1 Example
+        type: string
+    type: object
+  aliasExample:
+    description: alias Example
+    properties:
+      foo:
+        default: bar
+        description: bar example
+        type: string
+    type: object
+  global:
+    default: []
+    description: Example
+    items:
+      properties:
+        foo:
+          default: bar
+          description: bar example
+          type: string
+      type: object
+    type: array
+type: object
+`},
 	}
 
 	for _, test := range tests {
