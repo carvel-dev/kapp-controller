@@ -4,6 +4,7 @@
 package init
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -106,6 +107,7 @@ func (t *TemplateConfiguration) getHelmAppTemplate(fetchSource string) (v1alpha1
 		if err != nil {
 			return v1alpha1.AppTemplate{}, err
 		}
+		fmt.Println(vendirConfig.Config)
 		pathFromVendir = vendirConfig.Contents()[0].IncludePaths[0]
 		// Remove all the trailing `/` from the string
 		pathFromVendir = strings.TrimRight(pathFromVendir, "/")

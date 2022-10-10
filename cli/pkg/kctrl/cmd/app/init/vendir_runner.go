@@ -20,8 +20,16 @@ func NewVendirRunner(ui cmdcore.AuthoringUI) VendirRunner {
 }
 
 func (r VendirRunner) RunSync() error {
+	_, err := os.Stat(VendirFileName)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	if os.IsNotExist(err) {
+		return nil
+	}
+
 	r.ui.PrintInformationalText("We will use vendir to fetch the data from the source to the local directory. Vendir allows us to declaratively state what should be in a directory and sync data sources into it. All the information entered above has been persisted into a vendir.yml file.")
-	err := r.printVendirFile()
+	err = r.printVendirFile()
 	if err != nil {
 		return err
 	}
@@ -33,9 +41,8 @@ func (r VendirRunner) RunSync() error {
 }
 
 func (r VendirRunner) printVendirFile() error {
-	vendirFileLocation := VendirFileName
-	r.ui.PrintActionableText(fmt.Sprintf("Printing %s \n", vendirFileLocation))
-	err := r.printFile(vendirFileLocation)
+	r.ui.PrintActionableText(fmt.Sprintf("Printing %s \n", VendirFileName))
+	err := r.printFile(VendirFileName)
 	if err != nil {
 		return err
 	}
