@@ -63,6 +63,9 @@ func (o *InitOptions) Run() error {
 		}
 	}
 
+	o.ui.PrintInformationalText("\nWelcome! Before we start, do install the latest Carvel suite of tools, specifically ytt, imgpkg, vendir and kbld as these will be used by kctrl.\n")
+	o.ui.PrintHeaderText("\nBasic Information")
+
 	pkgBuild, err := o.newOrExistingPackageBuild()
 	if err != nil {
 		return err
@@ -70,30 +73,14 @@ func (o *InitOptions) Run() error {
 
 	pkg, pkgMetadata, pkgInstall, err := o.newOrExistingPackageResources()
 
-	o.ui.PrintInformationalText("\nWelcome! Before we start, do install the latest Carvel suite of tools, specifically ytt, imgpkg, vendir and kbld as these will be used by kctrl.\n")
-	o.ui.PrintHeaderText("\nBasic Information")
-
 	pkgRefName, err := o.readPackageRefName(pkgMetadata.Name)
 	if err != nil {
 		return err
 	}
 
-	// TODO: @praveenrewar Can this be don any better?
-	pkgMetadata.Name = pkgRefName
-	pkg.Spec.RefName = pkgRefName
-	pkgMetadata.Spec.DisplayName = strings.Split(pkgRefName, ".")[0]
+	o.updateAndDefaultPackageResources(pkgRefName, pkgMetadata, pkg)
 
-	shortDesc := pkgMetadata.Spec.ShortDescription
-	if len(shortDesc) == 0 {
-		pkgMetadata.Spec.ShortDescription = pkgRefName
-	}
-
-	longDesc := pkgMetadata.Spec.LongDescription
-	if len(longDesc) == 0 {
-		pkgMetadata.Spec.LongDescription = pkgRefName
-	}
-
-	err = o.SavePackageResources(pkg, pkgMetadata, pkgInstall)
+	err = o.savePackageResources(pkg, pkgMetadata, pkgInstall)
 	if err != nil {
 		return err
 	}
@@ -140,7 +127,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	err = o.SavePackageResources(pkg, pkgMetadata, pkgInstall)
+	err = o.savePackageResources(pkg, pkgMetadata, pkgInstall)
 	if err != nil {
 		return err
 	}
@@ -226,6 +213,22 @@ func (o *InitOptions) newOrExistingPackageResources() (*v1alpha1.Package,
 	}
 
 	return pkg, pkgMetadata, pkgInstall, nil
+}
+
+func (o *InitOptions) updateAndDefaultPackageResources(pkgRefName string, pkgMetadata *v1alpha1.PackageMetadata, pkg *v1alpha1.Package) {
+	pkgMetadata.Name = pkgRefName
+	pkg.Spec.RefName = pkgRefName
+	pkgMetadata.Spec.DisplayName = strings.Split(pkgRefName, ".")[0]
+
+	shortDesc := pkgMetadata.Spec.ShortDescription
+	if len(shortDesc) == 0 {
+		pkgMetadata.Spec.ShortDescription = pkgRefName
+	}
+
+	longDesc := pkgMetadata.Spec.LongDescription
+	if len(longDesc) == 0 {
+		pkgMetadata.Spec.LongDescription = pkgRefName
+	}
 }
 
 func (o *InitOptions) readPackageRefName(packageMetadataName string) (string, error) {
@@ -316,7 +319,7 @@ func isAppSpecSame(pkg *v1alpha1.Package, pkgBuild *PackageBuild) bool {
 	return reflect.DeepEqual(pkgBuildAppTemplates, pkgAppTemplates) && reflect.DeepEqual(pkgBuildAppDeploys, pkgAppDeploys)
 }
 
-func (o *InitOptions) SavePackageResources(pkg *v1alpha1.Package,
+func (o *InitOptions) savePackageResources(pkg *v1alpha1.Package,
 	pkgMetadata *v1alpha1.PackageMetadata, pkgInstall *pkgv1alpha1.PackageInstall) error {
 	pkgYAML, err := yaml.Marshal(pkg)
 	if err != nil {
