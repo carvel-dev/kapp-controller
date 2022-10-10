@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1664990457631,
+  "lastUpdate": 1665415475596,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -6837,6 +6837,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6479107852,
             "unit": "ns/op\t         4.277 DeleteSeconds\t         2.159 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jryan@pivotal.io",
+            "name": "John S. Ryan",
+            "username": "pivotaljohn"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cd69a5f9e5660fc2679e8f8a39392b702b2bdac7",
+          "message": "Use all component info fields in Downward API example (#892)\n\n* Use all component info fields in Downward API example\r\n\r\n* Add example output for api-versions\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\r\n\r\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\r\nCo-authored-by: John Ryan <jtigger@infosysengr.com>\r\nCo-authored-by: Neil Hickey <nhickey@vmware.com>",
+          "timestamp": "2022-10-10T11:13:57-04:00",
+          "tree_id": "158d5ea6db42263a7fcc4f3d6d89b7d67790b1ce",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/cd69a5f9e5660fc2679e8f8a39392b702b2bdac7"
+        },
+        "date": 1665415474633,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35472509265,
+            "unit": "ns/op\t        17.96 DeleteSeconds\t        17.47 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8485920481,
+            "unit": "ns/op\t         4.281 DeleteSeconds\t         4.164 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6464953680,
+            "unit": "ns/op\t         4.293 DeleteSeconds\t         2.130 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
