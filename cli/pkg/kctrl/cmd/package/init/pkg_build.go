@@ -34,7 +34,11 @@ func (b *PackageBuild) Save() error {
 		return err
 	}
 
-	return appbuild.WriteFile(pkgBuildFileName, content)
+	err = os.WriteFile(pkgBuildFileName, content, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func NewPackageBuildFromFile(filePath string) (*PackageBuild, error) {

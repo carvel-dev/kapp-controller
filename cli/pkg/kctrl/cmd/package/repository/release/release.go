@@ -10,7 +10,6 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	appInit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository/release/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
@@ -184,19 +183,14 @@ func (o *ReleaseOptions) Run() error {
 }
 
 func (o *ReleaseOptions) getPackageRepositoryBuild(pkgRepoBuildFilePath string) (*build.PackageRepoBuild, error) {
-	var packageRepoBuild *build.PackageRepoBuild
-	exists, err := appInit.IsFileExists(pkgRepoBuildFilePath)
-	if err != nil {
-		return nil, err
+
+	_, err := os.Stat(pkgRepoBuildFilePath)
+	if err != nil && !os.IsNotExist(err) {
+		return &build.PackageRepoBuild{}, err
 	}
 
-	if exists {
-		packageRepoBuild, err = o.newPackageRepoBuildFromFile(pkgRepoBuildFilePath)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		packageRepoBuild = &build.PackageRepoBuild{
+	if os.IsNotExist(err) {
+		return &build.PackageRepoBuild{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       build.PkgRepoBuildKind,
 				APIVersion: build.PkgRepoBuildAPIVersion,
@@ -209,8 +203,14 @@ func (o *ReleaseOptions) getPackageRepositoryBuild(pkgRepoBuildFilePath string) 
 					ImgpkgBundle: &build.PackageRepoBuildExportImgpkgBundle{},
 				},
 			},
-		}
+		}, nil
 	}
+
+	packageRepoBuild, err := o.newPackageRepoBuildFromFile(pkgRepoBuildFilePath)
+	if err != nil {
+		return nil, err
+	}
+
 	return packageRepoBuild, nil
 }
 

@@ -18,30 +18,29 @@ func NewVendirConfig(path string) *VendirConfig {
 }
 
 func (c *VendirConfig) Load() error {
-	exists, err := IsFileExists(VendirFileName)
-	if err != nil {
+	_, err := os.Stat(VendirFileName)
+	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
 
-	if exists {
-		content, err := os.ReadFile(c.path)
-		if err != nil {
-			return err
+	if os.IsNotExist(err) {
+		c.Config = &vendirconf.Config{
+			APIVersion: "vendir.k14s.io/v1alpha1",
+			Kind:       "Config",
 		}
-		vendirConfig := vendirconf.Config{}
-		err = yaml.Unmarshal(content, &vendirConfig)
-		if err != nil {
-			return err
-		}
-		c.Config = &vendirConfig
 		return nil
 	}
 
-	c.Config = &vendirconf.Config{
-		APIVersion: "vendir.k14s.io/v1alpha1",
-		Kind:       "Config",
+	content, err := os.ReadFile(c.path)
+	if err != nil {
+		return err
 	}
-
+	vendirConfig := vendirconf.Config{}
+	err = yaml.Unmarshal(content, &vendirConfig)
+	if err != nil {
+		return err
+	}
+	c.Config = &vendirConfig
 	return nil
 }
 

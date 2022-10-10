@@ -142,7 +142,7 @@ func (o *InitOptions) writeAppFile(appBuild *AppBuild) error {
 	if err != nil {
 		return err
 	}
-	err = WriteFile(AppFileName, appContent)
+	err = os.WriteFile(AppFileName, appContent, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -156,23 +156,24 @@ func (o *InitOptions) writeAppFile(appBuild *AppBuild) error {
 
 func (o *InitOptions) generateApp(appBuild *AppBuild) (kcv1alpha1.App, error) {
 	var app kcv1alpha1.App
-	exists, err := IsFileExists(AppFileName)
+	_, err := os.Stat(FileName)
+	if err != nil && !os.IsNotExist(err) {
+		return kcv1alpha1.App{}, err
+	}
+
+	if os.IsNotExist(err) {
+		return o.createAppFromAppBuild(appBuild), nil
+	}
+
+	data, err := os.ReadFile(AppFileName)
+	if err != nil {
+		return kcv1alpha1.App{}, err
+	}
+	err = yaml.Unmarshal(data, &app)
 	if err != nil {
 		return kcv1alpha1.App{}, err
 	}
 
-	if exists {
-		data, err := os.ReadFile(AppFileName)
-		if err != nil {
-			return kcv1alpha1.App{}, err
-		}
-		err = yaml.Unmarshal(data, &app)
-		if err != nil {
-			return kcv1alpha1.App{}, err
-		}
-	} else {
-		app = o.createAppFromAppBuild(appBuild)
-	}
 	return app, nil
 
 }

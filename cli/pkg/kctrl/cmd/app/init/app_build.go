@@ -72,28 +72,34 @@ func (b *AppBuild) Save() error {
 		return err
 	}
 
-	return WriteFile(FileName, content)
+	err = os.WriteFile(FileName, content, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func NewAppBuild() (*AppBuild, error) {
 	var appBuild *AppBuild
-	exists, err := IsFileExists(FileName)
+
+	_, err := os.Stat(FileName)
+	if err != nil && !os.IsNotExist(err) {
+		return &AppBuild{}, err
+	}
+
+	if os.IsNotExist(err) {
+		return NewDefaultAppBuild(), nil
+	}
+
+	appBuild, err = NewAppBuildFromFile(FileName)
 	if err != nil {
 		return &AppBuild{}, err
 	}
 
-	if exists {
-		appBuild, err = NewAppBuildFromFile(FileName)
-		if err != nil {
-			return &AppBuild{}, err
-		}
-
-		// In case user has manually removed the app section from the app-build
-		if appBuild.Spec.App == nil {
-			appBuild.Spec.App = NewDefaultAppTemplateSpec()
-		}
-	} else {
-		appBuild = NewDefaultAppBuild()
+	// In case user has manually removed the app section from the app-build
+	if appBuild.Spec.App == nil {
+		appBuild.Spec.App = NewDefaultAppTemplateSpec()
 	}
 
 	return appBuild, nil
