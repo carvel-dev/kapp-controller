@@ -21,6 +21,8 @@ spec:
               kubernetesVersion: {}
             - name: kcV
               kappControllerVersion: {}
+            - name: k8sApis
+              kubernetesAPIs: {}
       inline:
         paths:
           filename.yaml: |
@@ -37,7 +39,7 @@ spec:
                     env:
                     #@overlay/match by="name"
                     - name: HELLO_MSG
-                      value: #@ "from {} namespace, deployed by kapp-controller v{}, hosted on kubernetes v{}".format(data.values.ns, data.values.kcV, data.values.k8sV)
-  #! sample output: <h1>Hello from default namespace, deployed by kapp-controller v0.40.0+develop, hosted on kubernetes v1.23.3!</h1>
+                      value: #@ "from {} namespace, deployed by kapp-controller v{}, hosted on kubernetes v{}, supporting api-versions {}".format(data.values.ns, data.values.kcV, data.values.k8sV, data.values.k8sApis)
+  #! sample output: <h1>Hello from default namespace, deployed by kapp-controller v0.40.0+develop, hosted on kubernetes v1.23.3, supporting api-versions ["data.packaging.carvel.dev/v1alpha1", "apps/v1"] ...</h1>
   deploy:
   - kapp: {}
