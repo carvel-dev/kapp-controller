@@ -305,13 +305,11 @@ spec:
               description: Version of mongodb-enterprise-operator
               type: string
             watchedResources:
-              default:
-              - mongodb
-              - opsmanagers
-              - mongodbusers
+              default: []
               description: The Custom Resources that will be watched by the Operator.
                 Needs to be changed if only some of the CRDs are installed
               items:
+                default: mongodb
                 type: string
               type: array
           type: object
