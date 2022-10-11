@@ -29,42 +29,38 @@ func TestHelmValuesSchemaGen_Schema_Success(t *testing.T) {
 		{
 			name: "array with different values",
 			input: `
-# arrKeyWithStringValues default value is stringVal1, stringVal2
+# arrKeyWithStringValues default value is stringVal1
 arrKeyWithStringValues:
 - stringVal1
-- stringVal2
-# arrKeyWithIntValues default value is 1, 2
+# arrKeyWithIntValues default value is 1
 arrKeyWithIntValues:
 - 1
-- 2
-# arrKeyWithFloatValues default value is 1.1, 1.2
+# arrKeyWithFloatValues default value is 1.1. 1.2 is ignored
 arrKeyWithFloatValues:
 - 1.1
 - 1.2
 `,
 			want: `properties:
   arrKeyWithFloatValues:
-    default:
-    - 1.1
-    - 1.2
-    description: default value is 1.1, 1.2
+    default: []
+    description: default value is 1.1. 1.2 is ignored
     items:
+      default: 1.1
+      format: float
       type: number
     type: array
   arrKeyWithIntValues:
-    default:
-    - 1
-    - 2
-    description: default value is 1, 2
+    default: []
+    description: default value is 1
     items:
+      default: 1
       type: integer
     type: array
   arrKeyWithStringValues:
-    default:
-    - stringVal1
-    - stringVal2
-    description: default value is stringVal1, stringVal2
+    default: []
+    description: default value is stringVal1
     items:
+      default: stringVal1
       type: string
     type: array
 type: object
@@ -88,10 +84,10 @@ intExample: 3
 `,
 			want: `properties:
   arrExample:
-    default:
-    - arr1
+    default: []
     description: Array example
     items:
+      default: arr1
       type: string
     type: array
   boolExample:
@@ -127,6 +123,7 @@ containers:
   env:
   # key1 example
   - key1: val1
+  env2:
   -
   # key2 example
     key2: val2
@@ -145,6 +142,12 @@ containers:
               default: val1
               description: example
               type: string
+          type: object
+        type: array
+      env2:
+        default: []
+        items:
+          properties:
             key2:
               default: val2
               description: example
@@ -163,7 +166,7 @@ containers:
     type: object
 type: object
 `},
-  		{
+		{
 			name: "Alias Node",
 			input: `
 # alias Example
@@ -214,6 +217,7 @@ type: object
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			cleanup()
 			defer cleanup()
 			dirName := "tmp"
 			err := os.Mkdir(dirName, fs.ModePerm)
@@ -223,12 +227,14 @@ type: object
 			require.NoError(t, err)
 			valuesSchema, err := release.NewHelmValuesSchemaGen("tmp").Schema()
 			output, err := yaml.JSONToYAML(valuesSchema.OpenAPIv3.Raw)
+			require.NoError(t, err)
 			require.Equal(t, test.want, string(output), "Expected valuesSchema to match")
 		})
 	}
 }
 
 func TestHelmValuesSchemaGen_Schema_EmptyFile(t *testing.T) {
+	cleanup()
 	defer cleanup()
 	dirName := "tmp"
 	err := os.Mkdir(dirName, fs.ModePerm)
@@ -237,15 +243,18 @@ func TestHelmValuesSchemaGen_Schema_EmptyFile(t *testing.T) {
 	err = os.WriteFile(filepath.Join(dirName, fileName), []byte(""), fs.ModePerm)
 	require.NoError(t, err)
 	valuesSchema, err := release.NewHelmValuesSchemaGen("tmp").Schema()
+	require.NoError(t, err)
 	require.Equal(t, 0, len(valuesSchema.OpenAPIv3.Raw), "Expected valuesSchema.OpenAPIv3.Raw to be empty")
 }
 
 func TestHelmValuesSchemaGen_Schema_File_Not_Present(t *testing.T) {
+	cleanup()
 	defer cleanup()
 	cleanup()
 	dirName := "tmp"
 	err := os.Mkdir(dirName, fs.ModePerm)
 	require.NoError(t, err)
 	valuesSchema, err := release.NewHelmValuesSchemaGen("tmp").Schema()
+	require.NoError(t, err)
 	require.Equal(t, 0, len(valuesSchema.OpenAPIv3.Raw), "Expected valuesSchema.OpenAPIv3.Raw to be empty")
 }

@@ -183,11 +183,13 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 			apiKeys = append(apiKeys, &MapItem{Key: defaultKey, Value: "{}"})
 		}
 	case yaml3.SequenceNode:
-		var defaultVals []interface{}
-		properties := &Map{[]*MapItem{}}
 		apiKeys = append(apiKeys, &MapItem{Key: typeKey, Value: arrayVal})
+		apiKeys = append(apiKeys, &MapItem{Key: defaultKey, Value: []interface{}{}})
 
-		for _, v := range value.Content {
+		if len(value.Content) > 0 {
+			// For now, we have decided to add only the first item if it is an array.
+			// Based on feedback, we will revisit and enhance the implementation.
+			v := value.Content[0]
 			if len(v.Content) > 0 && v.Content[0].HeadComment == "" {
 				v.Content[0].HeadComment = v.HeadComment
 			}
@@ -195,49 +197,12 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 			if v.Kind == yaml3.AliasNode {
 				val = v.Alias
 			}
-			switch v.Kind {
-			case yaml3.MappingNode, yaml3.SequenceNode, yaml3.AliasNode:
-				calculatedProperties, err := h.calculateProperties(nil, val)
-				if err != nil {
-					return nil, err
-				}
-				for _, item := range calculatedProperties.Items {
-					// MappingNode -> propertiesKey, SequenceNode -> itemsKey
-					// propertiesKey and itemsKey are mutually exclusive.
-					if item.Key == propertiesKey || item.Key == itemsKey{
-						properties.Items = append(properties.Items, item.Value.(*Map).Items...)
-					}
-				}
-			case yaml3.ScalarNode:
-				val, err := h.getDefaultValue(v.Tag, v.Value)
-				if err != nil {
-					return nil, err
-				}
-				defaultVals = append(defaultVals, val)
-			default:
-				return nil, fmt.Errorf("Unrecognized type %T", v.Kind)
+			calculatedProperties, err := h.calculateProperties(nil, val)
+			if err != nil {
+				return nil, err
 			}
+			apiKeys = append(apiKeys, &MapItem{Key: itemsKey, Value: calculatedProperties})
 		}
-
-		if len(value.Content) > 0 {
-			var itemsProperties *Map
-			switch value.Content[0].Kind {
-			case yaml3.MappingNode, yaml3.AliasNode:
-				itemsProperties = &Map{[]*MapItem{
-					&MapItem{Key: typeKey, Value: "object"},
-					&MapItem{Key: propertiesKey, Value: properties}}}
-			case yaml3.SequenceNode:
-				itemsProperties = &Map{[]*MapItem{
-					&MapItem{Key: typeKey, Value: "array"},
-					&MapItem{Key: defaultKey, Value: "[]"},
-					&MapItem{Key: itemsKey, Value: properties}}}
-			case yaml3.ScalarNode:
-				itemsProperties = &Map{[]*MapItem{
-					&MapItem{Key: typeKey, Value: h.openAPIType(value.Content[0].Tag, value.Content[0].Value)}}}
-			}
-			apiKeys = append(apiKeys, &MapItem{Key: itemsKey, Value: itemsProperties})
-		}
-		apiKeys = append(apiKeys, &MapItem{Key: defaultKey, Value: defaultVals})
 	case yaml3.ScalarNode:
 		defaultVal, err := h.getDefaultValue(value.Tag, value.Value)
 		if err != nil {
@@ -254,7 +219,7 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 		return nil, fmt.Errorf("Unrecognized type %T", value.Kind)
 	}
 
-	sort.Slice(apiKeys, func (i, j int) bool {
+	sort.Slice(apiKeys, func(i, j int) bool {
 		return keyOrder[apiKeys[i].Key] < keyOrder[apiKeys[j].Key]
 	})
 	if key == nil {
