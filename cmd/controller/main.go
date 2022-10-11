@@ -48,11 +48,6 @@ func runLeaderElection(lock *resourcelock.LeaseLock, ctx context.Context, id str
 		RetryPeriod:     2 * time.Second,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(c context.Context) {
-				log := zap.New(zap.UseDevMode(false)).WithName("kc")
-				logf.SetLogger(log)
-				klog.SetLogger(log)
-				mainLog := log.WithName("main")
-				mainLog.Info("kapp-controller", "version", Version)
 				err := Run(ctrlOpts, log.WithName("controller"))
 				if err != nil {
 					mainLog.Error(err, "Exited run with error")
@@ -93,7 +88,11 @@ func main() {
 		sidecarexecMain()
 		return
 	}
-
+	log := zap.New(zap.UseDevMode(false)).WithName("kc")
+	logf.SetLogger(log)
+	klog.SetLogger(log)
+	mainLog := log.WithName("main")
+	mainLog.Info("kapp-controller", "version", Version)
 	var (
 		leaseLockName      string
 		leaseLockNamespace string
