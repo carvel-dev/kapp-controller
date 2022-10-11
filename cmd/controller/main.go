@@ -4,10 +4,16 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/leaderelection"
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/klog/v2"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -15,6 +21,57 @@ import (
 
 // Version of kapp-controller is set via ldflags at build-time from the most recent git tag; see hack/build.sh
 var Version = "develop"
+
+var (
+	client *clientset.Clientset
+)
+
+func getNewLock(lockname, podname, namespace string) *resourcelock.LeaseLock {
+	return &resourcelock.LeaseLock{
+		LeaseMeta: metav1.ObjectMeta{
+			Name:      lockname,
+			Namespace: namespace,
+		},
+		Client: client.CoordinationV1(),
+		LockConfig: resourcelock.ResourceLockConfig{
+			Identity: podname,
+		},
+	}
+}
+
+func runLeaderElection(lock *resourcelock.LeaseLock, ctx context.Context, id string, ctrlOpts Options) {
+	leaderelection.RunOrDie(ctx, leaderelection.LeaderElectionConfig{
+		Lock:            lock,
+		ReleaseOnCancel: true,
+		LeaseDuration:   15 * time.Second,
+		RenewDeadline:   10 * time.Second,
+		RetryPeriod:     2 * time.Second,
+		Callbacks: leaderelection.LeaderCallbacks{
+			OnStartedLeading: func(c context.Context) {
+				log := zap.New(zap.UseDevMode(false)).WithName("kc")
+				logf.SetLogger(log)
+				klog.SetLogger(log)
+				mainLog := log.WithName("main")
+				mainLog.Info("kapp-controller", "version", Version)
+				err := Run(ctrlOpts, log.WithName("controller"))
+				if err != nil {
+					mainLog.Error(err, "Exited run with error")
+					os.Exit(1)
+				}
+			},
+			OnStoppedLeading: func() {
+				klog.Info("no longer the leader, staying inactive.")
+			},
+			OnNewLeader: func(current_id string) {
+				if current_id == id {
+					klog.Info("still the leader!")
+					return
+				}
+				klog.Info("new leader is %s", current_id)
+			},
+		},
+	})
+}
 
 func main() {
 	ctrlOpts := Options{}
@@ -37,18 +94,23 @@ func main() {
 		return
 	}
 
-	log := zap.New(zap.UseDevMode(false)).WithName("kc")
-	logf.SetLogger(log)
-	klog.SetLogger(log)
+	var (
+		leaseLockName      string
+		leaseLockNamespace string
+		podName            = os.Getenv("POD_NAME")
+	)
+	config, err := rest.InClusterConfig()
+	client = clientset.NewForConfigOrDie(config)
 
-	mainLog := log.WithName("main")
-	mainLog.Info("kapp-controller", "version", Version)
-
-	err := Run(ctrlOpts, log.WithName("controller"))
 	if err != nil {
-		mainLog.Error(err, "Exited run with error")
-		os.Exit(1)
+		klog.Fatalf("failed to get kubeconfig")
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	lock := getNewLock(leaseLockName, podName, leaseLockNamespace)
+	runLeaderElection(lock, ctx, podName, ctrlOpts)
 
 	os.Exit(0)
 }
