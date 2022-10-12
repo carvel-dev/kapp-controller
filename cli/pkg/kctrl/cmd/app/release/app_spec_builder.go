@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	regname "github.com/google/go-containerregistry/pkg/name"
 	appinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
@@ -33,6 +34,7 @@ type AppSpecBuilderOpts struct {
 	BuildExport   []appinit.Export
 	BundleImage   string
 	Debug         bool
+	Tag           string
 }
 
 func NewAppSpecBuilder(depsFactory cmdcore.DepsFactory, logger logger.Logger, ui cmdcore.AuthoringUI, opts AppSpecBuilderOpts) *AppSpecBuilder {
@@ -96,12 +98,23 @@ func (b *AppSpecBuilder) Build() (kcv1alpha1.AppSpec, error) {
 
 	bundleURL := ""
 	useKbldImagesLock := false
+	var tag string
+	if b.opts.Tag != "" {
+		tag = b.opts.Tag
+	} else {
+		tag = fmt.Sprintf("build-%d", time.Now().Unix())
+	}
 	for _, exportStep := range b.opts.BuildExport {
 		switch {
 		case exportStep.ImgpkgBundle != nil:
 			useKbldImagesLock = exportStep.ImgpkgBundle.UseKbldImagesLock
+			bundlePath := fmt.Sprintf("%s:%s", exportStep.ImgpkgBundle.Image, tag)
+			_, err := regname.NewTag(bundlePath, regname.WeakValidation)
+			if err != nil {
+				return kcv1alpha1.AppSpec{}, err
+			}
 			imgpkgRunner := ImgpkgRunner{
-				BundlePath:        fmt.Sprintf("%s:build-%d", exportStep.ImgpkgBundle.Image, time.Now().Unix()),
+				BundlePath:        bundlePath,
 				Paths:             exportStep.IncludePaths,
 				UseKbldImagesLock: exportStep.ImgpkgBundle.UseKbldImagesLock,
 				ImgLockFilepath:   tempImgpkgLockPath,

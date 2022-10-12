@@ -21,6 +21,7 @@ type ImgpkgRunner struct {
 	UseKbldImagesLock bool
 	ImgLockFilepath   string
 	UI                cmdcore.AuthoringUI
+	Tag               string
 }
 
 func (r ImgpkgRunner) Run() (string, error) {

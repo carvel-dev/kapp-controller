@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -808,4 +809,126 @@ func (p promptOutput) WaitFor(text string) {
 		fmt.Printf("Timed out waiting for text '%s'", text)
 		p.t.Fail()
 	}
+}
+
+func TestE2EInitAndReleaseByAddingTag(t *testing.T) {
+	input := E2EAuthoringTestCase{
+		Name: "Add tag for imgpkg bundle while releasing the package",
+		InitInteraction: Interaction{
+			Prompts: []string{
+				"Enter the package reference name",
+				"Enter source",
+				"Enter Git URL",
+				"Enter Git Reference",
+				"Enter the paths which contain Kubernetes manifests",
+			},
+			Inputs: []string{
+				"testpackage.corp.dev",
+				"4",
+				"https://github.com/vmware-tanzu/carvel-kapp",
+				"origin/develop",
+				"examples/simple-app-example/config-1.yml",
+			},
+		},
+		ExpectedPackage: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.1.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - imgpkgBundle:
+      template:
+      - ytt:
+          paths:
+          - upstream
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/images.yml
+  valuesSchema:
+    openAPIv3:
+      default: null
+      nullable: true
+  version: 1.0.0
+`,
+	}
+	env := BuildEnv(t)
+	logger := Logger{}
+	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+	kappCli := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+
+	cleanUp := func() {
+		os.RemoveAll(workingDir)
+	}
+	cleanUp()
+	defer cleanUp()
+
+	err := os.Mkdir(workingDir, os.ModePerm)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const pkgDir = "./carvel-artifacts/packages/testpackage.corp.dev/"
+	promptOutput := newPromptOutput(t)
+	go input.InitInteraction.Run(promptOutput)
+
+	logger.Section(fmt.Sprintf("%s: Package init", input.Name), func() {
+		kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+
+		// Error if upstream folder doesn't exist
+		_, err = os.Stat(filepath.Join(workingDir, "upstream"))
+		require.NoError(t, err)
+	})
+
+	logger.Section(fmt.Sprintf("%s: Package release", input.Name), func() {
+		releaseInteraction := Interaction{
+			Prompts: []string{"Enter the registry URL"},
+			Inputs:  []string{env.Image},
+		}
+
+		go releaseInteraction.Run(promptOutput)
+		tag := "1.0.0"
+		kappCtrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir, "--tag", tag},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+
+		// Below key's values will be changed during every run, hence adding these keys to be ignored
+		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image:"}
+
+		// Verify Package artifact
+		out, err := readFile(pkgDir + "package.yml")
+		require.NoErrorf(t, err, "Expected to read package.yml")
+		expectedPackage := strings.TrimSpace(replaceSpaces(input.ExpectedPackage))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedPackage, out, "Expected Package to match")
+
+		// Verify imgpkg pull is successful
+		cmd := exec.Command("imgpkg", []string{"pull", "-b", fmt.Sprintf("%s:%s", env.Image, tag), "-o", filepath.Join(workingDir, "tmp")}...)
+		err = cmd.Run()
+		require.NoErrorf(t, err, "Expected imgpkg pull to succeed")
+	})
+
+	logger.Section(fmt.Sprintf("%s: Testing and installing created Package", input.Name), func() {
+		cleanUpInstalledPkg := func() {
+			kappCli.RunWithOpts([]string{"delete", "-a", "test-package"},
+				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+			kappCtrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
+				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+		}
+		defer cleanUpInstalledPkg()
+
+		kappCli.RunWithOpts([]string{"deploy", "-a", "test-package", "-f", filepath.Join(workingDir, pkgDir), "-c"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+		kappCtrl.RunWithOpts([]string{"pkg", "available", "list"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+		kappCtrl.RunWithOpts([]string{"pkg", "install", "-p", "testpackage.corp.dev", "-i", "test", "--version", "1.0.0"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+	})
 }
