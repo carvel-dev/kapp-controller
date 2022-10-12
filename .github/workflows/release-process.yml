@@ -48,8 +48,8 @@ jobs:
         run: |
           constraintVersion="${{ github.ref_name }}"
           ./cli/kctrl-linux-amd64 pkg release -y -v ${constraintVersion:1} --debug
-          shasum -a 256 ./carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml | tee -a tmp/checksums-formatted.txt
-          shasum -a 256 ./carvel-artifacts/packages/kapp-controller.carvel.dev/metadata.yml | tee -a tmp/checksums-formatted.txt
+          shasum -a 256 ./carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml | tee -a tmp/checksums.txt
+          shasum -a 256 ./carvel-artifacts/packages/kapp-controller.carvel.dev/metadata.yml | tee -a tmp/checksums.txt
 
       - name: Create release draft and upload release yaml
         uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
