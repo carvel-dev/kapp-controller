@@ -60,7 +60,7 @@ type Map struct {
 	Items []*MapItem
 }
 
-func (m *Map) Iterate(iterFunc func(k string, v interface{})) {
+func (m *Map) ForEach(iterFunc func(k string, v interface{})) {
 	for _, item := range m.Items {
 		iterFunc(item.Key, item.Value)
 	}
@@ -146,7 +146,7 @@ func (h HelmValuesSchemaGen) toYAML(val interface{}) interface{} {
 	switch typedVal := val.(type) {
 	case *Map:
 		result := yaml2.MapSlice{}
-		typedVal.Iterate(func(k string, v interface{}) {
+		typedVal.ForEach(func(k string, v interface{}) {
 			result = append(result, yaml2.MapItem{
 				Key:   k,
 				Value: h.toYAML(v),
@@ -187,16 +187,16 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 		apiKeys = append(apiKeys, &MapItem{Key: defaultKey, Value: []interface{}{}})
 
 		if len(value.Content) > 0 {
-			// For now, we have decided to add only the first item if it is an array.
-			// Based on feedback, we will revisit and enhance the implementation.
+			// TODO: Do we need to consider that elements in a list might have different or more keys?
 			v := value.Content[0]
-			if len(v.Content) > 0 && v.Content[0].HeadComment == "" {
-				v.Content[0].HeadComment = v.HeadComment
-			}
 			val := v
 			if v.Kind == yaml3.AliasNode {
 				val = v.Alias
 			}
+			if len(v.Content) > 0 && v.Content[0].HeadComment == "" {
+				v.Content[0].HeadComment = v.HeadComment
+			}
+
 			calculatedProperties, err := h.calculateProperties(nil, val)
 			if err != nil {
 				return nil, err
