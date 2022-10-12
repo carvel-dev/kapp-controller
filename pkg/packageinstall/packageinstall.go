@@ -99,6 +99,8 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 		return reconcile.Result{Requeue: true}, err
 	}
 
+	defer modelStatus.FlushConditions()
+	modelStatus.RemoveAllConditions()
 	modelStatus.SetReconciling(pi.model.ObjectMeta)
 
 	var fieldErrors field.ErrorList
@@ -113,6 +115,10 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 	pkg, err := pi.referencedPkgVersion()
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
+	}
+
+	if pkg.Spec.Yanked != nil {
+		modelStatus.SetPackageYanked(pi.model.ObjectMeta, pkg.Spec.Yanked.Reason)
 	}
 
 	// Set new desired version before checking if it's not applicable
