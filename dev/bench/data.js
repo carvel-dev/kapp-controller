@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1665415475596,
+  "lastUpdate": 1665652034607,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -6879,6 +6879,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6464953680,
             "unit": "ns/op\t         4.293 DeleteSeconds\t         2.130 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "55523204+rohitagg2020@users.noreply.github.com",
+            "name": "rohitagg2020",
+            "username": "rohitagg2020"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f17a931d4f01920d4c8aedebe9e138816b78cb42",
+          "message": "kctrl: Generating openapi schema from helm values file. (#904)\n\n* Initial Implementation for generating openapi schema from helm values.yaml file\r\n\r\nInitial Implementation for generating openapi schema from helm values.yaml file\r\n\r\n* Fixing test case\r\n\r\nFixing test case\r\n\r\n* Fixing E2e Test case\r\n\r\n* Update package_authoring_e2e_test.go\r\n\r\n* Adding unit test cases.\r\n\r\nAdding unit test cases.\r\n\r\n* Update helm_openapi_schema_gen.go\r\n\r\n* Update helm_openapi_schema_gen.go\r\n\r\n* Adopted review comments.\r\n\r\nAdopted review comments.\r\n\r\n* Adopting review comments\r\n\r\nAdopting review comments\r\n\r\n* Update helm_openapi_schema_gen.go\r\n\r\n* Adopting review comments\r\n\r\n* Update release.go\r\n\r\n* Modifying behavior in case > 1 items present in YAML array\r\n\r\nModifying behavior in case > 1 items present in YAML array\r\n\r\n* Update package_authoring_e2e_test.go\r\n\r\n* Update helm_openapi_schema_gen.go\r\n\r\n* Update helm_openapi_schema_gen.go\r\n\r\n* Add openapi schema flag (#914)\r\n\r\n* Adding openapi-schema flag to pkg release command\r\n\r\n* Update package_authoring_e2e_test.go\r\n\r\n* Adopting review comments\r\n\r\n* Override openapi only when openapi-schema flagg is set to true.\r\n\r\nOverride openapi only when openapi-schema flagg is set to true.\r\n\r\n* Update release.go",
+          "timestamp": "2022-10-13T14:24:46+05:30",
+          "tree_id": "802abe5a829a46c9b99c6168d41c7d245f59505e",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/f17a931d4f01920d4c8aedebe9e138816b78cb42"
+        },
+        "date": 1665652032011,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37027199344,
+            "unit": "ns/op\t        19.25 DeleteSeconds\t        17.73 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8650370239,
+            "unit": "ns/op\t         4.348 DeleteSeconds\t         4.242 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6533674256,
+            "unit": "ns/op\t         4.309 DeleteSeconds\t         2.167 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
