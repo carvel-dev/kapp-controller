@@ -1252,7 +1252,7 @@ spec:
 
 		go releaseInteraction.Run(promptOutput)
 
-		kappCtrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir, "--generate-openapi-schema=false"},
+		kappCtrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir, "--openapi-schema=false"},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
 

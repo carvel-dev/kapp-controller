@@ -135,7 +135,7 @@ func (o *ReleaseOptions) Run() error {
 
 func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild cmdpkgbuild.PackageBuild,
 	packageTemplate *kcdatav1alpha1.Package, metadataTemplate *kcdatav1alpha1.PackageMetadata) error {
-	valuesSchema := &kcdatav1alpha1.ValuesSchema{}
+	var valuesSchema *kcdatav1alpha1.ValuesSchema
 	var err error
 	if o.generateOpenAPISchema {
 		valuesSchema, err = generateValuesSchema(pkgBuild)
@@ -145,13 +145,13 @@ func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild c
 	}
 
 	artifactWriter := NewArtifactWriter(pkgBuild.Name, o.pkgVersion, packageTemplate, metadataTemplate, o.outputLocation, o.ui)
-	err = artifactWriter.Write(&appSpec, *valuesSchema)
+	err = artifactWriter.Write(&appSpec, valuesSchema)
 	if err != nil {
 		return err
 	}
 
 	if o.repoOutputLocation != "" {
-		err = artifactWriter.WriteRepoOutput(&appSpec, *valuesSchema, o.repoOutputLocation)
+		err = artifactWriter.WriteRepoOutput(&appSpec, valuesSchema, o.repoOutputLocation)
 		if err != nil {
 			return err
 		}
