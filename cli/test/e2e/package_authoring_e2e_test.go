@@ -1044,3 +1044,248 @@ func (p promptOutput) WaitFor(text string) {
 		p.t.Fail()
 	}
 }
+
+func TestE2EInitAndReleaseCaseDisableOpenAPISchemaGeneration(t *testing.T) {
+	input := E2EAuthoringTestCase{
+		Name: "Disable OpenAPI Schema generation while releasing the package",
+		InitInteraction: Interaction{
+			Prompts: []string{
+				"Enter the package reference name",
+				"Enter source",
+				"Enter helm chart repository URL",
+				"Enter helm chart name",
+				"Enter helm chart version",
+			},
+			Inputs: []string{
+				"testpackage.corp.dev",
+				"3",
+				"https://mongodb.github.io/helm-charts",
+				"enterprise-operator",
+				"1.16.0",
+			},
+		},
+		ExpectedPkgBuild: `
+apiVersion: kctrl.carvel.dev/v1alpha1
+kind: PackageBuild
+metadata:
+  name: testpackage.corp.dev
+spec:
+  template:
+    spec:
+      app:
+        spec:
+          deploy:
+          - kapp: {}
+          template:
+          - helmTemplate:
+              path: upstream
+          - ytt:
+              paths:
+              - '-'
+          - kbld: {}
+      export:
+      - includePaths:
+        - upstream
+`,
+		ExpectedPkgResource: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.0.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - git: {}
+      template:
+      - helmTemplate:
+          path: upstream
+      - ytt:
+          paths:
+          - '-'
+      - kbld: {}
+  valuesSchema:
+    openAPIv3: null
+  version: 0.0.0
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  annotations:
+    kctrl.carvel.dev/local-fetch-0: .
+  name: testpackage
+spec:
+  packageRef:
+    refName: testpackage.corp.dev
+    versionSelection:
+      constraints: 0.0.0
+  serviceAccountName: testpackage-sa
+status:
+  conditions: null
+  friendlyDescription: ""
+  observedGeneration: 0
+`,
+		ExpectedVendir: `
+apiVersion: vendir.k14s.io/v1alpha1
+directories:
+- contents:
+  - helmChart:
+      name: enterprise-operator
+      repository:
+        url: https://mongodb.github.io/helm-charts
+      version: 1.16.0
+    path: .
+  path: upstream
+kind: Config
+minimumRequiredVersion: ""
+`,
+		ExpectedPackageMetadata: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+`,
+		ExpectedPackage: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.1.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - imgpkgBundle:
+      template:
+      - helmTemplate:
+          path: upstream
+      - ytt:
+          paths:
+          - '-'
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/images.yml
+  valuesSchema:
+    openAPIv3: null
+  version: 1.0.0
+`,
+	}
+	env := BuildEnv(t)
+	logger := Logger{}
+	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+	kappCli := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+
+	cleanUp := func() {
+		os.RemoveAll(workingDir)
+	}
+	cleanUp()
+	defer cleanUp()
+
+	err := os.Mkdir(workingDir, os.ModePerm)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const pkgDir = "./carvel-artifacts/packages/testpackage.corp.dev/"
+	promptOutput := newPromptOutput(t)
+	go input.InitInteraction.Run(promptOutput)
+
+	logger.Section(fmt.Sprintf("%s: Package init", input.Name), func() {
+		kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+
+		// Below key's values will be changed during every run, hence adding these keys to be ignored
+		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:"}
+
+		// Error if upstream folder doesn't exist
+		_, err = os.Stat(filepath.Join(workingDir, "upstream"))
+		require.NoError(t, err)
+
+		// Verify PackageBuild
+		out, err := readFile("package-build.yml")
+		require.NoErrorf(t, err, "Expected to read package-build.yml")
+		expectedPackageBuild := strings.TrimSpace(replaceSpaces(input.ExpectedPkgBuild))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedPackageBuild, out, "Expected PackageBuild output to match")
+
+		// Verify package resources
+		out, err = readFile("package-resources.yml")
+		require.NoErrorf(t, err, "Expected to read package-resources.yml")
+		expectedPackageResources := strings.TrimSpace(replaceSpaces(input.ExpectedPkgResource))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedPackageResources, out, "Expected package resources output to match")
+
+		// Verify vendir
+		out, err = readFile("vendir.yml")
+		require.NoErrorf(t, err, "Expected to read vendir.yml")
+		expectedVendirOutput := strings.TrimSpace(replaceSpaces(input.ExpectedVendir))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedVendirOutput, out, "Expected vendir output to match")
+	})
+
+	logger.Section(fmt.Sprintf("%s: Package release", input.Name), func() {
+		releaseInteraction := Interaction{
+			Prompts: []string{"Enter the registry URL"},
+			Inputs:  []string{env.Image},
+		}
+
+		go releaseInteraction.Run(promptOutput)
+
+		kappCtrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir, "--openapi-schema=false"},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+
+		// Below key's values will be changed during every run, hence adding these keys to be ignored
+		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image:"}
+
+		// Verify PackageMetadata artifact
+		out, err := readFile(pkgDir + "metadata.yml")
+		require.NoErrorf(t, err, "Expected to read metadata.yml")
+		expectedPackageMetadata := strings.TrimSpace(replaceSpaces(input.ExpectedPackageMetadata))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedPackageMetadata, out, "Expected PackageMetadata to match")
+
+		// Verify Package artifact
+		out, err = readFile(pkgDir + "package.yml")
+		require.NoErrorf(t, err, "Expected to read package.yml")
+		expectedPackage := strings.TrimSpace(replaceSpaces(input.ExpectedPackage))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedPackage, out, "Expected Package to match")
+	})
+
+	logger.Section(fmt.Sprintf("%s: Testing and installing created Package", input.Name), func() {
+		cleanUpInstalledPkg := func() {
+			kappCli.RunWithOpts([]string{"delete", "-a", "test-package"},
+				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+			kappCtrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
+				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+		}
+		defer cleanUpInstalledPkg()
+
+		kappCli.RunWithOpts([]string{"deploy", "-a", "test-package", "-f", filepath.Join(workingDir, pkgDir), "-c"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+		kappCtrl.RunWithOpts([]string{"pkg", "available", "list"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+		kappCtrl.RunWithOpts([]string{"pkg", "install", "-p", "testpackage.corp.dev", "-i", "test", "--version", "1.0.0"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+	})
+}
