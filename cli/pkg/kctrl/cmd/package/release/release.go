@@ -26,11 +26,12 @@ type ReleaseOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	pkgVersion         string
-	chdir              string
-	outputLocation     string
-	repoOutputLocation string
-	debug              bool
+	pkgVersion            string
+	chdir                 string
+	outputLocation        string
+	repoOutputLocation    string
+	debug                 bool
+	generateOpenAPISchema bool
 }
 
 const (
@@ -57,6 +58,7 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 	cmd.Flags().StringVar(&o.outputLocation, "copy-to", defaultArtifactDir, "Output location for artifacts")
 	cmd.Flags().StringVar(&o.repoOutputLocation, "repo-output", "", "Output location for artifacts in repository bundle format")
 	cmd.Flags().BoolVar(&o.debug, "debug", false, "Print verbose debug output")
+	cmd.Flags().BoolVar(&o.generateOpenAPISchema, "openapi-schema", true, "Generates openapi schema for ytt and helm templated files and adds it to generated package")
 
 	return cmd
 }
@@ -133,30 +135,43 @@ func (o *ReleaseOptions) Run() error {
 
 func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild cmdpkgbuild.PackageBuild,
 	packageTemplate *kcdatav1alpha1.Package, metadataTemplate *kcdatav1alpha1.PackageMetadata) error {
-	var yttPaths []string
-	for _, templateStage := range pkgBuild.Spec.Template.Spec.App.Spec.Template {
-		if templateStage.Ytt != nil {
-			yttPaths = append(yttPaths, templateStage.Ytt.Paths...)
+	var valuesSchema *kcdatav1alpha1.ValuesSchema
+	var err error
+	if o.generateOpenAPISchema {
+		valuesSchema, err = generateValuesSchema(pkgBuild)
+		if err != nil {
+			return err
 		}
-	}
-	valuesSchema, err := NewValuesSchemaGen(yttPaths).Schema()
-	if err != nil {
-		return err
 	}
 
 	artifactWriter := NewArtifactWriter(pkgBuild.Name, o.pkgVersion, packageTemplate, metadataTemplate, o.outputLocation, o.ui)
-	err = artifactWriter.Write(&appSpec, *valuesSchema)
+	err = artifactWriter.Write(&appSpec, valuesSchema)
 	if err != nil {
 		return err
 	}
 
 	if o.repoOutputLocation != "" {
-		err = artifactWriter.WriteRepoOutput(&appSpec, *valuesSchema, o.repoOutputLocation)
+		err = artifactWriter.WriteRepoOutput(&appSpec, valuesSchema, o.repoOutputLocation)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func generateValuesSchema(pkgBuild cmdpkgbuild.PackageBuild) (*kcdatav1alpha1.ValuesSchema, error) {
+	if pkgBuild.Spec.Template.Spec.App.Spec.Template != nil {
+		// As of today, PackageInstall values file is applicable only for the first templating step.
+		// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/pkg/packageinstall/app.go#L103
+		templateStage := pkgBuild.Spec.Template.Spec.App.Spec.Template[0]
+		switch {
+		case templateStage.HelmTemplate != nil:
+			return NewHelmValuesSchemaGen(templateStage.HelmTemplate.Path).Schema()
+		case templateStage.Ytt != nil:
+			return NewValuesSchemaGen(templateStage.Ytt.Paths).Schema()
+		}
+	}
+	return nil, nil
 }
 
 func (o *ReleaseOptions) loadExportData(pkgBuild *cmdpkgbuild.PackageBuild) error {

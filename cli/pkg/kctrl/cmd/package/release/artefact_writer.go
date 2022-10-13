@@ -38,7 +38,7 @@ func NewArtifactWriter(pkg string, version string, packageTemplate *kcdatav1alph
 		packageTemplate: packageTemplate, ui: ui}
 }
 
-func (w *ArtifactWriter) Write(appSpec *kcv1alpha1.AppSpec, valuesSchema kcdatav1alpha1.ValuesSchema) error {
+func (w *ArtifactWriter) Write(appSpec *kcv1alpha1.AppSpec, valuesSchema *kcdatav1alpha1.ValuesSchema) error {
 	path := filepath.Join(w.artifactDir, packageDir, w.packageName)
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
@@ -57,7 +57,7 @@ func (w *ArtifactWriter) Write(appSpec *kcv1alpha1.AppSpec, valuesSchema kcdatav
 	return nil
 }
 
-func (w *ArtifactWriter) WriteRepoOutput(appSpec *kcv1alpha1.AppSpec, valuesSchema kcdatav1alpha1.ValuesSchema, path string) error {
+func (w *ArtifactWriter) WriteRepoOutput(appSpec *kcv1alpha1.AppSpec, valuesSchema *kcdatav1alpha1.ValuesSchema, path string) error {
 	path = filepath.Join(path, packageDir, w.packageName)
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
@@ -84,13 +84,15 @@ func (w *ArtifactWriter) writePackageMetadata(path string) error {
 	return w.createOrOverwriteFile(path, metadataBytes)
 }
 
-func (w *ArtifactWriter) writePackage(path string, appSpec *kcv1alpha1.AppSpec, valuesSchema kcdatav1alpha1.ValuesSchema) error {
+func (w *ArtifactWriter) writePackage(path string, appSpec *kcv1alpha1.AppSpec, valuesSchema *kcdatav1alpha1.ValuesSchema) error {
 	w.packageTemplate.SetName(fmt.Sprintf("%s.%s", w.packageName, w.version))
 	w.packageTemplate.Spec.ReleasedAt = metav1.Now()
 	w.packageTemplate.Spec.Version = w.version
 	w.packageTemplate.Spec.RefName = w.packageName
 	w.packageTemplate.Spec.Template = kcdatav1alpha1.AppTemplateSpec{Spec: appSpec}
-	w.packageTemplate.Spec.ValuesSchema = valuesSchema
+	if valuesSchema != nil {
+		w.packageTemplate.Spec.ValuesSchema = *valuesSchema
+	}
 
 	packageBytes, err := yaml.Marshal(w.packageTemplate)
 	if err != nil {
