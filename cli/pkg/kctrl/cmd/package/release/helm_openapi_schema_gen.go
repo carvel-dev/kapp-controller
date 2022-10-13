@@ -188,13 +188,14 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 
 		if len(value.Content) > 0 {
 			// TODO: Do we need to consider that elements in a list might have different or more keys?
-			v := value.Content[0]
-			val := v
-			if v.Kind == yaml3.AliasNode {
-				val = v.Alias
+			arrayNode := value.Content[0]
+			val := arrayNode
+			if arrayNode.Kind == yaml3.AliasNode {
+				val = arrayNode.Alias
 			}
-			if len(v.Content) > 0 && v.Content[0].HeadComment == "" {
-				v.Content[0].HeadComment = v.HeadComment
+			// val.Content is nil in the case of scalarNode
+			if len(val.Content) > 0 && val.Content[0].HeadComment == "" {
+				val.Content[0].HeadComment = arrayNode.HeadComment
 			}
 
 			calculatedProperties, err := h.calculateProperties(nil, val)
