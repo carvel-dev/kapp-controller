@@ -67,6 +67,8 @@ func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
 		func(st kcv1alpha1.GenericStatus) { pi.model.Status.GenericStatus = st },
 	}
 
+	status.RemoveAllConditions()
+
 	var result reconcile.Result
 	var err error
 
@@ -81,6 +83,8 @@ func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
 			status.SetReconcileCompleted(err)
 		}
 	}
+
+	status.FlushStatus()
 
 	// Always update status
 	statusErr := pi.updateStatus()
@@ -99,8 +103,6 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 		return reconcile.Result{Requeue: true}, err
 	}
 
-	defer modelStatus.FlushConditions()
-	modelStatus.RemoveAllConditions()
 	modelStatus.SetReconciling(pi.model.ObjectMeta)
 
 	var fieldErrors field.ErrorList

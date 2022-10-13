@@ -116,8 +116,6 @@ func (s *Status) SetReconcileCompleted(err error) {
 		s.S.FriendlyDescription = "Reconcile succeeded"
 		s.S.UsefulErrorMessage = ""
 	}
-
-	s.UpdateFunc(s.S)
 }
 
 func (s *Status) SetDeleteCompleted(err error) {
@@ -174,7 +172,7 @@ func (s *Status) SetUsefulErrorMessage(errMsg string) {
 	s.S.UsefulErrorMessage = errMsg
 }
 
-// FlushConditions sets the conditions on the kubernetes cluster
-func (s *Status) FlushConditions() {
+// FlushStatus sets the conditions on the kubernetes cluster
+func (s *Status) FlushStatus() {
 	s.UpdateFunc(s.S)
 }
