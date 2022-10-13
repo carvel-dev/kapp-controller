@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -39,7 +40,7 @@ func getNewLock(lockname, podname, namespace string) *resourcelock.LeaseLock {
 	}
 }
 
-func runLeaderElection(lock *resourcelock.LeaseLock, ctx context.Context, id string, ctrlOpts Options) {
+func runLeaderElection(lock *resourcelock.LeaseLock, ctx context.Context, id string, ctrlOpts Options, mainLog logr.Logger, log logr.Logger) {
 	leaderelection.RunOrDie(ctx, leaderelection.LeaderElectionConfig{
 		Lock:            lock,
 		ReleaseOnCancel: true,
@@ -59,7 +60,7 @@ func runLeaderElection(lock *resourcelock.LeaseLock, ctx context.Context, id str
 			},
 			OnNewLeader: func(current_id string) {
 				if current_id == id {
-					klog.Info("still the leader!")
+					klog.Info("still the leader.")
 					return
 				}
 				klog.Info("new leader is %s", current_id)
@@ -104,12 +105,11 @@ func main() {
 	if err != nil {
 		klog.Fatalf("failed to get kubeconfig")
 	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	lock := getNewLock(leaseLockName, podName, leaseLockNamespace)
-	runLeaderElection(lock, ctx, podName, ctrlOpts)
+	runLeaderElection(lock, ctx, podName, ctrlOpts, mainLog, log)
 
 	os.Exit(0)
 }
