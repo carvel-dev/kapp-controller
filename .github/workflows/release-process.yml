@@ -30,7 +30,7 @@ jobs:
         with:
           go-version: "1.19"
 
-      - name: Run release script
+      - name: Run release script and build package
         run: |
           set -e -x
           minikube start --driver=docker --wait=all
@@ -39,17 +39,21 @@ jobs:
           cd cli
           ./hack/build-binaries.sh
           shasum -a 256 ./kctrl-* | tee -a ../tmp/checksums.txt
+          constraintVersion="${{ github.ref_name }}"
+          ./kctrl-linux-amd64 pkg release -y -v ${constraintVersion:1} --chdir .. --debug
+          shasum -a 256 ../carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml | tee -a ../tmp/checksums.txt
+          shasum -a 256 ../carvel-artifacts/packages/kapp-controller.carvel.dev/metadata.yml | tee -a ../tmp/checksums.txt
           echo "# :open_file_folder: Files Checksum" | tee ../tmp/checksums-formatted.txt
           echo '```' | tee -a ../tmp/checksums-formatted.txt
           cat ../tmp/checksums.txt | tee -a ../tmp/checksums-formatted.txt
           echo '```' | tee -a ../tmp/checksums-formatted.txt
 
-      - name: Run Package build
-        run: |
-          constraintVersion="${{ github.ref_name }}"
-          ./cli/kctrl-linux-amd64 pkg release -y -v ${constraintVersion:1} --debug
-          shasum -a 256 ./carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml | tee -a tmp/checksums.txt
-          shasum -a 256 ./carvel-artifacts/packages/kapp-controller.carvel.dev/metadata.yml | tee -a tmp/checksums.txt
+      # - name: Run Package build
+      #   run: |
+      #     constraintVersion="${{ github.ref_name }}"
+      #     ./cli/kctrl-linux-amd64 pkg release -y -v ${constraintVersion:1} --debug
+      #     shasum -a 256 ./carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml | tee -a tmp/checksums.txt
+      #     shasum -a 256 ./carvel-artifacts/packages/kapp-controller.carvel.dev/metadata.yml | tee -a tmp/checksums.txt
 
       - name: Create release draft and upload release yaml
         uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
