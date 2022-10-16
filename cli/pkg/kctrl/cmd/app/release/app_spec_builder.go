@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	regname "github.com/google/go-containerregistry/pkg/name"
 	appinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
@@ -109,10 +108,6 @@ func (b *AppSpecBuilder) Build() (kcv1alpha1.AppSpec, error) {
 		case exportStep.ImgpkgBundle != nil:
 			useKbldImagesLock = exportStep.ImgpkgBundle.UseKbldImagesLock
 			bundlePath := fmt.Sprintf("%s:%s", exportStep.ImgpkgBundle.Image, tag)
-			_, err := regname.NewTag(bundlePath, regname.WeakValidation)
-			if err != nil {
-				return kcv1alpha1.AppSpec{}, err
-			}
 			imgpkgRunner := ImgpkgRunner{
 				BundlePath:        bundlePath,
 				Paths:             exportStep.IncludePaths,
