@@ -22,7 +22,7 @@ type ReleaseOptions struct {
 	chdir          string
 	outputLocation string
 	debug          bool
-	tag            string
+	bundleTag      string
 }
 
 const (
@@ -44,7 +44,7 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Working directory with package-build and other config")
 	cmd.Flags().StringVar(&o.outputLocation, "copy-to", defaultArtifactDir, "Output location for artifacts")
 	cmd.Flags().BoolVar(&o.debug, "debug", false, "Print verbose debug output")
-	cmd.Flags().StringVarP(&o.tag, "tag", "t", "", "Tag of the image/bundle to be pushed")
+	cmd.Flags().StringVarP(&o.bundleTag, "tag", "t", "", "Tag pushed with imgpkg bundle (default bundle-<TIMESTAMP>)")
 
 	return cmd
 }
@@ -69,7 +69,7 @@ func (o *ReleaseOptions) Run() error {
 		BuildDeploy:   appBuild.GetAppSpec().Deploy,
 		BuildExport:   *appBuild.GetExport(),
 		Debug:         o.debug,
-		Tag:           o.tag,
+		BundleTag:     o.bundleTag,
 	}
 	_, err = NewAppSpecBuilder(o.depsFactory, o.logger, o.ui, builderOpts).Build()
 	if err != nil {
