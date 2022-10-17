@@ -15,6 +15,7 @@ import (
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
 	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
+	sources "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/sources"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -89,17 +90,17 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	err = appinit.NewFetchConfiguration(o.ui, pkgBuild).Configure()
+	err = sources.NewFetchConfiguration(o.ui, pkgBuild).Configure()
 	if err != nil {
 		return err
 	}
 
-	err = appinit.NewVendirRunner(o.ui).RunSync()
+	err = sources.NewVendirRunner(o.ui).RunSync()
 	if err != nil {
 		return err
 	}
 
-	err = appinit.NewTemplateConfiguration(o.ui, pkgBuild).Configure()
+	err = sources.NewTemplateConfiguration(o.ui, pkgBuild).Configure()
 	if err != nil {
 		return err
 	}

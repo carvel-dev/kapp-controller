@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
+	sources "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/sources"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +20,8 @@ import (
 )
 
 const (
-	AppFileName = "app.yml"
+	AppFileName             = "app.yml"
+	LocalFetchAnnotationKey = "kctrl.carvel.dev/local-fetch-0"
 )
 
 type InitOptions struct {
@@ -70,17 +72,17 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	err = NewFetchConfiguration(o.ui, appBuild).Configure()
+	err = sources.NewFetchConfiguration(o.ui, appBuild).Configure()
 	if err != nil {
 		return err
 	}
 
-	err = NewVendirRunner(o.ui).RunSync()
+	err = sources.NewVendirRunner(o.ui).RunSync()
 	if err != nil {
 		return err
 	}
 
-	err = NewTemplateConfiguration(o.ui, appBuild).Configure()
+	err = sources.NewTemplateConfiguration(o.ui, appBuild).Configure()
 	if err != nil {
 		return err
 	}

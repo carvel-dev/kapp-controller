@@ -1,7 +1,7 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package init
+package sources
 
 import (
 	"fmt"
@@ -14,7 +14,6 @@ import (
 
 const (
 	FetchContentAnnotationKey = "fetch-content-from"
-	LocalFetchAnnotationKey   = "kctrl.carvel.dev/local-fetch-0"
 )
 
 const (
