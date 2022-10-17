@@ -1291,7 +1291,7 @@ spec:
 	})
 }
 
-func TestE2EInitAndReleaseByAddingTag(t *testing.T) {
+func TestPackageInitAndReleaseWithTagOption(t *testing.T) {
 	input := E2EAuthoringTestCase{
 		Name: "Add tag for imgpkg bundle while releasing the package",
 		InitInteraction: Interaction{
@@ -1413,7 +1413,7 @@ spec:
 	})
 }
 
-func TestE2EInitAndReleaseByAddingInvalidTag(t *testing.T) {
+func TestPackageInitAndReleaseWithInvalidTag(t *testing.T) {
 	input := E2EAuthoringTestCase{
 		Name: "Add tag for imgpkg bundle while releasing the package",
 		InitInteraction: Interaction{

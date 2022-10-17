@@ -97,19 +97,16 @@ func (b *AppSpecBuilder) Build() (kcv1alpha1.AppSpec, error) {
 
 	bundleURL := ""
 	useKbldImagesLock := false
-	var tag string
+	tag := fmt.Sprintf("build-%d", time.Now().Unix())
 	if b.opts.BundleTag != "" {
 		tag = b.opts.BundleTag
-	} else {
-		tag = fmt.Sprintf("build-%d", time.Now().Unix())
 	}
 	for _, exportStep := range b.opts.BuildExport {
 		switch {
 		case exportStep.ImgpkgBundle != nil:
 			useKbldImagesLock = exportStep.ImgpkgBundle.UseKbldImagesLock
-			bundlePath := fmt.Sprintf("%s:%s", exportStep.ImgpkgBundle.Image, tag)
 			imgpkgRunner := ImgpkgRunner{
-				BundlePath:        bundlePath,
+				BundlePath:        fmt.Sprintf("%s:%s", exportStep.ImgpkgBundle.Image, tag),
 				Paths:             exportStep.IncludePaths,
 				UseKbldImagesLock: exportStep.ImgpkgBundle.UseKbldImagesLock,
 				ImgLockFilepath:   tempImgpkgLockPath,
