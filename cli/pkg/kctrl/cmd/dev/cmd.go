@@ -72,10 +72,11 @@ func (o *DevOptions) Run() error {
 	reconciler := cmdlocal.NewReconciler(o.depsFactory, cmdRunner, o.logger)
 
 	reconcileErr := reconciler.Reconcile(configs, cmdlocal.ReconcileOpts{
-		Local:     o.Local,
-		KbldBuild: o.KbldBuild,
-		Delete:    o.Delete,
-		Debug:     o.Debug,
+		Local:           o.Local,
+		KbldBuild:       o.KbldBuild,
+		Delete:          o.Delete,
+		Debug:           o.Debug,
+		DeployResources: true,
 
 		BeforeAppReconcile: o.beforeAppReconcile,
 		AfterAppReconcile:  o.afterAppReconcile,

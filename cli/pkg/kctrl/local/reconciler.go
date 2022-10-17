@@ -44,10 +44,11 @@ func NewReconciler(depsFactory cmdcore.DepsFactory,
 }
 
 type ReconcileOpts struct {
-	Local     bool
-	KbldBuild bool
-	Delete    bool
-	Debug     bool
+	Local           bool
+	KbldBuild       bool
+	Delete          bool
+	Debug           bool
+	DeployResources bool
 
 	BeforeAppReconcile func(kcv1alpha1.App, *fakekc.Clientset) error
 	AfterAppReconcile  func(kcv1alpha1.App, *fakekc.Clientset) error
@@ -81,17 +82,23 @@ func (o *Reconciler) Reconcile(configs Configs, opts ReconcileOpts) error {
 		appRes.Namespace = pkgiRes.Namespace
 	}
 
-	coreClient, err := o.depsFactory.CoreClient()
-	if err != nil {
-		return fmt.Errorf("Getting core client: %s", err)
-	}
-
-	err = o.hackyConfigureKubernetesDst(coreClient)
-	if err != nil {
-		return err
+	var coreClient kubernetes.Interface
+	if opts.DeployResources {
+		// An instance coreClient is only instantiated if resources are going to be deployed
+		client, err := o.depsFactory.CoreClient()
+		if err != nil {
+			return err
+		}
+		coreClient = client
+		err = o.hackyConfigureKubernetesDst(coreClient)
+		if err != nil {
+			return err
+		}
 	}
 
 	minCoreClient := &MinCoreClient{
+		// This is a nil interface when we do not expect resources to be deployed
+		// Only the dev command requires an instance of coreClient to be supplied here
 		client:          coreClient,
 		localSecrets:    &localSecrets{configs.Secrets},
 		localConfigMaps: configs.ConfigMaps,
