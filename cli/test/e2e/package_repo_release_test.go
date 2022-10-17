@@ -27,10 +27,10 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 
 	env := BuildEnv(t)
 	logger := Logger{}
-	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
-	kappCli := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kctrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 	promptOutput := newPromptOutput(t)
-	setup(t)
+	setupPackageToRelease(t)
 
 	logger.Section("Creating a package repository interactively using pkg repo release", func() {
 
@@ -41,7 +41,7 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 			promptOutput.Write(env.Image)
 		}()
 
-		kappCtrl.RunWithOpts([]string{"pkg", "repo", "release", "--tty=true", "--chdir", workingDir, "--version", "1.0.0"},
+		kctrl.RunWithOpts([]string{"pkg", "repo", "release", "--tty=true", "--chdir", workingDir, "--version", "1.0.0"},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
 
@@ -53,22 +53,18 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 	logger.Section(fmt.Sprintf("Installing package repository"), func() {
 		pkgrKappAppName := "test-package-repo-app"
 		cleanUpInstalledPkgRepo := func() {
-			kappCli.RunWithOpts([]string{"delete", "-a", pkgrKappAppName},
+			kapp.RunWithOpts([]string{"delete", "-a", pkgrKappAppName},
 				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
 		}
 		defer cleanUpInstalledPkgRepo()
 
-		kappCli.RunWithOpts([]string{"deploy", "-a", pkgrKappAppName, "-f", filepath.Join(workingDir, pkgRepoOutputFile), "-c"},
+		kapp.RunWithOpts([]string{"deploy", "-a", pkgrKappAppName, "-f", filepath.Join(workingDir, pkgRepoOutputFile), "-c"},
 			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-		out, _ := kappCtrl.RunWithOpts([]string{"package", "repository", "get", "-r", pkgrName, "--json"}, RunOpts{})
+		out, _ := kctrl.RunWithOpts([]string{"package", "repository", "get", "-r", pkgrName, "--json"}, RunOpts{})
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
-		for _, m := range output.Tables[0].Rows {
-			val, ok := m["source"]
-			if ok {
-				require.Contains(t, val, fmt.Sprintf("(imgpkg) (1.0.0) %s", env.Image))
-			}
-		}
+		require.Equal(t, 1, len(output.Tables[0].Rows))
+		require.Contains(t, output.Tables[0].Rows[0]["source"], fmt.Sprintf("(imgpkg) (1.0.0) %s", env.Image))
 	})
 }
 
@@ -99,7 +95,7 @@ apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
 metadata:
   annotations:
-    tag: 1.0.0
+    kctrl.carvel.dev/repository-version: 1.0.0
   name: testpackagerepo.corp.dev
 spec:
   fetch:
@@ -119,7 +115,7 @@ status:
 	require.Equal(t, packageRepoBuildExpectedOutput, out, "output does not match")
 }
 
-func setup(t *testing.T) {
+func setupPackageToRelease(t *testing.T) {
 	pkg_metadata_yaml := `---
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
