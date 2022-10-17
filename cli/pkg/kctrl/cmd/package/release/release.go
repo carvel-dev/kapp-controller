@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	cmdapprelease "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/release"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
-	cmdpkgrelease "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/init"
+	cmdpkg "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
 	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
@@ -82,7 +82,7 @@ func (o *ReleaseOptions) Run() error {
 		return err
 	}
 
-	pkgConfigs, err := local.NewConfigFromFiles([]string{cmdpkgrelease.PkgResourcesFileName})
+	pkgConfigs, err := local.NewConfigFromFiles([]string{cmdpkg.PkgResourcesFileName})
 	if err != nil {
 		return err
 	}

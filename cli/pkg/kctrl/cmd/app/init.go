@@ -1,7 +1,7 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package init
+package app
 
 import (
 	"fmt"
@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	AppFileName             = "app.yml"
+	AppFileName = "app.yml"
+	//TODO: Where should this constant reside, it is also used by package init
 	LocalFetchAnnotationKey = "kctrl.carvel.dev/local-fetch-0"
 )
 

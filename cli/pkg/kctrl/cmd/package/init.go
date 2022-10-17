@@ -1,7 +1,7 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package init
+package pkg
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	appinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
 	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
@@ -251,7 +251,7 @@ e.g. samplepackage.corp.com`)
 func (o *InitOptions) updatePackageInstall(pkgInstall *pkgv1alpha1.PackageInstall, refName, displayName string) {
 	if pkgInstall.ObjectMeta.Annotations == nil {
 		pkgInstall.ObjectMeta.Annotations = make(map[string]string)
-		pkgInstall.ObjectMeta.Annotations[appinit.LocalFetchAnnotationKey] = "."
+		pkgInstall.ObjectMeta.Annotations[app.LocalFetchAnnotationKey] = "."
 	}
 
 	if len(pkgInstall.Name) == 0 {
