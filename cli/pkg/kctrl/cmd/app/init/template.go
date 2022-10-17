@@ -102,7 +102,7 @@ func (t *TemplateConfiguration) Configure() error {
 func (t *TemplateConfiguration) getHelmAppTemplate(fetchSource string) (v1alpha1.AppTemplate, error) {
 	var pathFromVendir string
 	if fetchSource == FetchChartFromGit {
-		vendirConfig := NewVendirConfig(VendirFileName)
+		vendirConfig := NewVendirConfig(vendirFileName)
 		err := vendirConfig.Load()
 		if err != nil {
 			return v1alpha1.AppTemplate{}, err

@@ -226,7 +226,7 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 	if key == nil {
 		return &Map{Items: apiKeys}, nil
 	}
-	return &Map{Items: []*MapItem{&MapItem{Key: key.Value, Value: &Map{Items: apiKeys}}}}, nil
+	return &Map{Items: []*MapItem{{Key: key.Value, Value: &Map{Items: apiKeys}}}}, nil
 }
 
 func (h HelmValuesSchemaGen) getDescriptionFromNode(node *yaml3.Node) (string, bool) {

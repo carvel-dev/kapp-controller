@@ -18,7 +18,7 @@ func NewVendirConfig(path string) *VendirConfig {
 }
 
 func (c *VendirConfig) Load() error {
-	_, err := os.Stat(VendirFileName)
+	_, err := os.Stat(vendirFileName)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}

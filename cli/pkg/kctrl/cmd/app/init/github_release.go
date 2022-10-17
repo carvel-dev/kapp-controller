@@ -125,7 +125,7 @@ func (g *GithubReleaseConfiguration) getIncludedPaths(contents []vendirconf.Dire
 	includedPaths := contents[0].IncludePaths
 	defaultIncludedPath := strings.Join(includedPaths, ",")
 	if len(includedPaths) == 0 {
-		defaultIncludedPath = IncludeAllFiles
+		defaultIncludedPath = includeAllFiles
 	}
 	textOpts := ui.TextOpts{
 		Label:        "Enter the paths which contain Kubernetes manifests",
@@ -137,7 +137,7 @@ func (g *GithubReleaseConfiguration) getIncludedPaths(contents []vendirconf.Dire
 		return err
 	}
 	paths := strings.Split(path, ",")
-	if path == IncludeAllFiles {
+	if path == includeAllFiles {
 		paths = nil
 	}
 	for i := 0; i < len(paths); i++ {

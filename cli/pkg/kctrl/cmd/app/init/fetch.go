@@ -8,11 +8,18 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
 const (
 	FetchContentAnnotationKey = "fetch-content-from"
 	LocalFetchAnnotationKey   = "kctrl.carvel.dev/local-fetch-0"
+)
+
+const (
+	vendirFileName      = "vendir.yml"
+	vendirSyncDirectory = "upstream"
+	includeAllFiles     = "*"
 )
 
 const (
@@ -37,7 +44,7 @@ func (f FetchConfiguration) Configure() error {
 	f.ui.PrintHeaderText("Content")
 	f.ui.PrintInformationalText("Please provide the location from where your Kubernetes manifests or Helm chart can be fetched. This will be bundled as a part of the package.")
 
-	vendirConfig := NewVendirConfig(VendirFileName)
+	vendirConfig := NewVendirConfig(vendirFileName)
 	err := vendirConfig.Load()
 	if err != nil {
 		return err
@@ -80,7 +87,31 @@ func (f FetchConfiguration) Configure() error {
 		return nil
 	}
 
-	return NewVendirConfigBuilder(f.ui, vendirConfig, currentFetchOptionSelected).Configure()
+	vendirDirectories := vendirConfig.Directories()
+	if len(vendirDirectories) > 1 {
+		return fmt.Errorf("More than 1 directory config found in the vendir file. (hint: Run vendir sync manually)")
+	}
+	if len(vendirDirectories) == 0 {
+		err := f.initializeVendirDirectorySection(vendirConfig)
+		if err != nil {
+			return err
+		}
+	} else {
+		directory := vendirDirectories[0]
+		if len(directory.Contents) > 1 {
+			return fmt.Errorf("More than 1 content config found in the vendir file. (hint: Run vendir sync manually)")
+		}
+	}
+
+	switch currentFetchOptionSelected {
+	case FetchFromGithubRelease:
+		return NewGithubReleaseConfiguration(f.ui, vendirConfig).Configure()
+	case FetchFromHelmRepo:
+		return NewHelmConfiguration(f.ui, vendirConfig).Configure()
+	case FetchFromGit, FetchChartFromGit:
+		return NewGitConfiguration(f.ui, vendirConfig).Configure()
+	}
+	return fmt.Errorf("Unexppected: Invalid fetch mode encountered while configuring vendir")
 }
 
 func (f FetchConfiguration) getPreviousFetchOptionIndex(manifestOptions []string, previousFetchOption string) int {
@@ -96,4 +127,23 @@ func (f FetchConfiguration) getPreviousFetchOptionIndex(manifestOptions []string
 		}
 	}
 	return previousFetchOptionIndex
+}
+
+func (f *FetchConfiguration) initializeVendirDirectorySection(vendirConfig *VendirConfig) error {
+	var directory vendirconf.Directory
+	directory = vendirconf.Directory{
+		Path: vendirSyncDirectory,
+		Contents: []vendirconf.DirectoryContents{
+			{
+				Path: ".",
+			},
+		},
+	}
+	directories := []vendirconf.Directory{directory}
+	vendirConfig.SetDirectories(directories)
+	err := vendirConfig.Save()
+	if err != nil {
+		return err
+	}
+	return nil
 }

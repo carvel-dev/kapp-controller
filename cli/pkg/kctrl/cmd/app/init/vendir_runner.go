@@ -20,7 +20,7 @@ func NewVendirRunner(ui cmdcore.AuthoringUI) VendirRunner {
 }
 
 func (r VendirRunner) RunSync() error {
-	_, err := os.Stat(VendirFileName)
+	_, err := os.Stat(vendirFileName)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -41,8 +41,8 @@ func (r VendirRunner) RunSync() error {
 }
 
 func (r VendirRunner) printVendirFile() error {
-	r.ui.PrintActionableText(fmt.Sprintf("Printing %s \n", VendirFileName))
-	err := r.printFile(VendirFileName)
+	r.ui.PrintActionableText(fmt.Sprintf("Printing %s \n", vendirFileName))
+	err := r.printFile(vendirFileName)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (r VendirRunner) runVendirSync() error {
 	var stdoutBs, stderrBs bytes.Buffer
 
 	localCmdRunner := exec.NewPlainCmdRunner()
-	cmd := goexec.Command("vendir", []string{"sync", "-f", VendirFileName}...)
+	cmd := goexec.Command("vendir", []string{"sync", "-f", vendirFileName}...)
 	cmd.Stdin = nil
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
