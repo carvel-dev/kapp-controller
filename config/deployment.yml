@@ -69,6 +69,8 @@ spec:
         env:
         - name: KAPPCTRL_SIDECAREXEC_SOCK
           value: /etc/kappctrl-mem-tmp/sidecarexec.sock
+        - name: IMGPKG_ACTIVE_KEYCHAINS
+          value: gke,aks,ecr
         volumeMounts:
         - name: template-fs
           mountPath: /etc/kappctrl-mem-tmp
