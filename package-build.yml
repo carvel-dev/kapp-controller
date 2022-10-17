@@ -20,7 +20,7 @@ spec:
           - kbld:
               paths:
               - '-'
-              - .imgpkg/images.yml
+              - image/.imgpkg/images.yml
       export:
       - imgpkgBundle:
           image: ysethiya/kappctrltest
@@ -28,4 +28,4 @@ spec:
         includePaths:
         - config
         - config-release
-        - .imgpkg/images.yml
+        - image/.imgpkg/images.yml
