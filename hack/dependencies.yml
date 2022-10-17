@@ -33,36 +33,25 @@
   version: v0.53.0
 - checksums:
     darwin:
-      amd64: bf839a539c90a22287904e2a83c4322bf00da3150d8d47cb9fb5eb59dfe41111
+      amd64: 5964af6123563b63cad7b9b5525d49814f8f2048a75bb811888d87618a358c30
     linux:
-      amd64: e8a9a3d37a125eca49b8c074ee2f5c84616e765f20ee6c6d60f79dae8f19af10
-      arm64: c5d7b4a39250778f1dd5f9763d3854003c44bb9622d3ac72f58b41aa92d55f7a
-  dev: true
-  name: imgpkg
-  repo: vmware-tanzu/carvel-imgpkg
-  urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.31.0
-- checksums:
-    darwin:
-      amd64: 5ee954207d6324f336341b2a81c0cb6147f08e7f892fbc52c28effc81bc2302f
-    linux:
-      amd64: eb66c8fd398925e2a2e68a2f65de3ca06207addd86cf207c07f7ad566dbe7b25
-      arm64: bbe6747135e0e4995a2378f1d556c0e0a20383391cf80dd4421748b028d3eb1c
+      amd64: 0b52c170f4a30c2b6213ff0048ecc89c9c25c3e4da56eb1e095fcdb335bd82ed
+      arm64: e66c0c6c8e3e89a49b7e6a8ad216d8f2b44e9b8d35345bfd85c354eea4f4177a
   dev: true
   name: vendir
   repo: vmware-tanzu/carvel-vendir
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.30.0
+  version: v0.32.0
 - checksums:
     linux:
-      amd64: 31960ff2f76a7379d9bac526ddf889fb79241191f1dbe2a24f7864ddcb3f6560
-      arm64: d24163e466f7884c55079d1050968e80a05b633830047116cdfd8ae28d35b0c0
+      amd64: c12d2cd638f2d066fec123d0bd7f010f32c643afdf288d39a4610b1f9cb32af3
+      arm64: d04b38d439ab8655abb4cb9ccc1efa8a3fe95f3f68af46d9137c6b7985491833
   dev: false
   name: helm
   repo: helm/helm
   tarballSubpath: '{{.OS}}-{{.Arch}}/helm'
   urlTemplate: https://get.helm.sh/helm-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
-  version: v3.9.4
+  version: v3.10.1
 - checksums:
     linux:
       amd64: 53aec65e45f62a769ff24b7e5384f0c82d62668dd96ed56685f649da114b4dbb
