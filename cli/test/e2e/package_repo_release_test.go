@@ -36,7 +36,7 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 
 		go func() {
 			promptOutput.WaitFor("Enter the package repository name")
-			promptOutput.Write("testpackagerepo.corp.dev")
+			promptOutput.Write(pkgrName)
 			promptOutput.WaitFor("Enter the registry url")
 			promptOutput.Write(env.Image)
 		}()
@@ -51,15 +51,16 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 	})
 
 	logger.Section(fmt.Sprintf("Installing package repository"), func() {
+		pkgrKappAppName := "test-package-repo-app"
 		cleanUpInstalledPkgRepo := func() {
-			kappCli.RunWithOpts([]string{"delete", "-a", "test-package-repo"},
+			kappCli.RunWithOpts([]string{"delete", "-a", pkgrKappAppName},
 				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
 		}
 		defer cleanUpInstalledPkgRepo()
 
-		kappCli.RunWithOpts([]string{"deploy", "-a", "test-package-repo", "-f", filepath.Join(workingDir, pkgRepoOutputFile), "-c"},
+		kappCli.RunWithOpts([]string{"deploy", "-a", pkgrKappAppName, "-f", filepath.Join(workingDir, pkgRepoOutputFile), "-c"},
 			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-		out, _ := kappCtrl.RunWithOpts([]string{"package", "repository", "get", "-r", "testpackagerepo.corp.dev", "--json"}, RunOpts{})
+		out, _ := kappCtrl.RunWithOpts([]string{"package", "repository", "get", "-r", pkgrName, "--json"}, RunOpts{})
 
 		output := uitest.JSONUIFromBytes(t, []byte(out))
 		for _, m := range output.Tables[0].Rows {
