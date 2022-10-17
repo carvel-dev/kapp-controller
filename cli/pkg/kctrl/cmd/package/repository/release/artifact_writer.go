@@ -22,7 +22,7 @@ func NewArtifactWriter(pkgRepoName string, directory string) *ArtifactWriter {
 	return &ArtifactWriter{PackageRepoName: pkgRepoName, TargetDir: directory}
 }
 
-func (w *ArtifactWriter) WritePackageRepositoryFile(imgpkgBundleLocation string) error {
+func (w *ArtifactWriter) WritePackageRepositoryFile(imgpkgBundleLocation, tag string) error {
 	packageRepository := v1alpha1.PackageRepository{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "PackageRepository",
@@ -31,6 +31,9 @@ func (w *ArtifactWriter) WritePackageRepositoryFile(imgpkgBundleLocation string)
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              w.PackageRepoName,
 			CreationTimestamp: metav1.NewTime(time.Now()),
+			Annotations: map[string]string{
+				"tag": tag,
+			},
 		},
 		Spec: v1alpha1.PackageRepositorySpec{
 			Fetch: &v1alpha1.PackageRepositoryFetch{

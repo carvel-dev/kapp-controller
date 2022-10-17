@@ -113,7 +113,13 @@ func NewSourceValue(pkgr v1alpha1.PackageRepository) uitable.Value {
 	if pkgr.Spec.Fetch != nil {
 		switch {
 		case pkgr.Spec.Fetch.ImgpkgBundle != nil:
-			source = "(imgpkg) " + pkgr.Spec.Fetch.ImgpkgBundle.Image
+			tag, ok := pkgr.Annotations["tag"]
+			if ok {
+				source = fmt.Sprintf("(imgpkg) (%s) %s", tag, pkgr.Spec.Fetch.ImgpkgBundle.Image)
+			} else {
+				source = fmt.Sprintf("(imgpkg) %s", pkgr.Spec.Fetch.ImgpkgBundle.Image)
+			}
+
 			if pkgr.Spec.Fetch.ImgpkgBundle.TagSelection != nil && pkgr.Spec.Fetch.ImgpkgBundle.TagSelection.Semver != nil &&
 				pkgr.Spec.Fetch.ImgpkgBundle.TagSelection.Semver.Constraints != "" {
 				source += fmt.Sprintf(" (%s)", pkgr.Spec.Fetch.ImgpkgBundle.TagSelection.Semver.Constraints)

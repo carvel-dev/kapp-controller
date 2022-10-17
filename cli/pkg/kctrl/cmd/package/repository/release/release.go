@@ -175,7 +175,7 @@ func (o *ReleaseOptions) Run() error {
 	}
 
 	artifactWriter := NewArtifactWriter(pkgRepoName, wd)
-	err = artifactWriter.WritePackageRepositoryFile(bundleURL)
+	err = artifactWriter.WritePackageRepositoryFile(bundleURL, o.pkgRepoVersion)
 	if err != nil {
 		return err
 	}
