@@ -14,6 +14,7 @@ import (
 	appinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
+	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -25,8 +26,7 @@ import (
 )
 
 const (
-	pkgBuildFileName     = "package-build.yml"
-	pkgResourcesFileName = "package-resources.yml"
+	PkgResourcesFileName = "package-resources.yml"
 )
 
 type InitOptions struct {
@@ -147,19 +147,19 @@ func (o *InitOptions) Run() error {
 	return nil
 }
 
-func (o *InitOptions) newOrExistingPackageBuild() (*PackageBuild, error) {
-	content, err := os.ReadFile(pkgBuildFileName)
+func (o *InitOptions) newOrExistingPackageBuild() (*buildconfigs.PackageBuild, error) {
+	content, err := os.ReadFile(buildconfigs.PkgBuildFileName)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			return &PackageBuild{}, err
+			return &buildconfigs.PackageBuild{}, err
 		}
-		return &PackageBuild{TypeMeta: metav1.TypeMeta{
+		return &buildconfigs.PackageBuild{TypeMeta: metav1.TypeMeta{
 			Kind:       "PackageBuild",
 			APIVersion: "kctrl.carvel.dev/v1alpha1",
 		}}, nil
 	}
 
-	var packageBuild PackageBuild
+	var packageBuild buildconfigs.PackageBuild
 	err = yaml.Unmarshal(content, &packageBuild)
 	return &packageBuild, err
 }
@@ -167,7 +167,7 @@ func (o *InitOptions) newOrExistingPackageBuild() (*PackageBuild, error) {
 func (o *InitOptions) newOrExistingPackageResources() (*v1alpha1.Package,
 	*v1alpha1.PackageMetadata, *pkgv1alpha1.PackageInstall, error) {
 	var configs cmdlocal.Configs
-	configs, err := cmdlocal.NewConfigFromFiles([]string{pkgResourcesFileName})
+	configs, err := cmdlocal.NewConfigFromFiles([]string{PkgResourcesFileName})
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &v1alpha1.Package{}, &v1alpha1.PackageMetadata{}, &pkgv1alpha1.PackageInstall{}, err
@@ -273,7 +273,7 @@ func (o *InitOptions) updatePackageInstall(pkgInstall *pkgv1alpha1.PackageInstal
 	}
 }
 
-func (o *InitOptions) updatePackage(pkg *v1alpha1.Package, pkgBuild *PackageBuild) error {
+func (o *InitOptions) updatePackage(pkg *v1alpha1.Package, pkgBuild *buildconfigs.PackageBuild) error {
 	if len(pkg.Spec.Version) == 0 {
 		pkg.Spec.Version = "0.0.0"
 	}
@@ -311,7 +311,7 @@ func (o *InitOptions) updatePackage(pkg *v1alpha1.Package, pkgBuild *PackageBuil
 // isAppSpecSame compares the template and deploy section of package and packageBuild.
 // It doesn't consider fetch as this will always be different because PackageBuild doesn't
 // define fetch section.
-func isAppSpecSame(pkg *v1alpha1.Package, pkgBuild *PackageBuild) bool {
+func isAppSpecSame(pkg *v1alpha1.Package, pkgBuild *buildconfigs.PackageBuild) bool {
 	pkgBuildAppTemplates := pkgBuild.GetAppSpec().Template
 	pkgAppTemplates := pkg.Spec.Template.Spec.Template
 	pkgBuildAppDeploys := pkgBuild.GetAppSpec().Deploy
@@ -342,7 +342,7 @@ func (o *InitOptions) savePackageResources(pkg *v1alpha1.Package,
 ---
 %s`, string(pkgYAML), string(pkgMetadataYAML), string(pkgInstallYAML))
 
-	return os.WriteFile(pkgResourcesFileName, []byte(packageResources), os.ModePerm)
+	return os.WriteFile(PkgResourcesFileName, []byte(packageResources), os.ModePerm)
 }
 
 // TODO should we use the same validation used in kapp controller. But that accepts other parameter. ValidatePackageMetadataName in validations.go file

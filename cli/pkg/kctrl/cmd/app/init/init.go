@@ -11,6 +11,7 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,7 +55,7 @@ func (o *InitOptions) Run() error {
 	o.ui.PrintHeaderText("\nPre-requisite")
 	o.ui.PrintInformationalText("Welcome! Before we start on the app creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
 
-	appBuild, err := NewAppBuild()
+	appBuild, err := buildconfigs.NewAppBuild()
 	if err != nil {
 		return err
 	}
@@ -98,7 +99,7 @@ func (o *InitOptions) Run() error {
 	return nil
 }
 
-func (o *InitOptions) getAppBuildName(appBuild *AppBuild) error {
+func (o *InitOptions) getAppBuildName(appBuild *buildconfigs.AppBuild) error {
 	o.ui.PrintHeaderText("\nBasic Information")
 	wd, err := os.Getwd()
 	if err != nil {
@@ -132,7 +133,7 @@ func (o *InitOptions) getAppBuildName(appBuild *AppBuild) error {
 	return nil
 }
 
-func (o *InitOptions) writeAppFile(appBuild *AppBuild) error {
+func (o *InitOptions) writeAppFile(appBuild *buildconfigs.AppBuild) error {
 	appConfig, err := o.generateApp(appBuild)
 	if err != nil {
 		return err
@@ -154,9 +155,9 @@ func (o *InitOptions) writeAppFile(appBuild *AppBuild) error {
 	return nil
 }
 
-func (o *InitOptions) generateApp(appBuild *AppBuild) (kcv1alpha1.App, error) {
+func (o *InitOptions) generateApp(appBuild *buildconfigs.AppBuild) (kcv1alpha1.App, error) {
 	var app kcv1alpha1.App
-	_, err := os.Stat(FileName)
+	_, err := os.Stat(AppFileName)
 	if err != nil && !os.IsNotExist(err) {
 		return kcv1alpha1.App{}, err
 	}
@@ -178,7 +179,7 @@ func (o *InitOptions) generateApp(appBuild *AppBuild) (kcv1alpha1.App, error) {
 
 }
 
-func (o *InitOptions) createAppFromAppBuild(appBuild *AppBuild) kcv1alpha1.App {
+func (o *InitOptions) createAppFromAppBuild(appBuild *buildconfigs.AppBuild) kcv1alpha1.App {
 	appName := "microservices-demo"
 	serviceAccountName := fmt.Sprintf("%s-sa", appName)
 	appAnnotation := map[string]string{

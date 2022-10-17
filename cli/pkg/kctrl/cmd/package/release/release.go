@@ -11,11 +11,11 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	appinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdapprelease "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/release"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
-	cmdpkgbuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/init"
+	cmdpkgrelease "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/init"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
+	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcdatav1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -77,12 +77,12 @@ func (o *ReleaseOptions) Run() error {
 		}
 	}
 
-	pkgBuild, err := cmdpkgbuild.NewPackageBuildFromFile("package-build.yml")
+	pkgBuild, err := buildconfigs.NewPackageBuildFromFile(buildconfigs.PkgBuildFileName)
 	if err != nil {
 		return err
 	}
 
-	pkgConfigs, err := local.NewConfigFromFiles([]string{"package-resources.yml"})
+	pkgConfigs, err := local.NewConfigFromFiles([]string{cmdpkgrelease.PkgResourcesFileName})
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (o *ReleaseOptions) Run() error {
 
 	// To be removed and moved to a question in case we have more config/variations around this
 	if pkgBuild.Spec.Release == nil || len(pkgBuild.Spec.Release) == 0 {
-		pkgBuild.Spec.Release = []appinit.Release{{Resource: &appinit.ReleaseResource{}}}
+		pkgBuild.Spec.Release = []buildconfigs.Release{{Resource: &buildconfigs.ReleaseResource{}}}
 		err = pkgBuild.Save()
 		if err != nil {
 			return err
@@ -136,7 +136,7 @@ func (o *ReleaseOptions) Run() error {
 	return nil
 }
 
-func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild cmdpkgbuild.PackageBuild,
+func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild buildconfigs.PackageBuild,
 	packageTemplate *kcdatav1alpha1.Package, metadataTemplate *kcdatav1alpha1.PackageMetadata) error {
 	var valuesSchema *kcdatav1alpha1.ValuesSchema
 	var err error
@@ -162,7 +162,7 @@ func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild c
 	return nil
 }
 
-func generateValuesSchema(pkgBuild cmdpkgbuild.PackageBuild) (*kcdatav1alpha1.ValuesSchema, error) {
+func generateValuesSchema(pkgBuild buildconfigs.PackageBuild) (*kcdatav1alpha1.ValuesSchema, error) {
 	if pkgBuild.Spec.Template.Spec.App.Spec.Template != nil {
 		// As of today, PackageInstall values file is applicable only for the first templating step.
 		// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/pkg/packageinstall/app.go#L103
@@ -177,16 +177,16 @@ func generateValuesSchema(pkgBuild cmdpkgbuild.PackageBuild) (*kcdatav1alpha1.Va
 	return nil, nil
 }
 
-func (o *ReleaseOptions) loadExportData(pkgBuild *cmdpkgbuild.PackageBuild) error {
+func (o *ReleaseOptions) loadExportData(pkgBuild *buildconfigs.PackageBuild) error {
 	if len(pkgBuild.Spec.Template.Spec.Export) == 0 {
-		pkgBuild.Spec.Template.Spec.Export = []appinit.Export{
+		pkgBuild.Spec.Template.Spec.Export = []buildconfigs.Export{
 			{
-				ImgpkgBundle: &appinit.ImgpkgBundle{UseKbldImagesLock: true},
+				ImgpkgBundle: &buildconfigs.ImgpkgBundle{UseKbldImagesLock: true},
 			},
 		}
 	}
 	if pkgBuild.Spec.Template.Spec.Export[0].ImgpkgBundle == nil {
-		pkgBuild.Spec.Template.Spec.Export[0].ImgpkgBundle = &appinit.ImgpkgBundle{UseKbldImagesLock: true}
+		pkgBuild.Spec.Template.Spec.Export[0].ImgpkgBundle = &buildconfigs.ImgpkgBundle{UseKbldImagesLock: true}
 	}
 	defaultImgValue := pkgBuild.Spec.Template.Spec.Export[0].ImgpkgBundle.Image
 	o.ui.PrintInformationalText("The bundle created needs to be pushed to an OCI registry." +

@@ -10,20 +10,16 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-)
-
-const (
-	UpstreamFolderName = "upstream"
-	StdIn              = "-"
 )
 
 type TemplateConfiguration struct {
 	ui    cmdcore.AuthoringUI
-	build Build
+	build buildconfigs.Build
 }
 
-func NewTemplateConfiguration(ui cmdcore.AuthoringUI, build Build) *TemplateConfiguration {
+func NewTemplateConfiguration(ui cmdcore.AuthoringUI, build buildconfigs.Build) *TemplateConfiguration {
 	return &TemplateConfiguration{ui: ui, build: build}
 }
 
@@ -71,7 +67,7 @@ func (t *TemplateConfiguration) Configure() error {
 		//  Define YttPaths
 		var defaultYttPaths []string
 		if fetchSource == FetchFromHelmRepo || fetchSource == FetchChartFromGit {
-			defaultYttPaths = []string{StdIn}
+			defaultYttPaths = []string{buildconfigs.StdIn}
 		} else if fetchSource == FetchFromLocalDirectory {
 			var err error
 			defaultYttPaths, err = t.getYttPathsForLocalDirectory("")
@@ -79,7 +75,7 @@ func (t *TemplateConfiguration) Configure() error {
 				return err
 			}
 		} else {
-			defaultYttPaths = []string{UpstreamFolderName}
+			defaultYttPaths = []string{buildconfigs.UpstreamFolderName}
 		}
 		// Add yttTemplate
 		appTemplateWithYtt := v1alpha1.AppTemplate{
@@ -117,7 +113,7 @@ func (t *TemplateConfiguration) getHelmAppTemplate(fetchSource string) (v1alpha1
 	}
 	appTemplateWithHelm := v1alpha1.AppTemplate{
 		HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{
-			Path: filepath.Join(UpstreamFolderName, pathFromVendir),
+			Path: filepath.Join(buildconfigs.UpstreamFolderName, pathFromVendir),
 		}}
 	return appTemplateWithHelm, nil
 }

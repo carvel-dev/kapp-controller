@@ -1,7 +1,7 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package init
+package buildconfigs
 
 import (
 	"os"
@@ -14,7 +14,13 @@ import (
 )
 
 const (
-	FileName = "app-build.yml"
+	// TODO: Find better location for UpstreamFolderName
+	UpstreamFolderName        = "upstream"
+	StdIn                     = "-"
+	FetchContentAnnotationKey = "fetch-content-from"
+	// TODO: Remove this constant after handling how fetch modes are passed between sections of the code beter
+	FetchFromLocalDirectory = "Local Directory"
+	AppBuildFileName        = "app-build.yml"
 )
 
 type Build interface {
@@ -72,7 +78,7 @@ func (b *AppBuild) Save() error {
 		return err
 	}
 
-	err = os.WriteFile(FileName, content, os.ModePerm)
+	err = os.WriteFile(AppBuildFileName, content, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -83,7 +89,7 @@ func (b *AppBuild) Save() error {
 func NewAppBuild() (*AppBuild, error) {
 	var appBuild *AppBuild
 
-	_, err := os.Stat(FileName)
+	_, err := os.Stat(AppBuildFileName)
 	if err != nil && !os.IsNotExist(err) {
 		return &AppBuild{}, err
 	}
@@ -92,7 +98,7 @@ func NewAppBuild() (*AppBuild, error) {
 		return NewDefaultAppBuild(), nil
 	}
 
-	appBuild, err = NewAppBuildFromFile(FileName)
+	appBuild, err = NewAppBuildFromFile(AppBuildFileName)
 	if err != nil {
 		return &AppBuild{}, err
 	}
@@ -214,7 +220,7 @@ func (b *AppBuild) ConfigureExportSection() {
 		}
 
 		if len(exportSection) == 0 {
-			exportSection = []Export{Export{}}
+			exportSection = []Export{{}}
 		}
 		exportSection[0].IncludePaths = includePaths
 

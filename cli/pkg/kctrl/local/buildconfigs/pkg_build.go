@@ -1,16 +1,19 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package init
+package buildconfigs
 
 import (
 	"os"
 
-	appbuild "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
+)
+
+const (
+	PkgBuildFileName = "package-build.yml"
 )
 
 type PackageBuild struct {
@@ -20,12 +23,12 @@ type PackageBuild struct {
 }
 
 type PackageBuildSpec struct {
-	Template Template           `json:"template,omitempty"`
-	Release  []appbuild.Release `json:"release,omitempty"`
+	Template Template  `json:"template,omitempty"`
+	Release  []Release `json:"release,omitempty"`
 }
 
 type Template struct {
-	Spec appbuild.Spec `json:"spec"`
+	Spec Spec `json:"spec"`
 }
 
 func (b *PackageBuild) Save() error {
@@ -34,7 +37,7 @@ func (b *PackageBuild) Save() error {
 		return err
 	}
 
-	err = os.WriteFile(pkgBuildFileName, content, os.ModePerm)
+	err = os.WriteFile(PkgBuildFileName, content, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -81,11 +84,11 @@ func (b *PackageBuild) SetObjectMeta(metaObj *metav1.ObjectMeta) {
 	return
 }
 
-func (b *PackageBuild) GetExport() *[]appbuild.Export {
+func (b *PackageBuild) GetExport() *[]Export {
 	return &b.Spec.Template.Spec.Export
 }
 
-func (b *PackageBuild) SetExport(exportObj *[]appbuild.Export) {
+func (b *PackageBuild) SetExport(exportObj *[]Export) {
 	b.Spec.Template.Spec.Export = *exportObj
 	return
 }
@@ -105,7 +108,7 @@ func (b *PackageBuild) HasHelmTemplate() bool {
 }
 
 func (b *PackageBuild) ConfigureExportSection() {
-	fetchSource := b.GetObjectMeta().Annotations[appbuild.FetchContentAnnotationKey]
+	fetchSource := b.GetObjectMeta().Annotations[FetchContentAnnotationKey]
 	exportSection := *b.GetExport()
 	// In case of pkg init rerun with FetchFromLocalDirectory, today we overwrite the includePaths
 	// with what we get from template section.
@@ -113,17 +116,17 @@ func (b *PackageBuild) ConfigureExportSection() {
 	// It becomes complex to merge already existing includePaths with template section especially scenario 2
 	// Scenario 1: During rerun, something is added in the app template section
 	// Scenario 2: During rerun, something is removed from the app template section
-	if exportSection == nil || len(exportSection) == 0 || fetchSource == appbuild.FetchFromLocalDirectory {
+	if exportSection == nil || len(exportSection) == 0 || fetchSource == FetchFromLocalDirectory {
 		appTemplates := b.GetAppSpec().Template
 		includePaths := []string{}
 		for _, appTemplate := range appTemplates {
 			if appTemplate.HelmTemplate != nil {
-				includePaths = append(includePaths, appbuild.UpstreamFolderName)
+				includePaths = append(includePaths, UpstreamFolderName)
 			}
 
 			if appTemplate.Ytt != nil {
 				for _, path := range appTemplate.Ytt.Paths {
-					if path == appbuild.StdIn {
+					if path == StdIn {
 						continue
 					}
 					includePaths = append(includePaths, path)
@@ -132,7 +135,7 @@ func (b *PackageBuild) ConfigureExportSection() {
 		}
 
 		if len(exportSection) == 0 {
-			exportSection = []appbuild.Export{{}}
+			exportSection = []Export{{}}
 		}
 		exportSection[0].IncludePaths = includePaths
 

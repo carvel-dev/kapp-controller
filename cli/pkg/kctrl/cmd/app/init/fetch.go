@@ -8,6 +8,7 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
@@ -33,10 +34,10 @@ const (
 
 type FetchConfiguration struct {
 	ui    cmdcore.AuthoringUI
-	build Build
+	build buildconfigs.Build
 }
 
-func NewFetchConfiguration(ui cmdcore.AuthoringUI, build Build) FetchConfiguration {
+func NewFetchConfiguration(ui cmdcore.AuthoringUI, build buildconfigs.Build) FetchConfiguration {
 	return FetchConfiguration{ui: ui, build: build}
 }
 
