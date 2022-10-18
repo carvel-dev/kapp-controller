@@ -8,17 +8,15 @@ import (
 	"strings"
 	"time"
 
-	appInit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository/release/build"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"sigs.k8s.io/yaml"
-
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
+	appInit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository/release/build"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 type ReleaseOptions struct {
@@ -175,7 +173,7 @@ func (o *ReleaseOptions) Run() error {
 	}
 
 	artifactWriter := NewArtifactWriter(pkgRepoName, wd)
-	err = artifactWriter.WritePackageRepositoryFile(bundleURL)
+	err = artifactWriter.WritePackageRepositoryFile(bundleURL, o.pkgRepoVersion)
 	if err != nil {
 		return err
 	}
