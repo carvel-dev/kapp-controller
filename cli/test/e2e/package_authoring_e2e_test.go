@@ -1291,26 +1291,24 @@ spec:
 	})
 }
 
-func TestPackageInitAndReleaseWithTagOption(t *testing.T) {
-	input := E2EAuthoringTestCase{
-		Name: "Add tag for imgpkg bundle while releasing the package",
-		InitInteraction: Interaction{
-			Prompts: []string{
-				"Enter the package reference name",
-				"Enter source",
-				"Enter Git URL",
-				"Enter Git Reference",
-				"Enter the paths which contain Kubernetes manifests",
-			},
-			Inputs: []string{
-				"testpackage.corp.dev",
-				"4",
-				"https://github.com/vmware-tanzu/carvel-kapp",
-				"origin/develop",
-				"examples/simple-app-example/config-1.yml",
-			},
+func TestPackageInitAndReleaseWithTag(t *testing.T) {
+	initInteraction := Interaction{
+		Prompts: []string{
+			"Enter the package reference name",
+			"Enter source",
+			"Enter Git URL",
+			"Enter Git Reference",
+			"Enter the paths which contain Kubernetes manifests",
 		},
-		ExpectedPackage: `
+		Inputs: []string{
+			"testpackage.corp.dev",
+			"4",
+			"https://github.com/vmware-tanzu/carvel-kapp",
+			"origin/develop",
+			"examples/simple-app-example/config-1.yml",
+		},
+	}
+	expectedPackage := `
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
@@ -1336,12 +1334,11 @@ spec:
       default: null
       nullable: true
   version: 1.0.0
-`,
-	}
+`
 	env := BuildEnv(t)
 	logger := Logger{}
-	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
-	kappCli := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kctrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 
 	cleanUp := func() {
 		os.RemoveAll(workingDir)
@@ -1355,10 +1352,10 @@ spec:
 	}
 	const pkgDir = "./carvel-artifacts/packages/testpackage.corp.dev/"
 	promptOutput := newPromptOutput(t)
-	go input.InitInteraction.Run(promptOutput)
+	go initInteraction.Run(promptOutput)
 
-	logger.Section(fmt.Sprintf("%s: Package init", input.Name), func() {
-		kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
+	logger.Section("Package init", func() {
+		kctrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
 
@@ -1367,15 +1364,15 @@ spec:
 		require.NoError(t, err)
 	})
 
-	logger.Section(fmt.Sprintf("%s: Package release", input.Name), func() {
+	logger.Section("Package release", func() {
 		releaseInteraction := Interaction{
 			Prompts: []string{"Enter the registry URL"},
 			Inputs:  []string{env.Image},
 		}
-
 		go releaseInteraction.Run(promptOutput)
 		tag := "1.0.0"
-		kappCtrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir, "--tag", tag},
+
+		kctrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir, "--tag", tag},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
 
@@ -1385,7 +1382,7 @@ spec:
 		// Verify Package artifact
 		out, err := readFile(pkgDir + "package.yml")
 		require.NoErrorf(t, err, "Expected to read package.yml")
-		expectedPackage := strings.TrimSpace(replaceSpaces(input.ExpectedPackage))
+		expectedPackage := strings.TrimSpace(replaceSpaces(expectedPackage))
 		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
 		require.Equal(t, expectedPackage, out, "Expected Package to match")
 
@@ -1395,44 +1392,42 @@ spec:
 		require.NoErrorf(t, err, "Expected imgpkg pull to succeed")
 	})
 
-	logger.Section(fmt.Sprintf("%s: Testing and installing created Package", input.Name), func() {
+	logger.Section("Testing and installing created Package", func() {
 		cleanUpInstalledPkg := func() {
-			kappCli.RunWithOpts([]string{"delete", "-a", "test-package"},
+			kapp.RunWithOpts([]string{"delete", "-a", "test-package"},
 				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-			kappCtrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
+			kctrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
 				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
 		}
 		defer cleanUpInstalledPkg()
 
-		kappCli.RunWithOpts([]string{"deploy", "-a", "test-package", "-f", filepath.Join(workingDir, pkgDir), "-c"},
+		kapp.RunWithOpts([]string{"deploy", "-a", "test-package", "-f", filepath.Join(workingDir, pkgDir), "-c"},
 			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-		kappCtrl.RunWithOpts([]string{"pkg", "available", "list"},
+		kctrl.RunWithOpts([]string{"pkg", "available", "list"},
 			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-		kappCtrl.RunWithOpts([]string{"pkg", "install", "-p", "testpackage.corp.dev", "-i", "test", "--version", "1.0.0"},
+		kctrl.RunWithOpts([]string{"pkg", "install", "-p", "testpackage.corp.dev", "-i", "test", "--version", "1.0.0"},
 			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
 	})
 }
 
 func TestPackageInitAndReleaseWithInvalidTag(t *testing.T) {
-	input := E2EAuthoringTestCase{
-		Name: "Add tag for imgpkg bundle while releasing the package",
-		InitInteraction: Interaction{
-			Prompts: []string{
-				"Enter the package reference name",
-				"Enter source",
-				"Enter Git URL",
-				"Enter Git Reference",
-				"Enter the paths which contain Kubernetes manifests",
-			},
-			Inputs: []string{
-				"testpackage.corp.dev",
-				"4",
-				"https://github.com/vmware-tanzu/carvel-kapp",
-				"origin/develop",
-				"examples/simple-app-example/config-1.yml",
-			},
+	initInteraction := Interaction{
+		Prompts: []string{
+			"Enter the package reference name",
+			"Enter source",
+			"Enter Git URL",
+			"Enter Git Reference",
+			"Enter the paths which contain Kubernetes manifests",
+		},
+		Inputs: []string{
+			"testpackage.corp.dev",
+			"4",
+			"https://github.com/vmware-tanzu/carvel-kapp",
+			"origin/develop",
+			"examples/simple-app-example/config-1.yml",
 		},
 	}
+
 	env := BuildEnv(t)
 	logger := Logger{}
 	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
@@ -1449,9 +1444,9 @@ func TestPackageInitAndReleaseWithInvalidTag(t *testing.T) {
 	}
 	const pkgDir = "./carvel-artifacts/packages/testpackage.corp.dev/"
 	promptOutput := newPromptOutput(t)
-	go input.InitInteraction.Run(promptOutput)
+	go initInteraction.Run(promptOutput)
 
-	logger.Section(fmt.Sprintf("%s: Package init", input.Name), func() {
+	logger.Section("Package init", func() {
 		kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
@@ -1461,7 +1456,7 @@ func TestPackageInitAndReleaseWithInvalidTag(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	logger.Section(fmt.Sprintf("%s: Package release", input.Name), func() {
+	logger.Section("Package release", func() {
 		releaseInteraction := Interaction{
 			Prompts: []string{"Enter the registry URL"},
 			Inputs:  []string{env.Image},
