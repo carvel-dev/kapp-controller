@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1666072114564,
+  "lastUpdate": 1666079918443,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -6963,6 +6963,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6529529375,
             "unit": "ns/op\t         4.323 DeleteSeconds\t         2.154 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "55523204+rohitagg2020@users.noreply.github.com",
+            "name": "rohitagg2020",
+            "username": "rohitagg2020"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d6b68623f3336af0947fced9a6ae797f275c64bd",
+          "message": "Adding a tag flag to override default imgpkg bundle tag (#930)\n\n* Adding a tag flag to override default imgpkg bundle tag\r\n\r\nAdding a tag flag to override default imgpkg bundle tag\r\n\r\n* Adding test case\r\n\r\nAdding test case\r\n\r\n* Adopting comments\r\n\r\nAdopting comments\r\n\r\n* Adopting comments\r\n\r\n* Update package_authoring_e2e_test.go\r\n\r\n* Update package_authoring_e2e_test.go\r\n\r\n* Update package_authoring_e2e_test.go",
+          "timestamp": "2022-10-18T13:16:33+05:30",
+          "tree_id": "26f5f35fb5ad721807bafab4209646a2e77fed66",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/d6b68623f3336af0947fced9a6ae797f275c64bd"
+        },
+        "date": 1666079916973,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37110487963,
+            "unit": "ns/op\t        19.42 DeleteSeconds\t        17.64 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8561202025,
+            "unit": "ns/op\t         4.327 DeleteSeconds\t         4.190 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6487215415,
+            "unit": "ns/op\t         4.291 DeleteSeconds\t         2.150 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
