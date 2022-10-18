@@ -13,10 +13,6 @@ import (
 )
 
 const (
-	FetchContentAnnotationKey = "fetch-content-from"
-)
-
-const (
 	vendirFileName      = "vendir.yml"
 	vendirSyncDirectory = "upstream"
 	includeAllFiles     = "*"
@@ -40,14 +36,14 @@ func NewFetchConfiguration(ui cmdcore.AuthoringUI, build buildconfigs.Build) Fet
 	return FetchConfiguration{ui: ui, build: build}
 }
 
-func (f FetchConfiguration) Configure() error {
+func (f FetchConfiguration) Configure() (string, SourceConfiguration, error) {
 	f.ui.PrintHeaderText("Content")
 	f.ui.PrintInformationalText("Please provide the location from where your Kubernetes manifests or Helm chart can be fetched. This will be bundled as a part of the package.")
 
 	vendirConfig := NewVendirConfig(vendirFileName)
 	err := vendirConfig.Load()
 	if err != nil {
-		return err
+		return "", nil, err
 	}
 
 	isHelmTemplateExistInPreviousOption := f.build.HasHelmTemplate()
@@ -55,7 +51,7 @@ func (f FetchConfiguration) Configure() error {
 	if previousFetchOptionSelected == MultipleFetchOptionsSelected {
 		// As this is advanced use case, we dont know how to handle it.
 		f.ui.PrintInformationalText("Since vendir is syncing data from multiple resources, we will not reconfigure vendir.yml and run vendir sync.")
-		return nil
+		return "", nil, nil
 	}
 
 	options := []string{FetchFromLocalDirectory, FetchFromGithubRelease, FetchFromHelmRepo, FetchFromGit, FetchChartFromGit}
@@ -68,50 +64,44 @@ func (f FetchConfiguration) Configure() error {
 	}
 	currentFetchOptionIndex, err := f.ui.AskForChoice(choiceOpts)
 	if err != nil {
-		return err
+		return "", nil, err
 	}
 	currentFetchOptionSelected := options[currentFetchOptionIndex]
 
 	if previousFetchOptionSelected != "" && currentFetchOptionSelected != previousFetchOptionSelected {
-		return fmt.Errorf("Transitioning from one fetch option to another is not allowed. Earlier option selected: %s, Current Option selected: %s", previousFetchOptionSelected, currentFetchOptionSelected)
+		return "", nil, fmt.Errorf("Transitioning from one fetch option to another is not allowed. Earlier option selected: %s, Current Option selected: %s", previousFetchOptionSelected, currentFetchOptionSelected)
 	}
 
-	buildObjectMeta := f.build.GetObjectMeta()
-	if buildObjectMeta.Annotations == nil {
-		buildObjectMeta.Annotations = make(map[string]string)
-	}
-	buildObjectMeta.Annotations[FetchContentAnnotationKey] = currentFetchOptionSelected
-	f.build.SetObjectMeta(buildObjectMeta)
 	// For the local directory options, all files/directories in working directory are used while releasing
 	if currentFetchOptionSelected == FetchFromLocalDirectory {
-		return nil
+		return currentFetchOptionSelected, nil, nil
 	}
 
 	vendirDirectories := vendirConfig.Directories()
 	if len(vendirDirectories) > 1 {
-		return fmt.Errorf("More than 1 directory config found in the vendir file. (hint: Run vendir sync manually)")
+		return currentFetchOptionSelected, nil, fmt.Errorf("More than 1 directory config found in the vendir file. (hint: Run vendir sync manually)")
 	}
 	if len(vendirDirectories) == 0 {
 		err := f.initializeVendirDirectorySection(vendirConfig)
 		if err != nil {
-			return err
+			return currentFetchOptionSelected, nil, err
 		}
 	} else {
 		directory := vendirDirectories[0]
 		if len(directory.Contents) > 1 {
-			return fmt.Errorf("More than 1 content config found in the vendir file. (hint: Run vendir sync manually)")
+			return currentFetchOptionSelected, nil, fmt.Errorf("More than 1 content config found in the vendir file. (hint: Run vendir sync manually)")
 		}
 	}
 
 	switch currentFetchOptionSelected {
 	case FetchFromGithubRelease:
-		return NewGithubReleaseConfiguration(f.ui, vendirConfig).Configure()
+		return currentFetchOptionSelected, NewGithubReleaseConfiguration(f.ui, vendirConfig), nil
 	case FetchFromHelmRepo:
-		return NewHelmConfiguration(f.ui, vendirConfig).Configure()
+		return currentFetchOptionSelected, NewHelmConfiguration(f.ui, vendirConfig), nil
 	case FetchFromGit, FetchChartFromGit:
-		return NewGitConfiguration(f.ui, vendirConfig).Configure()
+		return currentFetchOptionSelected, NewGitConfiguration(f.ui, vendirConfig), nil
 	}
-	return fmt.Errorf("Unexppected: Invalid fetch mode encountered while configuring vendir")
+	return currentFetchOptionSelected, nil, fmt.Errorf("Unexppected: Invalid fetch mode encountered while configuring vendir")
 }
 
 func (f FetchConfiguration) getPreviousFetchOptionIndex(manifestOptions []string, previousFetchOption string) int {

@@ -20,6 +20,8 @@ type GithubReleaseConfiguration struct {
 	vendirConfig *VendirConfig
 }
 
+var _ SourceConfiguration = &GithubReleaseConfiguration{}
+
 func NewGithubReleaseConfiguration(ui cmdcore.AuthoringUI, vendirConfig *VendirConfig) *GithubReleaseConfiguration {
 	return &GithubReleaseConfiguration{ui: ui, vendirConfig: vendirConfig}
 }

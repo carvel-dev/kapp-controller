@@ -73,9 +73,17 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	err = sources.NewFetchConfiguration(o.ui, appBuild).Configure()
+	fetchMode, sourceConfiguration, err := sources.NewFetchConfiguration(o.ui, appBuild).Configure()
 	if err != nil {
 		return err
+	}
+
+	// source does not need to be conifgured if manifests are in the local directory
+	if sourceConfiguration != nil {
+		err = sourceConfiguration.Configure()
+		if err != nil {
+			return err
+		}
 	}
 
 	err = sources.NewVendirRunner(o.ui).RunSync()
@@ -83,7 +91,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	err = sources.NewTemplateConfiguration(o.ui, appBuild).Configure()
+	err = sources.NewTemplateConfiguration(o.ui, appBuild).Configure(fetchMode)
 	if err != nil {
 		return err
 	}

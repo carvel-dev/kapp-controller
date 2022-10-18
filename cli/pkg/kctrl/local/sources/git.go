@@ -11,6 +11,10 @@ import (
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
+type SourceConfiguration interface {
+	Configure() error
+}
+
 type GitConfiguration struct {
 	ui           cmdcore.AuthoringUI
 	vendirConfig *VendirConfig

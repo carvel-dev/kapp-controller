@@ -23,19 +23,18 @@ func NewTemplateConfiguration(ui cmdcore.AuthoringUI, build buildconfigs.Build) 
 	return &TemplateConfiguration{ui: ui, build: build}
 }
 
-func (t *TemplateConfiguration) Configure() error {
+func (t *TemplateConfiguration) Configure(fetchMode string) error {
 	appSpec := t.build.GetAppSpec()
 	if appSpec == nil {
 		appSpec = &v1alpha1.AppSpec{}
 	}
 	existingTemplates := appSpec.Template
-	fetchSource := t.build.GetObjectMeta().Annotations[FetchContentAnnotationKey]
 
 	/* In case of pkg init rerun, if user has selected anything else except FetchFromLocalDirectory,
 	we will return from Template section without touching it.
 	We dont want to reset the modification user have done. */
 	if len(existingTemplates) > 0 {
-		if fetchSource == FetchFromLocalDirectory {
+		if fetchMode == FetchFromLocalDirectory {
 			for _, template := range existingTemplates {
 				if template.Ytt != nil {
 					var defaultIncludedPath string
@@ -56,8 +55,8 @@ func (t *TemplateConfiguration) Configure() error {
 		appTemplates := []v1alpha1.AppTemplate{}
 
 		// Add helmTemplate
-		if fetchSource == FetchChartFromGit || fetchSource == FetchFromHelmRepo {
-			appTemplate, err := t.getHelmAppTemplate(fetchSource)
+		if fetchMode == FetchChartFromGit || fetchMode == FetchFromHelmRepo {
+			appTemplate, err := t.getHelmAppTemplate(fetchMode)
 			if err != nil {
 				return err
 			}
@@ -66,9 +65,9 @@ func (t *TemplateConfiguration) Configure() error {
 
 		//  Define YttPaths
 		var defaultYttPaths []string
-		if fetchSource == FetchFromHelmRepo || fetchSource == FetchChartFromGit {
+		if fetchMode == FetchFromHelmRepo || fetchMode == FetchChartFromGit {
 			defaultYttPaths = []string{buildconfigs.StdIn}
-		} else if fetchSource == FetchFromLocalDirectory {
+		} else if fetchMode == FetchFromLocalDirectory {
 			var err error
 			defaultYttPaths, err = t.getYttPathsForLocalDirectory("")
 			if err != nil {
@@ -95,9 +94,9 @@ func (t *TemplateConfiguration) Configure() error {
 	return nil
 }
 
-func (t *TemplateConfiguration) getHelmAppTemplate(fetchSource string) (v1alpha1.AppTemplate, error) {
+func (t *TemplateConfiguration) getHelmAppTemplate(fetchMode string) (v1alpha1.AppTemplate, error) {
 	var pathFromVendir string
-	if fetchSource == FetchChartFromGit {
+	if fetchMode == FetchChartFromGit {
 		vendirConfig := NewVendirConfig(vendirFileName)
 		err := vendirConfig.Load()
 		if err != nil {

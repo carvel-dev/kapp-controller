@@ -16,6 +16,8 @@ type HelmConfiguration struct {
 	vendirConfig *VendirConfig
 }
 
+var _ SourceConfiguration = &HelmConfiguration{}
+
 func NewHelmConfiguration(ui cmdcore.AuthoringUI, vendirConfig *VendirConfig) *HelmConfiguration {
 	return &HelmConfiguration{ui: ui, vendirConfig: vendirConfig}
 }

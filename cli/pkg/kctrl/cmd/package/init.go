@@ -90,9 +90,16 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	err = sources.NewFetchConfiguration(o.ui, pkgBuild).Configure()
+	fetchMode, sourceConfiguration, err := sources.NewFetchConfiguration(o.ui, pkgBuild).Configure()
 	if err != nil {
 		return err
+	}
+
+	if sourceConfiguration != nil {
+		err = sourceConfiguration.Configure()
+		if err != nil {
+			return err
+		}
 	}
 
 	err = sources.NewVendirRunner(o.ui).RunSync()
@@ -100,7 +107,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	err = sources.NewTemplateConfiguration(o.ui, pkgBuild).Configure()
+	err = sources.NewTemplateConfiguration(o.ui, pkgBuild).Configure(fetchMode)
 	if err != nil {
 		return err
 	}
