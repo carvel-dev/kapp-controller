@@ -1296,18 +1296,26 @@ func TestPackageInitAndReleaseWithTag(t *testing.T) {
 	logger := Logger{}
 	kctrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	const pkgDir = "./carvel-artifacts/packages/testpackage.corp.dev/"
+	promptOutput := newPromptOutput(t)
 
-	os.RemoveAll(workingDir)
-	defer os.RemoveAll(workingDir)
+	cleanUp := func() {
+		os.RemoveAll(workingDir)
+		kapp.RunWithOpts([]string{"delete", "-a", "test-package"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+		kctrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+	}
+	cleanUp()
+	defer cleanUp()
+
 	err := os.Mkdir(workingDir, os.ModePerm)
 	if err != nil {
 		t.Fatal(err)
 	}
-	const pkgDir = "./carvel-artifacts/packages/testpackage.corp.dev/"
-	promptOutput := newPromptOutput(t)
 
 	logger.Section("Package init", func() {
-		packageInitInteraction := Interaction{
+		interaction := Interaction{
 			Prompts: []string{
 				"Enter the package reference name",
 				"Enter source",
@@ -1323,7 +1331,8 @@ func TestPackageInitAndReleaseWithTag(t *testing.T) {
 				"examples/simple-app-example/config-1.yml",
 			},
 		}
-		go packageInitInteraction.Run(promptOutput)
+
+		go interaction.Run(promptOutput)
 		kctrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
@@ -1365,38 +1374,27 @@ spec:
 			Prompts: []string{"Enter the registry URL"},
 			Inputs:  []string{env.Image},
 		}
-		go releaseInteraction.Run(promptOutput)
 		tag := "1.0.0"
 
+		go releaseInteraction.Run(promptOutput)
 		kctrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir, "--tag", tag},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
 
-		// Below key's values will be changed during every run, hence adding these keys to be ignored
-		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image:"}
-
-		// Verify Package artifact
 		out, err := readFile(pkgDir + "package.yml")
 		require.NoErrorf(t, err, "Expected to read package.yml")
+
+		// Below key's values will be changed during every run, hence removing them
+		out = clearKeys([]string{"creationTimestamp:", "releasedAt:", "image:"}, strings.TrimSpace(replaceSpaces(out)))
 		expectedPackage = strings.TrimSpace(replaceSpaces(expectedPackage))
-		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
 		require.Equal(t, expectedPackage, out, "Expected Package to match")
 
-		// Verify imgpkg pull is successful
 		cmd := exec.Command("imgpkg", []string{"pull", "-b", fmt.Sprintf("%s:%s", env.Image, tag), "-o", filepath.Join(workingDir, "tmp")}...)
 		err = cmd.Run()
 		require.NoErrorf(t, err, "Expected imgpkg pull to succeed")
 	})
 
 	logger.Section("Testing and installing created Package", func() {
-		cleanUpInstalledPkg := func() {
-			kapp.RunWithOpts([]string{"delete", "-a", "test-package"},
-				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-			kctrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
-				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-		}
-		defer cleanUpInstalledPkg()
-
 		kapp.RunWithOpts([]string{"deploy", "-a", "test-package", "-f", filepath.Join(workingDir, pkgDir), "-c"},
 			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
 		kctrl.RunWithOpts([]string{"pkg", "available", "list"},
@@ -1407,38 +1405,39 @@ spec:
 }
 
 func TestPackageInitAndReleaseWithInvalidTag(t *testing.T) {
-	packageInitInteraction := Interaction{
-		Prompts: []string{
-			"Enter the package reference name",
-			"Enter source",
-			"Enter Git URL",
-			"Enter Git Reference",
-			"Enter the paths which contain Kubernetes manifests",
-		},
-		Inputs: []string{
-			"testpackage.corp.dev",
-			"4",
-			"https://github.com/vmware-tanzu/carvel-kapp",
-			"origin/develop",
-			"examples/simple-app-example/config-1.yml",
-		},
-	}
-
 	env := BuildEnv(t)
 	logger := Logger{}
-	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+	kctrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+	promptOutput := newPromptOutput(t)
 
 	os.RemoveAll(workingDir)
 	defer os.RemoveAll(workingDir)
+
 	err := os.Mkdir(workingDir, os.ModePerm)
 	if err != nil {
 		t.Fatal(err)
 	}
-	promptOutput := newPromptOutput(t)
 
 	logger.Section("Package init", func() {
-		go packageInitInteraction.Run(promptOutput)
-		kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
+		interaction := Interaction{
+			Prompts: []string{
+				"Enter the package reference name",
+				"Enter source",
+				"Enter Git URL",
+				"Enter Git Reference",
+				"Enter the paths which contain Kubernetes manifests",
+			},
+			Inputs: []string{
+				"testpackage.corp.dev",
+				"4",
+				"https://github.com/vmware-tanzu/carvel-kapp",
+				"origin/develop",
+				"examples/simple-app-example/config-1.yml",
+			},
+		}
+
+		go interaction.Run(promptOutput)
+		kctrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
 
@@ -1452,12 +1451,13 @@ func TestPackageInitAndReleaseWithInvalidTag(t *testing.T) {
 			Prompts: []string{"Enter the registry URL"},
 			Inputs:  []string{env.Image},
 		}
+		tag := "1.0.0+"
 
 		go releaseInteraction.Run(promptOutput)
-		tag := "1.0.0+"
-		_, err := kappCtrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir, "--tag", tag},
+		_, err := kctrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir, "--tag", tag},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true, AllowError: true})
+
 		require.Error(t, err)
 	})
 }
