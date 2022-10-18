@@ -16,24 +16,32 @@ const (
 	packagesDir       = "packages"
 	pkgRepoOutputFile = "package-repository.yml"
 	pkgrName          = "testpackagerepo.corp.dev"
+	pkgrKappAppName   = "test-package-repo-app"
 )
 
 func TestPackageRepositoryReleaseInteractively(t *testing.T) {
-	cleanUp := func() {
-		os.RemoveAll(workingDir)
-	}
-	cleanUp()
-	defer cleanUp()
-
 	env := BuildEnv(t)
 	logger := Logger{}
 	kctrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 	promptOutput := newPromptOutput(t)
+
+	cleanUp := func() {
+		os.RemoveAll(workingDir)
+		kapp.RunWithOpts([]string{"delete", "-a", pkgrKappAppName},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	err := os.MkdirAll(filepath.Join(workingDir, packagesDir), fs.ModePerm)
+	if err != nil {
+		t.Errorf("Unable to create packages directory: %s", err.Error())
+	}
+
 	setupPackageToRelease(t)
 
 	logger.Section("Creating a package repository interactively using pkg repo release", func() {
-
 		go func() {
 			promptOutput.WaitFor("Enter the package repository name")
 			promptOutput.Write(pkgrName)
@@ -51,13 +59,6 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 	})
 
 	logger.Section(fmt.Sprintf("Installing package repository"), func() {
-		pkgrKappAppName := "test-package-repo-app"
-		cleanUpInstalledPkgRepo := func() {
-			kapp.RunWithOpts([]string{"delete", "-a", pkgrKappAppName},
-				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
-		}
-		defer cleanUpInstalledPkgRepo()
-
 		kapp.RunWithOpts([]string{"deploy", "-a", pkgrKappAppName, "-f", filepath.Join(workingDir, pkgRepoOutputFile), "-c"},
 			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
 		out, _ := kctrl.RunWithOpts([]string{"package", "repository", "get", "-r", pkgrName, "--json"}, RunOpts{})
@@ -158,11 +159,7 @@ spec:
       deploy:
       - kapp: {}
 `
-	err := os.MkdirAll(filepath.Join(workingDir, packagesDir), fs.ModePerm)
-	if err != nil {
-		t.Errorf("Unable to create packages directory: %s", err.Error())
-	}
-	err = os.WriteFile(filepath.Join(workingDir, packagesDir, "package.yml"), []byte(pkg_yaml), fs.ModePerm)
+	err := os.WriteFile(filepath.Join(workingDir, packagesDir, "package.yml"), []byte(pkg_yaml), fs.ModePerm)
 	if err != nil {
 		t.Errorf("Unable to create package.yml file: %s", err.Error())
 	}
