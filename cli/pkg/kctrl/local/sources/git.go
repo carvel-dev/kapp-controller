@@ -20,6 +20,8 @@ type GitConfiguration struct {
 	vendirConfig *VendirConfig
 }
 
+var _ SourceConfiguration = &GitConfiguration{}
+
 func NewGitConfiguration(ui cmdcore.AuthoringUI, vendirConfig *VendirConfig) *GitConfiguration {
 	return &GitConfiguration{ui: ui, vendirConfig: vendirConfig}
 }

@@ -78,7 +78,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	// source does not need to be conifgured if manifests are in the local directory
+	// Source does not need to be conifgured if manifests are in the local directory
 	if sourceConfiguration != nil {
 		err = sourceConfiguration.Configure()
 		if err != nil {
@@ -102,7 +102,7 @@ func (o *InitOptions) Run() error {
 	}
 	appBuild.SetAppSpec(appSpec)
 
-	appBuild.ConfigureExportSection()
+	buildconfigs.ConfigureExportSection(appBuild, fetchMode == sources.FetchFromLocalDirectory, sources.VendirSyncDirectory)
 	err = appBuild.Save()
 	if err != nil {
 		return err

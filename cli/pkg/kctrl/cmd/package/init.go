@@ -95,6 +95,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
+	// Source does not need to be conifgured if manifests are in the local directory
 	if sourceConfiguration != nil {
 		err = sourceConfiguration.Configure()
 		if err != nil {
@@ -118,7 +119,7 @@ func (o *InitOptions) Run() error {
 	}
 	pkgBuild.SetAppSpec(appSpec)
 
-	pkgBuild.ConfigureExportSection()
+	buildconfigs.ConfigureExportSection(pkgBuild, fetchMode == sources.FetchFromLocalDirectory, sources.VendirSyncDirectory)
 	err = pkgBuild.Save()
 	if err != nil {
 		return err

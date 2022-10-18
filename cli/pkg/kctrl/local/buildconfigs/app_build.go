@@ -14,13 +14,9 @@ import (
 )
 
 const (
-	// TODO: Find better location for UpstreamFolderName
-	UpstreamFolderName        = "upstream"
 	StdIn                     = "-"
 	FetchContentAnnotationKey = "fetch-content-from"
-	// TODO: Remove this constant after handling how fetch modes are passed between sections of the code beter
-	FetchFromLocalDirectory = "Local Directory"
-	AppBuildFileName        = "app-build.yml"
+	AppBuildFileName          = "app-build.yml"
 )
 
 type Build interface {
@@ -32,7 +28,6 @@ type Build interface {
 	SetExport(export *[]Export)
 	GetExport() *[]Export
 	HasHelmTemplate() bool
-	ConfigureExportSection()
 }
 
 type AppBuild struct {
@@ -192,21 +187,20 @@ func (b *AppBuild) HasHelmTemplate() bool {
 	return false
 }
 
-func (b *AppBuild) ConfigureExportSection() {
-	fetchSource := b.GetObjectMeta().Annotations[FetchContentAnnotationKey]
-	exportSection := *b.GetExport()
+func ConfigureExportSection(buildConfig Build, isLocal bool, vendirSyncDirectory string) {
+	exportSection := *buildConfig.GetExport()
 	// In case of pkg init rerun with FetchFromLocalDirectory, today we overwrite the includePaths
 	// with what we get from template section.
 	// Alternatively, we can merge the includePaths with template section.
 	// It becomes complex to merge already existing includePaths with template section especially scenario 2
 	// Scenario 1: During rerun, something is added in the app template section
 	// Scenario 2: During rerun, something is removed from the app template section
-	if exportSection == nil || len(exportSection) == 0 || fetchSource == FetchFromLocalDirectory {
-		appTemplates := b.GetAppSpec().Template
+	if exportSection == nil || len(exportSection) == 0 || isLocal {
+		appTemplates := buildConfig.GetAppSpec().Template
 		includePaths := []string{}
 		for _, appTemplate := range appTemplates {
 			if appTemplate.HelmTemplate != nil {
-				includePaths = append(includePaths, UpstreamFolderName)
+				includePaths = append(includePaths, vendirSyncDirectory)
 			}
 
 			if appTemplate.Ytt != nil {
@@ -224,6 +218,6 @@ func (b *AppBuild) ConfigureExportSection() {
 		}
 		exportSection[0].IncludePaths = includePaths
 
-		b.SetExport(&exportSection)
+		buildConfig.SetExport(&exportSection)
 	}
 }

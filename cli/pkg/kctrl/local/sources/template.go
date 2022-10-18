@@ -74,7 +74,7 @@ func (t *TemplateConfiguration) Configure(fetchMode string) error {
 				return err
 			}
 		} else {
-			defaultYttPaths = []string{buildconfigs.UpstreamFolderName}
+			defaultYttPaths = []string{VendirSyncDirectory}
 		}
 		// Add yttTemplate
 		appTemplateWithYtt := v1alpha1.AppTemplate{
@@ -112,7 +112,7 @@ func (t *TemplateConfiguration) getHelmAppTemplate(fetchMode string) (v1alpha1.A
 	}
 	appTemplateWithHelm := v1alpha1.AppTemplate{
 		HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{
-			Path: filepath.Join(buildconfigs.UpstreamFolderName, pathFromVendir),
+			Path: filepath.Join(VendirSyncDirectory, pathFromVendir),
 		}}
 	return appTemplateWithHelm, nil
 }

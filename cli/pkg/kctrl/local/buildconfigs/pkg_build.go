@@ -106,39 +106,3 @@ func (b *PackageBuild) HasHelmTemplate() bool {
 	}
 	return false
 }
-
-func (b *PackageBuild) ConfigureExportSection() {
-	fetchSource := b.GetObjectMeta().Annotations[FetchContentAnnotationKey]
-	exportSection := *b.GetExport()
-	// In case of pkg init rerun with FetchFromLocalDirectory, today we overwrite the includePaths
-	// with what we get from template section.
-	// Alternatively, we can merge the includePaths with template section.
-	// It becomes complex to merge already existing includePaths with template section especially scenario 2
-	// Scenario 1: During rerun, something is added in the app template section
-	// Scenario 2: During rerun, something is removed from the app template section
-	if exportSection == nil || len(exportSection) == 0 || fetchSource == FetchFromLocalDirectory {
-		appTemplates := b.GetAppSpec().Template
-		includePaths := []string{}
-		for _, appTemplate := range appTemplates {
-			if appTemplate.HelmTemplate != nil {
-				includePaths = append(includePaths, UpstreamFolderName)
-			}
-
-			if appTemplate.Ytt != nil {
-				for _, path := range appTemplate.Ytt.Paths {
-					if path == StdIn {
-						continue
-					}
-					includePaths = append(includePaths, path)
-				}
-			}
-		}
-
-		if len(exportSection) == 0 {
-			exportSection = []Export{{}}
-		}
-		exportSection[0].IncludePaths = includePaths
-
-		b.SetExport(&exportSection)
-	}
-}

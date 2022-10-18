@@ -13,8 +13,8 @@ import (
 )
 
 const (
+	VendirSyncDirectory = "upstream"
 	vendirFileName      = "vendir.yml"
-	vendirSyncDirectory = "upstream"
 	includeAllFiles     = "*"
 )
 
@@ -122,7 +122,7 @@ func (f FetchConfiguration) getPreviousFetchOptionIndex(manifestOptions []string
 func (f *FetchConfiguration) initializeVendirDirectorySection(vendirConfig *VendirConfig) error {
 	var directory vendirconf.Directory
 	directory = vendirconf.Directory{
-		Path: vendirSyncDirectory,
+		Path: VendirSyncDirectory,
 		Contents: []vendirconf.DirectoryContents{
 			{
 				Path: ".",
