@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1665652034607,
+  "lastUpdate": 1666072114564,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -6921,6 +6921,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6533674256,
             "unit": "ns/op\t         4.309 DeleteSeconds\t         2.167 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dbde3d601f4b543854b8b6eb54681ea4a28c3331",
+          "message": "Instantiate coreClient while using reconciler only for the dev command (#939)",
+          "timestamp": "2022-10-18T11:06:14+05:30",
+          "tree_id": "27ffe6be07f467e5ffdc4556cfa6d77c28e9537b",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/dbde3d601f4b543854b8b6eb54681ea4a28c3331"
+        },
+        "date": 1666072112995,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36822366615,
+            "unit": "ns/op\t        18.12 DeleteSeconds\t        18.66 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8693877425,
+            "unit": "ns/op\t         4.444 DeleteSeconds\t         4.206 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6529529375,
+            "unit": "ns/op\t         4.323 DeleteSeconds\t         2.154 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
