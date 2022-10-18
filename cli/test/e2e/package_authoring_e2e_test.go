@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -1287,5 +1288,176 @@ spec:
 			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
 		kappCtrl.RunWithOpts([]string{"pkg", "install", "-p", "testpackage.corp.dev", "-i", "test", "--version", "1.0.0"},
 			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+	})
+}
+
+func TestPackageInitAndReleaseWithTag(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kctrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	const pkgDir = "./carvel-artifacts/packages/testpackage.corp.dev/"
+	promptOutput := newPromptOutput(t)
+
+	cleanUp := func() {
+		os.RemoveAll(workingDir)
+		kapp.RunWithOpts([]string{"delete", "-a", "test-package"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+		kctrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	err := os.Mkdir(workingDir, os.ModePerm)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	logger.Section("Package init", func() {
+		interaction := Interaction{
+			Prompts: []string{
+				"Enter the package reference name",
+				"Enter source",
+				"Enter Git URL",
+				"Enter Git Reference",
+				"Enter the paths which contain Kubernetes manifests",
+			},
+			Inputs: []string{
+				"testpackage.corp.dev",
+				"4",
+				"https://github.com/vmware-tanzu/carvel-kapp",
+				"origin/develop",
+				"examples/simple-app-example/config-1.yml",
+			},
+		}
+
+		go interaction.Run(promptOutput)
+		kctrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+
+		// Error if upstream folder doesn't exist
+		_, err = os.Stat(filepath.Join(workingDir, "upstream"))
+		require.NoError(t, err)
+	})
+
+	logger.Section("Package release", func() {
+		expectedPackage := `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.1.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - imgpkgBundle:
+      template:
+      - ytt:
+          paths:
+          - upstream
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/images.yml
+  valuesSchema:
+    openAPIv3:
+      default: null
+      nullable: true
+  version: 1.0.0
+`
+		releaseInteraction := Interaction{
+			Prompts: []string{"Enter the registry URL"},
+			Inputs:  []string{env.Image},
+		}
+		tag := "1.0.0"
+
+		go releaseInteraction.Run(promptOutput)
+		kctrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir, "--tag", tag},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+
+		out, err := readFile(pkgDir + "package.yml")
+		require.NoErrorf(t, err, "Expected to read package.yml")
+
+		// Below key's values will be changed during every run, hence removing them
+		out = clearKeys([]string{"creationTimestamp:", "releasedAt:", "image:"}, strings.TrimSpace(replaceSpaces(out)))
+		expectedPackage = strings.TrimSpace(replaceSpaces(expectedPackage))
+		require.Equal(t, expectedPackage, out, "Expected Package to match")
+
+		cmd := exec.Command("imgpkg", []string{"pull", "-b", fmt.Sprintf("%s:%s", env.Image, tag), "-o", filepath.Join(workingDir, "tmp")}...)
+		err = cmd.Run()
+		require.NoErrorf(t, err, "Expected imgpkg pull to succeed")
+	})
+
+	logger.Section("Testing and installing created Package", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", "test-package", "-f", filepath.Join(workingDir, pkgDir), "-c"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+		kctrl.RunWithOpts([]string{"pkg", "available", "list"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+		kctrl.RunWithOpts([]string{"pkg", "install", "-p", "testpackage.corp.dev", "-i", "test", "--version", "1.0.0"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+	})
+}
+
+func TestPackageInitAndReleaseWithInvalidTag(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kctrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+	promptOutput := newPromptOutput(t)
+
+	os.RemoveAll(workingDir)
+	defer os.RemoveAll(workingDir)
+
+	err := os.Mkdir(workingDir, os.ModePerm)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	logger.Section("Package init", func() {
+		interaction := Interaction{
+			Prompts: []string{
+				"Enter the package reference name",
+				"Enter source",
+				"Enter Git URL",
+				"Enter Git Reference",
+				"Enter the paths which contain Kubernetes manifests",
+			},
+			Inputs: []string{
+				"testpackage.corp.dev",
+				"4",
+				"https://github.com/vmware-tanzu/carvel-kapp",
+				"origin/develop",
+				"examples/simple-app-example/config-1.yml",
+			},
+		}
+
+		go interaction.Run(promptOutput)
+		kctrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+
+		// Error if upstream folder doesn't exist
+		_, err = os.Stat(filepath.Join(workingDir, "upstream"))
+		require.NoError(t, err)
+	})
+
+	logger.Section("Package release", func() {
+		releaseInteraction := Interaction{
+			Prompts: []string{"Enter the registry URL"},
+			Inputs:  []string{env.Image},
+		}
+		tag := "1.0.0+"
+
+		go releaseInteraction.Run(promptOutput)
+		_, err := kctrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir, "--tag", tag},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true, AllowError: true})
+
+		require.Error(t, err)
 	})
 }

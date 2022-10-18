@@ -33,6 +33,7 @@ type AppSpecBuilderOpts struct {
 	BuildExport   []appinit.Export
 	BundleImage   string
 	Debug         bool
+	BundleTag     string
 }
 
 func NewAppSpecBuilder(depsFactory cmdcore.DepsFactory, logger logger.Logger, ui cmdcore.AuthoringUI, opts AppSpecBuilderOpts) *AppSpecBuilder {
@@ -96,12 +97,16 @@ func (b *AppSpecBuilder) Build() (kcv1alpha1.AppSpec, error) {
 
 	bundleURL := ""
 	useKbldImagesLock := false
+	tag := fmt.Sprintf("build-%d", time.Now().Unix())
+	if b.opts.BundleTag != "" {
+		tag = b.opts.BundleTag
+	}
 	for _, exportStep := range b.opts.BuildExport {
 		switch {
 		case exportStep.ImgpkgBundle != nil:
 			useKbldImagesLock = exportStep.ImgpkgBundle.UseKbldImagesLock
 			imgpkgRunner := ImgpkgRunner{
-				BundlePath:        fmt.Sprintf("%s:build-%d", exportStep.ImgpkgBundle.Image, time.Now().Unix()),
+				BundlePath:        fmt.Sprintf("%s:%s", exportStep.ImgpkgBundle.Image, tag),
 				Paths:             exportStep.IncludePaths,
 				UseKbldImagesLock: exportStep.ImgpkgBundle.UseKbldImagesLock,
 				ImgLockFilepath:   tempImgpkgLockPath,
