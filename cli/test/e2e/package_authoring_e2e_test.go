@@ -1292,23 +1292,49 @@ spec:
 }
 
 func TestPackageInitAndReleaseWithTag(t *testing.T) {
-	initInteraction := Interaction{
-		Prompts: []string{
-			"Enter the package reference name",
-			"Enter source",
-			"Enter Git URL",
-			"Enter Git Reference",
-			"Enter the paths which contain Kubernetes manifests",
-		},
-		Inputs: []string{
-			"testpackage.corp.dev",
-			"4",
-			"https://github.com/vmware-tanzu/carvel-kapp",
-			"origin/develop",
-			"examples/simple-app-example/config-1.yml",
-		},
+	env := BuildEnv(t)
+	logger := Logger{}
+	kctrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+
+	os.RemoveAll(workingDir)
+	defer os.RemoveAll(workingDir)
+	err := os.Mkdir(workingDir, os.ModePerm)
+	if err != nil {
+		t.Fatal(err)
 	}
-	expectedPackage := `
+	const pkgDir = "./carvel-artifacts/packages/testpackage.corp.dev/"
+	promptOutput := newPromptOutput(t)
+
+	logger.Section("Package init", func() {
+		packageInitInteraction := Interaction{
+			Prompts: []string{
+				"Enter the package reference name",
+				"Enter source",
+				"Enter Git URL",
+				"Enter Git Reference",
+				"Enter the paths which contain Kubernetes manifests",
+			},
+			Inputs: []string{
+				"testpackage.corp.dev",
+				"4",
+				"https://github.com/vmware-tanzu/carvel-kapp",
+				"origin/develop",
+				"examples/simple-app-example/config-1.yml",
+			},
+		}
+		go packageInitInteraction.Run(promptOutput)
+		kctrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+
+		// Error if upstream folder doesn't exist
+		_, err = os.Stat(filepath.Join(workingDir, "upstream"))
+		require.NoError(t, err)
+	})
+
+	logger.Section("Package release", func() {
+		expectedPackage := `
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
@@ -1335,36 +1361,6 @@ spec:
       nullable: true
   version: 1.0.0
 `
-	env := BuildEnv(t)
-	logger := Logger{}
-	kctrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-
-	cleanUp := func() {
-		os.RemoveAll(workingDir)
-	}
-	cleanUp()
-	defer cleanUp()
-
-	err := os.Mkdir(workingDir, os.ModePerm)
-	if err != nil {
-		t.Fatal(err)
-	}
-	const pkgDir = "./carvel-artifacts/packages/testpackage.corp.dev/"
-	promptOutput := newPromptOutput(t)
-	go initInteraction.Run(promptOutput)
-
-	logger.Section("Package init", func() {
-		kctrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
-			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
-				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
-
-		// Error if upstream folder doesn't exist
-		_, err = os.Stat(filepath.Join(workingDir, "upstream"))
-		require.NoError(t, err)
-	})
-
-	logger.Section("Package release", func() {
 		releaseInteraction := Interaction{
 			Prompts: []string{"Enter the registry URL"},
 			Inputs:  []string{env.Image},
@@ -1382,7 +1378,7 @@ spec:
 		// Verify Package artifact
 		out, err := readFile(pkgDir + "package.yml")
 		require.NoErrorf(t, err, "Expected to read package.yml")
-		expectedPackage := strings.TrimSpace(replaceSpaces(expectedPackage))
+		expectedPackage = strings.TrimSpace(replaceSpaces(expectedPackage))
 		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
 		require.Equal(t, expectedPackage, out, "Expected Package to match")
 
@@ -1411,7 +1407,7 @@ spec:
 }
 
 func TestPackageInitAndReleaseWithInvalidTag(t *testing.T) {
-	initInteraction := Interaction{
+	packageInitInteraction := Interaction{
 		Prompts: []string{
 			"Enter the package reference name",
 			"Enter source",
@@ -1432,21 +1428,16 @@ func TestPackageInitAndReleaseWithInvalidTag(t *testing.T) {
 	logger := Logger{}
 	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
 
-	cleanUp := func() {
-		os.RemoveAll(workingDir)
-	}
-	cleanUp()
-	defer cleanUp()
-
+	os.RemoveAll(workingDir)
+	defer os.RemoveAll(workingDir)
 	err := os.Mkdir(workingDir, os.ModePerm)
 	if err != nil {
 		t.Fatal(err)
 	}
-	const pkgDir = "./carvel-artifacts/packages/testpackage.corp.dev/"
 	promptOutput := newPromptOutput(t)
-	go initInteraction.Run(promptOutput)
 
 	logger.Section("Package init", func() {
+		go packageInitInteraction.Run(promptOutput)
 		kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
