@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1666079918443,
+  "lastUpdate": 1666080611627,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -7005,6 +7005,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6487215415,
             "unit": "ns/op\t         4.291 DeleteSeconds\t         2.150 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "55523204+rohitagg2020@users.noreply.github.com",
+            "name": "rohitagg2020",
+            "username": "rohitagg2020"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "995597990c2a8b3d181d4ddce3d33eb704e5fa6d",
+          "message": "Adding tag as annotation for pkg repo release command. (#938)\n\n* Adding tag as annotation for pkg repo release command.\r\n\r\nAdding tag as annotation for pkg repo release command.\r\n\r\n* Update package_repo_release_test.go\r\n\r\n* Adopting review comments\r\n\r\nAdopting review comments\r\n\r\n* Adopting reviews\r\n\r\n* Update package_repo_release_test.go",
+          "timestamp": "2022-10-18T13:29:49+05:30",
+          "tree_id": "8277e097467fcad017d5d0c92ecad2588f4126f7",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/995597990c2a8b3d181d4ddce3d33eb704e5fa6d"
+        },
+        "date": 1666080610723,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36507449910,
+            "unit": "ns/op\t        18.92 DeleteSeconds\t        17.54 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8501330660,
+            "unit": "ns/op\t         4.259 DeleteSeconds\t         4.204 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6569984611,
+            "unit": "ns/op\t         4.381 DeleteSeconds\t         2.145 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
