@@ -113,7 +113,7 @@ func (o *ReleaseOptions) Run() error {
 	builderOpts := cmdapprelease.AppSpecBuilderOpts{
 		BuildTemplate: buildAppSpec.Template,
 		BuildDeploy:   buildAppSpec.Deploy,
-		BuildExport:   *pkgBuild.GetExport(),
+		BuildExport:   pkgBuild.GetExport(),
 		Debug:         o.debug,
 		BundleTag:     o.tag,
 	}

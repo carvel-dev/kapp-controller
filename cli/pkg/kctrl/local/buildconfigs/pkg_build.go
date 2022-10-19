@@ -31,6 +31,8 @@ type Template struct {
 	Spec Spec `json:"spec"`
 }
 
+var _ Build = &PackageBuild{}
+
 func (b *PackageBuild) Save() error {
 	content, err := yaml.Marshal(b)
 	if err != nil {
@@ -84,8 +86,8 @@ func (b *PackageBuild) SetObjectMeta(metaObj *metav1.ObjectMeta) {
 	return
 }
 
-func (b *PackageBuild) GetExport() *[]Export {
-	return &b.Spec.Template.Spec.Export
+func (b *PackageBuild) GetExport() []Export {
+	return b.Spec.Template.Spec.Export
 }
 
 func (b *PackageBuild) SetExport(exportObj *[]Export) {

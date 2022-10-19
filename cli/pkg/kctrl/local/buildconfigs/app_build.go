@@ -26,7 +26,7 @@ type Build interface {
 	GetObjectMeta() *metav1.ObjectMeta
 	SetObjectMeta(*metav1.ObjectMeta)
 	SetExport(export *[]Export)
-	GetExport() *[]Export
+	GetExport() []Export
 	HasHelmTemplate() bool
 }
 
@@ -63,6 +63,8 @@ type ImgpkgBundle struct {
 
 type ReleaseResource struct {
 }
+
+var _ Build = &AppBuild{}
 
 // Save will persist the appBuild onto the fileSystem. Before saving, it will remove the Annotations from the AppBuild.
 func (b *AppBuild) Save() error {
@@ -164,8 +166,8 @@ func (b *AppBuild) SetObjectMeta(metaObj *metav1.ObjectMeta) {
 	return
 }
 
-func (b *AppBuild) GetExport() *[]Export {
-	return &b.Spec.Export
+func (b *AppBuild) GetExport() []Export {
+	return b.Spec.Export
 }
 
 func (b *AppBuild) SetExport(exportObj *[]Export) {
@@ -188,7 +190,7 @@ func (b *AppBuild) HasHelmTemplate() bool {
 }
 
 func ConfigureExportSection(buildConfig Build, isLocal bool, vendirSyncDirectory string) {
-	exportSection := *buildConfig.GetExport()
+	exportSection := buildConfig.GetExport()
 	// In case of pkg init rerun with FetchFromLocalDirectory, today we overwrite the includePaths
 	// with what we get from template section.
 	// Alternatively, we can merge the includePaths with template section.

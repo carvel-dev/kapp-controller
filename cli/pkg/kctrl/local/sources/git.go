@@ -52,7 +52,6 @@ func (g *GitConfiguration) Configure() error {
 }
 
 func (g *GitConfiguration) initializeContentWithGit(contents []vendirconf.DirectoryContents) error {
-	//TODO Rohit need to check this how it should be done. It is giving path as empty.
 	g.vendirConfig.SetContents(append(contents, vendirconf.DirectoryContents{}))
 	return g.initializeGit(contents)
 }

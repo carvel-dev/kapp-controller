@@ -67,7 +67,7 @@ func (o *ReleaseOptions) Run() error {
 	builderOpts := AppSpecBuilderOpts{
 		BuildTemplate: appBuild.GetAppSpec().Template,
 		BuildDeploy:   appBuild.GetAppSpec().Deploy,
-		BuildExport:   *appBuild.GetExport(),
+		BuildExport:   appBuild.GetExport(),
 		Debug:         o.debug,
 		BundleTag:     o.tag,
 	}
