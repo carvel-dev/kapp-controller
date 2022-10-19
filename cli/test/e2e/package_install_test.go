@@ -62,6 +62,14 @@ spec:
       deploy:
       - kapp: {}`
 
+	valuesFile1 := `
+key1: value1
+`
+
+	valuesFile2 := `
+key2: value2
+`
+
 	packageCR1 := fmt.Sprintf(packageCR, packageName1, packageVersion1)
 
 	packageCR2 := fmt.Sprintf(packageCR, packageName2, packageVersion2)
@@ -95,7 +103,9 @@ spec:
 	})
 
 	logger.Section("Installing test package", func() {
-		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--package-install", pkgiName, "-p", packageMetadataName, "--version", packageVersion1}, RunOpts{})
+		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--package-install", pkgiName,
+			"-p", packageMetadataName, "--version", packageVersion1,
+			"--values-file", "-"}, RunOpts{StdinReader: strings.NewReader(valuesFile1)})
 		require.NoError(t, err)
 	})
 
@@ -156,13 +166,13 @@ spec:
 	})
 
 	logger.Section("package installed update", func() {
-
 		_, err := kappCtrl.RunWithOpts([]string{
 			"package", "installed", "update",
 			"--package-install", pkgiName,
 			"-p", packageMetadataName,
 			"--version", packageVersion2,
-		}, RunOpts{})
+			"--values-file", "-",
+		}, RunOpts{StdinReader: strings.NewReader(valuesFile2)})
 		require.NoError(t, err)
 
 		out, err := kappCtrl.RunWithOpts([]string{"package", "installed", "get", "--package-install", pkgiName, "--json"}, RunOpts{})

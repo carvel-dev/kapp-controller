@@ -349,10 +349,8 @@ func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 }
 
 func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kcclient.Interface, pkgInstall *kcpkgv1alpha1.PackageInstall) error {
-	updatedPkgInstall, changed, err := o.preparePackageInstallForUpdate(pkgInstall)
-	if err != nil {
-		return err
-	}
+	changed := o.version != "" && o.version != pkgInstall.Spec.PackageRef.VersionSelection.Constraints
+	updatedPkgInstall := pkgInstall.DeepCopy()
 
 	switch {
 	case changed: // Continue if package install resource is changed
@@ -370,7 +368,7 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 	reconciliationPaused := false
 	if (o.valuesFile != "" && len(pkgInstall.Spec.Values) > 0) ||
 		(len(o.YttOverlayFlags.yttOverlayFiles) > 0 && hasYttOverlays(pkgInstall)) {
-		updatedPkgInstall, err = o.pauseReconciliation(kcClient)
+		_, err := o.pauseReconciliation(kcClient)
 		if err != nil {
 			return err
 		}
@@ -379,6 +377,20 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 			return err
 		}
 		reconciliationPaused = true
+
+		// observedGeneration is updated after pausing reconciliation
+		updatedPkgInstall, err = kcClient.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(
+			context.Background(), o.Name, metav1.GetOptions{},
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	var err error
+	updatedPkgInstall, err = o.preparePackageInstallForUpdate(updatedPkgInstall)
+	if err != nil {
+		return err
 	}
 
 	isSecretCreated, err := o.createOrUpdateValuesSecret(updatedPkgInstall, client)
@@ -734,25 +746,18 @@ func (o *CreateOrUpdateOptions) createOrUpdateServiceAccount(client kubernetes.I
 	return true, nil
 }
 
-func (o *CreateOrUpdateOptions) preparePackageInstallForUpdate(pkgInstall *kcpkgv1alpha1.PackageInstall) (*kcpkgv1alpha1.PackageInstall, bool, error) {
-	var (
-		changed bool
-		err     error
-	)
-
+func (o *CreateOrUpdateOptions) preparePackageInstallForUpdate(pkgInstall *kcpkgv1alpha1.PackageInstall) (*kcpkgv1alpha1.PackageInstall, error) {
 	updatedPkgInstall := pkgInstall.DeepCopy()
 
 	if updatedPkgInstall.Spec.PackageRef == nil || updatedPkgInstall.Spec.PackageRef.VersionSelection == nil {
-		err = fmt.Errorf("Failed to update package '%s' as no existing package reference/version was found in the package install", o.Name)
-		return nil, false, err
+		return nil, fmt.Errorf("Failed to update package '%s' as no existing package reference/version was found in the package install", o.Name)
 	}
 
 	// If o.PackageName is provided by the user (via --package flag), verify that the package name in PackageInstall matches it.
 	// This will prevent the users from accidentally overwriting an installed package with another package content due to choosing a pre-existing name for the package isntall.
 	// Otherwise if o.PackageName is not provided, fill it from the installed package spec
 	if o.packageName != "" && updatedPkgInstall.Spec.PackageRef.RefName != o.packageName {
-		err = fmt.Errorf("Installed package '%s' is already associated with package '%s'", o.Name, updatedPkgInstall.Spec.PackageRef.RefName)
-		return nil, false, err
+		return nil, fmt.Errorf("Installed package '%s' is already associated with package '%s'", o.Name, updatedPkgInstall.Spec.PackageRef.RefName)
 	}
 	o.packageName = updatedPkgInstall.Spec.PackageRef.RefName
 
@@ -760,14 +765,13 @@ func (o *CreateOrUpdateOptions) preparePackageInstallForUpdate(pkgInstall *kcpkg
 	// Otherwise if o.Version is not provided, fill it from the installed package spec
 	if o.version != "" {
 		if updatedPkgInstall.Spec.PackageRef.VersionSelection.Constraints != o.version {
-			changed = true
 			updatedPkgInstall.Spec.PackageRef.VersionSelection.Constraints = o.version
 		}
 	} else {
 		o.version = updatedPkgInstall.Spec.PackageRef.VersionSelection.Constraints
 	}
 
-	return updatedPkgInstall, changed, nil
+	return updatedPkgInstall, nil
 }
 
 func (o *CreateOrUpdateOptions) createOrUpdateValuesSecret(pkgInstallToUpdate *kcpkgv1alpha1.PackageInstall, client kubernetes.Interface) (bool, error) {
