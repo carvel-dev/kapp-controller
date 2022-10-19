@@ -255,4 +255,17 @@ key2: value2
 		})
 		require.Contains(t, err.Error(), "not found")
 	})
+
+	logger.Section("package installed update with missing old version", func() {
+		kappCtrl.RunWithOpts([]string{"package", "installed", "create", "--package-install", pkgiName,
+			"-p", packageMetadataName, "--version", packageVersion1,
+			"--values-file", "-"}, RunOpts{StdinReader: strings.NewReader(valuesFile1)})
+
+		kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
+			StdinReader: strings.NewReader(packageMetadata + "\n" + packageCR2)})
+
+		kappCtrl.RunWithOpts([]string{"package", "installed", "update", "--package-install", pkgiName,
+			"-p", packageMetadataName, "--version", packageVersion2,
+			"--values-file", "-"}, RunOpts{StdinReader: strings.NewReader(valuesFile2)})
+	})
 }
