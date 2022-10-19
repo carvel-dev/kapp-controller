@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1666080611627,
+  "lastUpdate": 1666154392859,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -7047,6 +7047,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6569984611,
             "unit": "ns/op\t         4.381 DeleteSeconds\t         2.145 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f54408f0bf378c18df9556c81b24a9b3959bcfb2",
+          "message": "Refresh package install after pausing it (#929)\n\nAfter a package install is paused successfully, the observedGeneration is updated resulting in conflicts while updating the package install",
+          "timestamp": "2022-10-19T09:59:29+05:30",
+          "tree_id": "31b768171a72e627aa5ab793a1873a0ef9403dbc",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/f54408f0bf378c18df9556c81b24a9b3959bcfb2"
+        },
+        "date": 1666154391938,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35688087668,
+            "unit": "ns/op\t        18.16 DeleteSeconds\t        17.49 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8460735008,
+            "unit": "ns/op\t         4.270 DeleteSeconds\t         4.151 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6456875580,
+            "unit": "ns/op\t         4.293 DeleteSeconds\t         2.122 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
