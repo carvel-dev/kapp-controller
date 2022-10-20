@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -233,6 +234,18 @@ func (o *PauseOrKickOptions) waitForAppPause(client kcclient.Interface) error {
 		}
 		if appResource.Status.FriendlyDescription == "Canceled/paused" {
 			return true, nil
+		}
+		pkgi, err := client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+		if pkgi.Generation != pkgi.Status.ObservedGeneration {
+			return false, nil
+		}
+		for _, condition := range pkgi.Status.Conditions {
+			if condition.Type == "ReconcileFailed" && strings.Contains(condition.Message, "Expected to find at least one version") {
+				return true, nil
+			}
 		}
 		return false, nil
 	}); err != nil {
