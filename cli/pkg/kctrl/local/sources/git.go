@@ -27,47 +27,40 @@ func NewGitSource(ui cmdcore.AuthoringUI, vendirConfig *VendirConfig) *GitSource
 }
 
 func (g *GitSource) Configure() error {
+	err := g.initializeContentWithGit()
+	if err != nil {
+		return err
+	}
+
+	err = g.configureGitURL()
+	if err != nil {
+		return err
+	}
+	err = g.configureGitRef()
+	if err != nil {
+		return err
+	}
+	return g.getIncludedPaths()
+}
+
+func (g *GitSource) initializeContentWithGit() error {
 	contents := g.vendirConfig.Contents()
 	if contents == nil {
-		err := g.initializeContentWithGit(contents)
-		if err != nil {
-			return err
-		}
-	} else if contents[0].Git == nil {
-		err := g.initializeGit(contents)
-		if err != nil {
-			return err
-		}
+		contents = append(contents, vendirconf.DirectoryContents{})
 	}
-
-	err := g.configureGitURL(contents)
-	if err != nil {
-		return err
+	if contents[0].Git == nil {
+		contents[0].Git = &vendirconf.DirectoryContentsGit{}
 	}
-	err = g.configureGitRef(contents)
-	if err != nil {
-		return err
-	}
-	return g.getIncludedPaths(contents)
-}
-
-func (g *GitSource) initializeContentWithGit(contents []vendirconf.DirectoryContents) error {
-	g.vendirConfig.SetContents(append(contents, vendirconf.DirectoryContents{}))
-	return g.initializeGit(contents)
-}
-
-func (g *GitSource) initializeGit(contents []vendirconf.DirectoryContents) error {
-	contents[0].Git = &vendirconf.DirectoryContentsGit{}
 	g.vendirConfig.SetContents(contents)
 	return g.vendirConfig.Save()
 }
 
-func (g *GitSource) configureGitURL(contents []vendirconf.DirectoryContents) error {
+func (g *GitSource) configureGitURL() error {
+	contents := g.vendirConfig.Contents()
 	g.ui.PrintInformationalText("Both https and ssh URL's are supported, e.g. https://github.com/vmware-tanzu/carvel-kapp-controller")
-	defaultURL := contents[0].Git.URL
 	textOpts := ui.TextOpts{
 		Label:        "Enter Git URL",
-		Default:      defaultURL,
+		Default:      contents[0].Git.URL,
 		ValidateFunc: nil,
 	}
 	name, err := g.ui.AskForText(textOpts)
@@ -80,7 +73,8 @@ func (g *GitSource) configureGitURL(contents []vendirconf.DirectoryContents) err
 	return g.vendirConfig.Save()
 }
 
-func (g *GitSource) configureGitRef(contents []vendirconf.DirectoryContents) error {
+func (g *GitSource) configureGitRef() error {
+	contents := g.vendirConfig.Contents()
 	g.ui.PrintInformationalText("A git reference can be any branch, tag, commit; origin is the name of the remote.")
 	defaultRef := contents[0].Git.Ref
 	if defaultRef == "" {
@@ -101,7 +95,8 @@ func (g *GitSource) configureGitRef(contents []vendirconf.DirectoryContents) err
 	return g.vendirConfig.Save()
 }
 
-func (g *GitSource) getIncludedPaths(contents []vendirconf.DirectoryContents) error {
+func (g *GitSource) getIncludedPaths() error {
+	contents := g.vendirConfig.Contents()
 	g.ui.PrintInformationalText(`We need to know which files contain Kubernetes manifests. Multiple files can be included using a comma separator. 
 - To include all the files, enter * 
 - To include a folder with all the sub-folders and files, enter <FOLDER_NAME>/**/*
