@@ -105,12 +105,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	appSpec := pkgBuild.GetAppSpec()
-	if appSpec.Deploy == nil {
-		appSpec.Deploy = []kcv1alpha1.AppDeploy{{Kapp: &kcv1alpha1.AppDeployKapp{}}}
-	}
-	pkgBuild.SetAppSpec(appSpec)
-
+	pkgBuild.InitializeOrKeepDeploySection()
 	buildconfigs.ConfigureExportSection(pkgBuild, fetchMode == sources.LocalDirectory, sources.VendirSyncDirectory)
 	err = pkgBuild.Save()
 	if err != nil {

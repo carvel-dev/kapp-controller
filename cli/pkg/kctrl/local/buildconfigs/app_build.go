@@ -7,7 +7,6 @@ import (
 	"os"
 
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -21,13 +20,14 @@ const (
 
 type Build interface {
 	Save() error
-	GetAppSpec() *v1alpha12.AppSpec
-	SetAppSpec(*v1alpha12.AppSpec)
+	GetAppSpec() *kcv1alpha1.AppSpec
+	SetAppSpec(*kcv1alpha1.AppSpec)
 	GetObjectMeta() *metav1.ObjectMeta
 	SetObjectMeta(*metav1.ObjectMeta)
 	SetExport(export *[]Export)
 	GetExport() []Export
 	HasHelmTemplate() bool
+	InitializeOrKeepDeploySection()
 }
 
 type AppBuild struct {
@@ -149,11 +149,15 @@ func (b *AppBuild) getAppSpec() *kcv1alpha1.AppSpec {
 	return b.Spec.App.Spec
 }
 
-func (b *AppBuild) SetAppSpec(appSpec *kcv1alpha1.AppSpec) {
+func (b *AppBuild) setAppSpec(appSpec *kcv1alpha1.AppSpec) {
 	if b.Spec.App == nil {
 		b.Spec.App = &v1alpha1.AppTemplateSpec{}
 	}
 	b.Spec.App.Spec = appSpec
+}
+
+func (b *AppBuild) SetAppSpec(appSpec *kcv1alpha1.AppSpec) {
+	b.setAppSpec(appSpec)
 }
 
 func (b *AppBuild) GetObjectMeta() *metav1.ObjectMeta {
@@ -186,6 +190,14 @@ func (b *AppBuild) HasHelmTemplate() bool {
 		}
 	}
 	return false
+}
+
+func (b *AppBuild) InitializeOrKeepDeploySection() {
+	appSpec := b.getAppSpec()
+	if appSpec.Deploy == nil {
+		appSpec.Deploy = []kcv1alpha1.AppDeploy{{Kapp: &kcv1alpha1.AppDeployKapp{}}}
+	}
+	b.setAppSpec(appSpec)
 }
 
 func ConfigureExportSection(buildConfig Build, isLocal bool, vendirSyncDirectory string) {
