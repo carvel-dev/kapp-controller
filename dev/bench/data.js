@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1666154392859,
+  "lastUpdate": 1666245625836,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -7089,6 +7089,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6456875580,
             "unit": "ns/op\t         4.293 DeleteSeconds\t         2.122 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "050ba8ab3e592c814b53947f44ce418fe9ce1a8b",
+          "message": "Add missing package condition while waiting for app pause (#944)\n\nWhen a package install for which the installed package version is now removed from the cluster, the app cr is never paused and so we need to check for the failing condition in package install",
+          "timestamp": "2022-10-20T11:20:11+05:30",
+          "tree_id": "79c72d962a29e83e06ce40e547fa34bf702d6e7d",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/050ba8ab3e592c814b53947f44ce418fe9ce1a8b"
+        },
+        "date": 1666245624975,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36478840671,
+            "unit": "ns/op\t        18.94 DeleteSeconds\t        17.49 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8469204544,
+            "unit": "ns/op\t         4.268 DeleteSeconds\t         4.162 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6470042474,
+            "unit": "ns/op\t         4.306 DeleteSeconds\t         2.125 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
