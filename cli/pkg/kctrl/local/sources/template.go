@@ -34,7 +34,7 @@ func (t *TemplateConfiguration) Configure(fetchMode string) error {
 	we will return from Template section without touching it.
 	We dont want to reset the modification user have done. */
 	if len(existingTemplates) > 0 {
-		if fetchMode == FetchFromLocalDirectory {
+		if fetchMode == LocalDirectory {
 			for _, template := range existingTemplates {
 				if template.Ytt != nil {
 					var defaultIncludedPath string
@@ -55,7 +55,7 @@ func (t *TemplateConfiguration) Configure(fetchMode string) error {
 		appTemplates := []v1alpha1.AppTemplate{}
 
 		// Add helmTemplate
-		if fetchMode == FetchChartFromGit || fetchMode == FetchFromHelmRepo {
+		if fetchMode == ChartFromGit || fetchMode == HelmRepo {
 			appTemplate, err := t.getHelmAppTemplate(fetchMode)
 			if err != nil {
 				return err
@@ -65,9 +65,9 @@ func (t *TemplateConfiguration) Configure(fetchMode string) error {
 
 		//  Define YttPaths
 		var defaultYttPaths []string
-		if fetchMode == FetchFromHelmRepo || fetchMode == FetchChartFromGit {
+		if fetchMode == HelmRepo || fetchMode == ChartFromGit {
 			defaultYttPaths = []string{buildconfigs.StdIn}
-		} else if fetchMode == FetchFromLocalDirectory {
+		} else if fetchMode == LocalDirectory {
 			var err error
 			defaultYttPaths, err = t.getYttPathsForLocalDirectory("")
 			if err != nil {
@@ -96,7 +96,7 @@ func (t *TemplateConfiguration) Configure(fetchMode string) error {
 
 func (t *TemplateConfiguration) getHelmAppTemplate(fetchMode string) (v1alpha1.AppTemplate, error) {
 	var pathFromVendir string
-	if fetchMode == FetchChartFromGit {
+	if fetchMode == ChartFromGit {
 		vendirConfig := NewVendirConfig(vendirFileName)
 		err := vendirConfig.Load()
 		if err != nil {

@@ -87,12 +87,11 @@ func NewAppBuild() (*AppBuild, error) {
 	var appBuild *AppBuild
 
 	_, err := os.Stat(AppBuildFileName)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil {
+		if os.IsNotExist(err) {
+			return NewDefaultAppBuild(), nil
+		}
 		return &AppBuild{}, err
-	}
-
-	if os.IsNotExist(err) {
-		return NewDefaultAppBuild(), nil
 	}
 
 	appBuild, err = NewAppBuildFromFile(AppBuildFileName)

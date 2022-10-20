@@ -19,30 +19,20 @@ func NewVendirRunner(ui cmdcore.AuthoringUI) VendirRunner {
 	return VendirRunner{ui: ui}
 }
 
-func (r VendirRunner) RunSync() error {
-	_, err := os.Stat(vendirFileName)
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-	if os.IsNotExist(err) {
+func (r VendirRunner) Sync(fetchMode string) error {
+	if fetchMode == LocalDirectory {
 		return nil
 	}
 
-	r.ui.PrintInformationalText("We will use vendir to fetch the data from the source to the local directory. Vendir allows us to declaratively state what should be in a directory and sync data sources into it. All the information entered above has been persisted into a vendir.yml file.")
-	err = r.printVendirFile()
+	r.ui.PrintInformationalText("We will use vendir to fetch the data from the source to the local directory." +
+		"Vendir allows us to declaratively state what should be in a directory and sync data sources into it." +
+		"All the information entered above has been persisted into a vendir.yml file.")
+	r.ui.PrintActionableText(fmt.Sprintf("Printing %s \n", vendirFileName))
+	err := r.printFile(vendirFileName)
 	if err != nil {
 		return err
 	}
 	err = r.runVendirSync()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r VendirRunner) printVendirFile() error {
-	r.ui.PrintActionableText(fmt.Sprintf("Printing %s \n", vendirFileName))
-	err := r.printFile(vendirFileName)
 	if err != nil {
 		return err
 	}
@@ -54,9 +44,8 @@ func (r VendirRunner) printFile(filePath string) error {
 	if err != nil {
 		return fmt.Errorf("Printing file: %w", err)
 	}
-	defer func() {
-		file.Close()
-	}()
+	defer file.Close()
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		r.ui.PrintCmdExecutionOutput(scanner.Text())

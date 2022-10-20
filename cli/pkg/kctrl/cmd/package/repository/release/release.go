@@ -185,25 +185,24 @@ func (o *ReleaseOptions) Run() error {
 func (o *ReleaseOptions) getPackageRepositoryBuild(pkgRepoBuildFilePath string) (*build.PackageRepoBuild, error) {
 
 	_, err := os.Stat(pkgRepoBuildFilePath)
-	if err != nil && !os.IsNotExist(err) {
-		return &build.PackageRepoBuild{}, err
-	}
-
-	if os.IsNotExist(err) {
-		return &build.PackageRepoBuild{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       build.PkgRepoBuildKind,
-				APIVersion: build.PkgRepoBuildAPIVersion,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				CreationTimestamp: metav1.NewTime(time.Now()),
-			},
-			Spec: build.PackageRepoBuildSpec{
-				Export: &build.PackageRepoBuildExport{
-					ImgpkgBundle: &build.PackageRepoBuildExportImgpkgBundle{},
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &build.PackageRepoBuild{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       build.PkgRepoBuildKind,
+					APIVersion: build.PkgRepoBuildAPIVersion,
 				},
-			},
-		}, nil
+				ObjectMeta: metav1.ObjectMeta{
+					CreationTimestamp: metav1.NewTime(time.Now()),
+				},
+				Spec: build.PackageRepoBuildSpec{
+					Export: &build.PackageRepoBuildExport{
+						ImgpkgBundle: &build.PackageRepoBuildExportImgpkgBundle{},
+					},
+				},
+			}, nil
+		}
+		return &build.PackageRepoBuild{}, err
 	}
 
 	packageRepoBuild, err := o.newPackageRepoBuildFromFile(pkgRepoBuildFilePath)

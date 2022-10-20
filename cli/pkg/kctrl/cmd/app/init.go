@@ -73,7 +73,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	fetchMode, sourceConfiguration, err := sources.NewFetchConfiguration(o.ui, appBuild).Configure()
+	fetchMode, sourceConfiguration, err := sources.NewSource(o.ui, appBuild).Configure()
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (o *InitOptions) Run() error {
 		}
 	}
 
-	err = sources.NewVendirRunner(o.ui).RunSync()
+	err = sources.NewVendirRunner(o.ui).Sync()
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (o *InitOptions) Run() error {
 	}
 	appBuild.SetAppSpec(appSpec)
 
-	buildconfigs.ConfigureExportSection(appBuild, fetchMode == sources.FetchFromLocalDirectory, sources.VendirSyncDirectory)
+	buildconfigs.ConfigureExportSection(appBuild, fetchMode == sources.LocalDirectory, sources.VendirSyncDirectory)
 	err = appBuild.Save()
 	if err != nil {
 		return err
@@ -169,12 +169,11 @@ func (o *InitOptions) writeAppFile(appBuild *buildconfigs.AppBuild) error {
 func (o *InitOptions) generateApp(appBuild *buildconfigs.AppBuild) (kcv1alpha1.App, error) {
 	var app kcv1alpha1.App
 	_, err := os.Stat(AppFileName)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil {
+		if os.IsNotExist(err) {
+			return o.createAppFromAppBuild(appBuild), nil
+		}
 		return kcv1alpha1.App{}, err
-	}
-
-	if os.IsNotExist(err) {
-		return o.createAppFromAppBuild(appBuild), nil
 	}
 
 	data, err := os.ReadFile(AppFileName)

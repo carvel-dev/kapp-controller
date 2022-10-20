@@ -90,7 +90,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	fetchMode, sourceConfiguration, err := sources.NewFetchConfiguration(o.ui, pkgBuild).Configure()
+	fetchMode, sourceConfiguration, err := sources.NewSource(o.ui, pkgBuild).Configure()
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (o *InitOptions) Run() error {
 		}
 	}
 
-	err = sources.NewVendirRunner(o.ui).RunSync()
+	err = sources.NewVendirRunner(o.ui).Sync()
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func (o *InitOptions) Run() error {
 	}
 	pkgBuild.SetAppSpec(appSpec)
 
-	buildconfigs.ConfigureExportSection(pkgBuild, fetchMode == sources.FetchFromLocalDirectory, sources.VendirSyncDirectory)
+	buildconfigs.ConfigureExportSection(pkgBuild, fetchMode == sources.LocalDirectory, sources.VendirSyncDirectory)
 	err = pkgBuild.Save()
 	if err != nil {
 		return err

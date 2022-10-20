@@ -15,18 +15,18 @@ const (
 	LatestVersion = "latest"
 )
 
-type GithubReleaseConfiguration struct {
+type GithubReleaseSource struct {
 	ui           cmdcore.AuthoringUI
 	vendirConfig *VendirConfig
 }
 
-var _ SourceConfiguration = &GithubReleaseConfiguration{}
+var _ SourceConfiguration = &GithubReleaseSource{}
 
-func NewGithubReleaseConfiguration(ui cmdcore.AuthoringUI, vendirConfig *VendirConfig) *GithubReleaseConfiguration {
-	return &GithubReleaseConfiguration{ui: ui, vendirConfig: vendirConfig}
+func NewGithubReleaseSource(ui cmdcore.AuthoringUI, vendirConfig *VendirConfig) *GithubReleaseSource {
+	return &GithubReleaseSource{ui: ui, vendirConfig: vendirConfig}
 }
 
-func (g *GithubReleaseConfiguration) Configure() error {
+func (g *GithubReleaseSource) Configure() error {
 	contents := g.vendirConfig.Contents()
 	if contents == nil {
 		err := g.initializeContentWithGithubRelease(contents)
@@ -53,7 +53,7 @@ func (g *GithubReleaseConfiguration) Configure() error {
 	return g.getIncludedPaths(contents)
 }
 
-func (g *GithubReleaseConfiguration) initializeGithubRelease(contents []vendirconf.DirectoryContents) error {
+func (g *GithubReleaseSource) initializeGithubRelease(contents []vendirconf.DirectoryContents) error {
 	githubReleaseContent := vendirconf.DirectoryContentsGithubRelease{
 		DisableAutoChecksumValidation: true,
 	}
@@ -62,13 +62,13 @@ func (g *GithubReleaseConfiguration) initializeGithubRelease(contents []vendirco
 	return g.vendirConfig.Save()
 }
 
-func (g *GithubReleaseConfiguration) initializeContentWithGithubRelease(contents []vendirconf.DirectoryContents) error {
+func (g *GithubReleaseSource) initializeContentWithGithubRelease(contents []vendirconf.DirectoryContents) error {
 	//TODO Rohit need to check this how it should be done. It is giving path as empty.
 	g.vendirConfig.SetContents(append(contents, vendirconf.DirectoryContents{}))
 	return g.initializeGithubRelease(contents)
 }
 
-func (g *GithubReleaseConfiguration) configureRepoSlug(contents []vendirconf.DirectoryContents) error {
+func (g *GithubReleaseSource) configureRepoSlug(contents []vendirconf.DirectoryContents) error {
 	defaultSlug := contents[0].GithubRelease.Slug
 	g.ui.PrintInformationalText("Slug format is org/repo e.g. vmware-tanzu/simple-app")
 	textOpts := ui.TextOpts{
@@ -86,7 +86,7 @@ func (g *GithubReleaseConfiguration) configureRepoSlug(contents []vendirconf.Dir
 	return g.vendirConfig.Save()
 }
 
-func (g *GithubReleaseConfiguration) configureVersion(contents []vendirconf.DirectoryContents) error {
+func (g *GithubReleaseSource) configureVersion(contents []vendirconf.DirectoryContents) error {
 	githubReleaseContent := contents[0].GithubRelease
 	defaultReleaseTag := g.getDefaultReleaseTag(contents)
 	textOpts := ui.TextOpts{
@@ -114,7 +114,7 @@ func (g *GithubReleaseConfiguration) configureVersion(contents []vendirconf.Dire
 	return g.vendirConfig.Save()
 }
 
-func (g *GithubReleaseConfiguration) getDefaultReleaseTag(contents []vendirconf.DirectoryContents) string {
+func (g *GithubReleaseSource) getDefaultReleaseTag(contents []vendirconf.DirectoryContents) string {
 	releaseTag := g.vendirConfig.Contents()[0].GithubRelease.Tag
 	if len(releaseTag) > 0 {
 		return releaseTag
@@ -122,7 +122,7 @@ func (g *GithubReleaseConfiguration) getDefaultReleaseTag(contents []vendirconf.
 	return LatestVersion
 }
 
-func (g *GithubReleaseConfiguration) getIncludedPaths(contents []vendirconf.DirectoryContents) error {
+func (g *GithubReleaseSource) getIncludedPaths(contents []vendirconf.DirectoryContents) error {
 	g.ui.PrintInformationalText("We need to know which files contain Kubernetes manifests. Multiple files can be included using a comma separator. To include all the files, enter *")
 	includedPaths := contents[0].IncludePaths
 	defaultIncludedPath := strings.Join(includedPaths, ",")

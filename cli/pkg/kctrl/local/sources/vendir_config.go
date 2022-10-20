@@ -19,16 +19,15 @@ func NewVendirConfig(path string) *VendirConfig {
 
 func (c *VendirConfig) Load() error {
 	_, err := os.Stat(vendirFileName)
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-
-	if os.IsNotExist(err) {
-		c.Config = &vendirconf.Config{
-			APIVersion: "vendir.k14s.io/v1alpha1",
-			Kind:       "Config",
+	if err != nil {
+		if os.IsNotExist(err) {
+			c.Config = &vendirconf.Config{
+				APIVersion: "vendir.k14s.io/v1alpha1",
+				Kind:       "Config",
+			}
+			return nil
 		}
-		return nil
+		return err
 	}
 
 	content, err := os.ReadFile(c.path)
@@ -55,27 +54,41 @@ func (c *VendirConfig) FetchMode(ishelmTemplateExist bool) string {
 	var selectedVendirOption string
 	switch {
 	case content.GithubRelease != nil:
-		selectedVendirOption = FetchFromGithubRelease
+		selectedVendirOption = GithubRelease
 	case content.HelmChart != nil:
-		selectedVendirOption = FetchFromHelmRepo
+		selectedVendirOption = HelmRepo
 	case content.Directory != nil:
-		selectedVendirOption = FetchFromLocalDirectory
+		selectedVendirOption = LocalDirectory
 	case content.Git != nil:
 		if ishelmTemplateExist {
-			selectedVendirOption = FetchChartFromGit
+			selectedVendirOption = ChartFromGit
 		} else {
-			selectedVendirOption = FetchFromGit
+			selectedVendirOption = Git
 		}
 	}
 	return selectedVendirOption
 }
 
-func (c *VendirConfig) Save() error {
+func (c *VendirConfig) save() error {
 	content, err := yaml.Marshal(c.Config)
 	if err != nil {
 		return err
 	}
 	err = os.WriteFile(c.path, content, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *VendirConfig) Save() error {
+	return c.save()
+}
+
+func (c *VendirConfig) InitiatliseDirectories() error {
+	directories := []vendirconf.Directory{vendirconf.Directory{Path: VendirSyncDirectory, Contents: []vendirconf.DirectoryContents{{Path: "."}}}}
+	c.Config.Directories = directories
+	err := c.save()
 	if err != nil {
 		return err
 	}
@@ -92,8 +105,4 @@ func (c *VendirConfig) SetContents(contents []vendirconf.DirectoryContents) {
 
 func (c *VendirConfig) Directories() []vendirconf.Directory {
 	return c.Config.Directories
-}
-
-func (c *VendirConfig) SetDirectories(directories []vendirconf.Directory) {
-	c.Config.Directories = directories
 }
