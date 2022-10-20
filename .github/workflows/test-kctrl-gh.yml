@@ -26,7 +26,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Install Carvel Tools
-      run: ./hack/install-deps.sh
+      uses: vmware-tanzu/carvel-setup-action@v1
+      with:
+        only: ytt, kbld, imgpkg, vendir, kapp
     - name: Run Tests
       run: |
         set -e -x
