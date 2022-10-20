@@ -1,7 +1,7 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package init
+package pkg
 
 import (
 	"fmt"
@@ -11,10 +11,11 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	appinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
-	interfaces "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
+	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
+	sources "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/sources"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -26,8 +27,7 @@ import (
 )
 
 const (
-	pkgBuildFileName     = "package-build.yml"
-	pkgResourcesFileName = "package-resources.yml"
+	PkgResourcesFileName = "package-resources.yml"
 )
 
 type InitOptions struct {
@@ -64,6 +64,9 @@ func (o *InitOptions) Run() error {
 		}
 	}
 
+	o.ui.PrintInformationalText("\nWelcome! Before we start, do install the latest Carvel suite of tools, specifically ytt, imgpkg, vendir and kbld as these will be used by kctrl.\n")
+	o.ui.PrintHeaderText("\nBasic Information")
+
 	pkgBuild, err := o.newOrExistingPackageBuild()
 	if err != nil {
 		return err
@@ -71,47 +74,40 @@ func (o *InitOptions) Run() error {
 
 	pkg, pkgMetadata, pkgInstall, err := o.newOrExistingPackageResources()
 
-	o.ui.PrintInformationalText("\nWelcome! Before we start, do install the latest Carvel suite of tools, specifically ytt, imgpkg, vendir and kbld as these will be used by kctrl.\n")
-
-	o.ui.PrintHeaderText("\nBasic Information")
-
 	pkgRefName, err := o.readPackageRefName(pkgMetadata.Name)
 	if err != nil {
 		return err
 	}
 
-	// TODO: @praveenrewar Can this be don any better?
-	pkgMetadata.Name = pkgRefName
-	pkg.Spec.RefName = pkgRefName
-	pkgMetadata.Spec.DisplayName = strings.Split(pkgRefName, ".")[0]
+	o.updateAndDefaultPackageResources(pkgRefName, pkgMetadata, pkg)
 
-	shortDesc := pkgMetadata.Spec.ShortDescription
-	if len(shortDesc) == 0 {
-		pkgMetadata.Spec.ShortDescription = pkgRefName
-	}
-
-	longDesc := pkgMetadata.Spec.LongDescription
-	if len(longDesc) == 0 {
-		pkgMetadata.Spec.LongDescription = pkgRefName
-	}
-
-	err = o.SavePackageResources(pkg, pkgMetadata, pkgInstall)
+	err = o.savePackageResources(pkg, pkgMetadata, pkgInstall)
 	if err != nil {
 		return err
 	}
-	pkgBuild.Save()
+	err = pkgBuild.Save()
 	if err != nil {
 		return err
 	}
 
-	// TODO: @praveenrewar Remove the step part and use only relevant code from Fetch
-	appCreateStep := appinit.NewCreateStep(o.ui, pkgBuild, o.logger, o.depsFactory, false)
-	err = interfaces.Run(appCreateStep)
+	fetchMode, err := sources.NewSource(o.ui, pkgBuild).Configure()
 	if err != nil {
 		return err
 	}
 
-	pkgBuild.Save()
+	err = sources.NewVendirRunner(o.ui).Sync(fetchMode)
+	if err != nil {
+		return err
+	}
+
+	err = sources.NewTemplate(o.ui, pkgBuild).Configure(fetchMode)
+	if err != nil {
+		return err
+	}
+
+	pkgBuild.InitializeOrKeepDeploySection()
+	buildconfigs.ConfigureExportSection(pkgBuild, fetchMode == sources.LocalDirectory, sources.VendirSyncDirectory)
+	err = pkgBuild.Save()
 	if err != nil {
 		return err
 	}
@@ -127,7 +123,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	err = o.SavePackageResources(pkg, pkgMetadata, pkgInstall)
+	err = o.savePackageResources(pkg, pkgMetadata, pkgInstall)
 	if err != nil {
 		return err
 	}
@@ -147,19 +143,19 @@ func (o *InitOptions) Run() error {
 	return nil
 }
 
-func (o *InitOptions) newOrExistingPackageBuild() (*PackageBuild, error) {
-	content, err := os.ReadFile(pkgBuildFileName)
+func (o *InitOptions) newOrExistingPackageBuild() (*buildconfigs.PackageBuild, error) {
+	content, err := os.ReadFile(buildconfigs.PkgBuildFileName)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			return &PackageBuild{}, err
+			return &buildconfigs.PackageBuild{}, err
 		}
-		return &PackageBuild{TypeMeta: metav1.TypeMeta{
+		return &buildconfigs.PackageBuild{TypeMeta: metav1.TypeMeta{
 			Kind:       "PackageBuild",
 			APIVersion: "kctrl.carvel.dev/v1alpha1",
 		}}, nil
 	}
 
-	var packageBuild PackageBuild
+	var packageBuild buildconfigs.PackageBuild
 	err = yaml.Unmarshal(content, &packageBuild)
 	return &packageBuild, err
 }
@@ -167,7 +163,7 @@ func (o *InitOptions) newOrExistingPackageBuild() (*PackageBuild, error) {
 func (o *InitOptions) newOrExistingPackageResources() (*v1alpha1.Package,
 	*v1alpha1.PackageMetadata, *pkgv1alpha1.PackageInstall, error) {
 	var configs cmdlocal.Configs
-	configs, err := cmdlocal.NewConfigFromFiles([]string{pkgResourcesFileName})
+	configs, err := cmdlocal.NewConfigFromFiles([]string{PkgResourcesFileName})
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &v1alpha1.Package{}, &v1alpha1.PackageMetadata{}, &pkgv1alpha1.PackageInstall{}, err
@@ -215,6 +211,20 @@ func (o *InitOptions) newOrExistingPackageResources() (*v1alpha1.Package,
 	return pkg, pkgMetadata, pkgInstall, nil
 }
 
+func (o *InitOptions) updateAndDefaultPackageResources(pkgRefName string, pkgMetadata *v1alpha1.PackageMetadata, pkg *v1alpha1.Package) {
+	pkgMetadata.Name = pkgRefName
+	pkg.Spec.RefName = pkgRefName
+	pkgMetadata.Spec.DisplayName = strings.Split(pkgRefName, ".")[0]
+
+	if len(pkgMetadata.Spec.ShortDescription) == 0 {
+		pkgMetadata.Spec.ShortDescription = pkgRefName
+	}
+
+	if len(pkgMetadata.Spec.LongDescription) == 0 {
+		pkgMetadata.Spec.LongDescription = pkgRefName
+	}
+}
+
 func (o *InitOptions) readPackageRefName(packageMetadataName string) (string, error) {
 	o.ui.PrintInformationalText(`A package reference name must be at least three '.' separated segments,
 e.g. samplepackage.corp.com`)
@@ -234,7 +244,7 @@ e.g. samplepackage.corp.com`)
 func (o *InitOptions) updatePackageInstall(pkgInstall *pkgv1alpha1.PackageInstall, refName, displayName string) {
 	if pkgInstall.ObjectMeta.Annotations == nil {
 		pkgInstall.ObjectMeta.Annotations = make(map[string]string)
-		pkgInstall.ObjectMeta.Annotations[appinit.LocalFetchAnnotationKey] = "."
+		pkgInstall.ObjectMeta.Annotations[app.LocalFetchAnnotationKey] = "."
 	}
 
 	if len(pkgInstall.Name) == 0 {
@@ -257,7 +267,7 @@ func (o *InitOptions) updatePackageInstall(pkgInstall *pkgv1alpha1.PackageInstal
 	}
 }
 
-func (o *InitOptions) updatePackage(pkg *v1alpha1.Package, pkgBuild *PackageBuild) error {
+func (o *InitOptions) updatePackage(pkg *v1alpha1.Package, pkgBuild *buildconfigs.PackageBuild) error {
 	if len(pkg.Spec.Version) == 0 {
 		pkg.Spec.Version = "0.0.0"
 	}
@@ -295,7 +305,7 @@ func (o *InitOptions) updatePackage(pkg *v1alpha1.Package, pkgBuild *PackageBuil
 // isAppSpecSame compares the template and deploy section of package and packageBuild.
 // It doesn't consider fetch as this will always be different because PackageBuild doesn't
 // define fetch section.
-func isAppSpecSame(pkg *v1alpha1.Package, pkgBuild *PackageBuild) bool {
+func isAppSpecSame(pkg *v1alpha1.Package, pkgBuild *buildconfigs.PackageBuild) bool {
 	pkgBuildAppTemplates := pkgBuild.GetAppSpec().Template
 	pkgAppTemplates := pkg.Spec.Template.Spec.Template
 	pkgBuildAppDeploys := pkgBuild.GetAppSpec().Deploy
@@ -303,7 +313,7 @@ func isAppSpecSame(pkg *v1alpha1.Package, pkgBuild *PackageBuild) bool {
 	return reflect.DeepEqual(pkgBuildAppTemplates, pkgAppTemplates) && reflect.DeepEqual(pkgBuildAppDeploys, pkgAppDeploys)
 }
 
-func (o *InitOptions) SavePackageResources(pkg *v1alpha1.Package,
+func (o *InitOptions) savePackageResources(pkg *v1alpha1.Package,
 	pkgMetadata *v1alpha1.PackageMetadata, pkgInstall *pkgv1alpha1.PackageInstall) error {
 	pkgYAML, err := yaml.Marshal(pkg)
 	if err != nil {
@@ -326,7 +336,7 @@ func (o *InitOptions) SavePackageResources(pkg *v1alpha1.Package,
 ---
 %s`, string(pkgYAML), string(pkgMetadataYAML), string(pkgInstallYAML))
 
-	return os.WriteFile(pkgResourcesFileName, []byte(packageResources), os.ModePerm)
+	return os.WriteFile(PkgResourcesFileName, []byte(packageResources), os.ModePerm)
 }
 
 // TODO should we use the same validation used in kapp controller. But that accepts other parameter. ValidatePackageMetadataName in validations.go file

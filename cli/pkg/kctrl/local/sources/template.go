@@ -1,50 +1,40 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package init
+package sources
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
-const (
-	UpstreamFolderName = "upstream"
-	StdIn              = "-"
-)
-
-type TemplateStep struct {
+type Template struct {
 	ui    cmdcore.AuthoringUI
-	build Build
+	build buildconfigs.Build
 }
 
-func NewTemplateStep(ui cmdcore.AuthoringUI, build Build) *TemplateStep {
-	templateStep := TemplateStep{
-		ui:    ui,
-		build: build,
-	}
-	return &templateStep
+func NewTemplate(ui cmdcore.AuthoringUI, build buildconfigs.Build) *Template {
+	return &Template{ui: ui, build: build}
 }
 
-func (t *TemplateStep) PreInteract() error { return nil }
-
-func (t *TemplateStep) Interact() error {
+func (t *Template) Configure(fetchMode string) error {
 	appSpec := t.build.GetAppSpec()
 	if appSpec == nil {
 		appSpec = &v1alpha1.AppSpec{}
 	}
 	existingTemplates := appSpec.Template
-	fetchSource := t.build.GetObjectMeta().Annotations[FetchContentAnnotationKey]
 
 	/* In case of pkg init rerun, if user has selected anything else except FetchFromLocalDirectory,
 	we will return from Template section without touching it.
 	We dont want to reset the modification user have done. */
 	if len(existingTemplates) > 0 {
-		if fetchSource == FetchFromLocalDirectory {
+		if fetchMode == LocalDirectory {
 			for _, template := range existingTemplates {
 				if template.Ytt != nil {
 					var defaultIncludedPath string
@@ -65,8 +55,8 @@ func (t *TemplateStep) Interact() error {
 		appTemplates := []v1alpha1.AppTemplate{}
 
 		// Add helmTemplate
-		if fetchSource == FetchChartFromGit || fetchSource == FetchFromHelmRepo {
-			appTemplate, err := t.getHelmAppTemplate(fetchSource)
+		if fetchMode == ChartFromGit || fetchMode == HelmRepo {
+			appTemplate, err := t.getHelmAppTemplate(fetchMode)
 			if err != nil {
 				return err
 			}
@@ -75,16 +65,16 @@ func (t *TemplateStep) Interact() error {
 
 		//  Define YttPaths
 		var defaultYttPaths []string
-		if fetchSource == FetchFromHelmRepo || fetchSource == FetchChartFromGit {
-			defaultYttPaths = []string{StdIn}
-		} else if fetchSource == FetchFromLocalDirectory {
+		if fetchMode == HelmRepo || fetchMode == ChartFromGit {
+			defaultYttPaths = []string{buildconfigs.StdIn}
+		} else if fetchMode == LocalDirectory {
 			var err error
 			defaultYttPaths, err = t.getYttPathsForLocalDirectory("")
 			if err != nil {
 				return err
 			}
 		} else {
-			defaultYttPaths = []string{UpstreamFolderName}
+			defaultYttPaths = []string{VendirSyncDirectory}
 		}
 		// Add yttTemplate
 		appTemplateWithYtt := v1alpha1.AppTemplate{
@@ -104,14 +94,16 @@ func (t *TemplateStep) Interact() error {
 	return nil
 }
 
-func (t *TemplateStep) getHelmAppTemplate(fetchSource string) (v1alpha1.AppTemplate, error) {
+func (t *Template) getHelmAppTemplate(fetchMode string) (v1alpha1.AppTemplate, error) {
 	var pathFromVendir string
-	if fetchSource == FetchChartFromGit {
-		vendirConf, err := ReadVendirConfig()
+	if fetchMode == ChartFromGit {
+		vendirConfig := NewVendirConfig(vendirFileName)
+		err := vendirConfig.Load()
 		if err != nil {
 			return v1alpha1.AppTemplate{}, err
 		}
-		pathFromVendir = vendirConf.Directories[0].Contents[0].IncludePaths[0]
+		fmt.Println(vendirConfig.Config)
+		pathFromVendir = vendirConfig.Contents()[0].IncludePaths[0]
 		// Remove all the trailing `/` from the string
 		pathFromVendir = strings.TrimRight(pathFromVendir, "/")
 		pathFromVendir = strings.TrimSuffix(pathFromVendir, "/**/*")
@@ -120,12 +112,12 @@ func (t *TemplateStep) getHelmAppTemplate(fetchSource string) (v1alpha1.AppTempl
 	}
 	appTemplateWithHelm := v1alpha1.AppTemplate{
 		HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{
-			Path: filepath.Join(UpstreamFolderName, pathFromVendir),
+			Path: filepath.Join(VendirSyncDirectory, pathFromVendir),
 		}}
 	return appTemplateWithHelm, nil
 }
 
-func (t *TemplateStep) getYttPathsForLocalDirectory(defaultIncludedPath string) ([]string, error) {
+func (t *Template) getYttPathsForLocalDirectory(defaultIncludedPath string) ([]string, error) {
 	t.ui.PrintInformationalText("We need to include files/ directories which contain Kubernetes manifests. " +
 		"Multiple values can be included using a comma separator.")
 	textOpts := ui.TextOpts{
@@ -143,5 +135,3 @@ func (t *TemplateStep) getYttPathsForLocalDirectory(defaultIncludedPath string) 
 	}
 	return defaultYttPaths, nil
 }
-
-func (t *TemplateStep) PostInteract() error { return nil }
