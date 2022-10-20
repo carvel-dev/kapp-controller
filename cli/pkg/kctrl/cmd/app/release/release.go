@@ -8,8 +8,8 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	cmdappinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 )
 
@@ -59,7 +59,7 @@ func (o *ReleaseOptions) Run() error {
 
 	o.printPrerequisites()
 
-	appBuild, err := cmdappinit.NewAppBuildFromFile(cmdappinit.FileName)
+	appBuild, err := buildconfigs.NewAppBuildFromFile(buildconfigs.AppBuildFileName)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (o *ReleaseOptions) Run() error {
 	builderOpts := AppSpecBuilderOpts{
 		BuildTemplate: appBuild.GetAppSpec().Template,
 		BuildDeploy:   appBuild.GetAppSpec().Deploy,
-		BuildExport:   *appBuild.GetExport(),
+		BuildExport:   appBuild.GetExport(),
 		Debug:         o.debug,
 		BundleTag:     o.tag,
 	}

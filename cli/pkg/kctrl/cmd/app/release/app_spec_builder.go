@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	appinit "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/init"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
+	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	fakekc "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
@@ -30,7 +30,7 @@ type AppSpecBuilder struct {
 type AppSpecBuilderOpts struct {
 	BuildTemplate []kcv1alpha1.AppTemplate
 	BuildDeploy   []kcv1alpha1.AppDeploy
-	BuildExport   []appinit.Export
+	BuildExport   []buildconfigs.Export
 	BundleImage   string
 	Debug         bool
 	BundleTag     string

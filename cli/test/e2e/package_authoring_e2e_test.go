@@ -867,6 +867,7 @@ spec:
 			os.RemoveAll(workingDir)
 		}
 		cleanUp()
+		defer cleanUp()
 
 		err := os.Mkdir(workingDir, os.ModePerm)
 		if err != nil {

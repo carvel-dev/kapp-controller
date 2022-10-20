@@ -1,7 +1,7 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package init
+package sources
 
 import (
 	"strings"
@@ -11,35 +11,28 @@ import (
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
-type GitStep struct {
+type SourceConfiguration interface {
+	Configure() error
+}
+
+type GitSource struct {
 	ui           cmdcore.AuthoringUI
-	vendirConfig vendirconf.Config
+	vendirConfig *VendirConfig
 }
 
-func NewGitStep(ui cmdcore.AuthoringUI, vendirConfig vendirconf.Config) *GitStep {
-	return &GitStep{
-		ui:           ui,
-		vendirConfig: vendirConfig,
-	}
+var _ SourceConfiguration = &GitSource{}
+
+func NewGitSource(ui cmdcore.AuthoringUI, vendirConfig *VendirConfig) *GitSource {
+	return &GitSource{ui: ui, vendirConfig: vendirConfig}
 }
 
-func (g *GitStep) PreInteract() error { return nil }
-
-func (g *GitStep) Interact() error {
-	contents := g.vendirConfig.Directories[0].Contents
-	if contents == nil {
-		err := g.initializeContentWithGit()
-		if err != nil {
-			return err
-		}
-	} else if contents[0].Git == nil {
-		err := g.initializeGit()
-		if err != nil {
-			return err
-		}
+func (g *GitSource) Configure() error {
+	err := g.initializeContentWithGit()
+	if err != nil {
+		return err
 	}
 
-	err := g.configureGitURL()
+	err = g.configureGitURL()
 	if err != nil {
 		return err
 	}
@@ -50,26 +43,24 @@ func (g *GitStep) Interact() error {
 	return g.getIncludedPaths()
 }
 
-func (g *GitStep) PostInteract() error { return nil }
-
-func (g *GitStep) initializeContentWithGit() error {
-	//TODO Rohit need to check this how it should be done. It is giving path as empty.
-	g.vendirConfig.Directories[0].Contents = append(g.vendirConfig.Directories[0].Contents, vendirconf.DirectoryContents{})
-	return g.initializeGit()
+func (g *GitSource) initializeContentWithGit() error {
+	contents := g.vendirConfig.Contents()
+	if contents == nil {
+		contents = append(contents, vendirconf.DirectoryContents{})
+	}
+	if contents[0].Git == nil {
+		contents[0].Git = &vendirconf.DirectoryContentsGit{}
+	}
+	g.vendirConfig.SetContents(contents)
+	return g.vendirConfig.Save()
 }
 
-func (g *GitStep) initializeGit() error {
-	g.vendirConfig.Directories[0].Contents[0].Git = &vendirconf.DirectoryContentsGit{}
-	return SaveVendir(g.vendirConfig)
-}
-
-func (g *GitStep) configureGitURL() error {
+func (g *GitSource) configureGitURL() error {
+	contents := g.vendirConfig.Contents()
 	g.ui.PrintInformationalText("Both https and ssh URL's are supported, e.g. https://github.com/vmware-tanzu/carvel-kapp-controller")
-	gitContent := g.vendirConfig.Directories[0].Contents[0].Git
-	defaultURL := gitContent.URL
 	textOpts := ui.TextOpts{
 		Label:        "Enter Git URL",
-		Default:      defaultURL,
+		Default:      contents[0].Git.URL,
 		ValidateFunc: nil,
 	}
 	name, err := g.ui.AskForText(textOpts)
@@ -77,14 +68,15 @@ func (g *GitStep) configureGitURL() error {
 		return err
 	}
 
-	gitContent.URL = strings.TrimSpace(name)
-	return SaveVendir(g.vendirConfig)
+	contents[0].Git.URL = strings.TrimSpace(name)
+	g.vendirConfig.SetContents(contents)
+	return g.vendirConfig.Save()
 }
 
-func (g *GitStep) configureGitRef() error {
+func (g *GitSource) configureGitRef() error {
+	contents := g.vendirConfig.Contents()
 	g.ui.PrintInformationalText("A git reference can be any branch, tag, commit; origin is the name of the remote.")
-	gitContent := g.vendirConfig.Directories[0].Contents[0].Git
-	defaultRef := gitContent.Ref
+	defaultRef := contents[0].Git.Ref
 	if defaultRef == "" {
 		defaultRef = "origin/main"
 	}
@@ -98,19 +90,21 @@ func (g *GitStep) configureGitRef() error {
 		return err
 	}
 
-	gitContent.Ref = strings.TrimSpace(name)
-	return SaveVendir(g.vendirConfig)
+	contents[0].Git.Ref = strings.TrimSpace(name)
+	g.vendirConfig.SetContents(contents)
+	return g.vendirConfig.Save()
 }
 
-func (g *GitStep) getIncludedPaths() error {
+func (g *GitSource) getIncludedPaths() error {
+	contents := g.vendirConfig.Contents()
 	g.ui.PrintInformationalText(`We need to know which files contain Kubernetes manifests. Multiple files can be included using a comma separator. 
 - To include all the files, enter * 
 - To include a folder with all the sub-folders and files, enter <FOLDER_NAME>/**/*
 - To include all the files inside a folder, enter <FOLDER_NAME>/*`)
-	includedPaths := g.vendirConfig.Directories[0].Contents[0].IncludePaths
+	includedPaths := contents[0].IncludePaths
 	defaultIncludedPath := strings.Join(includedPaths, ",")
 	if len(includedPaths) == 0 {
-		defaultIncludedPath = IncludeAllFiles
+		defaultIncludedPath = includeAllFiles
 	}
 	textOpts := ui.TextOpts{
 		Label:        "Enter the paths which contain Kubernetes manifests",
@@ -122,12 +116,13 @@ func (g *GitStep) getIncludedPaths() error {
 		return err
 	}
 	paths := strings.Split(path, ",")
-	if path == IncludeAllFiles {
+	if path == includeAllFiles {
 		paths = nil
 	}
 	for i := 0; i < len(paths); i++ {
 		paths[i] = strings.TrimSpace(paths[i])
 	}
-	g.vendirConfig.Directories[0].Contents[0].IncludePaths = paths
-	return SaveVendir(g.vendirConfig)
+	contents[0].IncludePaths = paths
+	g.vendirConfig.SetContents(contents)
+	return g.vendirConfig.Save()
 }
