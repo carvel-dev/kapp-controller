@@ -32,7 +32,7 @@ jobs:
     - name: Run Tests
       run: |
         set -e -x
-
+        helm version
         mkdir /tmp/bin
         export PATH=/tmp/bin:$PATH
 
