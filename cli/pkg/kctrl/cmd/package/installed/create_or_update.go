@@ -901,6 +901,8 @@ func (o *CreateOrUpdateOptions) unpauseReconciliation(client kcclient.Interface)
 }
 
 // Waits for the App CR created by the package installation to pick up it's paused status
+// TODO: Have common place for waiting logic and refactor based on
+// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/639
 func (o *CreateOrUpdateOptions) waitForAppPause(client kcclient.Interface) error {
 	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
 		appResource, err := client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
@@ -912,6 +914,18 @@ func (o *CreateOrUpdateOptions) waitForAppPause(client kcclient.Interface) error
 		}
 		if appResource.Status.FriendlyDescription == "Canceled/paused" {
 			return true, nil
+		}
+		pkgi, err := client.PackagingV1alpha1().PackageInstalls(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+		if pkgi.Generation != pkgi.Status.ObservedGeneration {
+			return false, nil
+		}
+		for _, condition := range pkgi.Status.Conditions {
+			if condition.Type == "ReconcileFailed" && strings.Contains(condition.Message, "Expected to find at least one version") {
+				return true, nil
+			}
 		}
 		return false, nil
 	}); err != nil {
