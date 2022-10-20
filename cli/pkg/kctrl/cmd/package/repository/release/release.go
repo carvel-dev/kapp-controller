@@ -186,23 +186,23 @@ func (o *ReleaseOptions) getPackageRepositoryBuild(pkgRepoBuildFilePath string) 
 
 	_, err := os.Stat(pkgRepoBuildFilePath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return &build.PackageRepoBuild{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       build.PkgRepoBuildKind,
-					APIVersion: build.PkgRepoBuildAPIVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					CreationTimestamp: metav1.NewTime(time.Now()),
-				},
-				Spec: build.PackageRepoBuildSpec{
-					Export: &build.PackageRepoBuildExport{
-						ImgpkgBundle: &build.PackageRepoBuildExportImgpkgBundle{},
-					},
-				},
-			}, nil
+		if !os.IsNotExist(err) {
+			return &build.PackageRepoBuild{}, err
 		}
-		return &build.PackageRepoBuild{}, err
+		return &build.PackageRepoBuild{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       build.PkgRepoBuildKind,
+				APIVersion: build.PkgRepoBuildAPIVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				CreationTimestamp: metav1.NewTime(time.Now()),
+			},
+			Spec: build.PackageRepoBuildSpec{
+				Export: &build.PackageRepoBuildExport{
+					ImgpkgBundle: &build.PackageRepoBuildExportImgpkgBundle{},
+				},
+			},
+		}, nil
 	}
 
 	packageRepoBuild, err := o.newPackageRepoBuildFromFile(pkgRepoBuildFilePath)

@@ -31,7 +31,7 @@ func (r VendirRunner) Sync(fetchMode string) error {
 	if err != nil {
 		return err
 	}
-	err = r.runVendirSync()
+	err = r.sync()
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (r VendirRunner) printFile(filePath string) error {
 }
 
 // TODO vendir sync failure. Reproduce: In case of 429 from github, we dont show errors today.
-func (r VendirRunner) runVendirSync() error {
+func (r VendirRunner) sync() error {
 	r.ui.PrintInformationalText("\nNext step is to run `vendir sync` to fetch the data from the source to the local directory. Vendir will sync the data into the upstream folder.")
 	r.ui.PrintActionableText("Running vendir sync")
 	r.ui.PrintCmdExecutionText("vendir sync -f vendir.yml\n")

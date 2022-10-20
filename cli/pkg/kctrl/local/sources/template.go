@@ -14,16 +14,16 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
-type TemplateConfiguration struct {
+type Template struct {
 	ui    cmdcore.AuthoringUI
 	build buildconfigs.Build
 }
 
-func NewTemplateConfiguration(ui cmdcore.AuthoringUI, build buildconfigs.Build) *TemplateConfiguration {
-	return &TemplateConfiguration{ui: ui, build: build}
+func NewTemplate(ui cmdcore.AuthoringUI, build buildconfigs.Build) *Template {
+	return &Template{ui: ui, build: build}
 }
 
-func (t *TemplateConfiguration) Configure(fetchMode string) error {
+func (t *Template) Configure(fetchMode string) error {
 	appSpec := t.build.GetAppSpec()
 	if appSpec == nil {
 		appSpec = &v1alpha1.AppSpec{}
@@ -94,7 +94,7 @@ func (t *TemplateConfiguration) Configure(fetchMode string) error {
 	return nil
 }
 
-func (t *TemplateConfiguration) getHelmAppTemplate(fetchMode string) (v1alpha1.AppTemplate, error) {
+func (t *Template) getHelmAppTemplate(fetchMode string) (v1alpha1.AppTemplate, error) {
 	var pathFromVendir string
 	if fetchMode == ChartFromGit {
 		vendirConfig := NewVendirConfig(vendirFileName)
@@ -117,7 +117,7 @@ func (t *TemplateConfiguration) getHelmAppTemplate(fetchMode string) (v1alpha1.A
 	return appTemplateWithHelm, nil
 }
 
-func (t *TemplateConfiguration) getYttPathsForLocalDirectory(defaultIncludedPath string) ([]string, error) {
+func (t *Template) getYttPathsForLocalDirectory(defaultIncludedPath string) ([]string, error) {
 	t.ui.PrintInformationalText("We need to include files/ directories which contain Kubernetes manifests. " +
 		"Multiple values can be included using a comma separator.")
 	textOpts := ui.TextOpts{

@@ -83,7 +83,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	err = sources.NewTemplateConfiguration(o.ui, appBuild).Configure(fetchMode)
+	err = sources.NewTemplate(o.ui, appBuild).Configure(fetchMode)
 	if err != nil {
 		return err
 	}

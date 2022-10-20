@@ -100,7 +100,7 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	err = sources.NewTemplateConfiguration(o.ui, pkgBuild).Configure(fetchMode)
+	err = sources.NewTemplate(o.ui, pkgBuild).Configure(fetchMode)
 	if err != nil {
 		return err
 	}

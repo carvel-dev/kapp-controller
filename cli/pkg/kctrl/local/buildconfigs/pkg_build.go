@@ -104,8 +104,8 @@ func (b *PackageBuild) HasHelmTemplate() bool {
 	if appSpec == nil || appSpec.Template == nil {
 		return false
 	}
-	appTemplates := appSpec.Template
-	for _, appTemplate := range appTemplates {
+
+	for _, appTemplate := range appSpec.Template {
 		if appTemplate.HelmTemplate != nil {
 			return true
 		}
