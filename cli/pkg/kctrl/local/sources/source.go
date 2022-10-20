@@ -35,20 +35,20 @@ func NewSource(ui cmdcore.AuthoringUI, build buildconfigs.Build) Source {
 	return Source{ui: ui, build: build}
 }
 
-func (f Source) Configure() (string, SourceConfiguration, error) {
+func (f Source) Configure() (string, error) {
 	f.ui.PrintHeaderText("Content")
 	f.ui.PrintInformationalText("Please provide the location from where your Kubernetes manifests or Helm chart can be fetched. This will be bundled as a part of the package.")
 
 	vendirConfig := NewVendirConfig(vendirFileName)
 	err := vendirConfig.Load()
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
 
 	previousFetchOptionSelected := vendirConfig.FetchMode(f.build.HasHelmTemplate())
 	if previousFetchOptionSelected == MultipleFetchOptionsSelected {
 		f.ui.PrintInformationalText("vendir.yml has multiple sources defined. Running vendir sync without overwriting vendir.yml")
-		return "", nil, nil
+		return "", nil
 	}
 
 	options := []string{LocalDirectory, GithubRelease, HelmRepo, Git, ChartFromGit}
@@ -59,44 +59,44 @@ func (f Source) Configure() (string, SourceConfiguration, error) {
 	}
 	currentFetchOptionIndex, err := f.ui.AskForChoice(choiceOpts)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
 	currentFetchOptionSelected := options[currentFetchOptionIndex]
 
 	if previousFetchOptionSelected != "" && currentFetchOptionSelected != previousFetchOptionSelected {
-		return "", nil, fmt.Errorf("Transitioning from one fetch option to another is not allowed. Earlier option selected: %s, Current Option selected: %s", previousFetchOptionSelected, currentFetchOptionSelected)
+		return "", fmt.Errorf("Transitioning from one fetch option to another is not allowed. Earlier option selected: %s, Current Option selected: %s", previousFetchOptionSelected, currentFetchOptionSelected)
 	}
 
 	// For the local directory options, all files/directories in working directory are used while releasing
 	if currentFetchOptionSelected == LocalDirectory {
-		return currentFetchOptionSelected, nil, nil
+		return currentFetchOptionSelected, nil
 	}
 
 	vendirDirectories := vendirConfig.Directories()
 	switch {
 	case len(vendirDirectories) > 1:
-		return currentFetchOptionSelected, nil, fmt.Errorf("More than 1 directory config found in the vendir file. (hint: Run vendir sync manually)")
+		return currentFetchOptionSelected, fmt.Errorf("More than 1 directory config found in the vendir file. (hint: Run vendir sync manually)")
 	case len(vendirDirectories) == 0:
 		err := vendirConfig.InitiatliseDirectories()
 		if err != nil {
-			return currentFetchOptionSelected, nil, err
+			return currentFetchOptionSelected, err
 		}
 	default:
 		directory := vendirDirectories[0]
 		if len(directory.Contents) > 1 {
-			return currentFetchOptionSelected, nil, fmt.Errorf("More than 1 content config found in the vendir file. (hint: Run vendir sync manually)")
+			return currentFetchOptionSelected, fmt.Errorf("More than 1 content config found in the vendir file. (hint: Run vendir sync manually)")
 		}
 	}
 
 	switch currentFetchOptionSelected {
 	case GithubRelease:
-		return currentFetchOptionSelected, NewGithubReleaseSource(f.ui, vendirConfig), nil
+		return currentFetchOptionSelected, NewGithubReleaseSource(f.ui, vendirConfig).Configure()
 	case HelmRepo:
-		return currentFetchOptionSelected, NewHelmSource(f.ui, vendirConfig), nil
+		return currentFetchOptionSelected, NewHelmSource(f.ui, vendirConfig).Configure()
 	case Git, ChartFromGit:
-		return currentFetchOptionSelected, NewGitSource(f.ui, vendirConfig), nil
+		return currentFetchOptionSelected, NewGitSource(f.ui, vendirConfig).Configure()
 	}
-	return currentFetchOptionSelected, nil, fmt.Errorf("Unexppected: Invalid fetch mode encountered while configuring vendir")
+	return currentFetchOptionSelected, fmt.Errorf("Unexppected: Invalid fetch mode encountered while configuring vendir")
 }
 
 func (f Source) getPreviousFetchOptionIndex(manifestOptions []string, previousFetchOption string) int {

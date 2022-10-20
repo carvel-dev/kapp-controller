@@ -90,20 +90,12 @@ func (o *InitOptions) Run() error {
 		return err
 	}
 
-	fetchMode, sourceConfiguration, err := sources.NewSource(o.ui, pkgBuild).Configure()
+	fetchMode, err := sources.NewSource(o.ui, pkgBuild).Configure()
 	if err != nil {
 		return err
 	}
 
-	// Source does not need to be conifgured if manifests are in the local directory
-	if sourceConfiguration != nil {
-		err = sourceConfiguration.Configure()
-		if err != nil {
-			return err
-		}
-	}
-
-	err = sources.NewVendirRunner(o.ui).Sync()
+	err = sources.NewVendirRunner(o.ui).Sync(fetchMode)
 	if err != nil {
 		return err
 	}
