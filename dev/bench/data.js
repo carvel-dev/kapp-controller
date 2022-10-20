@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1666245625836,
+  "lastUpdate": 1666265894549,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -7131,6 +7131,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6470042474,
             "unit": "ns/op\t         4.306 DeleteSeconds\t         2.125 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "498483538975cb854bd1164ce45b5ea477edadd1",
+          "message": "Refactor app/pkg init logic (#913)\n\n* Scope logic dealing with vendir.yml to VendirConfig\r\n\r\n* Refactor how Fetch is configured. Move build scoped fucntions to build.\r\n\r\n* Split VendirStep into VendirRunner and VendirConfigBuilder. Remove deadcode\r\n\r\n* Refactor git step. Remove deadcode.\r\n\r\n* Refactor GithubStep\r\n\r\n* Remove unused create step and refactor necessarily in app init\r\n\r\n* Refactor GitStep\r\n\r\n* Dedup app init logic. configureAppBuild => getAppBuildName\r\n\r\n* Refactor TemplateStep\r\n\r\n* Remove step interface and move Build interface\r\n\r\n* Refactoring package init\r\n\r\n* Add missing deffered cleanup\r\n\r\n* Remove file_utils. Use builins instead\r\n\r\n* Add check while running vendir sync to handle local directory case\r\n\r\n* Merge VendirCOnfiguration into FetchConfiguation\r\n\r\n* Move PackageBuild and AppBuild to buildconfigs\r\n\r\n* Move vendir config and related objects to sources package\r\n\r\n* Move init command files out of a separate package\r\n\r\n* Remove dependency of annotation for storing fetch mode\r\n\r\n* Moving constants to appropriate locations\r\n\r\n* Returning a non-pointer value from GetExport as it is always dereferenced. Removing stale comments\r\n\r\n* Stricter checks before running vendir sync. Making not exists check on files cleaner\r\n\r\n* Move source specific configuration to source.go. fetch.go => source.go. Refactoring init files\r\n\r\n* Remove unnecessary dependency on carvel-kapp-controller/.../exec package\r\n\r\n* Use vendirConfig.Contents while configuring package build instead of passing contents down the function tree\r\n\r\n* Move logic for initialising deploy section to build interface. Remove duplicate dependencies\r\n\r\n* TemplateConfiguration => Template. Othere refactoring.",
+          "timestamp": "2022-10-20T16:55:29+05:30",
+          "tree_id": "be91724ed25ef9a772beb32ae6469a6f5748610f",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/498483538975cb854bd1164ce45b5ea477edadd1"
+        },
+        "date": 1666265892111,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36992952971,
+            "unit": "ns/op\t        19.23 DeleteSeconds\t        17.71 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8593540756,
+            "unit": "ns/op\t         4.352 DeleteSeconds\t         4.196 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6523328603,
+            "unit": "ns/op\t         4.321 DeleteSeconds\t         2.154 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
