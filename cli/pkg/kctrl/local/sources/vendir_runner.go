@@ -8,7 +8,6 @@ import (
 	goexec "os/exec"
 
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
 
 type VendirRunner struct {
@@ -58,21 +57,14 @@ func (r VendirRunner) runVendirSync() error {
 	r.ui.PrintInformationalText("\nNext step is to run `vendir sync` to fetch the data from the source to the local directory. Vendir will sync the data into the upstream folder.")
 	r.ui.PrintActionableText("Running vendir sync")
 	r.ui.PrintCmdExecutionText("vendir sync -f vendir.yml\n")
-	var stdoutBs, stderrBs bytes.Buffer
 
-	localCmdRunner := exec.NewPlainCmdRunner()
+	var stderrBs bytes.Buffer
 	cmd := goexec.Command("vendir", []string{"sync", "-f", vendirFileName}...)
 	cmd.Stdin = nil
-	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
-	err := localCmdRunner.Run(cmd)
-	result := exec.CmdRunResult{
-		Stdout: stdoutBs.String(),
-		Stderr: stderrBs.String(),
-	}
-	result.AttachErrorf("Fetching resources: %s", err)
-	if result.Error != nil {
-		return fmt.Errorf("Running vendir sync: %s", result.Stderr)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("Running vendir sync: %s", stderrBs.String())
 	}
 	return nil
 }
@@ -80,20 +72,14 @@ func (r VendirRunner) runVendirSync() error {
 func (r VendirRunner) listFiles(dir string) error {
 	var stdoutBs, stderrBs bytes.Buffer
 
-	localCmdRunner := exec.NewPlainCmdRunner()
 	cmd := goexec.Command("ls", []string{"-lR", dir}...)
 	cmd.Stdin = nil
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
-	localCmdRunner.Run(cmd)
-
-	result := exec.CmdRunResult{
-		Stdout: stdoutBs.String(),
-		Stderr: stderrBs.String(),
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("Listing files.\n %s", stderrBs.String())
 	}
-	if result.Error != nil {
-		return fmt.Errorf("Listing files.\n %s", result.Stderr)
-	}
-	r.ui.PrintCmdExecutionOutput(result.Stdout)
+	r.ui.PrintCmdExecutionOutput(stdoutBs.String())
 	return nil
 }

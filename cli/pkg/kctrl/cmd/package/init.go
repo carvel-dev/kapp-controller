@@ -221,13 +221,11 @@ func (o *InitOptions) updateAndDefaultPackageResources(pkgRefName string, pkgMet
 	pkg.Spec.RefName = pkgRefName
 	pkgMetadata.Spec.DisplayName = strings.Split(pkgRefName, ".")[0]
 
-	shortDesc := pkgMetadata.Spec.ShortDescription
-	if len(shortDesc) == 0 {
+	if len(pkgMetadata.Spec.ShortDescription) == 0 {
 		pkgMetadata.Spec.ShortDescription = pkgRefName
 	}
 
-	longDesc := pkgMetadata.Spec.LongDescription
-	if len(longDesc) == 0 {
+	if len(pkgMetadata.Spec.LongDescription) == 0 {
 		pkgMetadata.Spec.LongDescription = pkgRefName
 	}
 }
