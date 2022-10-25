@@ -11,7 +11,7 @@ require (
 	github.com/stretchr/testify v1.8.0
 	github.com/vmware-tanzu/carvel-vendir v0.30.0
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/text v0.3.8 // indirect
 	golang.org/x/tools v0.1.12
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.25.3
