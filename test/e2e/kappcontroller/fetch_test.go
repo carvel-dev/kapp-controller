@@ -194,7 +194,7 @@ spec:
 			logger.Section("deploy", func() {
 				// if template stage succeeds, assume test pass
 				kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", tc.name},
-					e2e.RunOpts{StdinReader: strings.NewReader(tc.deploymentYAML)})
+					e2e.RunOpts{StdinReader: strings.NewReader(tc.deploymentYAML), OnErrKubectl: []string{"get", "app", "-oyaml"}})
 			})
 		})
 	}

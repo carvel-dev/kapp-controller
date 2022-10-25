@@ -5,10 +5,10 @@ package kappcontroller
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
@@ -64,9 +64,7 @@ spec:
 
 		var cr v1alpha1.App
 		err := yaml.Unmarshal([]byte(out), &cr)
-		if err != nil {
-			t.Fatalf("Failed to unmarshal: %s", err)
-		}
+		require.NoError(t, err)
 
 		expectedStatus := v1alpha1.AppStatus{
 			GenericStatus: v1alpha1.GenericStatus{
@@ -101,20 +99,15 @@ spec:
 			cr.Status.Deploy.KappDeployStatus = nil
 
 			// fetch
-			if !strings.Contains(cr.Status.Fetch.Stdout, "- imgpkgBundle") {
-				t.Fatalf("Expected to find imgpkgBundle contents in fetch stdout but got:\n%s", cr.Status.Fetch.Stdout)
-			}
-			if !strings.Contains(cr.Status.Fetch.Stdout, "image: index.docker.io/k8slt/kappctrl-e2e-bundle@sha256:83f86234f68a980490ec66f2d347ad4c8148713073c0993760b8eaaef3eb48d7") {
-				t.Fatalf("Expected to find imgpkgBundle contents in fetch stdout but got:\n%s", cr.Status.Fetch.Stdout)
-			}
+			require.Contains(t, cr.Status.Fetch.Stdout, "- imgpkgBundle")
+			require.Contains(t, cr.Status.Fetch.Stdout, "image: index.docker.io/k8slt/kappctrl-e2e-bundle@sha256:83f86234f68a980490ec66f2d347ad4c8148713073c0993760b8eaaef3eb48d7")
 			cr.Status.Fetch.StartedAt = metav1.Time{}
 			cr.Status.Fetch.UpdatedAt = metav1.Time{}
 			cr.Status.Fetch.Stdout = ""
 
 			// inspect
-			if !strings.Contains(cr.Status.Inspect.Stdout, "simple-app") && !strings.Contains(cr.Status.Inspect.Stdout, "Succeeded") {
-				t.Fatalf("Expected to find simple-app resources created but got:\n%s", cr.Status.Inspect.Stdout)
-			}
+			require.Contains(t, cr.Status.Inspect.Stdout, "simple-app")
+			require.Contains(t, cr.Status.Inspect.Stdout, "Succeeded")
 			cr.Status.Inspect.UpdatedAt = metav1.Time{}
 			cr.Status.Inspect.Stdout = ""
 
@@ -123,8 +116,6 @@ spec:
 			cr.Status.Template.Stderr = ""
 		}
 
-		if !reflect.DeepEqual(expectedStatus, cr.Status) {
-			t.Fatalf("\nStatus is not same:\nExpected:\n%#v\nGot:\n%#v\n", expectedStatus, cr.Status)
-		}
+		require.Equal(t, expectedStatus, cr.Status)
 	})
 }
