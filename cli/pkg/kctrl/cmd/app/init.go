@@ -56,7 +56,9 @@ func (o *InitOptions) Run() error {
 	}
 
 	o.ui.PrintHeaderText("\nPre-requisite")
-	o.ui.PrintInformationalText("Welcome! Before we start on the app creation journey, please ensure the following pre-requites are met:\n* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
+	o.ui.PrintInformationalText("Welcome! Before we start on the app creation journey, please ensure the following pre-requites are met:\n" +
+		"* The Carvel suite of tools are installed. Do get familiar with the following Carvel tools: ytt, imgpkg, vendir, and kbld.\n" +
+		"* You have access to an OCI registry, and authenticated locally so that images can be pushed. e.g. docker login <REGISTRY URL>\n")
 
 	appBuild, err := buildconfigs.NewAppBuild()
 	if err != nil {
@@ -149,7 +151,7 @@ func (o *InitOptions) writeAppFile(appBuild *buildconfigs.AppBuild) error {
 	o.ui.PrintInformationalText("Successfully updated app-build.yml\n")
 	o.ui.PrintInformationalText("Successfully updated app.yml\n")
 	o.ui.PrintHeaderText("\n**Next steps**")
-	o.ui.PrintInformationalText("Created files can be consumed in following ways:\n1. Optionally, use 'kctrl dev deploy' to iterate on the app and deploy locally.\n2. Use 'kctrl app release' to release the app.\n")
+	o.ui.PrintInformationalText("Use `dev deploy` command to iterate on the app and deploy locally.\n")
 	return nil
 }
 

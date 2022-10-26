@@ -64,7 +64,8 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 
 func (o *ReleaseOptions) Run() error {
 	o.ui.PrintHeaderText("\nPrerequisites")
-	o.ui.PrintInformationalText("1. A `packages` directory containing Package and PackageMetadata files should be present in the working directory.\n2. The host must be authorized to push images to a registry (can be set up by running `docker login`)\n")
+	o.ui.PrintInformationalText("1. `packages` directory containing Package and PackageMetadata files present in the working directory.\n" +
+		"2. Host is authorized to push images to a registry (can be set up using `docker login`)\n")
 
 	if o.pkgRepoVersion == "" {
 		o.pkgRepoVersion = fmt.Sprintf(DefaultVersion, time.Now().Unix())
@@ -99,8 +100,8 @@ func (o *ReleaseOptions) Run() error {
 	pkgRepoBuild.Name = pkgRepoName
 
 	o.ui.PrintHeaderText("Registry URL")
-	o.ui.PrintInformationalText("The bundle created needs to be pushed to an OCI registry." +
-		" Registry URL format: <REGISTRY_URL/REPOSITORY_NAME> e.g. index.docker.io/k8slt/sample-bundle")
+	o.ui.PrintInformationalText("The bundle created needs to be pushed to an OCI registry (format: <REGISTRY_URL/REPOSITORY_NAME>) " +
+		"e.g. index.docker.io/k8slt/sample-bundle")
 	defaultRegistryURL := pkgRepoBuild.Spec.Export.ImgpkgBundle.Image
 	textOpts = ui.TextOpts{
 		Label:        "Enter the registry url",
@@ -178,12 +179,12 @@ func (o *ReleaseOptions) Run() error {
 	}
 	o.ui.PrintInformationalText("Successfully created package-repository.yml\n")
 	o.ui.PrintHeaderText("\nNext steps")
-	o.ui.PrintInformationalText("1. Add the package repository to the Kubernetes cluster by running `kctrl package repository add -r <REPO_NAME> --url <PKG_REPO_BUNDLE_URL>`\n2. Alternatively, use `kapp` or `kubectl` to apply `package-repository.yml` to your cluster.\n")
+	o.ui.PrintInformationalText("1. Add the package repository to the cluster by running `package repository add`\n" +
+		"2. Alternatively, apply 'package-repository.yml' directly to your cluster.\n")
 	return nil
 }
 
 func (o *ReleaseOptions) getPackageRepositoryBuild(pkgRepoBuildFilePath string) (*build.PackageRepoBuild, error) {
-
 	_, err := os.Stat(pkgRepoBuildFilePath)
 	if err != nil {
 		if !os.IsNotExist(err) {
