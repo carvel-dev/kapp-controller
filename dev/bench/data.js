@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1666722654508,
+  "lastUpdate": 1666811934469,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -7425,6 +7425,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6550127007,
             "unit": "ns/op\t         4.328 DeleteSeconds\t         2.170 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cppforlife@gmail.com",
+            "name": "Dmitriy Kalinin",
+            "username": "cppforlife"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "eb31a8f5338c82f068627b72579b7ff3d8bc33e4",
+          "message": "Merge pull request #909 from vmware-tanzu/vendir-caching\n\nActivate caching of images and bundles",
+          "timestamp": "2022-10-26T15:08:21-04:00",
+          "tree_id": "acd93c223997ac0af23d3b3f7816bd65eaa5139e",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/eb31a8f5338c82f068627b72579b7ff3d8bc33e4"
+        },
+        "date": 1666811933116,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36602453223,
+            "unit": "ns/op\t        18.98 DeleteSeconds\t        17.58 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8489019909,
+            "unit": "ns/op\t         4.278 DeleteSeconds\t         4.166 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6464989333,
+            "unit": "ns/op\t         4.269 DeleteSeconds\t         2.153 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
