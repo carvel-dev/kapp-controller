@@ -97,10 +97,10 @@ func (g *GitSource) configureGitRef() error {
 
 func (g *GitSource) getIncludedPaths() error {
 	contents := g.vendirConfig.Contents()
-	g.ui.PrintInformationalText(`We need to know which files contain Kubernetes manifests. Multiple files can be included using a comma separator. 
-- To include all the files, enter * 
-- To include a folder with all the sub-folders and files, enter <FOLDER_NAME>/**/*
-- To include all the files inside a folder, enter <FOLDER_NAME>/*`)
+	g.ui.PrintInformationalText("We need to know which files contain Kubernetes manifests. Multiple files can be included using a comma separator.\n" +
+		"- To include all the files, enter *\n" +
+		"- To include a folder with all the sub-folders and files, enter <FOLDER_NAME>/**/* \n" +
+		"- To include all the files inside a folder, enter <FOLDER_NAME>/*")
 	includedPaths := contents[0].IncludePaths
 	defaultIncludedPath := strings.Join(includedPaths, ",")
 	if len(includedPaths) == 0 {

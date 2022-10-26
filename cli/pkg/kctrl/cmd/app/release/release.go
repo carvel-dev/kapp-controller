@@ -83,6 +83,6 @@ func (o *ReleaseOptions) Run() error {
 
 func (o *ReleaseOptions) printPrerequisites() {
 	o.ui.PrintHeaderText("Pre-requisites")
-	o.ui.PrintInformationalText("1. The host must be authorized to push images to a registry (can be set up by running `docker login`)\n" +
-		"2. an app can be released with this command only once `kctrl app init` has been run successfully.\n")
+	o.ui.PrintInformationalText("1. Host is authorized to push images to a registry (can be set up using `docker login`)\n" +
+		"2. `app init` ran successfully.")
 }

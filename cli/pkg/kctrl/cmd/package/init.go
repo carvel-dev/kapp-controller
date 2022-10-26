@@ -64,7 +64,7 @@ func (o *InitOptions) Run() error {
 		}
 	}
 
-	o.ui.PrintInformationalText("\nWelcome! Before we start, do install the latest Carvel suite of tools, specifically ytt, imgpkg, vendir and kbld as these will be used by kctrl.\n")
+	o.ui.PrintInformationalText("\nWelcome! Before we start, do install the latest Carvel suite of tools, specifically ytt, imgpkg, vendir and kbld.\n")
 	o.ui.PrintHeaderText("\nBasic Information")
 
 	pkgBuild, err := o.newOrExistingPackageBuild()
@@ -135,11 +135,9 @@ func (o *InitOptions) Run() error {
 	o.ui.PrintInformationalText("Successfully updated package-build.yml\n")
 	o.ui.PrintInformationalText("Successfully updated package-resources.yml\n")
 	o.ui.PrintHeaderText("\nNext steps")
-	o.ui.PrintInformationalText(`Created files can be consumed in following ways:
-1. Optionally, use 'kctrl dev' to deploy and test the package.
-2. Use 'kctrl pkg release' to release the package.
-3. Use 'kctrl pkg release --repo-output repo/' to release the package and add it to the package repository directory.
-`)
+	o.ui.PrintInformationalText("Created files can be consumed in following ways:\n" +
+		"1. `package release` command to release the package.\n" +
+		"2. `package release --repo-output repo` to release the package and add it to the package repository directory.\n")
 	return nil
 }
 
@@ -226,8 +224,8 @@ func (o *InitOptions) updateAndDefaultPackageResources(pkgRefName string, pkgMet
 }
 
 func (o *InitOptions) readPackageRefName(packageMetadataName string) (string, error) {
-	o.ui.PrintInformationalText(`A package reference name must be at least three '.' separated segments,
-e.g. samplepackage.corp.com`)
+	o.ui.PrintInformationalText("A package reference name must be at least three '.' separated segments," +
+		"e.g. samplepackage.corp.com")
 
 	defaultPkgRefName := "samplepackage.corp.com"
 	if len(packageMetadataName) > 0 {
@@ -280,9 +278,9 @@ func (o *InitOptions) updatePackage(pkg *v1alpha1.Package, pkgBuild *buildconfig
 		pkg.Spec.Template.Spec.Deploy = pkgBuild.GetAppSpec().Deploy
 	} else {
 		if !isAppSpecSame(pkg, pkgBuild) {
-			o.ui.PrintInformationalText("AppSpec section of Package(inside package-resources.yml) and " +
-				"PackageBuild(inside package-build.yml) is different. " +
-				"Either choose to overwrite the Package AppSpec or leave as it is.")
+			o.ui.PrintInformationalText("Found different AppSpec section in\n" +
+				"Package (inside package-resources.yml) and\n" +
+				"PackageBuild (inside package-build.yml)")
 			overrideOptions := []string{"Yes", "No"}
 			choiceOpts := ui.ChoiceOpts{
 				Label:   "Overwrite the Package AppSpec from PackageBuild",

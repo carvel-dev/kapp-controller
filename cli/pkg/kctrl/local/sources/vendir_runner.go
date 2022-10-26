@@ -23,8 +23,8 @@ func (r VendirRunner) Sync(fetchMode string) error {
 		return nil
 	}
 
-	r.ui.PrintInformationalText("We will use vendir to fetch the data from the source to the local directory." +
-		"Vendir allows us to declaratively state what should be in a directory and sync data sources into it." +
+	r.ui.PrintInformationalText("We will use vendir to fetch the data from the source to the local directory.\n" +
+		"Vendir allows us to declaratively state what should be in a directory and sync data sources into it.\n" +
 		"All the information entered above has been persisted into a vendir.yml file.")
 	r.ui.PrintActionableText(fmt.Sprintf("Printing %s \n", vendirFileName))
 	err := r.printFile(vendirFileName)
@@ -54,7 +54,8 @@ func (r VendirRunner) printFile(filePath string) error {
 
 // TODO vendir sync failure. Reproduce: In case of 429 from github, we dont show errors today.
 func (r VendirRunner) sync() error {
-	r.ui.PrintInformationalText("\nNext step is to run `vendir sync` to fetch the data from the source to the local directory. Vendir will sync the data into the upstream folder.")
+	r.ui.PrintInformationalText("\nNext step is to run 'vendir sync' to fetch the data from the source to the local directory.\n" +
+		"Vendir will sync the data into the upstream folder.")
 	r.ui.PrintActionableText("Running vendir sync")
 	r.ui.PrintCmdExecutionText("vendir sync -f vendir.yml\n")
 
