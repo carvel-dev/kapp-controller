@@ -22,6 +22,7 @@ import (
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
@@ -185,15 +186,21 @@ func Run(opts Options, runLog logr.Logger) error {
 	kubeconf := kubeconfig.NewKubeconfig(coreClient, runLog)
 	compInfo := componentinfo.NewComponentInfo(coreClient, kubeconf, Version)
 
+	cacheFolderApps := memdir.NewTmpDir("cache-appcr")
+	err = cacheFolderApps.Create()
+	if err != nil {
+		return fmt.Errorf("Unable to create cache tmp directory for AppCRs: %s", err)
+	}
 	{ // add controller for apps
 		appFactory := app.CRDAppFactory{
-			CoreClient: coreClient,
-			AppClient:  kcClient,
-			KcConfig:   kcConfig,
-			AppMetrics: appMetrics,
-			CmdRunner:  sidecarCmdExec,
-			Kubeconf:   kubeconf,
-			CompInfo:   compInfo,
+			CoreClient:  coreClient,
+			AppClient:   kcClient,
+			KcConfig:    kcConfig,
+			AppMetrics:  appMetrics,
+			CmdRunner:   sidecarCmdExec,
+			Kubeconf:    kubeconf,
+			CompInfo:    compInfo,
+			CacheFolder: cacheFolderApps,
 		}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 			appFactory, refTracker, updateStatusTracker, compInfo)
@@ -235,8 +242,21 @@ func Run(opts Options, runLog logr.Logger) error {
 		}
 	}
 
+	cacheFolderPkgRepoApps := memdir.NewTmpDir("cache-package-repo")
+	err = cacheFolderPkgRepoApps.Create()
+	if err != nil {
+		return fmt.Errorf("Unable to create cache tmp directory for AppCRs: %s", err)
+	}
+
 	{ // add controller for pkgrepositories
-		appFactory := pkgrepository.AppFactory{coreClient, kcClient, kcConfig, sidecarCmdExec, kubeconf}
+		appFactory := pkgrepository.AppFactory{
+			CoreClient:  coreClient,
+			AppClient:   kcClient,
+			KcConfig:    kcConfig,
+			CmdRunner:   sidecarCmdExec,
+			Kubeconf:    kubeconf,
+			CacheFolder: cacheFolderPkgRepoApps,
+		}
 
 		reconciler := pkgrepository.NewReconciler(kcClient, coreClient,
 			runLog.WithName("pkgr"), appFactory, refTracker, updateStatusTracker)

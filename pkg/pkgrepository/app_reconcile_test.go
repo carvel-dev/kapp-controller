@@ -17,6 +17,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -28,6 +29,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	// app to fail before deploy.
 	app := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
+			UID:  uuid.NewUUID(),
 			Name: "simple-app",
 		},
 		Spec: v1alpha1.AppSpec{
@@ -82,6 +84,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	}
 	app := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
+			UID:  uuid.NewUUID(),
 			Name: "simple-app",
 		},
 		Spec: v1alpha1.AppSpec{
@@ -138,6 +141,7 @@ func TestInvalidPackageRepositoryFormat(t *testing.T) {
 	}
 	app := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
+			UID:  uuid.NewUUID(),
 			Name: "simple-app",
 		},
 		Spec: v1alpha1.AppSpec{
