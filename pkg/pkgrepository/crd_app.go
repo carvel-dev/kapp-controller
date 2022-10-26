@@ -37,7 +37,7 @@ func NewCRDApp(appModel *kcv1alpha1.App, packageRepo *pkgingv1alpha1.PackageRepo
 		BlockDeletion:   crdApp.blockDeletion,
 		UnblockDeletion: crdApp.unblockDeletion,
 		UpdateStatus:    crdApp.updateStatus,
-	}, fetchFactory, templateFactory, deployFactory, log)
+	}, fetchFactory, templateFactory, deployFactory, log, packageRepo.UID)
 
 	return crdApp
 }
