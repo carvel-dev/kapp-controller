@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -46,6 +47,127 @@ func (i Interaction) Run(promptOutputObj promptOutput) {
 
 func TestE2EInitAndReleaseCases(t *testing.T) {
 	testcases := []E2EAuthoringTestCase{
+		{
+			Name: "Local dir Flow",
+			InitInteraction: Interaction{
+				Prompts: []string{
+					"Enter the package reference name",
+					"Enter source",
+					"Enter the paths which contain Kubernetes manifests",
+				},
+				Inputs: []string{
+					"testpackage.corp.dev",
+					"1",
+					filepath.Join("config", "config.yml"),
+				},
+			},
+			ExpectedPkgBuild: `
+apiVersion: kctrl.carvel.dev/v1alpha1
+kind: PackageBuild
+metadata:
+  name: testpackage.corp.dev
+spec:
+  template:
+    spec:
+      app:
+        spec:
+          deploy:
+          - kapp: {}
+          template:
+          - ytt:
+              paths:
+              - config/config.yml
+          - kbld: {}
+      export:
+      - includePaths:
+        - config/config.yml
+`,
+			ExpectedPkgResource: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.0.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - git: {}
+      template:
+      - ytt:
+          paths:
+          - config/config.yml
+      - kbld: {}
+  valuesSchema:
+    openAPIv3: null
+  version: 0.0.0
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  annotations:
+    kctrl.carvel.dev/local-fetch-0: .
+  name: testpackage
+spec:
+  packageRef:
+    refName: testpackage.corp.dev
+    versionSelection:
+      constraints: 0.0.0
+  serviceAccountName: testpackage-sa
+status:
+  conditions: null
+  friendlyDescription: ""
+  observedGeneration: 0
+`,
+			ExpectedPackageMetadata: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+`,
+			ExpectedPackage: `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.1.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - imgpkgBundle:
+      template:
+      - ytt:
+          paths:
+          - config/config.yml
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/images.yml
+  valuesSchema:
+    openAPIv3:
+      default: null
+      nullable: true
+  version: 1.0.0
+`,
+		},
 		{
 			Name: "Helm Chart Flow",
 			InitInteraction: Interaction{
@@ -876,6 +998,12 @@ spec:
 		const pkgDir = "./carvel-artifacts/packages/testpackage.corp.dev/"
 		promptOutput := newPromptOutput(t)
 
+		switch testcase.Name {
+		case "Local dir Flow":
+			err := createContentForLocalDir(workingDir)
+			require.NoError(t, err)
+		}
+
 		go testcase.InitInteraction.Run(promptOutput)
 
 		logger.Section(fmt.Sprintf("%s: Package init", testcase.Name), func() {
@@ -886,9 +1014,18 @@ spec:
 			// Below key's values will be changed during every run, hence adding these keys to be ignored
 			keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:"}
 
-			// Error if upstream folder doesn't exist
-			_, err = os.Stat(filepath.Join(workingDir, "upstream"))
-			require.NoError(t, err)
+			if testcase.Name != "Local dir Flow" {
+				// Error if upstream folder doesn't exist
+				_, err = os.Stat(filepath.Join(workingDir, "upstream"))
+				require.NoError(t, err)
+
+				// Verify vendir
+				out, err := readFile("vendir.yml")
+				require.NoErrorf(t, err, "Expected to read vendir.yml")
+				expectedVendirOutput := strings.TrimSpace(replaceSpaces(testcase.ExpectedVendir))
+				out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+				require.Equal(t, expectedVendirOutput, out, "Expected vendir output to match")
+			}
 
 			// Verify PackageBuild
 			out, err := readFile("package-build.yml")
@@ -903,13 +1040,6 @@ spec:
 			expectedPackageResources := strings.TrimSpace(replaceSpaces(testcase.ExpectedPkgResource))
 			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
 			require.Equal(t, expectedPackageResources, out, "Expected package resources output to match")
-
-			// Verify vendir
-			out, err = readFile("vendir.yml")
-			require.NoErrorf(t, err, "Expected to read vendir.yml")
-			expectedVendirOutput := strings.TrimSpace(replaceSpaces(testcase.ExpectedVendir))
-			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
-			require.Equal(t, expectedVendirOutput, out, "Expected vendir output to match")
 		})
 
 		logger.Section(fmt.Sprintf("%s: Package release", testcase.Name), func() {
@@ -967,6 +1097,47 @@ spec:
 				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
 		})
 	}
+}
+
+func createContentForLocalDir(parentDir string) error {
+	configDir := "config"
+	configFileData := `---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-app
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    simple-app: ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-app
+spec:
+  selector:
+    matchLabels:
+      simple-app: ""
+  template:
+    metadata:
+      labels:
+        simple-app: ""
+    spec:
+      containers:
+      - name: simple-app
+        image: 100mik/simple-app
+        env:
+        - name: SIMPLE_MSG
+          value: stranger
+`
+	err := os.MkdirAll(filepath.Join(parentDir, configDir), os.ModePerm)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(parentDir, configDir, "config.yml"), []byte(configFileData), fs.ModePerm)
 }
 
 func readFile(fileName string) (string, error) {
