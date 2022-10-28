@@ -118,30 +118,23 @@ func (o *ReleaseOptions) Run() error {
 		return err
 	}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
 	o.ui.PrintInformationalText("kbld ensures that all image references are resolved to an immutable reference.")
 	o.ui.PrintActionableText("Lock image references using kbld")
 
-	packagesFolderPath := filepath.Join(wd, PackagesDirectory)
-	_, err = os.Stat(packagesFolderPath)
+	_, err = os.Stat(PackagesDirectory)
 	if err != nil && os.IsNotExist(err) {
 		return fmt.Errorf("Expected to find `packages` directory in the root")
 	}
 
 	// Make lock output directory if it does not exist
-	tmpImgpkgFolder := filepath.Join(wd, LockOutputFolder)
-	_, err = os.Stat(tmpImgpkgFolder)
+	_, err = os.Stat(LockOutputFolder)
 	if err != nil && os.IsNotExist(err) {
-		err := os.Mkdir(tmpImgpkgFolder, os.ModePerm)
+		err := os.Mkdir(LockOutputFolder, os.ModePerm)
 		if err != nil {
 			return err
 		}
+		defer os.RemoveAll(LockOutputFolder)
 	}
-	defer os.RemoveAll(filepath.Join(wd, LockOutputFolder))
 
 	tempImgpkgLockPath := filepath.Join(LockOutputFolder, LockOutputFile)
 
@@ -171,7 +164,7 @@ func (o *ReleaseOptions) Run() error {
 		}
 	}
 
-	artifactWriter := NewArtifactWriter(pkgRepoName, wd)
+	artifactWriter := NewArtifactWriter(pkgRepoName)
 	err = artifactWriter.WritePackageRepositoryFile(bundleURL, o.pkgRepoVersion)
 	if err != nil {
 		return err
