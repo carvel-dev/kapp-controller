@@ -30,8 +30,8 @@ metadata:
   name: kapp-controller.carvel.dev
 spec:
   displayName: kapp-controller
-  longDescription: kapp-controller.carvel.dev
-  shortDescription: kapp-controller.carvel.dev
+  longDescription: "Provide CRDs to declaratively install, manage, and upgrade applications on a Kubernetes cluster"
+  shortDescription: "install, manage, and upgrade applications"
 
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
@@ -51,4 +51,3 @@ status:
   conditions: null
   friendlyDescription: ""
   observedGeneration: 0
-  

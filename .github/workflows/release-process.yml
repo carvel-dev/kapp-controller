@@ -39,20 +39,19 @@ jobs:
           ./hack/build-release.sh
           cd cli
           ./hack/build-binaries.sh
+          shasum -a 256 ./kctrl-* | tee -a ../tmp/checksums.txt
 
       - name: Run Package build
         run: |
           constraintVersion="${{ github.ref_name }}"
           ./cli/kctrl-linux-amd64 pkg release -y -v ${constraintVersion:1} --debug
-          cd cli
-          shasum -a 256 ./kctrl-* | tee -a ../tmp/checksums.txt
-          echo "# :open_file_folder: Files Checksum" | tee ../tmp/checksums-formatted.txt
-          echo '```' | tee -a ../tmp/checksums-formatted.txt
-          cat ../tmp/checksums.txt | tee -a ../tmp/checksums-formatted.txt
-          echo '```' | tee -a ../tmp/checksums-formatted.txt
-          cd ..
-          shasum -a 256 carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml | tee -a tmp/checksums.txt
-          shasum -a 256 carvel-artifacts/packages/kapp-controller.carvel.dev/metadata.yml | tee -a tmp/checksums.txt
+          mv ./carvel-artifacts/packages/kapp-controller.carvel.dev/metadata.yml ./carvel-artifacts/packages/kapp-controller.carvel.dev/package-metadata.yml
+          shasum -a 256 ./carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml | tee -a ./tmp/checksums.txt
+          shasum -a 256 ./carvel-artifacts/packages/kapp-controller.carvel.dev/package-metadata.yml | tee -a ./tmp/checksums.txt
+          echo "# :open_file_folder: Files Checksum" | tee ./tmp/checksums-formatted.txt
+          echo '```' | tee -a ./tmp/checksums-formatted.txt
+          cat ./tmp/checksums.txt | tee -a ./tmp/checksums-formatted.txt
+          echo '```' | tee -a ./tmp/checksums-formatted.txt
 
       - name: Create release draft and upload release yaml
         uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
@@ -64,8 +63,8 @@ jobs:
             ./cli/kctrl-*
             ./tmp/release.yml
             ./tmp/checksums.txt
-            carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml
-            carvel-artifacts/packages/kapp-controller.carvel.dev/metadata.yml
+            ./carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml
+            ./carvel-artifacts/packages/kapp-controller.carvel.dev/package-metadata.yml
           draft: true
           prerelease: true
 
@@ -117,8 +116,8 @@ jobs:
             ${checksums['kctrl-linux-amd64']}  ./kctrl-linux-amd64
             ${checksums['kctrl-linux-arm64']}  ./kctrl-linux-arm64
             ${checksums['kctrl-windows-amd64.exe']}  ./kctrl-windows-amd64.exe`
-            ${checksums['package.yml']}  carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml
-            ${checksums['metadata.yml']}  carvel-artifacts/packages/kapp-controller.carvel.dev/metadata.yml`
+            ${checksums['package.yml']}  ./carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml
+            ${checksums['package-metadata.yml']}  ./carvel-artifacts/packages/kapp-controller.carvel.dev/package-metadata.yml`
 
       - name: Verify uploaded artifacts
         if: startsWith(github.ref, 'refs/tags/')
