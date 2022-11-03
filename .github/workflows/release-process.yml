@@ -48,6 +48,9 @@ jobs:
           mv ./carvel-artifacts/packages/kapp-controller.carvel.dev/metadata.yml ./carvel-artifacts/packages/kapp-controller.carvel.dev/package-metadata.yml
           shasum -a 256 ./carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml | tee -a ./tmp/checksums.txt
           shasum -a 256 ./carvel-artifacts/packages/kapp-controller.carvel.dev/package-metadata.yml | tee -a ./tmp/checksums.txt
+          
+      - name: Add to formatted checksum
+        run: |
           echo "# :open_file_folder: Files Checksum" | tee ./tmp/checksums-formatted.txt
           echo '```' | tee -a ./tmp/checksums-formatted.txt
           cat ./tmp/checksums.txt | tee -a ./tmp/checksums-formatted.txt
