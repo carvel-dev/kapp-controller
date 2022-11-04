@@ -21,6 +21,7 @@ import (
 
 const (
 	workingDir = "kctrl-test"
+	pkgDir     = "./carvel-artifacts/packages/testpackage.corp.dev/"
 )
 
 type E2EAuthoringTestCase struct {
@@ -995,14 +996,7 @@ spec:
 		if err != nil {
 			t.Fatal(err)
 		}
-		const pkgDir = "./carvel-artifacts/packages/testpackage.corp.dev/"
 		promptOutput := newPromptOutput(t)
-
-		switch testcase.Name {
-		case "Local dir Flow":
-			err := createContentForLocalDir(workingDir)
-			require.NoError(t, err)
-		}
 
 		go testcase.InitInteraction.Run(promptOutput)
 
@@ -1014,21 +1008,19 @@ spec:
 			// Below key's values will be changed during every run, hence adding these keys to be ignored
 			keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:"}
 
-			if testcase.Name != "Local dir Flow" {
-				// Error if upstream folder doesn't exist
-				_, err = os.Stat(filepath.Join(workingDir, "upstream"))
-				require.NoError(t, err)
+			// Error if upstream folder doesn't exist
+			_, err = os.Stat(filepath.Join(workingDir, "upstream"))
+			require.NoError(t, err)
 
-				// Verify vendir
-				out, err := readFile("vendir.yml")
-				require.NoErrorf(t, err, "Expected to read vendir.yml")
-				expectedVendirOutput := strings.TrimSpace(replaceSpaces(testcase.ExpectedVendir))
-				out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
-				require.Equal(t, expectedVendirOutput, out, "Expected vendir output to match")
-			}
+			// Verify vendir
+			out, err := readFile("vendir.yml")
+			require.NoErrorf(t, err, "Expected to read vendir.yml")
+			expectedVendirOutput := strings.TrimSpace(replaceSpaces(testcase.ExpectedVendir))
+			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+			require.Equal(t, expectedVendirOutput, out, "Expected vendir output to match")
 
 			// Verify PackageBuild
-			out, err := readFile("package-build.yml")
+			out, err = readFile("package-build.yml")
 			require.NoErrorf(t, err, "Expected to read package-build.yml")
 			expectedPackageBuild := strings.TrimSpace(replaceSpaces(testcase.ExpectedPkgBuild))
 			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
@@ -1097,6 +1089,215 @@ spec:
 				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
 		})
 	}
+}
+
+func TestE2EInitAndReleaseCaseForLocalDir(t *testing.T) {
+	initInteraction := Interaction{
+		Prompts: []string{
+			"Enter the package reference name",
+			"Enter source",
+			"Enter the paths which contain Kubernetes manifests",
+		},
+		Inputs: []string{
+			"testpackage.corp.dev",
+			"1",
+			filepath.Join("config", "config.yml"),
+		},
+	}
+	expectedPkgBuild := `
+apiVersion: kctrl.carvel.dev/v1alpha1
+kind: PackageBuild
+metadata:
+  name: testpackage.corp.dev
+spec:
+  template:
+    spec:
+      app:
+        spec:
+          deploy:
+          - kapp: {}
+          template:
+          - ytt:
+              paths:
+              - config/config.yml
+          - kbld: {}
+      export:
+      - includePaths:
+        - config/config.yml
+`
+	expectedPkgResource := `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.0.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - git: {}
+      template:
+      - ytt:
+          paths:
+          - config/config.yml
+      - kbld: {}
+  valuesSchema:
+    openAPIv3: null
+  version: 0.0.0
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  annotations:
+    kctrl.carvel.dev/local-fetch-0: .
+  name: testpackage
+spec:
+  packageRef:
+    refName: testpackage.corp.dev
+    versionSelection:
+      constraints: 0.0.0
+  serviceAccountName: testpackage-sa
+status:
+  conditions: null
+  friendlyDescription: ""
+  observedGeneration: 0
+`
+	expectedPackageMetadata := `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: testpackage.corp.dev
+spec:
+  displayName: testpackage
+  longDescription: testpackage.corp.dev
+  shortDescription: testpackage.corp.dev
+`
+	expectedPackage := `
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: testpackage.corp.dev.1.0.0
+spec:
+  refName: testpackage.corp.dev
+  template:
+    spec:
+      deploy:
+      - kapp: {}
+      fetch:
+      - imgpkgBundle:
+      template:
+      - ytt:
+          paths:
+          - config/config.yml
+      - kbld:
+          paths:
+          - '-'
+          - .imgpkg/images.yml
+  valuesSchema:
+    openAPIv3:
+      default: null
+      nullable: true
+  version: 1.0.0
+`
+	cleanUp := func() {
+		os.RemoveAll(workingDir)
+	}
+	cleanUp()
+	defer cleanUp()
+
+	err := os.Mkdir(workingDir, os.ModePerm)
+	require.NoError(t, err)
+	err = createContentForLocalDir(workingDir)
+	require.NoError(t, err)
+
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kctrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+	promptOutput := newPromptOutput(t)
+
+	go initInteraction.Run(promptOutput)
+
+	logger.Section("Local dir flow: Package init", func() {
+		kctrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+
+		// Below key's values will be changed during every run, hence adding these keys to be ignored
+		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:"}
+
+		// Verify PackageBuild
+		out, err := readFile("package-build.yml")
+		require.NoErrorf(t, err, "Expected to read package-build.yml")
+		expectedPackageBuild := strings.TrimSpace(replaceSpaces(expectedPkgBuild))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedPackageBuild, out, "Expected PackageBuild output to match")
+
+		// Verify package resources
+		out, err = readFile("package-resources.yml")
+		require.NoErrorf(t, err, "Expected to read package-resources.yml")
+		expectedPackageResources := strings.TrimSpace(replaceSpaces(expectedPkgResource))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedPackageResources, out, "Expected package resources output to match")
+	})
+
+	logger.Section("Local dir flow: Package release", func() {
+		releaseInteraction := Interaction{
+			Prompts: []string{"Enter the registry URL"},
+			Inputs:  []string{env.Image},
+		}
+
+		go releaseInteraction.Run(promptOutput)
+
+		kctrl.RunWithOpts([]string{"pkg", "release", "--version", "1.0.0", "--tty=true", "--chdir", workingDir},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+
+		// Below key's values will be changed during every run, hence adding these keys to be ignored
+		keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:", "image:"}
+
+		// Verify PackageMetadata artifact
+		out, err := readFile(pkgDir + "metadata.yml")
+		require.NoErrorf(t, err, "Expected to read metadata.yml")
+		expectedPackageMetadata := strings.TrimSpace(replaceSpaces(expectedPackageMetadata))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedPackageMetadata, out, "Expected PackageMetadata to match")
+
+		// Verify Package artifact
+		out, err = readFile(pkgDir + "package.yml")
+		require.NoErrorf(t, err, "Expected to read package.yml")
+		expectedPackage := strings.TrimSpace(replaceSpaces(expectedPackage))
+		out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+		require.Equal(t, expectedPackage, out, "Expected Package to match")
+	})
+
+	logger.Section("Local dir flow: Testing and installing created Package", func() {
+		cleanUpInstalledPkg := func() {
+			kapp.RunWithOpts([]string{"delete", "-a", "test-package"},
+				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+			kctrl.RunWithOpts([]string{"pkg", "installed", "delete", "-i", "test"},
+				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+		}
+		defer cleanUpInstalledPkg()
+
+		kapp.RunWithOpts([]string{"deploy", "-a", "test-package", "-f", filepath.Join(workingDir, pkgDir), "-c"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+		kctrl.RunWithOpts([]string{"pkg", "available", "list"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+		kctrl.RunWithOpts([]string{"pkg", "install", "-p", "testpackage.corp.dev", "-i", "test", "--version", "1.0.0"},
+			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
+	})
 }
 
 func createContentForLocalDir(parentDir string) error {
