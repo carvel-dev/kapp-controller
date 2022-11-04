@@ -49,127 +49,6 @@ func (i Interaction) Run(promptOutputObj promptOutput) {
 func TestE2EInitAndReleaseCases(t *testing.T) {
 	testcases := []E2EAuthoringTestCase{
 		{
-			Name: "Local dir Flow",
-			InitInteraction: Interaction{
-				Prompts: []string{
-					"Enter the package reference name",
-					"Enter source",
-					"Enter the paths which contain Kubernetes manifests",
-				},
-				Inputs: []string{
-					"testpackage.corp.dev",
-					"1",
-					filepath.Join("config", "config.yml"),
-				},
-			},
-			ExpectedPkgBuild: `
-apiVersion: kctrl.carvel.dev/v1alpha1
-kind: PackageBuild
-metadata:
-  name: testpackage.corp.dev
-spec:
-  template:
-    spec:
-      app:
-        spec:
-          deploy:
-          - kapp: {}
-          template:
-          - ytt:
-              paths:
-              - config/config.yml
-          - kbld: {}
-      export:
-      - includePaths:
-        - config/config.yml
-`,
-			ExpectedPkgResource: `
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
-metadata:
-  name: testpackage.corp.dev.0.0.0
-spec:
-  refName: testpackage.corp.dev
-  template:
-    spec:
-      deploy:
-      - kapp: {}
-      fetch:
-      - git: {}
-      template:
-      - ytt:
-          paths:
-          - config/config.yml
-      - kbld: {}
-  valuesSchema:
-    openAPIv3: null
-  version: 0.0.0
----
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageMetadata
-metadata:
-  name: testpackage.corp.dev
-spec:
-  displayName: testpackage
-  longDescription: testpackage.corp.dev
-  shortDescription: testpackage.corp.dev
----
-apiVersion: packaging.carvel.dev/v1alpha1
-kind: PackageInstall
-metadata:
-  annotations:
-    kctrl.carvel.dev/local-fetch-0: .
-  name: testpackage
-spec:
-  packageRef:
-    refName: testpackage.corp.dev
-    versionSelection:
-      constraints: 0.0.0
-  serviceAccountName: testpackage-sa
-status:
-  conditions: null
-  friendlyDescription: ""
-  observedGeneration: 0
-`,
-			ExpectedPackageMetadata: `
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageMetadata
-metadata:
-  name: testpackage.corp.dev
-spec:
-  displayName: testpackage
-  longDescription: testpackage.corp.dev
-  shortDescription: testpackage.corp.dev
-`,
-			ExpectedPackage: `
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
-metadata:
-  name: testpackage.corp.dev.1.0.0
-spec:
-  refName: testpackage.corp.dev
-  template:
-    spec:
-      deploy:
-      - kapp: {}
-      fetch:
-      - imgpkgBundle:
-      template:
-      - ytt:
-          paths:
-          - config/config.yml
-      - kbld:
-          paths:
-          - '-'
-          - .imgpkg/images.yml
-  valuesSchema:
-    openAPIv3:
-      default: null
-      nullable: true
-  version: 1.0.0
-`,
-		},
-		{
 			Name: "Helm Chart Flow",
 			InitInteraction: Interaction{
 				Prompts: []string{
@@ -1012,15 +891,8 @@ spec:
 			_, err = os.Stat(filepath.Join(workingDir, "upstream"))
 			require.NoError(t, err)
 
-			// Verify vendir
-			out, err := readFile("vendir.yml")
-			require.NoErrorf(t, err, "Expected to read vendir.yml")
-			expectedVendirOutput := strings.TrimSpace(replaceSpaces(testcase.ExpectedVendir))
-			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
-			require.Equal(t, expectedVendirOutput, out, "Expected vendir output to match")
-
 			// Verify PackageBuild
-			out, err = readFile("package-build.yml")
+			out, err := readFile("package-build.yml")
 			require.NoErrorf(t, err, "Expected to read package-build.yml")
 			expectedPackageBuild := strings.TrimSpace(replaceSpaces(testcase.ExpectedPkgBuild))
 			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
@@ -1032,6 +904,13 @@ spec:
 			expectedPackageResources := strings.TrimSpace(replaceSpaces(testcase.ExpectedPkgResource))
 			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
 			require.Equal(t, expectedPackageResources, out, "Expected package resources output to match")
+
+			// Verify vendir
+			out, err = readFile("vendir.yml")
+			require.NoErrorf(t, err, "Expected to read vendir.yml")
+			expectedVendirOutput := strings.TrimSpace(replaceSpaces(testcase.ExpectedVendir))
+			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+			require.Equal(t, expectedVendirOutput, out, "Expected vendir output to match")
 		})
 
 		logger.Section(fmt.Sprintf("%s: Package release", testcase.Name), func() {
