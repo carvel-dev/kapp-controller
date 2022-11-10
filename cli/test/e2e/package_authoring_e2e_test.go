@@ -882,34 +882,13 @@ spec:
 			kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir},
 				RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 					StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+			verifyBoilerplate(t, testcase)
+		})
 
-			// Below key's values will be changed during every run, hence adding these keys to be ignored
-			keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:"}
-
-			// Error if upstream folder doesn't exist
-			_, err = os.Stat(filepath.Join(workingDir, "upstream"))
-			require.NoError(t, err)
-
-			// Verify PackageBuild
-			out, err := readFile("package-build.yml")
-			require.NoErrorf(t, err, "Expected to read package-build.yml")
-			expectedPackageBuild := strings.TrimSpace(replaceSpaces(testcase.ExpectedPkgBuild))
-			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
-			require.Equal(t, expectedPackageBuild, out, "Expected PackageBuild output to match")
-
-			// Verify package resources
-			out, err = readFile("package-resources.yml")
-			require.NoErrorf(t, err, "Expected to read package-resources.yml")
-			expectedPackageResources := strings.TrimSpace(replaceSpaces(testcase.ExpectedPkgResource))
-			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
-			require.Equal(t, expectedPackageResources, out, "Expected package resources output to match")
-
-			// Verify vendir
-			out, err = readFile("vendir.yml")
-			require.NoErrorf(t, err, "Expected to read vendir.yml")
-			expectedVendirOutput := strings.TrimSpace(replaceSpaces(testcase.ExpectedVendir))
-			out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
-			require.Equal(t, expectedVendirOutput, out, "Expected vendir output to match")
+		// Ensure that defaults are retained by running in non-interactive mode
+		logger.Section(fmt.Sprintf("%s: Package init non-interactive", testcase.Name), func() {
+			kappCtrl.RunWithOpts([]string{"pkg", "init", "--tty=true", "--chdir", workingDir}, RunOpts{NoNamespace: true})
+			verifyBoilerplate(t, testcase)
 		})
 
 		logger.Section(fmt.Sprintf("%s: Package release", testcase.Name), func() {
@@ -967,6 +946,36 @@ spec:
 				RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
 		})
 	}
+}
+
+func verifyBoilerplate(t *testing.T, testcase E2EAuthoringTestCase) {
+	// Below key's values will be changed during every run, hence adding these keys to be ignored
+	keysToBeIgnored := []string{"creationTimestamp:", "releasedAt:"}
+
+	// Error if upstream folder doesn't exist
+	_, err := os.Stat(filepath.Join(workingDir, "upstream"))
+	require.NoError(t, err)
+
+	// Verify PackageBuild
+	out, err := readFile("package-build.yml")
+	require.NoErrorf(t, err, "Expected to read package-build.yml")
+	expectedPackageBuild := strings.TrimSpace(replaceSpaces(testcase.ExpectedPkgBuild))
+	out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+	require.Equal(t, expectedPackageBuild, out, "Expected PackageBuild output to match")
+
+	// Verify package resources
+	out, err = readFile("package-resources.yml")
+	require.NoErrorf(t, err, "Expected to read package-resources.yml")
+	expectedPackageResources := strings.TrimSpace(replaceSpaces(testcase.ExpectedPkgResource))
+	out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+	require.Equal(t, expectedPackageResources, out, "Expected package resources output to match")
+
+	// Verify vendir
+	out, err = readFile("vendir.yml")
+	require.NoErrorf(t, err, "Expected to read vendir.yml")
+	expectedVendirOutput := strings.TrimSpace(replaceSpaces(testcase.ExpectedVendir))
+	out = clearKeys(keysToBeIgnored, strings.TrimSpace(replaceSpaces(out)))
+	require.Equal(t, expectedVendirOutput, out, "Expected vendir output to match")
 }
 
 func readFile(fileName string) (string, error) {

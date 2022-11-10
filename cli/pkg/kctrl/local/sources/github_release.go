@@ -51,7 +51,7 @@ func (g *GithubReleaseSource) initializeContentWithGithubRelease() error {
 	if contents == nil {
 		contents = append(contents, vendirconf.DirectoryContents{})
 	}
-	if contents[0].Git == nil {
+	if contents[0].GithubRelease == nil {
 		contents[0].GithubRelease = &vendirconf.DirectoryContentsGithubRelease{DisableAutoChecksumValidation: true}
 	}
 	g.vendirConfig.SetContents(contents)
