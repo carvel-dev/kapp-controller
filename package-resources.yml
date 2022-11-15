@@ -34,6 +34,11 @@ spec:
   displayName: kapp-controller
   longDescription: "Provide CRDs to declaratively install, manage, and upgrade applications on a Kubernetes cluster"
   shortDescription: "install, manage, and upgrade applications"
+  providerName: carvel.dev
+  maintainers:
+    - name: Carvel team (see www.carvel.dev for team members)
+  categories:
+    - "package management"
 
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
