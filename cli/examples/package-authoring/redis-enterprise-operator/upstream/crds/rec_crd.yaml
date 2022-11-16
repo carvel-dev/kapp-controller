@@ -6244,11 +6244,11 @@ spec:
                   type: object
                 type: array
               slaveHA:
-                description: Slave high availability mechanism configuration.
+                description: Replica high availability mechanism configuration.
                 properties:
                   slaveHAGracePeriod:
                     description: Time in seconds between when a node fails, and when
-                      slave high availability mechanism starts relocating shards. If
+                      replica high availability mechanism starts relocating shards. If
                       set to 0, will not affect cluster configuration.
                     format: int32
                     type: integer
@@ -13142,11 +13142,11 @@ spec:
                   type: object
                 type: array
               slaveHA:
-                description: Slave high availability mechanism configuration.
+                description: Replica high availability mechanism configuration.
                 properties:
                   slaveHAGracePeriod:
                     description: Time in seconds between when a node fails, and when
-                      slave high availability mechanism starts relocating shards. If
+                      replica high availability mechanism starts relocating shards. If
                       set to 0, will not affect cluster configuration.
                     format: int32
                     type: integer
