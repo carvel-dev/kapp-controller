@@ -4,9 +4,9 @@ ARG KCTRL_VER=development
 
 # adapted from golang docker image
 ENV PATH /usr/local/go/bin:$PATH
-ENV GOLANG_VERSION 1.17.6
+ENV GOLANG_VERSION 1.17.13
 ENV GO_REL_ARCH linux-amd64
-ENV GO_REL_SHA 231654bbf2dab3d86c1619ce799e77b03d96f9b50770297c8f4dff8836fc8ca2
+ENV GO_REL_SHA 7629a36ea5ee00c30df8aef33a954012ab3884265af95dda08ada393f435f340
 
 RUN set eux; \
     curl -sLo go.tgz "https://golang.org/dl/go${GOLANG_VERSION}.${GO_REL_ARCH}.tar.gz"; \
@@ -32,13 +32,13 @@ RUN curl -sLo /helm https://get.helm.sh/helm-v2.17.0-linux-amd64.tar.gz && \
   echo "f3bec3c7c55f6a9eb9e6586b8c503f370af92fe987fcbf741f37707606d70296  /helm" | sha256sum -c - && \
   mkdir /helm-v2-unpacked && tar -C /helm-v2-unpacked -xzvf /helm
 
-RUN curl -sLo /helm https://get.helm.sh/helm-v3.8.0-linux-amd64.tar.gz && \
-  echo "8408c91e846c5b9ba15eb6b1a5a79fc22dd4d33ac6ea63388e5698d1b2320c8b  /helm" | sha256sum -c - && \
+RUN curl -sLo /helm https://get.helm.sh/helm-v3.8.2-linux-amd64.tar.gz && \
+  echo "6cb9a48f72ab9ddfecab88d264c2f6508ab3cd42d9c09666be16a7bf006bed7b  /helm" | sha256sum -c - && \
   mkdir /helm-unpacked && tar -C /helm-unpacked -xzvf /helm
 
 # sops
-RUN curl -sLo /usr/local/bin/sops https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.linux && \
-  echo "185348fd77fc160d5bdf3cd20ecbc796163504fd3df196d7cb29000773657b74  /usr/local/bin/sops" | sha256sum -c - && \
+RUN curl -sLo /usr/local/bin/sops https://github.com/mozilla/sops/releases/download/v3.7.3/sops-v3.7.3.linux && \
+  echo "53aec65e45f62a769ff24b7e5384f0c82d62668dd96ed56685f649da114b4dbb  /usr/local/bin/sops" | sha256sum -c - && \
   chmod +x /usr/local/bin/sops && sops -v
 
 # age (encryption for sops)
