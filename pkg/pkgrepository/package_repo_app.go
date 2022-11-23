@@ -31,6 +31,8 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 		// but does not allow listing of most resources in such namespaces --
 		// instead of spinning wheels trying to list, scope to "current" namespace
 		"--dangerous-scope-to-fallback-allowed-namespaces=true",
+		// Skip waiting since there are no wait rules defined for Packages
+		"--wait=false",
 	}
 
 	if kappDebug {
