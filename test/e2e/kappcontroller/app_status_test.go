@@ -126,6 +126,8 @@ spec:
 		cr.Status.Template.UpdatedAt = metav1.Time{}
 		cr.Status.Template.Stderr = ""
 
+		// App may be reconciled again before we inspect
+		cr.Status.ConsecutiveReconcileFailures = 1
 	}
 
 	require.Equal(t, expectedStatus, cr.Status)
