@@ -3,6 +3,10 @@ name: Kind Cluster E2E tests
 on:
   pull_request:
     types: [opened, reopened, synchronize]
+    paths-ignore:
+    - 'docs/**'
+    - '*.md'
+    - 'cli/**'
   workflow_dispatch:
 
 concurrency:
