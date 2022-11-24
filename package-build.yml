@@ -1,0 +1,31 @@
+apiVersion: kctrl.carvel.dev/v1alpha1
+kind: PackageBuild
+metadata:
+  creationTimestamp: null
+  name: kapp-controller.carvel.dev
+spec:
+  release:
+  - resource: {}
+  template:
+    spec:
+      app:
+        spec:
+          deploy:
+          - kapp: {}
+          template:
+          - ytt:
+              paths:
+              - config
+              - config-release
+          - kbld:
+              paths:
+              - '-'
+              - .imgpkg/images.yml
+      export:
+      - imgpkgBundle:
+          image: ghcr.io/vmware-tanzu/carvel-kapp-controller-package-bundle
+          useKbldImagesLock: false
+        includePaths:
+        - config
+        - config-release
+        - .imgpkg/images.yml
