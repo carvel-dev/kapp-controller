@@ -71,6 +71,11 @@ spec:
 			ConsecutiveReconcileFailures: 1,
 		}
 
+		{
+			// PackageRepo may be reconciled again before we inspect
+			cr.Status.ConsecutiveReconcileFailures = 1
+		}
+
 		cleanupStatusForAssertion(&cr)
 		assert.Equal(t, expectedStatus, cr.Status)
 	})
@@ -137,6 +142,11 @@ spec:
 				FriendlyDescription: "Reconcile succeeded",
 				UsefulErrorMessage:  "",
 			},
+		}
+
+		{
+			// PackageRepo may be reconciled again before we inspect
+			cr.Status.ConsecutiveReconcileSuccesses = 1
 		}
 
 		cleanupStatusForAssertion(&cr)
