@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1668551174512,
+  "lastUpdate": 1669286204873,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -7593,6 +7593,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6437324410,
             "unit": "ns/op\t         4.258 DeleteSeconds\t         2.138 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7e318f4b5567e2f398fe4b06e8d0d54cef81db10",
+          "message": "Set wait-check-interval to 1s for benchmark tests (#979)\n\nWith kapp v0.54.0 wait-check-interval is set to 3s which increases the time to wait for package repositories, hence we need to explicitly set it to 1s",
+          "timestamp": "2022-11-24T15:54:38+05:30",
+          "tree_id": "7a756cff29234e5722c486a090cba4bc99e4e491",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/7e318f4b5567e2f398fe4b06e8d0d54cef81db10"
+        },
+        "date": 1669286203373,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36244518875,
+            "unit": "ns/op\t        18.50 DeleteSeconds\t        17.67 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8608082542,
+            "unit": "ns/op\t         4.351 DeleteSeconds\t         4.206 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6539948394,
+            "unit": "ns/op\t         4.301 DeleteSeconds\t         2.189 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
