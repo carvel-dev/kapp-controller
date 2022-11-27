@@ -13,9 +13,9 @@ jobs:
         id: latest-sha
         run: |
           # Get the latest released docker image sha
-          curl -sL https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/releases/latest | jq -r '.assets[].browser_download_url' | wget -i -
+          curl -sL https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/releases/latest | jq -r '.assets[] | select(.name | contains("release.yml")).browser_download_url' | wget -i -
 
-          echo ::set-output name=image::$(yq eval '.spec.template.spec.containers[0].image' release.yml -N -j | jq 'select(. != null)' -r)
+          echo ::set-output name=image::$(yq eval '.spec.template.spec.containers[0].image' release.yml -N -oj | jq 'select(. != null)' -r)
           echo ::set-output name=tag::$(curl -sL https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/releases/latest | jq -r '.tag_name')
       - name: Install Trivy
         run: |
@@ -124,9 +124,9 @@ jobs:
         run: |
           set -eo pipefail
 
-          summary_binary=$(jq '.Results[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results.json | tr -d \\ | tr -d '"')
-          summary_image=$(jq '.Results[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results-image.json | tr -d \\ | tr -d '"')
-          summary_kctrl=$(jq '.Results[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results-kctrl.json | tr -d \\ | tr -d '"')
+          summary_binary=$(jq '.Results[]? | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results.json | tr -d \\ | tr -d '"')
+          summary_image=$(jq '.Results[]? | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results-image.json | tr -d \\ | tr -d '"')
+          summary_kctrl=$(jq '.Results[]? | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results-kctrl.json | tr -d \\ | tr -d '"')
 
           summary=$( echo -e "Binary Image Summary:\n$summary_binary\nDocker Image Summary:\n$summary_image\nkctrl Summary:\n$summary_kctrl")
 
