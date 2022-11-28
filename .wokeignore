@@ -1,0 +1,3 @@
+# out of our control
+vendor/
+cli/examples/package-authoring/redis-enterprise-operator/upstream/crds/rec_crd.yaml
