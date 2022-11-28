@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1669455944846,
+  "lastUpdate": 1669649907646,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -7803,6 +7803,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6468223406,
             "unit": "ns/op\t         4.281 DeleteSeconds\t         2.142 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "aaronshurley@users.noreply.github.com",
+            "name": "Aaron Hurley",
+            "username": "aaronshurley"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cc210091e62457fe479e0edad4e060d523ab5397",
+          "message": "Introduce inclusive naming check and update existing language (#977)\n\nWe are following the Inclusive Naming Initiative's guidance as that is what the\r\nCNCF supports.",
+          "timestamp": "2022-11-28T09:27:14-06:00",
+          "tree_id": "bf5578d2ff7133d57dcf3110b8411b021eb49871",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/cc210091e62457fe479e0edad4e060d523ab5397"
+        },
+        "date": 1669649906367,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35530732861,
+            "unit": "ns/op\t        17.98 DeleteSeconds\t        17.50 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8537122568,
+            "unit": "ns/op\t         4.329 DeleteSeconds\t         4.169 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6464156443,
+            "unit": "ns/op\t         4.253 DeleteSeconds\t         2.167 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
