@@ -42,20 +42,25 @@ jobs:
           minikube start --driver=docker --wait=all
           docker buildx create minikube --use --driver=kubernetes --bootstrap
           ./hack/build-release.sh
+          # Create release folder to store all the output artifacts
+          mkdir release
+          cp ./tmp/release.yml  release/release.yml
           cd cli
           ./hack/build-binaries.sh
-          shasum -a 256 ./kctrl-* | tee -a ../tmp/checksums.txt
+          cp ./kctrl-* ../release/
 
       - name: Run Package build
         run: |
           constraintVersion="${{ github.ref_name }}"
           ./cli/kctrl-linux-amd64 pkg release -y -v ${constraintVersion:1} --debug
           mv ./carvel-artifacts/packages/kapp-controller.carvel.dev/metadata.yml ./carvel-artifacts/packages/kapp-controller.carvel.dev/package-metadata.yml
-          shasum -a 256 ./carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml | tee -a ./tmp/checksums.txt
-          shasum -a 256 ./carvel-artifacts/packages/kapp-controller.carvel.dev/package-metadata.yml | tee -a ./tmp/checksums.txt
-          
+          mv ./carvel-artifacts/packages/kapp-controller.carvel.dev/* release/
+
       - name: Add to formatted checksum
         run: |
+          pushd release
+          shasum -a 256 ./release.yml ./kctrl-* ./package.yml ./package-metada.yml | tee ../tmp/checksums.txt
+          popd
           echo "# :open_file_folder: Files Checksum" | tee ./tmp/checksums-formatted.txt
           echo '```' | tee -a ./tmp/checksums-formatted.txt
           cat ./tmp/checksums.txt | tee -a ./tmp/checksums-formatted.txt
@@ -68,11 +73,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           body_path: ./tmp/checksums-formatted.txt
           files: |
-            ./cli/kctrl-*
-            ./tmp/release.yml
+            ./release/*
             ./tmp/checksums.txt
-            ./carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml
-            ./carvel-artifacts/packages/kapp-controller.carvel.dev/package-metadata.yml
           draft: true
           prerelease: true
 
@@ -118,14 +120,14 @@ jobs:
               }
             }
             console.log(checksums)
-            return `${checksums['release.yml']}  ./tmp/release.yml
+            return `${checksums['release.yml']}  ./release.yml
             ${checksums['kctrl-darwin-amd64']}  ./kctrl-darwin-amd64
             ${checksums['kctrl-darwin-arm64']}  ./kctrl-darwin-arm64
             ${checksums['kctrl-linux-amd64']}  ./kctrl-linux-amd64
             ${checksums['kctrl-linux-arm64']}  ./kctrl-linux-arm64
             ${checksums['kctrl-windows-amd64.exe']}  ./kctrl-windows-amd64.exe
-            ${checksums['package.yml']}  ./carvel-artifacts/packages/kapp-controller.carvel.dev/package.yml
-            ${checksums['package-metadata.yml']}  ./carvel-artifacts/packages/kapp-controller.carvel.dev/package-metadata.yml`
+            ${checksums['package.yml']}  ./package.yml
+            ${checksums['package-metadata.yml']}  ./package-metadata.yml`
 
       - name: Verify uploaded artifacts
         if: startsWith(github.ref, 'refs/tags/')
