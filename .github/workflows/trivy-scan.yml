@@ -13,9 +13,9 @@ jobs:
         id: latest-sha
         run: |
           # Get the latest released docker image sha
-          curl -sL https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/releases/latest | jq -r '.assets[].browser_download_url' | wget -i -
+          curl -sL https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/releases/latest | jq -r '.assets[] | select(.name | contains("release.yml")).browser_download_url' | wget -i -
 
-          echo ::set-output name=image::$(yq eval '.spec.template.spec.containers[0].image' release.yml -N -j | jq 'select(. != null)' -r)
+          echo ::set-output name=image::$(yq eval '.spec.template.spec.containers[0].image' release.yml -N -oj | jq 'select(. != null)' -r)
           echo ::set-output name=tag::$(curl -sL https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/releases/latest | jq -r '.tag_name')
       - name: Install Trivy
         run: |
@@ -77,6 +77,11 @@ jobs:
 
           # docker image
           docker buildx build -t docker.io/carvel/kapp-controller:${{ github.sha }} .
+
+          # kctrl
+          cd cli
+          ./hack/build.sh
+          mv ./kctrl ../
       - name: Install Trivy
         run: |
           # https://aquasecurity.github.io/trivy/v0.18.3/installation/
@@ -106,6 +111,10 @@ jobs:
           # kapp-controller docker image - output in sarif and json
           trivy image --ignore-unfixed --format sarif --output trivy-results-image.sarif "docker.io/carvel/kapp-controller:${{ github.sha }}"
           trivy image --ignore-unfixed --format json --output trivy-results-image.json "docker.io/carvel/kapp-controller:${{ github.sha }}"
+
+          # kctrl binary - output in sarif and json
+          trivy rootfs --ignore-unfixed --format sarif --output trivy-results-kctrl.sarif "kctrl"
+          trivy rootfs --ignore-unfixed --format json --output trivy-results-kctrl.json "kctrl"
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
         with:
@@ -115,15 +124,24 @@ jobs:
         run: |
           set -eo pipefail
 
-          summary_binary=$(jq '.Results[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results.json | tr -d \\ | tr -d '"')
-          summary_image=$(jq '.Results[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results-image.json | tr -d \\ | tr -d '"')
+          summary_binary=$(jq '.Results[]? | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results.json | tr -d \\ | tr -d '"')
+          summary_image=$(jq '.Results[]? | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results-image.json | tr -d \\ | tr -d '"')
+          summary_kctrl=$(jq '.Results[]? | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results-kctrl.json | tr -d \\ | tr -d '"')
 
-          summary=$( echo -e "Binary Image Summary:\n$summary_binary\nDocker Image Summary:\n$summary_image")
-          if [[ -n $summary_binary || -n $summary_image ]]
+          summary=$( echo -e "Binary Image Summary:\n$summary_binary\nDocker Image Summary:\n$summary_image\nkctrl Summary:\n$summary_kctrl")
+
+          # Escape '%', '\n' and '\r' to support multiline strings with set-output
+          # https://github.com/orgs/community/discussions/26288
+          summary="${summary//'%'/'%25'}"
+          summary="${summary//$'\n'/'%0A'}"
+          summary="${summary//$'\r'/'%0D'}"
+
+          if [[ -n $summary_binary || -n $summary_image || -n $summary_kctrl]]
           then
+            echo "Summary: $summary"
             echo "::set-output name=summary::$summary"
           else
-            echo "No new Issues where found"
+            echo "No new Issues were found"
           fi
       - name: Send Slack Notification if Scan Ran Successfully
         if: steps.cve-summary.outputs.summary != ''
