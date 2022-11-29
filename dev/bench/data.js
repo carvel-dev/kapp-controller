@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1669754190313,
+  "lastUpdate": 1669756486047,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -7929,6 +7929,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6638290975,
             "unit": "ns/op\t         4.365 DeleteSeconds\t         2.212 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "43b643866b75f8c19e1144e330069550b47d89f0",
+          "message": "Remove version constraint on kind tests (#992)",
+          "timestamp": "2022-11-29T16:04:15-05:00",
+          "tree_id": "46d7ca1615ae09973d416f94c90d97d4f5711f77",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/43b643866b75f8c19e1144e330069550b47d89f0"
+        },
+        "date": 1669756484735,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36791136865,
+            "unit": "ns/op\t        18.97 DeleteSeconds\t        17.78 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8504645702,
+            "unit": "ns/op\t         4.283 DeleteSeconds\t         4.175 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6446492949,
+            "unit": "ns/op\t         4.263 DeleteSeconds\t         2.146 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
