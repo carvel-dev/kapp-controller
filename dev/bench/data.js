@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1669679518154,
+  "lastUpdate": 1669754190313,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -7887,6 +7887,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6555828568,
             "unit": "ns/op\t         4.321 DeleteSeconds\t         2.160 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1843f99c53df901c1287612d15c991a49e28ff39",
+          "message": "Add trivy scan for kctrl (#969)\n\n* Fix trivy scan: support multiline strings with set-output\r\n\r\n* Add trivy scan for kctrl\r\n\r\n* Use -o=json instead of --to-json\r\n\r\nDownload only release.yml instead of all release artefacts",
+          "timestamp": "2022-11-30T01:52:57+05:30",
+          "tree_id": "d4ca2d5fcb0cd71465c4e63e79a656b72b0a15a0",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/1843f99c53df901c1287612d15c991a49e28ff39"
+        },
+        "date": 1669754189093,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 38799798702,
+            "unit": "ns/op\t        19.89 DeleteSeconds\t        18.85 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9765535497,
+            "unit": "ns/op\t         5.442 DeleteSeconds\t         4.254 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6638290975,
+            "unit": "ns/op\t         4.365 DeleteSeconds\t         2.212 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
