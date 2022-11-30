@@ -1,33 +1,33 @@
 - checksums:
     darwin:
-      amd64: c370fab22081b17b780d4ec37fb664edb58fe6f28d635ad4beccbac7997586f9
+      amd64: a50a8065c6d80226aa979bb708992ca4da9dd2ec2df2c6c4d5c6e9b4b9f3e6f8
     linux:
-      amd64: 65dbc4f3a4a2ed84296dd1b323e8e7bd77e488fa7540d12dd36cf7fb2fc77c03
+      amd64: b3fbce9c6828c7eea09491c24fe49ddba7afe09e4405db33373d2776c91b1e6c
   dev: true
   name: ytt
   repo: vmware-tanzu/carvel-ytt
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.41.1
+  version: v0.44.0
 - checksums:
     darwin:
-      amd64: 5fd3afbe09a66fc9e91252c57448045eeeab1ee3f6d305da6f9885186b744e67
+      amd64: 8c8dd97986bc558b676ea3195566e293ae0ee19b31c57104d76adaf01592b4a2
     linux:
-      amd64: 67c86ece94a3747b2e011a5b72044b69f2594ca807621b1e1e4c805f6abcaeef
+      amd64: bbae1d86b627b1a78cf9d0e1b911377fa55f2dbc058b964cdada8382bf6432dd
   dev: true
   name: kbld
   repo: vmware-tanzu/carvel-kbld
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.34.0
+  version: v0.36.0
 - checksums:
     darwin:
-      amd64: 51e209f903b17c9e330151c41c6d507bfabccfdaa56dd8fdaa1c0f39ed2240e9
+      amd64: 2521971ce334e32af32942aece39c9cdc7a2a9c982c386c2aa61db1a2527a10e
     linux:
-      amd64: dec5040d90478fdf0af3c1548d46f9ded642f156245bba83fe99171c8461e4f7
+      amd64: 886cd9d634214904ee34f44510abe85ce60acbbe4529131ad97bee387d6327fe
   dev: true
   name: kapp
   repo: vmware-tanzu/carvel-kapp
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.49.0
+  version: v0.54.0
 - checksums:
     darwin:
       amd64: b8462c9b2b9c060e1a81c206ea9810937bf7357ae2ee150f94ec8635dff1d612
@@ -50,13 +50,13 @@
   version: v0.27.0
 - checksums:
     linux:
-      amd64: 1484ffb0c7a608d8069470f48b88d729e88c41a1b6602f145231e8ea7b43b50a
+      amd64: 2315941a13291c277dac9f65e75ead56386440d3907e0540bf157ae70f188347
   dev: false
   name: helm
   repo: helm/helm
   tarballSubpath: '{{.OS}}-{{.Arch}}/helm'
   urlTemplate: https://get.helm.sh/helm-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
-  version: v3.9.4
+  version: v3.10.2
 - checksums:
     linux:
       amd64: 53aec65e45f62a769ff24b7e5384f0c82d62668dd96ed56685f649da114b4dbb
