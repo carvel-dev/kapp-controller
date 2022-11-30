@@ -1,6 +1,10 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+// Package main provides an implementation of a sidecar container in kapp-controller which
+// runs each bundled binary in this separate container.
+// This was introduced for security purposes, to reduce the attack vector on kapp-controller container
+// by moving the binary exec calls to it's own isolated container.
 package main
 
 import (
