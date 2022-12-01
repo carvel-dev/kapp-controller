@@ -4,13 +4,13 @@
 package kappcontroller
 
 import (
-	"fmt"
-	"strings"
 	"testing"
+	"strings"
+	"fmt"
 
-	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
+	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 )
 
 func TestConfig_HTTPProxy(t *testing.T) {

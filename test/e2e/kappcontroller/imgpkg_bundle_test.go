@@ -127,3 +127,79 @@ spec:
 		}
 	})
 }
+
+func TestImgpkgBundleSkipTLSVerify(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	sas := e2e.ServiceAccounts{env.Namespace}
+
+	// If this changes, the skip-tls-verify domain must be updated to match
+	registryNamespace := "registry"
+	name := "test-skip-tls"
+	registryName := "test-registry"
+
+	yaml1 := fmt.Sprintf(`---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: %s
+  annotations:
+    kapp.k14s.io/change-group: kappctrl-e2e.k14s.io/apps
+spec:
+  serviceAccountName: kappctrl-e2e-ns-sa
+  fetch:
+  - imgpkgBundle:
+      image: registry-svc.%s.svc.cluster.local:443/my-repo/image
+  template:
+  - ytt: {}
+  deploy:
+  - kapp:
+      inspect: {}
+      intoNs: %s
+`, name, registryNamespace, env.Namespace) + sas.ForNamespaceYAML()
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+		kapp.Run([]string{"delete", "-a", registryName, "-n", registryNamespace})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy registry with self signed certs", func() {
+		kapp.Run([]string{"deploy", "-f", "../assets/registry/registry.yml", "-f", "../assets/registry/certs-for-skip-tls.yml", "-a", registryName})
+	})
+
+	logger.Section("deploy", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			e2e.RunOpts{AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
+
+		var cr v1alpha1.App
+		err := yaml.Unmarshal([]byte(out), &cr)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal: %s", err)
+		}
+
+		// To avoid the complexity associated with preloading our deployed registry with an image, and because
+		// imgpkg will fall back to http to pull the image if https fails, this explicitly expects an error and
+		// asserts the error message is due to a manifest unknown error and not TLS verification.
+		if cr.Status.Fetch == nil {
+			t.Fatalf("Expected status to have fetch stage, it did not")
+		}
+
+		if cr.Status.Fetch.ExitCode != 1 {
+			t.Fatalf("Expected fetch stage to fail, it did not")
+		}
+
+		if strings.Contains(cr.Status.Fetch.Stderr, "x509: certificate signed by unknown authority") {
+			t.Fatalf("Expected app reconcile not to fail because of a bad cert, but got: %v", cr.Status.Fetch.Stderr)
+		}
+
+		if !strings.Contains(cr.Status.Fetch.Stderr, "MANIFEST_UNKNOWN: manifest unknown;") {
+			t.Fatalf("Expected app reconcile to fail because of missing image, but got: %v", cr.Status.Fetch.Stderr)
+		}
+	})
+}
