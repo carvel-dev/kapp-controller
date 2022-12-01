@@ -66,7 +66,7 @@ spec:
 				}},
 				ObservedGeneration:  1,
 				FriendlyDescription: "Reconcile failed: Fetching resources: Error (see .status.usefulErrorMessage for details)",
-				UsefulErrorMessage:  "vendir: Error: Syncing directory '0':\n  Syncing directory '.' with imgpkgBundle contents:\n    Imgpkg: exit status 1 (stderr: imgpkg: Error: Checking if image is bundle:\n  Fetching image:\n    GET https://index.docker.io/v2/k8slt/i-dont-exist/manifests/latest:\n      UNAUTHORIZED: authentication required; [map[Action:pull Class: Name:k8slt/i-dont-exist Type:repository]]\n)\n",
+				UsefulErrorMessage:  "vendir: Error: Syncing directory '0':\n  Syncing directory '.' with imgpkgBundle contents:\n    Imgpkg: exit status 1 (stderr: imgpkg: Error: Fetching image:\n  GET https://index.docker.io/v2/k8slt/i-dont-exist/manifests/latest:\n    UNAUTHORIZED: authentication required; [map[Action:pull Class: Name:k8slt/i-dont-exist Type:repository]]\n)\n",
 			},
 			ConsecutiveReconcileFailures: 1,
 		}
@@ -100,7 +100,7 @@ spec:
 
 	logger.Section("deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(repoYml),
+			StdinReader:  strings.NewReader(repoYml),
 			OnErrKubectl: []string{"get", "pkgr", "-oyaml"},
 		})
 	})
@@ -113,7 +113,7 @@ spec:
 		if err != nil {
 			t.Fatalf("failed to unmarshal: %s", err)
 		}
-		
+
 		expectedStatus := v1alpha1.PackageRepositoryStatus{
 			Fetch: &kcv1alpha1.AppStatusFetch{
 				ExitCode: 0,
@@ -145,7 +145,7 @@ spec:
 
 	logger.Section("force a second reconcile and see if it all still works", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(repoYml+"\n  syncPeriod: 30s\n"),
+			StdinReader:  strings.NewReader(repoYml + "\n  syncPeriod: 30s\n"),
 			OnErrKubectl: []string{"get", "pkgr", "-oyaml"},
 		})
 	})
@@ -186,7 +186,7 @@ spec:
 
 		out := kubectl.Run([]string{"get", "pkgm/pkg.test.carvel.dev", "-o", "yaml"})
 		assert.Contains(t, out, "packaging.carvel.dev/package-repository-ref: kappctrl-test/basic.test.carvel.dev")
-		
+
 		verifyPkg("pkg/pkg.test.carvel.dev.1.0.0", "index.docker.io/k8slt/kctrl-example-pkg@sha256:8ffa7f9352149dba1d539d0006b38eda357917edcdd39b82497a61dab2c27b75")
 		verifyPkg("pkg/pkg.test.carvel.dev.2.0.0", "index.docker.io/k8slt/kctrl-example-pkg@sha256:73713d922b5f561c0db2a7ea5f4f6384f7d2d6289886f8400a8aaf5e8fdf134a")
 	})
@@ -371,7 +371,7 @@ spec:
 
 	logger.Section("deploy pkgr1", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr1Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgr1),
+			StdinReader:  strings.NewReader(pkgr1),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwned(t, kubectl, pkgName, pkgr1Name, env.Namespace)
@@ -379,7 +379,7 @@ spec:
 
 	logger.Section("deploy pkgr2 successfully, but pkg is still owned by pkgr1", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr2Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgr2),
+			StdinReader:  strings.NewReader(pkgr2),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwned(t, kubectl, pkgName, pkgr1Name, env.Namespace)
@@ -424,7 +424,7 @@ spec:
 
 	logger.Section("updated pkgr1", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr1Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgr1u),
+			StdinReader:  strings.NewReader(pkgr1u),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwned(t, kubectl, pkgName, pkgr1Name, env.Namespace)
@@ -434,7 +434,7 @@ spec:
 
 	logger.Section("update pkgr2 successfully, but pkg is still owned by pkgr1", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr2Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgr2u),
+			StdinReader:  strings.NewReader(pkgr2u),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwned(t, kubectl, pkgName, pkgr1Name, env.Namespace)
@@ -491,7 +491,7 @@ spec:
 
 	logger.Section("deploy pkgr1", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr1Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgr1),
+			StdinReader:  strings.NewReader(pkgr1),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwned(t, kubectl, pkgName, pkgr1Name, env.Namespace)
@@ -499,7 +499,7 @@ spec:
 
 	logger.Section("deploy pkgr2 successfully, but pkg is still owned by pkgr1", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr2Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgr2),
+			StdinReader:  strings.NewReader(pkgr2),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwned(t, kubectl, pkgName, pkgr1Name, env.Namespace)
@@ -601,7 +601,7 @@ spec:
 
 	logger.Section("deploy pkgr1 into local namespace", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr1Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgr1),
+			StdinReader:  strings.NewReader(pkgr1),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwned(t, kubectl, pkgName, pkgr1Name, pkgr1LocalNS)
@@ -609,7 +609,7 @@ spec:
 
 	logger.Section("deploy pkgr2 into global namespace successfully, but pkg is still owned by pkgr1 in local namespace", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr2Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgr2),
+			StdinReader:  strings.NewReader(pkgr2),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwnedWithNs(t, kubectl, pkgName, pkgr1LocalNS, pkgr1Name, pkgr1LocalNS)
@@ -620,7 +620,7 @@ spec:
 		kapp.Run([]string{"delete", "-a", pkgr1Name})
 
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr1Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgr1),
+			StdinReader:  strings.NewReader(pkgr1),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwnedWithNs(t, kubectl, pkgName, pkgr2GlobalNS, pkgr2Name, pkgr2GlobalNS)
@@ -683,7 +683,7 @@ spec:
 
 	logger.Section("deploy pkgr1", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr1Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgr1),
+			StdinReader:  strings.NewReader(pkgr1),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwned(t, kubectl, pkgName, pkgr1Name, env.Namespace)
@@ -691,7 +691,7 @@ spec:
 
 	logger.Section("deploy pkgr2 successfully, and it overrides bc it has higher revision", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr2Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(fmt.Sprintf(pkgrTemplate, pkgr2Name, pkgName, "2")),
+			StdinReader:  strings.NewReader(fmt.Sprintf(pkgrTemplate, pkgr2Name, pkgName, "2")),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwned(t, kubectl, pkgName, pkgr2Name, env.Namespace)
@@ -701,7 +701,7 @@ spec:
 		kapp.Run([]string{"delete", "-a", pkgr1Name})
 
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr1Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgr1),
+			StdinReader:  strings.NewReader(pkgr1),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwned(t, kubectl, pkgName, pkgr2Name, env.Namespace)
@@ -709,7 +709,7 @@ spec:
 
 	logger.Section("install pkgr with higher revision using .0 suffix (2.0 > 2)", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr3Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(fmt.Sprintf(pkgrTemplate, pkgr3Name, pkgName, "2.0")),
+			StdinReader:  strings.NewReader(fmt.Sprintf(pkgrTemplate, pkgr3Name, pkgName, "2.0")),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwned(t, kubectl, pkgName, pkgr3Name, env.Namespace)
@@ -717,7 +717,7 @@ spec:
 
 	logger.Section("install pkgr with lower revision (2.0 > 1.6.8)", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr4Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(fmt.Sprintf(pkgrTemplate, pkgr4Name, pkgName, "1.6.8")),
+			StdinReader:  strings.NewReader(fmt.Sprintf(pkgrTemplate, pkgr4Name, pkgName, "1.6.8")),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwned(t, kubectl, pkgName, pkgr3Name, env.Namespace)
@@ -725,7 +725,7 @@ spec:
 
 	logger.Section("install pkgr with higher revision (2.1.0 > 2.0)", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr5Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(fmt.Sprintf(pkgrTemplate, pkgr5Name, pkgName, "2.1.0")),
+			StdinReader:  strings.NewReader(fmt.Sprintf(pkgrTemplate, pkgr5Name, pkgName, "2.1.0")),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 		assertPkgOwned(t, kubectl, pkgName, pkgr5Name, env.Namespace)
@@ -810,7 +810,7 @@ spec:
 
 	logger.Section("deploy pkgr1", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr1Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgr1),
+			StdinReader:  strings.NewReader(pkgr1),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 
@@ -832,7 +832,7 @@ spec:
 			fmt.Sprintf(pkgTemplate, "contooor.co.uk", "0.22.0"))
 
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgr2Name}, e2e.RunOpts{
-			StdinReader: strings.NewReader(pkgr2),
+			StdinReader:  strings.NewReader(pkgr2),
 			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
 		})
 
