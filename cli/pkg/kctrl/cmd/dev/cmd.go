@@ -42,7 +42,7 @@ func NewDevOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logg
 func NewCmd(o *DevOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "dev",
-		Short: "Deploy App CRs and packaging CRs",
+		Short: "Deploy App CRs, Package CRs and PackageInstall CRs",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 		Annotations: map[string]string{
 			cmdcore.DevHelpGroup.Key: cmdcore.DevHelpGroup.Value,
@@ -50,7 +50,7 @@ func NewCmd(o *DevOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	}
 
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().StringSliceVarP(&o.Files, "file", "f", nil, "Set App CR file (required)")
+	cmd.Flags().StringSliceVarP(&o.Files, "file", "f", nil, "Set file name (required)")
 
 	cmd.Flags().BoolVarP(&o.Local, "local", "l", false, "Use local fetch source")
 	cmd.Flags().BoolVarP(&o.KbldBuild, "kbld-build", "b", false, "Allow kbld build")
