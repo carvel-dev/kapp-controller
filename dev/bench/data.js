@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1669902293572,
+  "lastUpdate": 1669969039593,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -8013,6 +8013,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6597616553,
             "unit": "ns/op\t         4.385 DeleteSeconds\t         2.161 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ThomasVitale@users.noreply.github.com",
+            "name": "Thomas Vitale",
+            "username": "ThomasVitale"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9693c1b246b6b94f8c638b68d05f829274df5bce",
+          "message": "Improve kctrl dev command description (#1000)\n\n* Update the description for the kctrl dev command.\r\n* Update the description for the -f flag.\r\n\r\nFixes gh-964",
+          "timestamp": "2022-12-02T13:37:17+05:30",
+          "tree_id": "8bd01cc64947c4cd1b5e6ddc6b0669720d0bc37e",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/9693c1b246b6b94f8c638b68d05f829274df5bce"
+        },
+        "date": 1669969038658,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36902734404,
+            "unit": "ns/op\t        19.32 DeleteSeconds\t        17.54 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8471431941,
+            "unit": "ns/op\t         4.272 DeleteSeconds\t         4.153 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6454251932,
+            "unit": "ns/op\t         4.270 DeleteSeconds\t         2.140 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
