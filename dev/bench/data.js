@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670276392206,
+  "lastUpdate": 1670276420513,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -8307,6 +8307,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6470175329,
             "unit": "ns/op\t         4.267 DeleteSeconds\t         2.148 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4f0cda217970340a440dcba5989b996e72e67bfa",
+          "message": "Merge pull request #967 from vmware-tanzu/dependabot/github_actions/benchmark-action/github-action-benchmark-1.15.0\n\nBump benchmark-action/github-action-benchmark from 1.14.0 to 1.15.0",
+          "timestamp": "2022-12-05T14:27:16-07:00",
+          "tree_id": "ed6fa708fa128a20ed9a0f8fcdfcc7d583efc87f",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/4f0cda217970340a440dcba5989b996e72e67bfa"
+        },
+        "date": 1670276418605,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37379469275,
+            "unit": "ns/op\t        19.58 DeleteSeconds\t        17.75 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8817282335,
+            "unit": "ns/op\t         4.504 DeleteSeconds\t         4.218 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6643089335,
+            "unit": "ns/op\t         4.376 DeleteSeconds\t         2.203 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
