@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1669969039593,
+  "lastUpdate": 1670265092502,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -8055,6 +8055,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6454251932,
             "unit": "ns/op\t         4.270 DeleteSeconds\t         2.140 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2c51b3ec201869f9a43e740b79320f709ea4aa56",
+          "message": "Merge pull request #993 from vmware-tanzu/trivy-scan\n\nAdd space for if condition in trivy-scan",
+          "timestamp": "2022-12-05T11:20:30-07:00",
+          "tree_id": "3273c8cc4bb05d4e747d44cbc437407f6b3f6470",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/2c51b3ec201869f9a43e740b79320f709ea4aa56"
+        },
+        "date": 1670265091092,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36413487021,
+            "unit": "ns/op\t        18.53 DeleteSeconds\t        17.83 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8562732806,
+            "unit": "ns/op\t         4.337 DeleteSeconds\t         4.176 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6556021562,
+            "unit": "ns/op\t         4.325 DeleteSeconds\t         2.163 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
