@@ -32,13 +32,13 @@ RUN curl -sLo /helm https://get.helm.sh/helm-v2.17.0-linux-amd64.tar.gz && \
   echo "f3bec3c7c55f6a9eb9e6586b8c503f370af92fe987fcbf741f37707606d70296  /helm" | sha256sum -c - && \
   mkdir /helm-v2-unpacked && tar -C /helm-v2-unpacked -xzvf /helm
 
-RUN curl -sLo /helm https://get.helm.sh/helm-v3.8.0-linux-amd64.tar.gz && \
-  echo "8408c91e846c5b9ba15eb6b1a5a79fc22dd4d33ac6ea63388e5698d1b2320c8b  /helm" | sha256sum -c - && \
+RUN curl -sLo /helm https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz && \
+  echo "2315941a13291c277dac9f65e75ead56386440d3907e0540bf157ae70f188347  /helm" | sha256sum -c - && \
   mkdir /helm-unpacked && tar -C /helm-unpacked -xzvf /helm
 
 # sops
-RUN curl -sLo /usr/local/bin/sops https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.linux && \
-  echo "185348fd77fc160d5bdf3cd20ecbc796163504fd3df196d7cb29000773657b74  /usr/local/bin/sops" | sha256sum -c - && \
+RUN curl -sLo /usr/local/bin/sops https://github.com/mozilla/sops/releases/download/v3.7.3/sops-v3.7.3.linux && \
+  echo "53aec65e45f62a769ff24b7e5384f0c82d62668dd96ed56685f649da114b4dbb  /usr/local/bin/sops" | sha256sum -c - && \
   chmod +x /usr/local/bin/sops && sops -v
 
 # age (encryption for sops)
@@ -47,8 +47,8 @@ RUN curl -sLo age.tgz https://github.com/FiloSottile/age/releases/download/v1.0.
   tar -xzf age.tgz && cp age/age /usr/local/bin && \
   chmod +x /usr/local/bin/age && age --version
 
-RUN curl -sLo cue.tgz https://github.com/cue-lang/cue/releases/download/v0.4.2/cue_v0.4.2_linux_amd64.tar.gz && \
-  echo "d43cf77e54f42619d270b8e4c1836aec87304daf243449c503251e6943f7466a cue.tgz" | sha256sum -c - && \
+RUN curl -sLo cue.tgz https://github.com/cue-lang/cue/releases/download/v0.4.3/cue_v0.4.3_linux_amd64.tar.gz && \
+  echo "5e7ecb614b5926acfc36eb1258800391ab7c6e6e026fa7cacbfe92006bac895c cue.tgz" | sha256sum -c - && \
   tar -xf cue.tgz -C /usr/local/bin cue && cue version
 
 # kapp-controller
