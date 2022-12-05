@@ -4,7 +4,7 @@ ARG KCTRL_VER=development
 
 # adapted from golang docker image
 ENV PATH /usr/local/go/bin:$PATH
-ENV GOLANG_VERSION 1.17.6
+ENV GOLANG_VERSION 1.19.3
 ENV GO_REL_ARCH linux-amd64
 ENV GO_REL_SHA 231654bbf2dab3d86c1619ce799e77b03d96f9b50770297c8f4dff8836fc8ca2
 
