@@ -33,6 +33,6 @@ spec:
     spec:
       containers:
       - name: proxy-server
-        image: datadog/squid
+        image: ubuntu/squid
         ports:
         - containerPort: 3128
