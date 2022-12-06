@@ -1,6 +1,6 @@
 module github.com/vmware-tanzu/carvel-kapp-controller
 
-go 1.17
+go 1.19
 
 require (
 	github.com/fatih/color v1.12.0 // indirect
@@ -9,7 +9,7 @@ require (
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/go-containerregistry v0.7.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
-	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang v1.11.1
 	github.com/stretchr/testify v1.7.0
 	github.com/vmware-tanzu/carvel-vendir v0.24.0
 	golang.org/x/crypto v0.0.0-20220314234659-1baeb1ce4c0b
