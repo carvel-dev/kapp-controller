@@ -28,7 +28,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         only: ytt, kapp, kbld, vendir
-        ytt: v0.38.0
+        ytt: v0.40.3
         kapp: v0.46.1
         kbld: v0.32.2
         vendir: v0.26.1
