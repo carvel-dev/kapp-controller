@@ -60,7 +60,7 @@ spec:
   - helmChart:
       name: redis
       # Chart version v1, DEPRECATED 
-      version: "11.3.4"
+      version: "16.13.2"
       repository:
         url: https://charts.bitnami.com/bitnami
   template:
@@ -96,7 +96,7 @@ spec:
   fetch:
   - helmChart:
       name: redis
-      version: "12.10.1"
+      version: "17.3.14"
       repository:
         url: https://charts.bitnami.com/bitnami
   template:
@@ -216,7 +216,7 @@ spec:
   fetch:
   - helmChart:
       name: redis
-      version: "12.10.1"
+      version: "17.3.14"
       repository:
         url: https://charts.bitnami.com/bitnami
   - inline:
