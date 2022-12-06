@@ -1,14 +1,14 @@
 - checksums:
     darwin:
-      amd64: 579012ac80cc0d55c3a6dde2dfc0ff5bf8a4f74c775295be99faf691cc18595e
+      amd64: 6919e680fb11b62a44b20201ed6346457d5166fcfa7681df9fff7c3c94739361
     linux:
-      amd64: 29e647beeacbcc2be5f2f481e405c73bcd6d7563bd229ff924a7997b6f2edd5f
-      arm64: 62b8b0698bb9a88d5cfb91ed2f42853dff4f6b4f59f61036df07ad38ca10267b
+      amd64: 04a00467c64fc70a6f55cf355d0603b21667b0c47164a6a5f8dd7492de47955b
+      arm64: debe704eac68afdd14694db23da130b5c54791063e3f3812b2754a3811d4911a
   dev: true
   name: ytt
   repo: vmware-tanzu/carvel-ytt
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.43.0
+  version: v0.43.1
 - checksums:
     darwin:
       amd64: 524263ada225bb1ef9ef5e014f63c9b18aa99cc913dc52afe01de89e111cc2f1
