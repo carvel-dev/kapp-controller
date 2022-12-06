@@ -32,8 +32,8 @@ RUN curl -sLo /helm https://get.helm.sh/helm-v2.17.0-linux-amd64.tar.gz && \
   echo "f3bec3c7c55f6a9eb9e6586b8c503f370af92fe987fcbf741f37707606d70296  /helm" | sha256sum -c - && \
   mkdir /helm-v2-unpacked && tar -C /helm-v2-unpacked -xzvf /helm
 
-RUN curl -sLo /helm https://get.helm.sh/helm-v3.8.2-linux-amd64.tar.gz && \
-  echo "6cb9a48f72ab9ddfecab88d264c2f6508ab3cd42d9c09666be16a7bf006bed7b  /helm" | sha256sum -c - && \
+RUN curl -sLo /helm https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz && \
+  echo "2315941a13291c277dac9f65e75ead56386440d3907e0540bf157ae70f188347  /helm" | sha256sum -c - && \
   mkdir /helm-unpacked && tar -C /helm-unpacked -xzvf /helm
 
 # sops
@@ -47,8 +47,8 @@ RUN curl -sLo age.tgz https://github.com/FiloSottile/age/releases/download/v1.0.
   tar -xzf age.tgz && cp age/age /usr/local/bin && \
   chmod +x /usr/local/bin/age && age --version
 
-RUN curl -sLo cue.tgz https://github.com/cue-lang/cue/releases/download/v0.4.2/cue_v0.4.2_linux_amd64.tar.gz && \
-  echo "d43cf77e54f42619d270b8e4c1836aec87304daf243449c503251e6943f7466a cue.tgz" | sha256sum -c - && \
+RUN curl -sLo cue.tgz https://github.com/cue-lang/cue/releases/download/v0.4.3/cue_v0.4.3_linux_amd64.tar.gz && \
+  echo "5e7ecb614b5926acfc36eb1258800391ab7c6e6e026fa7cacbfe92006bac895c cue.tgz" | sha256sum -c - && \
   tar -xf cue.tgz -C /usr/local/bin cue && cue version
 
 # kapp-controller
