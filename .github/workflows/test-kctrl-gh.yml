@@ -48,7 +48,7 @@ jobs:
 
         curl -sLo /tmp/bin/minikube https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
         chmod +x /tmp/bin/minikube
-        minikube start --driver=docker
+        minikube start --driver=docker --kubernetes-version=v1.23.14
         eval $(minikube docker-env --shell=bash)
 
         export KAPPCTRL_E2E_SECRETGEN_CONTROLLER=true
