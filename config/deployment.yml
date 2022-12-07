@@ -58,7 +58,9 @@ spec:
           runAsNonRoot: true
           capabilities:
             drop:
-            - all
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
       - name: kapp-controller-sidecarexec
         image: kapp-controller
         args: ["--sidecarexec"]
@@ -85,7 +87,9 @@ spec:
           runAsNonRoot: true
           capabilities:
             drop:
-            - all
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
       volumes:
       - name: template-fs
         emptyDir:
