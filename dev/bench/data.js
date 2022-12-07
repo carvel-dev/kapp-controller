@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670276420513,
+  "lastUpdate": 1670430627736,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -8349,6 +8349,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6643089335,
             "unit": "ns/op\t         4.376 DeleteSeconds\t         2.203 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6706205ca85e3f4e9dc305fe47fc581f07337ca3",
+          "message": "Set seccompProfile type for both containers (#999)\n\nboth = kapp-controller and kapp-controller-sidecarexec",
+          "timestamp": "2022-12-07T11:19:55-05:00",
+          "tree_id": "7c909eea6d98ba305e69514cff15cbb16a224362",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/6706205ca85e3f4e9dc305fe47fc581f07337ca3"
+        },
+        "date": 1670430625745,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37045289274,
+            "unit": "ns/op\t        19.48 DeleteSeconds\t        17.52 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8537708318,
+            "unit": "ns/op\t         4.311 DeleteSeconds\t         4.184 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6477540185,
+            "unit": "ns/op\t         4.285 DeleteSeconds\t         2.153 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
