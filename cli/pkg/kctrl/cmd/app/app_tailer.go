@@ -49,7 +49,8 @@ func (o *AppTailer) printTillCurrent(status kcv1alpha1.AppStatus) error {
 		return nil
 	}
 
-	completed, err := NewAppStatusDiff(kcv1alpha1.AppStatus{}, status, o.statusUI).PrintUpdate()
+	completed, cachedDeployOutput, err := NewAppStatusDiff(kcv1alpha1.AppStatus{}, status, o.statusUI, o.lastSeenDeployStdout).PrintUpdate()
+	o.lastSeenDeployStdout = cachedDeployOutput
 	if err != nil {
 		return fmt.Errorf("Reconciling app: %s", err)
 	}
@@ -152,8 +153,8 @@ func (o *AppTailer) udpateEventHandler(oldObj interface{}, newObj interface{}) {
 		return
 	}
 
-	// o.printUpdate(oldApp.Status, newApp.Status)
-	stopWatch, err := NewAppStatusDiff(oldApp.Status, newApp.Status, o.statusUI).PrintUpdate()
+	stopWatch, cachedDeployOutput, err := NewAppStatusDiff(oldApp.Status, newApp.Status, o.statusUI, o.lastSeenDeployStdout).PrintUpdate()
+	o.lastSeenDeployStdout = cachedDeployOutput
 	o.watchError = err
 	if stopWatch {
 		o.stopWatch()
@@ -165,22 +166,6 @@ func (o *AppTailer) deleteEventHandler(oldObj interface{}) {
 	o.stopWatch()
 }
 
-func (o *AppTailer) printDeployStdout(stdout string, timestamp time.Time, isDeleting bool) {
-	if o.lastSeenDeployStdout == "" {
-		o.lastSeenDeployStdout = stdout
-		msg := "Deploying"
-		if isDeleting {
-			msg = "Deleting"
-		}
-		o.statusUI.PrintLogLine(msg, stdout, false, timestamp)
-		return
-	}
-
-	o.statusUI.PrintMessageBlockDiff(o.lastSeenDeployStdout, stdout, timestamp)
-
-	o.lastSeenDeployStdout = stdout
-}
-
 type AppStatusDiff struct {
 	old kcv1alpha1.AppStatus
 	new kcv1alpha1.AppStatus
@@ -190,11 +175,11 @@ type AppStatusDiff struct {
 	lastSeenDeployStdout string
 }
 
-func NewAppStatusDiff(old kcv1alpha1.AppStatus, new kcv1alpha1.AppStatus, statusUI cmdcore.StatusLoggingUI) *AppStatusDiff {
-	return &AppStatusDiff{old: old, new: new, statusUI: statusUI}
+func NewAppStatusDiff(old kcv1alpha1.AppStatus, new kcv1alpha1.AppStatus, statusUI cmdcore.StatusLoggingUI, cachedDeployOutput string) *AppStatusDiff {
+	return &AppStatusDiff{old: old, new: new, statusUI: statusUI, lastSeenDeployStdout: cachedDeployOutput}
 }
 
-func (d *AppStatusDiff) PrintUpdate() (bool, error) {
+func (d *AppStatusDiff) PrintUpdate() (bool, string, error) {
 	if d.new.Fetch != nil {
 		if d.old.Fetch == nil || (!d.old.Fetch.StartedAt.Equal(&d.new.Fetch.StartedAt) && d.new.Fetch.UpdatedAt.Unix() <= d.new.Fetch.StartedAt.Unix()) {
 			d.statusUI.PrintLogLine("Fetch started", "", false, d.new.Fetch.StartedAt.Time)
@@ -204,7 +189,7 @@ func (d *AppStatusDiff) PrintUpdate() (bool, error) {
 				msg := "Fetch failed"
 				errLog := d.new.Fetch.Stderr + "\n" + d.new.Fetch.Error
 				d.statusUI.PrintLogLine(msg, errLog, true, d.new.Fetch.UpdatedAt.Time)
-				return true, fmt.Errorf(msg)
+				return true, d.lastSeenDeployStdout, fmt.Errorf(msg)
 			}
 			d.statusUI.PrintLogLine("Fetching", d.new.Fetch.Stdout, false, d.new.Fetch.UpdatedAt.Time)
 			d.statusUI.PrintLogLine("Fetch succeeded", "", false, d.new.Fetch.UpdatedAt.Time)
@@ -216,7 +201,7 @@ func (d *AppStatusDiff) PrintUpdate() (bool, error) {
 				msg := "Template failed"
 				errLog := d.new.Template.Stderr + "\n" + d.new.Template.Error
 				d.statusUI.PrintLogLine(msg, errLog, true, d.new.Template.UpdatedAt.Time)
-				return true, fmt.Errorf(msg)
+				return true, d.lastSeenDeployStdout, fmt.Errorf(msg)
 			}
 			d.statusUI.PrintLogLine("Template succeeded", "", false, d.new.Template.UpdatedAt.Time)
 		}
@@ -236,7 +221,7 @@ func (d *AppStatusDiff) PrintUpdate() (bool, error) {
 				msg := fmt.Sprintf("%s failed", ongoingOp)
 				errLog := d.new.Deploy.Stderr + "\n" + d.new.Deploy.Error
 				d.statusUI.PrintLogLine(msg, errLog, true, d.new.Deploy.UpdatedAt.Time)
-				return true, fmt.Errorf(msg)
+				return true, d.lastSeenDeployStdout, fmt.Errorf(msg)
 			}
 			d.printDeployStdout(d.new.Deploy.Stdout, d.new.Deploy.UpdatedAt.Time, isDeleting)
 		}
@@ -244,14 +229,14 @@ func (d *AppStatusDiff) PrintUpdate() (bool, error) {
 
 	if HasReconciled(d.new) {
 		d.statusUI.PrintLogLine("Deploy succeeded", "", false, d.new.Deploy.UpdatedAt.Time)
-		return true, nil
+		return true, d.lastSeenDeployStdout, nil
 	}
 	failed, errMsg := HasFailed(d.new)
 	if failed {
 		d.statusUI.PrintLogLine(errMsg, "", true, time.Now())
-		return true, fmt.Errorf(errMsg)
+		return true, d.lastSeenDeployStdout, fmt.Errorf(errMsg)
 	}
-	return false, nil
+	return false, d.lastSeenDeployStdout, nil
 }
 
 func (d *AppStatusDiff) printDeployStdout(stdout string, timestamp time.Time, isDeleting bool) {
