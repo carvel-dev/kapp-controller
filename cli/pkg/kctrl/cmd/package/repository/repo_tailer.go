@@ -77,8 +77,8 @@ func (o *RepoTailer) printTillCurrent(status kcv1alpha1.AppStatus) error {
 		return nil
 	}
 
-	completed, cachedDeployOutput, err := cmdapp.NewAppStatusDiff(kcv1alpha1.AppStatus{}, status, o.statusUI, o.lastSeenDeployStdout).PrintUpdate()
-	o.lastSeenDeployStdout = cachedDeployOutput
+	completed, deployOutput, err := cmdapp.NewAppStatusDiff(kcv1alpha1.AppStatus{}, status, o.statusUI, o.lastSeenDeployStdout).PrintUpdate()
+	o.lastSeenDeployStdout = deployOutput
 	if err != nil {
 		return fmt.Errorf("Reconciling package repository: %s", err)
 	}
@@ -102,8 +102,8 @@ func (o *RepoTailer) udpateEventHandler(oldObj interface{}, newObj interface{}) 
 	mappedNewStatus := o.appStatusFromPkgrStatus(newRepo.Status)
 
 	// o.printUpdate(oldApp.Status, newApp.Status)
-	stopWatch, cachedDeployOutput, err := cmdapp.NewAppStatusDiff(mappedOldStatus, mappedNewStatus, o.statusUI, o.lastSeenDeployStdout).PrintUpdate()
-	o.lastSeenDeployStdout = cachedDeployOutput
+	stopWatch, deployOutput, err := cmdapp.NewAppStatusDiff(mappedOldStatus, mappedNewStatus, o.statusUI, o.lastSeenDeployStdout).PrintUpdate()
+	o.lastSeenDeployStdout = deployOutput
 	o.watchError = err
 	if stopWatch {
 		o.stopWatch()

@@ -49,8 +49,8 @@ func (o *AppTailer) printTillCurrent(status kcv1alpha1.AppStatus) error {
 		return nil
 	}
 
-	completed, cachedDeployOutput, err := NewAppStatusDiff(kcv1alpha1.AppStatus{}, status, o.statusUI, o.lastSeenDeployStdout).PrintUpdate()
-	o.lastSeenDeployStdout = cachedDeployOutput
+	completed, deployOutput, err := NewAppStatusDiff(kcv1alpha1.AppStatus{}, status, o.statusUI, o.lastSeenDeployStdout).PrintUpdate()
+	o.lastSeenDeployStdout = deployOutput
 	if err != nil {
 		return fmt.Errorf("Reconciling app: %s", err)
 	}
@@ -153,8 +153,8 @@ func (o *AppTailer) udpateEventHandler(oldObj interface{}, newObj interface{}) {
 		return
 	}
 
-	stopWatch, cachedDeployOutput, err := NewAppStatusDiff(oldApp.Status, newApp.Status, o.statusUI, o.lastSeenDeployStdout).PrintUpdate()
-	o.lastSeenDeployStdout = cachedDeployOutput
+	stopWatch, deployOutput, err := NewAppStatusDiff(oldApp.Status, newApp.Status, o.statusUI, o.lastSeenDeployStdout).PrintUpdate()
+	o.lastSeenDeployStdout = deployOutput
 	o.watchError = err
 	if stopWatch {
 		o.stopWatch()
@@ -175,8 +175,8 @@ type AppStatusDiff struct {
 	lastSeenDeployStdout string
 }
 
-func NewAppStatusDiff(old kcv1alpha1.AppStatus, new kcv1alpha1.AppStatus, statusUI cmdcore.StatusLoggingUI, cachedDeployOutput string) *AppStatusDiff {
-	return &AppStatusDiff{old: old, new: new, statusUI: statusUI, lastSeenDeployStdout: cachedDeployOutput}
+func NewAppStatusDiff(old kcv1alpha1.AppStatus, new kcv1alpha1.AppStatus, statusUI cmdcore.StatusLoggingUI, deployOutput string) *AppStatusDiff {
+	return &AppStatusDiff{old: old, new: new, statusUI: statusUI, lastSeenDeployStdout: deployOutput}
 }
 
 func (d *AppStatusDiff) PrintUpdate() (bool, string, error) {
