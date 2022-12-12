@@ -1,6 +1,7 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+// Package componentinfo provides access to version and configuration information about components of the system.
 package componentinfo
 
 import (

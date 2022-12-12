@@ -1,6 +1,8 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+// Package template provides a factory pattern design of instantiating a new "templater" in kapp-controller
+// some examples include cue, helm, and ytt
 package template
 
 import (
