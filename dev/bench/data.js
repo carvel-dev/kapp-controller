@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670960138176,
+  "lastUpdate": 1670960235867,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -8643,6 +8643,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6642678445,
             "unit": "ns/op\t         4.379 DeleteSeconds\t         2.195 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4fd75f560f198cf43532fa396c43f53f3210a922",
+          "message": "Merge pull request #1022 from vmware-tanzu/dependabot/github_actions/actions/stale-6.0.1\n\nBump actions/stale from 5.1.1 to 6.0.1",
+          "timestamp": "2022-12-13T12:26:41-07:00",
+          "tree_id": "c6f9ecb14acbc2490461cf98c139b8ecb46d2664",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/4fd75f560f198cf43532fa396c43f53f3210a922"
+        },
+        "date": 1670960234807,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36663957021,
+            "unit": "ns/op\t        19.07 DeleteSeconds\t        17.56 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8734708033,
+            "unit": "ns/op\t         4.495 DeleteSeconds\t         4.184 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6508145049,
+            "unit": "ns/op\t         4.276 DeleteSeconds\t         2.183 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
