@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670966074594,
+  "lastUpdate": 1670971120534,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -8853,6 +8853,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6648066372,
             "unit": "ns/op\t         4.385 DeleteSeconds\t         2.204 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ryanjo@vmware.com",
+            "name": "John Ryan",
+            "username": "pivotaljohn"
+          },
+          "committer": {
+            "email": "ryanjo@vmware.com",
+            "name": "John Ryan",
+            "username": "pivotaljohn"
+          },
+          "distinct": true,
+          "id": "1afc52e00b1cda77886a22bccad051b351cd337a",
+          "message": "Fix typo in \"release process\" workflow\n\nSigned-off-by: Neil Hickey <nhickey@vmware.com>\nSigned-off-by: Varsha Munishwar <vmunishwar@vmware.com>",
+          "timestamp": "2022-12-13T14:26:10-08:00",
+          "tree_id": "0b618c6020c03f79fe2fc2b228f6e1110f109e46",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/1afc52e00b1cda77886a22bccad051b351cd337a"
+        },
+        "date": 1670971119236,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35831233790,
+            "unit": "ns/op\t        18.31 DeleteSeconds\t        17.48 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8548395724,
+            "unit": "ns/op\t         4.321 DeleteSeconds\t         4.172 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6446645043,
+            "unit": "ns/op\t         4.261 DeleteSeconds\t         2.144 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
