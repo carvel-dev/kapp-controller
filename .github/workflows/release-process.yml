@@ -59,7 +59,7 @@ jobs:
       - name: Add to formatted checksum
         run: |
           pushd release
-          shasum -a 256 ./release.yml ./kctrl-* ./package.yml ./package-metada.yml | tee ../tmp/checksums.txt
+          shasum -a 256 ./release.yml ./kctrl-* ./package.yml ./package-metadata.yml | tee ../tmp/checksums.txt
           popd
           echo "# :open_file_folder: Files Checksum" | tee ./tmp/checksums-formatted.txt
           echo '```' | tee -a ./tmp/checksums-formatted.txt
