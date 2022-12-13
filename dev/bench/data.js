@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670959652052,
+  "lastUpdate": 1670960090255,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -8559,6 +8559,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6425604774,
             "unit": "ns/op\t         4.234 DeleteSeconds\t         2.141 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d54145f59b5de8e3abc7d9d1f8bba56ff1cf4f1e",
+          "message": "Merge pull request #991 from vmware-tanzu/fix-release-note-paths\n\nRemove file path on automated release note generated",
+          "timestamp": "2022-12-13T12:25:01-07:00",
+          "tree_id": "df7954b39594c9dcc3cde305fb30fb537e5b5b36",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/d54145f59b5de8e3abc7d9d1f8bba56ff1cf4f1e"
+        },
+        "date": 1670960089339,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35424262384,
+            "unit": "ns/op\t        17.88 DeleteSeconds\t        17.50 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8535283813,
+            "unit": "ns/op\t         4.337 DeleteSeconds\t         4.157 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6386190305,
+            "unit": "ns/op\t         4.228 DeleteSeconds\t         2.119 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
