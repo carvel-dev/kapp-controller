@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670971120534,
+  "lastUpdate": 1670999870337,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -8895,6 +8895,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6446645043,
             "unit": "ns/op\t         4.261 DeleteSeconds\t         2.144 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6b0843a3db36784fea47d34307deb994de107cb2",
+          "message": "Fix app status diff, to ensure that deploy output is deduped (#1013)\n\n* Ensure that deploy output is cached to fix deploy output diffing\r\n\r\n* Harden package install tests to ensure that app statuses are diffed adequately",
+          "timestamp": "2022-12-14T11:57:43+05:30",
+          "tree_id": "c6ef03c105efb1f9b7a237df184d227ba05dba33",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/6b0843a3db36784fea47d34307deb994de107cb2"
+        },
+        "date": 1670999868051,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37025596166,
+            "unit": "ns/op\t        19.43 DeleteSeconds\t        17.54 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8477347028,
+            "unit": "ns/op\t         4.284 DeleteSeconds\t         4.151 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6430730626,
+            "unit": "ns/op\t         4.260 DeleteSeconds\t         2.127 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
