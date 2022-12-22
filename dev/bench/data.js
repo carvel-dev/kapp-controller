@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1671730308491,
+  "lastUpdate": 1671733320418,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -9021,6 +9021,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6814628307,
             "unit": "ns/op\t         4.560 DeleteSeconds\t         2.206 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f88670e53d679a1ae16c2eccb9abb4397af2d0bd",
+          "message": "Merge pull request #1030 from vmware-tanzu/fix-trivy-scan-1\n\nFix warning in trivy scan and add error check to the command",
+          "timestamp": "2022-12-22T11:11:22-07:00",
+          "tree_id": "5a68349715da9e91bae2922aa1791eeaedc8d66d",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/f88670e53d679a1ae16c2eccb9abb4397af2d0bd"
+        },
+        "date": 1671733319147,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36672472054,
+            "unit": "ns/op\t        18.89 DeleteSeconds\t        17.74 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8458544284,
+            "unit": "ns/op\t         4.268 DeleteSeconds\t         4.150 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6737991429,
+            "unit": "ns/op\t         4.544 DeleteSeconds\t         2.149 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
