@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1671038808402,
+  "lastUpdate": 1671730308491,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -8979,6 +8979,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 7732190397,
             "unit": "ns/op\t         4.480 DeleteSeconds\t         3.201 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fea2c7cae46f3809ec9ab8e9d27161b713db10f5",
+          "message": "Merge pull request #1033 from vmware-tanzu/nh-bump-redis-chart-latest\n\nBump testing redis chart to latest [17.3.17]",
+          "timestamp": "2022-12-22T10:21:13-07:00",
+          "tree_id": "6927a1a1ccb7c3a0509eed865e725242fde11119",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/fea2c7cae46f3809ec9ab8e9d27161b713db10f5"
+        },
+        "date": 1671730307074,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36843259569,
+            "unit": "ns/op\t        19.30 DeleteSeconds\t        17.49 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8586132039,
+            "unit": "ns/op\t         4.363 DeleteSeconds\t         4.174 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6814628307,
+            "unit": "ns/op\t         4.560 DeleteSeconds\t         2.206 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
