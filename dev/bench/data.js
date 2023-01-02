@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1671748250057,
+  "lastUpdate": 1672676392476,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -9189,6 +9189,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6481370003,
             "unit": "ns/op\t         4.281 DeleteSeconds\t         2.155 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "joaod@vmware.com",
+            "name": "João Pereira",
+            "username": "joaopapereira"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dcaf6e006a29472183258b9290cd665d2697cfc3",
+          "message": "Merge pull request #1034 from vmware-tanzu/nh-fix-trivy-output\n\nFix trivy output formatting",
+          "timestamp": "2023-01-02T10:06:05-06:00",
+          "tree_id": "95d1c7a0eff9e1879353dd5e9b420223fb53b42e",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/dcaf6e006a29472183258b9290cd665d2697cfc3"
+        },
+        "date": 1672676390560,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37343293056,
+            "unit": "ns/op\t        19.46 DeleteSeconds\t        17.81 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8739560669,
+            "unit": "ns/op\t         4.450 DeleteSeconds\t         4.239 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6716709625,
+            "unit": "ns/op\t         4.477 DeleteSeconds\t         2.185 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
