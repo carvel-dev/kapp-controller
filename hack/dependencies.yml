@@ -63,14 +63,14 @@
   version: v3.7.3
 - checksums:
     linux:
-      amd64: 6414f71ce947fbbea1314f6e9786c5d48436ebc76c3fd6167bf018e432b3b669
-      arm64: 6c82aa1d406e5a401ec3bb344cd406626478be74d5ae628f192d907cd78af981
+      amd64: cf16cbb108fc56e2064b00ba2b65d9fb1b8d7002ca5e38260ee1cc34f6aaa8f9
+      arm64: f0dbf4364f5ba44e37ad85af9fdd3716bd410018ce344d317b174d206b03e6fc
   dev: false
   name: age
   repo: FiloSottile/age
   tarballSubpath: age/age
   urlTemplate: https://github.com/FiloSottile/age/releases/download/{{.Version}}/age-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
-  version: v1.0.0
+  version: v1.1.1
 - checksums:
     linux:
       amd64: 5e7ecb614b5926acfc36eb1258800391ab7c6e6e026fa7cacbfe92006bac895c
