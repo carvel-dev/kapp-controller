@@ -47,7 +47,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 			cmdcore.Example{"List packages available on the cluster",
 				[]string{"package", "available", "list"},
 			},
-			cmdcore.Example{"List packages available onto specify a particular version use the format: '-p package-name/version' the cluster with their short descriptions",
+			cmdcore.Example{"List packages available on the cluster with their short descriptions",
 				[]string{"package", "available", "list", "--wide"},
 			},
 			cmdcore.Example{"List all available package versions with release dates",
