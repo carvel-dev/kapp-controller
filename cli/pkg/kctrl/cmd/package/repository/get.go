@@ -39,7 +39,7 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Get details for a package repository",
-				[]string{"package", "repository", "get", "-r", "sample-repo", "-n", "test-ns"}},
+				[]string{"package", "repository", "get", "-r", "sample-repo"}},
 		}.Description("-r", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 		Annotations: map[string]string{"table": "",
