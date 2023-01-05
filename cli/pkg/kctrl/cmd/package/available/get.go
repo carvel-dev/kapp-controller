@@ -101,7 +101,7 @@ func (o *GetOptions) Run(args []string) error {
 
 	if o.ValuesSchema {
 		if pkgVersion == "" {
-			return fmt.Errorf("Package version is required when --values-schema flag is declared (hint: to specify a particular version use the format: '-p <package-name>/<version>')")
+			return fmt.Errorf("Package version is required when --values-schema flag is declared (hint: to specify a particular version use the format: '<package-name>/<version>')")
 		}
 		return o.showValuesSchema(client, pkgName, pkgVersion)
 	}
@@ -181,7 +181,7 @@ func (o *GetOptions) show(client pkgclient.Interface, pkgName, pkgVersion string
 		}...)
 	} else {
 		if len(o.DefaultValuesFile) > 0 {
-			return fmt.Errorf("Package version is required when --default-values-file-output flag is declared (hint: to specify a particular version use the format: '-p <package-name>/<version>')")
+			return fmt.Errorf("Package version is required when --default-values-file-output flag is declared (hint: to specify a particular version use the format: '<package-name>/<version>')")
 		}
 		listOpts := metav1.ListOptions{}
 		if len(o.Name) > 0 {
