@@ -55,7 +55,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Delete package install",
-				[]string{"package", "installed", "delete", "-i", "cert-man"}},
+				[]string{"package", "installed", "delete", "-i", "sample-pkg-install", "-n", "test-ns"}},
 		}.Description("-i", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 		Annotations: map[string]string{cmdapp.TTYByDefaultKey: "",

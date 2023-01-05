@@ -40,10 +40,10 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 		Example: cmdcore.Examples{
 			cmdcore.Example{"List package repositories",
-				[]string{"package", "repository", "list"},
+				[]string{"package", "repository", "list", "-n", "test-ns"},
 			},
 			cmdcore.Example{"List package repositories in all namespaces",
-				[]string{"package", "repository", "list", "A"}},
+				[]string{"package", "repository", "list", "A", "-n", "test-ns"}},
 		}.Description("", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 		Annotations: map[string]string{"table": "",

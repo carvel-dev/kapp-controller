@@ -52,7 +52,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Add a package repository",
-				[]string{"package", "repository", "add", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.1"}},
+				[]string{"package", "repository", "add", "-r", "sample-repo", "--url", "projects.repo.com/example:1.0.0", "-n", "test-ns"}},
 		}.Description("-r", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 		Annotations: map[string]string{cmdapp.TTYByDefaultKey: "",
@@ -90,7 +90,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Update a package repository with a new URL",
-				[]string{"package", "repository", "update", "-r", "tce", "--url", "projects.registry.vmware.com/tce/main:0.9.2"}},
+				[]string{"package", "repository", "update", "-r", "sample-repo", "--url", "projects.repo.com/example:1.0.0", "-n", "test-ns"}},
 		}.Description("-r", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 		Annotations: map[string]string{cmdapp.TTYByDefaultKey: "",

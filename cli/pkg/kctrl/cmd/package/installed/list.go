@@ -38,10 +38,10 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 		Example: cmdcore.Examples{
 			cmdcore.Example{"List installed packages",
-				[]string{"package", "installed", "list"},
+				[]string{"package", "installed", "list", "-n", "test-ns"},
 			},
 			cmdcore.Example{"List installed packages in all namespaces",
-				[]string{"package", "installed", "list", "-A"}},
+				[]string{"package", "installed", "list", "-A", "-n", "test-ns"}},
 		}.Description("", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 		Annotations: map[string]string{"table": "",
