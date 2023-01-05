@@ -49,10 +49,10 @@ func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command 
 		RunE:    func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Get details about an available package",
-				[]string{"package", "available", "get", "-p", "cert-manager.community.tanzu.vmware.com"},
+				[]string{"package", "available", "get", "-p", "package.corp.com", "-n", "test-ns"},
 			},
 			cmdcore.Example{"Get the values schema for a particular version of the package",
-				[]string{"package", "available", "get", "-p", "cert-manager.community.tanzu.vmware.com/1.0.0", "--values-schema"}},
+				[]string{"package", "available", "get", "-p", "package.corp.com/1.0.0", "--values-schema", "-n", "test-ns"}},
 		}.Description("-p", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 		Annotations: map[string]string{"table": "",

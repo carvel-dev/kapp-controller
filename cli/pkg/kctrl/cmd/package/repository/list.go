@@ -43,7 +43,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 				[]string{"package", "repository", "list", "-n", "test-ns"},
 			},
 			cmdcore.Example{"List package repositories in all namespaces",
-				[]string{"package", "repository", "list", "A", "-n", "test-ns"}},
+				[]string{"package", "repository", "list", "-A", "-n", "test-ns"}},
 		}.Description("", o.pkgCmdTreeOpts),
 		SilenceUsage: true,
 		Annotations: map[string]string{"table": "",
