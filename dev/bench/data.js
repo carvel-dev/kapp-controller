@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672942740574,
+  "lastUpdate": 1672980420439,
   "repoUrl": "https://github.com/vmware-tanzu/carvel-kapp-controller",
   "entries": {
     "Benchmark": [
@@ -9315,6 +9315,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6586119265,
             "unit": "ns/op\t         4.341 DeleteSeconds\t         2.183 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "38600853+kumaritanushree@users.noreply.github.com",
+            "name": "kumari tanushree",
+            "username": "kumaritanushree"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ad24bdc3e41219b176f88280a469e9fd21979339",
+          "message": "Updated repo url and package name to generic name in examples (#1039)\n\n* updating repo url to generic name as TCE is getting deprecated and updated package name to a generic name as well\r\n\r\n* updated namespace flag to package available cmd\r\n\r\n* removed -n flag from cmd added in example\r\n\r\n* reverted unwanted change\r\n\r\nCo-authored-by: kumari tanushree <ktanushree@vmware.com>",
+          "timestamp": "2023-01-06T10:06:44+05:30",
+          "tree_id": "84906f760e6714b2705bb63e5dcc01e450b43ef7",
+          "url": "https://github.com/vmware-tanzu/carvel-kapp-controller/commit/ad24bdc3e41219b176f88280a469e9fd21979339"
+        },
+        "date": 1672980419075,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36723494856,
+            "unit": "ns/op\t        19.23 DeleteSeconds\t        17.44 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8522641312,
+            "unit": "ns/op\t         4.326 DeleteSeconds\t         4.158 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6418738587,
+            "unit": "ns/op\t         4.250 DeleteSeconds\t         2.132 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
