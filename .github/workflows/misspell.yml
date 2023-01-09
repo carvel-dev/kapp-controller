@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code.
-        uses: actions/checkout@v3.2.0
+        uses: actions/checkout@v3.3.0
       - name: misspell
         uses: reviewdog/action-misspell@fe8d5c98c3761ef40755a7bb95460b2a33f6b346 # v1.1.0
         with:
