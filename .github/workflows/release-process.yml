@@ -52,6 +52,7 @@ jobs:
       - name: Run Package build
         run: |
           constraintVersion="${{ github.ref_name }}"
+          ytt -f config-release > ./config/release-config.yml
           ./cli/kctrl-linux-amd64 pkg release -y -v ${constraintVersion:1} --debug
           mv ./carvel-artifacts/packages/kapp-controller.carvel.dev/metadata.yml ./carvel-artifacts/packages/kapp-controller.carvel.dev/package-metadata.yml
           mv ./carvel-artifacts/packages/kapp-controller.carvel.dev/* release/
