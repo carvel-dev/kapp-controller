@@ -4,15 +4,15 @@
 namespace: kapp-controller
 #@schema/desc "Whether to create namespace specified for kapp-controller"
 create_namespace: true
-#@schema/desc "packaging global namespace value"
+#@schema/desc "Mention global namespace used for packaging"
 packaging_global_namespace: kapp-controller-packaging-global
-#@schema/desc "create packaging namespace flag"
+#@schema/desc "Boolean flag on to whaether to create packaging namespace or not"
 create_packaging_namespace: true
-#@schema/desc "api priority flag. Clusters version 1.19 and below should disable APIPriorityAndFairness by setting the below to false"
+#@schema/desc "APIPriorityAndFairness flag. Clusters version 1.19 and below should disable APIPriorityAndFairness by setting the below to false"
 enable_api_priority_and_fairness: true
-#@schema/desc "dangerous enable pprof flag"
+#@schema/desc "Enable profiling by setting dangerous_enable_pprof to true"
 dangerous_enable_pprof: false
-#@schema/desc "comma separated list of cipher suites - empty for language defaults"
+#@schema/desc "Comma separated list of cipher suites - empty for language defaults"
 tls_cipher_suites: ""
-#@schema/desc "api port"
+#@schema/desc "Container port"
 api_port: 10350
