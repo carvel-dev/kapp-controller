@@ -62,7 +62,9 @@ type AppTemplateHelmTemplate struct {
 
 // +k8s:openapi-gen=true
 type AppTemplateValuesSource struct {
+	// Reference to a Secret. The keys will be used as data value file names, and the values as the content of the corresponding data values file (typically a multiline yaml)
 	SecretRef    *AppTemplateValuesSourceRef   `json:"secretRef,omitempty" protobuf:"bytes,1,opt,name=secretRef"`
+	// Reference to a ConfigMap. The keys will be used as data value file names, and the values as the content of the corresponding data values file (typically a multiline yaml)
 	ConfigMapRef *AppTemplateValuesSourceRef   `json:"configMapRef,omitempty" protobuf:"bytes,2,opt,name=configMapRef"`
 	Path         string                        `json:"path,omitempty" protobuf:"bytes,3,opt,name=path"`
 	DownwardAPI  *AppTemplateValuesDownwardAPI `json:"downwardAPI,omitempty" protobuf:"bytes,4,opt,name=downwardAPI"`
