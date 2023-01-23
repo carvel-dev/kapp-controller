@@ -14,8 +14,8 @@ require (
 	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/tools v0.1.12
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.25.5
-	k8s.io/apimachinery v0.25.5
+	k8s.io/api v0.25.6
+	k8s.io/apimachinery v0.25.6
 	k8s.io/apiserver v0.25.0
 	k8s.io/client-go v0.25.5
 	k8s.io/code-generator v0.25.0
