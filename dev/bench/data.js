@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674516170555,
+  "lastUpdate": 1674516303135,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -9651,6 +9651,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6473900267,
             "unit": "ns/op\t         4.271 DeleteSeconds\t         2.155 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a69036a6467ae923813a7b8482eb51985c0be197",
+          "message": "Fix typo in \"dependency updater\" workflow",
+          "timestamp": "2023-01-23T16:14:50-07:00",
+          "tree_id": "57919989a5791fc94634fa761c00389704f0f6fc",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/a69036a6467ae923813a7b8482eb51985c0be197"
+        },
+        "date": 1674516301390,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35433257790,
+            "unit": "ns/op\t        17.85 DeleteSeconds\t        17.54 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8485949897,
+            "unit": "ns/op\t         4.272 DeleteSeconds\t         4.174 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6525833109,
+            "unit": "ns/op\t         4.309 DeleteSeconds\t         2.156 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
