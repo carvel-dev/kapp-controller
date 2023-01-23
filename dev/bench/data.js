@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674515667354,
+  "lastUpdate": 1674516026094,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -9567,6 +9567,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6635553935,
             "unit": "ns/op\t         4.390 DeleteSeconds\t         2.186 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "13ff0cbefa297138b3a15d46146adb3d7fd4003b",
+          "message": "Add signed-off to each commit from the bot",
+          "timestamp": "2023-01-23T16:10:25-07:00",
+          "tree_id": "db1948e5b501baf33840a56e6cd012141f49bcea",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/13ff0cbefa297138b3a15d46146adb3d7fd4003b"
+        },
+        "date": 1674516025067,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36720065880,
+            "unit": "ns/op\t        18.93 DeleteSeconds\t        17.74 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8553384743,
+            "unit": "ns/op\t         4.352 DeleteSeconds\t         4.158 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6449558356,
+            "unit": "ns/op\t         4.282 DeleteSeconds\t         2.130 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
