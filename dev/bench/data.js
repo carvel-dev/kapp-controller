@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674516026094,
+  "lastUpdate": 1674516170555,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -9609,6 +9609,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6449558356,
             "unit": "ns/op\t         4.282 DeleteSeconds\t         2.130 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8dadce32112113631c769347b716f42b2499c4de",
+          "message": "Add signed-off-by for carvel-bot",
+          "timestamp": "2023-01-23T16:12:29-07:00",
+          "tree_id": "e133a720e78b6b0ba1fdad8f756db7a80aa05c58",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/8dadce32112113631c769347b716f42b2499c4de"
+        },
+        "date": 1674516169661,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36562261391,
+            "unit": "ns/op\t        18.98 DeleteSeconds\t        17.54 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8633606419,
+            "unit": "ns/op\t         4.301 DeleteSeconds\t         4.288 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6473900267,
+            "unit": "ns/op\t         4.271 DeleteSeconds\t         2.155 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
