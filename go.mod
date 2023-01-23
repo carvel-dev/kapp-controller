@@ -14,10 +14,10 @@ require (
 	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/tools v0.1.12
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.25.5
-	k8s.io/apimachinery v0.25.5
+	k8s.io/api v0.25.6
+	k8s.io/apimachinery v0.25.6
 	k8s.io/apiserver v0.25.0
-	k8s.io/client-go v0.25.5
+	k8s.io/client-go v0.25.6
 	k8s.io/code-generator v0.25.0
 	k8s.io/kube-aggregator v0.22.17
 	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1
