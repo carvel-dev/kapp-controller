@@ -25,7 +25,10 @@ jobs:
           token: ${{ secrets.CARVEL_BOT_ACCESS_TOKEN }}
           committer: Carvel Bot <svc.bot.carvel@vmware.com>
           author: Carvel Bot <svc.bot.carvel@vmware.com>
-          commit-message: Bump dependencies
+          commit-message: | 
+            Bump dependencies
+            
+            Signed-off-by: Carvel Bot <svc.bot.carvel@vmware.co>
           title: Bump dependencies
           delete-branch: true
           body: |
