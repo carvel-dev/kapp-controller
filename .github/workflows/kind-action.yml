@@ -38,7 +38,24 @@ jobs:
 
           source ./hack/version-util.sh
 
-          ytt -f config/ -v kapp_controller_version="$(get_kappctrl_ver)+develop" | kbld -f- > kbld.out 2> kbldmeta.out
+          cat <<EOF >overlay.yml
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:data", "data")
+#@ def resource(kind, name):
+kind: #@ kind
+metadata:
+  name: #@ name
+#@ end
+#@overlay/match by=overlay.subset(resource("Deployment", "kapp-controller"))
+---
+metadata:
+  annotations:
+    #@overlay/match missing_ok=True
+    kapp-controller.carvel.dev/version: #@ data.values.version
+EOF
+
+          ytt -f config/ > ./tmp/config.yml
+          ytt -f ./tmp/config.yml -f overlay.yml -v version="$(get_kappctrl_ver)+develop" | kbld -f- > kbld.out 2> kbldmeta.out
           cat kbldmeta.out | tail -n 1 | sed 's/.*final: kapp-controller -> \(.*\)$/\1/p'  | tail -n 1 | xargs kind load docker-image --name kinder
           kapp deploy -a kc -f kbld.out -c -y
 

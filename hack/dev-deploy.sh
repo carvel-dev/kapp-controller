@@ -47,5 +47,32 @@ sources:
       pull: false
 EOF
 
-ytt -f config/ -f tmp/build/overlay.yml -v kapp_controller_version="$(get_kappctrl_ver)+develop" | kbld -f- | kapp deploy -a kc -f- -c -y
+cat <<EOF > tmp/build/version-overlay.yml
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:data", "data")
+#@ def resource(kind, name):
+kind: #@ kind
+metadata:
+  name: #@ name
+#@ end
+#@overlay/match by=overlay.subset(resource("Deployment", "kapp-controller"))
+---
+metadata:
+  annotations:
+    #@overlay/match missing_ok=True
+    kapp-controller.carvel.dev/version: #@ data.values.version
+EOF
+
+cat <<EOF > tmp/build/values.yml
+#@data/values
+---
+dev:
+  push_images: false
+  image_cache: true
+  platform: ""
+EOF
+
+ytt -f config/ -f config-release/ -f tmp/build/overlay.yml -f tmp/build/values.yml > ./tmp/config.yml
+
+ytt -f ./tmp/config.yml -f tmp/build/version-overlay.yml -v version="$(get_kappctrl_ver)+develop" | kbld -f- | kapp deploy -a kc -f- -c -y
 

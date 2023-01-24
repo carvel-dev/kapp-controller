@@ -11,6 +11,6 @@ dev:
   #@schema/desc "Comma separated list of supported architectures"
   platform: "linux/amd64,linux/arm64"
   #@schema/desc "Whether to push images to the OCI registry or not"
-  push_images: "true"
+  push_images: true
   #@schema/desc "Whether to cache the image or not"
   image_cache: false
