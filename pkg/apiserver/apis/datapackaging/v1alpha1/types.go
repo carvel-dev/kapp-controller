@@ -86,6 +86,17 @@ type PackageSpec struct {
 	// KubernetesVersionSelection specifies the versions of k8s which this package can be installed on
 	// +optional
 	KubernetesVersionSelection *VersionSelection `json:"kubernetesVersionSelection,omitempty" protobuf:"bytes,11,opt,name=kubernetesVersionSelection"`
+
+	// Yanked indicates that this package is no longer recommended for use.
+	// This package likely contains unsupported software, a CVE or a critical bug.
+	// +optional
+	Yanked *Yanked `json:"yanked,omitempty" protobuf:"bytes,12,opt,name=yanked"`
+}
+
+// Yanked contains details of the rationale of why this version was yanked
+type Yanked struct {
+	Reason string      `json:"reason,omitempty" protobuf:"bytes,1,opt,name=reason"`
+	At     metav1.Time `json:"at,omitempty" protobuf:"bytes,2,opt,name=at"`
 }
 
 // VersionSelection provides version range constraints but will always accept prereleases

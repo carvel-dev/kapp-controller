@@ -67,6 +67,8 @@ func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
 		func(st kcv1alpha1.GenericStatus) { pi.model.Status.GenericStatus = st },
 	}
 
+	status.RemoveAllConditions()
+
 	var result reconcile.Result
 	var err error
 
@@ -81,6 +83,8 @@ func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
 			status.SetReconcileCompleted(err)
 		}
 	}
+
+	status.FlushStatus()
 
 	// Always update status
 	statusErr := pi.updateStatus()
@@ -113,6 +117,10 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 	pkg, err := pi.referencedPkgVersion()
 	if err != nil {
 		return reconcile.Result{Requeue: true}, err
+	}
+
+	if pkg.Spec.Yanked != nil {
+		modelStatus.SetPackageYanked(pi.model.ObjectMeta, pkg.Spec.Yanked.Reason)
 	}
 
 	// Set new desired version before checking if it's not applicable

@@ -123,6 +123,11 @@ message PackageSpec {
   // KubernetesVersionSelection specifies the versions of k8s which this package can be installed on
   // +optional
   optional VersionSelection kubernetesVersionSelection = 11;
+
+  // Yanked indicates that this package is no longer recommended for use.
+  // This package likely contains unsupported software, a CVE or a critical bug.
+  // +optional
+  optional Yanked yanked = 12;
 }
 
 message ValuesSchema {
@@ -135,5 +140,12 @@ message ValuesSchema {
 // VersionSelection provides version range constraints but will always accept prereleases
 message VersionSelection {
   optional string constraints = 1;
+}
+
+// Yanked contains details of the rationale of why this version was yanked
+message Yanked {
+  optional string reason = 1;
+
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time at = 2;
 }
 
