@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674516303135,
+  "lastUpdate": 1674752538814,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -9693,6 +9693,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6525833109,
             "unit": "ns/op\t         4.309 DeleteSeconds\t         2.156 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86852107+joe-kimmel-vmw@users.noreply.github.com",
+            "name": "Joe Kimmel",
+            "username": "joe-kimmel-vmw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9afffabb6ea453ae050c95a6dc25533c22a746e4",
+          "message": "dev.md - fix link to benchmark after repo donation (#1070)\n\nSigned-off-by: Joe Kimmel <jkimmel@vmware.com>\r\n\r\nSigned-off-by: Joe Kimmel <jkimmel@vmware.com>",
+          "timestamp": "2023-01-26T11:48:42-05:00",
+          "tree_id": "4fe17e4532c35405bb6acffe0f48c8c423af2a0f",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/9afffabb6ea453ae050c95a6dc25533c22a746e4"
+        },
+        "date": 1674752536985,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 38301289991,
+            "unit": "ns/op\t        19.42 DeleteSeconds\t        18.83 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8966633407,
+            "unit": "ns/op\t         4.624 DeleteSeconds\t         4.269 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6663823121,
+            "unit": "ns/op\t         4.395 DeleteSeconds\t         2.204 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
