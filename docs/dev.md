@@ -95,7 +95,7 @@ toolchain `go test ./test/bench/... -bench=.`
 
 Benchmarks run on develop branch are
 graphed in [github
-pages](https://vmware-tanzu.github.io/carvel-kapp-controller/dev/bench/index.html).
+pages](https://carvel-dev.github.io/kapp-controller/dev/bench/index.html).
 
 ### Profiling
 1.) Enable profiling by editing config/values.yaml and setting `dangerous_enable_pprof`
