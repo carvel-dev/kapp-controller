@@ -392,7 +392,7 @@ func (v *Vendir) Run(conf []byte, workingDir string, cacheID string) exec.CmdRun
 	cmd.Stdin = bytes.NewReader(conf)
 	cmd.Stdout = &stdoutBs
 	cmd.Stderr = &stderrBs
-	cmd.Env = append(os.Environ(), "VENDIR_CACHE_DIR="+filepath.Join(v.opts.BaseCacheFolder, cacheID))
+	cmd.Env = []string{"VENDIR_CACHE_DIR=" + filepath.Join(v.opts.BaseCacheFolder, cacheID)}
 
 	err := v.cmdRunner.Run(cmd)
 
