@@ -9,7 +9,7 @@ assignees: ''
 
 ## Releasing a new minor / major:
 - [ ] OSS Release
-    - [ ] [Releasing via workflow](https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/docs/dev.md#release).
+    - [ ] [Releasing via workflow](https://github.com/carvel-dev/kapp-controller/blob/develop/docs/dev.md#release).
     - [ ] Close any GitHub issues that have been delivered.
     - [ ] Add a link to the release on the issue.
     - [ ] Communicate to the kctrl maintainers, so they can update the release notes.
@@ -33,4 +33,4 @@ assignees: ''
     - [ ] `git push origin v0.38.<next-patch-version>`.
     - [ ] Make a PR.
     - [ ] Once approved, merge the changes back to the `v0.38.x` branch and `git push` the branch and delete your temporary branch used in the PR.
-    - [ ] To Release: follow the instructions FROM THE BRANCH YOU ARE UPDATING at `docs/dev.md#release` in the repository. These will contain the relevant steps at each point of time in the project's history, e.g when updating `v0.25.x` the url will look like: https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.25.x/docs/dev.md#release
+    - [ ] To Release: follow the instructions FROM THE BRANCH YOU ARE UPDATING at `docs/dev.md#release` in the repository. These will contain the relevant steps at each point of time in the project's history, e.g when updating `v0.25.x` the url will look like: https://github.com/carvel-dev/kapp-controller/blob/v0.25.x/docs/dev.md#release

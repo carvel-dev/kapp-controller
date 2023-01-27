@@ -10,9 +10,9 @@ You will need the following tools to build and deploy kapp-controller:
 For linux/mac users, all the tools below can be installed by running `./hack/install-deps.sh`.
 
 For windows users, please download the binaries from the respective GitHub repositories:
-* https://github.com/vmware-tanzu/carvel-ytt
-* https://github.com/vmware-tanzu/carvel-kbld
-* https://github.com/vmware-tanzu/carvel-kapp
+* https://github.com/carvel-dev/ytt
+* https://github.com/carvel-dev/kbld
+* https://github.com/carvel-dev/kapp
 
 ### Build
 
@@ -39,8 +39,8 @@ things up.
 
 #### Non-minikube environment
 
-1. Change the [push_images property](https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/config/values.yml#L10) to true
-2. Change the [image_repo property](https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/config/values.yml#L12) to the location to push the kapp-controller image
+1. Change the [push_images property](https://github.com/carvel-dev/kapp-controller/blob/develop/config/values.yml#L10) to true
+2. Change the [image_repo property](https://github.com/carvel-dev/kapp-controller/blob/develop/config/values.yml#L12) to the location to push the kapp-controller image
 3. Run `./hack/deploy.sh`
 
 *Note:* As above, while iterating you may prefer to run
@@ -95,7 +95,7 @@ toolchain `go test ./test/bench/... -bench=.`
 
 Benchmarks run on develop branch are
 graphed in [github
-pages](https://vmware-tanzu.github.io/carvel-kapp-controller/dev/bench/index.html).
+pages](https://carvel-dev.github.io/kapp-controller/dev/bench/index.html).
 
 ### Profiling
 1.) Enable profiling by editing config/values.yaml and setting `dangerous_enable_pprof`
