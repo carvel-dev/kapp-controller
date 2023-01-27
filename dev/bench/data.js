@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674752538814,
+  "lastUpdate": 1674781960959,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -9735,6 +9735,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6663823121,
             "unit": "ns/op\t         4.395 DeleteSeconds\t         2.204 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "joaod@vmware.com",
+            "name": "João Pereira",
+            "username": "joaopapereira"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "50caee3ca668c2d9cb84739174b5c8110cfc4b59",
+          "message": "Sidecar execution honor sidecar environment variables instead of main pod (#1068)\n\nSigned-off-by: João Pereira <joaod@vmware.com>\r\n\r\nSigned-off-by: João Pereira <joaod@vmware.com>",
+          "timestamp": "2023-01-26T20:02:27-05:00",
+          "tree_id": "013d03dcccd84d21f0ae84ddea2e86de78fef7bd",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/50caee3ca668c2d9cb84739174b5c8110cfc4b59"
+        },
+        "date": 1674781960028,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36636445078,
+            "unit": "ns/op\t        18.96 DeleteSeconds\t        17.63 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8518164789,
+            "unit": "ns/op\t         4.303 DeleteSeconds\t         4.175 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6477002429,
+            "unit": "ns/op\t         4.278 DeleteSeconds\t         2.153 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
