@@ -44,13 +44,13 @@ Ours is slightly updated, but original script can be found [here.](https://raw.g
 Install the latest release of `kapp-controller`:
 
 ```sh
-kubectl apply -f https://github.com/vmware-tanzu/carvel-kapp-controller/releases/latest/download/release.yml
+kubectl apply -f https://github.com/carvel-dev/kapp-controller/releases/latest/download/release.yml
 ```
 
 ### install RBAC for admin SA account
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/vmware-tanzu/carvel-kapp-controller/develop/examples/rbac/cluster-admin.yml
+kubectl apply -f https://raw.githubusercontent.com/carvel-dev/kapp-controller/develop/examples/rbac/cluster-admin.yml
 ```
 
 ## Hack the gibson
