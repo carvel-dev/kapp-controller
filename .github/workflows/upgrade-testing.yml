@@ -37,6 +37,6 @@ jobs:
           minikube start --driver=docker
           eval $(minikube docker-env --shell=bash)
 
-          kapp deploy -a kc -f https://github.com/vmware-tanzu/carvel-kapp-controller/releases/latest/download/release.yml -y
+          kapp deploy -a kc -f https://github.com/carvel-dev/kapp-controller/releases/latest/download/release.yml -y
 
           ./hack/deploy.sh
