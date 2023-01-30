@@ -39,6 +39,9 @@ func (r ReleaseCmdRunner) Run(cmd *goexec.Cmd) error {
 	if filepath.Base(cmd.Path) == "kbld" {
 		cmd.Args = append(cmd.Args, fmt.Sprintf("--imgpkg-lock-output=%s", r.tempImgLockFilepath))
 	}
+	if filepath.Base(cmd.Path) == "ytt" {
+		cmd.Args = append(cmd.Args, "--dangerous-data-values-disable-validation")
+	}
 	if r.fullOutput {
 		cmd.Stdout = io.MultiWriter(r.log, cmd.Stdout)
 		cmd.Stderr = io.MultiWriter(r.log, cmd.Stderr)
