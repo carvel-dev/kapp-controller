@@ -998,6 +998,7 @@ func clearKeys(keys []string, out string) string {
 		r := regexp.MustCompile(key + ".*")
 		out = r.ReplaceAllString(out, "")
 	}
+
 	//removing all empty lines
 	r := regexp.MustCompile(`[ ]*[\n\t]*\n`)
 	out = r.ReplaceAllString(out, "\n")
