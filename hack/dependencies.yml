@@ -11,26 +11,26 @@
   version: v0.44.3
 - checksums:
     darwin:
-      amd64: 187a25bfdd4cddc9936e8f304ac54802896bd95b41d4939b8dbb92defbb46faa
+      amd64: f0cdc652e4c8d56ec9f6f61030e353699e57faa2a0aedd1e786d44eb738f8ac1
     linux:
-      amd64: 1d799fe491c87c18fa3b25473ee04acceea04d410cc8f806e8a6b06fa82abaee
-      arm64: c54c5a78fde0e2db92da8afaa3d2d5b7407d291106a8b8b32af6cbde1a5b3ebc
+      amd64: 6a933fa76aa581b6c92c810c4c35877fad68187e2e9320b86876e00ec6852185
+      arm64: 4d3842e2199006a0326c43247392f39a9d82c23c77e6bc3015f4db72483a18de
   dev: true
   name: kbld
   repo: carvel-dev/kbld
   urlTemplate: https://github.com/carvel-dev/{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.36.3
+  version: v0.36.4
 - checksums:
     darwin:
-      amd64: 7349b265b327c6fb29fcf866e311029d3a5f06c18cb29d96b511fa378b245474
+      amd64: d3bf8bc733ed781ca5371ee6de008cb7682731995f1a9fb7748d2b21a6e7a9ff
     linux:
-      amd64: bb586f4ee94a8fdeea5b3fcb934b95b20bb0d502deab19e9a445a573b6a27071
-      arm64: 0e81eeb34bda28108f58011184c04226c422a83fc8a2d575dd5b85d4f569977a
+      amd64: 6b53e0d866fb3cdcb781475c23973eab6c37959e53c22094bc81f998884d74ae
+      arm64: 9b4c8c0d718a0655acfc37a7df04450a3caa6126facfe301cd479466e20f954f
   dev: true
   name: kapp
   repo: carvel-dev/kapp
   urlTemplate: https://github.com/carvel-dev/{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.54.2
+  version: v0.54.3
 - checksums:
     darwin:
       amd64: 33c9654e6e5e865f45f411bf45ea12e28590fdcb43961f758b6d3b28be4c1caf
