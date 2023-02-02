@@ -13,13 +13,18 @@ jobs:
         id: latest-sha
         run: |
           # Get the latest released docker image sha
-          curl -sL https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/releases/latest | jq -r '.assets[].browser_download_url' | wget -i -
+          curl -sL https://api.github.com/repos/carvel-dev/kapp-controller/releases/latest | jq -r '.assets[].browser_download_url' | wget -i -
 
           echo ::set-output name=image::$(yq eval '.spec.template.spec.containers[0].image' release.yml -N -j | jq 'select(. != null)' -r)
-          echo ::set-output name=tag::$(curl -sL https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/releases/latest | jq -r '.tag_name')
+          echo ::set-output name=tag::$(curl -sL https://api.github.com/repos/carvel-dev/kapp-controller/releases/latest | jq -r '.tag_name')
       - name: Install Trivy
         run: |
-          brew install aquasecurity/trivy/trivy
+          # https://aquasecurity.github.io/trivy/v0.18.3/installation/
+          sudo apt-get install wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
       - name: Run Trivy
         run: |
           trivy image ${{ steps.latest-sha.outputs.image }}
@@ -38,19 +43,19 @@ jobs:
           echo "SUMMARY=$summary" >> "$GITHUB_ENV"
       - name: Send Slack Notification
         if: success()
-        uses: slackapi/slack-github-action@v1.15.0
+        uses: slackapi/slack-github-action@v1.23.0
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
-          channel-id: G01FTP43JMQ
+          channel-id: C010XR15VHU
           slack-message: "${{ env.SUMMARY }}"
       - name: Send Failure notification
         if: failure()
-        uses: slackapi/slack-github-action@v1.15.0
+        uses: slackapi/slack-github-action@v1.23.0
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
-          channel-id: G01FTP43JMQ
+          channel-id: C010XR15VHU
           slack-message: "Trivy scan workflow [${{steps.latest-sha.outputs.tag}}] failed. Please check the latest github action run for trivy scanner."
   scan-develop-branch:
     runs-on: ubuntu-latest
@@ -58,11 +63,11 @@ jobs:
       security-events: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
         with:
           fetch-depth: 0
       - name: Set up Go 1.x
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v3
         with:
           go-version: "1.19.5"
       - name: Build the kapp-controller artifacts
@@ -74,7 +79,12 @@ jobs:
           docker build -t docker.io/carvel/kapp-controller:${{ github.sha }} .
       - name: Install Trivy
         run: |
-          brew install aquasecurity/trivy/trivy
+          # https://aquasecurity.github.io/trivy/v0.18.3/installation/
+          sudo apt-get install wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
       - name: Read dismissed CVEs from Github
         run: |
           set -o pipefail
@@ -97,7 +107,7 @@ jobs:
           trivy image --ignore-unfixed --format sarif --output trivy-results-image.sarif "docker.io/carvel/kapp-controller:${{ github.sha }}"
           trivy image --ignore-unfixed --format json --output trivy-results-image.json "docker.io/carvel/kapp-controller:${{ github.sha }}"
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
+        uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: '.'
       - name: Create Issues Summary
@@ -109,25 +119,33 @@ jobs:
           summary_image=$(jq '.Results[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' trivy-results-image.json | tr -d \\ | tr -d '"')
           
           summary=$( echo -e "Binary Image Summary:\n$summary_binary\nDocker Image Summary:\n$summary_image")
+
+          # Escape '%', '\n' and '\r' to support multiline strings with set-output
+          # https://github.com/orgs/community/discussions/26288
+          summary="${summary//'%'/'%25'}"
+          summary="${summary//$'\n'/'%0A'}"
+          summary="${summary//$'\r'/'%0D'}"
+
           if [[ -n $summary_binary || -n $summary_image ]]
           then
+            echo "Summary: $summary"
             echo "::set-output name=summary::$summary"
           else
-            echo "No new Issues where found"
+            echo "No new Issues were found"
           fi
       - name: Send Slack Notification if Scan Ran Successfully
         if: steps.cve-summary.outputs.summary != ''
-        uses: slackapi/slack-github-action@v1.16.0
+        uses: slackapi/slack-github-action@v1.23.0
         with:
-          slack-message: "New CVEs found! Check https://github.com/vmware-tanzu/carvel-kapp-controller/security/code-scanning for details \n ${{ steps.cve-summary.outputs.summary }}"
-          channel-id: G01FTP43JMQ
+          slack-message: "New CVEs found! Check https://github.com/carvel-dev/kapp-controller/security/code-scanning for details \n ${{ steps.cve-summary.outputs.summary }}"
+          channel-id: C010XR15VHU
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
       - name: Send Failure notification
         if: failure()
-        uses: slackapi/slack-github-action@v1.15.0
+        uses: slackapi/slack-github-action@v1.23.0
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
-          channel-id: G01FTP43JMQ
+          channel-id: C010XR15VHU
           slack-message: "Trivy scan workflow failed. Check: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}."

@@ -32,8 +32,8 @@ RUN curl -sLo /helm https://get.helm.sh/helm-v2.17.0-linux-amd64.tar.gz && \
   echo "f3bec3c7c55f6a9eb9e6586b8c503f370af92fe987fcbf741f37707606d70296  /helm" | sha256sum -c - && \
   mkdir /helm-v2-unpacked && tar -C /helm-v2-unpacked -xzvf /helm
 
-RUN curl -sLo /helm https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz && \
-  echo "2315941a13291c277dac9f65e75ead56386440d3907e0540bf157ae70f188347  /helm" | sha256sum -c - && \
+RUN curl -sLo /helm https://get.helm.sh/helm-v3.10.3-linux-amd64.tar.gz && \
+  echo "950439759ece902157cf915b209b8d694e6f675eaab5099fb7894f30eeaee9a2  /helm" | sha256sum -c - && \
   mkdir /helm-unpacked && tar -C /helm-unpacked -xzvf /helm
 
 # sops
