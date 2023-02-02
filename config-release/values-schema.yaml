@@ -9,8 +9,8 @@ dev:
   #@schema/desc "Development version"
   kapp_controller_version: develop
   #@schema/desc "Comma separated list of supported architectures"
-  platform: "linux/amd64,linux/arm64"
+  platform: ""
   #@schema/desc "Whether to push images to the OCI registry or not"
-  push_images: true
+  push_images: false
   #@schema/desc "Whether to cache the image or not"
-  image_cache: false
+  image_cache: true

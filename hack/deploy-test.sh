@@ -4,7 +4,7 @@ set -e
 
 source $(dirname "$0")/version-util.sh
 
-cat <<EOF >overlay.yml
+cat << EOF > overlay.yml
 #@ load("@ytt:overlay", "overlay")
 #@ load("@ytt:data", "data")
 #@ def resource(kind, name):
@@ -17,21 +17,10 @@ metadata:
 metadata:
   annotations:
     #@overlay/match missing_ok=True
-    kapp-controller.carvel.dev/version: #@ data.values.version
+    kapp-controller.carvel.dev/version: #@ data.values.dev.kapp_controller_version
 EOF
 
-cat <<EOF >values.yml
-#@data/values
----
-dev:
-  push_images: false
-  image_cache: true
-  platform: ""
-EOF
-
-./hack/build.sh && ytt -f config/ -f config-release/ -f values.yml > ./tmp/config.yml
-
-ytt -f ./tmp/config.yml -f overlay.yml -v version="$(get_kappctrl_ver)+develop" | kbld -f- | kapp deploy -a kc -f- -c -y
+./hack/build.sh && ytt -f config/ -f config-release/ -f overlay.yml -v dev.kapp_controller_version="$(get_kappctrl_ver)+develop" | kbld -f- | kapp deploy -a kc -f- -c -y
 
 source ./hack/secretgen-controller.sh
 deploy_secretgen-controller

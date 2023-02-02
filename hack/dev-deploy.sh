@@ -60,19 +60,8 @@ metadata:
 metadata:
   annotations:
     #@overlay/match missing_ok=True
-    kapp-controller.carvel.dev/version: #@ data.values.version
+    kapp-controller.carvel.dev/version: #@ data.values.dev.kapp_controller_version
 EOF
 
-cat <<EOF > tmp/build/values.yml
-#@data/values
----
-dev:
-  push_images: false
-  image_cache: true
-  platform: ""
-EOF
-
-ytt -f config/ -f config-release/ -f tmp/build/overlay.yml -f tmp/build/values.yml > ./tmp/config.yml
-
-ytt -f ./tmp/config.yml -f tmp/build/version-overlay.yml -v version="$(get_kappctrl_ver)+develop" | kbld -f- | kapp deploy -a kc -f- -c -y
+ytt -f config/ -f config-release/ -f tmp/build/overlay.yml -f tmp/build/version-overlay.yml -v dev.kapp_controller_version="$(get_kappctrl_ver)+develop" | kbld -f- | kapp deploy -a kc -f- -c -y
 
