@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674781960959,
+  "lastUpdate": 1675462643921,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -9777,6 +9777,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6477002429,
             "unit": "ns/op\t         4.278 DeleteSeconds\t         2.153 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "26af4b0e4e0dd1b9cde987704233436737615a4c",
+          "message": "Merge pull request #1073 from carvel-dev/go-bump\n\nBump go 1.19.5 to develop",
+          "timestamp": "2023-02-03T15:07:07-07:00",
+          "tree_id": "77056e448f1e2d6590bfb5c8183c1bb3520bfa48",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/26af4b0e4e0dd1b9cde987704233436737615a4c"
+        },
+        "date": 1675462643001,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36745749112,
+            "unit": "ns/op\t        19.00 DeleteSeconds\t        17.70 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8525140038,
+            "unit": "ns/op\t         4.300 DeleteSeconds\t         4.173 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6539578728,
+            "unit": "ns/op\t         4.291 DeleteSeconds\t         2.197 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
