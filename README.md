@@ -11,7 +11,7 @@ Kubernetes native continuous delivery and package management experience through 
 <a href="https://twitter.com/carvel_dev">Twitter</a>
 </p>
 
-## Features
+## Features 
 
 :zap: **Kubernetes Package Management** :zap:
 - [Authoring software packages](https://carvel.dev/kapp-controller/docs/latest/package-authoring/) through `Package` and `PackageMetadata` custom resources
