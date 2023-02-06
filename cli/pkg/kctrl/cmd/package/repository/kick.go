@@ -43,6 +43,11 @@ func NewKickCmd(o *KickOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Use:   "kick",
 		Short: "Trigger reconciliation for repository",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Example: cmdcore.Examples{
+			cmdcore.Example{"Trigger reconciliation for repository",
+				[]string{"package", "repository", "kick", "-r", "sample-repo"}},
+		}.Description("-r", o.pkgCmdTreeOpts),
+		SilenceUsage: true,
 		Annotations: map[string]string{cmdapp.TTYByDefaultKey: "",
 			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
