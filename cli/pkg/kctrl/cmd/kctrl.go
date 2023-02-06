@@ -186,7 +186,7 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 	pkgrepoCmd.AddCommand(pkgrepo.NewDeleteCmd(pkgrepo.NewDeleteOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgrepoCmd.AddCommand(pkgrepo.NewAddCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgrepoCmd.AddCommand(pkgrepo.NewUpdateCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
-	pkgrepoCmd.AddCommand(pkgrepo.NewKickCmd(pkgrepo.NewKickOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgrepo.NewKickCmd(pkgrepo.NewKickOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgrepoCmd.AddCommand(pkgreporel.NewReleaseCmd(pkgreporel.NewReleaseOptions(o.ui, o.depsFactory, o.logger)))
 
 	pkgiCmd := pkginst.NewCmd()
