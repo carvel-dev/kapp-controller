@@ -21,6 +21,7 @@ import (
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 type AddOrUpdateOptions struct {
@@ -33,6 +34,8 @@ type AddOrUpdateOptions struct {
 	SecureNamespaceFlags cmdcore.SecureNamespaceFlags
 	Name                 string
 	URL                  string
+
+	DryRun bool
 
 	CreateRepository bool
 
@@ -71,6 +74,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 
 	// TODO consider how to support other repository types
 	cmd.Flags().StringVar(&o.URL, "url", "", "OCI registry url for package repository bundle (required)")
+	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Print YAML for resources being applied to the cluster without applying them, optional")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -134,6 +138,14 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 	err := o.SecureNamespaceFlags.CheckForDisallowedSharedNamespaces(o.NamespaceFlags.Name)
 	if err != nil {
 		return err
+	}
+
+	if o.DryRun {
+		err = o.dryRun()
+		if err != nil {
+			return (fmt.Errorf("Generating resource YAML: %s", err))
+		}
+		return nil
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
@@ -250,4 +262,45 @@ func getPackageRepositoryDescription(name string, namespace string) string {
 		description += " cluster"
 	}
 	return description
+}
+
+func (o AddOrUpdateOptions) dryRun() error {
+	packageRepo := kcpkg.PackageRepository{
+		TypeMeta: metav1.TypeMeta{APIVersion: "packaging.carvel.dev/v1alpha1", Kind: "PackageRepository"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      o.Name,
+			Namespace: o.NamespaceFlags.Name,
+		},
+		Spec: kcpkg.PackageRepositorySpec{
+			Fetch: &kcpkg.PackageRepositoryFetch{
+				ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: o.URL},
+			},
+		},
+	}
+
+	ref, err := name.ParseReference(o.URL, name.WeakValidation)
+	if err != nil {
+		return fmt.Errorf("Parsing OCI registry URL: %s", err)
+	}
+
+	tag := ref.Identifier()
+
+	// the parser function sets the tag to "latest" if not specified, however we want it to be empty
+	if tag == "latest" && !strings.HasSuffix(o.URL, ":"+"latest") {
+		tag = ""
+	}
+
+	if tag == "" {
+		packageRepo.Spec.Fetch.ImgpkgBundle.TagSelection = &versions.VersionSelection{
+			Semver: &versions.VersionSelectionSemver{},
+		}
+	}
+
+	packageRepoYaml, err := yaml.Marshal(packageRepo)
+	if err != nil {
+		return fmt.Errorf("Marshalling PackageRepository YAML: %s", err)
+	}
+	o.ui.PrintLinef(string(packageRepoYaml))
+
+	return nil
 }
