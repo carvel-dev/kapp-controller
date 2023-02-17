@@ -54,6 +54,8 @@ type CreateOrUpdateOptions struct {
 
 	install bool
 
+	DryRun bool
+
 	Name                 string
 	NamespaceFlags       cmdcore.NamespaceFlags
 	SecureNamespaceFlags cmdcore.SecureNamespaceFlags
@@ -100,6 +102,7 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
+	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Print YAML for resources being applied to the cluster without applying them, optional")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -145,6 +148,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
+	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Print YAML for resources being applied to the cluster without applying them, optional")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -200,6 +204,8 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 }
 
 func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
+	o.createdAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
+
 	if o.pkgCmdTreeOpts.PositionalArgs {
 		o.Name = args[0]
 	}
@@ -215,6 +221,14 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 	err := o.SecureNamespaceFlags.CheckForDisallowedSharedNamespaces(o.NamespaceFlags.Name)
 	if err != nil {
 		return err
+	}
+
+	if o.DryRun {
+		err := PackageInstalledDryRun{o}.PrintResources()
+		if err != nil {
+			return (fmt.Errorf("Generating resource YAML: %s", err))
+		}
+		return nil
 	}
 
 	if len(o.version) == 0 {
@@ -247,8 +261,6 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 			return err
 		}
 	}
-
-	o.createdAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
 
 	// Fallback to update if resource exists
 	if pkgInstall != nil && err == nil {
