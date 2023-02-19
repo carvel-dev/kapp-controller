@@ -298,9 +298,9 @@ func (o AddOrUpdateOptions) dryRun() error {
 
 	packageRepoYaml, err := yaml.Marshal(packageRepo)
 	if err != nil {
-		return fmt.Errorf("Marshalling PackageRepository YAML: %s", err)
+		return fmt.Errorf("Marshaling PackageRepository YAML: %s", err)
 	}
-	o.ui.PrintLinef(string(packageRepoYaml))
+	o.ui.PrintBlock(packageRepoYaml)
 
 	return nil
 }
