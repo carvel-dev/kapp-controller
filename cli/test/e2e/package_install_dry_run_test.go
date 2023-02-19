@@ -60,6 +60,13 @@ subjects:
 apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageInstall
 metadata:
+  annotations:
+    packaging.carvel.dev/package-ClusterRole: test-kctrl-test-cluster-role
+    packaging.carvel.dev/package-ClusterRoleBinding: test-kctrl-test-cluster-rolebinding
+    packaging.carvel.dev/package-ServiceAccount: test-kctrl-test-sa
+    tkg.tanzu.vmware.com/tanzu-package-ClusterRole: test-kctrl-test-cluster-role
+    tkg.tanzu.vmware.com/tanzu-package-ClusterRoleBinding: test-kctrl-test-cluster-rolebinding
+    tkg.tanzu.vmware.com/tanzu-package-ServiceAccount: test-kctrl-test-sa
   creationTimestamp: null
   name: test
   namespace: kctrl-test
@@ -84,13 +91,6 @@ status:
 apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageInstall
 metadata:
-  annotations:
-    packaging.carvel.dev/package-ClusterRole: test-kctrl-test-cluster-role
-    packaging.carvel.dev/package-ClusterRoleBinding: test-kctrl-test-cluster-rolebinding
-    packaging.carvel.dev/package-ServiceAccount: test-kctrl-test-sa
-    tkg.tanzu.vmware.com/tanzu-package-ClusterRole: test-kctrl-test-cluster-role
-    tkg.tanzu.vmware.com/tanzu-package-ClusterRoleBinding: test-kctrl-test-cluster-rolebinding
-    tkg.tanzu.vmware.com/tanzu-package-ServiceAccount: test-kctrl-test-sa
   creationTimestamp: null
   name: test
   namespace: kctrl-test
@@ -130,14 +130,8 @@ apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageInstall
 metadata:
   annotations:
-    packaging.carvel.dev/package-ClusterRole: test-kctrl-test-cluster-role
-    packaging.carvel.dev/package-ClusterRoleBinding: test-kctrl-test-cluster-rolebinding
     packaging.carvel.dev/package-Secret: test-kctrl-test-values
-    packaging.carvel.dev/package-ServiceAccount: test-kctrl-test-sa
-    tkg.tanzu.vmware.com/tanzu-package-ClusterRole: test-kctrl-test-cluster-role
-    tkg.tanzu.vmware.com/tanzu-package-ClusterRoleBinding: test-kctrl-test-cluster-rolebinding
     tkg.tanzu.vmware.com/tanzu-package-Secret: test-kctrl-test-values
-    tkg.tanzu.vmware.com/tanzu-package-ServiceAccount: test-kctrl-test-sa
   creationTimestamp: null
   name: test
   namespace: kctrl-test

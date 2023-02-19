@@ -33,10 +33,8 @@ func (d PackageInstalledDryRun) PrintResources() error {
 	}
 
 	rbacResourcesYAML := ""
-	createRBAC := d.serviceAccountName != ""
+	createRBAC := d.serviceAccountName == ""
 	if createRBAC {
-		packageInstall.Spec.ServiceAccountName = d.serviceAccountName
-	} else {
 		packageInstall.Spec.ServiceAccountName = d.createdAnnotations.ServiceAccountAnnValue()
 
 		serviceAccount := &corev1.ServiceAccount{
@@ -52,7 +50,7 @@ func (d PackageInstalledDryRun) PrintResources() error {
 		}
 		serviceAccountYAML, err := yaml.Marshal(serviceAccount)
 		if err != nil {
-			return fmt.Errorf("Marshalling ServiceAccount YAML: %s", err)
+			return fmt.Errorf("Marshaling ServiceAccount YAML: %s", err)
 		}
 
 		clusterRole := &rbacv1.ClusterRole{
@@ -70,7 +68,7 @@ func (d PackageInstalledDryRun) PrintResources() error {
 		}
 		clusterRoleYAML, err := yaml.Marshal(clusterRole)
 		if err != nil {
-			return fmt.Errorf("Marshalling ClusterRole YAML: %s", err)
+			return fmt.Errorf("Marshaling ClusterRole YAML: %s", err)
 		}
 
 		clusterRoleBinding := &rbacv1.ClusterRoleBinding{
@@ -91,10 +89,12 @@ func (d PackageInstalledDryRun) PrintResources() error {
 		}
 		clusterRoleBindingYAML, err := yaml.Marshal(clusterRoleBinding)
 		if err != nil {
-			return fmt.Errorf("Marshalling ClusterRoleBinding YAML: %s", err)
+			return fmt.Errorf("Marshaling ClusterRoleBinding YAML: %s", err)
 		}
 
 		rbacResourcesYAML = yamlSeperator + string(serviceAccountYAML) + yamlSeperator + string(clusterRoleYAML) + yamlSeperator + string(clusterRoleBindingYAML)
+	} else {
+		packageInstall.Spec.ServiceAccountName = d.serviceAccountName
 	}
 
 	secretResourcesYAML := ""
@@ -123,7 +123,7 @@ func (d PackageInstalledDryRun) PrintResources() error {
 		}
 		secretYAML, err := yaml.Marshal(secret)
 		if err != nil {
-			return fmt.Errorf("Marshalling Secret YAML: %s", err)
+			return fmt.Errorf("Marshaling Secret YAML: %s", err)
 		}
 		secretResourcesYAML = yamlSeperator + string(secretYAML)
 
@@ -139,9 +139,9 @@ func (d PackageInstalledDryRun) PrintResources() error {
 
 	packageInstallYAML, err := yaml.Marshal(packageInstall)
 	if err != nil {
-		return fmt.Errorf("Marshalling PackageInstall YAML: %s", err)
+		return fmt.Errorf("Marshaling PackageInstall YAML: %s", err)
 	}
 
-	d.ui.PrintLinef(rbacResourcesYAML + secretResourcesYAML + yamlSeperator + string(packageInstallYAML))
+	d.ui.PrintBlock([]byte(rbacResourcesYAML + secretResourcesYAML + yamlSeperator + string(packageInstallYAML)))
 	return nil
 }
