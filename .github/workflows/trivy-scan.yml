@@ -14,10 +14,10 @@ jobs:
         run: |
           set -eo pipefail
           # Get the latest released docker image sha
-          curl -sL https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/releases/latest | jq -r '.assets[] | select(.name | contains("release.yml")).browser_download_url' | wget -i -
+          curl -sL https://api.github.com/repos/carvel-dev/kapp-controller/releases/latest | jq -r '.assets[] | select(.name | contains("release.yml")).browser_download_url' | wget -i -
 
           echo "image=$(yq eval '.spec.template.spec.containers[0].image' release.yml -N -oj | jq 'select(. != null)' -r)"  >> $GITHUB_OUTPUT
-          echo "tag=$(curl -sL https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/releases/latest | jq -r '.tag_name')" >> $GITHUB_OUTPUT
+          echo "tag=$(curl -sL https://api.github.com/repos/carvel-dev/kapp-controller/releases/latest | jq -r '.tag_name')" >> $GITHUB_OUTPUT
       - name: Install Trivy
         run: |
           # https://aquasecurity.github.io/trivy/v0.18.3/installation/
@@ -99,7 +99,7 @@ jobs:
             echo "the curl reply was:"
             cat cves.txt
           }
-          curl https://api.github.com/repos/vmware-tanzu/carvel-kapp-controller/code-scanning/alerts \
+          curl https://api.github.com/repos/carvel-dev/kapp-controller/code-scanning/alerts \
             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' > cves.txt
           cat cves.txt| jq '.[] | select(.state == "dismissed" or .state == "closed" or .state == "fixed") | .rule.id' | tr -d '"' > .trivyignore
       - name: Run Trivy Reports
@@ -148,7 +148,7 @@ jobs:
         if: steps.cve-summary.outputs.summary != ''
         uses: slackapi/slack-github-action@v1.23.0
         with:
-          slack-message: "New CVEs found! Check https://github.com/vmware-tanzu/carvel-kapp-controller/security/code-scanning for details \n ${{ steps.cve-summary.outputs.summary }}"
+          slack-message: "New CVEs found! Check https://github.com/carvel-dev/kapp-controller/security/code-scanning for details \n ${{ steps.cve-summary.outputs.summary }}"
           channel-id: C010XR15VHU
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

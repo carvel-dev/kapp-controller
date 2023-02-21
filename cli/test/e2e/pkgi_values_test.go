@@ -97,7 +97,7 @@ foo: bar
 	})
 
 	// TODO: Add check for ensuring that we wait for reconciliation when secrets are updated
-	// When https://github.com/vmware-tanzu/carvel-kapp-controller/issues/670 is resolved
+	// When https://github.com/carvel-dev/kapp-controller/issues/670 is resolved
 
 	logger.Section("Updating values config for test package", func() {
 		out, err := kappCtrl.RunWithOpts([]string{"package", "installed", "update", "--package-install", pkgiName, "--values-file", "-"}, RunOpts{StdinReader: strings.NewReader(valuesFile)})

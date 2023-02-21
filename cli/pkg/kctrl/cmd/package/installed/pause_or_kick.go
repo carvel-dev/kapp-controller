@@ -290,7 +290,7 @@ func (o *PauseOrKickOptions) waitForPackageInstallReconciliation(client kcclient
 			return false, nil
 		}
 		// Temporary workaround so that we do not pick up stale conditions
-		// To be removed on resolution of: https://github.com/vmware-tanzu/carvel-kapp-controller/issues/639
+		// To be removed on resolution of: https://github.com/carvel-dev/kapp-controller/issues/639
 		// Poll interval to be reverted to 1s post removal
 		if appResource.Generation != appResource.Status.ObservedGeneration {
 			return false, nil

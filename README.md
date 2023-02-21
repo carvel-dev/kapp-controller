@@ -6,7 +6,7 @@ Kubernetes native continuous delivery and package management experience through 
 
 <p>
 <a href="https://carvel.dev/kapp-controller/docs/latest">Documentation</a> ·
-<a href="https://github.com/orgs/vmware-tanzu/projects/16/views/1?filterQuery=repo%3A%22vmware-tanzu%2Fcarvel-kapp-controller%22">Backlog</a> ·
+<a href="https://github.com/orgs/carvel-dev/projects/1/views/1?filterQuery=repo%3A%22carvel-dev%2Fkapp-controller%22">Backlog</a> ·
 <a href="https://kubernetes.slack.com/archives/CH8KCCKA5">Slack</a> ·
 <a href="https://twitter.com/carvel_dev">Twitter</a>
 </p>
@@ -31,7 +31,7 @@ Kubernetes native continuous delivery and package management experience through 
 
 Check out our [contributing guidelines](CONTRIBUTING.md).
 
-First time contributing? Welcome! We are excited to support you, we have created a [list of good issues to get started](https://github.com/vmware-tanzu/carvel-kapp-controller/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22).
+First time contributing? Welcome! We are excited to support you, we have created a [list of good issues to get started](https://github.com/carvel-dev/kapp-controller/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22).
 
 Detailed instructions on how to setup and test locally can be found in our [developer guide](docs/dev.md).
 
@@ -42,4 +42,4 @@ Please join us during our online community meetings. Details can be found on our
 
 You can chat with us on Kubernetes Slack in the #carvel channel and follow us on Twitter at @carvel_dev.
 
-Check out which organizations are using and contributing to Carvel: [Adopter's list](https://github.com/vmware-tanzu/carvel/blob/master/ADOPTERS.md)
+Check out which organizations are using and contributing to Carvel: [Adopter's list](https://github.com/carvel-dev/carvel/blob/master/ADOPTERS.md)
