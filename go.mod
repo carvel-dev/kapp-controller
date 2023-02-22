@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/fatih/color v1.12.0 // indirect
 	github.com/gogo/protobuf v1.3.2
-	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/prometheus/client_golang v1.12.2
 	github.com/stretchr/testify v1.8.1
@@ -18,9 +18,9 @@ require (
 	k8s.io/apimachinery v0.25.6
 	k8s.io/apiserver v0.25.6
 	k8s.io/client-go v0.25.6
-	k8s.io/code-generator v0.25.6
+	k8s.io/code-generator v0.26.0-alpha.2
 	k8s.io/kube-aggregator v0.22.17
-	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1
+	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280
 	sigs.k8s.io/controller-runtime v0.13.1
 	sigs.k8s.io/controller-tools v0.7.0
 	sigs.k8s.io/yaml v1.3.0
@@ -35,15 +35,13 @@ require (
 	golang.org/x/sync v0.1.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/component-base v0.25.6
-	k8s.io/klog/v2 v2.70.1
+	k8s.io/klog/v2 v2.80.1
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed
 )
 
 require (
 	cloud.google.com/go v0.97.0 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
-	github.com/PuerkitoBio/purell v1.1.1 // indirect
-	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -51,14 +49,14 @@ require (
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
+	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/go-logr/zapr v1.2.3 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
-	github.com/go-openapi/jsonreference v0.19.6 // indirect
+	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/swag v0.19.15 // indirect
 	github.com/gobuffalo/flect v0.2.3 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -113,12 +111,12 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220502173005-c8bf987b8c21 // indirect
 	google.golang.org/grpc v1.47.0 // indirect
-	google.golang.org/protobuf v1.28.0 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	k8s.io/apiextensions-apiserver v0.25.0 // indirect
-	k8s.io/gengo v0.0.0-20211129171323-c02415ce4185 // indirect
+	k8s.io/gengo v0.0.0-20220902162205-c0856e24416d // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.35 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
