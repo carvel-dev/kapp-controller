@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677090039536,
+  "lastUpdate": 1677090189716,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -9987,6 +9987,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6484060691,
             "unit": "ns/op\t         4.285 DeleteSeconds\t         2.147 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "33b7fabd319231b3dd85554b6e31e70c0cfc994c",
+          "message": "allow minor bumps to depedencies via dependabot",
+          "timestamp": "2023-02-22T11:13:06-07:00",
+          "tree_id": "07d5a1992bfdc8c42f85eaa9fcb5eb63d62dffd4",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/33b7fabd319231b3dd85554b6e31e70c0cfc994c"
+        },
+        "date": 1677090188666,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35415438679,
+            "unit": "ns/op\t        17.87 DeleteSeconds\t        17.50 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8495718573,
+            "unit": "ns/op\t         4.284 DeleteSeconds\t         4.168 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6432314697,
+            "unit": "ns/op\t         4.257 DeleteSeconds\t         2.134 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
