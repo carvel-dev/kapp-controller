@@ -1,0 +1,33 @@
+#@ load("@ytt:data", "data")
+
+---
+apiVersion: kbld.k14s.io/v1alpha1
+kind: Config
+sources:
+- image: kapp-controller
+  path: .
+  docker:
+    buildx:
+      #@ if data.values.dev.rapid_deploy:
+      pull: false
+      noCache: false
+      file: Dockerfile.dev
+      buildkit: true
+      #@ elif data.values.dev.push_images:
+      #! Always rebuild image
+      pull: true
+      noCache: true
+      #@ end
+      #! pass kapp_controller_version into Dockerfile.
+      rawOptions:
+      - #@ "--build-arg=KCTRL_VER="+data.values.dev.version
+      #@ if/end data.values.dev.platform != "":
+      - #@ "--platform="+data.values.dev.platform
+
+#@ if/end data.values.dev.push_images:
+---
+apiVersion: kbld.k14s.io/v1alpha1
+kind: Config
+destinations:
+- image: kapp-controller
+  newImage: #@ data.values.dev.image_repo

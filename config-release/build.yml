@@ -1,5 +1,6 @@
 #@ load("@ytt:data", "data")
 
+---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: Config
 sources:
@@ -8,17 +9,15 @@ sources:
   docker:
     buildx:
       pull: true
-      noCache: #@ not data.values.image_cache
+      noCache: true
       #! pass kapp_controller_version into Dockerfile.
       rawOptions:
-      - #@ "--build-arg=KCTRL_VER="+data.values.kapp_controller_version
-      #@ if/end data.values.platform != "":
-      - #@ "--platform="+data.values.platform
-
-#@ if/end data.values.push_images:
+      - #@ "--build-arg=KCTRL_VER="+data.values.dev.version
+      #@ if/end data.values.dev.platform != "":
+      - #@ "--platform="+data.values.dev.platform
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: Config
 destinations:
 - image: kapp-controller
-  newImage: #@ data.values.image_repo
+  newImage: #@ data.values.dev.image_repo

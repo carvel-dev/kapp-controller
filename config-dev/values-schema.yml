@@ -1,0 +1,16 @@
+#@data/values-schema
+---
+#@overlay/match missing_ok=True
+#@overlay/match-child-defaults
+#@schema/desc "Configuration explicitly for developing kapp-controller"
+dev:
+  #@schema/desc "Whether to push images to the OCI registry or not"
+  push_images: false
+  #@schema/desc "Whether to use the faster deployment type whilst developing (must have deployed to a cluster once fully first)"
+  rapid_deploy: false
+  #@schema/desc "Location of kapp-controller image"
+  image_repo: docker.io/k14s/kapp-controller-test
+  #@schema/desc "Development version"
+  version: develop
+  #@schema/desc "Comma separated list of supported architectures"
+  platform: ""

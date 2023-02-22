@@ -1,0 +1,19 @@
+#@data/values-schema
+---
+#@schema/desc "The namespace in which to deploy kapp-controller"
+namespace: kapp-controller
+#@schema/desc "Whether to create namespace specified for kapp-controller"
+create_namespace: true
+#@schema/desc "The global packaging namespace for kapp-controller"
+packaging_global_namespace: kapp-controller-packaging-global
+#@schema/desc "Whether to create the global packaging namespace for kapp-controller"
+create_packaging_namespace: true
+#! clusters version 1.19 and below should disable APIPriorityAndFairness by setting the below to false
+#@schema/desc "Whether to enable api priority and fairness"
+enable_api_priority_and_fairness: true
+#@schema/desc "Whether to enable pprofiling for kapp-controller"
+dangerous_enable_pprof: false
+#@schema/desc "Comma separated list of cipher suites - empty for language defaults"
+tls_cipher_suites: ""
+#@schema/desc "API port"
+api_port: 10350
