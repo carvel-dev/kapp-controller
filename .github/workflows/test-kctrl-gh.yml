@@ -33,6 +33,7 @@ jobs:
       uses: carvel-dev/setup-action@v1
       with:
         only: ytt, kbld, imgpkg, vendir, kapp
+        token: ${{ secrets.GITHUB_TOKEN }}
     - name: Run Tests
       run: |
         set -e -x
