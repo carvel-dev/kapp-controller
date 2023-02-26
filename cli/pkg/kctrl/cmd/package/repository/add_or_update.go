@@ -19,6 +19,7 @@ import (
 	kcpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -33,6 +34,7 @@ type AddOrUpdateOptions struct {
 	SecureNamespaceFlags cmdcore.SecureNamespaceFlags
 	Name                 string
 	URL                  string
+	CreateNamespace      bool
 
 	CreateRepository bool
 
@@ -71,6 +73,8 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 
 	// TODO consider how to support other repository types
 	cmd.Flags().StringVar(&o.URL, "url", "", "OCI registry url for package repository bundle (required)")
+
+	cmd.Flags().BoolVar(&o.CreateNamespace, "create-namespace", false, "Create the package repository namespace if not present (default false)")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -139,6 +143,24 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 	client, err := o.depsFactory.KappCtrlClient()
 	if err != nil {
 		return err
+	}
+
+	if o.CreateNamespace {
+		coreClient, err := o.depsFactory.CoreClient()
+		if err != nil {
+			return err
+		}
+
+		namespace := &v1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: o.NamespaceFlags.Name,
+			},
+		}
+
+		_, err = coreClient.CoreV1().Namespaces().Create(context.Background(), namespace, metav1.CreateOptions{})
+		if err != nil {
+			o.ui.PrintLinef("The namespace %s already exists", o.NamespaceFlags.Name)
+		}
 	}
 
 	existingRepository, err := client.PackagingV1alpha1().PackageRepositories(o.NamespaceFlags.Name).Get(

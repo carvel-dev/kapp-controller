@@ -127,4 +127,21 @@ func TestPackageRepository(t *testing.T) {
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
 
+	logger.Section("creating a repository in a new namespace that doesn't exist", func() {
+		repoNamespace := "carvel-test-repos-a"
+
+		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL, "-n", repoNamespace, "--create-namespace"})
+
+		kubectl.Run([]string{"get", kind, pkgrName, "-n", repoNamespace})
+	})
+
+	logger.Section("creating a repository in a namespace that already exists", func() {
+		repoNamespace := "carvel-test-repos-b"
+		kubectl.Run([]string{"create", "namespace", repoNamespace})
+
+		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL, "-n", repoNamespace, "--create-namespace"})
+
+		kubectl.Run([]string{"get", kind, pkgrName, "-n", repoNamespace})
+	})
+
 }
