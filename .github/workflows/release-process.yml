@@ -19,6 +19,12 @@ jobs:
       - name: Install Carvel Tools
         run: ./hack/install-deps.sh
 
+      - name: Install imgpkg
+        uses: carvel-dev/setup-action@v1
+        with:
+          only: imgpkg
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
