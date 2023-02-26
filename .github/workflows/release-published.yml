@@ -11,6 +11,7 @@ jobs:
         with:
           only: kctrl
           kctrl: ${{ github.event.release.tag_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           kctrl version
           version=`kctrl version`
