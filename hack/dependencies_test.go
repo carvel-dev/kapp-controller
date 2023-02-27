@@ -14,11 +14,13 @@ import (
 )
 
 func init() {
-	client = http.DefaultClient
+	client = &http.Client{
+		// try to use a Github API token from the environment to avoid rate-limiting
+		Transport: newGithubTransport(),
+	}
 }
 
 func TestDependencyDownload(t *testing.T) {
-	client = http.DefaultClient
 	for _, tc := range []struct {
 		name string
 		dep  dependency
