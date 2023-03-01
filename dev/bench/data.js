@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677097663364,
+  "lastUpdate": 1677649103742,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -10113,6 +10113,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 7556562155,
             "unit": "ns/op\t         4.331 DeleteSeconds\t         3.169 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "distinct": true,
+          "id": "dc9017a0886b809b21fc6dccf70d8ff04f63c29b",
+          "message": "Deflake TestConfig_TrustCACerts\n\nSigned-off-by: Praveen Rewar <8457124+praveenrewar@users.noreply.github.com>",
+          "timestamp": "2023-03-01T10:57:33+05:30",
+          "tree_id": "60b0540fb463ac7bc76c0e787bd9001b45e17188",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/dc9017a0886b809b21fc6dccf70d8ff04f63c29b"
+        },
+        "date": 1677649102291,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36565988952,
+            "unit": "ns/op\t        18.99 DeleteSeconds\t        17.53 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8626260033,
+            "unit": "ns/op\t         4.405 DeleteSeconds\t         4.166 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6595135179,
+            "unit": "ns/op\t         4.385 DeleteSeconds\t         2.162 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
