@@ -19,7 +19,7 @@ import (
 	kcpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -146,12 +146,14 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 	}
 
 	if o.CreateNamespace {
+		o.statusUI.PrintMessagef("Creating namespace '%s'", o.NamespaceFlags.Name)
+
 		coreClient, err := o.depsFactory.CoreClient()
 		if err != nil {
 			return err
 		}
 
-		namespace := &v1.Namespace{
+		namespace := &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: o.NamespaceFlags.Name,
 			},
@@ -159,7 +161,11 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 
 		_, err = coreClient.CoreV1().Namespaces().Create(context.Background(), namespace, metav1.CreateOptions{})
 		if err != nil {
-			o.ui.PrintLinef("The namespace %s already exists", o.NamespaceFlags.Name)
+			if errors.IsAlreadyExists(err) {
+				o.statusUI.PrintMessagef("The namespace '%s' already exists", o.NamespaceFlags.Name)
+			} else {
+				return err
+			}
 		}
 	}
 
@@ -184,7 +190,6 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 	}
 
 	if o.WaitFlags.Enabled {
-		o.ui.PrintLinef("Waiting for package repository to be updated")
 		err = o.waitForPackageRepositoryInstallation(client)
 	}
 
