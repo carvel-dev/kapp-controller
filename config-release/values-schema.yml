@@ -1,0 +1,12 @@
+#@data/values-schema
+---
+#@overlay/match missing_ok=True
+#@overlay/match-child-defaults
+#@schema/desc "Configuration explicitly for developing kapp-controller"
+dev:
+  #@schema/desc "Location of kapp-controller image"
+  image_repo: ghcr.io/carvel-dev/kapp-controller
+  #@schema/desc "Development version"
+  version: develop
+  #@schema/desc "Comma separated list of supported architectures"
+  platform: "linux/amd64,linux/arm64"
