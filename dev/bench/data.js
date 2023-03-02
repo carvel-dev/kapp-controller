@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677649103742,
+  "lastUpdate": 1677767455997,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -10155,6 +10155,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6595135179,
             "unit": "ns/op\t         4.385 DeleteSeconds\t         2.162 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9682ece7c8379252065a8a37afce7af57d5de27d",
+          "message": "Do not expose development values to kc package bundle (#1111)\n\nStructure the config values to have a clear separation of values\r\nUpdate dev-deploy.sh to use these config values\r\n\r\nSigned-off-by: Praveen Rewar <8457124+praveenrewar@users.noreply.github.com>",
+          "timestamp": "2023-03-02T19:48:02+05:30",
+          "tree_id": "41806ff8634a1bbbb146258f7810b63bd8f11d83",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/9682ece7c8379252065a8a37afce7af57d5de27d"
+        },
+        "date": 1677767454256,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 38130987265,
+            "unit": "ns/op\t        19.32 DeleteSeconds\t        18.74 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8734704011,
+            "unit": "ns/op\t         4.409 DeleteSeconds\t         4.225 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 7690574322,
+            "unit": "ns/op\t         4.371 DeleteSeconds\t         3.266 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
