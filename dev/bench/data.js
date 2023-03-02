@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677789280394,
+  "lastUpdate": 1677789361828,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -10239,6 +10239,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5478190182,
             "unit": "ns/op\t         3.278 DeleteSeconds\t         2.159 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9870aee8b5b80cbd0d6f218461171aa423c6adb0",
+          "message": "Merge pull request #1106 from carvel-dev/dependabot/go_modules/github.com/prometheus/client_golang-1.14.0\n\nBump github.com/prometheus/client_golang from 1.12.2 to 1.14.0",
+          "timestamp": "2023-03-02T13:24:29-07:00",
+          "tree_id": "54175d212d6a5c64f99fd7180eddca0d805dae0d",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/9870aee8b5b80cbd0d6f218461171aa423c6adb0"
+        },
+        "date": 1677789359936,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36989562009,
+            "unit": "ns/op\t        19.31 DeleteSeconds\t        17.63 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8583307794,
+            "unit": "ns/op\t         4.334 DeleteSeconds\t         4.201 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6521104595,
+            "unit": "ns/op\t         4.302 DeleteSeconds\t         2.170 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
