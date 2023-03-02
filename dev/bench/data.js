@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677767455997,
+  "lastUpdate": 1677789280394,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -10197,6 +10197,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 7690574322,
             "unit": "ns/op\t         4.371 DeleteSeconds\t         3.266 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "18197babab94ab91012b6ffe8507ea71aadeaff3",
+          "message": "Merge pull request #1116 from carvel-dev/dependabot/github_actions/actions/add-to-project-0.4.1\n\nBump actions/add-to-project from 0.4.0 to 0.4.1",
+          "timestamp": "2023-03-02T13:23:55-07:00",
+          "tree_id": "ff3a04946288766382aecc0035613503dec7ce13",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/18197babab94ab91012b6ffe8507ea71aadeaff3"
+        },
+        "date": 1677789279067,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36573840764,
+            "unit": "ns/op\t        19.01 DeleteSeconds\t        17.52 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8537694307,
+            "unit": "ns/op\t         4.329 DeleteSeconds\t         4.167 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5478190182,
+            "unit": "ns/op\t         3.278 DeleteSeconds\t         2.159 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
