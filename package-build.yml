@@ -16,7 +16,6 @@ spec:
           - ytt:
               paths:
               - config
-              - config-release
           - kbld:
               paths:
               - '-'
@@ -27,5 +26,4 @@ spec:
           useKbldImagesLock: false
         includePaths:
         - config
-        - config-release
         - .imgpkg/images.yml

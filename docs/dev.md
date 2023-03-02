@@ -39,8 +39,8 @@ things up.
 
 #### Non-minikube environment
 
-1. Change the [push_images property](https://github.com/carvel-dev/kapp-controller/blob/develop/config/values.yml#L10) to true
-2. Change the [image_repo property](https://github.com/carvel-dev/kapp-controller/blob/develop/config/values.yml#L12) to the location to push the kapp-controller image
+1. Change the [push_images property](https://github.com/carvel-dev/kapp-controller/blob/develop/config-dev/values-schema.yml#L8) to true
+2. Change the [image_repo property](https://github.com/carvel-dev/kapp-controller/blob/develop/config-dev/values-schema.yml#L12) to the location to push the kapp-controller image
 3. Run `./hack/deploy.sh`
 
 *Note:* As above, while iterating you may prefer to run
@@ -170,15 +170,15 @@ to the date of the original release. For example:
 #### Release development process 
 
 If you are making changes to the release process and want to test the process, it is recommended 
-to work on a fork of kapp-controller instead of against the repository in the vmware-tanzu organization.
+to work on a fork of kapp-controller instead of against the repository in the carvel-dev organization.
 
 To do this, you can start by forking this repository. 
 
 Next, head to the `Actions` tab of the fork you are using and enable GitHub Actions to run 
 against this fork (i.e. By default, Actions do not run against forked repositories). 
 
-Change the [`config-release/values.yml`](../config-release/values.yml) to point to your forked repository by changing 
-`image_repo: ghcr.io/vmware-tanzu/carvel-kapp-controller` to `image_repo: ghcr.io/<YOUR GitHub USERNAME>/carvel-kapp-controller`.
+Change the [`config-release/values-schema.yml`](../config-release/values-schema.yml) to point to your forked repository by changing 
+`image_repo: ghcr.io/carvel-dev/kapp-controller` to `image_repo: ghcr.io/<YOUR GitHub USERNAME>/kapp-controller`.
 
 After these steps have been carried out, you can trigger the release process by pushing a tag 
 to your forked repository.
