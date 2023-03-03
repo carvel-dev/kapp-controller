@@ -14,7 +14,7 @@ go build -trimpath -mod=vendor -o controller ./cmd/controller/...
 ls -la ./controller
 
 ./hack/gen-crds.sh
-ytt -f config -f config-dev >/dev/null
+ytt -f config/config -f config/values-schema.yml -f config-dev >/dev/null
 
 # compile tests, but do not run them: https://github.com/golang/go/issues/15513#issuecomment-839126426
 go test --exec=echo ./... >/dev/null
