@@ -17,3 +17,57 @@ dangerous_enable_pprof: false
 tls_cipher_suites: ""
 #@schema/desc "API port"
 api_port: 10350
+#@schema/desc "The coreDNSIP will be injected into /etc/resolv.conf of kapp-controller pod"
+coreDNSIP: ""
+#@schema/desc "HostNetwork of kapp-controller deployment."
+hostNetwork: false
+#@schema/desc "PriorityClassName of kapp-controller deployment."
+priorityClassName: ""
+#@schema/desc "Concurrency of kapp-controller deployment"
+concurrency: 4
+#@schema/desc "Toleration of kapp-controller deployment."
+tolerations: [""]
+#@schema/desc "Address for metrics server."
+metricsBindAddress: ""
+
+#@schema/desc "Controller Configuration Spec"
+#@overlay/match-child-defaults missing_ok=True
+config:
+  #@schema/desc "A cert chain of trusted ca certs. These will be added to the system-wide cert pool of trusted ca's. Default is empty"
+  caCerts: ""
+  #@schema/desc "The url/ip of a proxy for kapp controller to use when making network requests. Default is empty"
+  httpProxy: ""
+  #@schema/desc "The url/ip of a tls capable proxy for kapp controller to use when making network requests. Default is empty"
+  httpsProxy: ""
+  #@schema/desc "A comma delimited list of domain names which kapp controller should bypass the proxy for when making requests. Default is empty"
+  noProxy: ""
+  #@schema/desc "A comma delimited list of hostnames for which kapp controller should skip TLS verification. Default is empty"
+  dangerousSkipTLSVerify: ""
+  #@schema/desc "JSON encoded array of kapp deploy rawOptions that are applied to all App CRs."
+  kappDeployRawOptions: ""
+  #@schema/desc "Time duration value used as a default for App CR's spec.syncPeriod. Minimum is 30s."
+  appDefaultSyncPeriod: ""
+  #@schema/desc "Time duration value to force a minimum for App CR's spec.syncPeriod. Minimum is 30s."
+  appMinimumSyncPeriod: ""
+
+#@schema/desc "Configuration for deployments"
+#@overlay/match-child-defaults missing_ok=True
+deployment:
+  #@schema/desc "Update strategy of deployments, empty uses default strategy"
+  updateStrategy: ""
+  #@schema/desc "Rolling update strategy. Applied only if RollingUpdate is used as updateStrategy"
+  rollingUpdate:
+    #@schema/desc "The maxUnavailable of rollingUpdate. Applied only if RollingUpdate is used as updateStrategy"
+    maxUnavailable: 1
+    #@schema/desc "The maxSurge of rollingUpdate. Applied only if RollingUpdate is used as updateStrategy"
+    maxSurge: 0
+
+#@schema/type any=True
+#@schema/desc "NodeSelector configuration applied to all the deployments"
+nodeSelector: null
+
+#@schema/desc "Configuration for daemonsets"
+#@overlay/match-child-defaults missing_ok=True
+daemonset:
+  #@schema/desc "Update strategy of daemonset, empty uses default strategy"
+  updateStrategy: ""
