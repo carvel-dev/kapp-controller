@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677789361828,
+  "lastUpdate": 1678082323465,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -10281,6 +10281,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6521104595,
             "unit": "ns/op\t         4.302 DeleteSeconds\t         2.170 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "distinct": true,
+          "id": "4485e29a2b218b333d9a99e0547606351356f7d5",
+          "message": "Add example for pkg repo kick\n\nSigned-off-by: Praveen Rewar <8457124+praveenrewar@users.noreply.github.com>",
+          "timestamp": "2023-03-06T11:18:16+05:30",
+          "tree_id": "e358684a2ee2748a08318552b5b7ff8bbb46a393",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/4485e29a2b218b333d9a99e0547606351356f7d5"
+        },
+        "date": 1678082322149,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37722488906,
+            "unit": "ns/op\t        19.11 DeleteSeconds\t        18.57 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8527624946,
+            "unit": "ns/op\t         4.306 DeleteSeconds\t         4.179 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6470364605,
+            "unit": "ns/op\t         4.276 DeleteSeconds\t         2.141 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
