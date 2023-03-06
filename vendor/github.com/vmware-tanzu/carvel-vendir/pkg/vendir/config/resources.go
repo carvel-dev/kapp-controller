@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 
 	kyaml "k8s.io/apimachinery/pkg/util/yaml"
@@ -25,12 +24,12 @@ func parseResources(paths []string, resourceFunc func([]byte) error) error {
 		var err error
 
 		if path == "-" {
-			bs, err = ioutil.ReadAll(os.Stdin)
+			bs, err = io.ReadAll(os.Stdin)
 			if err != nil {
 				return fmt.Errorf("Reading config from stdin: %s", err)
 			}
 		} else {
-			bs, err = ioutil.ReadFile(path)
+			bs, err = os.ReadFile(path)
 			if err != nil {
 				return fmt.Errorf("Reading config '%s': %s", path, err)
 			}
@@ -45,6 +44,10 @@ func parseResources(paths []string, resourceFunc func([]byte) error) error {
 			}
 			if err != nil {
 				return fmt.Errorf("Parsing config '%s': %s", path, err)
+			}
+			// Skip documents that are empty or only contain whitespace
+			if len(bytes.TrimSpace(docBytes)) == 0 {
+				continue
 			}
 			err = resourceFunc(docBytes)
 			if err != nil {
