@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678208928647,
+  "lastUpdate": 1678213792950,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -10449,6 +10449,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6475200319,
             "unit": "ns/op\t         4.277 DeleteSeconds\t         2.149 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "039ce70667c6879669ad1aa09d0f706be33a0994",
+          "message": "Print errors while parsing default values for a pkg (#1041)\n\nDo not ignore errors are from `saveDefaultValuesFileOutput`.",
+          "timestamp": "2023-03-07T23:49:34+05:30",
+          "tree_id": "8d304c7773ea18453b96b3a936bb433194709f16",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/039ce70667c6879669ad1aa09d0f706be33a0994"
+        },
+        "date": 1678213791885,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36571336051,
+            "unit": "ns/op\t        19.04 DeleteSeconds\t        17.49 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8512787910,
+            "unit": "ns/op\t         4.295 DeleteSeconds\t         4.169 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6610432251,
+            "unit": "ns/op\t         4.378 DeleteSeconds\t         2.161 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
