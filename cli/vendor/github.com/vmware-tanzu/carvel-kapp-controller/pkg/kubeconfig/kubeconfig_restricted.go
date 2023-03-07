@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package deploy
+package kubeconfig
 
 import (
 	"fmt"
@@ -10,13 +10,14 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-type KubeconfigRestricted struct {
+// Restricted contains a kubernetes kubeconfig as a string
+type Restricted struct {
 	result string
 }
 
 // NewKubeconfigRestricted takes kubeconfig yaml as input and returns kubeconfig yaml with certain fields restricted (removed).
 // Developers may find it informative to view their own config at ~/.kube/config
-func NewKubeconfigRestricted(input string) (*KubeconfigRestricted, error) {
+func NewKubeconfigRestricted(input string) (*Restricted, error) {
 	var inputConfig clientcmd.Config
 
 	err := yaml.Unmarshal([]byte(input), &inputConfig)
@@ -80,7 +81,8 @@ func NewKubeconfigRestricted(input string) (*KubeconfigRestricted, error) {
 		return nil, fmt.Errorf("Marshaling kubeconfig: %s", err)
 	}
 
-	return &KubeconfigRestricted{string(bs)}, nil
+	return &Restricted{string(bs)}, nil
 }
 
-func (r *KubeconfigRestricted) AsYAML() string { return r.result }
+// AsYAML returns a string formatted kubernetes kubeconfig
+func (r *Restricted) AsYAML() string { return r.result }

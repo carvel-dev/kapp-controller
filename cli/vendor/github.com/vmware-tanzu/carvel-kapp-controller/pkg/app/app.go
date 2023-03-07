@@ -5,22 +5,38 @@ package app
 
 import (
 	"sync"
+	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/k14s/semver/v4"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
+
+// ComponentInfo provides information about components of the system required by templating stage
+type ComponentInfo interface {
+	KappControllerVersion() (semver.Version, error)
+	KubernetesVersion(serviceAccountName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta) (semver.Version, error)
+	KubernetesAPIs() ([]string, error)
+}
 
 type Hooks struct {
 	BlockDeletion   func() error
 	UnblockDeletion func() error
 	UpdateStatus    func(string) error
 	WatchChanges    func(func(v1alpha1.App), chan struct{}) error
+}
+
+// Opts keeps App reconciliation options
+type Opts struct {
+	DefaultSyncPeriod time.Duration
+	MinimumSyncPeriod time.Duration
 }
 
 type App struct {
@@ -31,21 +47,27 @@ type App struct {
 	fetchFactory    fetch.Factory
 	templateFactory template.Factory
 	deployFactory   deploy.Factory
+	compInfo        ComponentInfo
+
+	memoizedKubernetesVersion string
+	memoizedKubernetesAPIs    []string
 
 	log        logr.Logger
+	opts       Opts
 	appMetrics *metrics.AppMetrics
 
 	pendingStatusUpdate   bool
 	flushAllStatusUpdates bool
+	metadata              *deploy.Meta
 }
 
 func NewApp(app v1alpha1.App, hooks Hooks,
 	fetchFactory fetch.Factory, templateFactory template.Factory,
-	deployFactory deploy.Factory, log logr.Logger, appMetrics *metrics.AppMetrics) *App {
+	deployFactory deploy.Factory, log logr.Logger, opts Opts, appMetrics *metrics.AppMetrics, compInfo ComponentInfo) *App {
 
 	return &App{app: app, appPrev: *(app.DeepCopy()), hooks: hooks,
 		fetchFactory: fetchFactory, templateFactory: templateFactory,
-		deployFactory: deployFactory, log: log, appMetrics: appMetrics}
+		deployFactory: deployFactory, log: log, opts: opts, appMetrics: appMetrics, compInfo: compInfo}
 }
 
 func (a *App) Name() string      { return a.app.Name }

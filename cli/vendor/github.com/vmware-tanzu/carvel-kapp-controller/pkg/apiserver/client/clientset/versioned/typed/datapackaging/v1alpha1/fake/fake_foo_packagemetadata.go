@@ -89,7 +89,7 @@ func (c *FakePackageMetadatas) Update(ctx context.Context, foo_PackageMetadata *
 // Delete takes name of the foo_PackageMetadata and deletes it. Returns an error if one occurs.
 func (c *FakePackageMetadatas) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(packagemetadatasResource, c.ns, name), &v1alpha1.PackageMetadata{})
+		Invokes(testing.NewDeleteActionWithOptions(packagemetadatasResource, c.ns, name, opts), &v1alpha1.PackageMetadata{})
 
 	return err
 }

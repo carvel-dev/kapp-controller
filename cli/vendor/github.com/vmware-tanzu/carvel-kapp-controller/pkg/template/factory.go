@@ -26,8 +26,8 @@ func NewFactory(coreClient kubernetes.Interface, fetchFactory fetch.Factory,
 }
 
 // NewYtt returns ytt template.
-func (f Factory) NewYtt(opts v1alpha1.AppTemplateYtt, appContext AppContext) *Ytt {
-	return NewYtt(opts, appContext, f.coreClient, f.fetchFactory, f.cmdRunner)
+func (f Factory) NewYtt(opts v1alpha1.AppTemplateYtt, appContext AppContext, additionalValues AdditionalDownwardAPIValues) *Ytt {
+	return NewYtt(opts, appContext, f.coreClient, f.fetchFactory, f.cmdRunner, additionalValues)
 }
 
 // NewKbld returns kbld template.
@@ -37,8 +37,8 @@ func (f Factory) NewKbld(opts v1alpha1.AppTemplateKbld, appContext AppContext) *
 
 // NewHelmTemplate returns helm template.
 func (f Factory) NewHelmTemplate(
-	opts v1alpha1.AppTemplateHelmTemplate, appContext AppContext) *HelmTemplate {
-	return NewHelmTemplate(opts, appContext, f.coreClient, f.cmdRunner)
+	opts v1alpha1.AppTemplateHelmTemplate, appContext AppContext, additionalValues AdditionalDownwardAPIValues) *HelmTemplate {
+	return NewHelmTemplate(opts, appContext, f.coreClient, f.cmdRunner, additionalValues)
 }
 
 func (f Factory) NewSops(
@@ -47,6 +47,6 @@ func (f Factory) NewSops(
 }
 
 // NewCue returns a Cue templater
-func (f Factory) NewCue(opts v1alpha1.AppTemplateCue, appContext AppContext) Template {
-	return newCue(opts, appContext, f.coreClient, f.cmdRunner)
+func (f Factory) NewCue(opts v1alpha1.AppTemplateCue, appContext AppContext, additionalValues AdditionalDownwardAPIValues) Template {
+	return newCue(opts, appContext, f.coreClient, f.cmdRunner, additionalValues)
 }

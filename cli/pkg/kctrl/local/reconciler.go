@@ -12,12 +12,16 @@ import (
 
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/version"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	fakedpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	fakekc "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/componentinfo"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	kckubeconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
@@ -115,8 +119,11 @@ func (o *Reconciler) Reconcile(configs Configs, opts ReconcileOpts) error {
 		vendirConfigHook = vendirConf.Adjust
 	}
 
-	appReconciler, pkgiReconciler := o.newReconcilers(
+	appReconciler, pkgiReconciler, err := o.newReconcilers(
 		minCoreClient, kcClient, dpkgClient, vendirConfigHook, opts)
+	if err != nil {
+		return fmt.Errorf("Creating reconcilers: %s", err)
+	}
 
 	if opts.BeforeAppReconcile != nil {
 		err := opts.BeforeAppReconcile(appRes, kcClient)
@@ -197,7 +204,7 @@ func (o *Reconciler) hackyConfigureKubernetesDst(coreClient kubernetes.Interface
 
 func (o *Reconciler) newReconcilers(
 	coreClient kubernetes.Interface, kcClient *fakekc.Clientset, pkgClient *fakedpkg.Clientset,
-	vendirConfigHook func(vendirconf.Config) vendirconf.Config, opts ReconcileOpts) (*app.Reconciler, *packageinstall.Reconciler) {
+	vendirConfigHook func(vendirconf.Config) vendirconf.Config, opts ReconcileOpts) (*app.Reconciler, *packageinstall.Reconciler, error) {
 
 	runLog := logf.Log.WithName("deploy")
 	if opts.Debug {
@@ -213,6 +220,16 @@ func (o *Reconciler) newReconcilers(
 	refTracker := reftracker.NewAppRefTracker()
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
 
+	kcKubeconfig := kckubeconfig.NewKubeconfig(coreClient, runLog)
+	//TODO: Allow overriding version of kapp-controller being used
+	componentInfo := componentinfo.NewComponentInfo(coreClient, kcKubeconfig, version.Version)
+
+	cacheFolderApps := memdir.NewTmpDir("cache-appcr")
+	err := cacheFolderApps.Create()
+	if err != nil {
+		return nil, nil, fmt.Errorf("Creating cache directory for Apps on local: %s", err)
+	}
+
 	appFactory := app.CRDAppFactory{
 		CoreClient:       coreClient,
 		AppClient:        kcClient,
@@ -221,16 +238,19 @@ func (o *Reconciler) newReconcilers(
 		VendirConfigHook: vendirConfigHook,
 		KbldAllowBuild:   opts.KbldBuild, // only for CLI mode
 		CmdRunner:        o.cmdRunner,
+		CacheFolder:      cacheFolderApps,
+		Kubeconf:         kcKubeconfig,
 	}
 	appReconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
-		appFactory, refTracker, updateStatusTracker)
+		appFactory, refTracker, updateStatusTracker, componentInfo)
 
 	pkgiReconciler := packageinstall.NewReconciler(
 		kcClient, pkgClient, coreClient,
 		// TODO do not need this in the constructor of Reconciler
 		(*packageinstall.PackageInstallVersionHandler)(nil),
 		runLog.WithName("pkgi"),
+		componentInfo,
 	)
 
-	return appReconciler, pkgiReconciler
+	return appReconciler, pkgiReconciler, nil
 }
