@@ -143,6 +143,6 @@ status:
 
 	logger.Section("run package release", func() {
 		// Verify that validation checks are not performed while running ytt to build packages
-		kappCtrl.RunWithOpts([]string{"package", "release", "--chdir", workingDir}, RunOpts{NoNamespace: true})
+		kappCtrl.RunWithOpts([]string{"package", "release", "--chdir", workingDir, "build-ytt-validations=false"}, RunOpts{NoNamespace: true})
 	})
 }

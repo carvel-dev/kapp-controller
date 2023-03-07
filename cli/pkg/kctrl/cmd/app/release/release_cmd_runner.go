@@ -18,13 +18,15 @@ type ReleaseCmdRunner struct {
 	log                 io.Writer
 	fullOutput          bool
 	tempImgLockFilepath string
+	buildYttValidations bool
 	ui                  cmdcore.AuthoringUI
 }
 
 var _ exec.CmdRunner = &ReleaseCmdRunner{}
 
-func NewReleaseCmdRunner(log io.Writer, fullOutput bool, tempImgLockFilepath string, ui cmdcore.AuthoringUI) *ReleaseCmdRunner {
-	return &ReleaseCmdRunner{log: log, fullOutput: fullOutput, tempImgLockFilepath: tempImgLockFilepath, ui: ui}
+func NewReleaseCmdRunner(log io.Writer, fullOutput bool, tempImgLockFilepath string, buildYttValidation bool, ui cmdcore.AuthoringUI) *ReleaseCmdRunner {
+	return &ReleaseCmdRunner{log: log, fullOutput: fullOutput, tempImgLockFilepath: tempImgLockFilepath,
+		buildYttValidations: buildYttValidation, ui: ui}
 }
 
 func (r ReleaseCmdRunner) Run(cmd *goexec.Cmd) error {
@@ -39,7 +41,7 @@ func (r ReleaseCmdRunner) Run(cmd *goexec.Cmd) error {
 	if filepath.Base(cmd.Path) == "kbld" {
 		cmd.Args = append(cmd.Args, fmt.Sprintf("--imgpkg-lock-output=%s", r.tempImgLockFilepath))
 	}
-	if filepath.Base(cmd.Path) == "ytt" {
+	if filepath.Base(cmd.Path) == "ytt" && !r.buildYttValidations {
 		cmd.Args = append(cmd.Args, "--dangerous-data-values-disable-validation")
 	}
 	if r.fullOutput {
