@@ -5,6 +5,8 @@ import (
 	"os"
 	"path"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestPackageReleaseWithRestrictiveValuesSchema(t *testing.T) {
@@ -141,8 +143,13 @@ status:
 		t.Fatal(err)
 	}
 
-	logger.Section("run package release", func() {
+	logger.Section("run package release with ytt validations", func() {
+		_, err := kappCtrl.RunWithOpts([]string{"package", "release", "--chdir", workingDir}, RunOpts{NoNamespace: true, AllowError: true})
+		require.Error(t, err)
+	})
+
+	logger.Section("run package release with ytt validations deactivated", func() {
 		// Verify that validation checks are not performed while running ytt to build packages
-		kappCtrl.RunWithOpts([]string{"package", "release", "--chdir", workingDir, "build-ytt-validations=false"}, RunOpts{NoNamespace: true})
+		kappCtrl.RunWithOpts([]string{"package", "release", "--chdir", workingDir, "--build-ytt-validations=false"}, RunOpts{NoNamespace: true})
 	})
 }
