@@ -34,6 +34,8 @@ type AppSpecBuilderOpts struct {
 	BundleImage   string
 	Debug         bool
 	BundleTag     string
+
+	BuildYttValidations bool
 }
 
 func NewAppSpecBuilder(depsFactory cmdcore.DepsFactory, logger logger.Logger, ui cmdcore.AuthoringUI, opts AppSpecBuilderOpts) *AppSpecBuilder {
@@ -83,7 +85,7 @@ func (b *AppSpecBuilder) Build() (kcv1alpha1.AppSpec, error) {
 
 	// Build images and resolve references using reconciler
 	tempImgpkgLockPath := filepath.Join(LockOutputFolder, LockOutputFile)
-	cmdRunner := NewReleaseCmdRunner(os.Stdout, b.opts.Debug, tempImgpkgLockPath, b.ui)
+	cmdRunner := NewReleaseCmdRunner(os.Stdout, b.opts.Debug, tempImgpkgLockPath, b.opts.BuildYttValidations, b.ui)
 	reconciler := cmdlocal.NewReconciler(b.depsFactory, cmdRunner, b.logger)
 
 	err = reconciler.Reconcile(buildConfigs, cmdlocal.ReconcileOpts{
