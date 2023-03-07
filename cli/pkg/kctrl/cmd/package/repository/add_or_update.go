@@ -161,11 +161,11 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 
 		_, err = coreClient.CoreV1().Namespaces().Create(context.Background(), namespace, metav1.CreateOptions{})
 		if err != nil {
-			if errors.IsAlreadyExists(err) {
-				o.statusUI.PrintMessagef("The namespace '%s' already exists", o.NamespaceFlags.Name)
-			} else {
+			if !errors.IsAlreadyExists(err) {
 				return err
 			}
+		} else {
+			o.statusUI.PrintMessagef("Created namespace '%s'", o.NamespaceFlags.Name)
 		}
 	}
 
