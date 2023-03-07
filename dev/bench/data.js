@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678191374097,
+  "lastUpdate": 1678193686338,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -10365,6 +10365,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6751103722,
             "unit": "ns/op\t         4.511 DeleteSeconds\t         2.177 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3af991eafb55d94ab590cc4190b3343526205fa5",
+          "message": "Allow disabling ytt validations while building packages (#1077)\n\n* Disable ytt validations while building packages\r\n\r\nSigned-off-by: Soumik Majumder <soumikm@vmware.com>\r\n\r\n* Add test to ensure that kctrl disables ytt validations while releasing packages\r\n\r\nSigned-off-by: Soumik Majumder <soumikm@vmware.com>\r\n\r\n* Add flag to disable ytt validations while releasing package\r\n\r\nSigned-off-by: Soumik Majumder <soumikm@vmware.com>\r\n\r\n* Add test case for using ytt validations while building packages\r\n\r\nSigned-off-by: Soumik Majumder <soumikm@vmware.com>\r\n\r\n---------\r\n\r\nSigned-off-by: Soumik Majumder <soumikm@vmware.com>",
+          "timestamp": "2023-03-07T18:10:47+05:30",
+          "tree_id": "296fbfa6ff76cdc855b10afeda1aa98e1bbe1650",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/3af991eafb55d94ab590cc4190b3343526205fa5"
+        },
+        "date": 1678193685025,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37492231456,
+            "unit": "ns/op\t        18.56 DeleteSeconds\t        18.88 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8847715912,
+            "unit": "ns/op\t         4.510 DeleteSeconds\t         4.273 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6870659040,
+            "unit": "ns/op\t         4.528 DeleteSeconds\t         2.228 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
