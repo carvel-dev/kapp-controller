@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678082323465,
+  "lastUpdate": 1678191374097,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -10323,6 +10323,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6470364605,
             "unit": "ns/op\t         4.276 DeleteSeconds\t         2.141 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "soumikm@vmware.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "distinct": true,
+          "id": "ab03cc28b25b8d5e50d1196250f431f7690e5318",
+          "message": "Add tests for package repo dry-run. Fix logic for creating RBAC resources.\n\nSigned-off-by: Soumik Majumder <soumikm@vmware.com>",
+          "timestamp": "2023-03-07T17:34:35+05:30",
+          "tree_id": "d33e78505866f3041ec67143b12f79b196856a82",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/ab03cc28b25b8d5e50d1196250f431f7690e5318"
+        },
+        "date": 1678191372248,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37134457519,
+            "unit": "ns/op\t        18.21 DeleteSeconds\t        18.88 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8625474699,
+            "unit": "ns/op\t         4.370 DeleteSeconds\t         4.202 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6751103722,
+            "unit": "ns/op\t         4.511 DeleteSeconds\t         2.177 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
