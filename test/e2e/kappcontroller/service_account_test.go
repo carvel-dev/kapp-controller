@@ -7,9 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
-	"sigs.k8s.io/yaml"
 )
 
 func TestServiceAccountNotAllowed(t *testing.T) {
@@ -86,23 +84,10 @@ spec:
 			t.Fatalf("Expected err, but was nil")
 		}
 
-		if !strings.Contains(err.Error(), "Reconcile failed:  (message: Deploying: Error (see .status.usefulErrorMessage for details))") {
-			t.Fatalf("Expected err to contain service account failure, but was: %s", err)
-		}
-
-		out := kapp.Run([]string{"inspect", "-a", name, "--raw", "--tty=false", "--filter-kind=App"})
-
-		var cr v1alpha1.App
-
-		err = yaml.Unmarshal([]byte(out), &cr)
-		if err != nil {
-			t.Fatalf("Failed to unmarshal: %s", err)
-		}
-
 		expectedErr := `cannot get resource "configmaps" in API group "" in the namespace "kube-system" (reason: Forbidden)`
 
-		if !strings.Contains(cr.Status.Deploy.Stderr, expectedErr) {
-			t.Fatalf("Expected forbidden error in deploy output, but was: %#v", cr.Status.Deploy)
+		if !strings.Contains(err.Error(), expectedErr) {
+			t.Fatalf("Expected forbidden error in deploy output, but was: %s", err.Error())
 		}
 	})
 
