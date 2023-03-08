@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678213792950,
+  "lastUpdate": 1678305617672,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -10491,6 +10491,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6610432251,
             "unit": "ns/op\t         4.378 DeleteSeconds\t         2.161 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7980c08c7ef990d7d73be357925ea162f1463f5d",
+          "message": "Bump kapp to v0.55.0 (#1125)\n\n* Bump kapp to v0.55.0\r\n\r\nSigned-off-by: Praveen Rewar <8457124+praveenrewar@users.noreply.github.com>\r\n\r\n* Update kapp error message in tests\r\n\r\nWith kapp v0.55.0 we display the usefulErrorMessage as part of the error.\r\n\r\nSigned-off-by: Praveen Rewar <8457124+praveenrewar@users.noreply.github.com>\r\n\r\n---------\r\n\r\nSigned-off-by: Praveen Rewar <8457124+praveenrewar@users.noreply.github.com>",
+          "timestamp": "2023-03-09T01:20:14+05:30",
+          "tree_id": "d4909d6090e4ad56b6822fbcfa5494e9517a06ba",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/7980c08c7ef990d7d73be357925ea162f1463f5d"
+        },
+        "date": 1678305616193,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36422961800,
+            "unit": "ns/op\t        18.93 DeleteSeconds\t        17.45 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8513360789,
+            "unit": "ns/op\t         4.314 DeleteSeconds\t         4.153 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6446699872,
+            "unit": "ns/op\t         4.259 DeleteSeconds\t         2.142 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
