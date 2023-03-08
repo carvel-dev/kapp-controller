@@ -4,16 +4,16 @@
 #! has Namespace first so that kubectl can can install kc
 #! (kapp of course perm automatic ordering)
 
-#@ if/end data.values.namespace != "default" and data.values.create_namespace:
+#@ if/end data.values.namespace != "default" and data.values.createNamespace:
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: #@ data.values.namespace
 
-#@ if/end data.values.packaging_global_namespace != "" and data.values.create_packaging_namespace:
+#@ if/end data.values.packagingGlobalNamespace != "" and data.values.createPackagingNamespace:
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: #@ data.values.packaging_global_namespace
+  name: #@ data.values.packagingGlobalNamespace
