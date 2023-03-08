@@ -6,4 +6,4 @@
 metadata:
   #@overlay/match missing_ok=True
   annotations:
-    packaging.carvel.dev/global-namespace: #@ data.values.packaging_global_namespace
+    packaging.carvel.dev/global-namespace: #@ data.values.packagingGlobalNamespace
