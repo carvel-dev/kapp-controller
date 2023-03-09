@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678305617672,
+  "lastUpdate": 1678339540941,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -10533,6 +10533,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6446699872,
             "unit": "ns/op\t         4.259 DeleteSeconds\t         2.142 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a22e85996b0cd11dd176c536a366f23e91f95bdc",
+          "message": "Add check for annotations field while looking for pkg_repo_ann (#1127)\n\nSigned-off-by: Praveen Rewar <8457124+praveenrewar@users.noreply.github.com>",
+          "timestamp": "2023-03-09T10:44:40+05:30",
+          "tree_id": "9ac0e08b381fdaf36abf79c08b81705ffc759a4e",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/a22e85996b0cd11dd176c536a366f23e91f95bdc"
+        },
+        "date": 1678339539501,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36914069894,
+            "unit": "ns/op\t        19.30 DeleteSeconds\t        17.56 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8721269207,
+            "unit": "ns/op\t         4.450 DeleteSeconds\t         4.217 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6522481855,
+            "unit": "ns/op\t         4.298 DeleteSeconds\t         2.171 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
