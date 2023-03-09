@@ -887,6 +887,128 @@ spec:
 	})
 }
 
+func Test_PackageReposWithOverlappingPackages_ExistingIndependentPackage(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	kapp := e2e.Kapp{t, env.Namespace, logger}
+	kubectl := e2e.Kubectl{t, env.Namespace, logger}
+
+	refName := "shirt-mgr.co.uk"
+	version := "5.5.5"
+	pkgName := fmt.Sprintf("%s.%s", refName, version)
+	pkgrName := "repo.tankyu.carvel.dev"
+
+	pkgrPreamble := `
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: repo.tankyu.carvel.dev
+spec:
+  fetch:
+    inline:
+      paths:
+`
+
+	pkgTemplate := fmt.Sprintf(`
+        packages/pkg.test.carvel.dev/%[1]s.%[2]s.yml: |
+          ---
+          apiVersion: data.packaging.carvel.dev/v1alpha1
+          kind: Package
+          metadata:
+            name: %[1]s.%[2]s
+          spec:
+            refName: %[1]s
+            version: %[2]s
+            template:
+              spec:
+                fetch:
+                - imgpkgBundle:
+                    image: k8slt/kctrl-example-pkg:v1.0.0
+                template:
+                - ytt:
+                    paths:
+                    - config/
+                - kbld:
+                    paths:
+                    - "-"
+                    - ".imgpkg/images.yml"
+                deploy:
+                - kapp: {}`, refName, version)
+
+	pkgYAML := fmt.Sprintf(`
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: %[1]s.%[2]s
+spec:
+  refName: %[1]s
+  version: %[2]s
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v1.0.0
+      template:
+      - ytt:
+          paths:
+          - config/
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
+      deploy:
+      - kapp: {}`, refName, version)
+
+	pkgr := fmt.Sprintf("%s%s", pkgrPreamble, pkgTemplate)
+
+	cleanUp := func() {
+		kubectl.RunWithOpts([]string{"delete", "package", pkgName},
+			e2e.RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", pkgrName})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy package", func() {
+		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, e2e.RunOpts{
+			StdinReader: strings.NewReader(pkgYAML)})
+	})
+
+	logger.Section("pkgr will succeed and start owning the package", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgrName}, e2e.RunOpts{
+			StdinReader:  strings.NewReader(pkgr),
+			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
+		})
+
+		out := kubectl.Run([]string{"get", "packages"})
+		require.Contains(t, out, "shirt-mgr.co.uk.5.5.5")
+
+		assertPkgOwned(t, kubectl, "shirt-mgr.co.uk.5.5.5", pkgrName, env.Namespace)
+	})
+
+	cleanUp()
+
+	// https://github.com/carvel-dev/kapp-controller/issues/1054
+	logger.Section("deploy package and remove annotations", func() {
+		kubectl.RunWithOpts([]string{"apply", "-f", "-"}, e2e.RunOpts{
+			StdinReader: strings.NewReader(pkgYAML)})
+		kubectl.Run([]string{"annotate", "package", pkgName, "kubectl.kubernetes.io/last-applied-configuration-"})
+	})
+
+	logger.Section("pkgr will succeed and start owning the package", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", pkgrName}, e2e.RunOpts{
+			StdinReader:  strings.NewReader(pkgr),
+			OnErrKubectl: []string{"get", "pkgr", "-A", "-oyaml"},
+		})
+
+		out := kubectl.Run([]string{"get", "packages"})
+		require.Contains(t, out, "shirt-mgr.co.uk.5.5.5")
+
+		assertPkgOwned(t, kubectl, "shirt-mgr.co.uk.5.5.5", pkgrName, env.Namespace)
+	})
+}
+
 func assertPkgOwned(t *testing.T, kubectl e2e.Kubectl, pkgName, pkgrName, pkgrNs string) {
 	out := kubectl.Run([]string{"get", "package", pkgName, "-oyaml"})
 
