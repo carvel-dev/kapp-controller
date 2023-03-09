@@ -734,6 +734,10 @@ spec:
       jsonPath: .status.deploy.startedAt
       name: Since-Deploy
       type: date
+    - description: Target Cluster name taken from the kubeconfig.
+      jsonPath: .spec.cluster.kubeconfigSecretRef.name
+      name: TargetCluster
+      type: string
     - description: Time since creation
       jsonPath: .metadata.creationTimestamp
       name: Age
