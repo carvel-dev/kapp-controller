@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678339540941,
+  "lastUpdate": 1678386999973,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -10575,6 +10575,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6522481855,
             "unit": "ns/op\t         4.298 DeleteSeconds\t         2.171 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "922e32fbd868552f0b5a3a3dae0b7c5c6edbfb2a",
+          "message": "Merge pull request #1133 from carvel-dev/upgrade-go-and-dependencies\n\nUpdating go version and dependencies",
+          "timestamp": "2023-03-09T11:23:57-07:00",
+          "tree_id": "e93ae8ad112f40d0bde6c810892855c67e1966ed",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/922e32fbd868552f0b5a3a3dae0b7c5c6edbfb2a"
+        },
+        "date": 1678386997897,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36037653826,
+            "unit": "ns/op\t        18.31 DeleteSeconds\t        17.66 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8693157992,
+            "unit": "ns/op\t         4.411 DeleteSeconds\t         4.221 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6653617799,
+            "unit": "ns/op\t         4.405 DeleteSeconds\t         2.199 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
