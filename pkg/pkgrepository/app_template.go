@@ -232,10 +232,12 @@ func (a *App) yttTemplateAddIdenticalRsRebase() kcv1alpha1.AppTemplateYtt {
         #@ pkg_repo_ann = "packaging.carvel.dev/package-repository-ref"
         #@ new_owner = data.values.new.metadata.annotations[pkg_repo_ann]
         #@
-        #@ if pkg_repo_ann in data.values.existing.metadata.annotations:
-        #@   existing_owner = data.values.existing.metadata.annotations[pkg_repo_ann]
-        #@ else:
-        #@   existing_owner = new_owner
+        #@ existing_owner = new_owner
+        #@
+        #@ if hasattr(data.values.existing.metadata, "annotations"):
+        #@   if pkg_repo_ann in data.values.existing.metadata.annotations:
+        #@     existing_owner = data.values.existing.metadata.annotations[pkg_repo_ann]
+        #@   end
         #@ end
         #@
         #@ if new_owner != existing_owner:
