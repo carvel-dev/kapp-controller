@@ -1,0 +1,69 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:data", "data")
+#@ load("@ytt:yaml", "yaml")
+
+#@ def is_toleration_specified(toleration):
+#@   return toleration in yaml.decode(yaml.encode(data.values.tolerations))
+#@ end
+
+#@ default_tolerations = []
+#@ is_primary_specified = is_toleration_specified({"effect":"NoSchedule", "key":"node-role.kubernetes.io/master"})
+#@ is_control_specified = is_toleration_specified({"effect":"NoSchedule", "key":"node-role.kubernetes.io/control-plane"})
+
+#@ if is_primary_specified and not is_control_specified:
+#@   default_tolerations += [{"effect":"NoSchedule", "key":"node-role.kubernetes.io/control-plane"}]
+#@ end
+
+#@overlay/match by=overlay.subset({"kind":"Deployment","metadata":{"name": "kapp-controller"}})
+---
+spec:
+  template:
+    #@overlay/match-child-defaults missing_ok=True
+    spec:
+      containers:
+      #@overlay/match by=overlay.subset({"name":"kapp-controller"})
+      - args:
+        #@overlay/append
+        - #@ "-concurrency={}".format(data.values.concurrency)
+        #@overlay/append
+        - #@ "-metrics-bind-address={}".format(data.values.metricsBindAddress)
+
+      #@overlay/match by=overlay.subset({"name":"kapp-controller-sidecarexec"})
+      -
+        #@ if/end data.values.coreDNSIP:
+        volumeMounts:
+          - mountPath: /etc
+            name: etc
+
+      #@ if data.values.coreDNSIP:
+      #! Using init container bypasses the restriction of not having root access in main container
+      #! It modifies /etc/resolv.conf which is shared to main container
+      initContainers:
+      - args:
+        - -c
+        - #@ "cp /etc/resolv.conf /etc/resolv.conf.bak; sed '1 i nameserver " + data.values.coreDNSIP + "' /etc/resolv.conf.bak > /etc/resolv.conf; rm /etc/resolv.conf.bak; cp -R /etc/* /kapp-etc; chmod g+w /kapp-etc/pki/tls/certs/"
+        command:
+        - /bin/sh
+        image: kapp-controller
+        name: init-kapp-controller
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsUser: 0
+        volumeMounts:
+        - mountPath: /kapp-etc
+          name: etc
+      #@ end
+      #@ if/end data.values.hostNetwork:
+      hostNetwork: #@ data.values.hostNetwork
+      #@ if/end data.values.priorityClassName:
+      priorityClassName: #@ data.values.priorityClassName
+      #@ if hasattr(data.values, 'tolerations') and data.values.tolerations:
+      tolerations: #@ default_tolerations + data.values.tolerations
+      #@ end
+      #@ if data.values.coreDNSIP:
+      volumes:
+        #@overlay/append
+        - emptyDir:
+            medium: Memory
+          name: etc
+      #@ end

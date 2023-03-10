@@ -98,7 +98,7 @@ graphed in [github
 pages](https://carvel-dev.github.io/kapp-controller/dev/bench/index.html).
 
 ### Profiling
-1.) Enable profiling by editing config/values.yaml and setting `dangerous_enable_pprof`
+1.) Enable profiling by editing config/values-schema.yaml and setting `dangerousEnablePprof`
 to true
 2.) deploy (see above)
 3.) install graphviz: `brew install graphviz`

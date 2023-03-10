@@ -26,4 +26,4 @@ ENV PATH="/:\${PATH}"
 ENTRYPOINT ["/kapp-controller"]
 EOF
 
-ytt -f config -f config-dev -v dev.version="$(get_kappctrl_ver)+develop" --data-value-yaml dev.rapid_deploy=true | kbld -f- | kapp deploy -a kc -f- -c -y
+ytt -f config/config -f config/values-schema.yml -f config-dev -v dev.version="$(get_kappctrl_ver)+develop" --data-value-yaml dev.rapid_deploy=true | kbld -f- | kapp deploy -a kc -f- -c -y
