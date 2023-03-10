@@ -23,11 +23,11 @@ spec:
       - name: kapp-controller
         image: kapp-controller
         args:
-        - #@ "-packaging-global-namespace={}".format(data.values.packaging_global_namespace)
-        #@ if/end data.values.dangerous_enable_pprof:
+        - #@ "-packaging-global-namespace={}".format(data.values.packagingGlobalNamespace)
+        #@ if/end data.values.dangerousEnablePprof:
         - -dangerous-enable-pprof=true
-        - #@ "-enable-api-priority-and-fairness={}".format(data.values.enable_api_priority_and_fairness)
-        - #@ "-tls-cipher-suites={}".format(data.values.tls_cipher_suites)
+        - #@ "-enable-api-priority-and-fairness={}".format(data.values.enableApiPriorityAndFairness)
+        - #@ "-tls-cipher-suites={}".format(data.values.tlsCipherSuites)
         env:
         - name: KAPPCTRL_MEM_TMP_DIR
           value: /etc/kappctrl-mem-tmp
@@ -38,7 +38,7 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         - name: KAPPCTRL_API_PORT
-          value: #@ str(data.values.api_port)
+          value: #@ str(data.values.apiPort)
         resources:
           requests:
             cpu: 120m
@@ -49,7 +49,7 @@ spec:
         - name: home
           mountPath: /home/kapp-controller
         ports:
-        - containerPort: #@ data.values.api_port
+        - containerPort: #@ data.values.apiPort
           name: api
           protocol: TCP
         securityContext:
@@ -96,7 +96,7 @@ spec:
       - name: empty-sa
         emptyDir: {}
 
-#@ if/end data.values.dangerous_enable_pprof:
+#@ if/end data.values.dangerousEnablePprof:
 ---
 apiVersion: v1
 kind: Service
