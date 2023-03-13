@@ -16,8 +16,10 @@ import (
 	// we run vendir by shelling out to it, but we create the vendir configs with help from a vendored copy of vendir.
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/utils/strings/slices"
 	kyaml "sigs.k8s.io/yaml"
 )
 
@@ -236,9 +238,26 @@ func (v *Vendir) ConfigBytes() ([]byte, error) {
 		return nil, err
 	}
 
-	finalConfig := bytes.Join(append(resourcesYaml, vendirConfBytes), []byte("---\n"))
+	finalConfig := bytes.Join(append(v.filterConfigSecrets(resourcesYaml), vendirConfBytes), []byte("---\n"))
 
 	return finalConfig, nil
+}
+
+func (v *Vendir) filterConfigSecrets(resourcesYaml [][]byte) [][]byte {
+	filteRedresourcesYaml := [][]byte{}
+	secrets := []string{}
+	for _, y := range resourcesYaml {
+		secret := &v1.Secret{}
+		if err := kyaml.Unmarshal(y, secret); err == nil && secret.APIVersion == "v1" && secret.Kind == "Secret" && secret.Name != "" {
+			if !slices.Contains(secrets, secret.GetName()) {
+				secrets = append(secrets, secret.GetName())
+				filteRedresourcesYaml = append(filteRedresourcesYaml, y)
+			}
+		} else {
+			filteRedresourcesYaml = append(filteRedresourcesYaml, y)
+		}
+	}
+	return filteRedresourcesYaml
 }
 
 func (v *Vendir) requiredResourcesYaml(contents vendirconf.DirectoryContents) ([][]byte, error) {
