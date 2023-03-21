@@ -49,7 +49,7 @@ func (s PackageSchema) DefaultValues() ([]byte, error) {
 		return nil, err
 	}
 
-	return s.commentDefaultValues(b), nil
+	return []byte(s.commentDefaultValues(s.removeEmptyMaps(b.String()))), nil
 }
 
 // schemaDefault does defaulting of x depending on default values in s.
@@ -61,6 +61,11 @@ func (s PackageSchema) DefaultValues() ([]byte, error) {
 func (s PackageSchema) schemaDefault(x interface{}, ss *structuralschema.Structural) {
 	if ss == nil {
 		return
+	}
+
+	requiredProperties := map[string]bool{}
+	for _, prop := range ss.ValueValidation.Required {
+		requiredProperties[prop] = true
 	}
 
 	switch x := x.(type) {
@@ -79,7 +84,7 @@ func (s PackageSchema) schemaDefault(x interface{}, ss *structuralschema.Structu
 					}
 				}
 
-				if shouldCreateDefault {
+				if shouldCreateDefault || requiredProperties[k] {
 					prop.Default.Object = make(map[string]interface{})
 				} else {
 					continue
@@ -138,9 +143,14 @@ func (s PackageSchema) isKindInt(src interface{}) bool {
 }
 
 func (s PackageSchema) createDefault(structural *structuralschema.Structural, b []bool) []bool {
-	for _, v := range structural.Properties {
+	requiredProperties := map[string]bool{}
+	for _, prop := range structural.ValueValidation.Required {
+		requiredProperties[prop] = true
+	}
+
+	for k, v := range structural.Properties {
 		// return true if there is a non-nested(not object) with a default value
-		if v.Type != "object" && v.Default.Object != nil {
+		if v.Type != "object" && (v.Default.Object != nil || requiredProperties[k]) {
 			b = append(b, true)
 			return b
 		}
@@ -155,11 +165,19 @@ func (s PackageSchema) createDefault(structural *structuralschema.Structural, b 
 	return b
 }
 
-func (s PackageSchema) commentDefaultValues(defaultValues bytes.Buffer) []byte {
+func (s PackageSchema) commentDefaultValues(defaultValues string) string {
 	var commentedDefaultValues string
-	for _, line := range strings.Split(strings.TrimSuffix(defaultValues.String(), "\n"), "\n") {
+	for _, line := range strings.Split(strings.TrimSuffix(defaultValues, "\n"), "\n") {
 		line = fmt.Sprintf("# %s\n", line)
 		commentedDefaultValues += line
 	}
-	return []byte(commentedDefaultValues)
+	return commentedDefaultValues
+}
+
+func (s PackageSchema) removeEmptyMaps(defaultValues string) string {
+	var out string
+	for _, line := range strings.Split(strings.TrimSuffix(defaultValues, "\n"), "\n") {
+		out += fmt.Sprintf("%s\n", strings.Replace(line, ": {}", ":", 1))
+	}
+	return out
 }
