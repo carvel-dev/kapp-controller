@@ -5,6 +5,7 @@ package e2e
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -46,6 +47,11 @@ spec:
           type: integer
         app_name:
           description: App Name
+        required_property_without_default:
+          type: integer
+          description: This is a required property without a default value
+      required:
+      - required_property_without_default
   template:
     spec:
       fetch:
@@ -192,7 +198,30 @@ spec:
 				"key":         "app_port",
 				"type":        "integer",
 			},
+			{
+				"default":     "",
+				"description": "This is a required property without a default value",
+				"key":         "required_property_without_default",
+				"type":        "integer",
+			},
 		}
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
+	})
+
+	logger.Section("getting default-values-file-output of a package", func() {
+		tmpDir, err := os.MkdirTemp("", "*")
+		require.NoError(t, err, "Error creating temp directory")
+		defer os.RemoveAll(tmpDir)
+
+		kappCtrl.Run([]string{"package", "available", "get", "-p", fmt.Sprintf("%s/%s", packageName, "1.0.0"), "--default-values-file-output", tmpDir + "/default-values.yaml", "--json"})
+
+		// properties with no default value should be included with just the key
+		expectedDefaultValuesFileOutout := `# app_port: 80
+# required_property_without_default:
+`
+		out, err := os.ReadFile(tmpDir + "/default-values.yaml")
+		require.NoError(t, err, "Error reading default values file output")
+
+		require.Equal(t, expectedDefaultValuesFileOutout, string(out), "default values file output does not match")
 	})
 }
