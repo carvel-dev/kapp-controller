@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v3 # default version of go is 1.10
         with:
-          go-version: "1.19.5"
+          go-version: "1.19.6"
       - name: Install Carvel Tools
         run: ./hack/install-deps.sh
       # Run benchmark with `go test -bench` and stores the output to a file
