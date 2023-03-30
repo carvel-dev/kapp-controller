@@ -27,8 +27,6 @@ func TestPackageRepository(t *testing.T) {
 
 	cleanUp := func() {
 		RemoveClusterResource(t, kind, pkgrName, env.Namespace, kubectl)
-		kubectl.Run([]string{"delete", "namespace", existingRepoNamespace})
-		kubectl.Run([]string{"delete", "namespace", newRepoNamespace})
 	}
 
 	cleanUp()
@@ -136,6 +134,8 @@ func TestPackageRepository(t *testing.T) {
 		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL, "-n", newRepoNamespace, "--create-namespace"})
 
 		kubectl.Run([]string{"get", kind, pkgrName, "-n", newRepoNamespace})
+
+		RemoveClusterResource(t, kind, pkgrName, newRepoNamespace, kubectl)
 	})
 
 	logger.Section("creating a repository in a namespace that already exists", func() {
@@ -144,6 +144,8 @@ func TestPackageRepository(t *testing.T) {
 		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL, "-n", existingRepoNamespace, "--create-namespace"})
 
 		kubectl.Run([]string{"get", kind, pkgrName, "-n", existingRepoNamespace})
+
+		RemoveClusterResource(t, kind, pkgrName, existingRepoNamespace, kubectl)
 	})
 
 }
