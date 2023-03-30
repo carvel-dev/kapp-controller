@@ -146,8 +146,6 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 	}
 
 	if o.CreateNamespace {
-		o.statusUI.PrintMessagef("Creating namespace '%s'", o.NamespaceFlags.Name)
-
 		coreClient, err := o.depsFactory.CoreClient()
 		if err != nil {
 			return err
