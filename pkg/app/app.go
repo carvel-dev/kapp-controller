@@ -31,6 +31,7 @@ type Hooks struct {
 	UnblockDeletion func() error
 	UpdateStatus    func(string) error
 	WatchChanges    func(func(v1alpha1.App), chan struct{}) error
+	NsState         func() (string, error)
 }
 
 // Opts keeps App reconciliation options
@@ -59,15 +60,17 @@ type App struct {
 	pendingStatusUpdate   bool
 	flushAllStatusUpdates bool
 	metadata              *deploy.Meta
+
+	isNamespaceTerminating bool
 }
 
 func NewApp(app v1alpha1.App, hooks Hooks,
 	fetchFactory fetch.Factory, templateFactory template.Factory,
-	deployFactory deploy.Factory, log logr.Logger, opts Opts, appMetrics *metrics.AppMetrics, compInfo ComponentInfo) *App {
+	deployFactory deploy.Factory, log logr.Logger, opts Opts, appMetrics *metrics.AppMetrics, compInfo ComponentInfo, isNamespaceTerminating bool) *App {
 
 	return &App{app: app, appPrev: *(app.DeepCopy()), hooks: hooks,
 		fetchFactory: fetchFactory, templateFactory: templateFactory,
-		deployFactory: deployFactory, log: log, opts: opts, appMetrics: appMetrics, compInfo: compInfo}
+		deployFactory: deployFactory, log: log, opts: opts, appMetrics: appMetrics, compInfo: compInfo, isNamespaceTerminating: isNamespaceTerminating}
 }
 
 func (a *App) Name() string      { return a.app.Name }

@@ -4,6 +4,7 @@
 package app
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/go-logr/logr"
@@ -18,6 +19,8 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
+	v1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -47,8 +50,9 @@ func (f *CRDAppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *CRDApp 
 	fetchFactory := fetch.NewFactory(f.CoreClient, vendirOpts, f.CmdRunner)
 	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, f.KbldAllowBuild, f.CmdRunner)
 	deployFactory := deploy.NewFactory(f.CoreClient, f.Kubeconf, f.KcConfig, f.CmdRunner, log)
+	ns, _ := f.CoreClient.CoreV1().Namespaces().Get(context.TODO(), app.Namespace, metaV1.GetOptions{})
 
-	return NewCRDApp(app, log, f.AppMetrics, f.AppClient, fetchFactory, templateFactory, deployFactory, f.CompInfo, Opts{
+	return NewCRDApp(app, log, f.AppMetrics, f.AppClient, fetchFactory, templateFactory, deployFactory, f.CompInfo, ns.Status.Phase == v1.NamespaceTerminating, Opts{
 		DefaultSyncPeriod: f.KcConfig.AppDefaultSyncPeriod(),
 		MinimumSyncPeriod: f.KcConfig.AppMinimumSyncPeriod(),
 	})

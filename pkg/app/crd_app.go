@@ -32,7 +32,7 @@ type CRDApp struct {
 func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger, appMetrics *metrics.AppMetrics,
 	appClient kcclient.Interface, fetchFactory fetch.Factory,
 	templateFactory template.Factory, deployFactory deploy.Factory,
-	compInfo ComponentInfo, opts Opts) *CRDApp {
+	compInfo ComponentInfo, isNamespaceTerminating bool, opts Opts) *CRDApp {
 
 	crdApp := &CRDApp{appModel: appModel, log: log, appMetrics: appMetrics, appClient: appClient}
 
@@ -41,7 +41,7 @@ func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger, appMetrics *metrics.Ap
 		UnblockDeletion: crdApp.unblockDeletion,
 		UpdateStatus:    crdApp.updateStatus,
 		WatchChanges:    crdApp.watchChanges,
-	}, fetchFactory, templateFactory, deployFactory, log, opts, appMetrics, compInfo)
+	}, fetchFactory, templateFactory, deployFactory, log, opts, appMetrics, compInfo, isNamespaceTerminating)
 
 	return crdApp
 }
@@ -116,6 +116,12 @@ func (a *CRDApp) updateApp(updateFunc func(*kcv1alpha1.App)) error {
 
 	return nil
 }
+
+// func (a *CRDApp) namespaceState() (string, error) {
+// 	a.log.Info("Getting app namespace")
+
+// 	a.appClient.
+// }
 
 func (a *CRDApp) Reconcile(force bool) (reconcile.Result, error) {
 	return a.app.Reconcile(force)

@@ -5,6 +5,7 @@ package app
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	ctldep "github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
@@ -65,6 +66,11 @@ func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 
 				kapp, err := a.newKapp(*dep.Kapp, cancelCh)
 				if err != nil {
+					if a.isNamespaceTerminating && strings.Contains(err.Error(), "not found") &&
+						len(a.app.Status.Deploy.KappDeployStatus.AssociatedResources.Namespaces) == 1 {
+						a.log.Error(err, "Preparing kapp:")
+						break
+					}
 					return exec.NewCmdRunResultWithErr(fmt.Errorf("Preparing kapp: %s", err))
 				}
 
