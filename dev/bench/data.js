@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1680710436620,
+  "lastUpdate": 1680717790418,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -10785,6 +10785,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6675035241,
             "unit": "ns/op\t         4.392 DeleteSeconds\t         2.213 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "clebs@users.noreply.github.com",
+            "name": "Borja Clemente",
+            "username": "clebs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9a0282f460933a0240faf4f8fd1f69711861ccbf",
+          "message": "Fix panic calling `tanzu package installed status` (#1161)\n\n* Fix panic calling tanzu package installed status\r\n\r\nCalling tanzu package installed status without any arguments causes the\r\nprogram to panic.\r\n\r\nSigned-off-by: Borja Clemente <cborja@vmware.com>\r\n\r\n* Apply review feedback\r\n\r\nSigned-off-by: Borja Clemente <cborja@vmware.com>\r\n\r\n---------\r\n\r\nSigned-off-by: Borja Clemente <cborja@vmware.com>",
+          "timestamp": "2023-04-05T23:21:40+05:30",
+          "tree_id": "6c6cff30a8279f6a8ca45100d47a7f871345185e",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/9a0282f460933a0240faf4f8fd1f69711861ccbf"
+        },
+        "date": 1680717788721,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36837939494,
+            "unit": "ns/op\t        19.16 DeleteSeconds\t        17.63 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8644547376,
+            "unit": "ns/op\t         4.343 DeleteSeconds\t         4.248 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6522204197,
+            "unit": "ns/op\t         4.306 DeleteSeconds\t         2.163 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
