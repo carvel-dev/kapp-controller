@@ -61,10 +61,9 @@ func NewStatusCmd(o *StatusOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 
 func (o *StatusOptions) Run(args []string) error {
 	if o.pkgCmdTreeOpts.PositionalArgs {
-		if len(args) == 0 {
-			return fmt.Errorf("Package name not provided.")
+		if len(args) > 0 {
+			o.Name = args[0]
 		}
-		o.Name = args[0]
 	}
 
 	if len(o.Name) == 0 {
