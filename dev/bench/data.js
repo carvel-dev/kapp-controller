@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678476072431,
+  "lastUpdate": 1680710436620,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -10743,6 +10743,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6759388647,
             "unit": "ns/op\t         4.441 DeleteSeconds\t         2.215 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ThomasVitale@users.noreply.github.com",
+            "name": "Thomas Vitale",
+            "username": "ThomasVitale"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "15c92dedd8e726d8f8281e50be42f497e4339584",
+          "message": "`kctrl`: Flag to create namespace when adding new repo (#1113)\n\n* kctrl: Flag to create namespace when adding repo\r\n\r\nWhen adding a new package repository to a cluster, it's now possible\r\nto create the installation namespace automatically\r\nby specifying the \"--create-namespace\" flag.\r\n\r\nFixes gh-1001\r\n\r\nSigned-off-by: Thomas Vitale <ThomasVitale@users.noreply.github.com>\r\n\r\n* Improve error handling\r\n\r\nSigned-off-by: Thomas Vitale <ThomasVitale@users.noreply.github.com>\r\n\r\n* Optimize status messages for namespace creation\r\n\r\nSigned-off-by: Thomas Vitale <ThomasVitale@users.noreply.github.com>\r\n\r\n* Add cleanup after tests\r\n\r\nSigned-off-by: Thomas Vitale <ThomasVitale@users.noreply.github.com>\r\n\r\n* Update test cleanup\r\n\r\nSigned-off-by: Thomas Vitale <ThomasVitale@users.noreply.github.com>\r\n\r\n* Use cleanup function for new tests\r\n\r\nSigned-off-by: Thomas Vitale <ThomasVitale@users.noreply.github.com>\r\n\r\n* Re-use existing namespace in test\r\n\r\nSigned-off-by: Thomas Vitale <ThomasVitale@users.noreply.github.com>\r\n\r\n---------\r\n\r\nSigned-off-by: Thomas Vitale <ThomasVitale@users.noreply.github.com>",
+          "timestamp": "2023-04-05T21:16:48+05:30",
+          "tree_id": "48b4ae83f8069b1678cf15c125b1e645037ad738",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/15c92dedd8e726d8f8281e50be42f497e4339584"
+        },
+        "date": 1680710434686,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36340507489,
+            "unit": "ns/op\t        18.59 DeleteSeconds\t        17.69 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8796131110,
+            "unit": "ns/op\t         4.479 DeleteSeconds\t         4.242 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6675035241,
+            "unit": "ns/op\t         4.392 DeleteSeconds\t         2.213 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
