@@ -20,14 +20,12 @@ func TestPackageRepository(t *testing.T) {
 	pkgrName := "test-package-repository"
 	pkgrURL := `index.docker.io/k8slt/kc-e2e-test-repo:latest`
 
-	existingRepoNamespace := "carvel-test-repos-a"
-	newRepoNamespace := "carvel-test-repos-b"
+	newRepoNamespace := "carvel-test-repo-a"
 
 	kind := "PackageRepository"
 
 	cleanUp := func() {
 		RemoveClusterResource(t, kind, pkgrName, env.Namespace, kubectl)
-		RemoveClusterResource(t, kind, pkgrName, existingRepoNamespace, kubectl)
 		RemoveClusterResource(t, kind, pkgrName, newRepoNamespace, kubectl)
 	}
 
@@ -139,11 +137,9 @@ func TestPackageRepository(t *testing.T) {
 	})
 
 	logger.Section("creating a repository in a namespace that already exists", func() {
-		kubectl.Run([]string{"create", "namespace", existingRepoNamespace})
+		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL, "-n", env.Namespace, "--create-namespace"})
 
-		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL, "-n", existingRepoNamespace, "--create-namespace"})
-
-		kubectl.Run([]string{"get", kind, pkgrName, "-n", existingRepoNamespace})
+		kubectl.Run([]string{"get", kind, pkgrName, "-n", env.Namespace})
 	})
 
 }
