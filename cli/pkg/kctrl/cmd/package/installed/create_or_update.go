@@ -207,7 +207,9 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 	o.createdAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
 
 	if o.pkgCmdTreeOpts.PositionalArgs {
-		o.Name = args[0]
+		if len(args) > 0 {
+			o.Name = args[0]
+		}
 	}
 
 	if len(o.Name) == 0 {
@@ -312,7 +314,9 @@ func (o *CreateOrUpdateOptions) create(client kubernetes.Interface, kcClient kcc
 
 func (o *CreateOrUpdateOptions) RunUpdate(args []string) error {
 	if o.pkgCmdTreeOpts.PositionalArgs {
-		o.Name = args[0]
+		if len(args) > 0 {
+			o.Name = args[0]
+		}
 	}
 
 	if len(o.Name) == 0 {

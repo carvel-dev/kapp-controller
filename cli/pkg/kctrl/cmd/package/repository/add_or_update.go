@@ -128,7 +128,9 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 
 func (o *AddOrUpdateOptions) Run(args []string) error {
 	if o.pkgCmdTreeOpts.PositionalArgs {
-		o.Name = args[0]
+		if len(args) > 0 {
+			o.Name = args[0]
+		}
 	}
 
 	if len(o.Name) == 0 {
