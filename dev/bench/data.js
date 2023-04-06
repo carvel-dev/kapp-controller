@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1680717790418,
+  "lastUpdate": 1680771121301,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -10827,6 +10827,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6522204197,
             "unit": "ns/op\t         4.306 DeleteSeconds\t         2.163 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "clebs@users.noreply.github.com",
+            "name": "Borja Clemente",
+            "username": "clebs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5b29ad419e759d362a3bb35ef6a89858a953b960",
+          "message": "Fix panic reading empty args slice (#1163)\n\nSigned-off-by: Borja Clemente <cborja@vmware.com>",
+          "timestamp": "2023-04-06T14:11:49+05:30",
+          "tree_id": "aedab09f86fb40131c016a11beed3ddb3b0e05cd",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/5b29ad419e759d362a3bb35ef6a89858a953b960"
+        },
+        "date": 1680771120247,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35553712855,
+            "unit": "ns/op\t        17.97 DeleteSeconds\t        17.50 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8649724662,
+            "unit": "ns/op\t         4.304 DeleteSeconds\t         4.297 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6482522999,
+            "unit": "ns/op\t         4.269 DeleteSeconds\t         2.163 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
