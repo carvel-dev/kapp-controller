@@ -11,8 +11,8 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/vmware-tanzu/carvel-vendir v0.30.1
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
-	golang.org/x/text v0.5.0 // indirect
-	golang.org/x/tools v0.1.12
+	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/tools v0.6.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.25.5
 	k8s.io/apimachinery v0.25.5
@@ -32,7 +32,7 @@ require (
 	github.com/go-logr/logr v1.2.3
 	github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115
 	github.com/spf13/cobra v1.4.0
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
+	golang.org/x/sync v0.1.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/component-base v0.25.5
 	k8s.io/klog/v2 v2.70.1
@@ -103,11 +103,11 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.3.1-0.20221206200815-1e63c2f08a10 // indirect
+	golang.org/x/mod v0.8.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401 // indirect
-	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/term v0.3.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/term v0.6.0 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
