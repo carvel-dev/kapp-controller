@@ -5,6 +5,7 @@ package sources
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
@@ -52,20 +53,29 @@ func (f Source) Configure() (string, error) {
 	}
 
 	options := []string{LocalDirectory, GithubRelease, HelmRepo, Git, ChartFromGit}
+	log.Println("=================previousFetchOptionSelected:", previousFetchOptionSelected, f.getPreviousFetchOptionIndex(options, previousFetchOptionSelected))
+
 	choiceOpts := ui.ChoiceOpts{
 		Label:   "Enter source",
 		Default: f.getPreviousFetchOptionIndex(options, previousFetchOptionSelected),
 		Choices: options,
 	}
-	currentFetchOptionIndex, err := f.ui.AskForChoice(choiceOpts)
-	if err != nil {
-		return "", err
-	}
+	haveChange := false
+	currentFetchOptionIndex := f.getPreviousFetchOptionIndex(options, previousFetchOptionSelected)
 	currentFetchOptionSelected := options[currentFetchOptionIndex]
-
-	if previousFetchOptionSelected != "" && currentFetchOptionSelected != previousFetchOptionSelected {
-		return "", fmt.Errorf("Transitioning from one fetch option to another is not allowed. Earlier option selected: %s, Current Option selected: %s", previousFetchOptionSelected, currentFetchOptionSelected)
+	if previousFetchOptionSelected == "" {
+		currentFetchOptionIndex, err = f.ui.AskForChoice(choiceOpts)
+		if err != nil {
+			return "", err
+		}
+		log.Println("=================currentFetchOptionIndex:", currentFetchOptionIndex)
+		currentFetchOptionSelected = options[currentFetchOptionIndex]
+		haveChange = true
 	}
+
+	// if previousFetchOptionSelected != "" && currentFetchOptionSelected != previousFetchOptionSelected {
+	// 	return "", fmt.Errorf("Transitioning from one fetch option to another is not allowed. Earlier option selected: %s, Current Option selected: %s", previousFetchOptionSelected, currentFetchOptionSelected)
+	// }
 
 	// For the local directory options, all files/directories in working directory are used while releasing
 	if currentFetchOptionSelected == LocalDirectory {
