@@ -56,7 +56,7 @@ func (r *Reconciler) AttachWatches(controller controller.Controller, ns string) 
 }
 
 // Reconcile gets the current config from the cluster and applies any changes.
-func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
+func (r *Reconciler) Reconcile(_ context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.log.WithValues("request", request)
 
 	err := r.config.Reload()
