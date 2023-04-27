@@ -1,6 +1,6 @@
 module github.com/vmware-tanzu/carvel-kapp-controller
 
-go 1.19
+go 1.20
 
 require (
 	github.com/fatih/color v1.12.0 // indirect
