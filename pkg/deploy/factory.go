@@ -29,7 +29,7 @@ type KappConfiguration interface {
 
 // NewFactory returns deploy factory.
 func NewFactory(coreClient kubernetes.Interface, kubeconfig *kubeconfig.Kubeconfig,
-	kappConfig KappConfiguration, cmdRunner exec.CmdRunner, log logr.Logger) Factory {
+	kappConfig KappConfiguration, cmdRunner exec.CmdRunner, _ logr.Logger) Factory {
 
 	return Factory{coreClient, kappConfig, kubeconfig, cmdRunner}
 }

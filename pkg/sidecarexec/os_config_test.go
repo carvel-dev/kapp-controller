@@ -13,9 +13,9 @@ import (
 )
 
 func Test_TrustedCertsCreateConfig(t *testing.T) {
-	backup, certs, close, err := createCertTempFiles(t)
+	backup, certs, closeFile, err := createCertTempFiles(t)
 	assert.NoError(t, err)
-	defer close()
+	defer closeFile()
 
 	backup.Write([]byte("existing-cert"))
 
@@ -36,9 +36,9 @@ func Test_TrustedCertsCreateConfig(t *testing.T) {
 }
 
 func Test_TrustedCertsUpdateConfig(t *testing.T) {
-	backup, certs, close, err := createCertTempFiles(t)
+	backup, certs, closeFile, err := createCertTempFiles(t)
 	assert.NoError(t, err)
-	defer close()
+	defer closeFile()
 
 	backup.Write([]byte("existing-cert"))
 
@@ -66,9 +66,9 @@ func Test_TrustedCertsUpdateConfig(t *testing.T) {
 }
 
 func Test_TrustedCertsDeleteConfig(t *testing.T) {
-	backup, certs, close, err := createCertTempFiles(t)
+	backup, certs, closeFile, err := createCertTempFiles(t)
 	assert.NoError(t, err)
-	defer close()
+	defer closeFile()
 
 	backup.Write([]byte("existing-cert"))
 
@@ -89,7 +89,7 @@ func Test_TrustedCertsDeleteConfig(t *testing.T) {
 	assert.Equal(t, string(contents), "existing-cert\n")
 }
 
-func createCertTempFiles(t *testing.T) (backup *os.File, certs *os.File, close func(), err error) {
+func createCertTempFiles(_ *testing.T) (backup *os.File, certs *os.File, close func(), err error) {
 	backup, err = os.CreateTemp("", "backup.crt")
 	if err != nil {
 		return nil, nil, nil, err
