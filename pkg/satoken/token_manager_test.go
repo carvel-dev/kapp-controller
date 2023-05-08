@@ -209,7 +209,7 @@ type fakeTokenGetter struct {
 	err   error
 }
 
-func (ftg *fakeTokenGetter) getToken(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
+func (ftg *fakeTokenGetter) getToken(_, _ string, _ *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
 	ftg.count++
 	return ftg.tr, ftg.err
 }

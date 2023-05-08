@@ -250,7 +250,7 @@ func (f FakeComponentInfo) KappControllerVersion() (semver.Version, error) {
 	return f.KCVersion, nil
 }
 
-func (f FakeComponentInfo) KubernetesVersion(serviceAccountName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta) (semver.Version, error) {
+func (f FakeComponentInfo) KubernetesVersion(_ string, _ *v1alpha1.AppCluster, _ *metav1.ObjectMeta) (semver.Version, error) {
 	*f.K8sVersionCount++
 	return f.K8sVersion, nil
 }

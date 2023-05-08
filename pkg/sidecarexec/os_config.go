@@ -44,7 +44,7 @@ func NewOSConfig(log logr.Logger) OSConfig {
 
 // ApplyCACerts atomically updates existing CA certs file
 // with additional CA certs provided.
-func (r OSConfig) ApplyCACerts(chain string, unusedResult *int) error {
+func (r OSConfig) ApplyCACerts(chain string, _ *int) error {
 	r.log.Info("Applying CA certs")
 
 	origCopyFile, err := os.Open(r.CACertsLoc.OrigCopyPath)
@@ -94,7 +94,7 @@ type ProxyInput struct {
 }
 
 // ApplyProxy sets proxy related environment variables.
-func (r OSConfig) ApplyProxy(in ProxyInput, unusedResult *int) error {
+func (r OSConfig) ApplyProxy(in ProxyInput, _ *int) error {
 	vals := map[string]string{
 		"http_proxy":  in.HTTPProxy,
 		"https_proxy": in.HTTPSProxy,
