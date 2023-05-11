@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1683828574479,
+  "lastUpdate": 1683831185115,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -11079,6 +11079,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6755366382,
             "unit": "ns/op\t         4.486 DeleteSeconds\t         2.203 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6293ec6178922d0268124746a2c96da0ec5c4d47",
+          "message": "Merge pull request #1092 from carvel-dev/downward-api-dot-check\n\ncheck that downward api supports dots in field paths",
+          "timestamp": "2023-05-11T12:43:16-06:00",
+          "tree_id": "193e9bf0adb5628aee700cb9b61c7d9a2e723018",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/6293ec6178922d0268124746a2c96da0ec5c4d47"
+        },
+        "date": 1683831183961,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35317580614,
+            "unit": "ns/op\t        17.78 DeleteSeconds\t        17.49 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8466272901,
+            "unit": "ns/op\t         4.277 DeleteSeconds\t         4.145 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6410271991,
+            "unit": "ns/op\t         4.239 DeleteSeconds\t         2.132 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
