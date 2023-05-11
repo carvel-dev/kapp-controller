@@ -24,15 +24,16 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v3
       with:
-        go-version: "1.19.3"
+        go-version: "1.20.3"
     - name: Check out code
-      uses: actions/checkout@v3.2.0
+      uses: actions/checkout@v3.3.0
       with:
         fetch-depth: 0
     - name: Install Carvel Tools
-      uses: vmware-tanzu/carvel-setup-action@v1
+      uses: carvel-dev/setup-action@v1
       with:
         only: ytt, kbld, imgpkg, vendir, kapp
+        token: ${{ secrets.GITHUB_TOKEN }}
     - name: Run Tests
       run: |
         set -e -x

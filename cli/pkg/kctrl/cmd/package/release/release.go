@@ -32,6 +32,7 @@ type ReleaseOptions struct {
 	repoOutputLocation    string
 	debug                 bool
 	generateOpenAPISchema bool
+	buildYttValidations   bool
 	tag                   string
 }
 
@@ -61,6 +62,7 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 	cmd.Flags().BoolVar(&o.debug, "debug", false, "Print verbose debug output")
 	cmd.Flags().StringVarP(&o.tag, "tag", "t", "", "Tag pushed with imgpkg bundle (default build-<TIMESTAMP>)")
 	cmd.Flags().BoolVar(&o.generateOpenAPISchema, "openapi-schema", true, "Generates openapi schema for ytt and helm templated files and adds it to generated package")
+	cmd.Flags().BoolVar(&o.buildYttValidations, "build-ytt-validations", true, "Ignore ytt validation errors while releasing packages")
 
 	return cmd
 }
@@ -111,11 +113,12 @@ func (o *ReleaseOptions) Run() error {
 		return fmt.Errorf("Releasing package: 'package init' was not run successfully. (hint: re-run the 'init' command)")
 	}
 	builderOpts := cmdapprelease.AppSpecBuilderOpts{
-		BuildTemplate: buildAppSpec.Template,
-		BuildDeploy:   buildAppSpec.Deploy,
-		BuildExport:   pkgBuild.GetExport(),
-		Debug:         o.debug,
-		BundleTag:     o.tag,
+		BuildTemplate:       buildAppSpec.Template,
+		BuildDeploy:         buildAppSpec.Deploy,
+		BuildExport:         pkgBuild.GetExport(),
+		Debug:               o.debug,
+		BundleTag:           o.tag,
+		BuildYttValidations: o.buildYttValidations,
 	}
 	appSpec, err := cmdapprelease.NewAppSpecBuilder(o.depsFactory, o.logger, o.ui, builderOpts).Build()
 	if err != nil {
@@ -165,7 +168,7 @@ func (o *ReleaseOptions) releaseResources(appSpec kcv1alpha1.AppSpec, pkgBuild b
 func generateValuesSchema(pkgBuild buildconfigs.PackageBuild) (*kcdatav1alpha1.ValuesSchema, error) {
 	if pkgBuild.Spec.Template.Spec.App.Spec.Template != nil {
 		// As of today, PackageInstall values file is applicable only for the first templating step.
-		// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/pkg/packageinstall/app.go#L103
+		// https://github.com/carvel-dev/kapp-controller/blob/develop/pkg/packageinstall/app.go#L103
 		templateStage := pkgBuild.Spec.Template.Spec.App.Spec.Template[0]
 		switch {
 		case templateStage.HelmTemplate != nil:

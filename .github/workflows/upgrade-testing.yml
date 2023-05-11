@@ -26,9 +26,9 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v3
         with:
-          go-version: "1.19.3"
+          go-version: "1.20.3"
       - name: Check out code
-        uses: actions/checkout@v3.2.0
+        uses: actions/checkout@v3.3.0
       - name: Install Carvel Tools
         run: ./hack/install-deps.sh
       - name: Run Upgrade Test
@@ -38,6 +38,6 @@ jobs:
           minikube start --driver=docker
           eval $(minikube docker-env --shell=bash)
 
-          kapp deploy -a kc -f https://github.com/vmware-tanzu/carvel-kapp-controller/releases/latest/download/release.yml -y
+          kapp deploy -a kc -f https://github.com/carvel-dev/kapp-controller/releases/latest/download/release.yml -y
 
           ./hack/deploy.sh

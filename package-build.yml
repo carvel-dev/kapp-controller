@@ -16,16 +16,14 @@ spec:
           - ytt:
               paths:
               - config
-              - config-release
           - kbld:
               paths:
               - '-'
               - .imgpkg/images.yml
       export:
       - imgpkgBundle:
-          image: ghcr.io/vmware-tanzu/carvel-kapp-controller-package-bundle
+          image: ghcr.io/carvel-dev/kapp-controller-package-bundle
           useKbldImagesLock: false
         includePaths:
         - config
-        - config-release
         - .imgpkg/images.yml

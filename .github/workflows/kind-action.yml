@@ -22,12 +22,12 @@ jobs:
         with:
           kubectl_version: v1.25.0
           cluster_name: kinder
-      - uses: actions/checkout@v3.2.0
+      - uses: actions/checkout@v3.3.0
         with:
           fetch-depth: 0
       - uses: actions/setup-go@v3 # default version of go is 1.10
         with:
-          go-version: "1.19.3"
+          go-version: "1.19.6"
       - name: Install Carvel Tools
         run: ./hack/install-deps.sh
       # Run benchmark with `go test -bench` and stores the output to a file
@@ -38,7 +38,7 @@ jobs:
 
           source ./hack/version-util.sh
 
-          ytt -f config/ -v kapp_controller_version="$(get_kappctrl_ver)+develop" | kbld -f- > kbld.out 2> kbldmeta.out
+          ytt -f config/config -f config/values-schema.yml -f config-dev -v dev.version="$(get_kappctrl_ver)+develop" | kbld -f- > kbld.out 2> kbldmeta.out
           cat kbldmeta.out | tail -n 1 | sed 's/.*final: kapp-controller -> \(.*\)$/\1/p'  | tail -n 1 | xargs kind load docker-image --name kinder
           kapp deploy -a kc -f kbld.out -c -y
 

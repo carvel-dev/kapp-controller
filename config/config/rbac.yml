@@ -1,0 +1,151 @@
+#@ load("@ytt:data", "data")
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kapp-controller-sa
+  namespace: #@ data.values.namespace
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kapp-controller-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create", "get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["serviceaccounts"]
+  verbs: ["get"]
+- apiGroups: [""]
+  resources: ["serviceaccounts/token"]
+  verbs: ["create"]
+- apiGroups: ["kappctrl.k14s.io"]
+  resources: ["apps", "apps/status"]
+  verbs: ["*"]
+- apiGroups: ["packaging.carvel.dev"]
+  resources: ["packageinstalls", "packageinstalls/status", "packageinstalls/finalizers"]
+  verbs: ["*"]
+- apiGroups: ["packaging.carvel.dev"]
+  resources: ["packagerepositories", "packagerepositories/status"]
+  verbs: ["*"]
+- apiGroups: ["internal.packaging.carvel.dev"]
+  resources: ["internalpackagemetadatas"]
+  verbs: ["*"]
+- apiGroups: ["data.packaging.carvel.dev"]
+  resources: ["packagemetadatas", "packagemetadatas/status"]
+  verbs: ["*"]
+- apiGroups: ["internal.packaging.carvel.dev"]
+  resources: ["internalpackages"]
+  verbs: ["*"]
+- apiGroups: ["data.packaging.carvel.dev"]
+  resources: ["packages", "packages/status"]
+  verbs: ["*"]
+#! TODO Needed for kapp-controller when deploying
+#! repository App CR (temporarily needed only for POC)
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["*"]
+#! Aggregated API server permissions
+- apiGroups: ["apiregistration.k8s.io"]
+  resources: ["apiservices"]
+  verbs: ["update", "get"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["list", "watch", "get", "update"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["mutatingwebhookconfigurations"]
+  verbs: ["list", "watch"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["validatingwebhookconfigurations"]
+  verbs: ["list", "watch"]
+- apiGroups: ["authorization.k8s.io"]
+  resources: ["subjectaccessreviews"]
+  verbs: ["create"]
+#@ if/end data.values.enableApiPriorityAndFairness:
+- apiGroups: ["flowcontrol.apiserver.k8s.io"]
+  resources: ["prioritylevelconfigurations", "flowschemas"]
+  verbs: ["list", "watch"]
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kapp-controller-user-role
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create", "get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["serviceaccounts"]
+  verbs: ["get"]
+- apiGroups: [""]
+  resources: ["serviceaccounts/token"]
+  verbs: ["create"]
+- apiGroups: ["kappctrl.k14s.io"]
+  resources: ["apps", "apps/status"]
+  verbs: ["*"]
+- apiGroups: ["packaging.carvel.dev"]
+  resources: ["packageinstalls", "packageinstalls/status", "packageinstalls/finalizers"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["*"]
+- apiGroups: ["packaging.carvel.dev"]
+  resources: ["packagerepositories", "packagerepositories/status"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["internal.packaging.carvel.dev"]
+  resources: ["internalpackagemetadatas"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["data.packaging.carvel.dev"]
+  resources: ["packagemetadatas", "packagemetadatas/status"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["internal.packaging.carvel.dev"]
+  resources: ["internalpackages"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["data.packaging.carvel.dev"]
+  resources: ["packages", "packages/status"]
+  verbs: ["get", "list", "watch"]
+
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kapp-controller-cluster-role-binding
+subjects:
+- kind: ServiceAccount
+  name: kapp-controller-sa
+  namespace: #@ data.values.namespace
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kapp-controller-cluster-role
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pkg-apiserver:system:auth-delegator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+- kind: ServiceAccount
+  name: kapp-controller-sa
+  namespace: #@ data.values.namespace
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pkgserver-auth-reader
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: extension-apiserver-authentication-reader
+subjects:
+- kind: ServiceAccount
+  name: kapp-controller-sa
+  namespace: #@ data.values.namespace

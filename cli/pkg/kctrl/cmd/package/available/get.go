@@ -77,7 +77,9 @@ func (o *GetOptions) Run(args []string) error {
 	var pkgName, pkgVersion string
 
 	if o.pkgCmdTreeOpts.PositionalArgs {
-		o.Name = args[0]
+		if len(args) > 0 {
+			o.Name = args[0]
+		}
 	}
 
 	if len(o.Name) == 0 {
@@ -161,7 +163,10 @@ func (o *GetOptions) show(client pkgclient.Interface, pkgName, pkgVersion string
 		}
 
 		if len(o.DefaultValuesFile) > 0 {
-			o.saveDefaultValuesFileOutput(pkg)
+			err := o.saveDefaultValuesFileOutput(pkg)
+			if err != nil {
+				o.ui.ErrorLinef("Default values file output: %v", err)
+			}
 		}
 
 		headers = append(headers, []uitable.Header{
@@ -291,8 +296,7 @@ func (o *GetOptions) showValuesSchema(client pkgclient.Interface, pkgName, pkgVe
 
 func (o *GetOptions) saveDefaultValuesFileOutput(pkg *v1alpha1.Package) error {
 	if len(pkg.Spec.ValuesSchema.OpenAPIv3.Raw) == 0 {
-		o.ui.PrintLinef("Package '%s/%s' does not have any user configurable values in the '%s' namespace", pkg.Spec.RefName, pkg.Spec.Version, o.NamespaceFlags.Name)
-		return nil
+		return fmt.Errorf("Package '%s/%s' does not have any user configurable values in the '%s' namespace", pkg.Spec.RefName, pkg.Spec.Version, o.NamespaceFlags.Name)
 	}
 
 	s := PackageSchema{pkg.Spec.ValuesSchema.OpenAPIv3.Raw}
