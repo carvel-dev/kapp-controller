@@ -1,0 +1,90 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: registry
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: registry
+  name: registry-svc
+spec:
+  selector:
+    app: simple-registry
+  ports:
+    - port: 5050
+      targetPort: 5050
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-registry
+  namespace: registry
+  annotations:
+    kapp.k14s.io/change-group: registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app:  simple-registry
+  template:
+    metadata:
+      labels:
+        app: simple-registry
+    spec:
+      containers:
+        - name: simple-registry
+          image: registry
+          env:
+            - name: REGISTRY_HTTP_ADDR
+              value: 0.0.0.0:5050
+            - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
+              value: /var/lib/tmp/registry
+          ports:
+            - containerPort: 5050
+          volumeMounts:
+            - mountPath: /var/lib
+              name: registry-sync
+      initContainers:
+        - name: registry-contents-populator
+          image: registry
+          command: [ "/bin/sh","-c", "tar -xf /tmp/tmp-registry -C /var/lib" ]
+          volumeMounts:
+            - mountPath: /tmp
+              name: registry-contents
+            - mountPath: /var/lib
+              name: registry-sync
+
+      volumes:
+        - name: registry-contents
+          configMap:
+            name: registry-contents
+        - name: registry-sync
+          emptyDir: { }
+
+# TODO should we make vendir's http retry within App CR, to avoid
+# transient failure when Service=>Deployment networking is not ready?
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: check-nginx-conn
+  annotations:
+    kapp.k14s.io/update-strategy: always-replace
+    kapp.k14s.io/change-rule: upsert after upserting registry
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      name: check-nginx-conn
+    spec:
+      containers:
+        - name: check
+          image: busybox
+          command:
+            - /bin/sh
+            - "-c"
+            - |
+              wget --tries=10 --no-check-certificate http://registry-svc.registry.svc.cluster.local:5050/v2/
+      restartPolicy: Never
