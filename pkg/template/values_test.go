@@ -24,10 +24,14 @@ func TestValues(t *testing.T) {
 		subject := subject
 		subject.appContext.Metadata = PartialObjectMetadata{
 			ObjectMeta: ObjectMeta{
-				Name:        "some-name",
-				Namespace:   "some-namespace",
-				UID:         "some-uid",
-				Labels:      map[string]string{"a_label": "a_label_val"},
+				Name:      "some-name",
+				Namespace: "some-namespace",
+				UID:       "some-uid",
+				Labels: map[string]string{
+					"a_label":                 "a_label_val",
+					"a_label.a_label2":        "a_label_val2",
+					"a_label.a_label2/suffix": "a_label_val2_suffix",
+				},
 				Annotations: map[string]string{"a_ann": "a_ann_val"},
 			},
 		}
@@ -52,7 +56,7 @@ func TestValues(t *testing.T) {
 			"b_some-name-key: some-name\n",
 			"c_some-namespace-key: some-namespace\n",
 			"d_some-uid-key: some-uid\n",
-			"e_some-label-key:\n  a_label: a_label_val\n",
+			"e_some-label-key:\n  a_label: a_label_val\n  a_label.a_label2: a_label_val2\n  a_label.a_label2/suffix: a_label_val2_suffix\n",
 		}
 
 		for i, p := range paths {
@@ -167,6 +171,22 @@ func TestValues(t *testing.T) {
 			_, _, err := subject.AsPaths(os.TempDir())
 			require.Error(t, err)
 			assert.ErrorContains(t, err, "INVALID_SUBPATH is not found")
+		})
+
+		t.Run("deals with complex labels", func(t *testing.T) {
+			subject := subject
+			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
+				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
+					{Name: "a_some-label-key", FieldPath: "metadata.labels['a_label\\.a_label2/suffix']"},
+				}},
+			}}
+
+			paths, cleanup, err := subject.AsPaths(os.TempDir())
+			require.NoError(t, err)
+			require.Len(t, paths, 1)
+			t.Cleanup(cleanup)
+
+			assertFileContents(t, paths[0], "a_some-label-key: a_label_val2_suffix\n")
 		})
 
 		t.Run("return helpful error if an unsupported downward api field spec is provided", func(t *testing.T) {
