@@ -611,7 +611,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref common.ReferenceCallback)
 					},
 					"subPath": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Grab only portion of repository (optional)",
+							Description: "Grab only portion of repository, subpath becomes new root (optional)",
 							Type:        []string{"string"},
 							Format:      "",
 						},
