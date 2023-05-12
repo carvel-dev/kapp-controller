@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1683911083855,
+  "lastUpdate": 1683911407782,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -11205,6 +11205,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5564258462,
             "unit": "ns/op\t         3.325 DeleteSeconds\t         2.167 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c28f473bd3a79dbaac6f5f224299b85183104734",
+          "message": "Merge pull request #1193 from carvel-dev/dependabot/go_modules/golang.org/x/tools-0.9.1\n\nBump golang.org/x/tools from 0.6.0 to 0.9.1",
+          "timestamp": "2023-05-12T10:57:13-06:00",
+          "tree_id": "94c508a3728019151fd09b4637370e5fe147ac54",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/c28f473bd3a79dbaac6f5f224299b85183104734"
+        },
+        "date": 1683911405876,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37361479261,
+            "unit": "ns/op\t        18.52 DeleteSeconds\t        18.73 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8712804672,
+            "unit": "ns/op\t         4.413 DeleteSeconds\t         4.239 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6682824534,
+            "unit": "ns/op\t         4.400 DeleteSeconds\t         2.210 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
