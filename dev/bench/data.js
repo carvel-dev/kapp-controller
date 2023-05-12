@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1683831185115,
+  "lastUpdate": 1683908819334,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -11121,6 +11121,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6410271991,
             "unit": "ns/op\t         4.239 DeleteSeconds\t         2.132 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f37e356acaab8e4dc0b04c118f15555e864a83b3",
+          "message": "Merge pull request #1194 from carvel-dev/flaky-test-fix\n\nFix flaky E2E tests",
+          "timestamp": "2023-05-12T10:16:19-06:00",
+          "tree_id": "56f35d4a10eb61de9224dbac25ffbe08775a8a06",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/f37e356acaab8e4dc0b04c118f15555e864a83b3"
+        },
+        "date": 1683908817950,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36712418831,
+            "unit": "ns/op\t        19.10 DeleteSeconds\t        17.56 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8560292043,
+            "unit": "ns/op\t         4.329 DeleteSeconds\t         4.184 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6709404380,
+            "unit": "ns/op\t         4.471 DeleteSeconds\t         2.185 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
