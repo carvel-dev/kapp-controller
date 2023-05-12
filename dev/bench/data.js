@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1683916011276,
+  "lastUpdate": 1683917051197,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -11331,6 +11331,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6684846537,
             "unit": "ns/op\t         4.415 DeleteSeconds\t         2.205 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "695a9123c9529dc20d1ac44bc44a0d61846be424",
+          "message": "Merge pull request #1178 from carvel-dev/dependabot/github_actions/actions/checkout-3.5.2\n\nBump actions/checkout from 3.3.0 to 3.5.2",
+          "timestamp": "2023-05-12T12:38:22-06:00",
+          "tree_id": "15e49f7c1f89a1f50d4a8beb4df4468a8fd7902d",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/695a9123c9529dc20d1ac44bc44a0d61846be424"
+        },
+        "date": 1683917050108,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36389707848,
+            "unit": "ns/op\t        18.87 DeleteSeconds\t        17.48 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8553024563,
+            "unit": "ns/op\t         4.351 DeleteSeconds\t         4.163 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6475668039,
+            "unit": "ns/op\t         4.239 DeleteSeconds\t         2.196 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
