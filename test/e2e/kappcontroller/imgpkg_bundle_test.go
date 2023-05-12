@@ -138,7 +138,7 @@ func Test_AppCR_FetchFromCaching(t *testing.T) {
 		// deletes ServiceAccount before App
 		kubectl.RunWithOpts([]string{"delete", "apps/" + pkgiName}, e2e.RunOpts{AllowError: true})
 		kapp.Run([]string{"delete", "-a", pkgiName})
-		kapp.Run([]string{"delete", "-a", registryName, "-n", registryNamespace})
+		kapp.Run([]string{"delete", "-a", registryName})
 	}
 	cleanUp()
 	defer cleanUp()
@@ -280,7 +280,7 @@ func Test_PackageRepo_FetchFromCaching(t *testing.T) {
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", pkgrName})
-		kapp.Run([]string{"delete", "-a", registryName, "-n", registryNamespace})
+		kapp.Run([]string{"delete", "-a", registryName})
 	}
 	cleanUp()
 	defer cleanUp()
@@ -374,7 +374,7 @@ func Test_PackageRepo_DoesNotFetchFromCaching(t *testing.T) {
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", pkgrName})
-		kapp.Run([]string{"delete", "-a", registryName, "-n", registryNamespace})
+		kapp.Run([]string{"delete", "-a", registryName})
 	}
 	cleanUp()
 	defer cleanUp()
