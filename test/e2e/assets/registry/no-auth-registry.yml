@@ -41,6 +41,14 @@ spec:
               value: /var/lib/tmp/registry
           ports:
             - containerPort: 5050
+          readinessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /v2/
+              port: 5050
+            # give some time to start up otherwise clients will flake
+            initialDelaySeconds: 5
+            periodSeconds: 1
           volumeMounts:
             - mountPath: /var/lib
               name: registry-sync
