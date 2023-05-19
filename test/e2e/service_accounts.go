@@ -51,3 +51,36 @@ roleRef:
   name: kappctrl-e2e-ns-role
 `, sa.Namespace)
 }
+
+// ForClusterYAML can be used to get service account with cluster wide permissions
+func (sa ServiceAccounts) ForClusterYAML() string {
+	return fmt.Sprintf(`
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kappctrl-e2e-ns-sa
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kappctrl-e2e-ns-role
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kappctrl-e2e-ns-role-binding
+subjects:
+- kind: ServiceAccount
+  name: kappctrl-e2e-ns-sa
+  namespace: %s
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kappctrl-e2e-ns-role
+`, sa.Namespace)
+}
