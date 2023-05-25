@@ -225,3 +225,94 @@ spec:
 		require.Equal(t, expectedDefaultValuesFileOutout, string(out), "default values file output does not match")
 	})
 }
+
+func TestPackageAvailableGet_WithEmptyValuesSchema(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+
+	packageName := "test-pkg.carvel.dev"
+	appName := "test-package"
+
+	yaml := `---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: test-pkg.carvel.dev
+spec:
+  displayName: "Carvel Test Package"
+  shortDescription: "Carvel package for testing installation"
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: test-pkg.carvel.dev.1.0.0
+spec:
+  refName: test-pkg.carvel.dev
+  version: 1.0.0
+  valuesSchema:
+    openAPIv3:
+      title: Empty values schema
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v1.0.0
+      template:
+      - ytt:
+          paths:
+          - config/
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
+      deploy:
+      - kapp: {}
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: test-pkg.carvel.dev.1.1.0
+spec:
+  refName: test-pkg.carvel.dev
+  version: 1.1.0
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: k8slt/kctrl-example-pkg:v1.0.0
+      template:
+      - ytt:
+          paths:
+          - config/
+      - kbld:
+          paths:
+          - "-"
+          - ".imgpkg/images.yml"
+      deploy:
+      - kapp: {}`
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", appName})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("getting value schema of a package", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"}, RunOpts{
+			StdinReader: strings.NewReader(yaml),
+		})
+
+		_, err := kappCtrl.RunWithOpts([]string{"package", "available", "get", "-p", fmt.Sprintf("%s/%s", packageName, "1.0.0"), "--values-schema", "--json"},
+			RunOpts{AllowError: true})
+
+		require.Error(t, err)
+		require.ErrorContains(t, err, "hint: the valuesSchema might not have any properties")
+	})
+
+	logger.Section("getting default-values-file-output of a package", func() {
+		out := kappCtrl.Run([]string{"package", "available", "get", "-p", fmt.Sprintf("%s/%s", packageName, "1.0.0"), "--default-values-file-output", "default-values.yaml", "--json"})
+		require.Contains(t, out, "does not have any user configurable values")
+	})
+}
