@@ -21,6 +21,10 @@ type PackageSchema struct {
 
 // DefaultValues returns a yaml byte array with values populated according to schema
 func (s PackageSchema) DefaultValues() ([]byte, error) {
+	if len(s.Raw) == 0 {
+		return []byte{}, nil
+	}
+
 	jsonSchemaProps := &apiextensions.JSONSchemaProps{}
 
 	if err := yaml.Unmarshal(s.Raw, jsonSchemaProps); err != nil {
@@ -30,6 +34,10 @@ func (s PackageSchema) DefaultValues() ([]byte, error) {
 	ss, err := structuralschema.NewStructural(jsonSchemaProps)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(ss.Properties) == 0 {
+		return []byte{}, nil
 	}
 
 	unstructured := make(map[string]interface{})
