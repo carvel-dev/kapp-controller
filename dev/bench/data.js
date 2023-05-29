@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1684941569241,
+  "lastUpdate": 1685335623635,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -11499,6 +11499,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6424373128,
             "unit": "ns/op\t         4.241 DeleteSeconds\t         2.139 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f36a3ce0a9abbef1715e680ab9ef4ea8b39db9fc",
+          "message": "Unblock app deletion when namespace is terminating (#1208)\n\nand app resources are in the same namespace only\r\n\r\nSigned-off-by: Praveen Rewar <8457124+praveenrewar@users.noreply.github.com>",
+          "timestamp": "2023-05-29T10:05:11+05:30",
+          "tree_id": "bcef968d3b4428a791feee4ef734c746d6cdd725",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/f36a3ce0a9abbef1715e680ab9ef4ea8b39db9fc"
+        },
+        "date": 1685335621847,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35918219281,
+            "unit": "ns/op\t        18.27 DeleteSeconds\t        17.59 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8710064416,
+            "unit": "ns/op\t         4.428 DeleteSeconds\t         4.225 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6553756084,
+            "unit": "ns/op\t         4.322 DeleteSeconds\t         2.168 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
