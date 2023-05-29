@@ -33,6 +33,7 @@ type ReleaseOptions struct {
 	debug                 bool
 	generateOpenAPISchema bool
 	buildYttValidations   bool
+	buildValues           string
 	tag                   string
 }
 
@@ -63,6 +64,7 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 	cmd.Flags().StringVarP(&o.tag, "tag", "t", "", "Tag pushed with imgpkg bundle (default build-<TIMESTAMP>)")
 	cmd.Flags().BoolVar(&o.generateOpenAPISchema, "openapi-schema", true, "Generates openapi schema for ytt and helm templated files and adds it to generated package")
 	cmd.Flags().BoolVar(&o.buildYttValidations, "build-ytt-validations", true, "Ignore ytt validation errors while releasing packages")
+	cmd.Flags().StringVar(&o.buildValues, "build-values", "", "Path to values file to be used while releasing package")
 
 	return cmd
 }
@@ -119,6 +121,7 @@ func (o *ReleaseOptions) Run() error {
 		Debug:               o.debug,
 		BundleTag:           o.tag,
 		BuildYttValidations: o.buildYttValidations,
+		BuildValues:         o.buildValues,
 	}
 	appSpec, err := cmdapprelease.NewAppSpecBuilder(o.depsFactory, o.logger, o.ui, builderOpts).Build()
 	if err != nil {
