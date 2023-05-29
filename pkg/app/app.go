@@ -15,6 +15,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
@@ -24,6 +25,7 @@ type ComponentInfo interface {
 	KappControllerVersion() (semver.Version, error)
 	KubernetesVersion(serviceAccountName string, specCluster *v1alpha1.AppCluster, objMeta *metav1.ObjectMeta) (semver.Version, error)
 	KubernetesAPIs() ([]string, error)
+	NamespaceStatus(name string) (v1.NamespaceStatus, error)
 }
 
 type Hooks struct {
@@ -289,4 +291,12 @@ func (a App) HasImageOrImgpkgBundle() bool {
 		}
 	}
 	return false
+}
+
+func (a App) isNamespaceTerminating() bool {
+	status, err := a.compInfo.NamespaceStatus(a.app.Namespace)
+	if err != nil {
+		a.log.Error(err, "Error getting app namespace status", "app", a.app.Name, "namespace", a.app.Namespace)
+	}
+	return status.Phase == v1.NamespaceTerminating
 }
