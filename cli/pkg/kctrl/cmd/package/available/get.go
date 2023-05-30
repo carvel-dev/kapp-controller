@@ -295,14 +295,14 @@ func (o *GetOptions) showValuesSchema(client pkgclient.Interface, pkgName, pkgVe
 }
 
 func (o *GetOptions) saveDefaultValuesFileOutput(pkg *v1alpha1.Package) error {
-	if len(pkg.Spec.ValuesSchema.OpenAPIv3.Raw) == 0 {
-		return fmt.Errorf("Package '%s/%s' does not have any user configurable values in the '%s' namespace", pkg.Spec.RefName, pkg.Spec.Version, o.NamespaceFlags.Name)
-	}
-
 	s := PackageSchema{pkg.Spec.ValuesSchema.OpenAPIv3.Raw}
 	defaultValues, err := s.DefaultValues()
 	if err != nil {
 		return err
+	}
+
+	if len(defaultValues) == 0 {
+		return fmt.Errorf("Package '%s/%s' does not have any user configurable values in the '%s' namespace", pkg.Spec.RefName, pkg.Spec.Version, o.NamespaceFlags.Name)
 	}
 
 	err = os.WriteFile(o.DefaultValuesFile, defaultValues, 0600)
