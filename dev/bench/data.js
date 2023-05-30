@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1685436588435,
+  "lastUpdate": 1685482397917,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -11625,6 +11625,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6443544877,
             "unit": "ns/op\t         4.272 DeleteSeconds\t         2.129 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "soumikm@vmware.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "distinct": true,
+          "id": "1d9af64a53ad5f639e6de77777f59d701b540182",
+          "message": "Add tests for --build-values flag\n\nSigned-off-by: Soumik Majumder <soumikm@vmware.com>",
+          "timestamp": "2023-05-31T02:57:07+05:30",
+          "tree_id": "12c9ed6d27188a30fe771a198e85772f2059d746",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/1d9af64a53ad5f639e6de77777f59d701b540182"
+        },
+        "date": 1685482396692,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35900043752,
+            "unit": "ns/op\t        18.19 DeleteSeconds\t        17.67 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8545901533,
+            "unit": "ns/op\t         4.311 DeleteSeconds\t         4.188 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6483493955,
+            "unit": "ns/op\t         4.286 DeleteSeconds\t         2.152 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
