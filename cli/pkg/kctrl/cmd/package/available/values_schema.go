@@ -91,7 +91,7 @@ func (parser *PackageValuesSchemaParser) walkOnValueSchemaProperties(docMap map[
 		propertiesMap = properties.(map[string]interface{})
 	default:
 		errMsg := fmt.Sprintf("unable to parse the value schema, the value of key named 'properties' has unsupported"+
-			" type %v. Expected types are: [map[string]interface{}, json.RawMessage]", t)
+			" type %v. Expected types are: [map[string]interface{}, json.RawMessage] (hint: the valuesSchema might not have any properties)", t)
 		return fmt.Errorf(errMsg)
 	}
 
