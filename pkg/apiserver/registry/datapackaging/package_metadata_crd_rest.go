@@ -36,8 +36,9 @@ type PackageMetadataCRDREST struct {
 }
 
 var (
-	_ rest.StandardStorage    = &PackageMetadataCRDREST{}
-	_ rest.ShortNamesProvider = &PackageMetadataCRDREST{}
+	_ rest.StandardStorage      = &PackageMetadataCRDREST{}
+	_ rest.ShortNamesProvider   = &PackageMetadataCRDREST{}
+	_ rest.SingularNameProvider = &PackageMetadataCRDREST{}
 )
 
 func NewPackageMetadataCRDREST(crdClient installclient.Interface, nsClient kubernetes.Interface, globalNS string) *PackageMetadataCRDREST {
@@ -46,6 +47,11 @@ func NewPackageMetadataCRDREST(crdClient installclient.Interface, nsClient kuber
 
 func (r *PackageMetadataCRDREST) ShortNames() []string {
 	return []string{"pkgm"}
+}
+
+// GetSingularName returns singular name of package metadatas
+func (r *PackageMetadataCRDREST) GetSingularName() string {
+	return "packagemetadata"
 }
 
 func (r *PackageMetadataCRDREST) New() runtime.Object {

@@ -34,8 +34,9 @@ type PackageCRDREST struct {
 }
 
 var (
-	_ rest.StandardStorage    = &PackageCRDREST{}
-	_ rest.ShortNamesProvider = &PackageCRDREST{}
+	_ rest.StandardStorage      = &PackageCRDREST{}
+	_ rest.ShortNamesProvider   = &PackageCRDREST{}
+	_ rest.SingularNameProvider = &PackageCRDREST{}
 )
 
 func NewPackageCRDREST(crdClient installclient.Interface, nsClient kubernetes.Interface, globalNS string) *PackageCRDREST {
@@ -44,6 +45,11 @@ func NewPackageCRDREST(crdClient installclient.Interface, nsClient kubernetes.In
 
 func (r *PackageCRDREST) ShortNames() []string {
 	return []string{"pkg"}
+}
+
+// GetSingularName returns singular name of packages
+func (r *PackageCRDREST) GetSingularName() string {
+	return "package"
 }
 
 func (r *PackageCRDREST) NamespaceScoped() bool {

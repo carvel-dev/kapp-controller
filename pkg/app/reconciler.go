@@ -16,6 +16,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -47,8 +48,8 @@ func NewReconciler(appClient kcclient.Interface, log logr.Logger, crdAppFactory 
 var _ reconcile.Reconciler = &Reconciler{}
 
 // AttachWatches configures watches needed for reconciler to reconcile Apps.
-func (r *Reconciler) AttachWatches(controller controller.Controller) error {
-	err := controller.Watch(&source.Kind{Type: &kcv1alpha1.App{}}, &handler.EnqueueRequestForObject{})
+func (r *Reconciler) AttachWatches(controller controller.Controller, cache cache.Cache) error {
+	err := controller.Watch(source.Kind(cache, &kcv1alpha1.App{}), &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return fmt.Errorf("Watch Apps: %s", err)
 	}
@@ -56,12 +57,12 @@ func (r *Reconciler) AttachWatches(controller controller.Controller) error {
 	secretHandler := reconciler.NewSecretHandler(r.log, r.appRefTracker, r.appUpdateStatus)
 	cmHandler := reconciler.NewConfigMapHandler(r.log, r.appRefTracker, r.appUpdateStatus)
 
-	err = controller.Watch(&source.Kind{Type: &corev1.Secret{}}, secretHandler)
+	err = controller.Watch(source.Kind(cache, &corev1.Secret{}), secretHandler)
 	if err != nil {
 		return fmt.Errorf("Watch Secrets: %s", err)
 	}
 
-	err = controller.Watch(&source.Kind{Type: &corev1.ConfigMap{}}, cmHandler)
+	err = controller.Watch(source.Kind(cache, &corev1.ConfigMap{}), cmHandler)
 	if err != nil {
 		return fmt.Errorf("Watch ConfigMaps: %s", err)
 	}
