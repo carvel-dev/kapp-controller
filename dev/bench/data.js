@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1686072604936,
+  "lastUpdate": 1686085183255,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -11877,6 +11877,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6557104866,
             "unit": "ns/op\t         4.318 DeleteSeconds\t         2.184 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6a9f2044cce4495b17c5f8d46b45ef40b154f494",
+          "message": "Merge pull request #1223 from carvel-dev/dependabot/github_actions/golangci/golangci-lint-action-3.5.0\n\nBump golangci/golangci-lint-action from 3.4.0 to 3.5.0",
+          "timestamp": "2023-06-06T14:53:51-06:00",
+          "tree_id": "1354528046e5d00ce18d995d56fb6f0c56f04cfe",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/6a9f2044cce4495b17c5f8d46b45ef40b154f494"
+        },
+        "date": 1686085181769,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35555210974,
+            "unit": "ns/op\t        18.02 DeleteSeconds\t        17.49 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8534030728,
+            "unit": "ns/op\t         4.321 DeleteSeconds\t         4.173 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6419997113,
+            "unit": "ns/op\t         4.245 DeleteSeconds\t         2.130 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
