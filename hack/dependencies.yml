@@ -22,15 +22,15 @@
   version: v0.37.2
 - checksums:
     darwin:
-      amd64: 4ebddf3be5cf0d55d71458c8b128bfdac361daec317fffbcefa0dcbc5288d26e
+      amd64: 761ce5415f4a1e4e05d47632e0a21da0a050435b495f9aed7997b77c4d59332c
     linux:
-      amd64: 2764aac38435b1178a9c232c072b6e184bfc8802268580ab911a1e84eebc42c1
-      arm64: 7ce8bb078204530f0e15a761c17b30cc49d55188de73ea78c89888509663ed39
+      amd64: f71adcf7292aa5a38f4fd8925bec27ab3af61e24e2eed122cb4856381c17efc1
+      arm64: 1385e0a7da5bf4c6b4428cf2059aa075a78dd7b66feb7a26ed04813437bc38a1
   dev: true
   name: kapp
   repo: vmware-tanzu/carvel-kapp
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.56.0
+  version: v0.57.0
 - checksums:
     darwin:
       amd64: c2d9515a2eed7db6d1a25ea1d4ac4818bee0303ffc560402da4b8bc02112046b
