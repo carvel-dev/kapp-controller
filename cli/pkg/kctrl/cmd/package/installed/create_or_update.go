@@ -204,8 +204,6 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 }
 
 func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
-	o.createdAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
-
 	if o.pkgCmdTreeOpts.PositionalArgs {
 		if len(args) > 0 {
 			o.Name = args[0]
@@ -224,6 +222,8 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 	if err != nil {
 		return err
 	}
+
+	o.createdAnnotations = NewCreatedResourceAnnotations(o.Name, o.NamespaceFlags.Name)
 
 	if o.DryRun {
 		err := PackageInstalledDryRun{o}.PrintResources()
