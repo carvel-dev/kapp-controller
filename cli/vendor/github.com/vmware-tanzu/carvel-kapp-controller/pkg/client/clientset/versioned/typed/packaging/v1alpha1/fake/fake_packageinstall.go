@@ -101,7 +101,7 @@ func (c *FakePackageInstalls) UpdateStatus(ctx context.Context, packageInstall *
 // Delete takes name of the packageInstall and deletes it. Returns an error if one occurs.
 func (c *FakePackageInstalls) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(packageinstallsResource, c.ns, name), &v1alpha1.PackageInstall{})
+		Invokes(testing.NewDeleteActionWithOptions(packageinstallsResource, c.ns, name, opts), &v1alpha1.PackageInstall{})
 
 	return err
 }

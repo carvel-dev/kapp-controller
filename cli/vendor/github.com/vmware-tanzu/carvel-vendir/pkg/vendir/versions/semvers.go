@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	semver "github.com/k14s/semver/v4"
+	semver "github.com/carvel-dev/semver/v4"
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 )
 
@@ -106,6 +106,16 @@ func (v Semvers) FilterPrereleases(prereleases *v1alpha1.VersionSelectionSemverP
 	var result []SemverWrap
 	for _, ver := range v.versions {
 		if len(ver.Version.Pre) == 0 || v.shouldKeepPrerelease(ver.Version, preIdentifiersAsMap) {
+			result = append(result, ver)
+		}
+	}
+	return Semvers{result}
+}
+
+func (v Semvers) Filter(f func(string) bool) Semvers {
+	var result []SemverWrap // it's a wrap
+	for _, ver := range v.versions {
+		if f(ver.Original) {
 			result = append(result, ver)
 		}
 	}
