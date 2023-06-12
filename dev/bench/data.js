@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1686331553598,
+  "lastUpdate": 1686590903693,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -12045,6 +12045,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5488340502,
             "unit": "ns/op\t         3.309 DeleteSeconds\t         2.152 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2e0e6dee81bb02de64c87bb9d9d9cf97a0e151dd",
+          "message": "Merge pull request #1229 from carvel-dev/bump-go-1.20.5\n\nBumping go version to 1.20.5",
+          "timestamp": "2023-06-12T11:17:54-06:00",
+          "tree_id": "bd5c7b69ffbefd28fb67294ed2c27bde31601b43",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/2e0e6dee81bb02de64c87bb9d9d9cf97a0e151dd"
+        },
+        "date": 1686590902518,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35525107148,
+            "unit": "ns/op\t        17.96 DeleteSeconds\t        17.54 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8451466729,
+            "unit": "ns/op\t         4.275 DeleteSeconds\t         4.146 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5399124322,
+            "unit": "ns/op\t         3.257 DeleteSeconds\t         2.112 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
