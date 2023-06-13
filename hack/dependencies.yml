@@ -44,14 +44,14 @@
   version: v0.33.3
 - checksums:
     linux:
-      amd64: da36e117d6dbc57c8ec5bab2283222fbd108db86c83389eebe045ad1ef3e2c3b
-      arm64: 658839fed8f9be2169f5df68e55cb2f0aa731a50df454caf183186766800bbd0
+      amd64: ca2d5d40d4cdfb9a3a6205dd803b5bc8def00bd2f13e5526c127e9b667974a89
+      arm64: 9f58e707dcbe9a3b7885c4e24ef57edfb9794490d72705b33a93fa1f3572cce4
   dev: false
   name: helm
   repo: helm/helm
   tarballSubpath: '{{.OS}}-{{.Arch}}/helm'
   urlTemplate: https://get.helm.sh/helm-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
-  version: v3.12.0
+  version: v3.11.3
 - checksums:
     linux:
       amd64: 53aec65e45f62a769ff24b7e5384f0c82d62668dd96ed56685f649da114b4dbb
@@ -73,11 +73,11 @@
   version: v1.1.1
 - checksums:
     linux:
-      amd64: 38c9a2f484076aeafd9f522efdee40538c31337539bd8c80a29f5c4077314e53
-      arm64: 735fa1b9bb02ef0ee79dd40c418760687776b44747f43f2e26c3bca4e1fd96f6
+      amd64: 5e7ecb614b5926acfc36eb1258800391ab7c6e6e026fa7cacbfe92006bac895c
+      arm64: a8c3f4140d18c324cc69f5de4df0566e529e1636cff340095a42475799bf3fed
   dev: false
   name: cue
   repo: cue-lang/cue
   tarballSubpath: cue
   urlTemplate: https://github.com/cue-lang/cue/releases/download/{{.Version}}/cue_{{.Version}}_{{.OS}}_{{.Arch}}.tar.gz
-  version: v0.5.0
+  version: v0.4.3
