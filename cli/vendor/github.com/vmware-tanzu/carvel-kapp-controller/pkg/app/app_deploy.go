@@ -9,6 +9,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	ctldep "github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 )
 
 func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
@@ -35,6 +36,7 @@ func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec
 			}
 
 			result = kapp.Deploy(tplOutput, a.startFlushingAllStatusUpdates, changedFunc)
+			a.trySaveMetadata(kapp)
 
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to deploy"))
@@ -54,7 +56,16 @@ func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 	}
 
 	var result exec.CmdRunResult
-	if !a.app.Spec.NoopDelete {
+
+	appResourcesInSameNs := a.app.Status.Deploy != nil && a.app.Status.Deploy.KappDeployStatus != nil &&
+		len(a.app.Status.Deploy.KappDeployStatus.AssociatedResources.Namespaces) == 1 &&
+		a.app.Status.Deploy.KappDeployStatus.AssociatedResources.Namespaces[0] == a.app.Namespace
+
+	// Use noopDelete if the namespace is terminating and app resources are in same namespace because
+	// the app resources will be automatically deleted including the kapp ServiceAccount
+	noopDelete := a.isNamespaceTerminating() && appResourcesInSameNs && a.app.Spec.Cluster == nil
+
+	if !a.app.Spec.NoopDelete && !noopDelete {
 		for _, dep := range a.app.Spec.Deploy {
 			switch {
 			case dep.Kapp != nil:
@@ -122,11 +133,20 @@ func (a *App) inspect() exec.CmdRunResult {
 	return result
 }
 
+// trySaveMetadata if unable to save the kapp metadata into an App meta continue and do not fail the deploy.
+func (a *App) trySaveMetadata(kapp *ctldep.Kapp) {
+	meta, err := kapp.InternalAppMeta()
+	if err != nil {
+		return
+	}
+
+	a.metadata = meta
+}
+
 func (a *App) newKapp(kapp v1alpha1.AppDeployKapp, cancelCh chan struct{}) (*ctldep.Kapp, error) {
-	genericOpts := ctldep.GenericOpts{Name: a.app.Name, Namespace: a.app.Namespace}
 
 	return a.deployFactory.NewKapp(kapp, a.app.Spec.ServiceAccountName,
-		a.app.Spec.Cluster, genericOpts, cancelCh)
+		a.app.Spec.Cluster, cancelCh, kubeconfig.AccessLocation{Name: a.app.Name, Namespace: a.app.Namespace})
 }
 
 type cancelCondition func(v1alpha1.App) bool

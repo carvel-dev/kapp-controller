@@ -4,11 +4,10 @@
 package deploy
 
 import (
-	"fmt"
-
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -19,10 +18,8 @@ type Factory struct {
 	coreClient kubernetes.Interface
 	kappConfig KappConfiguration
 
-	kubeconfigSecrets *KubeconfigSecrets
-	serviceAccounts   *ServiceAccounts
-
-	cmdRunner exec.CmdRunner
+	kubeconfig *kubeconfig.Kubeconfig
+	cmdRunner  exec.CmdRunner
 }
 
 // KappConfiguration provides a way to inject shared kapp settings.
@@ -31,59 +28,40 @@ type KappConfiguration interface {
 }
 
 // NewFactory returns deploy factory.
-func NewFactory(coreClient kubernetes.Interface,
-	kappConfig KappConfiguration, cmdRunner exec.CmdRunner, log logr.Logger) Factory {
+func NewFactory(coreClient kubernetes.Interface, kubeconfig *kubeconfig.Kubeconfig,
+	kappConfig KappConfiguration, cmdRunner exec.CmdRunner, _ logr.Logger) Factory {
 
-	return Factory{coreClient, kappConfig,
-		NewKubeconfigSecrets(coreClient), NewServiceAccounts(coreClient, log), cmdRunner}
+	return Factory{coreClient, kappConfig, kubeconfig, cmdRunner}
 }
 
+// NewKapp configures and returns a deployer of type Kapp
 func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
-	clusterOpts *v1alpha1.AppCluster, genericOpts GenericOpts, cancelCh chan struct{}) (*Kapp, error) {
+	clusterOpts *v1alpha1.AppCluster, cancelCh chan struct{}, location kubeconfig.AccessLocation) (*Kapp, error) {
 
-	var err error
-	var processedGenericOpts ProcessedGenericOpts
-	const suffix string = ".app"
-
-	switch {
-	case len(saName) > 0:
-		processedGenericOpts, err = f.serviceAccounts.Find(genericOpts, saName)
-		if err != nil {
-			return nil, err
-		}
-
-	case clusterOpts != nil:
-		processedGenericOpts, err = f.kubeconfigSecrets.Find(genericOpts, clusterOpts)
-		if err != nil {
-			return nil, err
-		}
-
-	default:
-		return nil, fmt.Errorf("Expected service account or cluster specified")
+	clusterAccess, err := f.kubeconfig.ClusterAccess(saName, clusterOpts, location)
+	if err != nil {
+		return nil, err
 	}
 
-	return NewKapp(suffix, opts, processedGenericOpts,
+	const suffix string = ".app"
+	return NewKapp(suffix, opts, clusterAccess,
 		f.globalKappDeployRawOpts(), cancelCh, f.cmdRunner), nil
 }
 
 // NewKappPrivileged is used for package repositories where users aren't required to provide
 // a service account, so it will install resources using its own privileges.
-func (f Factory) NewKappPrivilegedForPackageRepository(opts v1alpha1.AppDeployKapp,
-	genericOpts GenericOpts, cancelCh chan struct{}) (*Kapp, error) {
+func (f Factory) NewKappPrivilegedForPackageRepository(opts v1alpha1.AppDeployKapp, clusterAccess kubeconfig.AccessInfo, cancelCh chan struct{}) (*Kapp, error) {
 
 	const suffix string = ".pkgr"
 
-	pgo := ProcessedGenericOpts{
-		Name:      genericOpts.Name,
-		Namespace: genericOpts.Namespace,
-		// Just use the default service account. Mainly
-		// used for PackageRepos now so users do not need
-		// to specify serviceaccount via PackageRepo CR.
+	kconfAccess := kubeconfig.AccessInfo{
+		Name:                          clusterAccess.Name,
+		Namespace:                     clusterAccess.Namespace,
 		Kubeconfig:                    nil,
 		DangerousUsePodServiceAccount: true,
 	}
 
-	return NewKapp(suffix, opts, pgo, f.globalKappDeployRawOpts(), cancelCh, f.cmdRunner), nil
+	return NewKapp(suffix, opts, kconfAccess, f.globalKappDeployRawOpts(), cancelCh, f.cmdRunner), nil
 }
 
 func (f Factory) globalKappDeployRawOpts() []string {

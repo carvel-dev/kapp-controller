@@ -28,14 +28,21 @@ type Reconciler struct {
 	pkgClient              pkgclient.Interface
 	coreClient             kubernetes.Interface
 	pkgToPkgInstallHandler *PackageInstallVersionHandler
+	compInfo               ComponentInfo
 	log                    logr.Logger
 }
 
 // NewReconciler is the constructor for the Reconciler struct
 func NewReconciler(kcClient kcclient.Interface, pkgClient pkgclient.Interface,
 	coreClient kubernetes.Interface, pkgToPkgInstallHandler *PackageInstallVersionHandler,
-	log logr.Logger) *Reconciler {
-	return &Reconciler{kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, log}
+	log logr.Logger, compInfo ComponentInfo) *Reconciler {
+
+	return &Reconciler{kcClient: kcClient,
+		pkgClient:              pkgClient,
+		coreClient:             coreClient,
+		pkgToPkgInstallHandler: pkgToPkgInstallHandler,
+		compInfo:               compInfo,
+		log:                    log}
 }
 
 var _ reconcile.Reconciler = &Reconciler{}
@@ -78,5 +85,5 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 		return reconcile.Result{}, err
 	}
 
-	return NewPackageInstallCR(existingPkgInstall, log, r.kcClient, r.pkgClient, r.coreClient).Reconcile()
+	return NewPackageInstallCR(existingPkgInstall, log, r.kcClient, r.pkgClient, r.coreClient, r.compInfo).Reconcile()
 }

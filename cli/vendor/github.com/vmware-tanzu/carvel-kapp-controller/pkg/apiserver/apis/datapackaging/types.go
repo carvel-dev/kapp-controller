@@ -96,6 +96,18 @@ type PackageSpec struct {
 	// This is especially useful if the underlying versions do not match the Package version
 	// +optional
 	IncludedSoftware []IncludedSoftware `json:"includedSoftware,omitempty"`
+
+	// KappControllerVersionSelection specifies the versions of kapp-controller which can install this package
+	// +optional
+	KappControllerVersionSelection *VersionSelection `json:"kappControllerVersionSelection,omitempty" protobuf:"bytes,10,opt,name=kappControllerVersionSelection"`
+	// KubernetesVersionSelection specifies the versions of k8s which this package can be installed on
+	// +optional
+	KubernetesVersionSelection *VersionSelection `json:"kubernetesVersionSelection,omitempty" protobuf:"bytes,11,opt,name=kubernetesVersionSelection"`
+}
+
+// VersionSelection provides version range constraints but will always accept prereleases
+type VersionSelection struct {
+	Constraints string `json:"constraints,omitempty" protobuf:"bytes,1,opt,name=constraints"`
 }
 
 type PackageMetadataSpec struct {

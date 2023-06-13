@@ -4,6 +4,8 @@
 package app
 
 import (
+	"path/filepath"
+
 	"github.com/go-logr/logr"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
@@ -11,6 +13,8 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
@@ -26,16 +30,26 @@ type CRDAppFactory struct {
 	VendirConfigHook func(vendirconf.Config) vendirconf.Config
 	KbldAllowBuild   bool
 	CmdRunner        exec.CmdRunner
+	Kubeconf         *kubeconfig.Kubeconfig
+	CompInfo         ComponentInfo
+	DeployFactory    deploy.Factory
+	CacheFolder      *memdir.TmpDir
 }
 
 // NewCRDApp creates a CRDApp injecting necessary dependencies.
 func (f *CRDAppFactory) NewCRDApp(app *kcv1alpha1.App, log logr.Logger) *CRDApp {
 	vendirOpts := fetch.VendirOpts{
-		SkipTLSConfig: f.KcConfig,
-		ConfigHook:    f.VendirConfigHook,
+		SkipTLSConfig:   f.KcConfig,
+		ConfigHook:      f.VendirConfigHook,
+		BaseCacheFolder: filepath.Join(f.CacheFolder.Path(), "apps"),
 	}
+
 	fetchFactory := fetch.NewFactory(f.CoreClient, vendirOpts, f.CmdRunner)
 	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, f.KbldAllowBuild, f.CmdRunner)
-	deployFactory := deploy.NewFactory(f.CoreClient, f.KcConfig, f.CmdRunner, log)
-	return NewCRDApp(app, log, f.AppMetrics, f.AppClient, fetchFactory, templateFactory, deployFactory)
+	deployFactory := deploy.NewFactory(f.CoreClient, f.Kubeconf, f.KcConfig, f.CmdRunner, log)
+
+	return NewCRDApp(app, log, f.AppMetrics, f.AppClient, fetchFactory, templateFactory, deployFactory, f.CompInfo, Opts{
+		DefaultSyncPeriod: f.KcConfig.AppDefaultSyncPeriod(),
+		MinimumSyncPeriod: f.KcConfig.AppMinimumSyncPeriod(),
+	})
 }
