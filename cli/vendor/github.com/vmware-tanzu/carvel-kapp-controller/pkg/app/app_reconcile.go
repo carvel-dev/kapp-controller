@@ -23,6 +23,11 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 
 	a.appMetrics.InitMetrics(a.Name(), a.Namespace())
 
+	timerOpts := ReconcileTimerOpts{
+		DefaultSyncPeriod: a.opts.DefaultSyncPeriod,
+		MinimumSyncPeriod: a.opts.MinimumSyncPeriod,
+	}
+
 	switch {
 	case a.app.DeletionTimestamp != nil:
 		a.log.Info("Started delete")
@@ -38,7 +43,7 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 
 		err = a.updateStatus("app canceled/paused")
 
-	case force || NewReconcileTimer(a.app).IsReadyAt(time.Now()):
+	case force || NewReconcileTimer(a.app, timerOpts).IsReadyAt(time.Now()):
 		a.log.Info("Started deploy")
 		defer func() { a.log.Info("Completed deploy") }()
 
@@ -48,14 +53,20 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 		a.log.Info("Reconcile noop")
 	}
 
-	return reconcile.Result{RequeueAfter: NewReconcileTimer(a.app).DurationUntilReady(err)}, err
+	return reconcile.Result{RequeueAfter: NewReconcileTimer(a.app, timerOpts).DurationUntilReady(err)}, err
 }
 
 func (a *App) reconcileDelete() error {
 	a.markObservedLatest()
 	a.setDeleting()
 
-	err := a.updateStatus("marking deleting")
+	vendir := a.fetchFactory.NewVendir(a.app.Namespace)
+	err := vendir.ClearCache(a.cacheID())
+	if err != nil {
+		return err
+	}
+
+	err = a.updateStatus("marking deleting")
 	if err != nil {
 		return err
 	}
@@ -164,7 +175,26 @@ func (a *App) updateLastDeploy(result exec.CmdRunResult) exec.CmdRunResult {
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
 
-	a.updateStatus("marking last deploy")
+	defer a.updateStatus("marking last deploy")
+
+	if a.metadata == nil {
+		return result
+	}
+
+	usedGKs := []metav1.GroupKind{}
+	for _, gk := range a.metadata.UsedGKs {
+		usedGKs = append(usedGKs, metav1.GroupKind{
+			gk.Group, gk.Kind,
+		})
+	}
+
+	a.app.Status.Deploy.KappDeployStatus = &v1alpha1.KappDeployStatus{
+		AssociatedResources: v1alpha1.AssociatedResources{
+			Label:      fmt.Sprintf("%s=%s", a.metadata.LabelKey, a.metadata.LabelValue),
+			Namespaces: a.metadata.LastChange.Namespaces,
+			GroupKinds: usedGKs,
+		},
+	}
 
 	return result
 }

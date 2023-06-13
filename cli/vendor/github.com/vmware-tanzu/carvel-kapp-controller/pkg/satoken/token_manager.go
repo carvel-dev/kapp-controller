@@ -4,6 +4,8 @@
 // This file is a modified version of
 // https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/token/token_manager.go
 
+// Package satoken provides a Service Account Token getter and cache for kubernetes
+// ServiceAccount tokens.
 package satoken
 
 import (

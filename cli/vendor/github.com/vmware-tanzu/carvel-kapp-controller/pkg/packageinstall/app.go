@@ -43,6 +43,13 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 
 	desiredApp.Name = pkgInstall.Name
 	desiredApp.Namespace = pkgInstall.Namespace
+
+	if desiredApp.Annotations == nil {
+		desiredApp.Annotations = map[string]string{}
+	}
+	desiredApp.Annotations["packaging.carvel.dev/package-ref-name"] = pkgVersion.Spec.RefName
+	desiredApp.Annotations["packaging.carvel.dev/package-version"] = pkgVersion.Spec.Version
+
 	desiredApp.Spec = *pkgVersion.Spec.Template.Spec
 	desiredApp.Spec.ServiceAccountName = pkgInstall.Spec.ServiceAccountName
 	if pkgInstall.Spec.SyncPeriod == nil {

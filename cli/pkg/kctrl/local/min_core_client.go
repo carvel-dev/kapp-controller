@@ -15,12 +15,14 @@ import (
 	discovery "k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	admissionregistrationv1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1"
+	admissionregistrationv1alpha1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1alpha1"
 	admissionregistrationv1beta1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1beta1"
 	internalv1alpha1 "k8s.io/client-go/kubernetes/typed/apiserverinternal/v1alpha1"
 	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	appsv1beta1 "k8s.io/client-go/kubernetes/typed/apps/v1beta1"
 	appsv1beta2 "k8s.io/client-go/kubernetes/typed/apps/v1beta2"
 	authenticationv1 "k8s.io/client-go/kubernetes/typed/authentication/v1"
+	authenticationv1alpha1 "k8s.io/client-go/kubernetes/typed/authentication/v1alpha1"
 	authenticationv1beta1 "k8s.io/client-go/kubernetes/typed/authentication/v1beta1"
 	authorizationv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
 	authorizationv1beta1 "k8s.io/client-go/kubernetes/typed/authorization/v1beta1"
@@ -43,6 +45,7 @@ import (
 	flowcontrolv1alpha1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1alpha1"
 	flowcontrolv1beta1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta1"
 	flowcontrolv1beta2 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta2"
+	flowcontrolv1beta3 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta3"
 	networkingv1 "k8s.io/client-go/kubernetes/typed/networking/v1"
 	networkingv1alpha1 "k8s.io/client-go/kubernetes/typed/networking/v1alpha1"
 	networkingv1beta1 "k8s.io/client-go/kubernetes/typed/networking/v1beta1"
@@ -54,6 +57,7 @@ import (
 	rbacv1 "k8s.io/client-go/kubernetes/typed/rbac/v1"
 	rbacv1alpha1 "k8s.io/client-go/kubernetes/typed/rbac/v1alpha1"
 	rbacv1beta1 "k8s.io/client-go/kubernetes/typed/rbac/v1beta1"
+	resourcev1alpha1 "k8s.io/client-go/kubernetes/typed/resource/v1alpha1"
 	schedulingv1 "k8s.io/client-go/kubernetes/typed/scheduling/v1"
 	schedulingv1alpha1 "k8s.io/client-go/kubernetes/typed/scheduling/v1alpha1"
 	schedulingv1beta1 "k8s.io/client-go/kubernetes/typed/scheduling/v1beta1"
@@ -96,6 +100,9 @@ func (*MinCoreClient) AdmissionregistrationV1beta1() admissionregistrationv1beta
 	panic("Not implemented")
 	return nil
 }
+func (*MinCoreClient) AdmissionregistrationV1alpha1() admissionregistrationv1alpha1.AdmissionregistrationV1alpha1Interface {
+	panic("Not implemented")
+}
 func (*MinCoreClient) InternalV1alpha1() internalv1alpha1.InternalV1alpha1Interface {
 	panic("Not implemented")
 	return nil
@@ -116,6 +123,9 @@ func (*MinCoreClient) AuthenticationV1() authenticationv1.AuthenticationV1Interf
 func (*MinCoreClient) AuthenticationV1beta1() authenticationv1beta1.AuthenticationV1beta1Interface {
 	panic("Not implemented")
 	return nil
+}
+func (*MinCoreClient) AuthenticationV1alpha1() authenticationv1alpha1.AuthenticationV1alpha1Interface {
+	panic("Not implemented")
 }
 func (*MinCoreClient) AuthorizationV1() authorizationv1.AuthorizationV1Interface {
 	panic("Not implemented")
@@ -192,6 +202,9 @@ func (*MinCoreClient) FlowcontrolV1beta1() flowcontrolv1beta1.FlowcontrolV1beta1
 func (*MinCoreClient) FlowcontrolV1beta2() flowcontrolv1beta2.FlowcontrolV1beta2Interface {
 	panic("Not implemented")
 }
+func (*MinCoreClient) FlowcontrolV1beta3() flowcontrolv1beta3.FlowcontrolV1beta3Interface {
+	panic("Not implemented")
+}
 func (*MinCoreClient) NetworkingV1() networkingv1.NetworkingV1Interface {
 	panic("Not implemented")
 	return nil
@@ -225,6 +238,9 @@ func (*MinCoreClient) RbacV1beta1() rbacv1beta1.RbacV1beta1Interface {
 func (*MinCoreClient) RbacV1alpha1() rbacv1alpha1.RbacV1alpha1Interface {
 	panic("Not implemented")
 	return nil
+}
+func (*MinCoreClient) ResourceV1alpha1() resourcev1alpha1.ResourceV1alpha1Interface {
+	panic("Not implemented")
 }
 func (*MinCoreClient) SchedulingV1alpha1() schedulingv1alpha1.SchedulingV1alpha1Interface {
 	panic("Not implemented")

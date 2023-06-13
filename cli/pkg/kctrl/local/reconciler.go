@@ -16,8 +16,11 @@ import (
 	fakedpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
 	fakekc "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/componentinfo"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
@@ -213,6 +216,11 @@ func (o *Reconciler) newReconcilers(
 	refTracker := reftracker.NewAppRefTracker()
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
 
+	kubeConfig := kubeconfig.NewKubeconfig(coreClient, runLog)
+	compInfo := componentinfo.NewComponentInfo(coreClient, kubeConfig, "dev")
+
+	cacheFolderPkgRepoApps := memdir.NewTmpDir("cache-package-repo")
+
 	appFactory := app.CRDAppFactory{
 		CoreClient:       coreClient,
 		AppClient:        kcClient,
@@ -221,15 +229,19 @@ func (o *Reconciler) newReconcilers(
 		VendirConfigHook: vendirConfigHook,
 		KbldAllowBuild:   opts.KbldBuild, // only for CLI mode
 		CmdRunner:        o.cmdRunner,
+		CompInfo:         compInfo,
+		CacheFolder:      cacheFolderPkgRepoApps,
+		Kubeconf:         kubeConfig,
 	}
 	appReconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
-		appFactory, refTracker, updateStatusTracker)
+		appFactory, refTracker, updateStatusTracker, compInfo)
 
 	pkgiReconciler := packageinstall.NewReconciler(
 		kcClient, pkgClient, coreClient,
 		// TODO do not need this in the constructor of Reconciler
 		(*packageinstall.PackageInstallVersionHandler)(nil),
 		runLog.WithName("pkgi"),
+		compInfo,
 	)
 
 	return appReconciler, pkgiReconciler

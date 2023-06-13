@@ -5,6 +5,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	ctlver "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
@@ -27,6 +28,8 @@ var (
 type Directory struct {
 	Path     string              `json:"path"`
 	Contents []DirectoryContents `json:"contents,omitempty"`
+
+	Permissions *os.FileMode `json:"permissions,omitempty"`
 }
 
 type DirectoryContents struct {
@@ -48,9 +51,11 @@ type DirectoryContents struct {
 	IgnorePaths  []string `json:"ignorePaths,omitempty"`
 
 	// By default LICENSE/LICENCE/NOTICE/COPYRIGHT files are kept
-	LegalPaths []string `json:"legalPaths,omitempty"`
+	LegalPaths *[]string `json:"legalPaths,omitempty"`
 
 	NewRootPath string `json:"newRootPath,omitempty"`
+
+	Permissions *os.FileMode `json:"permissions,omitempty"`
 }
 
 type DirectoryContentsGit struct {
@@ -62,7 +67,9 @@ type DirectoryContentsGit struct {
 	// +optional
 	SecretRef *DirectoryContentsLocalRef `json:"secretRef,omitempty"`
 	// +optional
-	LFSSkipSmudge bool `json:"lfsSkipSmudge,omitempty"`
+	LFSSkipSmudge      bool `json:"lfsSkipSmudge,omitempty"`
+	SkipInitSubmodules bool `json:"skipInitSubmodules,omitempty"`
+	Depth              int  `json:"depth,omitempty"`
 }
 
 type DirectoryContentsGitVerification struct {
@@ -90,6 +97,8 @@ type DirectoryContentsHTTP struct {
 	// Secret may include one or more keys: username, password
 	// +optional
 	SecretRef *DirectoryContentsLocalRef `json:"secretRef,omitempty"`
+	// +optional
+	DisableUnpack bool `json:"disableUnpack,omitempty"`
 }
 
 type DirectoryContentsImage struct {
@@ -145,6 +154,9 @@ type DirectoryContentsGithubRelease struct {
 	// Secret may include one key: token
 	// +optional
 	SecretRef *DirectoryContentsLocalRef `json:"secretRef,omitempty"`
+
+	// +optional
+	HTTP *DirectoryContentsHTTP `json:"http,omitempty"`
 }
 
 type DirectoryContentsHelmChart struct {
@@ -278,10 +290,10 @@ func (c DirectoryContents) IsEntireDir() bool {
 }
 
 func (c DirectoryContents) LegalPathsWithDefaults() []string {
-	if len(c.LegalPaths) == 0 {
+	if c.LegalPaths == nil {
 		return append([]string{}, DefaultLegalPaths...)
 	}
-	return c.LegalPaths
+	return *c.LegalPaths
 }
 
 func isDisallowedPath(path string) error {
@@ -384,6 +396,7 @@ func (c *DirectoryContentsGithubRelease) Lock(lockConfig *LockDirectoryContentsG
 		return fmt.Errorf("Expected github release URL to be non-empty")
 	}
 	c.URL = lockConfig.URL
+	c.Tag = lockConfig.Tag
 	return nil
 }
 
