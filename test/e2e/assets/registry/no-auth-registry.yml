@@ -21,6 +21,8 @@ kind: Deployment
 metadata:
   name: simple-registry
   namespace: registry
+  annotations:
+    kapp.k14s.io/change-group: registry
 spec:
   replicas: 1
   selector:
@@ -68,3 +70,29 @@ spec:
             name: registry-contents
         - name: registry-sync
           emptyDir: { }
+
+# TODO should we make vendir's http retry within App CR, to avoid
+# transient failure when Service=>Deployment networking is not ready?
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: check-nginx-conn
+  annotations:
+    kapp.k14s.io/update-strategy: always-replace
+    kapp.k14s.io/change-rule: upsert after upserting registry
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      name: check-nginx-conn
+    spec:
+      containers:
+        - name: check
+          image: busybox
+          command:
+            - /bin/sh
+            - "-c"
+            - |
+              wget --tries=10 --no-check-certificate http://registry-svc.registry.svc.cluster.local:5050/v2/
+      restartPolicy: Never
