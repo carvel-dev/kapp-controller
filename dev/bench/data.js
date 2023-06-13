@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1686590903693,
+  "lastUpdate": 1686640456072,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -12087,6 +12087,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5399124322,
             "unit": "ns/op\t         3.257 DeleteSeconds\t         2.112 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e0221fa8ca760d5dd9e5175c16a999c1e54d7f6e",
+          "message": "Bump libraries (#1228)\n\nBump k8s.io/client-go to v0.26.1\r\nBump sig.k8s.io/controller-runtime to v0.14.5\r\nBump carvel-dev/kapp-controller to v0.46.0\r\n\r\nSigned-off-by: Praveen Rewar <8457124+praveenrewar@users.noreply.github.com>",
+          "timestamp": "2023-06-13T12:38:29+05:30",
+          "tree_id": "6a3cafdc3c31c807d5071551795fd0fee90a56cd",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/e0221fa8ca760d5dd9e5175c16a999c1e54d7f6e"
+        },
+        "date": 1686640454930,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35390097260,
+            "unit": "ns/op\t        17.87 DeleteSeconds\t        17.49 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8452257833,
+            "unit": "ns/op\t         4.257 DeleteSeconds\t         4.167 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5371826594,
+            "unit": "ns/op\t         3.235 DeleteSeconds\t         2.107 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
