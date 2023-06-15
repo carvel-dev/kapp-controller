@@ -8,7 +8,6 @@ import (
 	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -20,9 +19,9 @@ type FakePackageRepositories struct {
 	ns   string
 }
 
-var packagerepositoriesResource = schema.GroupVersionResource{Group: "packaging.carvel.dev", Version: "v1alpha1", Resource: "packagerepositories"}
+var packagerepositoriesResource = v1alpha1.SchemeGroupVersion.WithResource("packagerepositories")
 
-var packagerepositoriesKind = schema.GroupVersionKind{Group: "packaging.carvel.dev", Version: "v1alpha1", Kind: "PackageRepository"}
+var packagerepositoriesKind = v1alpha1.SchemeGroupVersion.WithKind("PackageRepository")
 
 // Get takes name of the packageRepository, and returns the corresponding packageRepository object, and an error if there is any.
 func (c *FakePackageRepositories) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.PackageRepository, err error) {

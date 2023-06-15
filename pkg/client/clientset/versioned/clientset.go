@@ -21,8 +21,7 @@ type Interface interface {
 	PackagingV1alpha1() packagingv1alpha1.PackagingV1alpha1Interface
 }
 
-// Clientset contains the clients for groups. Each group has exactly one
-// version included in a Clientset.
+// Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
 	internalV1alpha1  *internalv1alpha1.InternalV1alpha1Client
