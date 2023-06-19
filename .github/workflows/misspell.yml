@@ -8,7 +8,7 @@ jobs:
       - name: Check out code.
         uses: actions/checkout@v3.5.2
       - name: misspell
-        uses: reviewdog/action-misspell@ccb0441a34ac2a3ece1206c63d7b6dd757ffde4d # v1.1.0
+        uses: reviewdog/action-misspell@b149b49fbecf7e99831283bb0f63a3828126d341 # v1.1.0
         with:
           fail_on_error: true
           locale: "US"
