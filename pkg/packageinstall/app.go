@@ -33,7 +33,7 @@ const (
 	ExtFetchSecretNameAnnKeyFmt = "ext.packaging.carvel.dev/fetch-%d-secret-name"
 )
 
-func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall, pkgVersion datapkgingv1alpha1.Package) (*v1alpha1.App, error) {
+func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall, pkgVersion datapkgingv1alpha1.Package, opts Opts) (*v1alpha1.App, error) {
 	desiredApp := existingApp.DeepCopy()
 
 	if _, found := existingApp.Annotations[ManuallyControlledAnnKey]; found {
@@ -53,9 +53,11 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 	desiredApp.Spec = *pkgVersion.Spec.Template.Spec
 	desiredApp.Spec.ServiceAccountName = pkgInstall.Spec.ServiceAccountName
 	if pkgInstall.Spec.SyncPeriod == nil {
-		desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: time.Minute * 10}
+		if opts.DefaultSyncPeriod != 0 {
+			desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: opts.DefaultSyncPeriod}
+		}
 	} else {
-		desiredApp.Spec.SyncPeriod = pkgInstall.Spec.SyncPeriod
+		desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: time.Minute * 10}
 	}
 	desiredApp.Spec.NoopDelete = pkgInstall.Spec.NoopDelete
 	desiredApp.Spec.Paused = pkgInstall.Spec.Paused

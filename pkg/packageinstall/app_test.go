@@ -55,7 +55,7 @@ func TestAppExtPathsFromSecretNameAnn(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -167,7 +167,7 @@ func TestAppHelmOverlaysFromAnn(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -239,7 +239,7 @@ func TestAppExtYttDataValuesOverlaysAnn(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -309,7 +309,7 @@ func TestAppYttValues(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -378,7 +378,7 @@ func TestAppHelmTemplateValues(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -458,7 +458,7 @@ func TestAppManuallyControlled(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(existingApp, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(existingApp, ipkg, pkgVersion, packageinstall.Opts{})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -523,7 +523,7 @@ func TestAppCustomFetchSecretNames(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
 	require.NoError(t, err)
 
 	expectedApp := &kcv1alpha1.App{
@@ -582,7 +582,7 @@ func TestAppPackageDetailsAnnotations(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
 	require.NoError(t, err)
 
 	trueVal := true
