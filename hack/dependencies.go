@@ -1,6 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+// Package main contains a dependency tool that can read a .yml file and update the dependencies of kapp-controller
 package main
 
 import (

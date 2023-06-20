@@ -1,6 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+// Package main provides a Reconciler implementation for simple error handling
 package main
 
 import (
