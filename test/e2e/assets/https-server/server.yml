@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
       - name: self-signed-https-server
-        image: nginx
+        image: nginx:1.10
         ports:
         - containerPort: 443
         readinessProbe:
