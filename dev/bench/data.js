@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1686684736655,
+  "lastUpdate": 1687266015047,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -12171,6 +12171,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6658146776,
             "unit": "ns/op\t         4.422 DeleteSeconds\t         2.195 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "38600853+kumaritanushree@users.noreply.github.com",
+            "name": "kumari tanushree",
+            "username": "kumaritanushree"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6a321203cf2b90aa26b32e92be4823284c013537",
+          "message": "Merge pull request #1252 from carvel-dev/update-nginx-img-in-test\n\nUpdated nginx image tag to fix e2e test failure",
+          "timestamp": "2023-06-20T18:18:06+05:30",
+          "tree_id": "461747b7f10dd546cf16c7294e461c61ae98b7db",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/6a321203cf2b90aa26b32e92be4823284c013537"
+        },
+        "date": 1687266013384,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35976260639,
+            "unit": "ns/op\t        18.24 DeleteSeconds\t        17.69 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8611256379,
+            "unit": "ns/op\t         4.393 DeleteSeconds\t         4.178 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6490514065,
+            "unit": "ns/op\t         4.307 DeleteSeconds\t         2.137 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
