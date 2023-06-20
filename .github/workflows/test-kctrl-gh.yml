@@ -26,7 +26,10 @@ jobs:
       with:
         fetch-depth: 0
     - name: Install Carvel Tools
-      run: ./hack/install-deps.sh
+      uses: carvel-dev/setup-action@v1
+      with:
+        only: ytt, kbld, imgpkg, vendir, kapp
+        token: ${{ secrets.GITHUB_TOKEN }}
     - name: Run Tests
       run: |
         set -e -x
