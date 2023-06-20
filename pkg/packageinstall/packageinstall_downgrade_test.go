@@ -98,7 +98,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			GitVersion: "v0.20.0",
 		}
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")})
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
@@ -147,7 +147,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			GitVersion: "v0.20.0",
 		}
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")})
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
@@ -196,7 +196,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			GitVersion: "v0.20.0",
 		}
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")})
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
@@ -251,7 +251,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			GitVersion: "v0.20.0",
 		}
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")})
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 

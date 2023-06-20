@@ -38,8 +38,9 @@ type configData struct {
 	kappDeployRawOptions []string
 	skipTLSVerify        string
 
-	appDefaultSyncPeriod time.Duration
-	appMinimumSyncPeriod time.Duration
+	appDefaultSyncPeriod            time.Duration
+	appMinimumSyncPeriod            time.Duration
+	packageInstallDefaultSyncPeriod time.Duration
 }
 
 const (
@@ -191,6 +192,16 @@ func (gc *Config) AppMinimumSyncPeriod() time.Duration {
 	return min
 }
 
+// PackageInstallDefaultSyncPeriod returns duration that is used by Apps
+// that do not explicitly specify sync period.
+func (gc *Config) PackageInstallDefaultSyncPeriod() time.Duration {
+	const defaultSyncPeriod = 10 * time.Minute
+	if gc.data.packageInstallDefaultSyncPeriod != 0 {
+		return gc.data.packageInstallDefaultSyncPeriod
+	}
+	return defaultSyncPeriod
+}
+
 func (gc *Config) addSecretDataToConfig(secret *v1.Secret) error {
 	extractedValues := map[string]string{}
 	for key, value := range secret.Data {
@@ -216,6 +227,14 @@ func (gc *Config) addDataToConfig(rawData map[string]string) error {
 			return fmt.Errorf("Unmarshaling appDefaultSyncPeriod as duration: %s", err)
 		}
 		data.appDefaultSyncPeriod = dur
+	}
+
+	if val := rawData["packageInstallDefaultSyncPeriod"]; len(val) > 0 {
+		dur, err := time.ParseDuration(val)
+		if err != nil {
+			return fmt.Errorf("Unmarshaling packageInstallDefaultSyncPeriod as duration: %s", err)
+		}
+		data.packageInstallDefaultSyncPeriod = dur
 	}
 
 	if val := rawData["appMinimumSyncPeriod"]; len(val) > 0 {

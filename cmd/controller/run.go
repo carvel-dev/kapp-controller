@@ -226,7 +226,7 @@ func Run(opts Options, runLog logr.Logger) error {
 		pkgToPkgInstallHandler := pkginstall.NewPackageInstallVersionHandler(
 			kcClient, opts.PackagingGlobalNS, runLog.WithName("handler"))
 
-		reconciler := pkginstall.NewReconciler(kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, runLog.WithName("pkgi"), compInfo)
+		reconciler := pkginstall.NewReconciler(kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, runLog.WithName("pkgi"), compInfo, kcConfig)
 
 		ctrl, err := controller.New("pkgi", mgr, controller.Options{
 			Reconciler:              reconciler,
