@@ -563,6 +563,78 @@ func TestAppCustomFetchSecretNames(t *testing.T) {
 	require.Equal(t, expectedApp, app, "App does not match expected app")
 }
 
+// TestAppPackageIntallDefaultSyncPeriod tests the creation of an App and expects syncPeriod is set to the default value.
+func TestAppPackageIntallDefaultSyncPeriod(t *testing.T) {
+	ipkg := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "app",
+			Namespace: "default",
+		},
+	}
+
+	pkgVersion := datapkgingv1alpha1.Package{
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "expec-pkg",
+			Version: "1.5.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &kcv1alpha1.AppSpec{},
+			},
+		},
+	}
+
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
+	require.NoError(t, err)
+
+	// Define the expected app object, with the sync period attribute set to the default value
+	expectedApp := &kcv1alpha1.App{
+		Spec: kcv1alpha1.AppSpec{
+			SyncPeriod: packageinstall.DefaultSyncPeriod,
+		},
+	}
+
+	// Not interesting in metadata in this test
+	app.ObjectMeta = metav1.ObjectMeta{}
+
+	require.Equal(t, expectedApp, app, "App does not match expected app")
+}
+
+// TestAppCustomPackageIntallSyncPeriod tests the creation of an App when using PackageInstall with a defined syncPeriod.
+func TestAppCustomPackageIntallSyncPeriod(t *testing.T) {
+	ipkg := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "app",
+			Namespace: "default",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			SyncPeriod: &metav1.Duration{Duration: 100 * time.Second},
+		},
+	}
+
+	pkgVersion := datapkgingv1alpha1.Package{
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "expec-pkg",
+			Version: "1.5.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &kcv1alpha1.AppSpec{},
+			},
+		},
+	}
+
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
+	require.NoError(t, err)
+
+	expectedApp := &kcv1alpha1.App{
+		Spec: kcv1alpha1.AppSpec{
+			SyncPeriod: &metav1.Duration{Duration: 100 * time.Second},
+		},
+	}
+
+	// Not interesting in metadata in this test
+	app.ObjectMeta = metav1.ObjectMeta{}
+
+	require.Equal(t, expectedApp, app, "App does not match expected app")
+}
+
 func TestAppPackageDetailsAnnotations(t *testing.T) {
 	ipkg := &pkgingv1alpha1.PackageInstall{
 		ObjectMeta: metav1.ObjectMeta{
