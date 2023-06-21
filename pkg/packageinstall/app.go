@@ -33,6 +33,11 @@ const (
 	ExtFetchSecretNameAnnKeyFmt = "ext.packaging.carvel.dev/fetch-%d-secret-name"
 )
 
+var (
+	// Default syncPeriod value for App
+	DefaultSyncPeriod = &metav1.Duration{Duration: time.Minute * 10}
+)
+
 func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall, pkgVersion datapkgingv1alpha1.Package, opts Opts) (*v1alpha1.App, error) {
 	desiredApp := existingApp.DeepCopy()
 
@@ -55,9 +60,11 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 	if pkgInstall.Spec.SyncPeriod == nil {
 		if opts.DefaultSyncPeriod != 0 {
 			desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: opts.DefaultSyncPeriod}
+		} else {
+			desiredApp.Spec.SyncPeriod = DefaultSyncPeriod
 		}
 	} else {
-		desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: time.Minute * 10}
+		desiredApp.Spec.SyncPeriod = pkgInstall.Spec.SyncPeriod
 	}
 	desiredApp.Spec.NoopDelete = pkgInstall.Spec.NoopDelete
 	desiredApp.Spec.Paused = pkgInstall.Spec.Paused
