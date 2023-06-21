@@ -34,10 +34,12 @@ const (
 )
 
 var (
-	// Default syncPeriod value for App
+	// DefaultSyncPeriod value for App
 	DefaultSyncPeriod = &metav1.Duration{Duration: time.Minute * 10}
 )
 
+// NewApp creates a new instance of v1alpha1.App based on the provided parameters.
+// It takes an existingApp, pkgInstall, pkgVersion, and opts, and returns the newly created App.
 func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall, pkgVersion datapkgingv1alpha1.Package, opts Opts) (*v1alpha1.App, error) {
 	desiredApp := existingApp.DeepCopy()
 

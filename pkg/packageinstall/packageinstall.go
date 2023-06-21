@@ -55,6 +55,8 @@ type PackageInstallCR struct {
 	compInfo   ComponentInfo
 	opts       Opts
 }
+
+// nolint: revive
 type Opts struct {
 	DefaultSyncPeriod time.Duration
 }
