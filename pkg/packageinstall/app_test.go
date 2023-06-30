@@ -18,7 +18,7 @@ import (
 )
 
 // several tests below have no SyncPeriod set so they'll all use the same default.
-var defaultSyncPeriod = *packageinstall.DefaultSyncPeriod
+var defaultSyncPeriod metav1.Duration = metav1.Duration{Duration: 10 * time.Minute}
 
 func TestAppExtPathsFromSecretNameAnn(t *testing.T) {
 	ipkg := &pkgingv1alpha1.PackageInstall{
@@ -588,7 +588,7 @@ func TestAppPackageIntallDefaultSyncPeriod(t *testing.T) {
 	// Define the expected app object, with the sync period attribute set to the default value
 	expectedApp := &kcv1alpha1.App{
 		Spec: kcv1alpha1.AppSpec{
-			SyncPeriod: packageinstall.DefaultSyncPeriod,
+			SyncPeriod: &defaultSyncPeriod,
 		},
 	}
 
