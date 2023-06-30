@@ -864,7 +864,7 @@ spec:
 		// Create Repo and PackageInstall from YAML
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(packageInstallYaml)})
 
-		// syncPeriod of the App created via PackageInstall should match to configured value on a global controller level config
+		// syncPeriod of the App created via PackageInstall should match to default
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
 		out := kubectl.Run([]string{"get", fmt.Sprintf("apps/%s", name), "-o", "yaml"})
@@ -932,7 +932,7 @@ spec:
 		// Create Repo and PackageInstall from YAML
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{StdinReader: strings.NewReader(packageInstallYaml)})
 
-		// syncPeriod of the App created via PackageInstall should match to configured value on a global controller level config
+		// syncPeriod of the App created via PackageInstall should match to configured value part of PackageInstall.
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "pkgi/" + name, "--timeout", "1m"})
 		kubectl.Run([]string{"wait", "--for=condition=ReconcileSucceeded", "apps/" + name, "--timeout", "1m"})
 		out := kubectl.Run([]string{"get", fmt.Sprintf("apps/%s", name), "-o", "yaml"})
