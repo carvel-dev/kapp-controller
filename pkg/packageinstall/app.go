@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -34,8 +34,7 @@ const (
 )
 
 var (
-	// DefaultSyncPeriod value for App
-	DefaultSyncPeriod = &metav1.Duration{Duration: time.Minute * 10}
+	kcConfig config.Config
 )
 
 // NewApp creates a new instance of v1alpha1.App based on the provided parameters.
@@ -63,7 +62,7 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 		if opts.DefaultSyncPeriod != 0 {
 			desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: opts.DefaultSyncPeriod}
 		} else {
-			desiredApp.Spec.SyncPeriod = DefaultSyncPeriod
+			desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: kcConfig.PackageInstallDefaultSyncPeriod()}
 		}
 	} else {
 		desiredApp.Spec.SyncPeriod = pkgInstall.Spec.SyncPeriod

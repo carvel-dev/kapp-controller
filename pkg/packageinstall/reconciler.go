@@ -31,7 +31,7 @@ type Reconciler struct {
 	pkgToPkgInstallHandler *PackageInstallVersionHandler
 	compInfo               ComponentInfo
 	log                    logr.Logger
-	opts                   Opts
+	kcConfig               *kcconfig.Config
 }
 
 // NewReconciler is the constructor for the Reconciler struct
@@ -45,7 +45,8 @@ func NewReconciler(kcClient kcclient.Interface, pkgClient pkgclient.Interface,
 		pkgToPkgInstallHandler: pkgToPkgInstallHandler,
 		compInfo:               compInfo,
 		log:                    log,
-		opts:                   Opts{DefaultSyncPeriod: kcConfig.PackageInstallDefaultSyncPeriod()}}
+		kcConfig:               kcConfig,
+	}
 }
 
 var _ reconcile.Reconciler = &Reconciler{}
@@ -88,5 +89,5 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 		return reconcile.Result{}, err
 	}
 
-	return NewPackageInstallCR(existingPkgInstall, log, r.kcClient, r.pkgClient, r.coreClient, r.compInfo, r.opts).Reconcile()
+	return NewPackageInstallCR(existingPkgInstall, log, r.kcClient, r.pkgClient, r.coreClient, r.compInfo, Opts{DefaultSyncPeriod: r.kcConfig.PackageInstallDefaultSyncPeriod()}).Reconcile()
 }
