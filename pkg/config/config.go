@@ -196,8 +196,12 @@ func (gc *Config) AppMinimumSyncPeriod() time.Duration {
 // that do not explicitly specify sync period.
 func (gc *Config) PackageInstallDefaultSyncPeriod() time.Duration {
 	const defaultSyncPeriod = 10 * time.Minute
+	const minDefaultSyncPeriod = 30 * time.Second
 	if gc.data.packageInstallDefaultSyncPeriod != 0 {
-		return gc.data.packageInstallDefaultSyncPeriod
+		if gc.data.packageInstallDefaultSyncPeriod > minDefaultSyncPeriod {
+			return gc.data.packageInstallDefaultSyncPeriod
+		}
+		return minDefaultSyncPeriod
 	}
 	return defaultSyncPeriod
 }

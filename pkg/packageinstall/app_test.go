@@ -55,7 +55,7 @@ func TestAppExtPathsFromSecretNameAnn(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -167,7 +167,7 @@ func TestAppHelmOverlaysFromAnn(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -239,7 +239,7 @@ func TestAppExtYttDataValuesOverlaysAnn(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -309,7 +309,7 @@ func TestAppYttValues(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -378,7 +378,7 @@ func TestAppHelmTemplateValues(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -582,7 +582,7 @@ func TestAppPackageIntallDefaultSyncPeriod(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
 	require.NoError(t, err)
 
 	// Define the expected app object, with the sync period attribute set to the default value
