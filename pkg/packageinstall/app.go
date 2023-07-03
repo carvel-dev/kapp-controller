@@ -13,7 +13,6 @@ import (
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -31,10 +30,6 @@ const (
 	ExtYttDataValuesOverlaysAnnKey = "ext.packaging.carvel.dev/ytt-data-values-overlays"
 
 	ExtFetchSecretNameAnnKeyFmt = "ext.packaging.carvel.dev/fetch-%d-secret-name"
-)
-
-var (
-	kcConfig config.Config
 )
 
 // NewApp creates a new instance of v1alpha1.App based on the provided parameters.
@@ -59,11 +54,7 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 	desiredApp.Spec = *pkgVersion.Spec.Template.Spec
 	desiredApp.Spec.ServiceAccountName = pkgInstall.Spec.ServiceAccountName
 	if pkgInstall.Spec.SyncPeriod == nil {
-		if opts.DefaultSyncPeriod != 0 {
-			desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: opts.DefaultSyncPeriod}
-		} else {
-			desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: kcConfig.PackageInstallDefaultSyncPeriod()}
-		}
+		desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: opts.DefaultSyncPeriod}
 	} else {
 		desiredApp.Spec.SyncPeriod = pkgInstall.Spec.SyncPeriod
 	}
