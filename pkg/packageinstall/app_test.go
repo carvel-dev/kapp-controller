@@ -592,7 +592,7 @@ func TestAppPackageIntallDefaultSyncPeriod(t *testing.T) {
 		},
 	}
 
-	// Not interesting in metadata in this test
+	// Not interested in metadata in this test
 	app.ObjectMeta = metav1.ObjectMeta{}
 
 	require.Equal(t, expectedApp, app, "App does not match expected app")
@@ -629,7 +629,7 @@ func TestAppCustomPackageIntallSyncPeriod(t *testing.T) {
 		},
 	}
 
-	// Not interesting in metadata in this test
+	// Not interested in metadata in this test
 	app.ObjectMeta = metav1.ObjectMeta{}
 
 	require.Equal(t, expectedApp, app, "App does not match expected app")
