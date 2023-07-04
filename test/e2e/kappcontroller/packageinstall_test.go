@@ -828,6 +828,17 @@ func Test_PackageInstall_DefaultSyncPeriod(t *testing.T) {
 	packageInstallYaml := fmt.Sprintf(`
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: basic.test.carvel.dev
+  annotations:
+    kapp.k14s.io/change-group: "packagerepo"
+spec:
+  fetch:
+    imgpkgBundle:
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c
+---
+apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageInstall
 metadata:
   name: %s
@@ -882,6 +893,17 @@ func Test_PackageInstall_CustomSyncPeriod(t *testing.T) {
 	name := "install-pkg-custom-sync-period-test"
 
 	packageInstallYaml := fmt.Sprintf(`
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  name: basic.test.carvel.dev
+  annotations:
+    kapp.k14s.io/change-group: "packagerepo"
+spec:
+  fetch:
+    imgpkgBundle:
+      image: index.docker.io/k8slt/kc-e2e-test-repo@sha256:ddd93b67b97c1460580ca1afd04326d16900dc716c4357cade85b83deab76f1c
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageInstall
