@@ -45,6 +45,36 @@ func Test_NewConfig_ReturnsSecret_WhenBothConfigMapAndSecretExist(t *testing.T) 
 	}, config.ProxyOpts())
 }
 
+func Test_NewConfig_PackageInstallDefaultSyncPeriod(t *testing.T) {
+	t.Run("with empty config value, returns 10m", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "kapp-controller-config",
+				Namespace: "default",
+			},
+			Data: map[string][]byte{},
+		}
+		config, err := kcconfig.NewConfig(k8sfake.NewSimpleClientset(secret))
+		assert.NoError(t, err)
+		assert.Equal(t, 10*time.Minute, config.PackageInstallDefaultSyncPeriod())
+	})
+
+	t.Run("with value, returns 80s", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "kapp-controller-config",
+				Namespace: "default",
+			},
+			Data: map[string][]byte{
+				"packageInstallDefaultSyncPeriod": []byte("80s"),
+			},
+		}
+		config, err := kcconfig.NewConfig(k8sfake.NewSimpleClientset(secret))
+		assert.NoError(t, err)
+		assert.Equal(t, 80*time.Second, config.PackageInstallDefaultSyncPeriod())
+	})
+}
+
 func Test_NewConfig_AppDefaultSyncPeriod(t *testing.T) {
 	t.Run("with empty config value, returns 30s", func(t *testing.T) {
 		secret := &v1.Secret{
