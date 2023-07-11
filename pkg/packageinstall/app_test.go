@@ -18,7 +18,7 @@ import (
 )
 
 // several tests below have no SyncPeriod set so they'll all use the same default.
-var defaultSyncPeriod metav1.Duration = metav1.Duration{10 * time.Minute}
+var defaultSyncPeriod metav1.Duration = metav1.Duration{Duration: 10 * time.Minute}
 
 func TestAppExtPathsFromSecretNameAnn(t *testing.T) {
 	ipkg := &pkgingv1alpha1.PackageInstall{
@@ -55,7 +55,7 @@ func TestAppExtPathsFromSecretNameAnn(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -167,7 +167,7 @@ func TestAppHelmOverlaysFromAnn(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -239,7 +239,7 @@ func TestAppExtYttDataValuesOverlaysAnn(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -309,7 +309,7 @@ func TestAppYttValues(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -378,7 +378,7 @@ func TestAppHelmTemplateValues(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -458,7 +458,7 @@ func TestAppManuallyControlled(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(existingApp, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(existingApp, ipkg, pkgVersion, packageinstall.Opts{})
 	if err != nil {
 		t.Fatalf("Expected no err, but was: %s", err)
 	}
@@ -523,7 +523,7 @@ func TestAppCustomFetchSecretNames(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
 	require.NoError(t, err)
 
 	expectedApp := &kcv1alpha1.App{
@@ -563,6 +563,78 @@ func TestAppCustomFetchSecretNames(t *testing.T) {
 	require.Equal(t, expectedApp, app, "App does not match expected app")
 }
 
+// TestAppPackageIntallDefaultSyncPeriod tests the creation of an App and expects syncPeriod is set to the default value.
+func TestAppPackageIntallDefaultSyncPeriod(t *testing.T) {
+	ipkg := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "app",
+			Namespace: "default",
+		},
+	}
+
+	pkgVersion := datapkgingv1alpha1.Package{
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "expec-pkg",
+			Version: "1.5.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &kcv1alpha1.AppSpec{},
+			},
+		},
+	}
+
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
+	require.NoError(t, err)
+
+	// Define the expected app object, with the sync period attribute set to the default value
+	expectedApp := &kcv1alpha1.App{
+		Spec: kcv1alpha1.AppSpec{
+			SyncPeriod: &defaultSyncPeriod,
+		},
+	}
+
+	// Not interested in metadata in this test
+	app.ObjectMeta = metav1.ObjectMeta{}
+
+	require.Equal(t, expectedApp, app, "App does not match expected app")
+}
+
+// TestAppCustomPackageIntallSyncPeriod tests the creation of an App when using PackageInstall with a defined syncPeriod.
+func TestAppCustomPackageIntallSyncPeriod(t *testing.T) {
+	ipkg := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "app",
+			Namespace: "default",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			SyncPeriod: &metav1.Duration{Duration: 100 * time.Second},
+		},
+	}
+
+	pkgVersion := datapkgingv1alpha1.Package{
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "expec-pkg",
+			Version: "1.5.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &kcv1alpha1.AppSpec{},
+			},
+		},
+	}
+
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
+	require.NoError(t, err)
+
+	expectedApp := &kcv1alpha1.App{
+		Spec: kcv1alpha1.AppSpec{
+			SyncPeriod: &metav1.Duration{Duration: 100 * time.Second},
+		},
+	}
+
+	// Not interested in metadata in this test
+	app.ObjectMeta = metav1.ObjectMeta{}
+
+	require.Equal(t, expectedApp, app, "App does not match expected app")
+}
+
 func TestAppPackageDetailsAnnotations(t *testing.T) {
 	ipkg := &pkgingv1alpha1.PackageInstall{
 		ObjectMeta: metav1.ObjectMeta{
@@ -582,7 +654,7 @@ func TestAppPackageDetailsAnnotations(t *testing.T) {
 		},
 	}
 
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion)
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
 	require.NoError(t, err)
 
 	trueVal := true

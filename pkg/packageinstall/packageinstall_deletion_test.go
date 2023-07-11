@@ -65,7 +65,7 @@ func Test_PackageInstallDeletion(t *testing.T) {
 		appClient := fakekappctrl.NewSimpleClientset(pkgInstall, existingApp)
 		coreClient := fake.NewSimpleClientset()
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, coreClient, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")})
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, coreClient, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
