@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688741495193,
+  "lastUpdate": 1689109216857,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -12297,6 +12297,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6345775313,
             "unit": "ns/op\t         4.217 DeleteSeconds\t         2.102 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "joaod@vmware.com",
+            "name": "João Pereira",
+            "username": "joaopapereira"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6eb91df8648dda30cb919ec1d9e2add7781ceb3d",
+          "message": "Merge pull request #1259 from imusmanmalik/feat/defaultPackageInstallSyncPeriod\n\nfeat: Configurable default package install sync period",
+          "timestamp": "2023-07-11T15:54:23-05:00",
+          "tree_id": "eb3b3f09a57fd70f809c0ad8b9cf78f91312721a",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/6eb91df8648dda30cb919ec1d9e2add7781ceb3d"
+        },
+        "date": 1689109215258,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36337826833,
+            "unit": "ns/op\t        18.88 DeleteSeconds\t        17.43 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8445325915,
+            "unit": "ns/op\t         4.281 DeleteSeconds\t         4.123 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6354473205,
+            "unit": "ns/op\t         4.223 DeleteSeconds\t         2.104 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
