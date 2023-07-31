@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1689109216857,
+  "lastUpdate": 1690835177606,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -12339,6 +12339,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6354473205,
             "unit": "ns/op\t         4.223 DeleteSeconds\t         2.104 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "94950988+satyampsoni@users.noreply.github.com",
+            "name": "Satyam Soni",
+            "username": "satyampsoni"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ab79b03f4ffa42bb45f64a06bc1c527e6a9d4b4c",
+          "message": "updated readme with first (#1281)\n\nSigned-off-by: satyampsoni <satyampsoni@gmail.com>",
+          "timestamp": "2023-08-01T01:43:25+05:30",
+          "tree_id": "4c4cdc9c75af9fa0cf9def4c003c5120f8434024",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/ab79b03f4ffa42bb45f64a06bc1c527e6a9d4b4c"
+        },
+        "date": 1690835176161,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35953749460,
+            "unit": "ns/op\t        18.24 DeleteSeconds\t        17.66 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8608850457,
+            "unit": "ns/op\t         4.391 DeleteSeconds\t         4.174 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5652252031,
+            "unit": "ns/op\t         3.462 DeleteSeconds\t         2.152 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
