@@ -16,7 +16,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v4
         with:
-          go-version: 1.20.4
+          go-version: 1.20.7
       - name: Update Dependencies File
         run: go run ./hack/dependencies.go update
       - name: Create Pull Request
