@@ -33,7 +33,7 @@ eval $(minikube docker-env)
 ```
 
 *Note:* for rapid iteration while developing, you can run the script
-`./hack/dev-deploy` which is much faster (0.5 minutes vs. 4+ minutes), but it
+`./hack/dev-deploy.sh` which is much faster (0.5 minutes vs. 4+ minutes), but it
 requires that you have previously run the full deploy at least once to set
 things up.
 
@@ -44,7 +44,7 @@ things up.
 3. Run `./hack/deploy.sh`
 
 *Note:* As above, while iterating you may prefer to run
-`./hack/dev-deploy` which is much faster (0.5 minutes vs. 4+ minutes), but it
+`./hack/dev-deploy.sh` which is much faster (0.5 minutes vs. 4+ minutes), but it
 requires that you have previously run the full deploy at least once to set
 things up. Additionally you may need to make changes directly to the overlay in
 config-dev-deploy/build.yml.
