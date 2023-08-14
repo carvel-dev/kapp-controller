@@ -7,7 +7,13 @@ You will need the following tools to build and deploy kapp-controller:
 * kbld
 * kapp
 
-For linux/mac users, all the tools below can be installed by running `./hack/install-deps.sh`.
+For linux/intel mac users, all the tools below can be installed by running `./hack/install-deps.sh`.
+
+For M1 mac users, installing via brew is suggested.
+```
+brew tap carvel-dev/carvel
+brew install ytt kbld kapp 
+```
 
 For windows users, please download the binaries from the respective GitHub repositories:
 * https://github.com/carvel-dev/ytt
