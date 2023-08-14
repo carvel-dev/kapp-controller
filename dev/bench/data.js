@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690835177606,
+  "lastUpdate": 1692044598569,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -12381,6 +12381,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5652252031,
             "unit": "ns/op\t         3.462 DeleteSeconds\t         2.152 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "81f1ea18ead6f62339088ae3c0ab77dc0df8738a",
+          "message": "Merge pull request #1290 from ashpect/develop\n\nAdd checksums for darwin/arm64",
+          "timestamp": "2023-08-14T13:30:37-06:00",
+          "tree_id": "cf7c37b5c73dc41ae838d53dd6cbbe93c51d8e92",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/81f1ea18ead6f62339088ae3c0ab77dc0df8738a"
+        },
+        "date": 1692044597237,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35805302453,
+            "unit": "ns/op\t        18.19 DeleteSeconds\t        17.57 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8739402577,
+            "unit": "ns/op\t         4.496 DeleteSeconds\t         4.177 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5479599426,
+            "unit": "ns/op\t         3.298 DeleteSeconds\t         2.142 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
