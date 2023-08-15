@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1692044598569,
+  "lastUpdate": 1692123623759,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -12423,6 +12423,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5479599426,
             "unit": "ns/op\t         3.298 DeleteSeconds\t         2.142 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nhickey@vmware.com",
+            "name": "Neil Hickey",
+            "username": "neil-hickey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "32db3fbc1ebba85071457a450ae82afe58bb8e84",
+          "message": "Merge pull request #1284 from carvel-dev/dependabot/docker/golang-1.20.7\n\nBump golang from 1.20.5 to 1.20.7",
+          "timestamp": "2023-08-15T12:10:24-06:00",
+          "tree_id": "45241e05f81424fe9b43dbc83617a8843c328ac6",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/32db3fbc1ebba85071457a450ae82afe58bb8e84"
+        },
+        "date": 1692123622607,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35256748088,
+            "unit": "ns/op\t        17.76 DeleteSeconds\t        17.47 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8517668517,
+            "unit": "ns/op\t         4.348 DeleteSeconds\t         4.137 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5374050433,
+            "unit": "ns/op\t         3.234 DeleteSeconds\t         2.107 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
