@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
   go build -mod=vendor -ldflags="-X 'main.Version=$KCTRL_VER'" -trimpath -o out/kapp-controller ./cmd/controller
 
 # --- run image ---
-FROM photon:4.0
+FROM photon:5.0
 
 # Install openssh for git
 RUN tdnf install -y git openssh-clients
