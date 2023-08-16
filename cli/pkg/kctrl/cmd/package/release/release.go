@@ -90,7 +90,7 @@ func (o *ReleaseOptions) Run() error {
 	if err != nil {
 		return err
 	}
-	if len(pkgConfigs.PkgMetadatas) != 1 || len(pkgConfigs.PkgMetadatas) != 1 {
+	if len(pkgConfigs.Pkgs) != 1 || len(pkgConfigs.PkgMetadatas) != 1 {
 		return fmt.Errorf("Reading package-resource.yml: file malformed. (hint: delete the file and run `package init` again)")
 	}
 
