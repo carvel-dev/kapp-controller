@@ -1,57 +1,61 @@
 - checksums:
     darwin:
-      amd64: ff4e01758a9800248a4115d1debd3e09fd52cbdd1c42c17e9e1d6a28b9f6f871
+      amd64: 0f3b2d2ff521e8bc0ddc4501b92f5d7779058d485f6c8b8ad0f941dd7c038523
+      arm64: 4468036ccdf85e8fdb24e105d09586477bf8877296334220e3530cdfe31a9c13
     linux:
-      amd64: 1623058604bcf7de0af831c23e26b4eadef01cc66f05fb74b179f449f64770eb
-      arm64: 736d019d681055b91f3fe83af696c29367953b3b564dd81305920cf5bdf898fe
+      amd64: 05a0bdbfc2c515d1e0b6c342c3dbcf40a8ed725f77887f5ac6d138ffa4311ccf
+      arm64: 8fb64ba07588983f23200093c0154ec235df6ab093bc025301bb1fc309358f66
   dev: true
   name: ytt
   repo: carvel-dev/ytt
   urlTemplate: https://github.com/carvel-dev/{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.44.8
+  version: v0.44.9
 - checksums:
     darwin:
-      amd64: 7f97e580164e0adb62da607d27a3ac7c418a352e6a09a20edb086361b3d8adab
+      amd64: a3256644e80d321b63a737c649d81fa1b66a663e4314d5e1e1c663298100465c
+      arm64: 4036cad140bfa5986b77c8789a73b079a50abc342e35fa07ea416c1706a0793f
     linux:
-      amd64: d113d7a300c3b7059cee5aa7a90a6658dc75335afd84f5bb3ac0d9bdaa3be9b1
-      arm64: f84bc6d86bbf1cba691063f2a3b5cd35b0f17e8c590cc4414db556ab128fa386
+      amd64: eceefc8366d89eae2356e68b7ed52e4983eae5d8d152571d8e30f6d51ab23d38
+      arm64: 249beebab34dee82467531251f46dd4181e715b49af4c24661c9ebee97f347c6
   dev: true
   name: kbld
   repo: carvel-dev/kbld
   urlTemplate: https://github.com/carvel-dev/{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.36.8
+  version: v0.36.9
 - checksums:
     darwin:
-      amd64: 5916fa215aceabdf93b75e39c3bec027569adf2c8f796e626882e359ddd28581
+      amd64: 2e68ba20378547e192246d89b3ddefa6d82f54e1bed1fe99ef1fb56a2c84c821
+      arm64: ab64b293eef2f87a517fb4ad8a6779834790a9d4be28103e9f1f8da0b7212d8c
     linux:
-      amd64: 7344bbfed883bf46e38ef022dde9f51d054f6861788eff000fab52a27f091ac6
-      arm64: 0eaccb8f690bfef4542f90af54bfce90731797faadda1f71f02d6b401b190c35
+      amd64: 3ee1b75e6bed54b3e492d2c138b6b9ad9bea4c697fd8d9ef91e8e659c2d6cee5
+      arm64: 6bb2f83529689a7651e4150dfbe3b491ef1888818c802b9635e3356458e08466
   dev: true
   name: kapp
   repo: carvel-dev/kapp
   urlTemplate: https://github.com/carvel-dev/{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.54.5
+  version: v0.54.7
 - checksums:
     darwin:
-      amd64: 56bbc249c41e0c59aa0eac07d87f3edb6dac7ff5b7a7e2b99cefee83ecf0b57b
+      amd64: 910e3d49796b1921aa197b38ff205109242caf79cba7df3b2f15ce0a4a2b6778
+      arm64: b24a9b21733db5a9b1788c9c3cbc2b449642f6ce42cac5dd808522da7ea010d2
     linux:
-      amd64: c4ab861efddf25abf8e787a52960ca4007b08c9e28cca192951bdf0c1a948dc5
-      arm64: d45e792764e23a713e6baec47b20bc30d0ad36a1bf3c94290d092ceac76a09e0
+      amd64: 96b0bcf1b259513ab3f3bc73f575fd1afba91752ac749fe7114b28abe50c9b39
+      arm64: b81cd66f3cc71c20aa25539aac81038d0d46afa2376b8c55a44b090c9f225a22
   dev: true
   name: vendir
   repo: carvel-dev/vendir
   urlTemplate: https://github.com/carvel-dev/{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.32.7
+  version: v0.32.8
 - checksums:
     linux:
-      amd64: ca2d5d40d4cdfb9a3a6205dd803b5bc8def00bd2f13e5526c127e9b667974a89
-      arm64: 9f58e707dcbe9a3b7885c4e24ef57edfb9794490d72705b33a93fa1f3572cce4
+      amd64: 1b2313cd198d45eab00cc37c38f6b1ca0a948ba279c29e322bdf426d406129b5
+      arm64: 79ef06935fb47e432c0c91bdefd140e5b543ec46376007ca14a52e5ed3023088
   dev: false
   name: helm
   repo: helm/helm
   tarballSubpath: '{{.OS}}-{{.Arch}}/helm'
   urlTemplate: https://get.helm.sh/helm-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
-  version: v3.11.3
+  version: v3.12.3
 - checksums:
     linux:
       amd64: 53aec65e45f62a769ff24b7e5384f0c82d62668dd96ed56685f649da114b4dbb
