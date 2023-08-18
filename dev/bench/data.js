@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1692125291841,
+  "lastUpdate": 1692381741883,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -12591,6 +12591,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5521368084,
             "unit": "ns/op\t         3.264 DeleteSeconds\t         2.214 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nancil@vmware.com",
+            "name": "Nanci Lancaster",
+            "username": "microwavables"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d925c28fbcc3220afb0f0959de82e4bd5a71b1a4",
+          "message": "Merge pull request #1305 from microwavables/add-cii-badge\n\nadd cii badge to readme.md",
+          "timestamp": "2023-08-18T12:55:21-05:00",
+          "tree_id": "0ee83432e65b37ea6dd41149d62f147f7d1452dd",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/d925c28fbcc3220afb0f0959de82e4bd5a71b1a4"
+        },
+        "date": 1692381740465,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35957960737,
+            "unit": "ns/op\t        18.19 DeleteSeconds\t        17.72 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8534442241,
+            "unit": "ns/op\t         4.333 DeleteSeconds\t         4.163 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6567798222,
+            "unit": "ns/op\t         3.328 DeleteSeconds\t         3.202 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
