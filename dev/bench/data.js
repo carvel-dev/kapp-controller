@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1692381741883,
+  "lastUpdate": 1692642539938,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -12633,6 +12633,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6567798222,
             "unit": "ns/op\t         3.328 DeleteSeconds\t         3.202 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "2027679+andrew-su@users.noreply.github.com",
+            "name": "Andrew Su",
+            "username": "andrew-su"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "60a80dec176ce6279d8801033d96b3c56f79f20c",
+          "message": "Check for exactly one package and one metadata resource (#1295)\n\nSigned-off-by: Andrew Su <suan@vmware.com>",
+          "timestamp": "2023-08-21T23:47:20+05:30",
+          "tree_id": "c6cc2ccdff0c4d280b96c190a6dd9ce71e10edd1",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/60a80dec176ce6279d8801033d96b3c56f79f20c"
+        },
+        "date": 1692642538355,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35741579232,
+            "unit": "ns/op\t        18.12 DeleteSeconds\t        17.58 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8642265881,
+            "unit": "ns/op\t         4.442 DeleteSeconds\t         4.155 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5456567914,
+            "unit": "ns/op\t         3.277 DeleteSeconds\t         2.141 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
