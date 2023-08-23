@@ -160,6 +160,13 @@ namespace: test
 
 		// Verify that validation checks are not performed while running ytt to build packages
 		kappCtrl.RunWithOpts([]string{"package", "release", "--chdir", workingDir, "--build-values", "build-values.yml"}, RunOpts{NoNamespace: true})
+
+		// Ensure that flag does not affect package output
+		packageFile, err := os.ReadFile(path.Join(workingDir, "carvel-artifacts", "packages", "samplepackage.corp.com", "package.yml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		require.NotContains(t, string(packageFile), "valuesFrom")
 	})
 }
 
@@ -313,5 +320,12 @@ fooVal: bar
 			t.Fatal(err)
 		}
 		kappCtrl.RunWithOpts([]string{"package", "release", "--chdir", workingDir, "--build-values", "build-values.yml"}, RunOpts{NoNamespace: true})
+
+		// Ensure that flag does not affect package output
+		packageFile, err := os.ReadFile(path.Join(workingDir, "carvel-artifacts", "packages", "samplepackage.corp.com", "package.yml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		require.NotContains(t, string(packageFile), "valuesFrom")
 	})
 }
