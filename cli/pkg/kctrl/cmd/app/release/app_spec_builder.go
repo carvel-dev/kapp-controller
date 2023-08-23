@@ -65,7 +65,7 @@ func (b *AppSpecBuilder) Build() (kcv1alpha1.AppSpec, error) {
 					Git: &kcv1alpha1.AppFetchGit{},
 				},
 			},
-			Template: b.opts.BuildTemplate,
+			Template: b.deepCopyAppTemplateList(b.opts.BuildTemplate),
 			Deploy:   b.opts.BuildDeploy,
 		},
 	}
@@ -168,4 +168,13 @@ func (b *AppSpecBuilder) checkForErrorsAfterReconciliation(app kcv1alpha1.App, f
 		return fmt.Errorf("Reconciling: %s", existingApp.Status.UsefulErrorMessage)
 	}
 	return nil
+}
+
+func (b *AppSpecBuilder) deepCopyAppTemplateList(src []kcv1alpha1.AppTemplate) []kcv1alpha1.AppTemplate {
+	copy := []kcv1alpha1.AppTemplate{}
+	for _, templateStep := range src {
+		templateStepCopy := templateStep.DeepCopy()
+		copy = append(copy, *templateStepCopy)
+	}
+	return copy
 }
