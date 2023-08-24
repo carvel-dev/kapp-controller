@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1692642539938,
+  "lastUpdate": 1692864184643,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -12675,6 +12675,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5456567914,
             "unit": "ns/op\t         3.277 DeleteSeconds\t         2.141 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2165849357e783c711ff11e500a8a763c3a7b0a5",
+          "message": "Merge pull request #1310 from 100mik/kctrl-build-values-fix\n\nEnsure that `--build-values` does not affect package output",
+          "timestamp": "2023-08-24T13:20:52+05:30",
+          "tree_id": "a23f12a882b89389279f631bb2298254fea768b2",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/2165849357e783c711ff11e500a8a763c3a7b0a5"
+        },
+        "date": 1692864182692,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35861306320,
+            "unit": "ns/op\t        18.10 DeleteSeconds\t        17.72 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8562717749,
+            "unit": "ns/op\t         4.350 DeleteSeconds\t         4.168 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6497802133,
+            "unit": "ns/op\t         4.311 DeleteSeconds\t         2.146 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
