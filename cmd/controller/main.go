@@ -110,7 +110,7 @@ func main() {
 	defer cancel()
 
 	lock := getNewLock(leaseLockName, podName, leaseLockNamespace)
-	runLeaderElection(lock, ctx, podName, ctrlOpts, log)
+	runLeaderElection(ctx, lock, podName, ctrlOpts, log)
 
 	os.Exit(0)
 }
