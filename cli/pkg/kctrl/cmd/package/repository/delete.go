@@ -104,7 +104,7 @@ func (o *DeleteOptions) Run(args []string) error {
 
 func (o *DeleteOptions) waitForDeletion(client versioned.Interface) error {
 	o.statusUI.PrintMessagef("Waiting for package repository reconciliation for '%s'", o.Name)
-	repoWatcher := NewRepoTailer(o.NamespaceFlags.Name, o.Name, o.ui, client)
+	repoWatcher := NewRepoTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, RepoTailerOpts{})
 
 	err := repoWatcher.TailRepoStatus()
 	if err != nil {

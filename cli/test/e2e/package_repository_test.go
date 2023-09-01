@@ -64,6 +64,36 @@ func TestPackageRepository(t *testing.T) {
 		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"})
 	})
 
+	logger.Section("adding of existing repository", func() {
+		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL})
+	})
+
+	logger.Section("adding of existing repository with new url", func() {
+
+		_, err := kappCtrl.RunWithOpts([]string{"package", "repository", "add", "-r", pkgrName, "--url", "https://carvel.dev"}, RunOpts{
+			AllowError: true,
+		})
+		require.Error(t, err)
+
+		kubectl.Run([]string{"get", kind, pkgrName})
+
+		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL})
+
+		out := kappCtrl.Run([]string{"package", "repository", "get", "-r", pkgrName, "--json"})
+
+		output := uitest.JSONUIFromBytes(t, []byte(out))
+
+		expectedOutputRows := []map[string]string{{
+			"conditions":           "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
+			"status":               "Reconcile succeeded",
+			"namespace":            env.Namespace,
+			"name":                 pkgrName,
+			"source":               fmt.Sprintf("(imgpkg) %s", pkgrURL),
+			"useful_error_message": "",
+		}}
+		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
+	})
+
 	logger.Section("kicking a repository", func() {
 		out := kappCtrl.Run([]string{"package", "repository", "kick", "-r", pkgrName})
 
@@ -128,6 +158,10 @@ func TestPackageRepository(t *testing.T) {
 			"useful_error_message": "",
 		}}
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
+	})
+
+	logger.Section("updating a repository with no change in url", func() {
+		kappCtrl.Run([]string{"package", "repository", "update", "-r", pkgrName, "--url", pkgrURL})
 	})
 
 	logger.Section("creating a repository in a new namespace that doesn't exist", func() {
