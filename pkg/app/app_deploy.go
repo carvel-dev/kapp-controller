@@ -146,7 +146,9 @@ func (a *App) trySaveMetadata(kapp *ctldep.Kapp) {
 func (a *App) newKapp(kapp v1alpha1.AppDeployKapp, cancelCh chan struct{}) (*ctldep.Kapp, error) {
 
 	return a.deployFactory.NewKapp(kapp, a.app.Spec.ServiceAccountName,
-		a.app.Spec.Cluster, cancelCh, kubeconfig.AccessLocation{Name: a.app.Name, Namespace: a.app.Namespace})
+		a.app.Spec.Cluster, cancelCh, kubeconfig.AccessLocation{Name: a.app.Name, Namespace: a.app.Namespace},
+		a.app.Spec.DefaultNamespace, a.app.Namespace,
+	)
 }
 
 type cancelCondition func(v1alpha1.App) bool

@@ -373,6 +373,7 @@ func (pi *PackageInstallCR) reconcileDelete(modelStatus *reconciler.Status) (rec
 	if existingApp.Spec.Canceled != pi.model.Spec.Canceled {
 		existingApp.Spec.Canceled = pi.model.Spec.Canceled
 	}
+	existingApp.Spec.DefaultNamespace = pi.model.Spec.DefaultNamespace
 
 	if !equality.Semantic.DeepEqual(existingApp, unchangeExistingApp) {
 		existingApp, err = pi.kcclient.KappctrlV1alpha1().Apps(existingApp.Namespace).Update(
