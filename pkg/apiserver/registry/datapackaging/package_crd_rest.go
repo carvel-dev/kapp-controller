@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/validation"
 	installclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
@@ -31,6 +32,7 @@ type PackageCRDREST struct {
 	crdClient       installclient.Interface
 	nsClient        kubernetes.Interface
 	globalNamespace string
+	logger          logr.Logger
 }
 
 var (
@@ -38,8 +40,9 @@ var (
 	_ rest.ShortNamesProvider = &PackageCRDREST{}
 )
 
-func NewPackageCRDREST(crdClient installclient.Interface, nsClient kubernetes.Interface, globalNS string) *PackageCRDREST {
-	return &PackageCRDREST{crdClient, nsClient, globalNS}
+// NewPackageCRDREST creates a new instance of the PackageCRDREST type
+func NewPackageCRDREST(crdClient installclient.Interface, nsClient kubernetes.Interface, globalNS string, logger logr.Logger) *PackageCRDREST {
+	return &PackageCRDREST{crdClient, nsClient, globalNS, logger}
 }
 
 func (r *PackageCRDREST) ShortNames() []string {
@@ -65,7 +68,7 @@ func (r *PackageCRDREST) NewList() runtime.Object {
 
 func (r *PackageCRDREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
-	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace, r.logger))
 
 	if createValidation != nil {
 		if err := createValidation(ctx, obj); err != nil {
@@ -93,7 +96,7 @@ func (r *PackageCRDREST) shouldFetchGlobal(ctx context.Context, namespace string
 
 func (r *PackageCRDREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
-	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace, r.logger))
 
 	pkg, err := client.Get(ctx, namespace, name, *options)
 	if errors.IsNotFound(err) && r.shouldFetchGlobal(ctx, namespace) {
@@ -104,7 +107,7 @@ func (r *PackageCRDREST) Get(ctx context.Context, name string, options *metav1.G
 
 func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
-	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace, r.logger))
 
 	// field selector isnt supported by CRD's so reset it, we will apply it later
 	fs := options.FieldSelector
@@ -152,7 +155,7 @@ func (r *PackageCRDREST) List(ctx context.Context, options *internalversion.List
 
 func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
-	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace, r.logger))
 
 	pkg, err := client.Get(ctx, namespace, name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
@@ -220,7 +223,7 @@ func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.U
 
 func (r *PackageCRDREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
-	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace, r.logger))
 
 	pkg, err := client.Get(ctx, namespace, name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
@@ -247,7 +250,7 @@ func (r *PackageCRDREST) Delete(ctx context.Context, name string, deleteValidati
 
 func (r *PackageCRDREST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
-	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace, r.logger))
 
 	// clear unsupported field selectors
 	fs := listOptions.FieldSelector
@@ -295,7 +298,7 @@ func (r *PackageCRDREST) DeleteCollection(ctx context.Context, deleteValidation 
 
 func (r *PackageCRDREST) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
 	namespace := request.NamespaceValue(ctx)
-	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace))
+	client := NewPackageStorageClient(r.crdClient, NewPackageTranslator(namespace, r.logger))
 
 	watcher, err := client.Watch(ctx, namespace, r.internalToMetaListOpts(*options))
 	if errors.IsNotFound(err) && namespace != r.globalNamespace {
