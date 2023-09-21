@@ -36,21 +36,22 @@ func NewFactory(coreClient kubernetes.Interface, kubeconfig *kubeconfig.Kubeconf
 
 // NewKapp configures and returns a deployer of type Kapp
 func (f Factory) NewKapp(opts v1alpha1.AppDeployKapp, saName string,
-	clusterOpts *v1alpha1.AppCluster, cancelCh chan struct{}, location kubeconfig.AccessLocation) (*Kapp, error) {
+	clusterOpts *v1alpha1.AppCluster, cancelCh chan struct{}, location kubeconfig.AccessLocation,
+	defaultNamespace string, appNamespace string) (*Kapp, error) {
 
-	clusterAccess, err := f.kubeconfig.ClusterAccess(saName, clusterOpts, location)
+	clusterAccess, err := f.kubeconfig.ClusterAccess(saName, clusterOpts, location, defaultNamespace)
 	if err != nil {
 		return nil, err
 	}
 
 	const suffix string = ".app"
 	return NewKapp(suffix, opts, clusterAccess,
-		f.globalKappDeployRawOpts(), cancelCh, f.cmdRunner), nil
+		f.globalKappDeployRawOpts(), cancelCh, f.cmdRunner, appNamespace), nil
 }
 
 // NewKappPrivileged is used for package repositories where users aren't required to provide
 // a service account, so it will install resources using its own privileges.
-func (f Factory) NewKappPrivilegedForPackageRepository(opts v1alpha1.AppDeployKapp, clusterAccess kubeconfig.AccessInfo, cancelCh chan struct{}) (*Kapp, error) {
+func (f Factory) NewKappPrivilegedForPackageRepository(opts v1alpha1.AppDeployKapp, clusterAccess kubeconfig.AccessInfo, cancelCh chan struct{}, appNamespace string) (*Kapp, error) {
 
 	const suffix string = ".pkgr"
 
@@ -61,7 +62,7 @@ func (f Factory) NewKappPrivilegedForPackageRepository(opts v1alpha1.AppDeployKa
 		DangerousUsePodServiceAccount: true,
 	}
 
-	return NewKapp(suffix, opts, kconfAccess, f.globalKappDeployRawOpts(), cancelCh, f.cmdRunner), nil
+	return NewKapp(suffix, opts, kconfAccess, f.globalKappDeployRawOpts(), cancelCh, f.cmdRunner, appNamespace), nil
 }
 
 func (f Factory) globalKappDeployRawOpts() []string {

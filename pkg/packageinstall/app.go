@@ -62,6 +62,7 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 	desiredApp.Spec.Paused = pkgInstall.Spec.Paused
 	desiredApp.Spec.Canceled = pkgInstall.Spec.Canceled
 	desiredApp.Spec.Cluster = pkgInstall.Spec.Cluster
+	desiredApp.Spec.DefaultNamespace = pkgInstall.Spec.DefaultNamespace
 
 	err := controllerutil.SetControllerReference(pkgInstall, desiredApp, scheme.Scheme)
 	if err != nil {

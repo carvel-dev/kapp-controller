@@ -73,5 +73,5 @@ func (a *App) delete() exec.CmdRunResult {
 
 func (a *App) newKapp(kapp v1alpha1.AppDeployKapp, cancelCh chan struct{}) (*ctldep.Kapp, error) {
 	genericOpts := kubeconfig.AccessInfo{Name: a.app.Name, Namespace: a.app.Namespace}
-	return a.deployFactory.NewKappPrivilegedForPackageRepository(kapp, genericOpts, cancelCh)
+	return a.deployFactory.NewKappPrivilegedForPackageRepository(kapp, genericOpts, cancelCh, a.app.Namespace)
 }

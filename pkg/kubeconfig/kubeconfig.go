@@ -47,7 +47,7 @@ func NewKubeconfig(coreClient kubernetes.Interface, log logr.Logger) *Kubeconfig
 
 // ClusterAccess takes cluster info and a ServiceAccount Name, and returns a populated kubeconfig that can connect to a cluster.
 // if the saName is empty then you'll connect to a cluster via the clusterOpts inside the genericOpts, otherwise you'll use the specified SA.
-func (k Kubeconfig) ClusterAccess(saName string, clusterOpts *v1alpha1.AppCluster, accessLocation AccessLocation) (AccessInfo, error) {
+func (k Kubeconfig) ClusterAccess(saName string, clusterOpts *v1alpha1.AppCluster, accessLocation AccessLocation, preferredNamespace string) (AccessInfo, error) {
 	var err error
 	var clusterAccessInfo AccessInfo
 
@@ -67,5 +67,9 @@ func (k Kubeconfig) ClusterAccess(saName string, clusterOpts *v1alpha1.AppCluste
 	default:
 		return AccessInfo{}, fmt.Errorf("Expected service account or cluster specified")
 	}
+
+	// If preferredNamespace is "", then kubeconfig preferred namespace will be used
+	clusterAccessInfo.Namespace = preferredNamespace
+
 	return clusterAccessInfo, nil
 }

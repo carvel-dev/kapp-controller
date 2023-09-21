@@ -34,6 +34,7 @@ type Kapp struct {
 	cancelCh            chan struct{}
 	cmdRunner           exec.CmdRunner
 	appMeta             *Meta
+	appNamespace        string
 }
 
 var _ Deploy = &Kapp{}
@@ -42,9 +43,9 @@ var _ Deploy = &Kapp{}
 // additional info from the larger app resource (e.g. service account, name, namespace) as genericOpts,
 // and a cancel channel that gets passed through to the exec call that runs kapp.
 func NewKapp(appSuffix string, opts v1alpha1.AppDeployKapp, clusterAccess kubeconfig.AccessInfo,
-	globalDeployRawOpts []string, cancelCh chan struct{}, cmdRunner exec.CmdRunner) *Kapp {
+	globalDeployRawOpts []string, cancelCh chan struct{}, cmdRunner exec.CmdRunner, appNamespace string) *Kapp {
 
-	return &Kapp{appSuffix, opts, clusterAccess, globalDeployRawOpts, cancelCh, cmdRunner, nil}
+	return &Kapp{appSuffix, opts, clusterAccess, globalDeployRawOpts, cancelCh, cmdRunner, nil, appNamespace}
 }
 
 // Deploy takes the output from templating, and the app name,
@@ -62,7 +63,7 @@ func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 
 	metadataFile := filepath.Join(tmpMetadataDir.Path(), "app-metadata.yml")
 
-	args, err := a.addDeployArgs([]string{"deploy", "--app-metadata-file-output", metadataFile, "--prev-app", a.oldManagedName(), "-f", "-"})
+	args, err := a.addDeployArgs([]string{"deploy", "--app-metadata-file-output", metadataFile, "--prev-app", a.oldManagedName(), "-f", "-", "--app-namespace", a.appNamespace})
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(err)
 	}
@@ -89,7 +90,7 @@ func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 
 // Delete takes the app name, it shells out, running kapp delete ...
 func (a *Kapp) Delete(startedApplyingFunc func(), changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
-	args, err := a.addDeleteArgs([]string{"delete", "--prev-app", a.oldManagedName()})
+	args, err := a.addDeleteArgs([]string{"delete", "--prev-app", a.oldManagedName(), "--app-namespace", a.appNamespace})
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(err)
 	}
@@ -119,6 +120,7 @@ func (a *Kapp) Inspect() exec.CmdRunResult {
 		// TODO is there a better way to deal with this?
 		"--filter", `{"not":{"resource":{"kinds":["PodMetrics"]}}}`,
 		"--tty",
+		"--app-namespace", a.appNamespace,
 	})
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(err)

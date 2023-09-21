@@ -1000,6 +1000,13 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppSpec(ref common.ReferenceCallback) com
 							Format:      "",
 						},
 					},
+					"defaultNamespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Specifies the default namespace to install the App resources, by default this is same as the App's namespace (optional; v0.48.0+)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
