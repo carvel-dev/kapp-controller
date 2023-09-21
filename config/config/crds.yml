@@ -160,6 +160,9 @@ spec:
                             description: Specifies namespace in destination cluster (optional)
                             type: string
                         type: object
+                      defaultNamespace:
+                        description: Specifies the default namespace to install the App resources, by default this is same as the App's namespace (optional; v0.48.0+)
+                        type: string
                       deploy:
                         items:
                           properties:
@@ -773,6 +776,9 @@ spec:
                     description: Specifies namespace in destination cluster (optional)
                     type: string
                 type: object
+              defaultNamespace:
+                description: Specifies the default namespace to install the App resources, by default this is same as the App's namespace (optional; v0.48.0+)
+                type: string
               deploy:
                 items:
                   properties:
@@ -1502,6 +1508,9 @@ spec:
                     description: Specifies namespace in destination cluster (optional)
                     type: string
                 type: object
+              defaultNamespace:
+                description: Specifies the default namespace to install the Package resources, by default this is same as the PackageInstall namespace (optional; v0.48.0+)
+                type: string
               noopDelete:
                 description: When NoopDelete set to true, PackageInstall deletion should delete PackageInstall/App CR but preserve App's associated resources.
                 type: boolean

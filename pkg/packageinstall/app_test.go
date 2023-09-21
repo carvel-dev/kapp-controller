@@ -677,3 +677,42 @@ func TestAppPackageDetailsAnnotations(t *testing.T) {
 
 	require.Equal(t, expectedObjectMeta, app.ObjectMeta)
 }
+
+// TestAppPackageIntallDefaultNamespace tests the creation of an App when using PackageInstall with a defaultNamespace defined.
+func TestAppPackageIntallDefaultNamespace(t *testing.T) {
+	ipkg := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "app",
+			Namespace: "default",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			DefaultNamespace: "default-namespace",
+			SyncPeriod:       &metav1.Duration{100 * time.Second},
+		},
+	}
+
+	pkgVersion := datapkgingv1alpha1.Package{
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "expec-pkg",
+			Version: "1.5.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &kcv1alpha1.AppSpec{},
+			},
+		},
+	}
+
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{})
+	require.NoError(t, err)
+
+	expectedApp := &kcv1alpha1.App{
+		Spec: kcv1alpha1.AppSpec{
+			DefaultNamespace: "default-namespace",
+			SyncPeriod:       &metav1.Duration{100 * time.Second},
+		},
+	}
+
+	// Not interested in metadata in this test
+	app.ObjectMeta = metav1.ObjectMeta{}
+
+	require.Equal(t, expectedApp, app, "App does not match expected app")
+}
