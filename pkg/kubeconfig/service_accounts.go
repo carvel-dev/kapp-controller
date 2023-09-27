@@ -51,9 +51,10 @@ func (s *ServiceAccounts) Find(accessLocation AccessLocation, saName string) (Ac
 	}
 
 	pgoForSA := AccessInfo{
-		Name:       accessLocation.Name,
-		Namespace:  "", // Assume kubeconfig contains preferred namespace from SA
-		Kubeconfig: kubeconfigRestricted,
+		Name:            accessLocation.Name,
+		Namespace:       "",                       // Assume kubeconfig contains preferred namespace from SA
+		DeployNamespace: accessLocation.Namespace, // App namespace is same as SA namespace
+		Kubeconfig:      kubeconfigRestricted,
 	}
 
 	return pgoForSA, nil

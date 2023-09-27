@@ -13,6 +13,8 @@ import (
 // Restricted contains a kubernetes kubeconfig as a string
 type Restricted struct {
 	result string
+
+	defaultNamespace string
 }
 
 // NewKubeconfigRestricted takes kubeconfig yaml as input and returns kubeconfig yaml with certain fields restricted (removed).
@@ -65,6 +67,7 @@ func NewKubeconfigRestricted(input string) (*Restricted, error) {
 		})
 	}
 
+	defaultNamespace := "default" // TODO: Use the value from client-go directly
 	for _, inputCtx := range inputConfig.Contexts {
 		resultConfig.Contexts = append(resultConfig.Contexts, clientcmd.NamedContext{
 			Name: inputCtx.Name,
@@ -74,6 +77,9 @@ func NewKubeconfigRestricted(input string) (*Restricted, error) {
 				Namespace: inputCtx.Context.Namespace,
 			},
 		})
+		if inputCtx.Name == inputConfig.CurrentContext && inputCtx.Context.Namespace != "" {
+			defaultNamespace = inputCtx.Context.Namespace
+		}
 	}
 
 	bs, err := yaml.Marshal(resultConfig)
@@ -81,7 +87,7 @@ func NewKubeconfigRestricted(input string) (*Restricted, error) {
 		return nil, fmt.Errorf("Marshaling kubeconfig: %s", err)
 	}
 
-	return &Restricted{string(bs)}, nil
+	return &Restricted{string(bs), defaultNamespace}, nil
 }
 
 // AsYAML returns a string formatted kubernetes kubeconfig

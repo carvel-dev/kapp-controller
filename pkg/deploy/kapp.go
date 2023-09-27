@@ -63,7 +63,7 @@ func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 
 	metadataFile := filepath.Join(tmpMetadataDir.Path(), "app-metadata.yml")
 
-	args, err := a.addDeployArgs([]string{"deploy", "--app-metadata-file-output", metadataFile, "--prev-app", a.oldManagedName(), "-f", "-", "--app-namespace", a.appNamespace})
+	args, err := a.addDeployArgs([]string{"deploy", "--app-metadata-file-output", metadataFile, "--prev-app", a.oldManagedName(), "-f", "-"})
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(err)
 	}
@@ -90,7 +90,7 @@ func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 
 // Delete takes the app name, it shells out, running kapp delete ...
 func (a *Kapp) Delete(startedApplyingFunc func(), changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
-	args, err := a.addDeleteArgs([]string{"delete", "--prev-app", a.oldManagedName(), "--app-namespace", a.appNamespace})
+	args, err := a.addDeleteArgs([]string{"delete", "--prev-app", a.oldManagedName()})
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(err)
 	}
@@ -120,7 +120,6 @@ func (a *Kapp) Inspect() exec.CmdRunResult {
 		// TODO is there a better way to deal with this?
 		"--filter", `{"not":{"resource":{"kinds":["PodMetrics"]}}}`,
 		"--tty",
-		"--app-namespace", a.appNamespace,
 	})
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(err)
@@ -258,6 +257,10 @@ func (a *Kapp) addGenericArgs(args []string, appName string) ([]string, []string
 
 	if len(a.clusterAccess.Namespace) > 0 {
 		args = append(args, []string{"--namespace", a.clusterAccess.Namespace}...)
+	}
+
+	if len(a.clusterAccess.DeployNamespace) > 0 {
+		args = append(args, []string{"--app-namespace", a.clusterAccess.DeployNamespace}...)
 	}
 
 	switch {
