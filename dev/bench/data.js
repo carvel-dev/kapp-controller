@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1695401149616,
+  "lastUpdate": 1695798827334,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -12885,6 +12885,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5330796822,
             "unit": "ns/op\t         3.200 DeleteSeconds\t         2.097 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "8457124+praveenrewar@users.noreply.github.com",
+            "name": "Praveen Rewar",
+            "username": "praveenrewar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e66ee8089c6f70f8cb4aa66cb65dab62e923cd48",
+          "message": "Fix app-namespace usage for cluster options (#1333)\n\nDuring the introduction of defaultNamespace feature, we started using --app-namespace flag from kapp which should be used carefully when using cluster options instead of service account\r\n\r\nSigned-off-by: Praveen Rewar <8457124+praveenrewar@users.noreply.github.com>",
+          "timestamp": "2023-09-27T12:34:01+05:30",
+          "tree_id": "6e1a2f193eefe4d528c7d77207d97db6739e3e71",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/e66ee8089c6f70f8cb4aa66cb65dab62e923cd48"
+        },
+        "date": 1695798825488,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35247111123,
+            "unit": "ns/op\t        17.80 DeleteSeconds\t        17.42 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8365081603,
+            "unit": "ns/op\t         4.222 DeleteSeconds\t         4.112 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5402892321,
+            "unit": "ns/op\t         3.256 DeleteSeconds\t         2.093 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
