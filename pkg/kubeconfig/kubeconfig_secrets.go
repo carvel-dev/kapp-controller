@@ -49,8 +49,10 @@ func (s *Secrets) Find(accessLocation AccessLocation,
 		Name: accessLocation.Name,
 		// Override destination namespace; if it's empty
 		// assume kubeconfig contains preferred namespace
-		Namespace:  clusterOpts.Namespace,
-		Kubeconfig: kubeconfigRestricted,
+		Namespace: clusterOpts.Namespace,
+		// Use provided namespace as app namespace
+		DeployNamespace: clusterOpts.Namespace,
+		Kubeconfig:      kubeconfigRestricted,
 	}
 
 	return pgoForCluster, nil
