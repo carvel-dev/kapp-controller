@@ -14,6 +14,15 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp" // Initialize gcp client auth plugin
+	"k8s.io/component-base/cli/flag"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver"
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
@@ -28,14 +37,6 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/sidecarexec"
-	"k8s.io/client-go/kubernetes"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp" // Initialize gcp client auth plugin
-	"k8s.io/component-base/cli/flag"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const (
@@ -166,7 +167,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			return fmt.Errorf("Cannot get kapp-controller namespace")
 		}
 
-		err = reconciler.AttachWatches(ctrl, ns)
+		err = reconciler.AttachWatches(ctrl, ns, mgr.GetCache())
 		if err != nil {
 			return fmt.Errorf("Setting up Config reconciler watches: %s", err)
 		}
@@ -216,7 +217,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			return fmt.Errorf("Setting up Apps reconciler: %s", err)
 		}
 
-		err = reconciler.AttachWatches(ctrl)
+		err = reconciler.AttachWatches(ctrl, mgr.GetCache())
 		if err != nil {
 			return fmt.Errorf("Setting up Apps reconciler watches: %s", err)
 		}
@@ -236,7 +237,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			return fmt.Errorf("Setting up PackageInstalls reconciler: %s", err)
 		}
 
-		err = reconciler.AttachWatches(ctrl)
+		err = reconciler.AttachWatches(ctrl, mgr)
 		if err != nil {
 			return fmt.Errorf("Setting up PackageInstalls reconciler watches: %s", err)
 		}
@@ -270,7 +271,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			return fmt.Errorf("Setting up PackageRepositories reconciler: %s", err)
 		}
 
-		err = reconciler.AttachWatches(ctrl)
+		err = reconciler.AttachWatches(ctrl, mgr.GetCache())
 		if err != nil {
 			return fmt.Errorf("Setting up PackageRepositories reconciler watches: %s", err)
 		}

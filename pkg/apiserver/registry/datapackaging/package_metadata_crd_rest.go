@@ -9,9 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/validation"
-	installclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -22,6 +19,10 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/validation"
+	installclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 )
 
 const excludeGlobalPackagesAnn = "kapp-controller.carvel.dev/exclude-global-packages"
@@ -36,8 +37,9 @@ type PackageMetadataCRDREST struct {
 }
 
 var (
-	_ rest.StandardStorage    = &PackageMetadataCRDREST{}
-	_ rest.ShortNamesProvider = &PackageMetadataCRDREST{}
+	_ rest.StandardStorage      = &PackageMetadataCRDREST{}
+	_ rest.ShortNamesProvider   = &PackageMetadataCRDREST{}
+	_ rest.SingularNameProvider = &PackageMetadataCRDREST{}
 )
 
 func NewPackageMetadataCRDREST(crdClient installclient.Interface, nsClient kubernetes.Interface, globalNS string) *PackageMetadataCRDREST {
@@ -46,6 +48,10 @@ func NewPackageMetadataCRDREST(crdClient installclient.Interface, nsClient kuber
 
 func (r *PackageMetadataCRDREST) ShortNames() []string {
 	return []string{"pkgm"}
+}
+
+func (r *PackageMetadataCRDREST) GetSingularName() string {
+	return "packagemetadata"
 }
 
 func (r *PackageMetadataCRDREST) New() runtime.Object {

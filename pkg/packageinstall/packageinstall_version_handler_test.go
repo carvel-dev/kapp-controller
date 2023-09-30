@@ -4,20 +4,22 @@
 package packageinstall_test
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
 	"github.com/go-logr/logr/testr"
-	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
-	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
+	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 )
 
 func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
@@ -64,7 +66,7 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 		},
 	}
 
-	ipvh.Generic(event, q)
+	ipvh.Generic(context.Background(), event, q)
 
 	if q.Len() != 1 {
 		t.Fatalf("Expected queue to have length of 1, got %d", q.Len())
