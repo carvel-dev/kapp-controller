@@ -15,8 +15,9 @@ type AppTemplate struct {
 	Kustomize    *AppTemplateKustomize    `json:"kustomize,omitempty" protobuf:"bytes,4,opt,name=kustomize"`
 	Jsonnet      *AppTemplateJsonnet      `json:"jsonnet,omitempty" protobuf:"bytes,5,opt,name=jsonnet"`
 	// Use sops to decrypt *.sops.yml files (optional; v0.11.0+)
-	Sops *AppTemplateSops `json:"sops,omitempty" protobuf:"bytes,6,opt,name=sops"`
-	Cue  *AppTemplateCue  `json:"cue,omitempty" protobuf:"bytes,7,opt,name=cue"`
+	Sops        *AppTemplateSops        `json:"sops,omitempty" protobuf:"bytes,6,opt,name=sops"`
+	Cue         *AppTemplateCue         `json:"cue,omitempty" protobuf:"bytes,7,opt,name=cue"`
+	OLMRegistry *AppTemplateOLMRegistry `json:"olmRegistry,omitempty" protobuf:"bytes,8,opt,name=olmRegistry"`
 }
 
 // +k8s:openapi-gen=true
@@ -148,4 +149,16 @@ type AppTemplateCue struct {
 	InputExpression string `json:"inputExpression,omitempty" protobuf:"bytes,3,opt,name=inputExpression"`
 	// Cue expression to output, default will export all visible fields (optional)
 	OutputExpression string `json:"outputExpression,omitempty" protobuf:"bytes,4,opt,name=outputExpression"`
+}
+
+// +k8s:openapi-gen=true
+type AppTemplateOLMRegistry struct {
+	// BundleRoot is the path to bundle root within source directory.
+	// Default is the source directory root. (optional)
+	BundleRoot string `json:"bundleRoot,omitempty" protobuf:"bytes,1,opt,name=bundleRoot"`
+	// TargetNamespaces is the list of namespaces that the bundle will be configured to target.
+	// If the bundle supports AllNamespaces mode, default is all namespaces. Otherwise, if the
+	// bundle supports OwnNamespaces mode, default is the install namespace. If the bundle supports
+	// neither AllNamespaces nor OwnNamespace, TargetNamespaces must be specified.
+	TargetNamespaces []string `json:"targetNamespaces,omitempty" protobuf:"bytes,2,opt,name=targetNamespaces"`
 }

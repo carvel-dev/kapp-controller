@@ -12,12 +12,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
+
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 )
 
 func Test_PackageInstalled_FromPackageInstall_Successfully(t *testing.T) {
@@ -629,7 +630,7 @@ spec:
 				t.Fatalf("\nExpected App spec.template.ytt.paths to contain file.yml\nGot: %s", tmpl.Ytt.Paths[0])
 			}
 		} else {
-			t.Fatalf("\nExpected App spec.template.ytt.paths to contain file.yml\nGot: %s", tmpl)
+			t.Fatalf("\nExpected App spec.template.ytt.paths to contain file.yml\nGot: %v", tmpl)
 		}
 	})
 

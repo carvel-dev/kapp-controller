@@ -42,6 +42,8 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 			template = a.templateFactory.NewSops(*tpl.Sops, appContext)
 		case tpl.Cue != nil:
 			template = a.templateFactory.NewCue(*tpl.Cue, appContext, additionalValues)
+		case tpl.OLMRegistry != nil:
+			template = a.templateFactory.NewOLMRegistry(*tpl.OLMRegistry, appContext)
 		default:
 			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to template"))
 			return result
