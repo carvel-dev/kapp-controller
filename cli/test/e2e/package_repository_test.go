@@ -6,6 +6,7 @@ package e2e
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/require"
@@ -65,7 +66,14 @@ func TestPackageRepository(t *testing.T) {
 	})
 
 	logger.Section("adding of existing repository", func() {
-		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL})
+		start := time.Now()
+		out := kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL})
+		elapsed := time.Since(start).Seconds()
+		require.Equal(t, elapsed < 5, true, "Adding of existing package repository takes more than 5 seconds")
+		require.Contains(t, out, "Fetch succeeded")
+		require.Contains(t, out, "Template succeeded")
+		require.Contains(t, out, "Deploy succeeded")
+		require.Contains(t, out, "Succeeded")
 	})
 
 	logger.Section("adding of existing repository with new url", func() {
@@ -161,7 +169,15 @@ func TestPackageRepository(t *testing.T) {
 	})
 
 	logger.Section("updating a repository with no change in url", func() {
-		kappCtrl.Run([]string{"package", "repository", "update", "-r", pkgrName, "--url", pkgrURL})
+		start := time.Now()
+		out := kappCtrl.Run([]string{"package", "repository", "update", "-r", pkgrName, "--url", pkgrURL})
+		elapsed := time.Since(start).Seconds()
+		require.Equal(t, elapsed < 5, true, "Adding of existing package repository takes more than 5 seconds")
+		require.Contains(t, out, "Fetch succeeded")
+		require.Contains(t, out, "Template succeeded")
+		require.Contains(t, out, "Deploy succeeded")
+		require.Contains(t, out, "Succeeded")
+
 	})
 
 	logger.Section("creating a repository in a new namespace that doesn't exist", func() {
