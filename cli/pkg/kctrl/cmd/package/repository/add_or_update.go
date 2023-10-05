@@ -190,13 +190,8 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 		return err
 	}
 
-	if o.URL == existingRepository.Spec.Fetch.ImgpkgBundle.Image {
-		repoWatcher := NewRepoTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, RepoTailerOpts{
-			PrintCurrentState: true,
-		})
-		err = repoWatcher.TailRepoStatus()
-		return err
-
+	if o.URL != "" && o.URL == existingRepository.Spec.Fetch.ImgpkgBundle.Image {
+		return NewRepoTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, RepoTailerOpts{PrintCurrentState: true}).TailRepoStatus()
 	}
 
 	pkgRepository, err := o.updateExistingPackageRepository(existingRepository)
