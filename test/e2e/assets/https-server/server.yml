@@ -80,9 +80,7 @@ data:
 
     http {
       server {
-        listen 443;
-
-        ssl on;
+        listen 443 ssl;
         ssl_certificate /etc/ssl/https-server.crt;
         ssl_certificate_key /etc/ssl/https-server.key;
         server_name https-svc.default.svc.cluster.local;
