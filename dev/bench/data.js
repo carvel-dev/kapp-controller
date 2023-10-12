@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1697095903812,
+  "lastUpdate": 1697096037576,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -12969,6 +12969,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5385182784,
             "unit": "ns/op\t         3.242 DeleteSeconds\t         2.110 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "55523204+rohitagg2020@users.noreply.github.com",
+            "name": "rohitagg2020",
+            "username": "rohitagg2020"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "43f233497cfdbd4af3064ce0e5a337c3a6efe15b",
+          "message": "Merge pull request #1345 from carvel-dev/ra-fix-test-config-trust-ca-certs\n\nFixing the test case TestConfig_TrustCACerts ( ssl on is removed)",
+          "timestamp": "2023-10-12T12:51:57+05:30",
+          "tree_id": "43518f3f752ad0ebeef632a0cc07d243b66577b5",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/43f233497cfdbd4af3064ce0e5a337c3a6efe15b"
+        },
+        "date": 1697096035804,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35692561602,
+            "unit": "ns/op\t        18.06 DeleteSeconds\t        17.59 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8542634955,
+            "unit": "ns/op\t         4.343 DeleteSeconds\t         4.163 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5686241199,
+            "unit": "ns/op\t         3.458 DeleteSeconds\t         2.189 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
