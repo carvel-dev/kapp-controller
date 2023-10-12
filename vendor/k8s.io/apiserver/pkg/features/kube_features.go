@@ -35,6 +35,22 @@ const (
 	// of code conflicts because changes are more likely to be scattered
 	// across the file.
 
+	// owner: @ivelichkovich, @tallclair
+	// alpha: v1.27
+	// beta: v1.28
+	// kep: https://kep.k8s.io/3716
+	//
+	// Enables usage of MatchConditions fields to use CEL expressions for matching on admission webhooks
+	AdmissionWebhookMatchConditions featuregate.Feature = "AdmissionWebhookMatchConditions"
+
+	// owner: @jefftree @alexzielenski
+	// alpha: v1.26
+	// beta: v1.27
+	//
+	// Enables an single HTTP endpoint /discovery/<version> which supports native HTTP
+	// caching with ETags containing all APIResources known to the apiserver.
+	AggregatedDiscoveryEndpoint featuregate.Feature = "AggregatedDiscoveryEndpoint"
+
 	// owner: @smarterclayton
 	// alpha: v1.8
 	// beta: v1.9
@@ -67,39 +83,26 @@ const (
 
 	// owner: @dashpole
 	// alpha: v1.22
+	// beta: v1.27
 	//
 	// Add support for distributed tracing in the API Server
 	APIServerTracing featuregate.Feature = "APIServerTracing"
 
-	// owner: @tallclair
-	// alpha: v1.7
-	// beta: v1.8
-	// GA: v1.12
+	// owner: @cici37 @jpbetz
+	// kep: http://kep.k8s.io/3488
+	// alpha: v1.26
 	//
-	// AdvancedAuditing enables a much more general API auditing pipeline, which includes support for
-	// pluggable output backends and an audit policy specifying how different requests should be
-	// audited.
-	AdvancedAuditing featuregate.Feature = "AdvancedAuditing"
+	// Enables expression validation in Admission Control
+	ValidatingAdmissionPolicy featuregate.Feature = "ValidatingAdmissionPolicy"
 
 	// owner: @cici37
-	// kep: http://kep.k8s.io/2876
+	// kep: https://kep.k8s.io/2876
 	// alpha: v1.23
 	// beta: v1.25
 	//
 	// Enables expression validation for Custom Resource
 	CustomResourceValidationExpressions featuregate.Feature = "CustomResourceValidationExpressions"
 
-	// owner: @apelisse
-	// alpha: v1.12
-	// beta: v1.13
-	// stable: v1.18
-	//
-	// Allow requests to be processed but not stored, so that
-	// validation, merging, mutation can be tested without
-	// committing.
-	DryRun featuregate.Feature = "DryRun"
-
-	// owner: @wojtek-t
 	// alpha: v1.20
 	// beta: v1.21
 	// GA: v1.24
@@ -108,14 +111,29 @@ const (
 	EfficientWatchResumption featuregate.Feature = "EfficientWatchResumption"
 
 	// owner: @aramase
-	// kep: http://kep.k8s.io/3299
+	// kep: https://kep.k8s.io/3299
+	// deprecated: v1.28
+	//
+	// Enables KMS v1 API for encryption at rest.
+	KMSv1 featuregate.Feature = "KMSv1"
+
+	// owner: @aramase
+	// kep: https://kep.k8s.io/3299
 	// alpha: v1.25
+	// beta: v1.27
 	//
 	// Enables KMS v2 API for encryption at rest.
 	KMSv2 featuregate.Feature = "KMSv2"
 
+	// owner: @enj
+	// kep: https://kep.k8s.io/3299
+	// beta: v1.28
+	//
+	// Enables the use of derived encryption keys with KMS v2.
+	KMSv2KDF featuregate.Feature = "KMSv2KDF"
+
 	// owner: @jiahuif
-	// kep: http://kep.k8s.io/2887
+	// kep: https://kep.k8s.io/2887
 	// alpha: v1.23
 	// beta: v1.24
 	//
@@ -124,9 +142,10 @@ const (
 	OpenAPIEnums featuregate.Feature = "OpenAPIEnums"
 
 	// owner: @jefftree
-	// kep: http://kep.k8s.io/2896
+	// kep: https://kep.k8s.io/2896
 	// alpha: v1.23
 	// beta: v1.24
+	// stable: v1.27
 	//
 	// Enables kubernetes to publish OpenAPI v3
 	OpenAPIV3 featuregate.Feature = "OpenAPIV3"
@@ -156,7 +175,7 @@ const (
 	ServerSideApply featuregate.Feature = "ServerSideApply"
 
 	// owner: @kevindelgado
-	// kep: http://kep.k8s.io/2885
+	// kep: https://kep.k8s.io/2885
 	// alpha: v1.23
 	// beta: v1.24
 	//
@@ -184,6 +203,26 @@ const (
 	//
 	// Enables support for watch bookmark events.
 	WatchBookmark featuregate.Feature = "WatchBookmark"
+
+	// owner: @vinaykul
+	// kep: http://kep.k8s.io/1287
+	// alpha: v1.27
+	//
+	// Enables In-Place Pod Vertical Scaling
+	InPlacePodVerticalScaling featuregate.Feature = "InPlacePodVerticalScaling"
+
+	// owner: @p0lyn0mial
+	// alpha: v1.27
+	//
+	// Allow the API server to stream individual items instead of chunking
+	WatchList featuregate.Feature = "WatchList"
+
+	// owner: @serathius
+	// kep: http://kep.k8s.io/2340
+	// alpha: v1.28
+	//
+	// Allow the API server to serve consistent lists from cache
+	ConsistentListFromCache featuregate.Feature = "ConsistentListFromCache"
 )
 
 func init() {
@@ -194,41 +233,54 @@ func init() {
 // To add a new feature, define a key for it above and add it here. The features will be
 // available throughout Kubernetes binaries.
 var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
+
+	AggregatedDiscoveryEndpoint: {Default: true, PreRelease: featuregate.Beta},
+
+	AdmissionWebhookMatchConditions: {Default: true, PreRelease: featuregate.Beta},
+
 	APIListChunking: {Default: true, PreRelease: featuregate.Beta},
 
 	APIPriorityAndFairness: {Default: true, PreRelease: featuregate.Beta},
 
 	APIResponseCompression: {Default: true, PreRelease: featuregate.Beta},
 
-	APIServerIdentity: {Default: false, PreRelease: featuregate.Alpha},
+	APIServerIdentity: {Default: true, PreRelease: featuregate.Beta},
 
-	APIServerTracing: {Default: false, PreRelease: featuregate.Alpha},
+	APIServerTracing: {Default: true, PreRelease: featuregate.Beta},
 
-	AdvancedAuditing: {Default: true, PreRelease: featuregate.GA},
+	ValidatingAdmissionPolicy: {Default: false, PreRelease: featuregate.Beta},
 
 	CustomResourceValidationExpressions: {Default: true, PreRelease: featuregate.Beta},
 
-	DryRun: {Default: true, PreRelease: featuregate.GA},
-
 	EfficientWatchResumption: {Default: true, PreRelease: featuregate.GA, LockToDefault: true},
 
-	KMSv2: {Default: false, PreRelease: featuregate.Alpha},
+	KMSv1: {Default: true, PreRelease: featuregate.Deprecated},
+
+	KMSv2: {Default: true, PreRelease: featuregate.Beta},
+
+	KMSv2KDF: {Default: false, PreRelease: featuregate.Beta}, // default and lock to true in 1.29, remove in 1.31
 
 	OpenAPIEnums: {Default: true, PreRelease: featuregate.Beta},
 
-	OpenAPIV3: {Default: true, PreRelease: featuregate.Beta},
+	OpenAPIV3: {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.29
 
 	RemainingItemCount: {Default: true, PreRelease: featuregate.Beta},
 
 	RemoveSelfLink: {Default: true, PreRelease: featuregate.GA, LockToDefault: true},
 
-	ServerSideApply: {Default: true, PreRelease: featuregate.GA},
+	ServerSideApply: {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.29
 
-	ServerSideFieldValidation: {Default: true, PreRelease: featuregate.Beta},
+	ServerSideFieldValidation: {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.29
 
 	StorageVersionAPI: {Default: false, PreRelease: featuregate.Alpha},
 
 	StorageVersionHash: {Default: true, PreRelease: featuregate.Beta},
 
 	WatchBookmark: {Default: true, PreRelease: featuregate.GA, LockToDefault: true},
+
+	InPlacePodVerticalScaling: {Default: false, PreRelease: featuregate.Alpha},
+
+	WatchList: {Default: false, PreRelease: featuregate.Alpha},
+
+	ConsistentListFromCache: {Default: false, PreRelease: featuregate.Alpha},
 }
