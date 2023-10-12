@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1695798827334,
+  "lastUpdate": 1697095903812,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -12927,6 +12927,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5402892321,
             "unit": "ns/op\t         3.256 DeleteSeconds\t         2.093 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "55523204+rohitagg2020@users.noreply.github.com",
+            "name": "rohitagg2020",
+            "username": "rohitagg2020"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c3f692bfc14b03dbb1d7164e2cb808dff9dcc398",
+          "message": "Merge pull request #1348 from carvel-dev/ra-add-hint-on-cert-error\n\nAdding a hint when the APP CR installation fails due to ca cert error",
+          "timestamp": "2023-10-12T12:51:37+05:30",
+          "tree_id": "88faf39ba1d75ac9654c2ac94123314cacb7f596",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/c3f692bfc14b03dbb1d7164e2cb808dff9dcc398"
+        },
+        "date": 1697095902691,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35381956631,
+            "unit": "ns/op\t        17.84 DeleteSeconds\t        17.50 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8436073999,
+            "unit": "ns/op\t         4.267 DeleteSeconds\t         4.137 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5385182784,
+            "unit": "ns/op\t         3.242 DeleteSeconds\t         2.110 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
