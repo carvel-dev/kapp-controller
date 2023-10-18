@@ -190,6 +190,10 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 		return err
 	}
 
+	if o.URL != "" && o.URL == existingRepository.Spec.Fetch.ImgpkgBundle.Image {
+		return NewRepoTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, RepoTailerOpts{PrintCurrentState: true}).TailRepoStatus()
+	}
+
 	pkgRepository, err := o.updateExistingPackageRepository(existingRepository)
 	if err != nil {
 		return err
@@ -271,7 +275,7 @@ func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *kcpkg.Package
 
 func (o *AddOrUpdateOptions) waitForPackageRepositoryInstallation(client kcclient.Interface) error {
 	o.statusUI.PrintMessagef("Waiting for package repository reconciliation for '%s'", o.Name)
-	repoWatcher := NewRepoTailer(o.NamespaceFlags.Name, o.Name, o.ui, client)
+	repoWatcher := NewRepoTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, RepoTailerOpts{})
 
 	err := repoWatcher.TailRepoStatus()
 	if err != nil {
