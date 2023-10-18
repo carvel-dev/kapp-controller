@@ -30,20 +30,37 @@ type RepoTailer struct {
 
 	stopperChan chan struct{}
 	watchError  error
+	opts        RepoTailerOpts
 
 	lastSeenDeployStdout string
 }
 
-func NewRepoTailer(namespace string, name string, ui ui.UI, client kcclient.Interface) *RepoTailer {
-	return &RepoTailer{Namespace: namespace, Name: name, ui: ui, statusUI: cmdcore.NewStatusLoggingUI(ui), client: client}
+type RepoTailerOpts struct {
+	PrintCurrentState bool
+}
+
+func NewRepoTailer(namespace string, name string, ui ui.UI, client kcclient.Interface, opts RepoTailerOpts) *RepoTailer {
+	return &RepoTailer{Namespace: namespace, Name: name, ui: ui, statusUI: cmdcore.NewStatusLoggingUI(ui), client: client, opts: opts}
 }
 
 func (o *RepoTailer) TailRepoStatus() error {
 	o.stopperChan = make(chan struct{})
-	_, err := o.client.PackagingV1alpha1().PackageRepositories(o.Namespace).Get(context.Background(), o.Name, metav1.GetOptions{})
+	pkgRepo, err := o.client.PackagingV1alpha1().PackageRepositories(o.Namespace).Get(context.Background(), o.Name, metav1.GetOptions{})
 	if err != nil {
 		if !(errors.IsNotFound(err)) {
 			return err
+		}
+	}
+
+	if o.opts.PrintCurrentState {
+		appStatus := o.appStatusFromPkgrStatus(pkgRepo.Status)
+		err = o.printTillCurrent(appStatus)
+		if err != nil {
+			return err
+		}
+
+		if cmdapp.HasReconciled(appStatus) {
+			return nil
 		}
 	}
 

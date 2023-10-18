@@ -6,6 +6,7 @@ package e2e
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/require"
@@ -62,6 +63,43 @@ func TestPackageRepository(t *testing.T) {
 		kubectl.Run([]string{"get", "pkgm/pkg.test.carvel.dev"})
 		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"})
 		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"})
+	})
+
+	logger.Section("adding of existing repository", func() {
+		start := time.Now()
+		out := kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL})
+		elapsed := time.Since(start).Seconds()
+		require.Equal(t, elapsed < 5, true, "Adding of existing package repository takes more than 5 seconds")
+		require.Contains(t, out, "Fetch succeeded")
+		require.Contains(t, out, "Template succeeded")
+		require.Contains(t, out, "Deploy succeeded")
+		require.Contains(t, out, "Succeeded")
+	})
+
+	logger.Section("adding of existing repository with new url", func() {
+
+		_, err := kappCtrl.RunWithOpts([]string{"package", "repository", "add", "-r", pkgrName, "--url", "https://carvel.dev"}, RunOpts{
+			AllowError: true,
+		})
+		require.Error(t, err)
+
+		kubectl.Run([]string{"get", kind, pkgrName})
+
+		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL})
+
+		out := kappCtrl.Run([]string{"package", "repository", "get", "-r", pkgrName, "--json"})
+
+		output := uitest.JSONUIFromBytes(t, []byte(out))
+
+		expectedOutputRows := []map[string]string{{
+			"conditions":           "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
+			"status":               "Reconcile succeeded",
+			"namespace":            env.Namespace,
+			"name":                 pkgrName,
+			"source":               fmt.Sprintf("(imgpkg) %s", pkgrURL),
+			"useful_error_message": "",
+		}}
+		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
 
 	logger.Section("kicking a repository", func() {
@@ -128,6 +166,18 @@ func TestPackageRepository(t *testing.T) {
 			"useful_error_message": "",
 		}}
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
+	})
+
+	logger.Section("updating a repository with no change in url", func() {
+		start := time.Now()
+		out := kappCtrl.Run([]string{"package", "repository", "update", "-r", pkgrName, "--url", pkgrURL})
+		elapsed := time.Since(start).Seconds()
+		require.Equal(t, elapsed < 5, true, "Adding of existing package repository takes more than 5 seconds")
+		require.Contains(t, out, "Fetch succeeded")
+		require.Contains(t, out, "Template succeeded")
+		require.Contains(t, out, "Deploy succeeded")
+		require.Contains(t, out, "Succeeded")
+
 	})
 
 	logger.Section("creating a repository in a new namespace that doesn't exist", func() {
