@@ -132,12 +132,19 @@ func NewConfigFromFiles(paths []string) (Configs, error) {
 			}
 			configs.PkgInstalls = append(configs.PkgInstalls, pkgi)
 
+		case res.APIVersion == "imgpkg.carvel.dev/v1alpha1" && res.Kind == "ImagesLock", // ignoring images Lockfile
+			res.APIVersion == "data.packaging.carvel.dev/v1alpha1" && res.Kind == "PackageExtra",
+			// ignoring docs with comments
+			res.APIVersion == "" && res.Kind == "":
+			break
+
 		default:
 			return fmt.Errorf("Unknown apiVersion '%s' or kind '%s' for resource",
 				res.APIVersion, res.Kind)
 		}
 		return nil
 	})
+
 	if err != nil {
 		return configs, err
 	}
@@ -189,6 +196,7 @@ func parseResources(paths []string, resourceFunc func([]byte) error) error {
 				return fmt.Errorf("Parsing resource config '%s': %s", path, err)
 			}
 		}
+
 	}
 	return nil
 }
