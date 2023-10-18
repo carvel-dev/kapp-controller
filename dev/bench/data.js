@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1697616294261,
+  "lastUpdate": 1697661538181,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13137,6 +13137,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5505664214,
             "unit": "ns/op\t         3.331 DeleteSeconds\t         2.133 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rcmadhankumar@gmail.com",
+            "name": "Madhankumar Chellamuthu",
+            "username": "rcmadhankumar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5b1294bdf60107c9ff20b79e519abaefd71c4682",
+          "message": "Make kctrl to exit smoothly on adding the package registry with no changes (#1316)\n\n* Make kctrl to exit smoothly on adding the package registry with no changes\r\n\r\nSigned-off-by: rcmadhankumar <rcmadhankumar@gmail.com>\r\n\r\n* Additonal checks added to the test cases\r\n\r\nSigned-off-by: rcmadhankumar <rcmadhankumar@gmail.com>\r\n\r\n* review comments fixed\r\n\r\nSigned-off-by: rcmadhankumar <rcmadhankumar@gmail.com>\r\n\r\n---------\r\n\r\nSigned-off-by: rcmadhankumar <rcmadhankumar@gmail.com>",
+          "timestamp": "2023-10-19T02:02:55+05:30",
+          "tree_id": "2a99ed67e4f5e53f339803e1c5cd1f7a751e5f5f",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/5b1294bdf60107c9ff20b79e519abaefd71c4682"
+        },
+        "date": 1697661536943,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35384673962,
+            "unit": "ns/op\t        17.91 DeleteSeconds\t        17.44 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8459912499,
+            "unit": "ns/op\t         4.288 DeleteSeconds\t         4.138 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5401167229,
+            "unit": "ns/op\t         3.236 DeleteSeconds\t         2.129 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
