@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1697549936603,
+  "lastUpdate": 1697616294261,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13095,6 +13095,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5522437514,
             "unit": "ns/op\t         3.328 DeleteSeconds\t         2.141 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "joaod@vmware.com",
+            "name": "João Pereira",
+            "username": "joaopapereira"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1a63f5f5cd36c4211c9406888fa804c096a4f4b2",
+          "message": "Change default API port to 8443 (#1337)\n\nSigned-off-by: João Pereira <joaod@vmware.com>",
+          "timestamp": "2023-10-18T13:27:18+05:30",
+          "tree_id": "b675b947fc108e1b41debb13dcce02e02fc885bb",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/1a63f5f5cd36c4211c9406888fa804c096a4f4b2"
+        },
+        "date": 1697616292186,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37238084468,
+            "unit": "ns/op\t        19.45 DeleteSeconds\t        17.75 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8618095801,
+            "unit": "ns/op\t         4.397 DeleteSeconds\t         4.182 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5505664214,
+            "unit": "ns/op\t         3.331 DeleteSeconds\t         2.133 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
