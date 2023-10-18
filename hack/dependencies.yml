@@ -48,23 +48,23 @@
   version: v0.35.0
 - checksums:
     linux:
-      amd64: 1b2313cd198d45eab00cc37c38f6b1ca0a948ba279c29e322bdf426d406129b5
-      arm64: 79ef06935fb47e432c0c91bdefd140e5b543ec46376007ca14a52e5ed3023088
+      amd64: 98c363564d00afd0cc3088e8f830f2a0eeb5f28755b3d8c48df89866374a1ed0
+      arm64: 8c4a0777218b266a7b977394aaf0e9cef30ed2df6e742d683e523d75508d6efe
   dev: false
   name: helm
   repo: helm/helm
   tarballSubpath: '{{.OS}}-{{.Arch}}/helm'
   urlTemplate: https://get.helm.sh/helm-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
-  version: v3.12.3
+  version: v3.13.1
 - checksums:
     linux:
-      amd64: 48fb4a6562014a9213be15b4991931266d040b9b64dba8dbcd07b902e90025c0
-      arm64: 5ec31eaed635e154b59ff4b7c9b311b6e616bd4818a68899c2f9db00c81e3a63
+      amd64: d6bf07fb61972127c9e0d622523124c2d81caf9f7971fb123228961021811697
+      arm64: 15b8e90ca80dc23125cd2925731035fdef20c749ba259df477d1dd103a06d621
   dev: false
   name: sops
   repo: mozilla/sops
   urlTemplate: https://github.com/mozilla/sops/releases/download/{{.Version}}/sops-{{.Version}}.{{.OS}}.{{.Arch}}
-  version: v3.8.0
+  version: v3.8.1
 - checksums:
     linux:
       amd64: cf16cbb108fc56e2064b00ba2b65d9fb1b8d7002ca5e38260ee1cc34f6aaa8f9
