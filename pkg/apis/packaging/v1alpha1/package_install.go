@@ -17,6 +17,7 @@ import (
 // +kubebuilder:printcolumn:name=Package version,JSONPath=.status.version,description=PackageMetadata version,type=string
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
+// +kubebuilder:validation:XValidation:rule="has(self.spec.serviceAccountName) || has(self.spec.cluster)", message="Expected service account or cluster."
 // A Package Install is an actual installation of a package and its underlying resources on a Kubernetes cluster.
 // It is represented in kapp-controller by a PackageInstall CR.
 // A PackageInstall CR must reference a Package CR.
