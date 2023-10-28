@@ -57,12 +57,12 @@ func appName(fileName string) string {
 
 func deployAndDeletePkgr(b *testing.B, pkgrFileName string, totalPackages int) {
 	t1 := time.Now()
-	cmd := exec.Command("kapp", "deploy", "-f", pkgrFileName, "-a", appName(pkgrFileName), "-y", "--wait-check-interval=1s")
+	cmd := exec.Command("kapp", "deploy", "-f", pkgrFileName, "-a", appName(pkgrFileName), "-y")
 	output, err := cmd.Output()
 	require.NoError(b, err, string(output))
 	t2 := time.Now()
 
-	cmd = exec.Command("kapp", "delete", "-a", appName(pkgrFileName), "-y", "--wait-check-interval=1s")
+	cmd = exec.Command("kapp", "delete", "-a", appName(pkgrFileName), "-y")
 	output, err = cmd.Output()
 	require.NoError(b, err, string(output))
 	t3 := time.Now()
