@@ -48,6 +48,11 @@ func (r *PackageMetadataCRDREST) ShortNames() []string {
 	return []string{"pkgm"}
 }
 
+// GetSingularName returns singular name of resources.
+func (r *PackageMetadataCRDREST) GetSingularName() string {
+	return string("packagemetadata")
+}
+
 func (r *PackageMetadataCRDREST) New() runtime.Object {
 	return &datapackaging.PackageMetadata{}
 }

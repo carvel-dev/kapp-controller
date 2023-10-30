@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/k14s/semver/v4"
 	kcinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/install"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
 	datapkginginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/install"
@@ -29,6 +30,7 @@ import (
 	"k8s.io/apiserver/pkg/server/dynamiccertificates"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/util/feature"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
@@ -192,11 +194,23 @@ func newServerConfig(aggClient aggregatorclient.Interface, opts NewAPIServerOpts
 		return nil, fmt.Errorf("error updating api service with generated certs: %v", err)
 	}
 
-	if !opts.EnableAPIPriorityAndFairness {
-		// this feature gate was not enabled in k8s <=1.19 as the
-		// APIs it relies on were in alpha.
-		// the apiserver library hardcodes the beta version of the resource
-		// so the best we can do for older k8s clusters is to allow it to be disabled.
+	serverVersion, err := getServerVersion(aggClient.Discovery())
+	if err != nil {
+		return nil, err
+	}
+	// this feature gate is not enabled in k8s <1.26 as the
+	// APIs it relies on were in v1beta2/v1beta1/alpha.
+	// the apiserver library hardcodes the v1beta3 version of the resource
+	// so the best we can do for older k8s clusters is to allow it to be disabled.
+	minSupportedVersionForAPF, err := semver.New("1.26.0")
+	if err != nil {
+		return nil, err
+	}
+	isServerVerLTminSupportedVer := serverVersion.LT(*minSupportedVersionForAPF)
+	if !opts.EnableAPIPriorityAndFairness || isServerVerLTminSupportedVer {
+		if isServerVerLTminSupportedVer {
+			opts.Logger.Info("The current version of kapp-controller does not support api-priority-and-fairness for versions of kubernets prior to 1.26, disabling this option")
+		}
 		err := feature.DefaultMutableFeatureGate.Set("APIPriorityAndFairness=false")
 		if err != nil {
 			return nil, fmt.Errorf("error updating disabling feature gate for APIPriorityAndFairness: %v", err)
@@ -208,11 +222,25 @@ func newServerConfig(aggClient aggregatorclient.Interface, opts NewAPIServerOpts
 		return nil, err
 	}
 
-	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
+	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIConfig(
 		openapi.GetOpenAPIDefinitions,
 		genericopenapi.NewDefinitionNamer(Scheme))
-	serverConfig.OpenAPIConfig.Info.Title = "Kapp-controller"
+	serverConfig.OpenAPIV3Config.Info.Title = "Kapp-controller"
 	return serverConfig, nil
+}
+
+func getServerVersion(discoveryClient discovery.DiscoveryInterface) (semver.Version, error) {
+	version, err := discoveryClient.ServerVersion()
+	if err != nil {
+		return semver.Version{}, err
+	}
+	retv, err := semver.ParseTolerant(version.String())
+	if err != nil {
+		return retv, err
+	}
+	retv.Pre = semver.PRVersion{}
+	retv.Build = semver.BuildMeta{}
+	return retv, nil
 }
 
 func updateAPIService(logger logr.Logger, client aggregatorclient.Interface, caProvider dynamiccertificates.CAContentProvider) error {
