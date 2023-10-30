@@ -8,7 +8,6 @@ import (
 	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/internalpackaging/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -20,9 +19,9 @@ type FakeInternalPackages struct {
 	ns   string
 }
 
-var internalpackagesResource = schema.GroupVersionResource{Group: "internal.packaging.carvel.dev", Version: "v1alpha1", Resource: "internalpackages"}
+var internalpackagesResource = v1alpha1.SchemeGroupVersion.WithResource("internalpackages")
 
-var internalpackagesKind = schema.GroupVersionKind{Group: "internal.packaging.carvel.dev", Version: "v1alpha1", Kind: "InternalPackage"}
+var internalpackagesKind = v1alpha1.SchemeGroupVersion.WithKind("InternalPackage")
 
 // Get takes name of the internalPackage, and returns the corresponding internalPackage object, and an error if there is any.
 func (c *FakeInternalPackages) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.InternalPackage, err error) {

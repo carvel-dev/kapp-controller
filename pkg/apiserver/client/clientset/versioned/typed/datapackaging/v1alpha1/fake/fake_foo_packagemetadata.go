@@ -8,7 +8,6 @@ import (
 	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -20,9 +19,9 @@ type FakePackageMetadatas struct {
 	ns   string
 }
 
-var packagemetadatasResource = schema.GroupVersionResource{Group: "data.packaging.carvel.dev", Version: "v1alpha1", Resource: "packagemetadatas"}
+var packagemetadatasResource = v1alpha1.SchemeGroupVersion.WithResource("packagemetadatas")
 
-var packagemetadatasKind = schema.GroupVersionKind{Group: "data.packaging.carvel.dev", Version: "v1alpha1", Kind: "PackageMetadata"}
+var packagemetadatasKind = v1alpha1.SchemeGroupVersion.WithKind("PackageMetadata")
 
 // Get takes name of the foo_PackageMetadata, and returns the corresponding foo_PackageMetadata object, and an error if there is any.
 func (c *FakePackageMetadatas) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.PackageMetadata, err error) {

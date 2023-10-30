@@ -1,3 +1,4 @@
 # out of our control
 vendor/
+pkg/apiserver/openapi/zz_generated.openapi.go
 cli/examples/package-authoring/redis-enterprise-operator/upstream/crds/rec_crd.yaml

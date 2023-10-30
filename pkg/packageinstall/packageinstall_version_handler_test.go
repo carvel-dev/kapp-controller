@@ -4,6 +4,7 @@
 package packageinstall_test
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -64,7 +65,7 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 		},
 	}
 
-	ipvh.Generic(event, q)
+	ipvh.Generic(context.TODO(), event, q)
 
 	if q.Len() != 1 {
 		t.Fatalf("Expected queue to have length of 1, got %d", q.Len())
