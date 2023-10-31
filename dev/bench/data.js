@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1697661538181,
+  "lastUpdate": 1698748712262,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13179,6 +13179,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5401167229,
             "unit": "ns/op\t         3.236 DeleteSeconds\t         2.129 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "606e658868de2b2c1b40ec01a91938528be618a2",
+          "message": "Merge pull request #1388 from mamachanko/topic/mamachanko/develop/fix-dangerous-hint\n\nFix usage of `--dangerous-allow-use-of-shared-namespace` in hint",
+          "timestamp": "2023-10-31T15:58:13+05:30",
+          "tree_id": "3870c5cc86b7c4981bf6abde596ae918617da1e2",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/606e658868de2b2c1b40ec01a91938528be618a2"
+        },
+        "date": 1698748710699,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35548051979,
+            "unit": "ns/op\t        18.05 DeleteSeconds\t        17.45 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8507638717,
+            "unit": "ns/op\t         4.259 DeleteSeconds\t         4.216 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5423803195,
+            "unit": "ns/op\t         3.288 DeleteSeconds\t         2.106 DeploySeconds",
             "extra": "1 times\n2 procs"
           }
         ]
