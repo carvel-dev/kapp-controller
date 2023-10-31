@@ -30,7 +30,7 @@ func (s *SecureNamespaceFlags) CheckForDisallowedSharedNamespaces(namespace stri
 		if namespace == ns {
 			return fmt.Errorf("Creating sensitive resources in a shared namespace (%s)"+
 				"(hint: Specify a namespace using the '-n' flag or use kubeconfig to change default namespace 'kubectl config set-context --current --namespace=private-namespace'."+
-				"Or use '--dangerous-allow-use-of-shared-namespace=%s' to allow use of shared namespace)", namespace, namespace)
+				"Or use '--dangerous-allow-use-of-shared-namespace' to allow use of shared namespace)", namespace)
 		}
 	}
 	return nil
