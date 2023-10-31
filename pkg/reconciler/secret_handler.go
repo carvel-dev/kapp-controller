@@ -4,13 +4,16 @@
 package reconciler
 
 import (
+	"context"
+
 	"github.com/go-logr/logr"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 )
 
 type SecretHandler struct {
@@ -25,20 +28,21 @@ func NewSecretHandler(log logr.Logger, as *reftracker.AppRefTracker, aus *reftra
 	return &SecretHandler{log, as, aus}
 }
 
-func (sch *SecretHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
+func (sch *SecretHandler) Create(_ context.Context, evt event.CreateEvent, q workqueue.RateLimitingInterface) {
 	sch.enqueueAppsForUpdate(evt.Object.GetName(), evt.Object.GetNamespace(), q)
 }
 
-func (sch *SecretHandler) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
+func (sch *SecretHandler) Update(_ context.Context, evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
 	sch.enqueueAppsForUpdate(evt.ObjectNew.GetName(), evt.ObjectNew.GetNamespace(), q)
 }
 
-func (sch *SecretHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
+func (sch *SecretHandler) Delete(_ context.Context, evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
 	sch.enqueueAppsForUpdate(evt.Object.GetName(), evt.Object.GetNamespace(), q)
 	sch.appRefTracker.RemoveRef(reftracker.NewSecretKey(evt.Object.GetName(), evt.Object.GetNamespace()))
 }
 
-func (sch *SecretHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {}
+func (sch *SecretHandler) Generic(_ context.Context, evt event.GenericEvent, q workqueue.RateLimitingInterface) {
+}
 
 func (sch *SecretHandler) enqueueAppsForUpdate(secretName, secretNamespace string, q workqueue.RateLimitingInterface) error {
 	apps, err := sch.appRefTracker.AppsForRef(reftracker.NewSecretKey(secretName, secretNamespace))

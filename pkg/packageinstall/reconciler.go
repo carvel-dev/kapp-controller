@@ -8,19 +8,21 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
+
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // Reconciler is responsible for reconciling PackageInstalls.
@@ -52,21 +54,21 @@ func NewReconciler(kcClient kcclient.Interface, pkgClient pkgclient.Interface,
 var _ reconcile.Reconciler = &Reconciler{}
 
 // AttachWatches configures watches needed for reconciler to reconcile PackageInstalls.
-func (r *Reconciler) AttachWatches(controller controller.Controller) error {
-	err := controller.Watch(&source.Kind{Type: &pkgingv1alpha1.PackageInstall{}}, &handler.EnqueueRequestForObject{})
+func (r *Reconciler) AttachWatches(controller controller.Controller, mgr manager.Manager) error {
+	err := controller.Watch(source.Kind(mgr.GetCache(), &pkgingv1alpha1.PackageInstall{}), &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return fmt.Errorf("Watching PackageInstalls: %s", err)
 	}
 
-	err = controller.Watch(&source.Kind{Type: &datapkgingv1alpha1.Package{}}, r.pkgToPkgInstallHandler)
+	err = controller.Watch(source.Kind(mgr.GetCache(), &datapkgingv1alpha1.Package{}), r.pkgToPkgInstallHandler)
 	if err != nil {
 		return fmt.Errorf("Watching Packages: %s", err)
 	}
 
-	err = controller.Watch(&source.Kind{Type: &kappctrlv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
-		OwnerType:    &pkgingv1alpha1.PackageInstall{},
-		IsController: true,
-	})
+	err = controller.Watch(source.Kind(mgr.GetCache(), &kappctrlv1alpha1.App{}), handler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(),
+		&pkgingv1alpha1.PackageInstall{},
+		handler.OnlyControllerOwner(),
+	))
 	if err != nil {
 		return fmt.Errorf("Watching Apps: %s", err)
 	}

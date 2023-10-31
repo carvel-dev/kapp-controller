@@ -4,10 +4,11 @@
 package template
 
 import (
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
-	"k8s.io/client-go/kubernetes"
 )
 
 // Factory allows to build various templaters e.g. ytt, cue.
@@ -49,4 +50,9 @@ func (f Factory) NewSops(
 // NewCue returns a Cue templater
 func (f Factory) NewCue(opts v1alpha1.AppTemplateCue, appContext AppContext, additionalValues AdditionalDownwardAPIValues) Template {
 	return newCue(opts, appContext, f.coreClient, f.cmdRunner, additionalValues)
+}
+
+// NewOLMRegistry returns a OLMRegistry templater
+func (f Factory) NewOLMRegistry(opts v1alpha1.AppTemplateOLMRegistry, appContext AppContext) Template {
+	return newOLMRegistry(opts, appContext, f.coreClient, f.cmdRunner)
 }

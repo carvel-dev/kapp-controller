@@ -1,0 +1,14 @@
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: olm-app
+  namespace: default
+spec:
+  serviceAccountName: default
+  fetch:
+  - image:
+      url: quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed
+  template:
+  - olmRegistry: {}
+  deploy:
+  - kapp: {}

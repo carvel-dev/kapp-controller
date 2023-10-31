@@ -7,9 +7,6 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	verv1alpha1 "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,6 +16,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 )
 
 // TODO For this PoC, we are simply going to add all packages to
@@ -37,7 +38,7 @@ func NewPackageInstallVersionHandler(c kcclient.Interface, globalNS string, log 
 	return &PackageInstallVersionHandler{c, globalNS, log}
 }
 
-func (ipvh *PackageInstallVersionHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
+func (ipvh *PackageInstallVersionHandler) Create(_ context.Context, evt event.CreateEvent, q workqueue.RateLimitingInterface) {
 	ipvh.log.Info("enqueueing PackageInstallList")
 	err := ipvh.enqueueEligiblePackageInstalls(q, evt.Object)
 	if err != nil {
@@ -45,7 +46,7 @@ func (ipvh *PackageInstallVersionHandler) Create(evt event.CreateEvent, q workqu
 	}
 }
 
-func (ipvh *PackageInstallVersionHandler) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
+func (ipvh *PackageInstallVersionHandler) Update(_ context.Context, evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
 	ipvh.log.Info("enqueueing PackageInstallList")
 	err := ipvh.enqueueEligiblePackageInstalls(q, evt.ObjectNew)
 	if err != nil {
@@ -53,7 +54,7 @@ func (ipvh *PackageInstallVersionHandler) Update(evt event.UpdateEvent, q workqu
 	}
 }
 
-func (ipvh *PackageInstallVersionHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
+func (ipvh *PackageInstallVersionHandler) Delete(_ context.Context, evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
 	ipvh.log.Info("enqueueing PackageInstallList")
 	err := ipvh.enqueueEligiblePackageInstalls(q, evt.Object)
 	if err != nil {
@@ -61,7 +62,7 @@ func (ipvh *PackageInstallVersionHandler) Delete(evt event.DeleteEvent, q workqu
 	}
 }
 
-func (ipvh *PackageInstallVersionHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {
+func (ipvh *PackageInstallVersionHandler) Generic(_ context.Context, evt event.GenericEvent, q workqueue.RateLimitingInterface) {
 	ipvh.log.Info("enqueueing installedPkgList")
 	err := ipvh.enqueueEligiblePackageInstalls(q, evt.Object)
 	if err != nil {

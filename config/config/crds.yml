@@ -557,6 +557,17 @@ spec:
                             kustomize:
                               description: TODO implement kustomize
                               type: object
+                            olmRegistry:
+                              properties:
+                                bundleRoot:
+                                  description: BundleRoot is the path to bundle root within source directory. Default is the source directory root. (optional)
+                                  type: string
+                                targetNamespaces:
+                                  description: TargetNamespaces is the list of namespaces that the bundle will be configured to target. If the bundle supports AllNamespaces mode, default is all namespaces. Otherwise, if the bundle supports OwnNamespaces mode, default is the install namespace. If the bundle supports neither AllNamespaces nor OwnNamespace, TargetNamespaces must be specified.
+                                  items:
+                                    type: string
+                                  type: array
+                              type: object
                             sops:
                               description: Use sops to decrypt *.sops.yml files (optional; v0.11.0+)
                               properties:
@@ -1172,6 +1183,17 @@ spec:
                       type: object
                     kustomize:
                       description: TODO implement kustomize
+                      type: object
+                    olmRegistry:
+                      properties:
+                        bundleRoot:
+                          description: BundleRoot is the path to bundle root within source directory. Default is the source directory root. (optional)
+                          type: string
+                        targetNamespaces:
+                          description: TargetNamespaces is the list of namespaces that the bundle will be configured to target. If the bundle supports AllNamespaces mode, default is all namespaces. Otherwise, if the bundle supports OwnNamespaces mode, default is the install namespace. If the bundle supports neither AllNamespaces nor OwnNamespace, TargetNamespaces must be specified.
+                          items:
+                            type: string
+                          type: array
                       type: object
                     sops:
                       description: Use sops to decrypt *.sops.yml files (optional; v0.11.0+)
