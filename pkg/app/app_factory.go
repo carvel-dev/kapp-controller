@@ -6,6 +6,7 @@ package app
 import (
 	"path/filepath"
 
+	vendirconf "carvel.dev/vendir/pkg/vendir/config"
 	"github.com/go-logr/logr"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
@@ -17,7 +18,6 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
-	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	"k8s.io/client-go/kubernetes"
 )
 
