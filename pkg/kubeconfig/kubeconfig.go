@@ -7,8 +7,8 @@ package kubeconfig
 import (
 	"fmt"
 
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/go-logr/logr"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"k8s.io/client-go/kubernetes"
 )
 

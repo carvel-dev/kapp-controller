@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	datav1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/typed/datapackaging/v1alpha1"
+	datav1alpha1 "carvel.dev/kapp-controller/pkg/apiserver/client/clientset/versioned/typed/datapackaging/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

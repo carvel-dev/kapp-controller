@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"carvel.dev/kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 )

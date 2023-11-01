@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"carvel.dev/kapp-controller/test/e2e"
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 )
 
 func Test_NamespaceDelete_AppWithResourcesInSameNamespace(t *testing.T) {

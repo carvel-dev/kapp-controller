@@ -6,11 +6,11 @@ package datapackaging
 import (
 	"context"
 
-	internalpkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/internalpackaging/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
-	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/watchers"
-	internalclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	internalpkgingv1alpha1 "carvel.dev/kapp-controller/pkg/apis/internalpackaging/v1alpha1"
+	"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging"
+	datapkgingv1alpha1 "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	"carvel.dev/kapp-controller/pkg/apiserver/watchers"
+	internalclient "carvel.dev/kapp-controller/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 )

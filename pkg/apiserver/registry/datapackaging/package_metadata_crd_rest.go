@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/validation"
-	installclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging"
+	"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/validation"
+	installclient "carvel.dev/kapp-controller/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"

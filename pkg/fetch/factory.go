@@ -4,8 +4,8 @@
 package fetch
 
 import (
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"carvel.dev/kapp-controller/pkg/exec"
 	"k8s.io/client-go/kubernetes"
 )
 

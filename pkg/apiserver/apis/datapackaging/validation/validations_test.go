@@ -6,8 +6,8 @@ package validation_test
 import (
 	"testing"
 
+	"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/validation"
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 

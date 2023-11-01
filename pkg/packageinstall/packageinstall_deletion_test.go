@@ -6,13 +6,13 @@ package packageinstall
 import (
 	"testing"
 
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	pkgingv1alpha1 "carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
+	fakeapiserver "carvel.dev/kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
+	fakekappctrl "carvel.dev/kapp-controller/pkg/client/clientset/versioned/fake"
 	versions "carvel.dev/vendir/pkg/vendir/versions/v1alpha1"
 	"github.com/k14s/semver/v4"
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	fakeapiserver "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
-	fakekappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"

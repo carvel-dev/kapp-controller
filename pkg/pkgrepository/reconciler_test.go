@@ -6,12 +6,12 @@ package pkgrepository_test
 import (
 	"testing"
 
+	v1alpha12 "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
+	fakekappctrl "carvel.dev/kapp-controller/pkg/client/clientset/versioned/fake"
+	"carvel.dev/kapp-controller/pkg/pkgrepository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	fakekappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -4,8 +4,8 @@
 package reconciler
 
 import (
+	"carvel.dev/kapp-controller/pkg/reftracker"
 	"github.com/go-logr/logr"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/event"

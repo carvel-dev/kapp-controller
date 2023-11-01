@@ -3,126 +3,136 @@
 
 syntax = "proto2";
 
-package github.com.vmware_tanzu.carvel_kapp_controller.pkg.apis.kappctrl.v1alpha1;
+package carvel.dev.kapp_controller.pkg.apis.kappctrl.v1alpha1;
 
 import "carvel.dev/vendir/pkg/vendir/versions/v1alpha1/generated.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 
 // Package-wide variables from generator "generated".
-option go_package = "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1";
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.stable_marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.stringer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.goproto_unrecognized_all) = false;
+option (gogoproto.goproto_enum_prefix_all) = false;
+option (gogoproto.goproto_getters_all) = false;
+option go_package = "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1";
 
 // +k8s:openapi-gen=true
 message AppCluster {
   // Specifies namespace in destination cluster (optional)
   // +optional
-  optional string namespace = 1;
+  optional string namespace = 1 [(gogoproto.customname) = "Namespace", (gogoproto.nullable) = false];
 
   // Specifies secret containing kubeconfig (required)
   // +optional
-  optional AppClusterKubeconfigSecretRef kubeconfigSecretRef = 2;
+  optional AppClusterKubeconfigSecretRef kubeconfigSecretRef = 2 [(gogoproto.customname) = "KubeconfigSecretRef"];
 }
 
 // +k8s:openapi-gen=true
 message AppClusterKubeconfigSecretRef {
   // Specifies secret name within app's namespace (required)
   // +optional
-  optional string name = 1;
+  optional string name = 1 [(gogoproto.customname) = "Name", (gogoproto.nullable) = false];
 
   // Specifies key that contains kubeconfig (optional)
   // +optional
-  optional string key = 2;
+  optional string key = 2 [(gogoproto.customname) = "Key", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
 message AppDeploy {
   // Use kapp to deploy resources
-  optional AppDeployKapp kapp = 1;
+  optional AppDeployKapp kapp = 1 [(gogoproto.customname) = "Kapp"];
 }
 
 // +k8s:openapi-gen=true
 message AppDeployKapp {
   // Override namespace for all resources (optional)
-  optional string intoNs = 1;
+  optional string intoNs = 1 [(gogoproto.customname) = "IntoNs", (gogoproto.nullable) = false];
 
   // Provide custom namespace override mapping (optional)
-  repeated string mapNs = 2;
+  repeated string mapNs = 2 [(gogoproto.customname) = "MapNs"];
 
   // Pass through options to kapp deploy (optional)
-  repeated string rawOptions = 3;
+  repeated string rawOptions = 3 [(gogoproto.customname) = "RawOptions"];
 
   // Configuration for inspect command (optional)
   // as of kapp-controller v0.31.0, inspect is disabled by default
   // add rawOptions or use an empty inspect config like `inspect: {}` to enable
-  optional AppDeployKappInspect inspect = 4;
+  optional AppDeployKappInspect inspect = 4 [(gogoproto.customname) = "Inspect"];
 
   // Configuration for delete command (optional)
-  optional AppDeployKappDelete delete = 5;
+  optional AppDeployKappDelete delete = 5 [(gogoproto.customname) = "Delete"];
 }
 
 // +k8s:openapi-gen=true
 message AppDeployKappDelete {
   // Pass through options to kapp delete (optional)
-  repeated string rawOptions = 1;
+  repeated string rawOptions = 1 [(gogoproto.customname) = "RawOptions"];
 }
 
 // +k8s:openapi-gen=true
 message AppDeployKappInspect {
   // Pass through options to kapp inspect (optional)
-  repeated string rawOptions = 1;
+  repeated string rawOptions = 1 [(gogoproto.customname) = "RawOptions"];
 }
 
 // +k8s:openapi-gen=true
 message AppFetch {
   // Pulls content from within this resource; or other resources in the cluster
-  optional AppFetchInline inline = 1;
+  optional AppFetchInline inline = 1 [(gogoproto.customname) = "Inline"];
 
   // Pulls content from Docker/OCI registry
-  optional AppFetchImage image = 2;
+  optional AppFetchImage image = 2 [(gogoproto.customname) = "Image"];
 
   // Uses http library to fetch file
-  optional AppFetchHTTP http = 3;
+  optional AppFetchHTTP http = 3 [(gogoproto.customname) = "HTTP"];
 
   // Uses git to clone repository
-  optional AppFetchGit git = 4;
+  optional AppFetchGit git = 4 [(gogoproto.customname) = "Git"];
 
   // Uses helm fetch to fetch specified chart
-  optional AppFetchHelmChart helmChart = 5;
+  optional AppFetchHelmChart helmChart = 5 [(gogoproto.customname) = "HelmChart"];
 
   // Pulls imgpkg bundle from Docker/OCI registry (v0.17.0+)
-  optional AppFetchImgpkgBundle imgpkgBundle = 6;
+  optional AppFetchImgpkgBundle imgpkgBundle = 6 [(gogoproto.customname) = "ImgpkgBundle"];
 
   // Relative path to place the fetched artifacts
   // +optional
-  optional string path = 7;
+  optional string path = 7 [(gogoproto.customname) = "Path", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
 message AppFetchGit {
   // http or ssh urls are supported (required)
-  optional string url = 1;
+  optional string url = 1 [(gogoproto.customname) = "URL", (gogoproto.nullable) = false];
 
   // Branch, tag, commit; origin is the name of the remote (optional)
   // +optional
-  optional string ref = 2;
+  optional string ref = 2 [(gogoproto.customname) = "Ref", (gogoproto.nullable) = false];
 
   // Specifies a strategy to resolve to an explicit ref (optional; v0.24.0+)
   // +optional
-  optional github.com.vmware_tanzu.carvel_vendir.pkg.vendir.versions.v1alpha1.VersionSelection refSelection = 6;
+  optional carvel.dev.vendir.pkg.vendir.versions.v1alpha1.VersionSelection refSelection = 6 [(gogoproto.customname) = "RefSelection"];
 
   // Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password (optional)
   // (if ssh-knownhosts is not specified, git will not perform strict host checking)
   // +optional
-  optional AppFetchLocalRef secretRef = 3;
+  optional AppFetchLocalRef secretRef = 3 [(gogoproto.customname) = "SecretRef"];
 
   // Grab only portion of repository (optional)
   // +optional
-  optional string subPath = 4;
+  optional string subPath = 4 [(gogoproto.customname) = "SubPath", (gogoproto.nullable) = false];
 
   // Skip lfs download (optional)
   // +optional
-  optional bool lfsSkipSmudge = 5;
+  optional bool lfsSkipSmudge = 5 [(gogoproto.customname) = "LFSSkipSmudge", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
@@ -130,31 +140,31 @@ message AppFetchHTTP {
   // URL can point to one of following formats: text, tgz, zip
   // http and https url are supported;
   // plain file, tgz and tar types are supported (required)
-  optional string url = 1;
+  optional string url = 1 [(gogoproto.customname) = "URL", (gogoproto.nullable) = false];
 
   // Checksum to verify after download (optional)
   // +optional
-  optional string sha256 = 2;
+  optional string sha256 = 2 [(gogoproto.customname) = "SHA256", (gogoproto.nullable) = false];
 
   // Secret to provide auth details (optional)
   // Secret may include one or more keys: username, password
   // +optional
-  optional AppFetchLocalRef secretRef = 3;
+  optional AppFetchLocalRef secretRef = 3 [(gogoproto.customname) = "SecretRef"];
 
   // Grab only portion of download (optional)
   // +optional
-  optional string subPath = 4;
+  optional string subPath = 4 [(gogoproto.customname) = "SubPath", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
 message AppFetchHelmChart {
   // Example: stable/redis
-  optional string name = 1;
+  optional string name = 1 [(gogoproto.customname) = "Name", (gogoproto.nullable) = false];
 
   // +optional
-  optional string version = 2;
+  optional string version = 2 [(gogoproto.customname) = "Version", (gogoproto.nullable) = false];
 
-  optional AppFetchHelmChartRepo repository = 3;
+  optional AppFetchHelmChartRepo repository = 3 [(gogoproto.customname) = "Repository"];
 }
 
 // +k8s:openapi-gen=true
@@ -162,10 +172,10 @@ message AppFetchHelmChartRepo {
   // Repository url;
   // scheme of oci:// will fetch experimental helm oci chart (v0.19.0+)
   // (required)
-  optional string url = 1;
+  optional string url = 1 [(gogoproto.customname) = "URL", (gogoproto.nullable) = false];
 
   // +optional
-  optional AppFetchLocalRef secretRef = 2;
+  optional AppFetchLocalRef secretRef = 2 [(gogoproto.customname) = "SecretRef"];
 }
 
 // +k8s:openapi-gen=true
@@ -173,70 +183,70 @@ message AppFetchImage {
   // Docker image url; unqualified, tagged, or
   // digest references supported (required)
   // Example: username/app1-config:v0.1.0
-  optional string url = 1;
+  optional string url = 1 [(gogoproto.customname) = "URL", (gogoproto.nullable) = false];
 
   // Specifies a strategy to choose a tag (optional; v0.24.0+)
   // if specified, do not include a tag in url key
   // +optional
-  optional github.com.vmware_tanzu.carvel_vendir.pkg.vendir.versions.v1alpha1.VersionSelection tagSelection = 4;
+  optional carvel.dev.vendir.pkg.vendir.versions.v1alpha1.VersionSelection tagSelection = 4 [(gogoproto.customname) = "TagSelection"];
 
   // Secret may include one or more keys: username, password, token.
   // By default anonymous access is used for authentication.
   // +optional
-  optional AppFetchLocalRef secretRef = 2;
+  optional AppFetchLocalRef secretRef = 2 [(gogoproto.customname) = "SecretRef"];
 
   // Grab only portion of image (optional)
   // +optional
-  optional string subPath = 3;
+  optional string subPath = 3 [(gogoproto.customname) = "SubPath", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
 message AppFetchImgpkgBundle {
   // Docker image url; unqualified, tagged, or
   // digest references supported (required)
-  optional string image = 1;
+  optional string image = 1 [(gogoproto.customname) = "Image", (gogoproto.nullable) = false];
 
   // Specifies a strategy to choose a tag (optional; v0.24.0+)
   // if specified, do not include a tag in url key
   // +optional
-  optional github.com.vmware_tanzu.carvel_vendir.pkg.vendir.versions.v1alpha1.VersionSelection tagSelection = 3;
+  optional carvel.dev.vendir.pkg.vendir.versions.v1alpha1.VersionSelection tagSelection = 3 [(gogoproto.customname) = "TagSelection"];
 
   // Secret may include one or more keys: username, password, token.
   // By default anonymous access is used for authentication.
   // +optional
-  optional AppFetchLocalRef secretRef = 2;
+  optional AppFetchLocalRef secretRef = 2 [(gogoproto.customname) = "SecretRef"];
 }
 
 // +k8s:openapi-gen=true
 message AppFetchInline {
   // Specifies mapping of paths to their content;
   // not recommended for sensitive values as CR is not encrypted (optional)
-  map<string, string> paths = 1;
+  map<string, string> paths = 1 [(gogoproto.customname) = "Paths", (gogoproto.nullable) = false];
 
   // Specifies content via secrets and config maps;
   // data values are recommended to be placed in secrets (optional)
-  repeated AppFetchInlineSource pathsFrom = 2;
+  repeated AppFetchInlineSource pathsFrom = 2 [(gogoproto.customname) = "PathsFrom", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
 message AppFetchInlineSource {
-  optional AppFetchInlineSourceRef secretRef = 1;
+  optional AppFetchInlineSourceRef secretRef = 1 [(gogoproto.customname) = "SecretRef"];
 
-  optional AppFetchInlineSourceRef configMapRef = 2;
+  optional AppFetchInlineSourceRef configMapRef = 2 [(gogoproto.customname) = "ConfigMapRef"];
 }
 
 // +k8s:openapi-gen=true
 message AppFetchInlineSourceRef {
   // Specifies where to place files found in secret (optional)
-  optional string directoryPath = 2;
+  optional string directoryPath = 2 [(gogoproto.customname) = "DirectoryPath", (gogoproto.nullable) = false];
 
-  optional string name = 1;
+  optional string name = 1 [(gogoproto.customname) = "Name", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
 message AppFetchLocalRef {
   // Object is expected to be within same namespace
-  optional string name = 1;
+  optional string name = 1 [(gogoproto.customname) = "Name", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
@@ -244,105 +254,105 @@ message AppSpec {
   // Specifies that app should be deployed authenticated via
   // given service account, found in this namespace (optional; v0.6.0+)
   // +optional
-  optional string serviceAccountName = 1;
+  optional string serviceAccountName = 1 [(gogoproto.customname) = "ServiceAccountName", (gogoproto.nullable) = false];
 
   // Specifies that app should be deployed to destination cluster;
   // by default, cluster is same as where this resource resides (optional; v0.5.0+)
   // +optional
-  optional AppCluster cluster = 2;
+  optional AppCluster cluster = 2 [(gogoproto.customname) = "Cluster"];
 
   // +optional
-  repeated AppFetch fetch = 3;
+  repeated AppFetch fetch = 3 [(gogoproto.customname) = "Fetch", (gogoproto.nullable) = false];
 
   // +optional
-  repeated AppTemplate template = 4;
+  repeated AppTemplate template = 4 [(gogoproto.customname) = "Template", (gogoproto.nullable) = false];
 
   // +optional
-  repeated AppDeploy deploy = 5;
+  repeated AppDeploy deploy = 5 [(gogoproto.customname) = "Deploy", (gogoproto.nullable) = false];
 
   // Pauses _future_ reconciliation; does _not_ affect
   // currently running reconciliation (optional; default=false)
   // +optional
-  optional bool paused = 6;
+  optional bool paused = 6 [(gogoproto.customname) = "Paused", (gogoproto.nullable) = false];
 
   // Cancels current and future reconciliations (optional; default=false)
   // +optional
-  optional bool canceled = 7;
+  optional bool canceled = 7 [(gogoproto.customname) = "Canceled", (gogoproto.nullable) = false];
 
   // Specifies the length of time to wait, in time + unit
   // format, before reconciling. Always >= 30s. If value below
   // 30s is specified, 30s will be used. (optional; v0.9.0+; default=30s)
   // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Duration syncPeriod = 8;
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Duration syncPeriod = 8 [(gogoproto.customname) = "SyncPeriod"];
 
   // Deletion requests for the App will result in the App CR being
   // deleted, but its associated resources will not be deleted
   // (optional; default=false; v0.18.0+)
   // +optional
-  optional bool noopDelete = 9;
+  optional bool noopDelete = 9 [(gogoproto.customname) = "NoopDelete", (gogoproto.nullable) = false];
 
   // Specifies the default namespace to install the App resources, by default this is
   // same as the App's namespace (optional; v0.48.0+)
   // +optional
-  optional string defaultNamespace = 10;
+  optional string defaultNamespace = 10 [(gogoproto.customname) = "DefaultNamespace", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
 message AppTemplate {
   // Use ytt to template configuration
-  optional AppTemplateYtt ytt = 1;
+  optional AppTemplateYtt ytt = 1 [(gogoproto.customname) = "Ytt"];
 
   // Use kbld to resolve image references to use digests
-  optional AppTemplateKbld kbld = 2;
+  optional AppTemplateKbld kbld = 2 [(gogoproto.customname) = "Kbld"];
 
   // Use helm template command to render helm chart
-  optional AppTemplateHelmTemplate helmTemplate = 3;
+  optional AppTemplateHelmTemplate helmTemplate = 3 [(gogoproto.customname) = "HelmTemplate"];
 
-  optional AppTemplateKustomize kustomize = 4;
+  optional AppTemplateKustomize kustomize = 4 [(gogoproto.customname) = "Kustomize"];
 
-  optional AppTemplateJsonnet jsonnet = 5;
+  optional AppTemplateJsonnet jsonnet = 5 [(gogoproto.customname) = "Jsonnet"];
 
   // Use sops to decrypt *.sops.yml files (optional; v0.11.0+)
-  optional AppTemplateSops sops = 6;
+  optional AppTemplateSops sops = 6 [(gogoproto.customname) = "Sops"];
 
-  optional AppTemplateCue cue = 7;
+  optional AppTemplateCue cue = 7 [(gogoproto.customname) = "Cue"];
 }
 
 // +k8s:openapi-gen=true
 message AppTemplateCue {
   // Explicit list of files/directories (optional)
-  repeated string paths = 1;
+  repeated string paths = 1 [(gogoproto.customname) = "Paths"];
 
   // Provide values (optional)
-  repeated AppTemplateValuesSource valuesFrom = 2;
+  repeated AppTemplateValuesSource valuesFrom = 2 [(gogoproto.customname) = "ValuesFrom", (gogoproto.nullable) = false];
 
   // Cue expression for single path component, can be used to unify ValuesFrom into a given field (optional)
-  optional string inputExpression = 3;
+  optional string inputExpression = 3 [(gogoproto.customname) = "InputExpression", (gogoproto.nullable) = false];
 
   // Cue expression to output, default will export all visible fields (optional)
-  optional string outputExpression = 4;
+  optional string outputExpression = 4 [(gogoproto.customname) = "OutputExpression", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
 message AppTemplateHelmTemplate {
   // Set name explicitly, default is App CR's name (optional; v0.13.0+)
-  optional string name = 1;
+  optional string name = 1 [(gogoproto.customname) = "Name", (gogoproto.nullable) = false];
 
   // Set namespace explicitly, default is App CR's namespace (optional; v0.13.0+)
-  optional string namespace = 2;
+  optional string namespace = 2 [(gogoproto.customname) = "Namespace", (gogoproto.nullable) = false];
 
   // Path to chart (optional; v0.13.0+)
-  optional string path = 3;
+  optional string path = 3 [(gogoproto.customname) = "Path", (gogoproto.nullable) = false];
 
   // One or more secrets, config maps, paths that provide values (optional)
-  repeated AppTemplateValuesSource valuesFrom = 4;
+  repeated AppTemplateValuesSource valuesFrom = 4 [(gogoproto.customname) = "ValuesFrom", (gogoproto.nullable) = false];
 
   // Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster.
   // Can be manually overridden to a value instead.
-  optional Version kubernetesVersion = 5;
+  optional Version kubernetesVersion = 5 [(gogoproto.customname) = "KubernetesVersion"];
 
   // Optional: Use kubernetes group/versions resources available in the live cluster
-  optional KubernetesAPIs kubernetesAPIs = 6;
+  optional KubernetesAPIs kubernetesAPIs = 6 [(gogoproto.customname) = "KubernetesAPIs"];
 }
 
 // TODO implement jsonnet
@@ -352,7 +362,7 @@ message AppTemplateJsonnet {
 
 // +k8s:openapi-gen=true
 message AppTemplateKbld {
-  repeated string paths = 1;
+  repeated string paths = 1 [(gogoproto.customname) = "Paths"];
 }
 
 // TODO implement kustomize
@@ -363,111 +373,111 @@ message AppTemplateKustomize {
 // +k8s:openapi-gen=true
 message AppTemplateSops {
   // Use PGP to decrypt files (required)
-  optional AppTemplateSopsPGP pgp = 1;
+  optional AppTemplateSopsPGP pgp = 1 [(gogoproto.customname) = "PGP"];
 
   // Lists paths to decrypt explicitly (optional; v0.13.0+)
-  repeated string paths = 2;
+  repeated string paths = 2 [(gogoproto.customname) = "Paths"];
 
-  optional AppTemplateSopsAge age = 3;
+  optional AppTemplateSopsAge age = 3 [(gogoproto.customname) = "Age"];
 }
 
 // +k8s:openapi-gen=true
 message AppTemplateSopsAge {
   // Secret with private armored PGP private keys (required)
-  optional AppTemplateSopsPrivateKeysSecretRef privateKeysSecretRef = 1;
+  optional AppTemplateSopsPrivateKeysSecretRef privateKeysSecretRef = 1 [(gogoproto.customname) = "PrivateKeysSecretRef"];
 }
 
 // +k8s:openapi-gen=true
 message AppTemplateSopsPGP {
   // Secret with private armored PGP private keys (required)
-  optional AppTemplateSopsPrivateKeysSecretRef privateKeysSecretRef = 1;
+  optional AppTemplateSopsPrivateKeysSecretRef privateKeysSecretRef = 1 [(gogoproto.customname) = "PrivateKeysSecretRef"];
 }
 
 // +k8s:openapi-gen=true
 message AppTemplateSopsPrivateKeysSecretRef {
-  optional string name = 1;
+  optional string name = 1 [(gogoproto.customname) = "Name", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
 message AppTemplateValuesDownwardAPI {
-  repeated AppTemplateValuesDownwardAPIItem items = 1;
+  repeated AppTemplateValuesDownwardAPIItem items = 1 [(gogoproto.customname) = "Items", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
 message AppTemplateValuesDownwardAPIItem {
-  optional string name = 1;
+  optional string name = 1 [(gogoproto.customname) = "Name", (gogoproto.nullable) = false];
 
   // Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.
-  optional string fieldPath = 2;
+  optional string fieldPath = 2 [(gogoproto.customname) = "FieldPath", (gogoproto.nullable) = false];
 
   // Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster.
   // Can be manually supplied instead.
-  optional Version kubernetesVersion = 3;
+  optional Version kubernetesVersion = 3 [(gogoproto.customname) = "KubernetesVersion"];
 
   // Optional: Get running KappController version, defaults (empty) to retrieving the current running version..
   // Can be manually supplied instead.
-  optional Version kappControllerVersion = 4;
+  optional Version kappControllerVersion = 4 [(gogoproto.customname) = "KappControllerVersion"];
 
   // Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster.
   // Can be manually supplied instead, e.g ["group/version", "group2/version2"]
-  optional KubernetesAPIs kubernetesAPIs = 5;
+  optional KubernetesAPIs kubernetesAPIs = 5 [(gogoproto.customname) = "KubernetesAPIs"];
 }
 
 // +k8s:openapi-gen=true
 message AppTemplateValuesSource {
-  optional AppTemplateValuesSourceRef secretRef = 1;
+  optional AppTemplateValuesSourceRef secretRef = 1 [(gogoproto.customname) = "SecretRef"];
 
-  optional AppTemplateValuesSourceRef configMapRef = 2;
+  optional AppTemplateValuesSourceRef configMapRef = 2 [(gogoproto.customname) = "ConfigMapRef"];
 
-  optional string path = 3;
+  optional string path = 3 [(gogoproto.customname) = "Path", (gogoproto.nullable) = false];
 
-  optional AppTemplateValuesDownwardAPI downwardAPI = 4;
+  optional AppTemplateValuesDownwardAPI downwardAPI = 4 [(gogoproto.customname) = "DownwardAPI"];
 }
 
 // +k8s:openapi-gen=true
 message AppTemplateValuesSourceRef {
-  optional string name = 1;
+  optional string name = 1 [(gogoproto.customname) = "Name", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
 message AppTemplateYtt {
   // Ignores comments that ytt doesn't recognize
   // (optional; default=false)
-  optional bool ignoreUnknownComments = 1;
+  optional bool ignoreUnknownComments = 1 [(gogoproto.customname) = "IgnoreUnknownComments", (gogoproto.nullable) = false];
 
   // Forces strict mode https://github.com/k14s/ytt/blob/develop/docs/strict.md
   // (optional; default=false)
-  optional bool strict = 2;
+  optional bool strict = 2 [(gogoproto.customname) = "Strict", (gogoproto.nullable) = false];
 
   // Specify additional files, including data values (optional)
-  optional AppFetchInline inline = 3;
+  optional AppFetchInline inline = 3 [(gogoproto.customname) = "Inline"];
 
   // Lists paths to provide to ytt explicitly (optional)
-  repeated string paths = 4;
+  repeated string paths = 4 [(gogoproto.customname) = "Paths"];
 
   // Control metadata about input files passed to ytt (optional; v0.18.0+)
   // see https://carvel.dev/ytt/docs/latest/file-marks/ for more details
-  repeated string fileMarks = 5;
+  repeated string fileMarks = 5 [(gogoproto.customname) = "FileMarks"];
 
   // Provide values via ytt's --data-values-file (optional; v0.19.0-alpha.9)
-  repeated AppTemplateValuesSource valuesFrom = 6;
+  repeated AppTemplateValuesSource valuesFrom = 6 [(gogoproto.customname) = "ValuesFrom", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
 message Condition {
-  optional string type = 1;
+  optional string type = 1 [(gogoproto.casttype) = "ConditionType", (gogoproto.customname) = "Type", (gogoproto.nullable) = false];
 
-  optional string status = 2;
+  optional string status = 2 [(gogoproto.casttype) = "k8s.io/api/core/v1.ConditionStatus", (gogoproto.customname) = "Status", (gogoproto.nullable) = false];
 
   // Unique, this should be a short, machine understandable string that gives the reason
   // for condition's last transition. If it reports "ResizeStarted" that means the underlying
   // persistent volume is being resized.
   // +optional
-  optional string reason = 3;
+  optional string reason = 3 [(gogoproto.customname) = "Reason", (gogoproto.nullable) = false];
 
   // Human-readable message indicating details about last transition.
   // +optional
-  optional string message = 4;
+  optional string message = 4 [(gogoproto.customname) = "Message", (gogoproto.nullable) = false];
 }
 
 message GenericStatus {
@@ -475,25 +485,25 @@ message GenericStatus {
   // observes a change to the resource; if this value is
   // out of data, other status fields do not reflect latest state
   // +optional
-  optional int64 observedGeneration = 1;
+  optional int64 observedGeneration = 1 [(gogoproto.customname) = "ObservedGeneration", (gogoproto.nullable) = false];
 
   // +optional
-  repeated Condition conditions = 2;
+  repeated Condition conditions = 2 [(gogoproto.customname) = "Conditions", (gogoproto.nullable) = false];
 
   // +optional
-  optional string friendlyDescription = 3;
+  optional string friendlyDescription = 3 [(gogoproto.customname) = "FriendlyDescription", (gogoproto.nullable) = false];
 
   // +optional
-  optional string usefulErrorMessage = 4;
+  optional string usefulErrorMessage = 4 [(gogoproto.customname) = "UsefulErrorMessage", (gogoproto.nullable) = false];
 }
 
 // +k8s:openapi-gen=true
 message KubernetesAPIs {
-  repeated string groupVersions = 1;
+  repeated string groupVersions = 1 [(gogoproto.customname) = "GroupVersions"];
 }
 
 // +k8s:openapi-gen=true
 message Version {
-  optional string version = 1;
+  optional string version = 1 [(gogoproto.customname) = "Version", (gogoproto.nullable) = false];
 }
 
