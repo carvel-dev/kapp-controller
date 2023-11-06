@@ -7,9 +7,9 @@ import (
 	"syscall"
 	"time"
 
+	"carvel.dev/kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/sidecarexec"
 	"github.com/go-logr/logr"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/sidecarexec"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 

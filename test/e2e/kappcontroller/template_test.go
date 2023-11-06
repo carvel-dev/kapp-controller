@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"carvel.dev/kapp-controller/test/e2e"
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 )
@@ -326,9 +326,9 @@ stringData:
 
 	logger.Section("deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{
-      StdinReader: strings.NewReader(appYaml),
-      OnErrKubectl: []string{"get", "app", name, "-oyaml"},
-    })
+			StdinReader:  strings.NewReader(appYaml),
+			OnErrKubectl: []string{"get", "app", name, "-oyaml"},
+		})
 	})
 
 	logger.Section("check ConfigMap exists", func() {

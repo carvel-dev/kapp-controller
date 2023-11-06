@@ -9,7 +9,7 @@ import (
 	"os"
 	goexec "os/exec"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/exec"
 )
 
 // CmdInput describes a command to run.

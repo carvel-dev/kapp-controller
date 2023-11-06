@@ -6,11 +6,11 @@ package fetch_test
 import (
 	"testing"
 
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	kcconfig "carvel.dev/kapp-controller/pkg/config"
+	"carvel.dev/kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/fetch"
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sfake "k8s.io/client-go/kubernetes/fake"

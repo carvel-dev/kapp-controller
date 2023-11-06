@@ -7,9 +7,9 @@ import (
 	"os"
 	"testing"
 
+	"carvel.dev/kapp-controller/pkg/sidecarexec"
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/sidecarexec"
 )
 
 func Test_TrustedCertsCreateConfig(t *testing.T) {

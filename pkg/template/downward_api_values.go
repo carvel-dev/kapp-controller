@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/util/jsonpath"
 )

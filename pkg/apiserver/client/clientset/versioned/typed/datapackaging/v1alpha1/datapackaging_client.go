@@ -5,8 +5,8 @@ package v1alpha1
 import (
 	"net/http"
 
-	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/scheme"
+	v1alpha1 "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	"carvel.dev/kapp-controller/pkg/apiserver/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

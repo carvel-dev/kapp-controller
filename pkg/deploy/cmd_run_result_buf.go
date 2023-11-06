@@ -6,7 +6,7 @@ package deploy
 import (
 	"sync"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/exec"
 )
 
 type WriterFunc func([]byte) (int, error)

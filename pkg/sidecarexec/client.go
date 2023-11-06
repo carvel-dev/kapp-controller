@@ -11,7 +11,7 @@ import (
 	"net/rpc"
 	"sync"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/exec"
 )
 
 // Client provides access to sidecarexec API.

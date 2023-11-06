@@ -6,7 +6,7 @@ package reftracker_test
 import (
 	"testing"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
+	"carvel.dev/kapp-controller/pkg/reftracker"
 )
 
 func Test_AddAppForRef_AddsApp_WhenRefNotInMap(t *testing.T) {

@@ -9,7 +9,7 @@ spec:
   serviceAccountName: cluster-admin-sa
   fetch:
   - http:
-      url: https://github.com/vmware-tanzu/carvel-kapp-controller/releases/download/v0.35.0/release.yml
+      url: https://github.com/carvel-dev/kapp-controller/releases/download/v0.35.0/release.yml
   template:
   - ytt: {}
   - kbld: {}

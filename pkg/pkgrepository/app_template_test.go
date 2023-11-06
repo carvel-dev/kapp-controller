@@ -6,8 +6,8 @@ package pkgrepository_test
 import (
 	"testing"
 
+	"carvel.dev/kapp-controller/pkg/pkgrepository"
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/pkgrepository"
 )
 
 func TestFilterResourcesYAMLUnique(t *testing.T) {

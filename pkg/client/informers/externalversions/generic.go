@@ -5,9 +5,9 @@ package externalversions
 import (
 	"fmt"
 
-	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/internalpackaging/v1alpha1"
-	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	v1alpha1 "carvel.dev/kapp-controller/pkg/apis/internalpackaging/v1alpha1"
+	kappctrlv1alpha1 "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	packagingv1alpha1 "carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )

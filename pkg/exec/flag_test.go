@@ -6,7 +6,7 @@ package exec_test
 import (
 	"testing"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/exec"
 )
 
 func TestNewFlagFromString(t *testing.T) {

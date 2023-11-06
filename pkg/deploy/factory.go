@@ -4,10 +4,10 @@
 package deploy
 
 import (
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"carvel.dev/kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/kubeconfig"
 	"github.com/go-logr/logr"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 	"k8s.io/client-go/kubernetes"
 )
 

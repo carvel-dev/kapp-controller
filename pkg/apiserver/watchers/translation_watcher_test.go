@@ -6,7 +6,7 @@ package watchers
 import (
 	"testing"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
+	"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging"
 	"k8s.io/apimachinery/pkg/watch"
 )
 

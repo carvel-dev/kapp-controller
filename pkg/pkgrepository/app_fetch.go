@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/exec"
 )
 
 func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {

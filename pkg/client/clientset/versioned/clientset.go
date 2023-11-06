@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-	internalv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/internalpackaging/v1alpha1"
-	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1"
-	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/packaging/v1alpha1"
+	internalv1alpha1 "carvel.dev/kapp-controller/pkg/client/clientset/versioned/typed/internalpackaging/v1alpha1"
+	kappctrlv1alpha1 "carvel.dev/kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1"
+	packagingv1alpha1 "carvel.dev/kapp-controller/pkg/client/clientset/versioned/typed/packaging/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

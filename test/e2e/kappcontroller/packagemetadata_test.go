@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
+	"carvel.dev/kapp-controller/test/e2e"
 )
 
 func Test_PackageMetadataIsValidated(t *testing.T) {

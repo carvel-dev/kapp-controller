@@ -3,31 +3,41 @@
 
 syntax = "proto2";
 
-package github.com.vmware_tanzu.carvel_kapp_controller.pkg.apiserver.apis.datapackaging.v1alpha1;
+package carvel.dev.kapp_controller.pkg.apiserver.apis.datapackaging.v1alpha1;
 
-import "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1/generated.proto";
+import "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1/generated.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 
 // Package-wide variables from generator "generated".
-option go_package = "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1";
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.stable_marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.stringer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.goproto_unrecognized_all) = false;
+option (gogoproto.goproto_enum_prefix_all) = false;
+option (gogoproto.goproto_getters_all) = false;
+option go_package = "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1";
 
 message AppTemplateSpec {
-  optional github.com.vmware_tanzu.carvel_kapp_controller.pkg.apis.kappctrl.v1alpha1.AppSpec spec = 1;
+  optional carvel.dev.kapp_controller.pkg.apis.kappctrl.v1alpha1.AppSpec spec = 1 [(gogoproto.customname) = "Spec"];
 }
 
 // IncludedSoftware contains the underlying Software Contents of a Package
 message IncludedSoftware {
-  optional string displayName = 1;
+  optional string displayName = 1 [(gogoproto.customname) = "DisplayName", (gogoproto.nullable) = false];
 
-  optional string version = 2;
+  optional string version = 2 [(gogoproto.customname) = "Version", (gogoproto.nullable) = false];
 
-  optional string description = 3;
+  optional string description = 3 [(gogoproto.customname) = "Description", (gogoproto.nullable) = false];
 }
 
 message Maintainer {
-  optional string name = 1;
+  optional string name = 1 [(gogoproto.customname) = "Name", (gogoproto.nullable) = false];
 }
 
 // +genclient
@@ -35,9 +45,9 @@ message Maintainer {
 message Package {
   // Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
   // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1 [(gogoproto.customname) = "ObjectMeta", (gogoproto.nullable) = false];
 
-  optional PackageSpec spec = 2;
+  optional PackageSpec spec = 2 [(gogoproto.customname) = "Spec", (gogoproto.nullable) = false];
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -45,9 +55,9 @@ message PackageList {
   // Standard list metadata.
   // More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
   // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1 [(gogoproto.customname) = "ListMeta", (gogoproto.nullable) = false];
 
-  repeated Package items = 2;
+  repeated Package items = 2 [(gogoproto.customname) = "Items", (gogoproto.nullable) = false];
 }
 
 // +genclient
@@ -55,9 +65,9 @@ message PackageList {
 message PackageMetadata {
   // Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
   // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1 [(gogoproto.customname) = "ObjectMeta", (gogoproto.nullable) = false];
 
-  optional PackageMetadataSpec spec = 2;
+  optional PackageMetadataSpec spec = 2 [(gogoproto.customname) = "Spec", (gogoproto.nullable) = false];
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -65,75 +75,75 @@ message PackageMetadataList {
   // Standard list metadata.
   // More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
   // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1 [(gogoproto.customname) = "ListMeta", (gogoproto.nullable) = false];
 
-  repeated PackageMetadata items = 2;
+  repeated PackageMetadata items = 2 [(gogoproto.customname) = "Items", (gogoproto.nullable) = false];
 }
 
 message PackageMetadataSpec {
-  optional string displayName = 1;
+  optional string displayName = 1 [(gogoproto.customname) = "DisplayName", (gogoproto.nullable) = false];
 
-  optional string longDescription = 2;
+  optional string longDescription = 2 [(gogoproto.customname) = "LongDescription", (gogoproto.nullable) = false];
 
-  optional string shortDescription = 3;
+  optional string shortDescription = 3 [(gogoproto.customname) = "ShortDescription", (gogoproto.nullable) = false];
 
-  optional string iconSVGBase64 = 4;
+  optional string iconSVGBase64 = 4 [(gogoproto.customname) = "IconSVGBase64", (gogoproto.nullable) = false];
 
-  optional string providerName = 5;
+  optional string providerName = 5 [(gogoproto.customname) = "ProviderName", (gogoproto.nullable) = false];
 
-  repeated Maintainer maintainers = 6;
+  repeated Maintainer maintainers = 6 [(gogoproto.customname) = "Maintainers", (gogoproto.nullable) = false];
 
-  repeated string categories = 7;
+  repeated string categories = 7 [(gogoproto.customname) = "Categories"];
 
-  optional string supportDescription = 8;
+  optional string supportDescription = 8 [(gogoproto.customname) = "SupportDescription", (gogoproto.nullable) = false];
 }
 
 message PackageSpec {
-  optional string refName = 1;
+  optional string refName = 1 [(gogoproto.customname) = "RefName", (gogoproto.nullable) = false];
 
-  optional string version = 2;
+  optional string version = 2 [(gogoproto.customname) = "Version", (gogoproto.nullable) = false];
 
-  repeated string licenses = 3;
+  repeated string licenses = 3 [(gogoproto.customname) = "Licenses"];
 
   // +optional
   // +nullable
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time releasedAt = 4;
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time releasedAt = 4 [(gogoproto.customname) = "ReleasedAt", (gogoproto.nullable) = false];
 
-  optional string capacityRequirementsDescription = 5;
+  optional string capacityRequirementsDescription = 5 [(gogoproto.customname) = "CapactiyRequirementsDescription", (gogoproto.nullable) = false];
 
-  optional string releaseNotes = 6;
+  optional string releaseNotes = 6 [(gogoproto.customname) = "ReleaseNotes", (gogoproto.nullable) = false];
 
-  optional AppTemplateSpec template = 7;
+  optional AppTemplateSpec template = 7 [(gogoproto.customname) = "Template", (gogoproto.nullable) = false];
 
   // valuesSchema can be used to show template values that
   // can be configured by users when a Package is installed
   // in an OpenAPI schema format.
   // +optional
-  optional ValuesSchema valuesSchema = 8;
+  optional ValuesSchema valuesSchema = 8 [(gogoproto.customname) = "ValuesSchema", (gogoproto.nullable) = false];
 
   // IncludedSoftware can be used to show the software contents of a Package.
   // This is especially useful if the underlying versions do not match the Package version
   // +optional
-  repeated IncludedSoftware includedSoftware = 9;
+  repeated IncludedSoftware includedSoftware = 9 [(gogoproto.customname) = "IncludedSoftware", (gogoproto.nullable) = false];
 
   // KappControllerVersionSelection specifies the versions of kapp-controller which can install this package
   // +optional
-  optional VersionSelection kappControllerVersionSelection = 10;
+  optional VersionSelection kappControllerVersionSelection = 10 [(gogoproto.customname) = "KappControllerVersionSelection"];
 
   // KubernetesVersionSelection specifies the versions of k8s which this package can be installed on
   // +optional
-  optional VersionSelection kubernetesVersionSelection = 11;
+  optional VersionSelection kubernetesVersionSelection = 11 [(gogoproto.customname) = "KubernetesVersionSelection"];
 }
 
 message ValuesSchema {
   // +optional
   // +nullable
   // +kubebuilder:pruning:PreserveUnknownFields
-  optional k8s.io.apimachinery.pkg.runtime.RawExtension openAPIv3 = 1;
+  optional k8s.io.apimachinery.pkg.runtime.RawExtension openAPIv3 = 1 [(gogoproto.customname) = "OpenAPIv3", (gogoproto.nullable) = false];
 }
 
 // VersionSelection provides version range constraints but will always accept prereleases
 message VersionSelection {
-  optional string constraints = 1;
+  optional string constraints = 1 [(gogoproto.customname) = "Constraints", (gogoproto.nullable) = false];
 }
 

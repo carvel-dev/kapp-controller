@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"carvel.dev/kapp-controller/test/e2e"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 )
 
 func Test_PlaceholderSecrets_DeletedWhenPackageInstallDeleted(t *testing.T) {

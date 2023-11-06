@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
+	"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	"carvel.dev/kapp-controller/test/e2e"
 	"sigs.k8s.io/yaml"
 )
 

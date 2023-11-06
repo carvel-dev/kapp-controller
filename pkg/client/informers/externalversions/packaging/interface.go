@@ -3,8 +3,8 @@
 package packaging
 
 import (
-	internalinterfaces "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/informers/externalversions/packaging/v1alpha1"
+	internalinterfaces "carvel.dev/kapp-controller/pkg/client/informers/externalversions/internalinterfaces"
+	v1alpha1 "carvel.dev/kapp-controller/pkg/client/informers/externalversions/packaging/v1alpha1"
 )
 
 // Interface provides access to each of this group's versions.

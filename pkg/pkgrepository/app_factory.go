@@ -6,17 +6,17 @@ package pkgrepository
 import (
 	"path/filepath"
 
+	kcv1alpha1 "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	pkgv1alpha1 "carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
+	kcclient "carvel.dev/kapp-controller/pkg/client/clientset/versioned"
+	"carvel.dev/kapp-controller/pkg/config"
+	"carvel.dev/kapp-controller/pkg/deploy"
+	"carvel.dev/kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/fetch"
+	"carvel.dev/kapp-controller/pkg/kubeconfig"
+	"carvel.dev/kapp-controller/pkg/memdir"
+	"carvel.dev/kapp-controller/pkg/template"
 	"github.com/go-logr/logr"
-	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	pkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	"k8s.io/client-go/kubernetes"
 )
 
