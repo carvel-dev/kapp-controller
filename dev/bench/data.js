@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1698748712262,
+  "lastUpdate": 1699506601092,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13222,6 +13222,48 @@ window.BENCHMARK_DATA = {
             "value": 5423803195,
             "unit": "ns/op\t         3.288 DeleteSeconds\t         2.106 DeploySeconds",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "55523204+rohitagg2020@users.noreply.github.com",
+            "name": "rohitagg2020",
+            "username": "rohitagg2020"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6d83c439cfd7b912f17e8bbc696050b815f99ca0",
+          "message": "Merge pull request #1383 from carvel-dev/ra-k8s-1.28-support\n\nBumping controller runtime to remove deprecation messages",
+          "timestamp": "2023-11-09T10:32:53+05:30",
+          "tree_id": "94c6a56a743fd09dda3ce7f61cc990ad74884b27",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/6d83c439cfd7b912f17e8bbc696050b815f99ca0"
+        },
+        "date": 1699506599852,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35032081742,
+            "unit": "ns/op\t        17.65 DeleteSeconds\t        17.36 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8314360837,
+            "unit": "ns/op\t         4.188 DeleteSeconds\t         4.102 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5279865974,
+            "unit": "ns/op\t         3.175 DeleteSeconds\t         2.080 DeploySeconds",
+            "extra": "1 times\n4 procs"
           }
         ]
       }
