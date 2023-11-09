@@ -46,6 +46,11 @@ func (r *PackageCRDREST) ShortNames() []string {
 	return []string{"pkg"}
 }
 
+// GetSingularName returns singular name of resources.
+func (r *PackageCRDREST) GetSingularName() string {
+	return string("package")
+}
+
 func (r *PackageCRDREST) NamespaceScoped() bool {
 	return true
 }

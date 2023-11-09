@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
@@ -46,15 +47,15 @@ func NewReconciler(appClient kcclient.Interface, coreClient kubernetes.Interface
 }
 
 // AttachWatches configures watches needed for reconciler to reconcile PackageRepository.
-func (r *Reconciler) AttachWatches(controller controller.Controller) error {
-	err := controller.Watch(&source.Kind{Type: &pkgv1alpha1.PackageRepository{}}, &handler.EnqueueRequestForObject{})
+func (r *Reconciler) AttachWatches(controller controller.Controller, mgr manager.Manager) error {
+	err := controller.Watch(source.Kind(mgr.GetCache(), &pkgv1alpha1.PackageRepository{}), &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return fmt.Errorf("Watching PackageRepositories: %s", err)
 	}
 
 	schRepo := reconciler.NewSecretHandler(r.log, r.appRefTracker, r.appUpdateStatus)
 
-	err = controller.Watch(&source.Kind{Type: &corev1.Secret{}}, schRepo)
+	err = controller.Watch(source.Kind(mgr.GetCache(), &corev1.Secret{}), schRepo)
 	if err != nil {
 		return fmt.Errorf("Watching Secrets: %s", err)
 	}
