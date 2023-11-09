@@ -8,7 +8,6 @@ import (
 	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -20,9 +19,9 @@ type FakePackageInstalls struct {
 	ns   string
 }
 
-var packageinstallsResource = schema.GroupVersionResource{Group: "packaging.carvel.dev", Version: "v1alpha1", Resource: "packageinstalls"}
+var packageinstallsResource = v1alpha1.SchemeGroupVersion.WithResource("packageinstalls")
 
-var packageinstallsKind = schema.GroupVersionKind{Group: "packaging.carvel.dev", Version: "v1alpha1", Kind: "PackageInstall"}
+var packageinstallsKind = v1alpha1.SchemeGroupVersion.WithKind("PackageInstall")
 
 // Get takes name of the packageInstall, and returns the corresponding packageInstall object, and an error if there is any.
 func (c *FakePackageInstalls) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.PackageInstall, err error) {

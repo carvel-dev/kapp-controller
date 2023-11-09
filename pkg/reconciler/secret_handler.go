@@ -4,6 +4,8 @@
 package reconciler
 
 import (
+	"context"
+
 	"github.com/go-logr/logr"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"k8s.io/apimachinery/pkg/types"
@@ -25,20 +27,26 @@ func NewSecretHandler(log logr.Logger, as *reftracker.AppRefTracker, aus *reftra
 	return &SecretHandler{log, as, aus}
 }
 
-func (sch *SecretHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
+// Create is called in response to an create event
+func (sch *SecretHandler) Create(_ context.Context, evt event.CreateEvent, q workqueue.RateLimitingInterface) {
 	sch.enqueueAppsForUpdate(evt.Object.GetName(), evt.Object.GetNamespace(), q)
 }
 
-func (sch *SecretHandler) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
+// Update is called in response to an update event
+func (sch *SecretHandler) Update(_ context.Context, evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
 	sch.enqueueAppsForUpdate(evt.ObjectNew.GetName(), evt.ObjectNew.GetNamespace(), q)
 }
 
-func (sch *SecretHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
+// Delete is called in response to a delete event
+func (sch *SecretHandler) Delete(_ context.Context, evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
 	sch.enqueueAppsForUpdate(evt.Object.GetName(), evt.Object.GetNamespace(), q)
 	sch.appRefTracker.RemoveRef(reftracker.NewSecretKey(evt.Object.GetName(), evt.Object.GetNamespace()))
 }
 
-func (sch *SecretHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {}
+// Generic is called in response to an event of an unknown type or a synthetic event triggered as a cron or
+// external trigger request - e.g. reconcile Autoscaling, or a Webhook.
+func (sch *SecretHandler) Generic(_ context.Context, _ event.GenericEvent, _ workqueue.RateLimitingInterface) {
+}
 
 func (sch *SecretHandler) enqueueAppsForUpdate(secretName, secretNamespace string, q workqueue.RateLimitingInterface) error {
 	apps, err := sch.appRefTracker.AppsForRef(reftracker.NewSecretKey(secretName, secretNamespace))
