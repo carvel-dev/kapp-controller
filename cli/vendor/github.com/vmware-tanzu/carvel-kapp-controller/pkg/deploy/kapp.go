@@ -34,6 +34,7 @@ type Kapp struct {
 	cancelCh            chan struct{}
 	cmdRunner           exec.CmdRunner
 	appMeta             *Meta
+	appNamespace        string
 }
 
 var _ Deploy = &Kapp{}
@@ -42,9 +43,9 @@ var _ Deploy = &Kapp{}
 // additional info from the larger app resource (e.g. service account, name, namespace) as genericOpts,
 // and a cancel channel that gets passed through to the exec call that runs kapp.
 func NewKapp(appSuffix string, opts v1alpha1.AppDeployKapp, clusterAccess kubeconfig.AccessInfo,
-	globalDeployRawOpts []string, cancelCh chan struct{}, cmdRunner exec.CmdRunner) *Kapp {
+	globalDeployRawOpts []string, cancelCh chan struct{}, cmdRunner exec.CmdRunner, appNamespace string) *Kapp {
 
-	return &Kapp{appSuffix, opts, clusterAccess, globalDeployRawOpts, cancelCh, cmdRunner, nil}
+	return &Kapp{appSuffix, opts, clusterAccess, globalDeployRawOpts, cancelCh, cmdRunner, nil, appNamespace}
 }
 
 // Deploy takes the output from templating, and the app name,
@@ -256,6 +257,10 @@ func (a *Kapp) addGenericArgs(args []string, appName string) ([]string, []string
 
 	if len(a.clusterAccess.Namespace) > 0 {
 		args = append(args, []string{"--namespace", a.clusterAccess.Namespace}...)
+	}
+
+	if len(a.clusterAccess.DeployNamespace) > 0 {
+		args = append(args, []string{"--app-namespace", a.clusterAccess.DeployNamespace}...)
 	}
 
 	switch {

@@ -32,6 +32,8 @@ type AccessInfo struct {
 	Name      string
 	Namespace string
 
+	DeployNamespace string
+
 	Kubeconfig                    *Restricted
 	DangerousUsePodServiceAccount bool
 }
@@ -47,7 +49,7 @@ func NewKubeconfig(coreClient kubernetes.Interface, log logr.Logger) *Kubeconfig
 
 // ClusterAccess takes cluster info and a ServiceAccount Name, and returns a populated kubeconfig that can connect to a cluster.
 // if the saName is empty then you'll connect to a cluster via the clusterOpts inside the genericOpts, otherwise you'll use the specified SA.
-func (k Kubeconfig) ClusterAccess(saName string, clusterOpts *v1alpha1.AppCluster, accessLocation AccessLocation) (AccessInfo, error) {
+func (k Kubeconfig) ClusterAccess(saName string, clusterOpts *v1alpha1.AppCluster, accessLocation AccessLocation, defaultNamespace string) (AccessInfo, error) {
 	var err error
 	var clusterAccessInfo AccessInfo
 
@@ -63,9 +65,19 @@ func (k Kubeconfig) ClusterAccess(saName string, clusterOpts *v1alpha1.AppCluste
 		if err != nil {
 			return AccessInfo{}, err
 		}
+		// Use kubeconfig preferred namespace as deploy namespace if
+		// defaultNamespace is provided and cluster.namespace is not provided,
+		if defaultNamespace != "" && clusterAccessInfo.DeployNamespace == "" {
+			clusterAccessInfo.DeployNamespace = clusterAccessInfo.Kubeconfig.defaultNamespace
+		}
 
 	default:
 		return AccessInfo{}, fmt.Errorf("Expected service account or cluster specified")
 	}
+
+	if defaultNamespace != "" {
+		clusterAccessInfo.Namespace = defaultNamespace
+	}
+
 	return clusterAccessInfo, nil
 }

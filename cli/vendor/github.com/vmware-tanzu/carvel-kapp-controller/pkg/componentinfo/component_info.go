@@ -50,7 +50,7 @@ func (ci *ComponentInfo) KubernetesVersion(serviceAccountName string, specCluste
 		return ci.parseAndScrubVersion(v.String())
 
 	case specCluster != nil:
-		accessInfo, err := ci.clusterAccess.ClusterAccess(serviceAccountName, specCluster, kubeconfig.AccessLocation{Name: objMeta.Name, Namespace: objMeta.Namespace})
+		accessInfo, err := ci.clusterAccess.ClusterAccess(serviceAccountName, specCluster, kubeconfig.AccessLocation{Name: objMeta.Name, Namespace: objMeta.Namespace}, "")
 		if err != nil {
 			return semver.Version{}, err
 		}

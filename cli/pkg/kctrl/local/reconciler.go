@@ -241,7 +241,7 @@ func (o *Reconciler) newReconcilers(
 		// TODO do not need this in the constructor of Reconciler
 		(*packageinstall.PackageInstallVersionHandler)(nil),
 		runLog.WithName("pkgi"),
-		compInfo,
+		compInfo, nil,
 	)
 
 	return appReconciler, pkgiReconciler

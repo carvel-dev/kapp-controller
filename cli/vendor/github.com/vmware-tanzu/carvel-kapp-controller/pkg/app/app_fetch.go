@@ -8,9 +8,15 @@ import (
 	"fmt"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+)
+
+const (
+	addCACertMissingHintMsg = "(hint: The CA Certificate from URL is unknown/invalid. Add valid CA certificate to the kapp-controller configuration to reconcile successfully)"
+	caCertMissingError      = "x509: certificate signed by unknown authority"
 )
 
 func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
@@ -67,6 +73,9 @@ func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
 			}
 		}
 		if result.Error != nil {
+			if strings.Contains(result.Stderr, caCertMissingError) {
+				result.Stderr = fmt.Sprintf("%s%s", result.Stderr, addCACertMissingHintMsg)
+			}
 			return "", result
 		}
 	}
@@ -74,6 +83,12 @@ func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
 	// if only one fetch, update dstPath for backwards compatibility
 	if len(a.app.Spec.Fetch) == 1 && a.app.Spec.Fetch[0].Path == "" {
 		dstPath = path.Join(dstPath, "0")
+	}
+
+	if result.Error != nil {
+		if strings.Contains(result.Stderr, caCertMissingError) {
+			result.Stderr = fmt.Sprintf("%s%s", result.Stderr, addCACertMissingHintMsg)
+		}
 	}
 
 	return dstPath, result

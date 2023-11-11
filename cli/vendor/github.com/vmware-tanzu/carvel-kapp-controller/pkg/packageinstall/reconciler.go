@@ -13,11 +13,13 @@ import (
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
@@ -30,39 +32,40 @@ type Reconciler struct {
 	pkgToPkgInstallHandler *PackageInstallVersionHandler
 	compInfo               ComponentInfo
 	log                    logr.Logger
+	kcConfig               *kcconfig.Config
 }
 
 // NewReconciler is the constructor for the Reconciler struct
 func NewReconciler(kcClient kcclient.Interface, pkgClient pkgclient.Interface,
 	coreClient kubernetes.Interface, pkgToPkgInstallHandler *PackageInstallVersionHandler,
-	log logr.Logger, compInfo ComponentInfo) *Reconciler {
+	log logr.Logger, compInfo ComponentInfo, kcConfig *kcconfig.Config) *Reconciler {
 
 	return &Reconciler{kcClient: kcClient,
 		pkgClient:              pkgClient,
 		coreClient:             coreClient,
 		pkgToPkgInstallHandler: pkgToPkgInstallHandler,
 		compInfo:               compInfo,
-		log:                    log}
+		log:                    log,
+		kcConfig:               kcConfig,
+	}
 }
 
 var _ reconcile.Reconciler = &Reconciler{}
 
 // AttachWatches configures watches needed for reconciler to reconcile PackageInstalls.
-func (r *Reconciler) AttachWatches(controller controller.Controller) error {
-	err := controller.Watch(&source.Kind{Type: &pkgingv1alpha1.PackageInstall{}}, &handler.EnqueueRequestForObject{})
+func (r *Reconciler) AttachWatches(controller controller.Controller, mgr manager.Manager) error {
+	err := controller.Watch(source.Kind(mgr.GetCache(), &pkgingv1alpha1.PackageInstall{}), &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return fmt.Errorf("Watching PackageInstalls: %s", err)
 	}
 
-	err = controller.Watch(&source.Kind{Type: &datapkgingv1alpha1.Package{}}, r.pkgToPkgInstallHandler)
+	err = controller.Watch(source.Kind(mgr.GetCache(), &datapkgingv1alpha1.Package{}), r.pkgToPkgInstallHandler)
 	if err != nil {
 		return fmt.Errorf("Watching Packages: %s", err)
 	}
 
-	err = controller.Watch(&source.Kind{Type: &kappctrlv1alpha1.App{}}, &handler.EnqueueRequestForOwner{
-		OwnerType:    &pkgingv1alpha1.PackageInstall{},
-		IsController: true,
-	})
+	err = controller.Watch(source.Kind(mgr.GetCache(), &kappctrlv1alpha1.App{}), handler.EnqueueRequestForOwner(
+		mgr.GetScheme(), mgr.GetRESTMapper(), &pkgingv1alpha1.PackageInstall{}, handler.OnlyControllerOwner()))
 	if err != nil {
 		return fmt.Errorf("Watching Apps: %s", err)
 	}
@@ -85,5 +88,5 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 		return reconcile.Result{}, err
 	}
 
-	return NewPackageInstallCR(existingPkgInstall, log, r.kcClient, r.pkgClient, r.coreClient, r.compInfo).Reconcile()
+	return NewPackageInstallCR(existingPkgInstall, log, r.kcClient, r.pkgClient, r.coreClient, r.compInfo, Opts{DefaultSyncPeriod: r.kcConfig.PackageInstallDefaultSyncPeriod()}).Reconcile()
 }
