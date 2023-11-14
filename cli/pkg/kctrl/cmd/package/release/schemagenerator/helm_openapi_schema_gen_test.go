@@ -1,7 +1,7 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package release_test
+package schemagenerator_test
 
 import (
 	"io/fs"
@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/release"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/release/schemagenerator"
 	"sigs.k8s.io/yaml"
 )
 
@@ -225,7 +225,7 @@ type: object
 			fileName := "values.yaml"
 			err = os.WriteFile(filepath.Join(dirName, fileName), []byte(test.input), fs.ModePerm)
 			require.NoError(t, err)
-			valuesSchema, err := release.NewHelmValuesSchemaGen("tmp").Schema()
+			valuesSchema, err := schemagenerator.NewHelmValuesSchemaGen("tmp").Schema()
 			output, err := yaml.JSONToYAML(valuesSchema.OpenAPIv3.Raw)
 			require.NoError(t, err)
 			require.Equal(t, test.want, string(output), "Expected valuesSchema to match")
@@ -242,7 +242,7 @@ func TestHelmValuesSchemaGen_Schema_EmptyFile(t *testing.T) {
 	fileName := "values.yaml"
 	err = os.WriteFile(filepath.Join(dirName, fileName), []byte(""), fs.ModePerm)
 	require.NoError(t, err)
-	valuesSchema, err := release.NewHelmValuesSchemaGen("tmp").Schema()
+	valuesSchema, err := schemagenerator.NewHelmValuesSchemaGen("tmp").Schema()
 	require.NoError(t, err)
 	require.Equal(t, 0, len(valuesSchema.OpenAPIv3.Raw), "Expected valuesSchema.OpenAPIv3.Raw to be empty")
 }
@@ -254,7 +254,7 @@ func TestHelmValuesSchemaGen_Schema_File_Not_Present(t *testing.T) {
 	dirName := "tmp"
 	err := os.Mkdir(dirName, fs.ModePerm)
 	require.NoError(t, err)
-	valuesSchema, err := release.NewHelmValuesSchemaGen("tmp").Schema()
+	valuesSchema, err := schemagenerator.NewHelmValuesSchemaGen("tmp").Schema()
 	require.NoError(t, err)
 	require.Equal(t, 0, len(valuesSchema.OpenAPIv3.Raw), "Expected valuesSchema.OpenAPIv3.Raw to be empty")
 }
