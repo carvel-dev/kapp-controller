@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1699506601092,
+  "lastUpdate": 1700025581753,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13263,6 +13263,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5279865974,
             "unit": "ns/op\t         3.175 DeleteSeconds\t         2.080 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "934d244bffddcf351e37d64f923203350eb8c57e",
+          "message": "Enhance fallback to noop logic for apps to account for multiple namespaces (#1394)\n\n* Enhance fallback to noop logic for apps to account for multiple namespaces\r\n\r\nSigned-off-by: Soumik Majumder <soumikm@vmware.com>\r\n\r\n* Add tests for fallback to noop cases spanning multiple clusters\r\n\r\nSigned-off-by: Soumik Majumder <soumikm@vmware.com>\r\n\r\n---------\r\n\r\nSigned-off-by: Soumik Majumder <soumikm@vmware.com>",
+          "timestamp": "2023-11-15T10:42:33+05:30",
+          "tree_id": "38a84518fd73c1de4874cad3c0afe58ae459c7cf",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/934d244bffddcf351e37d64f923203350eb8c57e"
+        },
+        "date": 1700025580594,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35136487078,
+            "unit": "ns/op\t        17.69 DeleteSeconds\t        17.42 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8315219056,
+            "unit": "ns/op\t         4.183 DeleteSeconds\t         4.107 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5262385428,
+            "unit": "ns/op\t         3.155 DeleteSeconds\t         2.081 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
