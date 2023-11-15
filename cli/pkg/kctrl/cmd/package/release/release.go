@@ -14,6 +14,7 @@ import (
 	cmdapprelease "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/release"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdpkg "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package"
+	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/release/schemagenerator"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
 	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
@@ -175,9 +176,9 @@ func generateValuesSchema(pkgBuild buildconfigs.PackageBuild) (*kcdatav1alpha1.V
 		templateStage := pkgBuild.Spec.Template.Spec.App.Spec.Template[0]
 		switch {
 		case templateStage.HelmTemplate != nil:
-			return NewHelmValuesSchemaGen(templateStage.HelmTemplate.Path).Schema()
+			return schemagenerator.NewHelmValuesSchemaGen(templateStage.HelmTemplate.Path).Schema()
 		case templateStage.Ytt != nil:
-			return NewValuesSchemaGen(templateStage.Ytt.Paths).Schema()
+			return schemagenerator.NewValuesSchemaGen(templateStage.Ytt.Paths).Schema()
 		}
 	}
 	return nil, nil
