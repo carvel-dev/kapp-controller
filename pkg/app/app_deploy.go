@@ -57,15 +57,7 @@ func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 
 	var result exec.CmdRunResult
 
-	appResourcesInSameNs := a.app.Status.Deploy != nil && a.app.Status.Deploy.KappDeployStatus != nil &&
-		len(a.app.Status.Deploy.KappDeployStatus.AssociatedResources.Namespaces) == 1 &&
-		a.app.Status.Deploy.KappDeployStatus.AssociatedResources.Namespaces[0] == a.app.Namespace
-
-	// Use noopDelete if the namespace is terminating and app resources are in same namespace because
-	// the app resources will be automatically deleted including the kapp ServiceAccount
-	noopDelete := a.isNamespaceTerminating() && appResourcesInSameNs && a.app.Spec.Cluster == nil
-
-	if !a.app.Spec.NoopDelete && !noopDelete {
+	if !a.app.Spec.NoopDelete && !a.noopDeleteDueToTerminatingNamespaces() {
 		for _, dep := range a.app.Spec.Deploy {
 			switch {
 			case dep.Kapp != nil:
