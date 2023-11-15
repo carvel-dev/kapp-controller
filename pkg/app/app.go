@@ -276,6 +276,35 @@ func (a *App) ConfigMapRefs() map[reftracker.RefKey]struct{} {
 	return configMaps
 }
 
+func (a *App) noopDeleteDueToTerminatingNamespaces() bool {
+	if a.app.Status.Deploy == nil || a.app.Status.Deploy.KappDeployStatus == nil || a.app.Spec.ServiceAccountName == "" {
+		return false
+	}
+	if !a.isNamespaceTerminating(a.app.Namespace) {
+		return false
+	}
+	// Ensure that no cluster scoped resources are created by the app
+	// and all affected namespaces are terminating
+	for _, ns := range a.app.Status.Deploy.KappDeployStatus.AssociatedResources.Namespaces {
+		if ns == "(cluster)" {
+			return false
+		}
+		if !a.isNamespaceTerminating(ns) {
+			return false
+		}
+	}
+	a.log.Info("Safely performing noop delete to avoid blocking namespace deletion")
+	return true
+}
+
+func (a *App) isNamespaceTerminating(namespace string) bool {
+	status, err := a.compInfo.NamespaceStatus(namespace)
+	if err != nil {
+		a.log.Error(err, "Error getting app namespace status", "app", a.app.Name, "namespace", a.app.Namespace)
+	}
+	return status.Phase == v1.NamespaceTerminating
+}
+
 // HasImageOrImgpkgBundle is used to determine if the
 // App's spec contains a fetch stage for an image or
 // imgpkgbundle. It is mainly used to determine whether
@@ -291,12 +320,4 @@ func (a App) HasImageOrImgpkgBundle() bool {
 		}
 	}
 	return false
-}
-
-func (a App) isNamespaceTerminating() bool {
-	status, err := a.compInfo.NamespaceStatus(a.app.Namespace)
-	if err != nil {
-		a.log.Error(err, "Error getting app namespace status", "app", a.app.Name, "namespace", a.app.Namespace)
-	}
-	return status.Phase == v1.NamespaceTerminating
 }
