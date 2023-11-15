@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1700025581753,
+  "lastUpdate": 1700026360510,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13306,6 +13306,48 @@ window.BENCHMARK_DATA = {
             "value": 5262385428,
             "unit": "ns/op\t         3.155 DeleteSeconds\t         2.081 DeploySeconds",
             "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "55523204+rohitagg2020@users.noreply.github.com",
+            "name": "rohitagg2020",
+            "username": "rohitagg2020"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b4886dfaff8050fc7221e1d7bce9e69e2a4264e3",
+          "message": "Merge pull request #1399 from carvel-dev/break-release-package\n\nSplitting cli release package",
+          "timestamp": "2023-11-15T10:51:24+05:30",
+          "tree_id": "7044df1cb9ba460e59e7c3fb50875e8d5385760e",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/b4886dfaff8050fc7221e1d7bce9e69e2a4264e3"
+        },
+        "date": 1700026358986,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35573986844,
+            "unit": "ns/op\t        18.03 DeleteSeconds\t        17.51 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8516902468,
+            "unit": "ns/op\t         4.282 DeleteSeconds\t         4.199 DeploySeconds",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5366167702,
+            "unit": "ns/op\t         3.227 DeleteSeconds\t         2.110 DeploySeconds",
+            "extra": "1 times\n2 procs"
           }
         ]
       }
