@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1700026360510,
+  "lastUpdate": 1700474132000,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13348,6 +13348,48 @@ window.BENCHMARK_DATA = {
             "value": 5366167702,
             "unit": "ns/op\t         3.227 DeleteSeconds\t         2.110 DeploySeconds",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "59d4642bc93ec5d02bcf56c6baa229597b7c2c0e",
+          "message": "Extend noop delete scenario to account for terminated namespaces (#1404)\n\nSigned-off-by: Soumik Majumder <soumikm@vmware.com>",
+          "timestamp": "2023-11-20T15:18:35+05:30",
+          "tree_id": "46b02d8f6f4ee63091fdd9d6cd5af8f3111f89ec",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/59d4642bc93ec5d02bcf56c6baa229597b7c2c0e"
+        },
+        "date": 1700474130652,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35022467809,
+            "unit": "ns/op\t        17.64 DeleteSeconds\t        17.36 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8294367342,
+            "unit": "ns/op\t         4.173 DeleteSeconds\t         4.097 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5247034085,
+            "unit": "ns/op\t         3.144 DeleteSeconds\t         2.079 DeploySeconds",
+            "extra": "1 times\n4 procs"
           }
         ]
       }
