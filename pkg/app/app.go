@@ -16,6 +16,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
@@ -280,7 +281,7 @@ func (a *App) noopDeleteDueToTerminatingNamespaces() bool {
 	if a.app.Status.Deploy == nil || a.app.Status.Deploy.KappDeployStatus == nil || a.app.Spec.ServiceAccountName == "" {
 		return false
 	}
-	if !a.isNamespaceTerminating(a.app.Namespace) {
+	if !a.isNamespaceTerminatingOrTerminated(a.app.Namespace) {
 		return false
 	}
 	// Ensure that no cluster scoped resources are created by the app
@@ -289,7 +290,7 @@ func (a *App) noopDeleteDueToTerminatingNamespaces() bool {
 		if ns == "(cluster)" {
 			return false
 		}
-		if !a.isNamespaceTerminating(ns) {
+		if !a.isNamespaceTerminatingOrTerminated(ns) {
 			return false
 		}
 	}
@@ -297,9 +298,12 @@ func (a *App) noopDeleteDueToTerminatingNamespaces() bool {
 	return true
 }
 
-func (a *App) isNamespaceTerminating(namespace string) bool {
+func (a *App) isNamespaceTerminatingOrTerminated(namespace string) bool {
 	status, err := a.compInfo.NamespaceStatus(namespace)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			return true
+		}
 		a.log.Error(err, "Error getting app namespace status", "app", a.app.Name, "namespace", a.app.Namespace)
 	}
 	return status.Phase == v1.NamespaceTerminating
