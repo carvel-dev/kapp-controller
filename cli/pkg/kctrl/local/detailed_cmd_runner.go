@@ -6,6 +6,7 @@ package local
 import (
 	"fmt"
 	"io"
+	"os"
 	goexec "os/exec"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
@@ -27,6 +28,9 @@ func (r DetailedCmdRunner) Run(cmd *goexec.Cmd) error {
 		cmd.Stdout = io.MultiWriter(r.log, cmd.Stdout)
 		cmd.Stderr = io.MultiWriter(r.log, cmd.Stderr)
 	}
+
+	// Adding os environment keys to cmd environment
+	cmd.Env = append(os.Environ(), cmd.Env...)
 
 	fmt.Fprintf(r.log, "==> Executing %s %v\n", cmd.Path, cmd.Args)
 	defer fmt.Fprintf(r.log, "==> Finished executing %s\n\n", cmd.Path)
