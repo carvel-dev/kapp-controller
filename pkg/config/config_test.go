@@ -192,7 +192,7 @@ func Test_NewConfig_KappDeployRawOptions(t *testing.T) {
 		}
 		config, err := kcconfig.NewConfig(k8sfake.NewSimpleClientset(secret))
 		assert.NoError(t, err)
-		assert.Equal(t, []string{"--app-changes-max-to-keep=5"}, config.KappDeployRawOptions())
+		assert.Equal(t, defaultRawOptions, config.KappDeployRawOptions())
 	})
 
 	t.Run("with populated config value, returns default and user set", func(t *testing.T) {
