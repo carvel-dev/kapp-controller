@@ -30,7 +30,7 @@ type CRDApp struct {
 
 // NewCRDApp creates new CRD app
 func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger, appMetrics *metrics.AppMetrics,
-	appClient kcclient.Interface, fetchFactory fetch.Factory,
+	timeMetrics *metrics.ReconcileTimeMetrics, appClient kcclient.Interface, fetchFactory fetch.Factory,
 	templateFactory template.Factory, deployFactory deploy.Factory,
 	compInfo ComponentInfo, opts Opts) *CRDApp {
 
@@ -41,7 +41,7 @@ func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger, appMetrics *metrics.Ap
 		UnblockDeletion: crdApp.unblockDeletion,
 		UpdateStatus:    crdApp.updateStatus,
 		WatchChanges:    crdApp.watchChanges,
-	}, fetchFactory, templateFactory, deployFactory, log, opts, appMetrics, compInfo)
+	}, fetchFactory, templateFactory, deployFactory, log, opts, appMetrics, timeMetrics, compInfo)
 
 	return crdApp
 }

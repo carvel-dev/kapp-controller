@@ -103,6 +103,11 @@ func (a *App) reconcileDeploy() error {
 }
 
 func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
+	reconcileStartTS := time.Now()
+	defer func() {
+		a.timeMetrics.RegisterOverallTime(a.app.Kind, a.app.Name, a.app.Namespace, "", time.Since(reconcileStartTS))
+	}()
+
 	tmpDir := memdir.NewTmpDir("fetch-template-deploy")
 
 	err := tmpDir.Create()

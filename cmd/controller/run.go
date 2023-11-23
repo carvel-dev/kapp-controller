@@ -99,6 +99,9 @@ func Run(opts Options, runLog logr.Logger) error {
 	appMetrics := metrics.NewAppMetrics()
 	appMetrics.RegisterAllMetrics()
 
+	reconcileTimeMetrics := metrics.NewReconcileTimeMetrics()
+	reconcileTimeMetrics.RegisterAllMetrics()
+
 	var server *apiserver.APIServer
 	if opts.StartAPIServer {
 		// assign bindPort to env var KAPPCTRL_API_PORT if available
@@ -198,6 +201,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			AppClient:   kcClient,
 			KcConfig:    kcConfig,
 			AppMetrics:  appMetrics,
+			TimeMetrics: reconcileTimeMetrics,
 			CmdRunner:   sidecarCmdExec,
 			Kubeconf:    kubeconf,
 			CompInfo:    compInfo,
@@ -254,6 +258,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			CoreClient:  coreClient,
 			AppClient:   kcClient,
 			KcConfig:    kcConfig,
+			TimeMetrics: reconcileTimeMetrics,
 			CmdRunner:   sidecarCmdExec,
 			Kubeconf:    kubeconf,
 			CacheFolder: cacheFolderPkgRepoApps,

@@ -14,6 +14,10 @@ import (
 )
 
 func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
+	reconcileStartTS := time.Now()
+	defer func() {
+		a.timeMetrics.RegisterFetchTime(a.app.Kind, a.app.Name, a.app.Namespace, "", time.Since(reconcileStartTS))
+	}()
 	if len(a.app.Spec.Fetch) == 0 {
 		return "", exec.NewCmdRunResultWithErr(fmt.Errorf("Expected at least one fetch option"))
 	}

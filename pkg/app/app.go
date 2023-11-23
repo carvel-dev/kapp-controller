@@ -55,9 +55,10 @@ type App struct {
 	memoizedKubernetesVersion string
 	memoizedKubernetesAPIs    []string
 
-	log        logr.Logger
-	opts       Opts
-	appMetrics *metrics.AppMetrics
+	log         logr.Logger
+	opts        Opts
+	appMetrics  *metrics.AppMetrics
+	timeMetrics *metrics.ReconcileTimeMetrics
 
 	pendingStatusUpdate   bool
 	flushAllStatusUpdates bool
@@ -66,11 +67,11 @@ type App struct {
 
 func NewApp(app v1alpha1.App, hooks Hooks,
 	fetchFactory fetch.Factory, templateFactory template.Factory,
-	deployFactory deploy.Factory, log logr.Logger, opts Opts, appMetrics *metrics.AppMetrics, compInfo ComponentInfo) *App {
+	deployFactory deploy.Factory, log logr.Logger, opts Opts, appMetrics *metrics.AppMetrics, timeMetrics *metrics.ReconcileTimeMetrics, compInfo ComponentInfo) *App {
 
 	return &App{app: app, appPrev: *(app.DeepCopy()), hooks: hooks,
 		fetchFactory: fetchFactory, templateFactory: templateFactory,
-		deployFactory: deployFactory, log: log, opts: opts, appMetrics: appMetrics, compInfo: compInfo}
+		deployFactory: deployFactory, log: log, opts: opts, appMetrics: appMetrics, timeMetrics: timeMetrics, compInfo: compInfo}
 }
 
 func (a *App) Name() string      { return a.app.Name }
