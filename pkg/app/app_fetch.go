@@ -20,6 +20,13 @@ const (
 )
 
 func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
+	// update metrics with the total fetch time
+	reconcileStartTS := time.Now()
+	defer func() {
+		a.timeMetrics.RegisterFetchTime(a.app.Kind, a.app.Name, a.app.Namespace, "", time.Since(reconcileStartTS))
+	}()
+
+	// fetch init stage
 	if len(a.app.Spec.Fetch) == 0 {
 		return "", exec.NewCmdRunResultWithErr(fmt.Errorf("Expected at least one fetch option"))
 	}

@@ -64,7 +64,7 @@ func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, apppkg.Opts{}, nil, FakeComponentInfo{})
+	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, apppkg.Opts{}, nil, nil, FakeComponentInfo{})
 
 	out := app.SecretRefs()
 	assert.Truef(t, reflect.DeepEqual(out, expected), "Expected: %s\nGot: %s\n", expected, out)
@@ -88,7 +88,7 @@ func Test_SecretRefs_RetrievesNoSecretRefs_WhenNonePresent(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, apppkg.Opts{}, nil, FakeComponentInfo{})
+	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, apppkg.Opts{}, nil, nil, FakeComponentInfo{})
 
 	out := app.SecretRefs()
 	assert.Equal(t, 0, len(out), "No SecretRefs to be returned")
@@ -126,7 +126,7 @@ func Test_ConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, apppkg.Opts{}, nil, FakeComponentInfo{})
+	app := apppkg.NewApp(appWithRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, apppkg.Opts{}, nil, nil, FakeComponentInfo{})
 
 	out := app.ConfigMapRefs()
 	assert.Truef(t, reflect.DeepEqual(out, expected), "Expected: %s\nGot: %s\n", expected, out)
@@ -150,7 +150,7 @@ func Test_ConfigMapRefs_RetrievesNoConfigMapRefs_WhenNonePresent(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, apppkg.Opts{}, nil, FakeComponentInfo{})
+	app := apppkg.NewApp(appEmpty, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, apppkg.Opts{}, nil, nil, FakeComponentInfo{})
 
 	out := app.ConfigMapRefs()
 	assert.Lenf(t, out, 0, "Expected: %s\nGot: %s\n", "No ConfigMapRefs to be returned", out)
