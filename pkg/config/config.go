@@ -171,6 +171,7 @@ func (gc *Config) KappDeployRawOptions() []string {
 	// Set default first so that it can be overridden by user provided options.
 	kappOptions = append(kappOptions, "--app-changes-max-to-keep=5")
 	kappOptions = append(kappOptions, "--kube-api-qps=50", "--kube-api-burst=100")
+	kappOptions = append(kappOptions, "--apply-concurrency=10", "--wait-concurrency=10")
 	kappOptions = append(kappOptions, gc.data.kappDeployRawOptions...)
 
 	return kappOptions

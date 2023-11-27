@@ -166,7 +166,10 @@ func Test_NewConfig_AppMinimumSyncPeriod(t *testing.T) {
 }
 
 func Test_NewConfig_KappDeployRawOptions(t *testing.T) {
-	defaultRawOptions := []string{"--app-changes-max-to-keep=5", "--kube-api-qps=50", "--kube-api-burst=100"}
+	defaultRawOptions := []string{
+		"--app-changes-max-to-keep=5", "--kube-api-qps=50", "--kube-api-burst=100",
+		"--apply-concurrency=10", "--wait-concurrency=10",
+	}
 	t.Run("with empty config value, returns just default", func(t *testing.T) {
 		secret := &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
