@@ -10,6 +10,10 @@ jobs:
   kapp-controller-release:
     name: kapp-controller release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
     steps:
       - name: Check out code
         uses: actions/checkout@v3.5.2
@@ -37,6 +41,9 @@ jobs:
         with:
           go-version: 1.21.1
 
+      - name: Set up Cosign
+        uses: sigstore/cosign-installer@v3
+
       - name: Run release script
         run: |
           set -e -x
@@ -50,12 +57,38 @@ jobs:
           ./hack/build-binaries.sh
           cp ./kctrl-* ../release/
 
+      - name: Sign kapp-controller OCI image
+        run: |
+          image_url=`yq e '.spec.template.spec.containers[] | select(.name == "kapp-controller") | .image' release/release.yml`
+          cosign sign --yes "$image_url"
+
+      - name: Verify signature on Kapp-controller OCI image
+        run: |
+          image_url=`yq e '.spec.template.spec.containers[] | select(.name == "kapp-controller") | .image' release/release.yml`
+          cosign verify \
+            $image_url \
+            --certificate-identity-regexp=https://github.com/${{ github.repository_owner }} \
+            --certificate-oidc-issuer=https://token.actions.githubusercontent.com
+
       - name: Run Package build
         run: |
           constraintVersion="${{ github.ref_name }}"
           ./cli/kctrl-linux-amd64 pkg release -y -v ${constraintVersion:1} --debug
           mv ./carvel-artifacts/packages/kapp-controller.carvel.dev/metadata.yml ./carvel-artifacts/packages/kapp-controller.carvel.dev/package-metadata.yml
           mv ./carvel-artifacts/packages/kapp-controller.carvel.dev/* release/
+
+      - name: Sign kapp-controller-package-bundle OCI image
+        run: |
+          image_url=`yq e '.spec.template.spec.fetch[0].imgpkgBundle.image' release/package.yml`
+          cosign sign --yes "$image_url"
+
+      - name: Verify signature on kapp-controller-package-bundle OCI image
+        run: |
+          image_url=`yq e '.spec.template.spec.fetch[0].imgpkgBundle.image' release/package.yml`
+          cosign verify \
+            $image_url \
+            --certificate-identity-regexp=https://github.com/${{ github.repository_owner }} \
+            --certificate-oidc-issuer=https://token.actions.githubusercontent.com
 
       - name: Add to formatted checksum
         run: |
@@ -66,6 +99,18 @@ jobs:
           echo '```' | tee -a ./tmp/checksums-formatted.txt
           cat ./tmp/checksums.txt | tee -a ./tmp/checksums-formatted.txt
           echo '```' | tee -a ./tmp/checksums-formatted.txt
+
+      - name: Sign checksums.txt
+        run: |
+          cosign sign-blob --yes ./tmp/checksums.txt --output-certificate release/checksums.txt.pem  --output-signature release/checksums.txt.sig
+
+      - name: Verify checksums signature
+        run: |
+          cosign verify-blob \
+            --cert release/checksums.txt.pem \
+            --signature release/checksums.txt.sig \
+            --certificate-identity-regexp=https://github.com/${{ github.repository_owner }} \
+            --certificate-oidc-issuer=https://token.actions.githubusercontent.com ./tmp/checksums.txt
 
       - name: Create release draft and upload release yaml
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
@@ -141,3 +186,118 @@ jobs:
           ${{steps.get-checksums-from-draft-release.outputs.result}}
           EOF
           )
+
+      - name: Updating release notes
+        run: |
+          RELEASE_TAG=$(git describe --tags --abbrev=0)
+          KAPP_CONTROLLER_IMAGE=$(yq e '.spec.template.spec.containers[] | select(.name == "kapp-controller") | .image' release/release.yml)
+          KAPP_CONTROLLER_PACKAGE_BUNDLE_IMAGE=$(yq e '.spec.template.spec.fetch[0].imgpkgBundle.image' release/package.yml)
+
+          RELEASE_NOTES="
+          <details>
+          <summary><h2>Installation and signature verification</h2></summary>
+
+          ## Installation of kctrl
+
+          #### By downloading binary from the release
+          For instance, if you are using Linux on an AMD64 architecture:
+
+          \`\`\`shell
+          # Download the binary
+          curl -LO https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases/download/$RELEASE_TAG/kctrl-linux-amd64
+          # Move the binary in to your PATH
+          mv kctrl-linux-amd64 /usr/local/bin/kctrl
+          # Make the binary executable
+          chmod +x /usr/local/bin/kctrl
+          \`\`\`
+
+          #### Via Homebrew (macOS or Linux)
+          \`\`\`shell
+          $ brew tap carvel-dev/carvel
+          $ brew install kctrl
+          $ kctrl version
+          \`\`\`
+
+          ## Verify checksums file signature
+
+          Install cosign on your system https://docs.sigstore.dev/system_config/installation/
+
+          The checksums file provided within the artifacts attached to this release is signed using [Cosign](https://docs.sigstore.dev/cosign/overview/) with GitHub OIDC. To validate the signature of this file, run the following commands:
+
+          \`\`\`shell
+          # Download the checksums file, certificate, and signature
+          curl -LO https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases/download/$RELEASE_TAG/checksums.txt
+          curl -LO https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases/download/$RELEASE_TAG/checksums.txt.pem
+          curl -LO https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases/download/$RELEASE_TAG/checksums.txt.sig
+
+          ### Verify the checksums file
+          cosign verify-blob checksums.txt \
+          --certificate checksums.txt.pem \
+          --signature checksums.txt.sig \
+          --certificate-identity-regexp=https://github.com/${{ github.repository_owner }} \
+          --certificate-oidc-issuer=https://token.actions.githubusercontent.com 
+          \`\`\`
+
+          ### Verify binary integrity
+
+          To verify the integrity of the downloaded binary, you can utilize the checksums file after having validated its signature. For instance, if you are using Linux on an AMD64 architecture:
+
+          \`\`\`shell
+          # Verify the binary using the checksums file
+          sha256sum -c checksums.txt --ignore-missing
+          \`\`\`
+
+          ## Installation of kapp-controller
+
+          kapp-controller can be installed by using kapp 
+
+          \`\`\`shell
+          kapp deploy -a kc -f https://github.com/carvel-dev/kapp-controller/releases/$RELEASE_TAG/download/release.yml
+          \`\`\`
+
+          or by using kubectl
+          \`\`\`shell
+          kubectl deploy -f https://github.com/carvel-dev/kapp-controller/releases/$RELEASE_TAG/download/release.yml
+          \`\`\`
+
+          ### Container Images
+
+          Kapp-controller and Kapp-controller-package-bundle images are available in Github Container Registry.
+
+          ### OCI Image URLs
+
+          - $KAPP_CONTROLLER_IMAGE
+          - $KAPP_CONTROLLER_PACKAGE_BUNDLE_IMAGE
+
+          ### Verify container image signature
+
+          The container images are signed using [Cosign](https://docs.sigstore.dev/cosign/overview/) with GitHub OIDC. To validate the signature of OCI images, run the following commands:
+
+          \`\`\`shell
+          # Verifying kapp-controller image
+          cosign verify $KAPP_CONTROLLER_IMAGE \
+          --certificate-identity-regexp=https://github.com/${{ github.repository_owner }} \
+          --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
+          -o text
+
+          # Verifying kapp-controller-package-bundle image
+          cosign verify $KAPP_CONTROLLER_PACKAGE_BUNDLE_IMAGE \
+          --certificate-identity-regexp=https://github.com/${{ github.repository_owner }} \
+          --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
+          -o text
+          \`\`\`
+          </summary>
+          </details>
+
+          "
+
+          RELEASE_NOTES_UPLOADED=$(gh release view $RELEASE_TAG --json body | jq -r '.body')
+          RELEASE_NOTES+=$RELEASE_NOTES_UPLOADED
+          echo "$RELEASE_NOTES" > release_notes.txt
+          gh release edit $RELEASE_TAG --notes-file release_notes.txt
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+
