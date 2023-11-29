@@ -37,6 +37,9 @@ jobs:
         with:
           go-version: 1.21.1
 
+      - name: Set up Cosign
+        uses: sigstore/cosign-installer@v3
+
       - name: Run release script
         run: |
           set -e -x
@@ -50,12 +53,38 @@ jobs:
           ./hack/build-binaries.sh
           cp ./kctrl-* ../release/
 
+      - name: Sign kapp-controller OCI image
+        run: |
+          image_url=`yq e '.spec.template.spec.containers[] | select(.name == "kapp-controller") | .image' release/release.yml`
+          cosign sign --yes "$image_url"
+
+      - name: Verify signature on Kapp-controller OCI image
+        run: |
+          image_url=`yq e '.spec.template.spec.containers[] | select(.name == "kapp-controller") | .image' release/release.yml`
+          cosign verify \
+            $image_url \
+            --certificate-identity-regexp=https://github.com/carvel-dev \
+            --certificate-oidc-issuer=https://token.actions.githubusercontent.com
+
       - name: Run Package build
         run: |
           constraintVersion="${{ github.ref_name }}"
           ./cli/kctrl-linux-amd64 pkg release -y -v ${constraintVersion:1} --debug
           mv ./carvel-artifacts/packages/kapp-controller.carvel.dev/metadata.yml ./carvel-artifacts/packages/kapp-controller.carvel.dev/package-metadata.yml
           mv ./carvel-artifacts/packages/kapp-controller.carvel.dev/* release/
+
+      - name: Sign kapp-controller-package-bundle OCI image
+        run: |
+          image_url=`yq e '.spec.template.spec.fetch[0].imgpkgBundle.image' release/package.yml`
+          cosign sign --yes "$image_url"
+
+      - name: Verify signature on kapp-controller-package-bundle OCI image
+        run: |
+          image_url=`yq e '.spec.template.spec.fetch[0].imgpkgBundle.image' release/package.yml`
+          cosign verify \
+            $image_url \
+            --certificate-identity-regexp=https://github.com/carvel-dev \
+            --certificate-oidc-issuer=https://token.actions.githubusercontent.com
 
       - name: Add to formatted checksum
         run: |
@@ -67,6 +96,18 @@ jobs:
           cat ./tmp/checksums.txt | tee -a ./tmp/checksums-formatted.txt
           echo '```' | tee -a ./tmp/checksums-formatted.txt
 
+      - name: Sign checksums.txt
+        run: |
+          cosign sign-blob ./tmp/checksums.txt --output-certificate ./tmp/checksums.pem  --output-signature ./tmp/checksums.sig
+
+      - name: Verify checksums signature
+        run: |
+          cosign verify-blob \
+            --cert ./tmp/checksums.pem \
+            --signature ./tmp/checksums.sig \
+            --certificate-identity-regexp=https://github.com/carvel-dev \
+            --certificate-oidc-issuer=https://token.actions.githubusercontent.com ./tmp/checksums.txt
+
       - name: Create release draft and upload release yaml
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
@@ -75,7 +116,7 @@ jobs:
           body_path: ./tmp/checksums-formatted.txt
           files: |
             ./release/*
-            ./tmp/checksums.txt
+            ./tmp/*
           draft: true
           prerelease: true
 
