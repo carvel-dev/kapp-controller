@@ -63,7 +63,7 @@ jobs:
           image_url=`yq e '.spec.template.spec.containers[] | select(.name == "kapp-controller") | .image' release/release.yml`
           cosign verify \
             $image_url \
-            --certificate-identity-regexp=https://github.com/carvel-dev \
+            --certificate-identity-regexp=https://github.com/rcmadhankumar \
             --certificate-oidc-issuer=https://token.actions.githubusercontent.com
 
       - name: Run Package build
@@ -83,7 +83,7 @@ jobs:
           image_url=`yq e '.spec.template.spec.fetch[0].imgpkgBundle.image' release/package.yml`
           cosign verify \
             $image_url \
-            --certificate-identity-regexp=https://github.com/carvel-dev \
+            --certificate-identity-regexp=https://github.com/rcmadhankumar \
             --certificate-oidc-issuer=https://token.actions.githubusercontent.com
 
       - name: Add to formatted checksum
@@ -105,7 +105,7 @@ jobs:
           cosign verify-blob \
             --cert ./tmp/checksums.pem \
             --signature ./tmp/checksums.sig \
-            --certificate-identity-regexp=https://github.com/carvel-dev \
+            --certificate-identity-regexp=https://github.com/rcmadhankumar \
             --certificate-oidc-issuer=https://token.actions.githubusercontent.com ./tmp/checksums.txt
 
       - name: Create release draft and upload release yaml

@@ -22,7 +22,7 @@ spec:
               - .imgpkg/images.yml
       export:
       - imgpkgBundle:
-          image: ghcr.io/carvel-dev/kapp-controller-package-bundle
+          image: ghcr.io/rcmadhankumar/kapp-controller-package-bundle
           useKbldImagesLock: false
         includePaths:
         - config
