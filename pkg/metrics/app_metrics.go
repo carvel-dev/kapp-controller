@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
@@ -130,4 +131,12 @@ func (am *AppMetrics) RegisterReconcileDeleteAttempt(appName string, namespace s
 // RegisterReconcileDeleteFailed increments reconcileDeleteFailedTotal
 func (am *AppMetrics) RegisterReconcileDeleteFailed(appName string, namespace string) {
 	am.reconcileDeleteFailedTotal.WithLabelValues(appName, namespace).Inc()
+}
+
+func (am *AppMetrics) GetReconcileAttemptCounterValue(appName, namespace string) int64 {
+	var m = &dto.Metric{}
+	if err := am.reconcileAttemptTotal.WithLabelValues(appName, namespace).Write(m); err != nil {
+		return 0
+	}
+	return int64(m.Counter.GetValue())
 }

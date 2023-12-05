@@ -26,6 +26,7 @@ type AppFactory struct {
 	CoreClient  kubernetes.Interface
 	AppClient   kcclient.Interface
 	TimeMetrics *metrics.ReconcileTimeMetrics
+	AppMetrics  *metrics.AppMetrics
 	KcConfig    *config.Config
 	CmdRunner   exec.CmdRunner
 	Kubeconf    *kubeconfig.Kubeconfig
@@ -41,5 +42,5 @@ func (f *AppFactory) NewCRDPackageRepo(app *kcv1alpha1.App, pkgr *pkgv1alpha1.Pa
 	fetchFactory := fetch.NewFactory(f.CoreClient, vendirOpts, f.CmdRunner)
 	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, false, f.CmdRunner)
 	deployFactory := deploy.NewFactory(f.CoreClient, f.Kubeconf, nil, f.CmdRunner, log)
-	return NewCRDApp(app, pkgr, log, f.AppClient, f.TimeMetrics, fetchFactory, templateFactory, deployFactory)
+	return NewCRDApp(app, pkgr, log, f.AppClient, f.TimeMetrics, f.AppMetrics, fetchFactory, templateFactory, deployFactory)
 }

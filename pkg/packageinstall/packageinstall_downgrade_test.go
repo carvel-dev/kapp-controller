@@ -4,6 +4,7 @@
 package packageinstall
 
 import (
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"testing"
 
 	"github.com/k14s/semver/v4"
@@ -25,6 +26,7 @@ import (
 
 func Test_PackageInstallVersionDowngrades(t *testing.T) {
 	log := logf.Log.WithName("kc")
+	var reconcileTimeMetrics = metrics.NewReconcileTimeMetrics()
 
 	pkg1 := datapkgingv1alpha1.Package{
 		ObjectMeta: metav1.ObjectMeta{
@@ -98,7 +100,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			GitVersion: "v0.20.0",
 		}
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{}, reconcileTimeMetrics)
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
@@ -147,7 +149,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			GitVersion: "v0.20.0",
 		}
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{}, reconcileTimeMetrics)
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
@@ -196,7 +198,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			GitVersion: "v0.20.0",
 		}
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{}, reconcileTimeMetrics)
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
@@ -251,7 +253,7 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			GitVersion: "v0.20.0",
 		}
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{}, reconcileTimeMetrics)
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 

@@ -26,6 +26,7 @@ import (
 func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	var timeMetrics = metrics.NewReconcileTimeMetrics()
+	var appMetrics = metrics.NewAppMetrics()
 
 	// The url under fetch is invalid, which will cause this
 	// app to fail before deploy.
@@ -48,7 +49,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 	pkgr := v1alpha12.PackageRepository{}
 
-	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, timeMetrics, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, timeMetrics, appMetrics, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	if err != nil {
 		t.Fatalf("Unexpected error with reconciling: %v", err)
@@ -81,6 +82,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	var timeMetrics = metrics.NewReconcileTimeMetrics()
+	var appMetrics = metrics.NewAppMetrics()
 
 	fetchInline := map[string]string{
 		"packages/file.yml": `foo: #@ data.values.nothere`,
@@ -105,7 +107,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 	pkgr := v1alpha12.PackageRepository{}
 
-	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, timeMetrics, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, timeMetrics, appMetrics, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	if err != nil {
 		t.Fatalf("Unexpected error with reconciling: %v", err)
@@ -139,6 +141,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 func TestInvalidPackageRepositoryFormat(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	var timeMetrics = metrics.NewReconcileTimeMetrics()
+	var appMetrics = metrics.NewAppMetrics()
 
 	fetchInline := map[string]string{
 		"file.yml": `foo: hi`,
@@ -162,7 +165,7 @@ func TestInvalidPackageRepositoryFormat(t *testing.T) {
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 	pkgr := v1alpha12.PackageRepository{}
 
-	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, timeMetrics, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, timeMetrics, appMetrics, fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	if err != nil {
 		t.Fatalf("Unexpected error with reconciling: %v", err)

@@ -231,7 +231,8 @@ func Run(opts Options, runLog logr.Logger) error {
 		pkgToPkgInstallHandler := pkginstall.NewPackageInstallVersionHandler(
 			kcClient, opts.PackagingGlobalNS, runLog.WithName("handler"))
 
-		reconciler := pkginstall.NewReconciler(kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, runLog.WithName("pkgi"), compInfo, kcConfig)
+		reconciler := pkginstall.NewReconciler(kcClient, pkgClient, coreClient, pkgToPkgInstallHandler,
+			runLog.WithName("pkgi"), compInfo, kcConfig, reconcileTimeMetrics)
 
 		ctrl, err := controller.New("pkgi", mgr, controller.Options{
 			Reconciler:              reconciler,
@@ -258,6 +259,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			CoreClient:  coreClient,
 			AppClient:   kcClient,
 			KcConfig:    kcConfig,
+			AppMetrics:  appMetrics,
 			TimeMetrics: reconcileTimeMetrics,
 			CmdRunner:   sidecarCmdExec,
 			Kubeconf:    kubeconf,

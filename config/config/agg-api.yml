@@ -23,5 +23,10 @@ spec:
     - port: 443
       protocol: TCP
       targetPort: api
+      name: main
+    - port: 8080
+      protocol: TCP
+      targetPort: metrics
+      name: metrics
   selector:
     app: kapp-controller

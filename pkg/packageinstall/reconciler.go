@@ -6,7 +6,6 @@ package packageinstall
 import (
 	"context"
 	"fmt"
-
 	"github.com/go-logr/logr"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -14,6 +13,7 @@ import (
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -33,12 +33,13 @@ type Reconciler struct {
 	compInfo               ComponentInfo
 	log                    logr.Logger
 	kcConfig               *kcconfig.Config
+	timeMetrics            *metrics.ReconcileTimeMetrics
 }
 
 // NewReconciler is the constructor for the Reconciler struct
 func NewReconciler(kcClient kcclient.Interface, pkgClient pkgclient.Interface,
 	coreClient kubernetes.Interface, pkgToPkgInstallHandler *PackageInstallVersionHandler,
-	log logr.Logger, compInfo ComponentInfo, kcConfig *kcconfig.Config) *Reconciler {
+	log logr.Logger, compInfo ComponentInfo, kcConfig *kcconfig.Config, timeMetrics *metrics.ReconcileTimeMetrics) *Reconciler {
 
 	return &Reconciler{kcClient: kcClient,
 		pkgClient:              pkgClient,
@@ -47,6 +48,7 @@ func NewReconciler(kcClient kcclient.Interface, pkgClient pkgclient.Interface,
 		compInfo:               compInfo,
 		log:                    log,
 		kcConfig:               kcConfig,
+		timeMetrics:            timeMetrics,
 	}
 }
 
@@ -88,5 +90,5 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 		return reconcile.Result{}, err
 	}
 
-	return NewPackageInstallCR(existingPkgInstall, log, r.kcClient, r.pkgClient, r.coreClient, r.compInfo, Opts{DefaultSyncPeriod: r.kcConfig.PackageInstallDefaultSyncPeriod()}).Reconcile()
+	return NewPackageInstallCR(existingPkgInstall, log, r.kcClient, r.pkgClient, r.coreClient, r.compInfo, Opts{DefaultSyncPeriod: r.kcConfig.PackageInstallDefaultSyncPeriod()}, r.timeMetrics).Reconcile()
 }

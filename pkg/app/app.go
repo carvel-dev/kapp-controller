@@ -60,6 +60,7 @@ type App struct {
 	appMetrics  *metrics.AppMetrics
 	timeMetrics *metrics.ReconcileTimeMetrics
 
+	isFirstReconcile      string
 	pendingStatusUpdate   bool
 	flushAllStatusUpdates bool
 	metadata              *deploy.Meta

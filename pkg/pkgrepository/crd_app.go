@@ -30,7 +30,7 @@ type CRDApp struct {
 }
 
 func NewCRDApp(appModel *kcv1alpha1.App, packageRepo *pkgingv1alpha1.PackageRepository, log logr.Logger,
-	appClient kcclient.Interface, timeMetrics *metrics.ReconcileTimeMetrics, fetchFactory fetch.Factory,
+	appClient kcclient.Interface, timeMetrics *metrics.ReconcileTimeMetrics, appMetrics *metrics.AppMetrics, fetchFactory fetch.Factory,
 	templateFactory template.Factory, deployFactory deploy.Factory) *CRDApp {
 
 	crdApp := &CRDApp{appModel: appModel, pkgrModel: packageRepo, log: log, appClient: appClient}
@@ -39,7 +39,7 @@ func NewCRDApp(appModel *kcv1alpha1.App, packageRepo *pkgingv1alpha1.PackageRepo
 		BlockDeletion:   crdApp.blockDeletion,
 		UnblockDeletion: crdApp.unblockDeletion,
 		UpdateStatus:    crdApp.updateStatus,
-	}, fetchFactory, templateFactory, deployFactory, log, timeMetrics, packageRepo.UID)
+	}, fetchFactory, templateFactory, deployFactory, log, appMetrics, timeMetrics, packageRepo.UID)
 
 	return crdApp
 }
