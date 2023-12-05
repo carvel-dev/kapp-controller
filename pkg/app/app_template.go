@@ -5,20 +5,13 @@ package app
 
 import (
 	"fmt"
-	"strings"
-	"time"
-
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	ctltpl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
+	"strings"
 )
 
 func (a *App) template(dirPath string) exec.CmdRunResult {
-	reconcileStartTS := time.Now()
-	defer func() {
-		a.timeMetrics.RegisterTemplateTime(a.app.Kind, a.app.Name, a.app.Namespace, "", time.Since(reconcileStartTS))
-	}()
-
 	if len(a.app.Spec.Template) == 0 {
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Expected at least one template option"))
 	}

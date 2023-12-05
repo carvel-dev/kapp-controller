@@ -3,6 +3,7 @@ package metrics
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	"sync"
 	"time"
 )
 
@@ -12,6 +13,10 @@ type ReconcileTimeMetrics struct {
 	reconcileFetchTimeSeconds    *prometheus.GaugeVec
 	reconcileTemplateTimeSeconds *prometheus.GaugeVec
 }
+
+var (
+	timeMetricsOnce sync.Once
+)
 
 func NewReconcileTimeMetrics() *ReconcileTimeMetrics {
 	const (
@@ -58,7 +63,7 @@ func NewReconcileTimeMetrics() *ReconcileTimeMetrics {
 }
 
 func (tm *ReconcileTimeMetrics) RegisterAllMetrics() {
-	once.Do(func() {
+	timeMetricsOnce.Do(func() {
 		metrics.Registry.MustRegister(
 			tm.reconcileTimeSeconds,
 			tm.reconcileFetchTimeSeconds,

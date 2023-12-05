@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -26,11 +25,6 @@ import (
 var errInvalidPackageRepo = exec.NewCmdRunResultWithErr(fmt.Errorf("Invalid package repository content: must contain 'packages/' directory but did not"))
 
 func (a *App) template(dirPath string) exec.CmdRunResult {
-	reconcileStartTS := time.Now()
-	defer func() {
-		a.timeMetrics.RegisterTemplateTime(a.app.Kind, a.app.Name, a.app.Namespace, "", time.Since(reconcileStartTS))
-	}()
-
 	fileInfo, err := os.Lstat(filepath.Join(dirPath, "packages"))
 	if err != nil {
 		if os.IsNotExist(err) {

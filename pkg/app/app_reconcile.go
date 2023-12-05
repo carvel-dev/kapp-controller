@@ -104,8 +104,14 @@ func (a *App) reconcileDeploy() error {
 
 func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 	reconcileStartTS := time.Now()
+	a.isFirstReconcile = "false"
+	if a.appMetrics.GetReconcileAttemptCounterValue(a.app.Name, a.app.Namespace) == 1 {
+		a.isFirstReconcile = "true"
+	}
+
 	defer func() {
-		a.timeMetrics.RegisterOverallTime(a.app.Kind, a.app.Name, a.app.Namespace, "", time.Since(reconcileStartTS))
+		a.timeMetrics.RegisterOverallTime(a.app.Kind, a.app.Name, a.app.Namespace, a.isFirstReconcile,
+			time.Since(reconcileStartTS))
 	}()
 
 	tmpDir := memdir.NewTmpDir("fetch-template-deploy")
@@ -134,6 +140,9 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 			UpdatedAt: metav1.NewTime(time.Now().UTC()),
 		}
 
+		a.timeMetrics.RegisterFetchTime(a.app.Kind, a.app.Name, a.app.Namespace, a.isFirstReconcile,
+			a.app.Status.Fetch.UpdatedAt.Sub(a.app.Status.Fetch.StartedAt.Time))
+
 		err := a.updateStatus("marking fetch completed")
 		if err != nil {
 			return exec.NewCmdRunResultWithErr(err)
@@ -144,6 +153,8 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 		}
 	}
 
+	templateStartTime := time.Now()
+
 	tplResult := a.template(assetsPath)
 
 	a.app.Status.Template = &v1alpha1.AppStatusTemplate{
@@ -152,6 +163,9 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 		Error:     tplResult.ErrorStr(),
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
+
+	a.timeMetrics.RegisterTemplateTime(a.app.Kind, a.app.Name, a.app.Namespace, a.isFirstReconcile,
+		a.app.Status.Template.UpdatedAt.Sub(templateStartTime))
 
 	err = a.updateStatus("marking template completed")
 	if err != nil {
@@ -200,6 +214,9 @@ func (a *App) updateLastDeploy(result exec.CmdRunResult) exec.CmdRunResult {
 			GroupKinds: usedGKs,
 		},
 	}
+
+	a.timeMetrics.RegisterDeployTime(a.app.Kind, a.app.Name, a.app.Namespace, a.isFirstReconcile,
+		a.Status().Deploy.UpdatedAt.Sub(a.Status().Deploy.StartedAt.Time))
 
 	return result
 }

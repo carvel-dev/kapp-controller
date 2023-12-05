@@ -5,6 +5,7 @@ package packageinstall
 
 import (
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"reflect"
 	"testing"
 
@@ -353,6 +354,7 @@ func Test_PackageRefUsesName(t *testing.T) {
 }
 
 func Test_PlaceHolderSecretCreated_WhenPackageHasNoSecretRef(t *testing.T) {
+	var timeMetrics = metrics.NewReconcileTimeMetrics()
 	pkg := datapkgingv1alpha1.Package{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "expected-pkg",
@@ -402,7 +404,7 @@ func Test_PlaceHolderSecretCreated_WhenPackageHasNoSecretRef(t *testing.T) {
 		GitVersion: "v0.20.0",
 	}
 
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{}, timeMetrics)
 
 	_, err := ip.Reconcile()
 	assert.Nil(t, err)
@@ -428,6 +430,7 @@ func Test_PlaceHolderSecretCreated_WhenPackageHasNoSecretRef(t *testing.T) {
 }
 
 func Test_PlaceHolderSecretsCreated_WhenPackageHasMultipleFetchStages(t *testing.T) {
+	var timeMetrics = metrics.NewReconcileTimeMetrics()
 	pkg := datapkgingv1alpha1.Package{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "expected-pkg",
@@ -481,7 +484,7 @@ func Test_PlaceHolderSecretsCreated_WhenPackageHasMultipleFetchStages(t *testing
 		GitVersion: "v0.20.0",
 	}
 
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{}, timeMetrics)
 
 	_, err := ip.Reconcile()
 	assert.Nil(t, err)
@@ -517,6 +520,7 @@ func Test_PlaceHolderSecretsCreated_WhenPackageHasMultipleFetchStages(t *testing
 }
 
 func Test_PlaceHolderSecretsNotCreated_WhenFetchStagesHaveSecrets(t *testing.T) {
+	var timeMetrics = metrics.NewReconcileTimeMetrics()
 	pkg := datapkgingv1alpha1.Package{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "expected-pkg",
@@ -571,7 +575,7 @@ func Test_PlaceHolderSecretsNotCreated_WhenFetchStagesHaveSecrets(t *testing.T) 
 		GitVersion: "v0.20.0",
 	}
 
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{}, timeMetrics)
 
 	_, err := ip.Reconcile()
 	assert.Nil(t, err)
@@ -591,6 +595,7 @@ func Test_PlaceHolderSecretsNotCreated_WhenFetchStagesHaveSecrets(t *testing.T) 
 }
 
 func Test_PlaceHolderSecretCreated_WhenPackageInstallUpdated(t *testing.T) {
+	var timeMetrics = metrics.NewReconcileTimeMetrics()
 	appSpec := v1alpha1.AppSpec{
 		Fetch: []v1alpha1.AppFetch{
 			{
@@ -648,7 +653,7 @@ func Test_PlaceHolderSecretCreated_WhenPackageInstallUpdated(t *testing.T) {
 
 	fakekctrl := fakekappctrl.NewSimpleClientset(model, existingApp)
 	fakek8s := fake.NewSimpleClientset()
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{}, timeMetrics)
 
 	// mock the kubernetes server version
 	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)

@@ -6,6 +6,7 @@ package packageinstall
 import (
 	"context"
 	"fmt"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -54,6 +55,8 @@ type PackageInstallCR struct {
 	coreClient kubernetes.Interface
 	compInfo   ComponentInfo
 	opts       Opts
+
+	timeMetrics *metrics.ReconcileTimeMetrics
 }
 
 // nolint: revive
@@ -62,10 +65,11 @@ type Opts struct {
 }
 
 func NewPackageInstallCR(model *pkgingv1alpha1.PackageInstall, log logr.Logger,
-	kcclient kcclient.Interface, pkgclient pkgclient.Interface, coreClient kubernetes.Interface, compInfo ComponentInfo, opts Opts) *PackageInstallCR {
+	kcclient kcclient.Interface, pkgclient pkgclient.Interface, coreClient kubernetes.Interface,
+	compInfo ComponentInfo, opts Opts, timeMetrics *metrics.ReconcileTimeMetrics) *PackageInstallCR {
 
 	return &PackageInstallCR{model: model, unmodifiedModel: model.DeepCopy(), log: log,
-		kcclient: kcclient, pkgclient: pkgclient, coreClient: coreClient, compInfo: compInfo, opts: opts}
+		kcclient: kcclient, pkgclient: pkgclient, coreClient: coreClient, compInfo: compInfo, opts: opts, timeMetrics: timeMetrics}
 }
 
 func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
@@ -100,6 +104,11 @@ func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
 
 func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile.Result, error) {
 	pi.log.Info("Reconciling")
+
+	reconcileStartTS := time.Now()
+	defer func() {
+		pi.timeMetrics.RegisterOverallTime("pkgi", pi.model.Name, pi.model.Namespace, "", time.Since(reconcileStartTS))
+	}()
 
 	err := pi.blockDeletion()
 	if err != nil {
