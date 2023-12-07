@@ -96,8 +96,8 @@ func Run(opts Options, runLog logr.Logger) error {
 	}
 
 	runLog.Info("setting up metrics")
-	appMetrics := metrics.NewAppMetrics()
-	appMetrics.RegisterAllMetrics()
+	countMetrics := metrics.NewCountMetrics()
+	countMetrics.RegisterAllMetrics()
 
 	reconcileTimeMetrics := metrics.NewReconcileTimeMetrics()
 	reconcileTimeMetrics.RegisterAllMetrics()
@@ -197,15 +197,15 @@ func Run(opts Options, runLog logr.Logger) error {
 	}
 	{ // add controller for apps
 		appFactory := app.CRDAppFactory{
-			CoreClient:  coreClient,
-			AppClient:   kcClient,
-			KcConfig:    kcConfig,
-			AppMetrics:  appMetrics,
-			TimeMetrics: reconcileTimeMetrics,
-			CmdRunner:   sidecarCmdExec,
-			Kubeconf:    kubeconf,
-			CompInfo:    compInfo,
-			CacheFolder: cacheFolderApps,
+			CoreClient:   coreClient,
+			AppClient:    kcClient,
+			KcConfig:     kcConfig,
+			CountMetrics: countMetrics,
+			TimeMetrics:  reconcileTimeMetrics,
+			CmdRunner:    sidecarCmdExec,
+			Kubeconf:     kubeconf,
+			CompInfo:     compInfo,
+			CacheFolder:  cacheFolderApps,
 		}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 			appFactory, refTracker, updateStatusTracker, compInfo)
@@ -232,7 +232,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			kcClient, opts.PackagingGlobalNS, runLog.WithName("handler"))
 
 		reconciler := pkginstall.NewReconciler(kcClient, pkgClient, coreClient, pkgToPkgInstallHandler,
-			runLog.WithName("pkgi"), compInfo, kcConfig, reconcileTimeMetrics)
+			runLog.WithName("pkgi"), compInfo, kcConfig, countMetrics, reconcileTimeMetrics)
 
 		ctrl, err := controller.New("pkgi", mgr, controller.Options{
 			Reconciler:              reconciler,
@@ -256,14 +256,14 @@ func Run(opts Options, runLog logr.Logger) error {
 
 	{ // add controller for pkgrepositories
 		appFactory := pkgrepository.AppFactory{
-			CoreClient:  coreClient,
-			AppClient:   kcClient,
-			KcConfig:    kcConfig,
-			AppMetrics:  appMetrics,
-			TimeMetrics: reconcileTimeMetrics,
-			CmdRunner:   sidecarCmdExec,
-			Kubeconf:    kubeconf,
-			CacheFolder: cacheFolderPkgRepoApps,
+			CoreClient:   coreClient,
+			AppClient:    kcClient,
+			KcConfig:     kcConfig,
+			CountMetrics: countMetrics,
+			TimeMetrics:  reconcileTimeMetrics,
+			CmdRunner:    sidecarCmdExec,
+			Kubeconf:     kubeconf,
+			CacheFolder:  cacheFolderPkgRepoApps,
 		}
 
 		reconciler := pkgrepository.NewReconciler(kcClient, coreClient,

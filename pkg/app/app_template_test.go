@@ -61,7 +61,7 @@ func Test_BuildAdditionalDownwardAPIValues_MemoizedCallCount(t *testing.T) {
 		K8sAPIsCount:    &k8sAPIsCallCount,
 		KCVersionCount:  &kcVersionCallCount,
 	}
-	app := NewApp(appEmpty, Hooks{}, fetchFac, tmpFac, deployFac, log, Opts{}, metrics.NewAppMetrics(), metrics.NewReconcileTimeMetrics(), fakeInfo)
+	app := NewApp(appEmpty, Hooks{}, fetchFac, tmpFac, deployFac, log, Opts{}, metrics.NewCountMetrics(), metrics.NewReconcileTimeMetrics(), fakeInfo)
 
 	dir, err := os.MkdirTemp("", "temp")
 	assert.NoError(t, err)

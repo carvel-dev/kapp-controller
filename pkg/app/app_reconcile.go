@@ -15,13 +15,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+const appResourceType = "app"
+
 // Reconcile is not expected to be called concurrently
 func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 	defer a.flushUpdateStatus("app reconciled")
 
 	var err error
 
-	a.appMetrics.InitMetrics(a.Name(), a.Namespace())
+	a.countMetrics.InitMetrics(appResourceType, a.Name(), a.Namespace())
 
 	timerOpts := ReconcileTimerOpts{
 		DefaultSyncPeriod: a.opts.DefaultSyncPeriod,
@@ -104,13 +106,9 @@ func (a *App) reconcileDeploy() error {
 
 func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 	reconcileStartTS := time.Now()
-	a.isFirstReconcile = "false"
-	if a.appMetrics.GetReconcileAttemptCounterValue(a.app.Name, a.app.Namespace) == 1 {
-		a.isFirstReconcile = "true"
-	}
-
+	a.isFirstReconcile = a.countMetrics.GetReconcileAttemptCounterValue("app", a.app.Name, a.app.Namespace) == 1
 	defer func() {
-		a.timeMetrics.RegisterOverallTime(a.app.Kind, a.app.Name, a.app.Namespace, a.isFirstReconcile,
+		a.timeMetrics.RegisterOverallTime(appResourceType, a.app.Name, a.app.Namespace, a.isFirstReconcile,
 			time.Since(reconcileStartTS))
 	}()
 
@@ -140,7 +138,7 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 			UpdatedAt: metav1.NewTime(time.Now().UTC()),
 		}
 
-		a.timeMetrics.RegisterFetchTime(a.app.Kind, a.app.Name, a.app.Namespace, a.isFirstReconcile,
+		a.timeMetrics.RegisterFetchTime(appResourceType, a.app.Name, a.app.Namespace, a.isFirstReconcile,
 			a.app.Status.Fetch.UpdatedAt.Sub(a.app.Status.Fetch.StartedAt.Time))
 
 		err := a.updateStatus("marking fetch completed")
@@ -164,7 +162,7 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
 
-	a.timeMetrics.RegisterTemplateTime(a.app.Kind, a.app.Name, a.app.Namespace, a.isFirstReconcile,
+	a.timeMetrics.RegisterTemplateTime(appResourceType, a.app.Name, a.app.Namespace, a.isFirstReconcile,
 		a.app.Status.Template.UpdatedAt.Sub(templateStartTime))
 
 	err = a.updateStatus("marking template completed")
@@ -215,7 +213,7 @@ func (a *App) updateLastDeploy(result exec.CmdRunResult) exec.CmdRunResult {
 		},
 	}
 
-	a.timeMetrics.RegisterDeployTime(a.app.Kind, a.app.Name, a.app.Namespace, a.isFirstReconcile,
+	a.timeMetrics.RegisterDeployTime(appResourceType, a.app.Name, a.app.Namespace, a.isFirstReconcile,
 		a.Status().Deploy.UpdatedAt.Sub(a.Status().Deploy.StartedAt.Time))
 
 	return result
@@ -269,7 +267,7 @@ func (a *App) setReconciling() {
 		Status: corev1.ConditionTrue,
 	})
 
-	a.appMetrics.RegisterReconcileAttempt(a.app.Name, a.app.Namespace)
+	a.countMetrics.RegisterReconcileAttempt(appResourceType, a.app.Name, a.app.Namespace)
 	a.app.Status.FriendlyDescription = "Reconciling"
 }
 
@@ -285,7 +283,7 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 		a.app.Status.ConsecutiveReconcileFailures++
 		a.app.Status.ConsecutiveReconcileSuccesses = 0
 		a.app.Status.FriendlyDescription = fmt.Sprintf("Reconcile failed: %s", result.ErrorStr())
-		a.appMetrics.RegisterReconcileFailure(a.app.Name, a.app.Namespace)
+		a.countMetrics.RegisterReconcileFailure(appResourceType, a.app.Name, a.app.Namespace)
 		a.setUsefulErrorMessage(result)
 	} else {
 		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.Condition{
@@ -296,7 +294,7 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 		a.app.Status.ConsecutiveReconcileSuccesses++
 		a.app.Status.ConsecutiveReconcileFailures = 0
 		a.app.Status.FriendlyDescription = "Reconcile succeeded"
-		a.appMetrics.RegisterReconcileSuccess(a.app.Name, a.app.Namespace)
+		a.countMetrics.RegisterReconcileSuccess(appResourceType, a.app.Name, a.app.Namespace)
 		a.app.Status.UsefulErrorMessage = ""
 	}
 }
@@ -309,7 +307,7 @@ func (a *App) setDeleting() {
 		Status: corev1.ConditionTrue,
 	})
 
-	a.appMetrics.RegisterReconcileDeleteAttempt(a.app.Name, a.app.Namespace)
+	a.countMetrics.RegisterReconcileDeleteAttempt(appResourceType, a.app.Name, a.app.Namespace)
 	a.app.Status.FriendlyDescription = "Deleting"
 }
 
@@ -325,10 +323,10 @@ func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
 		a.app.Status.ConsecutiveReconcileFailures++
 		a.app.Status.ConsecutiveReconcileSuccesses = 0
 		a.app.Status.FriendlyDescription = fmt.Sprintf("Delete failed: %s", result.ErrorStr())
-		a.appMetrics.RegisterReconcileDeleteFailed(a.app.Name, a.app.Namespace)
+		a.countMetrics.RegisterReconcileDeleteFailed(appResourceType, a.app.Name, a.app.Namespace)
 		a.setUsefulErrorMessage(result)
 	} else {
-		a.appMetrics.DeleteMetrics(a.app.Name, a.app.Namespace)
+		a.countMetrics.DeleteMetrics(appResourceType, a.app.Name, a.app.Namespace)
 	}
 }
 

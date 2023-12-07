@@ -34,12 +34,14 @@ type Reconciler struct {
 	log                    logr.Logger
 	kcConfig               *kcconfig.Config
 	timeMetrics            *metrics.ReconcileTimeMetrics
+	countMetrics           *metrics.ReconcileCountMetrics
 }
 
 // NewReconciler is the constructor for the Reconciler struct
 func NewReconciler(kcClient kcclient.Interface, pkgClient pkgclient.Interface,
 	coreClient kubernetes.Interface, pkgToPkgInstallHandler *PackageInstallVersionHandler,
-	log logr.Logger, compInfo ComponentInfo, kcConfig *kcconfig.Config, timeMetrics *metrics.ReconcileTimeMetrics) *Reconciler {
+	log logr.Logger, compInfo ComponentInfo, kcConfig *kcconfig.Config, countMetrics *metrics.ReconcileCountMetrics,
+	timeMetrics *metrics.ReconcileTimeMetrics) *Reconciler {
 
 	return &Reconciler{kcClient: kcClient,
 		pkgClient:              pkgClient,
@@ -48,6 +50,7 @@ func NewReconciler(kcClient kcclient.Interface, pkgClient pkgclient.Interface,
 		compInfo:               compInfo,
 		log:                    log,
 		kcConfig:               kcConfig,
+		countMetrics:           countMetrics,
 		timeMetrics:            timeMetrics,
 	}
 }
@@ -90,5 +93,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 		return reconcile.Result{}, err
 	}
 
-	return NewPackageInstallCR(existingPkgInstall, log, r.kcClient, r.pkgClient, r.coreClient, r.compInfo, Opts{DefaultSyncPeriod: r.kcConfig.PackageInstallDefaultSyncPeriod()}, r.timeMetrics).Reconcile()
+	return NewPackageInstallCR(existingPkgInstall, log, r.kcClient, r.pkgClient, r.coreClient, r.compInfo,
+		Opts{DefaultSyncPeriod: r.kcConfig.PackageInstallDefaultSyncPeriod()}, r.countMetrics, r.timeMetrics).Reconcile()
 }
