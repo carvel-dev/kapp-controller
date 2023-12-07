@@ -30,7 +30,7 @@ import (
 func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	var (
-		appMetrics  = metrics.NewAppMetrics()
+		appMetrics  = metrics.NewCountMetrics()
 		timeMetrics = metrics.NewReconcileTimeMetrics()
 	)
 
@@ -90,7 +90,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 func Test_NoInspectReconcile_IfInspectNotEnabled(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	var (
-		appMetrics  = metrics.NewAppMetrics()
+		appMetrics  = metrics.NewCountMetrics()
 		timeMetrics = metrics.NewReconcileTimeMetrics()
 	)
 
@@ -171,7 +171,7 @@ func Test_NoInspectReconcile_IfInspectNotEnabled(t *testing.T) {
 func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	var (
-		appMetrics  = metrics.NewAppMetrics()
+		appMetrics  = metrics.NewCountMetrics()
 		timeMetrics = metrics.NewReconcileTimeMetrics()
 	)
 

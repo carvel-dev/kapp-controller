@@ -5,8 +5,6 @@ package pkgrepository
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	ctldep "github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
@@ -14,11 +12,6 @@ import (
 )
 
 func (a *App) deploy(tplOutput string) exec.CmdRunResult {
-	reconcileStartTS := time.Now()
-	defer func() {
-		a.timeMetrics.RegisterDeployTime(a.app.Kind, a.app.Name, a.app.Namespace, "", time.Since(reconcileStartTS))
-	}()
-
 	err := a.blockDeletion()
 	if err != nil {
 		return exec.NewCmdRunResultWithErr(fmt.Errorf("Blocking for deploy: %s", err))

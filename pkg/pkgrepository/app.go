@@ -30,22 +30,22 @@ type App struct {
 	templateFactory template.Factory
 	deployFactory   deploy.Factory
 
-	timeMetrics *metrics.ReconcileTimeMetrics
-	appMetrics  *metrics.AppMetrics
+	timeMetrics  *metrics.ReconcileTimeMetrics
+	countMetrics *metrics.ReconcileCountMetrics
 
 	log logr.Logger
 
-	isFirstReconcile      string
+	isFirstReconcile      bool
 	pendingStatusUpdate   bool
 	flushAllStatusUpdates bool
 }
 
 // NewApp creates a new instance of an App based on v1alpha1.App
 func NewApp(app v1alpha1.App, hooks Hooks, fetchFactory fetch.Factory, templateFactory template.Factory, deployFactory deploy.Factory,
-	log logr.Logger, appMetrics *metrics.AppMetrics, timeMetrics *metrics.ReconcileTimeMetrics, pkgRepoUID types.UID) *App {
+	log logr.Logger, countMetrics *metrics.ReconcileCountMetrics, timeMetrics *metrics.ReconcileTimeMetrics, pkgRepoUID types.UID) *App {
 	return &App{app: app, appPrev: *(app.DeepCopy()), hooks: hooks,
 		fetchFactory: fetchFactory, templateFactory: templateFactory,
-		deployFactory: deployFactory, log: log, appMetrics: appMetrics, timeMetrics: timeMetrics, pkgRepoUID: pkgRepoUID}
+		deployFactory: deployFactory, log: log, countMetrics: countMetrics, timeMetrics: timeMetrics, pkgRepoUID: pkgRepoUID}
 }
 
 func (a *App) Name() string      { return a.app.Name }

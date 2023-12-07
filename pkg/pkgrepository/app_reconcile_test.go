@@ -26,7 +26,7 @@ import (
 func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	var timeMetrics = metrics.NewReconcileTimeMetrics()
-	var appMetrics = metrics.NewAppMetrics()
+	var appMetrics = metrics.NewCountMetrics()
 
 	// The url under fetch is invalid, which will cause this
 	// app to fail before deploy.
@@ -82,7 +82,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	var timeMetrics = metrics.NewReconcileTimeMetrics()
-	var appMetrics = metrics.NewAppMetrics()
+	var appMetrics = metrics.NewCountMetrics()
 
 	fetchInline := map[string]string{
 		"packages/file.yml": `foo: #@ data.values.nothere`,
@@ -141,7 +141,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 func TestInvalidPackageRepositoryFormat(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	var timeMetrics = metrics.NewReconcileTimeMetrics()
-	var appMetrics = metrics.NewAppMetrics()
+	var appMetrics = metrics.NewCountMetrics()
 
 	fetchInline := map[string]string{
 		"file.yml": `foo: hi`,

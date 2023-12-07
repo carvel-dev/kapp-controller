@@ -42,6 +42,7 @@ const (
 	// PackageInstall to indicate that lower version of the package
 	// can be selected vs whats currently installed.
 	DowngradableAnnKey = "packaging.carvel.dev/downgradable"
+	packageInstallType = "pkgi"
 )
 
 // nolint: revive
@@ -56,7 +57,10 @@ type PackageInstallCR struct {
 	compInfo   ComponentInfo
 	opts       Opts
 
-	timeMetrics *metrics.ReconcileTimeMetrics
+	countMetrics *metrics.ReconcileCountMetrics
+	timeMetrics  *metrics.ReconcileTimeMetrics
+
+	firstReconcile bool
 }
 
 // nolint: revive
@@ -66,10 +70,11 @@ type Opts struct {
 
 func NewPackageInstallCR(model *pkgingv1alpha1.PackageInstall, log logr.Logger,
 	kcclient kcclient.Interface, pkgclient pkgclient.Interface, coreClient kubernetes.Interface,
-	compInfo ComponentInfo, opts Opts, timeMetrics *metrics.ReconcileTimeMetrics) *PackageInstallCR {
+	compInfo ComponentInfo, opts Opts, countMetrics *metrics.ReconcileCountMetrics, timeMetrics *metrics.ReconcileTimeMetrics) *PackageInstallCR {
 
 	return &PackageInstallCR{model: model, unmodifiedModel: model.DeepCopy(), log: log,
-		kcclient: kcclient, pkgclient: pkgclient, coreClient: coreClient, compInfo: compInfo, opts: opts, timeMetrics: timeMetrics}
+		kcclient: kcclient, pkgclient: pkgclient, coreClient: coreClient, compInfo: compInfo, opts: opts, countMetrics: countMetrics,
+		timeMetrics: timeMetrics}
 }
 
 func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
@@ -77,6 +82,8 @@ func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
 		pi.model.Status.GenericStatus,
 		func(st kcv1alpha1.GenericStatus) { pi.model.Status.GenericStatus = st },
 	}
+
+	pi.countMetrics.InitMetrics(packageInstallType, pi.model.Name, pi.model.Namespace)
 
 	var result reconcile.Result
 	var err error
@@ -104,10 +111,13 @@ func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
 
 func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile.Result, error) {
 	pi.log.Info("Reconciling")
+	pi.countMetrics.RegisterReconcileAttempt(packageInstallType, pi.model.Name, pi.model.Namespace)
 
 	reconcileStartTS := time.Now()
+	pi.firstReconcile = pi.countMetrics.GetReconcileAttemptCounterValue("pkgi", pi.model.Name, pi.model.Namespace) == 1
 	defer func() {
-		pi.timeMetrics.RegisterOverallTime("pkgi", pi.model.Name, pi.model.Namespace, "", time.Since(reconcileStartTS))
+		pi.timeMetrics.RegisterOverallTime(packageInstallType, pi.model.Name, pi.model.Namespace,
+			pi.firstReconcile, time.Since(reconcileStartTS))
 	}()
 
 	err := pi.blockDeletion()
