@@ -197,15 +197,15 @@ func Run(opts Options, runLog logr.Logger) error {
 	}
 	{ // add controller for apps
 		appFactory := app.CRDAppFactory{
-			CoreClient:   coreClient,
-			AppClient:    kcClient,
-			KcConfig:     kcConfig,
-			CountMetrics: countMetrics,
-			TimeMetrics:  reconcileTimeMetrics,
-			CmdRunner:    sidecarCmdExec,
-			Kubeconf:     kubeconf,
-			CompInfo:     compInfo,
-			CacheFolder:  cacheFolderApps,
+			CoreClient:           coreClient,
+			AppClient:            kcClient,
+			KcConfig:             kcConfig,
+			CountMetrics:         countMetrics,
+			ReconcileTimeMetrics: reconcileTimeMetrics,
+			CmdRunner:            sidecarCmdExec,
+			Kubeconf:             kubeconf,
+			CompInfo:             compInfo,
+			CacheFolder:          cacheFolderApps,
 		}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
 			appFactory, refTracker, updateStatusTracker, compInfo)

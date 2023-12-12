@@ -94,11 +94,11 @@ func (a *App) reconcileDeploy() error {
 }
 
 func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
-	reconcileStartTS := time.Now()
+	reconcileStartTime := time.Now()
 	a.isFirstReconcile = a.countMetrics.GetReconcileAttemptCounterValue(packageRepoResourceType, a.app.Name, a.app.Namespace) == 1
 	defer func() {
 		a.timeMetrics.RegisterOverallTime(packageRepoResourceType, a.app.Name, a.app.Namespace, a.isFirstReconcile,
-			time.Since(reconcileStartTS))
+			time.Since(reconcileStartTime))
 	}()
 
 	tmpDir := memdir.NewTmpDir("fetch-template-deploy")

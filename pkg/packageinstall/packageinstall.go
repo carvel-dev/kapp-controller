@@ -113,11 +113,11 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 	pi.log.Info("Reconciling")
 	pi.countMetrics.RegisterReconcileAttempt(packageInstallType, pi.model.Name, pi.model.Namespace)
 
-	reconcileStartTS := time.Now()
+	reconcileStartTime := time.Now()
 	pi.firstReconcile = pi.countMetrics.GetReconcileAttemptCounterValue("pkgi", pi.model.Name, pi.model.Namespace) == 1
 	defer func() {
 		pi.timeMetrics.RegisterOverallTime(packageInstallType, pi.model.Name, pi.model.Namespace,
-			pi.firstReconcile, time.Since(reconcileStartTS))
+			pi.firstReconcile, time.Since(reconcileStartTime))
 	}()
 
 	err := pi.blockDeletion()
