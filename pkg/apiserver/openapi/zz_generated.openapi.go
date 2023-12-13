@@ -629,6 +629,13 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
+					"dangerousSkipTLSVerify": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Skip TLS verification (optional)",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},

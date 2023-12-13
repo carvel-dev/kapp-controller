@@ -156,11 +156,12 @@ func (v *Vendir) gitConf(git v1alpha1.AppFetchGit) vendirconf.DirectoryContents 
 		Path:        vendirEntireDirPath,
 		NewRootPath: git.SubPath,
 		Git: &vendirconf.DirectoryContentsGit{
-			URL:           git.URL,
-			RefSelection:  git.RefSelection,
-			Ref:           git.Ref,
-			SecretRef:     v.localRefConf(git.SecretRef),
-			LFSSkipSmudge: git.LFSSkipSmudge,
+			URL:                    git.URL,
+			RefSelection:           git.RefSelection,
+			Ref:                    git.Ref,
+			SecretRef:              v.localRefConf(git.SecretRef),
+			LFSSkipSmudge:          git.LFSSkipSmudge,
+			DangerousSkipTLSVerify: git.DangerousSkipTLSVerify,
 		},
 	}
 }
