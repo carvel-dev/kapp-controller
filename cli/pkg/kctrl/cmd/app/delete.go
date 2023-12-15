@@ -57,6 +57,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		AllowDisableWait: true,
 		DefaultInterval:  1 * time.Second,
 		DefaultTimeout:   5 * time.Minute,
+		WaitByDefault:    true,
 	})
 
 	return cmd

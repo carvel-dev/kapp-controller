@@ -18,8 +18,8 @@ type SecureNamespaceFlags struct {
 	AllowedSharedNamespaces bool
 }
 
-func (s *SecureNamespaceFlags) Set(cmd *cobra.Command) {
-	cmd.Flags().BoolVar(&s.AllowedSharedNamespaces, "dangerous-allow-use-of-shared-namespace", false, "Allow use of shared namespaces")
+func (s *SecureNamespaceFlags) Set(cmd *cobra.Command, defaultVal bool) {
+	cmd.Flags().BoolVar(&s.AllowedSharedNamespaces, "dangerous-allow-use-of-shared-namespace", defaultVal, "Allow use of shared namespaces")
 }
 
 func (s *SecureNamespaceFlags) CheckForDisallowedSharedNamespaces(namespace string) error {
