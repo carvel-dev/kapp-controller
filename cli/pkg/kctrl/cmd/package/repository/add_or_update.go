@@ -65,7 +65,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	}
 
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
-	o.SecureNamespaceFlags.Set(cmd)
+	o.SecureNamespaceFlags.Set(cmd, o.pkgCmdTreeOpts.AllowSharedNamespaces)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
@@ -84,6 +84,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 		AllowDisableWait: true,
 		DefaultInterval:  1 * time.Second,
 		DefaultTimeout:   5 * time.Minute,
+		WaitByDefault:    o.pkgCmdTreeOpts.WaitByDefault,
 	})
 
 	o.CreateRepository = true
@@ -106,7 +107,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 	}
 
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
-	o.SecureNamespaceFlags.Set(cmd)
+	o.SecureNamespaceFlags.Set(cmd, o.pkgCmdTreeOpts.AllowSharedNamespaces)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
@@ -121,6 +122,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 		AllowDisableWait: true,
 		DefaultInterval:  1 * time.Second,
 		DefaultTimeout:   5 * time.Minute,
+		WaitByDefault:    o.pkgCmdTreeOpts.WaitByDefault,
 	})
 
 	return cmd
@@ -194,6 +196,7 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 		return NewRepoTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, RepoTailerOpts{PrintCurrentState: true}).TailRepoStatus()
 	}
 
+	o.statusUI.PrintMessagef("Updating package repository resource '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 	pkgRepository, err := o.updateExistingPackageRepository(existingRepository)
 	if err != nil {
 		return err
@@ -218,6 +221,7 @@ func (o *AddOrUpdateOptions) add(client kcclient.Interface) error {
 		return err
 	}
 
+	o.statusUI.PrintMessagef("Creating package repository resource '%s' in namespace '%s'", o.Name, o.NamespaceFlags.Name)
 	_, err = client.PackagingV1alpha1().PackageRepositories(o.NamespaceFlags.Name).Create(
 		context.Background(), pkgRepository, metav1.CreateOptions{})
 	if err != nil {

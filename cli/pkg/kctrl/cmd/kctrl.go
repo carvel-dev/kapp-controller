@@ -76,7 +76,7 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 		cmdcore.RestOfCommandsHelpGroup,
 	}))
 
-	pkgOpts := cmdcore.PackageCommandTreeOpts{BinaryName: "kctrl", PositionalArgs: false, Color: true, JSON: true}
+	pkgOpts := cmdcore.PackageCommandTreeOpts{BinaryName: "kctrl", Color: true, JSON: true, WaitByDefault: true}
 
 	setGlobalFlags(o, cmd, flagsFactory, pkgOpts)
 
@@ -227,6 +227,7 @@ func AttachGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore
 
 func AttachKctrlPackageCommandTree(cmd *cobra.Command, confUI *ui.ConfUI, opts cmdcore.PackageCommandTreeOpts) {
 	configFactory := cmdcore.NewConfigFactoryImpl()
+	configFactory.ConfigureKubeconfigOverrides(opts.DefaultKubeconfigOverridePath, opts.DefaultKubeconfigOverrideContext)
 	depsFactory := cmdcore.NewDepsFactoryImpl(configFactory, confUI)
 	options := NewKctrlOptions(confUI, configFactory, depsFactory)
 	flagsFactory := cmdcore.NewFlagsFactory(configFactory, depsFactory)
