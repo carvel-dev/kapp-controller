@@ -88,7 +88,7 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
-	o.SecureNamespaceFlags.Set(cmd)
+	o.SecureNamespaceFlags.Set(cmd, o.pkgCmdTreeOpts.AllowSharedNamespaces)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
@@ -99,7 +99,7 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
 	cmd.Flags().StringVarP(&o.version, "version", "v", "", "Set package version (required)")
-	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
+	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", o.pkgCmdTreeOpts.DefaultServiceAcccountName, "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
 	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Print YAML for resources being applied to the cluster without applying them, optional")
@@ -108,6 +108,7 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		AllowDisableWait: true,
 		DefaultInterval:  1 * time.Second,
 		DefaultTimeout:   30 * time.Minute,
+		WaitByDefault:    o.pkgCmdTreeOpts.WaitByDefault,
 	})
 	o.YttOverlayFlags.Set(cmd)
 
@@ -134,7 +135,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
-	o.SecureNamespaceFlags.Set(cmd)
+	o.SecureNamespaceFlags.Set(cmd, o.pkgCmdTreeOpts.AllowSharedNamespaces)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name (required)")
@@ -145,7 +146,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
 	cmd.Flags().StringVarP(&o.version, "version", "v", "", "Set package version (required)")
-	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
+	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", o.pkgCmdTreeOpts.DefaultServiceAcccountName, "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
 	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Print YAML for resources being applied to the cluster without applying them, optional")
@@ -154,6 +155,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 		AllowDisableWait: true,
 		DefaultInterval:  1 * time.Second,
 		DefaultTimeout:   30 * time.Minute,
+		WaitByDefault:    o.pkgCmdTreeOpts.WaitByDefault,
 	})
 	o.YttOverlayFlags.Set(cmd)
 
@@ -179,7 +181,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 			cmdcore.PackageManagementCommandsHelpGroup.Key: cmdcore.PackageManagementCommandsHelpGroup.Value},
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
-	o.SecureNamespaceFlags.Set(cmd)
+	o.SecureNamespaceFlags.Set(cmd, o.pkgCmdTreeOpts.AllowSharedNamespaces)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "package-install", "i", "", "Set installed package name")
@@ -197,6 +199,7 @@ func NewUpdateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 		AllowDisableWait: true,
 		DefaultInterval:  1 * time.Second,
 		DefaultTimeout:   30 * time.Minute,
+		WaitByDefault:    o.pkgCmdTreeOpts.WaitByDefault,
 	})
 	o.YttOverlayFlags.Set(cmd)
 
@@ -1072,10 +1075,10 @@ func (o *CreateOrUpdateOptions) showVersions(client pkgclient.Interface) error {
 }
 
 func (o *CreateOrUpdateOptions) createOrUpdateYttOverlaySecrets(pkgi *kcpkgv1alpha1.PackageInstall, client kubernetes.Interface) (*corev1.Secret, error) {
-	o.statusUI.PrintMessage("Creating overlay secrets")
 	if len(o.YttOverlayFlags.yttOverlayFiles) == 0 {
 		return nil, nil
 	}
+	o.statusUI.PrintMessage("Creating overlay secrets")
 
 	if pkgi != nil {
 		for annotation := range pkgi.Annotations {

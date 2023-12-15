@@ -96,6 +96,7 @@ func NewKickCmd(o *PauseOrKickOptions, flagsFactory cmdcore.FlagsFactory) *cobra
 		AllowDisableWait: true,
 		DefaultInterval:  2 * time.Second,
 		DefaultTimeout:   5 * time.Minute,
+		WaitByDefault:    o.pkgCmdTreeOpts.WaitByDefault,
 	})
 
 	return cmd

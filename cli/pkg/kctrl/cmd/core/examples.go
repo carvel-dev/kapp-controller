@@ -14,6 +14,13 @@ type PackageCommandTreeOpts struct {
 
 	Color bool
 	JSON  bool
+
+	DefaultKubeconfigOverridePath    string
+	DefaultKubeconfigOverrideContext string
+
+	DefaultServiceAcccountName string
+	WaitByDefault              bool
+	AllowSharedNamespaces      bool
 }
 
 type Example struct {

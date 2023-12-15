@@ -75,6 +75,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		AllowDisableWait: false,
 		DefaultInterval:  1 * time.Second,
 		DefaultTimeout:   5 * time.Minute,
+		WaitByDefault:    o.pkgCmdTreeOpts.WaitByDefault,
 	})
 
 	return cmd
@@ -136,11 +137,12 @@ func (o *DeleteOptions) Run(args []string) error {
 		return err
 	}
 
-	o.statusUI.PrintMessagef("Waiting for deletion of package install '%s' from namespace '%s'", o.Name, o.NamespaceFlags.Name)
-
-	err = o.waitForResourceDelete(kcClient)
-	if err != nil {
-		return err
+	if o.WaitFlags.Enabled {
+		o.statusUI.PrintMessagef("Waiting for deletion of package install '%s' from namespace '%s'", o.Name, o.NamespaceFlags.Name)
+		err = o.waitForResourceDelete(kcClient)
+		if err != nil {
+			return err
+		}
 	}
 
 	return o.deleteInstallCreatedResources(pkgi, dynamicClient)
