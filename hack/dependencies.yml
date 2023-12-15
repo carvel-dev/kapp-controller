@@ -1,51 +1,51 @@
 - checksums:
     darwin:
-      amd64: da83487a7a1d9678d456e9725ecaaebbc02213f8a12190abd88939089c9bc855
-      arm64: 2c3d42db34cce6d449ffbd66be8a720d4a0fd39d5754ba05a7842c56304ee716
+      amd64: 6c3e770371dbf2b44f65788c3b6bbbb11270c33f90e47b887effed1ca70048d1
+      arm64: c50da60b19d5c2c06f8643ddc558ae664b16ffc948c308fd786c3125a9fb4454
     linux:
-      amd64: abf46655ffcf4b3f0821a96b94eb30c840765c02c50cfe73c895de99abed8186
-      arm64: 2fe100931575627060b49b605bce372d1851153bbc9d15c7956616bfa060e58b
+      amd64: 4c00eac06048502c2ff3aa0d3dafeda39a980e178a9d9fb69d9a3a3209f71fa4
+      arm64: ebbc78ef85b758aede29db7586baba0d5cf871cf2805721b93ee29d6af6c2c50
   dev: true
   name: ytt
   repo: carvel-dev/ytt
   urlTemplate: https://github.com/carvel-dev/{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.44.11
+  version: v0.44.12
 - checksums:
     darwin:
-      amd64: 7666468c9de7cfda987f12d935fee391e88468a0c65bc0c976ce543759c9ad98
-      arm64: b3c4885798d33fa5fbd56d695723605ce80f6468bd7ca9aebbf9805ccc4849fb
+      amd64: 3b90cfcdfb8a672669d57c9e1243a683dd3a5f84206079cd490be075aa7153ac
+      arm64: f0e71a36ccc73cb7e1b660c00382ee60ec0acc8435fc5150d26f0bc9b071f2d0
     linux:
-      amd64: 1d619a0046dd6d8c588f1bb9855c183de3a2314698e5ac68242286e4bf781a5e
-      arm64: 681cb522dcf14c22c3ea32e9bfe5d999bff59abaa7eb4795c5031f11560cfd4e
+      amd64: feff48e701b215d019ef0c445bf76b430e5edfc8b9ca5a14c6e2ce4696a13250
+      arm64: f4cec44867303b1e7fc468d034d8105d5b5a14c25cb1df710e442651ae08ab3c
   dev: true
   name: kbld
   repo: carvel-dev/kbld
   urlTemplate: https://github.com/carvel-dev/{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.36.11
+  version: v0.36.12
 - checksums:
     darwin:
-      amd64: d208b8a3dc15ffe733b702493a13dfb30711d45ca283193c656afd995539bee0
-      arm64: 45e5af2b983a55baa6f8c8d10bad0a44f7f67417abd4e8eb0b2bce743b39fa9f
+      amd64: 7424a73f78148eb756a9a13efc073a76c8406320e5e4c7b85e51a1c967c6a84e
+      arm64: 902ada87e23ae8bd22023f935f1223f0f10fbfe8293354c7c5df58789a9637a1
     linux:
-      amd64: 62e9afb3a77625a3b824175739d90e1953394aba51e1dd957fdbc1124b8e8a26
-      arm64: fa4dfa7a53dc060b7292723c1cc8aef5a745e0f7539c6f3261e61aaa5e59631f
+      amd64: cd84173f07efb7a266aabb694164e22e09a7a6cf5606f206ce5d2739e4c3d1d3
+      arm64: ce60a131cd557bd6c8a044bf4e31726103542905f2c83b61666b52d8e3190ce5
   dev: true
   name: kapp
   repo: carvel-dev/kapp
   urlTemplate: https://github.com/carvel-dev/{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.54.9
+  version: v0.54.10
 - checksums:
     darwin:
-      amd64: 79a9a133ce6c829be0421ae55b383de2bdaecd25b05dacf9eb9e67d8209cab46
-      arm64: d5bdc9b8511479a7a616c7ed6ce85e0b1ec3cc0d12d63f877530730b61010e35
+      amd64: 3d27edffff73172a3c1d332a8dcdcad3f9f4912a26ee107e70782bad2cfd3486
+      arm64: 2aadf79534940b219dd3b9c85744ca229a72a41ee35ec6285de110ab2714c7f6
     linux:
-      amd64: 00522aca902d31876f9b4948006fb65da0f019e1a5ea2e315db9b41d689c8a0c
-      arm64: 45403a0417f63c235ccb3f7f0d33e3ff9bba6b904bdfd0abd667e0a455e46280
+      amd64: dbeb243a6f65d0d3e80794ec698002108eec29c2c3bb4966e4d80ea630bb39df
+      arm64: 5206ac9b04305dd4487543dc57e922a141ca8c0ee9eb0f203ac1ac78129c6d95
   dev: true
   name: vendir
   repo: carvel-dev/vendir
   urlTemplate: https://github.com/carvel-dev/{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.32.11
+  version: v0.32.12
 - checksums:
     linux:
       amd64: 1b2313cd198d45eab00cc37c38f6b1ca0a948ba279c29e322bdf426d406129b5
@@ -58,13 +58,13 @@
   version: v3.12.3
 - checksums:
     linux:
-      amd64: 53aec65e45f62a769ff24b7e5384f0c82d62668dd96ed56685f649da114b4dbb
-      arm64: 4945313ed0dfddba52a12ab460d750c91ead725d734039493da0285ad6c5f032
+      amd64: d6bf07fb61972127c9e0d622523124c2d81caf9f7971fb123228961021811697
+      arm64: 15b8e90ca80dc23125cd2925731035fdef20c749ba259df477d1dd103a06d621
   dev: false
   name: sops
   repo: mozilla/sops
   urlTemplate: https://github.com/mozilla/sops/releases/download/{{.Version}}/sops-{{.Version}}.{{.OS}}.{{.Arch}}
-  version: v3.7.3
+  version: v3.8.1
 - checksums:
     linux:
       amd64: cf16cbb108fc56e2064b00ba2b65d9fb1b8d7002ca5e38260ee1cc34f6aaa8f9
