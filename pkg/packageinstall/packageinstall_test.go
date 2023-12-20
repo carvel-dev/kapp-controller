@@ -405,7 +405,9 @@ func Test_PlaceHolderSecretCreated_WhenPackageHasNoSecretRef(t *testing.T) {
 		GitVersion: "v0.20.0",
 	}
 
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{}, countMetrics, timeMetrics)
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s,
+		FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+		&metrics.Metrics{ReconcileCountMetrics: countMetrics, ReconcileTimeMetrics: timeMetrics})
 
 	_, err := ip.Reconcile()
 	assert.Nil(t, err)
@@ -486,7 +488,9 @@ func Test_PlaceHolderSecretsCreated_WhenPackageHasMultipleFetchStages(t *testing
 		GitVersion: "v0.20.0",
 	}
 
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{}, countMetrics, timeMetrics)
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s,
+		FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+		&metrics.Metrics{ReconcileCountMetrics: countMetrics, ReconcileTimeMetrics: timeMetrics})
 
 	_, err := ip.Reconcile()
 	assert.Nil(t, err)
@@ -578,7 +582,9 @@ func Test_PlaceHolderSecretsNotCreated_WhenFetchStagesHaveSecrets(t *testing.T) 
 		GitVersion: "v0.20.0",
 	}
 
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{}, countMetrics, timeMetrics)
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s,
+		FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+		&metrics.Metrics{ReconcileCountMetrics: countMetrics, ReconcileTimeMetrics: timeMetrics})
 
 	_, err := ip.Reconcile()
 	assert.Nil(t, err)
@@ -657,7 +663,9 @@ func Test_PlaceHolderSecretCreated_WhenPackageInstallUpdated(t *testing.T) {
 
 	fakekctrl := fakekappctrl.NewSimpleClientset(model, existingApp)
 	fakek8s := fake.NewSimpleClientset()
-	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{}, countMetrics, timeMetrics)
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s,
+		FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+		&metrics.Metrics{ReconcileCountMetrics: countMetrics, ReconcileTimeMetrics: timeMetrics})
 
 	// mock the kubernetes server version
 	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)

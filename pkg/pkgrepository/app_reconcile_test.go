@@ -49,7 +49,8 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 	pkgr := v1alpha12.PackageRepository{}
 
-	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, timeMetrics, appMetrics, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, &metrics.Metrics{ReconcileCountMetrics: appMetrics, ReconcileTimeMetrics: timeMetrics},
+		fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	if err != nil {
 		t.Fatalf("Unexpected error with reconciling: %v", err)
@@ -107,7 +108,8 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 	pkgr := v1alpha12.PackageRepository{}
 
-	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, timeMetrics, appMetrics, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, &metrics.Metrics{ReconcileCountMetrics: appMetrics, ReconcileTimeMetrics: timeMetrics},
+		fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	if err != nil {
 		t.Fatalf("Unexpected error with reconciling: %v", err)
@@ -165,7 +167,8 @@ func TestInvalidPackageRepositoryFormat(t *testing.T) {
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 	pkgr := v1alpha12.PackageRepository{}
 
-	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, timeMetrics, appMetrics, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, &metrics.Metrics{ReconcileCountMetrics: appMetrics, ReconcileTimeMetrics: timeMetrics},
+		fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	if err != nil {
 		t.Fatalf("Unexpected error with reconciling: %v", err)

@@ -57,8 +57,7 @@ type PackageInstallCR struct {
 	compInfo   ComponentInfo
 	opts       Opts
 
-	countMetrics *metrics.ReconcileCountMetrics
-	timeMetrics  *metrics.ReconcileTimeMetrics
+	pkgMetrics *metrics.Metrics
 
 	firstReconcile bool
 }
@@ -70,11 +69,10 @@ type Opts struct {
 
 func NewPackageInstallCR(model *pkgingv1alpha1.PackageInstall, log logr.Logger,
 	kcclient kcclient.Interface, pkgclient pkgclient.Interface, coreClient kubernetes.Interface,
-	compInfo ComponentInfo, opts Opts, countMetrics *metrics.ReconcileCountMetrics, timeMetrics *metrics.ReconcileTimeMetrics) *PackageInstallCR {
+	compInfo ComponentInfo, opts Opts, pkgMetrics *metrics.Metrics) *PackageInstallCR {
 
 	return &PackageInstallCR{model: model, unmodifiedModel: model.DeepCopy(), log: log,
-		kcclient: kcclient, pkgclient: pkgclient, coreClient: coreClient, compInfo: compInfo, opts: opts, countMetrics: countMetrics,
-		timeMetrics: timeMetrics}
+		kcclient: kcclient, pkgclient: pkgclient, coreClient: coreClient, compInfo: compInfo, opts: opts, pkgMetrics: pkgMetrics}
 }
 
 func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
@@ -83,7 +81,7 @@ func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
 		func(st kcv1alpha1.GenericStatus) { pi.model.Status.GenericStatus = st },
 	}
 
-	pi.countMetrics.InitMetrics(packageInstallType, pi.model.Name, pi.model.Namespace)
+	pi.pkgMetrics.ReconcileCountMetrics.InitMetrics(packageInstallType, pi.model.Name, pi.model.Namespace)
 
 	var result reconcile.Result
 	var err error
@@ -111,12 +109,12 @@ func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
 
 func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile.Result, error) {
 	pi.log.Info("Reconciling")
-	pi.countMetrics.RegisterReconcileAttempt(packageInstallType, pi.model.Name, pi.model.Namespace)
+	pi.pkgMetrics.ReconcileCountMetrics.RegisterReconcileAttempt(packageInstallType, pi.model.Name, pi.model.Namespace)
 
 	reconcileStartTime := time.Now()
-	pi.firstReconcile = pi.countMetrics.GetReconcileAttemptCounterValue("pkgi", pi.model.Name, pi.model.Namespace) == 1
+	pi.firstReconcile = pi.pkgMetrics.ReconcileCountMetrics.GetReconcileAttemptCounterValue("pkgi", pi.model.Name, pi.model.Namespace) == 1
 	defer func() {
-		pi.timeMetrics.RegisterOverallTime(packageInstallType, pi.model.Name, pi.model.Namespace,
+		pi.pkgMetrics.ReconcileTimeMetrics.RegisterOverallTime(packageInstallType, pi.model.Name, pi.model.Namespace,
 			pi.firstReconcile, time.Since(reconcileStartTime))
 	}()
 

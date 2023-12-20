@@ -29,19 +29,18 @@ type CRDApp struct {
 }
 
 // NewCRDApp creates new CRD app
-func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger, appMetrics *metrics.ReconcileCountMetrics,
-	timeMetrics *metrics.ReconcileTimeMetrics, appClient kcclient.Interface, fetchFactory fetch.Factory,
+func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger, appMetrics *metrics.Metrics, appClient kcclient.Interface, fetchFactory fetch.Factory,
 	templateFactory template.Factory, deployFactory deploy.Factory,
 	compInfo ComponentInfo, opts Opts) *CRDApp {
 
-	crdApp := &CRDApp{appModel: appModel, log: log, countMetrics: appMetrics, appClient: appClient}
+	crdApp := &CRDApp{appModel: appModel, log: log, countMetrics: appMetrics.ReconcileCountMetrics, appClient: appClient}
 
 	crdApp.app = NewApp(*appModel, Hooks{
 		BlockDeletion:   crdApp.blockDeletion,
 		UnblockDeletion: crdApp.unblockDeletion,
 		UpdateStatus:    crdApp.updateStatus,
 		WatchChanges:    crdApp.watchChanges,
-	}, fetchFactory, templateFactory, deployFactory, log, opts, appMetrics, timeMetrics, compInfo)
+	}, fetchFactory, templateFactory, deployFactory, log, opts, appMetrics, compInfo)
 
 	return crdApp
 }

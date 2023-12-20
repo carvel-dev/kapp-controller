@@ -23,14 +23,13 @@ import (
 
 // AppFactory allows to create "hidden" Apps for reconciling PackageRepositories.
 type AppFactory struct {
-	CoreClient   kubernetes.Interface
-	AppClient    kcclient.Interface
-	TimeMetrics  *metrics.ReconcileTimeMetrics
-	CountMetrics *metrics.ReconcileCountMetrics
-	KcConfig     *config.Config
-	CmdRunner    exec.CmdRunner
-	Kubeconf     *kubeconfig.Kubeconfig
-	CacheFolder  *memdir.TmpDir
+	CoreClient  kubernetes.Interface
+	AppClient   kcclient.Interface
+	AppMetrics  *metrics.Metrics
+	KcConfig    *config.Config
+	CmdRunner   exec.CmdRunner
+	Kubeconf    *kubeconfig.Kubeconfig
+	CacheFolder *memdir.TmpDir
 }
 
 // NewCRDPackageRepo constructs "hidden" App to reconcile PackageRepository.
@@ -42,5 +41,5 @@ func (f *AppFactory) NewCRDPackageRepo(app *kcv1alpha1.App, pkgr *pkgv1alpha1.Pa
 	fetchFactory := fetch.NewFactory(f.CoreClient, vendirOpts, f.CmdRunner)
 	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, false, f.CmdRunner)
 	deployFactory := deploy.NewFactory(f.CoreClient, f.Kubeconf, nil, f.CmdRunner, log)
-	return NewCRDApp(app, pkgr, log, f.AppClient, f.TimeMetrics, f.CountMetrics, fetchFactory, templateFactory, deployFactory)
+	return NewCRDApp(app, pkgr, log, f.AppClient, f.AppMetrics, fetchFactory, templateFactory, deployFactory)
 }
