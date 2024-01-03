@@ -34,7 +34,6 @@ type App struct {
 
 	log logr.Logger
 
-	isFirstReconcile      bool
 	pendingStatusUpdate   bool
 	flushAllStatusUpdates bool
 }

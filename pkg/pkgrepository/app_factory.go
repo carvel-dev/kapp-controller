@@ -4,7 +4,6 @@
 package pkgrepository
 
 import (
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"path/filepath"
 
 	"github.com/go-logr/logr"
@@ -17,6 +16,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	"k8s.io/client-go/kubernetes"
 )

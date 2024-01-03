@@ -6,7 +6,6 @@ package packageinstall
 import (
 	"context"
 	"fmt"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -18,6 +17,7 @@ import (
 	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
 	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reconciler"
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	verv1alpha1 "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
@@ -58,8 +58,6 @@ type PackageInstallCR struct {
 	opts       Opts
 
 	pkgMetrics *metrics.Metrics
-
-	firstReconcile bool
 }
 
 // nolint: revive
@@ -112,10 +110,10 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 	pi.pkgMetrics.ReconcileCountMetrics.RegisterReconcileAttempt(packageInstallType, pi.model.Name, pi.model.Namespace)
 
 	reconcileStartTime := time.Now()
-	pi.firstReconcile = pi.pkgMetrics.ReconcileCountMetrics.GetReconcileAttemptCounterValue("pkgi", pi.model.Name, pi.model.Namespace) == 1
+	pi.pkgMetrics.IsFirstReconcile = pi.pkgMetrics.ReconcileCountMetrics.GetReconcileAttemptCounterValue(packageInstallType, pi.model.Name, pi.model.Namespace) == 1
 	defer func() {
 		pi.pkgMetrics.ReconcileTimeMetrics.RegisterOverallTime(packageInstallType, pi.model.Name, pi.model.Namespace,
-			pi.firstReconcile, time.Since(reconcileStartTime))
+			pi.pkgMetrics.IsFirstReconcile, time.Since(reconcileStartTime))
 	}()
 
 	err := pi.blockDeletion()

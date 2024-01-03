@@ -21,11 +21,10 @@ import (
 )
 
 type CRDApp struct {
-	app          *App
-	appModel     *kcv1alpha1.App
-	log          logr.Logger
-	countMetrics *metrics.ReconcileCountMetrics
-	appClient    kcclient.Interface
+	app       *App
+	appModel  *kcv1alpha1.App
+	log       logr.Logger
+	appClient kcclient.Interface
 }
 
 // NewCRDApp creates new CRD app
@@ -33,7 +32,7 @@ func NewCRDApp(appModel *kcv1alpha1.App, log logr.Logger, appMetrics *metrics.Me
 	templateFactory template.Factory, deployFactory deploy.Factory,
 	compInfo ComponentInfo, opts Opts) *CRDApp {
 
-	crdApp := &CRDApp{appModel: appModel, log: log, countMetrics: appMetrics.ReconcileCountMetrics, appClient: appClient}
+	crdApp := &CRDApp{appModel: appModel, log: log, appClient: appClient}
 
 	crdApp.app = NewApp(*appModel, Hooks{
 		BlockDeletion:   crdApp.blockDeletion,
