@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703599428256,
+  "lastUpdate": 1704297869181,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13473,6 +13473,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5252684537,
             "unit": "ns/op\t         3.150 DeleteSeconds\t         2.080 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "soumikm@vmware.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "distinct": true,
+          "id": "d4125e1cb2b3fb5b0b58a2b032e5dd13491297d0",
+          "message": "Make bits of kctrl more configurable\n\nSigned-off-by: Soumik Majumder <soumikm@vmware.com>",
+          "timestamp": "2024-01-03T21:27:30+05:30",
+          "tree_id": "9832c3aed2f37d6fc28f7aef284b80912aa438f7",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/d4125e1cb2b3fb5b0b58a2b032e5dd13491297d0"
+        },
+        "date": 1704297868012,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35037677198,
+            "unit": "ns/op\t        17.68 DeleteSeconds\t        17.34 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8284676075,
+            "unit": "ns/op\t         4.161 DeleteSeconds\t         4.099 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5280876857,
+            "unit": "ns/op\t         3.179 DeleteSeconds\t         2.079 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
