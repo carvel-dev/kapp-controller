@@ -189,6 +189,7 @@ func Run(opts Options, runLog logr.Logger) error {
 	// initialize cluster access once - it contains a service account token cache which should be only setup once.
 	kubeconf := kubeconfig.NewKubeconfig(coreClient, runLog)
 	compInfo := componentinfo.NewComponentInfo(coreClient, kubeconf, Version)
+	appMetrics := &metrics.Metrics{ReconcileCountMetrics: countMetrics, ReconcileTimeMetrics: reconcileTimeMetrics}
 
 	cacheFolderApps := memdir.NewTmpDir("cache-appcr")
 	err = cacheFolderApps.Create()
@@ -200,7 +201,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			CoreClient:  coreClient,
 			AppClient:   kcClient,
 			KcConfig:    kcConfig,
-			AppMetrics:  &metrics.Metrics{ReconcileCountMetrics: countMetrics, ReconcileTimeMetrics: reconcileTimeMetrics},
+			AppMetrics:  appMetrics,
 			CmdRunner:   sidecarCmdExec,
 			Kubeconf:    kubeconf,
 			CompInfo:    compInfo,
@@ -231,8 +232,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			kcClient, opts.PackagingGlobalNS, runLog.WithName("handler"))
 
 		reconciler := pkginstall.NewReconciler(kcClient, pkgClient, coreClient, pkgToPkgInstallHandler,
-			runLog.WithName("pkgi"), compInfo, kcConfig, &metrics.Metrics{ReconcileCountMetrics: countMetrics,
-				ReconcileTimeMetrics: reconcileTimeMetrics})
+			runLog.WithName("pkgi"), compInfo, kcConfig, appMetrics)
 
 		ctrl, err := controller.New("pkgi", mgr, controller.Options{
 			Reconciler:              reconciler,
@@ -259,7 +259,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			CoreClient:  coreClient,
 			AppClient:   kcClient,
 			KcConfig:    kcConfig,
-			AppMetrics:  &metrics.Metrics{ReconcileCountMetrics: countMetrics, ReconcileTimeMetrics: reconcileTimeMetrics},
+			AppMetrics:  appMetrics,
 			CmdRunner:   sidecarCmdExec,
 			Kubeconf:    kubeconf,
 			CacheFolder: cacheFolderPkgRepoApps,

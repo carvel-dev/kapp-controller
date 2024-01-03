@@ -7,4 +7,5 @@ package metrics
 type Metrics struct {
 	*ReconcileCountMetrics
 	*ReconcileTimeMetrics
+	IsFirstReconcile bool
 }

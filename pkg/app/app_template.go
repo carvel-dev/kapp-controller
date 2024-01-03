@@ -5,10 +5,11 @@ package app
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	ctltpl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
-	"strings"
 )
 
 func (a *App) template(dirPath string) exec.CmdRunResult {

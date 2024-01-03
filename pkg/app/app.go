@@ -59,7 +59,6 @@ type App struct {
 	opts       Opts
 	appMetrics *metrics.Metrics
 
-	isFirstReconcile      bool
 	pendingStatusUpdate   bool
 	flushAllStatusUpdates bool
 	metadata              *deploy.Meta

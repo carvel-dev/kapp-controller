@@ -20,7 +20,6 @@ const (
 )
 
 func (a *App) fetch(dstPath string) (string, exec.CmdRunResult) {
-	// fetch init stage
 	if len(a.app.Spec.Fetch) == 0 {
 		return "", exec.NewCmdRunResultWithErr(fmt.Errorf("Expected at least one fetch option"))
 	}
