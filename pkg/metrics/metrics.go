@@ -9,3 +9,12 @@ type Metrics struct {
 	*ReconcileTimeMetrics
 	IsFirstReconcile bool
 }
+
+// NewMetrics is a factory function that returns a new instance of Metrics.
+func NewMetrics() *Metrics {
+	return &Metrics{
+		ReconcileCountMetrics: NewCountMetrics(),
+		ReconcileTimeMetrics:  NewReconcileTimeMetrics(),
+		IsFirstReconcile:      false,
+	}
+}

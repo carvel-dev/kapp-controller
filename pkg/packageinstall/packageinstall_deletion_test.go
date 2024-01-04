@@ -68,7 +68,7 @@ func Test_PackageInstallDeletion(t *testing.T) {
 
 		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, coreClient,
 			FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
-			&metrics.Metrics{ReconcileCountMetrics: metrics.NewCountMetrics(), ReconcileTimeMetrics: metrics.NewReconcileTimeMetrics()})
+			metrics.NewMetrics())
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
