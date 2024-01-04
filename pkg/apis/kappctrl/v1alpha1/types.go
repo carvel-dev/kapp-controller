@@ -14,6 +14,7 @@ import (
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
 // +kubebuilder:printcolumn:name=Since-Deploy,JSONPath=.status.deploy.startedAt,description=Last time app started being deployed. Does not mean anything was changed.,type=date
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
+// +kubebuilder:validation:XValidation:rule="has(self.spec.serviceAccountName) || has(self.spec.cluster)", message="Expected service account or cluster."
 // +protobuf=false
 // An App is a set of Kubernetes resources. These resources could span any number of namespaces or could be cluster-wide (e.g. CRDs). An App is represented in kapp-controller using a App CR.
 // The App CR comprises of three main sections:

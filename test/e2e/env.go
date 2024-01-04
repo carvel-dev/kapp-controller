@@ -4,9 +4,14 @@
 package e2e
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
+
+	"k8s.io/apimachinery/pkg/version"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 type Env struct {
@@ -39,4 +44,23 @@ func (e Env) Validate(t *testing.T) {
 	if len(errStrs) > 0 {
 		t.Fatalf("%s", strings.Join(errStrs, "\n"))
 	}
+}
+
+// GetServerVersion returns the cluster info. 
+func (e Env) GetServerVersion() (*version.Info, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	serverVersion, err := clientset.Discovery().ServerVersion()
+	if err != nil {
+		return nil, fmt.Errorf("Error getting server version: %v", err)
+	}
+	return serverVersion, nil
 }

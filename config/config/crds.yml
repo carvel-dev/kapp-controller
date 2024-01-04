@@ -1434,6 +1434,9 @@ spec:
         required:
         - spec
         type: object
+        x-kubernetes-validations:
+        - message: Expected service account or cluster.
+          rule: has(self.spec.serviceAccountName) || has(self.spec.cluster)
     served: true
     storage: true
     subresources:
@@ -1594,6 +1597,9 @@ spec:
         required:
         - spec
         type: object
+        x-kubernetes-validations:
+        - message: Expected service account or cluster.
+          rule: has(self.spec.serviceAccountName) || has(self.spec.cluster)
     served: true
     storage: true
     subresources:
