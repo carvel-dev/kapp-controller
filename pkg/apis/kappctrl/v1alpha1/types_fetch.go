@@ -106,9 +106,6 @@ type AppFetchGit struct {
 	// Skip lfs download (optional)
 	// +optional
 	LFSSkipSmudge bool `json:"lfsSkipSmudge,omitempty" protobuf:"varint,5,opt,name=lfsSkipSmudge"`
-	// Skip TLS verification (optional)
-	// +optional
-	DangerousSkipTLSVerify bool `json:"dangerousSkipTLSVerify,omitempty" protobuf:"varint,7,opt,name=dangerousSkipTLSVerify"`
 }
 
 // +k8s:openapi-gen=true

@@ -209,9 +209,6 @@ spec:
                             git:
                               description: Uses git to clone repository
                               properties:
-                                dangerousSkipTLSVerify:
-                                  description: Skip TLS verification (optional)
-                                  type: boolean
                                 lfsSkipSmudge:
                                   description: Skip lfs download (optional)
                                   type: boolean
@@ -828,9 +825,6 @@ spec:
                     git:
                       description: Uses git to clone repository
                       properties:
-                        dangerousSkipTLSVerify:
-                          description: Skip TLS verification (optional)
-                          type: boolean
                         lfsSkipSmudge:
                           description: Skip lfs download (optional)
                           type: boolean
@@ -1653,9 +1647,6 @@ spec:
                   git:
                     description: Uses git to clone repository containing package list
                     properties:
-                      dangerousSkipTLSVerify:
-                        description: Skip TLS verification (optional)
-                        type: boolean
                       lfsSkipSmudge:
                         description: Skip lfs download (optional)
                         type: boolean

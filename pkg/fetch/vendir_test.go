@@ -58,32 +58,52 @@ func Test_AddDir_skipsTLS(t *testing.T) {
 	}
 }
 
-func TestExtractImageRegistry(t *testing.T) {
+func TestExtractHost(t *testing.T) {
 	tests := []struct {
-		name string
-		want string
+		name     string
+		isGitURL bool
+		want     string
 	}{
 		{
-			name: "ubuntu:latest",
-			want: "index.docker.io",
+			name:     "ubuntu:latest",
+			isGitURL: false,
+			want:     "index.docker.io",
 		},
 		{
-			name: "foo/bar:v1.2.3",
-			want: "index.docker.io",
+			name:     "foo/bar:v1.2.3",
+			isGitURL: false,
+			want:     "index.docker.io",
 		},
 		{
-			name: "ghcr.io/foo/bar:foo",
-			want: "ghcr.io",
+			name:     "ghcr.io/foo/bar:foo",
+			isGitURL: false,
+			want:     "ghcr.io",
 		},
 		{
-			name: "foo.domain:5426/foo/bar@sha256:blah",
-			want: "foo.domain:5426",
+			name:     "foo.domain:5426/foo/bar@sha256:blah",
+			isGitURL: false,
+			want:     "foo.domain:5426",
+		},
+		{
+			name:     "https://github.com/bitnami/charts/",
+			isGitURL: true,
+			want:     "github.com",
+		},
+		{
+			name:     "http://github.com/bitnami/charts/",
+			isGitURL: true,
+			want:     "github.com",
+		},
+		{
+			name:     "ssh://username@hostname.com:/path/to/repo.git",
+			isGitURL: true,
+			want:     "hostname.com",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := fetch.ExtractImageRegistry(tt.name); got != tt.want {
-				t.Errorf("ExtractDockerImageRepo() = %v, want %v", got, tt.want)
+			if got := fetch.ExtractHost(tt.name, tt.isGitURL); got != tt.want {
+				t.Errorf("ExtractHost() = %v, want %v", got, tt.want)
 			}
 		})
 	}

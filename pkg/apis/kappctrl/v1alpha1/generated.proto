@@ -123,10 +123,6 @@ message AppFetchGit {
   // Skip lfs download (optional)
   // +optional
   optional bool lfsSkipSmudge = 5;
-
-  // Skip TLS verification (optional)
-  // +optional
-  optional bool dangerousSkipTLSVerify = 7;
 }
 
 // +k8s:openapi-gen=true
