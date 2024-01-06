@@ -166,6 +166,9 @@ func Test_NewConfig_AppMinimumSyncPeriod(t *testing.T) {
 }
 
 func Test_NewConfig_KappDeployRawOptions(t *testing.T) {
+	defaultRawOptions := []string{
+		"--app-changes-max-to-keep=5", "--apply-timeout=5m",
+	}
 	t.Run("with empty config value, returns just default", func(t *testing.T) {
 		secret := &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -176,7 +179,7 @@ func Test_NewConfig_KappDeployRawOptions(t *testing.T) {
 		}
 		config, err := kcconfig.NewConfig(k8sfake.NewSimpleClientset(secret))
 		assert.NoError(t, err)
-		assert.Equal(t, []string{"--app-changes-max-to-keep=5"}, config.KappDeployRawOptions())
+		assert.Equal(t, defaultRawOptions, config.KappDeployRawOptions())
 	})
 
 	t.Run("with empty config value, returns just default", func(t *testing.T) {
@@ -191,7 +194,7 @@ func Test_NewConfig_KappDeployRawOptions(t *testing.T) {
 		}
 		config, err := kcconfig.NewConfig(k8sfake.NewSimpleClientset(secret))
 		assert.NoError(t, err)
-		assert.Equal(t, []string{"--app-changes-max-to-keep=5"}, config.KappDeployRawOptions())
+		assert.Equal(t, defaultRawOptions, config.KappDeployRawOptions())
 	})
 
 	t.Run("with populated config value, returns default and user set", func(t *testing.T) {
@@ -206,7 +209,7 @@ func Test_NewConfig_KappDeployRawOptions(t *testing.T) {
 		}
 		config, err := kcconfig.NewConfig(k8sfake.NewSimpleClientset(secret))
 		assert.NoError(t, err)
-		assert.Equal(t, []string{"--app-changes-max-to-keep=5", "--key=val"}, config.KappDeployRawOptions())
+		assert.Equal(t, appendNewSlice(defaultRawOptions, "--key=val"), config.KappDeployRawOptions())
 	})
 
 	t.Run("clears previously set value when secret is gone", func(t *testing.T) {
@@ -223,15 +226,21 @@ func Test_NewConfig_KappDeployRawOptions(t *testing.T) {
 
 		config, err := kcconfig.NewConfig(client)
 		assert.NoError(t, err)
-		assert.Equal(t, []string{"--app-changes-max-to-keep=5", "--key=val"}, config.KappDeployRawOptions())
+		assert.Equal(t, appendNewSlice(defaultRawOptions, "--key=val"), config.KappDeployRawOptions())
 
 		err = client.CoreV1().Secrets("default").Delete(
 			context.Background(), "kapp-controller-config", metav1.DeleteOptions{})
 		assert.NoError(t, err)
 
 		assert.NoError(t, config.Reload())
-		assert.Equal(t, []string{"--app-changes-max-to-keep=5"}, config.KappDeployRawOptions())
+		assert.Equal(t, defaultRawOptions, config.KappDeployRawOptions())
 	})
+}
+
+func appendNewSlice(act []string, items ...string) []string {
+	newslice := make([]string, 0)
+	newslice = append(newslice, act...)
+	return append(newslice, items...)
 }
 
 func Test_NewConfig_ReturnsConfigMap_WhenOnlyConfigMapExists(t *testing.T) {

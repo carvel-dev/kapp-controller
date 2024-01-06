@@ -164,11 +164,17 @@ func (gc *Config) KappDeployRawOptions() []string {
 	gc.dataLock.RLock()
 	defer gc.dataLock.RUnlock()
 
+	kappOptions := make([]string, 0)
+
 	// Configure kapp to keep only 5 app changes as it seems that
 	// larger number of ConfigMaps negative affects other controllers on the cluster.
 	// Eventually kapp can be smart enough to keep minimal number of app changes.
 	// Set default first so that it can be overridden by user provided options.
-	return append([]string{"--app-changes-max-to-keep=5"}, gc.data.kappDeployRawOptions...)
+	// return append([]string{"--app-changes-max-to-keep=5"}, gc.data.kappDeployRawOptions...)
+	kappOptions = append(kappOptions, "--app-changes-max-to-keep=5")
+	kappOptions = append(kappOptions, "--apply-timeout=5m")
+	kappOptions = append(kappOptions, gc.data.kappDeployRawOptions...)
+	return kappOptions
 }
 
 // AppDefaultSyncPeriod returns duration that is used by Apps
