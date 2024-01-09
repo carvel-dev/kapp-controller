@@ -96,7 +96,9 @@ func (o *GetOptions) Run(args []string) error {
 		return fmt.Errorf("Package name should be of the format 'name' or 'name/version'")
 	}
 
-	client, err := o.depsFactory.PackageClient()
+	client, err := o.depsFactory.PackageClient(&cmdcore.ConfigOpts{
+		HostNameMod: o.pkgCmdTreeOpts.KubeconfigHostNameMod,
+	})
 	if err != nil {
 		return err
 	}

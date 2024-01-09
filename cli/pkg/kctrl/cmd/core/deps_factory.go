@@ -22,7 +22,7 @@ type DepsFactory interface {
 	DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error)
 	CoreClient() (kubernetes.Interface, error)
 	KappCtrlClient() (kcclient.Interface, error)
-	PackageClient() (pkgclient.Interface, error)
+	PackageClient(*ConfigOpts) (pkgclient.Interface, error)
 }
 
 type DepsFactoryImpl struct {
@@ -44,7 +44,7 @@ type DynamicClientOpts struct{}
 
 // RESTHost ideally should be on ConfigFactory (TODO remove)
 func (f *DepsFactoryImpl) RESTHost() (string, error) {
-	config, err := f.configFactory.RESTConfig()
+	config, err := f.configFactory.RESTConfig(nil)
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +52,7 @@ func (f *DepsFactoryImpl) RESTHost() (string, error) {
 }
 
 func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error) {
-	config, err := f.configFactory.RESTConfig()
+	config, err := f.configFactory.RESTConfig(nil)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interfa
 }
 
 func (f *DepsFactoryImpl) CoreClient() (kubernetes.Interface, error) {
-	config, err := f.configFactory.RESTConfig()
+	config, err := f.configFactory.RESTConfig(nil)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func (f *DepsFactoryImpl) CoreClient() (kubernetes.Interface, error) {
 }
 
 func (f *DepsFactoryImpl) KappCtrlClient() (kcclient.Interface, error) {
-	config, err := f.configFactory.RESTConfig()
+	config, err := f.configFactory.RESTConfig(nil)
 	if err != nil {
 		return nil, err
 	}
@@ -103,8 +103,8 @@ func (f *DepsFactoryImpl) KappCtrlClient() (kcclient.Interface, error) {
 	return clientset, nil
 }
 
-func (f *DepsFactoryImpl) PackageClient() (pkgclient.Interface, error) {
-	config, err := f.configFactory.RESTConfig()
+func (f *DepsFactoryImpl) PackageClient(configOpts *ConfigOpts) (pkgclient.Interface, error) {
+	config, err := f.configFactory.RESTConfig(configOpts)
 	if err != nil {
 		return nil, err
 	}

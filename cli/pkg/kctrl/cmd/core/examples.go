@@ -17,6 +17,7 @@ type PackageCommandTreeOpts struct {
 
 	DefaultKubeconfigOverridePath    string
 	DefaultKubeconfigOverrideContext string
+	KubeconfigHostNameMod            func(string) string
 
 	DefaultServiceAcccountName string
 	WaitByDefault              bool
