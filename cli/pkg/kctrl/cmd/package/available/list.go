@@ -104,7 +104,9 @@ func (o *ListOptions) listPackageMetadatas() error {
 		nsHeader.Hidden = false
 	}
 
-	client, err := o.depsFactory.PackageClient()
+	client, err := o.depsFactory.PackageClient(&cmdcore.ConfigOpts{
+		HostNameMod: o.pkgCmdTreeOpts.KubeconfigHostNameMod,
+	})
 	if err != nil {
 		return err
 	}
@@ -159,7 +161,9 @@ func (o *ListOptions) listPackages() error {
 		nsHeader.Hidden = false
 	}
 
-	client, err := o.depsFactory.PackageClient()
+	client, err := o.depsFactory.PackageClient(&cmdcore.ConfigOpts{
+		HostNameMod: o.pkgCmdTreeOpts.KubeconfigHostNameMod,
+	})
 	if err != nil {
 		return err
 	}

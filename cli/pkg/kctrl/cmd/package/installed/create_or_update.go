@@ -237,7 +237,7 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 	}
 
 	if len(o.version) == 0 {
-		pkgClient, err := o.depsFactory.PackageClient()
+		pkgClient, err := o.depsFactory.PackageClient(nil)
 		if err != nil {
 			return err
 		}

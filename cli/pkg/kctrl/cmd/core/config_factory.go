@@ -18,7 +18,7 @@ type ConfigFactory interface {
 	ConfigureContextResolver(func() (string, error))
 	ConfigureYAMLResolver(func() (string, error))
 	ConfigureClient(float32, int)
-	RESTConfig() (*rest.Config, error)
+	RESTConfig(*ConfigOpts) (*rest.Config, error)
 	DefaultNamespace() (string, error)
 }
 
@@ -32,6 +32,10 @@ type ConfigFactoryImpl struct {
 
 	defaultKubeconfigOverridePath    string
 	defaultKubeconfigOverrideContext string
+}
+
+type ConfigOpts struct {
+	HostNameMod func(string) string
 }
 
 var _ ConfigFactory = &ConfigFactoryImpl{}
@@ -62,7 +66,7 @@ func (f *ConfigFactoryImpl) ConfigureClient(qps float32, burst int) {
 	f.burst = burst
 }
 
-func (f *ConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
+func (f *ConfigFactoryImpl) RESTConfig(opts *ConfigOpts) (*rest.Config, error) {
 	isExplicitYAMLConfig, config, err := f.clientConfig()
 	if err != nil {
 		return nil, err
@@ -84,6 +88,10 @@ func (f *ConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
 		}
 
 		return nil, fmt.Errorf("Building Kubernetes config%s: %s%s", prefixMsg, err, hintMsg)
+	}
+
+	if opts != nil && opts.HostNameMod != nil {
+		restConfig.Host = opts.HostNameMod(restConfig.Host)
 	}
 
 	if f.qps > 0.0 {
