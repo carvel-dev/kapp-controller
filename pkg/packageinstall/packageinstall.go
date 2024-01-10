@@ -42,7 +42,6 @@ const (
 	// PackageInstall to indicate that lower version of the package
 	// can be selected vs whats currently installed.
 	DowngradableAnnKey = "packaging.carvel.dev/downgradable"
-	packageInstallType = "pkgi"
 )
 
 // nolint: revive
@@ -58,6 +57,11 @@ type PackageInstallCR struct {
 	opts       Opts
 
 	pkgMetrics *metrics.Metrics
+}
+
+// Kind return kind of pkg install
+func (pi *PackageInstallCR) Kind() string {
+	return "pkgi"
 }
 
 // nolint: revive
@@ -79,7 +83,7 @@ func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
 		func(st kcv1alpha1.GenericStatus) { pi.model.Status.GenericStatus = st },
 	}
 
-	pi.pkgMetrics.ReconcileCountMetrics.InitMetrics(packageInstallType, pi.model.Name, pi.model.Namespace)
+	pi.pkgMetrics.ReconcileCountMetrics.InitMetrics(pi.Kind(), pi.model.Name, pi.model.Namespace)
 
 	var result reconcile.Result
 	var err error
@@ -107,12 +111,12 @@ func (pi *PackageInstallCR) Reconcile() (reconcile.Result, error) {
 
 func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile.Result, error) {
 	pi.log.Info("Reconciling")
-	pi.pkgMetrics.ReconcileCountMetrics.RegisterReconcileAttempt(packageInstallType, pi.model.Name, pi.model.Namespace)
+	pi.pkgMetrics.ReconcileCountMetrics.RegisterReconcileAttempt(pi.Kind(), pi.model.Name, pi.model.Namespace)
 
 	reconcileStartTime := time.Now()
-	pi.pkgMetrics.IsFirstReconcile = pi.pkgMetrics.ReconcileCountMetrics.GetReconcileAttemptCounterValue(packageInstallType, pi.model.Name, pi.model.Namespace) == 1
+	pi.pkgMetrics.IsFirstReconcile = pi.pkgMetrics.ReconcileCountMetrics.GetReconcileAttemptCounterValue(pi.Kind(), pi.model.Name, pi.model.Namespace) == 1
 	defer func() {
-		pi.pkgMetrics.ReconcileTimeMetrics.RegisterOverallTime(packageInstallType, pi.model.Name, pi.model.Namespace,
+		pi.pkgMetrics.ReconcileTimeMetrics.RegisterOverallTime(pi.Kind(), pi.model.Name, pi.model.Namespace,
 			pi.pkgMetrics.IsFirstReconcile, time.Since(reconcileStartTime))
 	}()
 
