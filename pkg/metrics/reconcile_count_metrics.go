@@ -61,7 +61,7 @@ func NewCountMetrics() *ReconcileCountMetrics {
 			prometheus.CounterOpts{
 				Namespace: metricNamespace,
 				Name:      "app_reconcile_delete_attempt_total",
-				Help:      "Total number of attempted reconcile deletion",
+				Help:      "Total number of attempted reconcile deletions",
 			},
 			[]string{resourceTypeLabel, kappNameLabel, kappNamespaceLabel},
 		),
@@ -69,7 +69,7 @@ func NewCountMetrics() *ReconcileCountMetrics {
 			prometheus.CounterOpts{
 				Namespace: metricNamespace,
 				Name:      "app_reconcile_delete_failed_total",
-				Help:      "Total number of failed reconcile deletion",
+				Help:      "Total number of failed reconcile deletions",
 			},
 			[]string{resourceTypeLabel, kappNameLabel, kappNamespaceLabel},
 		),

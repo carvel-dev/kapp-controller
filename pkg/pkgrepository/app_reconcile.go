@@ -15,15 +15,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-const packageRepoResourceType = "pkgr"
-
 // Reconcile is not expected to be called concurrently
 func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 	defer a.flushUpdateStatus("packagerepository reconciled")
 
 	var err error
 
-	a.appMetrics.ReconcileCountMetrics.InitMetrics(packageRepoResourceType, a.Name(), a.Namespace())
+	a.appMetrics.ReconcileCountMetrics.InitMetrics(a.Kind(), a.Name(), a.Namespace())
 
 	switch {
 	case a.app.Spec.Paused:
@@ -95,9 +93,9 @@ func (a *App) reconcileDeploy() error {
 
 func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 	reconcileStartTime := time.Now()
-	a.appMetrics.IsFirstReconcile = a.appMetrics.ReconcileCountMetrics.GetReconcileAttemptCounterValue(packageRepoResourceType, a.Name(), a.Namespace()) == 1
+	a.appMetrics.IsFirstReconcile = a.appMetrics.ReconcileCountMetrics.GetReconcileAttemptCounterValue(a.Kind(), a.Name(), a.Namespace()) == 1
 	defer func() {
-		a.appMetrics.ReconcileTimeMetrics.RegisterOverallTime(packageRepoResourceType, a.Name(), a.Namespace(), a.appMetrics.IsFirstReconcile,
+		a.appMetrics.ReconcileTimeMetrics.RegisterOverallTime(a.Kind(), a.Name(), a.Namespace(), a.appMetrics.IsFirstReconcile,
 			time.Since(reconcileStartTime))
 	}()
 
@@ -127,7 +125,7 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 			UpdatedAt: metav1.NewTime(time.Now().UTC()),
 		}
 
-		a.appMetrics.ReconcileTimeMetrics.RegisterFetchTime(packageRepoResourceType, a.Name(), a.Namespace(), a.appMetrics.IsFirstReconcile,
+		a.appMetrics.ReconcileTimeMetrics.RegisterFetchTime(a.Kind(), a.Name(), a.Namespace(), a.appMetrics.IsFirstReconcile,
 			a.app.Status.Fetch.UpdatedAt.Sub(a.app.Status.Fetch.StartedAt.Time))
 
 		err := a.updateStatus("marking fetch completed")
@@ -151,7 +149,7 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
 
-	a.appMetrics.ReconcileTimeMetrics.RegisterTemplateTime(packageRepoResourceType, a.Name(), a.Namespace(), a.appMetrics.IsFirstReconcile,
+	a.appMetrics.ReconcileTimeMetrics.RegisterTemplateTime(a.Kind(), a.Name(), a.Namespace(), a.appMetrics.IsFirstReconcile,
 		a.app.Status.Template.UpdatedAt.Sub(templateStartTime))
 
 	err = a.updateStatus("marking template completed")
@@ -181,7 +179,7 @@ func (a *App) updateLastDeploy(result exec.CmdRunResult) exec.CmdRunResult {
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
 
-	a.appMetrics.ReconcileTimeMetrics.RegisterDeployTime(packageRepoResourceType, a.Name(), a.Namespace(), a.appMetrics.IsFirstReconcile,
+	a.appMetrics.ReconcileTimeMetrics.RegisterDeployTime(a.Kind(), a.Name(), a.Namespace(), a.appMetrics.IsFirstReconcile,
 		a.Status().Deploy.UpdatedAt.Sub(a.Status().Deploy.StartedAt.Time))
 
 	a.updateStatus("marking last deploy")
@@ -215,7 +213,7 @@ func (a *App) setReconciling() {
 		Status: corev1.ConditionTrue,
 	})
 
-	a.appMetrics.ReconcileCountMetrics.RegisterReconcileAttempt(packageRepoResourceType, a.Name(), a.Namespace())
+	a.appMetrics.ReconcileCountMetrics.RegisterReconcileAttempt(a.Kind(), a.Name(), a.Namespace())
 
 	a.app.Status.FriendlyDescription = "Reconciling"
 }

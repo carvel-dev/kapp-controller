@@ -49,6 +49,9 @@ func NewApp(app v1alpha1.App, hooks Hooks, fetchFactory fetch.Factory, templateF
 func (a *App) Name() string      { return a.app.Name }
 func (a *App) Namespace() string { return a.app.Namespace }
 
+// Kind return kind of pkg repo
+func (a *App) Kind() string { return "pkgr" }
+
 func (a *App) Status() v1alpha1.AppStatus { return a.app.Status }
 
 func (a *App) blockDeletion() error   { return a.hooks.BlockDeletion() }
