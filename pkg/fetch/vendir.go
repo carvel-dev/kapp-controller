@@ -22,7 +22,15 @@ import (
 	kyaml "sigs.k8s.io/yaml"
 )
 
+// SourceType to extract host
+type SourceType string
+
 const (
+	// GitURL source type to extract host
+	GitURL SourceType = "gitURL"
+	// ImageRegistry source type to extract host
+	ImageRegistry SourceType = "image"
+
 	vendirEntireDirPath = "."
 )
 
@@ -123,7 +131,7 @@ func (v *Vendir) imageConf(image v1alpha1.AppFetchImage) vendirconf.DirectoryCon
 			URL:                    image.URL,
 			TagSelection:           image.TagSelection,
 			SecretRef:              v.localRefConf(image.SecretRef),
-			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(image.URL, false),
+			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(image.URL, ImageRegistry),
 		},
 	}
 }
@@ -135,7 +143,7 @@ func (v *Vendir) imgpkgBundleConf(imgpkgBundle v1alpha1.AppFetchImgpkgBundle) ve
 			Image:                  imgpkgBundle.Image,
 			TagSelection:           imgpkgBundle.TagSelection,
 			SecretRef:              v.localRefConf(imgpkgBundle.SecretRef),
-			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(imgpkgBundle.Image, false),
+			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(imgpkgBundle.Image, ImageRegistry),
 		},
 	}
 }
@@ -162,7 +170,7 @@ func (v *Vendir) gitConf(git v1alpha1.AppFetchGit) vendirconf.DirectoryContents 
 			Ref:                    git.Ref,
 			SecretRef:              v.localRefConf(git.SecretRef),
 			LFSSkipSmudge:          git.LFSSkipSmudge,
-			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(git.URL, true),
+			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(git.URL, GitURL),
 		},
 	}
 }
@@ -379,8 +387,8 @@ func (v *Vendir) configMapBytes(configMapRef vendirconf.DirectoryContentsLocalRe
 }
 
 // This function works on image refs and hostname extraction using isGitURL flag
-func (v *Vendir) shouldSkipTLSVerify(url string, isGitURL bool) bool {
-	return v.opts.SkipTLSConfig.ShouldSkipTLSForAuthority(ExtractHost(url, isGitURL))
+func (v *Vendir) shouldSkipTLSVerify(url string, sourceType SourceType) bool {
+	return v.opts.SkipTLSConfig.ShouldSkipTLSForAuthority(ExtractHost(url, sourceType))
 }
 
 // Run executes vendir command based on given configuration.
@@ -432,9 +440,13 @@ func extractGitHostname(input string) string {
 }
 
 // ExtractHost return registry for Docker Image and Host for git url
-func ExtractHost(input string, isGitURL bool) string {
-	if !isGitURL {
+func ExtractHost(input string, sourceType SourceType) string {
+	switch sourceType {
+	case GitURL:
+		return extractGitHostname(input)
+	case ImageRegistry:
 		return extractImageRegistry(input)
+	default:
+		return ""
 	}
-	return extractGitHostname(input)
 }

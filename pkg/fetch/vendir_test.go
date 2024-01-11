@@ -60,49 +60,49 @@ func Test_AddDir_skipsTLS(t *testing.T) {
 
 func TestExtractHost(t *testing.T) {
 	tests := []struct {
-		name     string
-		isGitURL bool
-		want     string
+		name       string
+		sourceType fetch.SourceType
+		want       string
 	}{
 		{
-			name:     "ubuntu:latest",
-			isGitURL: false,
-			want:     "index.docker.io",
+			name:       "ubuntu:latest",
+			sourceType: fetch.ImageRegistry,
+			want:       "index.docker.io",
 		},
 		{
-			name:     "foo/bar:v1.2.3",
-			isGitURL: false,
-			want:     "index.docker.io",
+			name:       "foo/bar:v1.2.3",
+			sourceType: fetch.ImageRegistry,
+			want:       "index.docker.io",
 		},
 		{
-			name:     "ghcr.io/foo/bar:foo",
-			isGitURL: false,
-			want:     "ghcr.io",
+			name:       "ghcr.io/foo/bar:foo",
+			sourceType: fetch.ImageRegistry,
+			want:       "ghcr.io",
 		},
 		{
-			name:     "foo.domain:5426/foo/bar@sha256:blah",
-			isGitURL: false,
-			want:     "foo.domain:5426",
+			name:       "foo.domain:5426/foo/bar@sha256:blah",
+			sourceType: fetch.ImageRegistry,
+			want:       "foo.domain:5426",
 		},
 		{
-			name:     "https://github.com/bitnami/charts/",
-			isGitURL: true,
-			want:     "github.com",
+			name:       "https://github.com/bitnami/charts/",
+			sourceType: fetch.GitURL,
+			want:       "github.com",
 		},
 		{
-			name:     "http://github.com/bitnami/charts/",
-			isGitURL: true,
-			want:     "github.com",
+			name:       "http://github.com/bitnami/charts/",
+			sourceType: fetch.GitURL,
+			want:       "github.com",
 		},
 		{
-			name:     "ssh://username@hostname.com:/path/to/repo.git",
-			isGitURL: true,
-			want:     "hostname.com",
+			name:       "ssh://username@hostname.com:/path/to/repo.git",
+			sourceType: fetch.GitURL,
+			want:       "hostname.com",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := fetch.ExtractHost(tt.name, tt.isGitURL); got != tt.want {
+			if got := fetch.ExtractHost(tt.name, tt.sourceType); got != tt.want {
 				t.Errorf("ExtractHost() = %v, want %v", got, tt.want)
 			}
 		})
