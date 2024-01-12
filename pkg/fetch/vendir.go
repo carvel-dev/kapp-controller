@@ -22,15 +22,14 @@ import (
 	kyaml "sigs.k8s.io/yaml"
 )
 
-// SourceType to extract host
-type SourceType string
-
 const (
 	// GitURL source type to extract host
-	GitURL SourceType = "gitURL"
+	GitURL = iota
 	// ImageRegistry source type to extract host
-	ImageRegistry SourceType = "image"
+	ImageRegistry
+)
 
+const (
 	vendirEntireDirPath = "."
 )
 
@@ -386,8 +385,8 @@ func (v *Vendir) configMapBytes(configMapRef vendirconf.DirectoryContentsLocalRe
 	return kyaml.Marshal(configMap)
 }
 
-// This function works on image refs and hostname extraction using isGitURL flag
-func (v *Vendir) shouldSkipTLSVerify(url string, sourceType SourceType) bool {
+// This function works on image refs and hostname extraction based on source type
+func (v *Vendir) shouldSkipTLSVerify(url string, sourceType int) bool {
 	return v.opts.SkipTLSConfig.ShouldSkipTLSForAuthority(ExtractHost(url, sourceType))
 }
 
@@ -440,7 +439,7 @@ func extractGitHostname(input string) string {
 }
 
 // ExtractHost return registry for Docker Image and Host for git url
-func ExtractHost(input string, sourceType SourceType) string {
+func ExtractHost(input string, sourceType int) string {
 	switch sourceType {
 	case GitURL:
 		return extractGitHostname(input)

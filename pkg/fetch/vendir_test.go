@@ -58,10 +58,50 @@ func Test_AddDir_skipsTLS(t *testing.T) {
 	}
 }
 
+func Test_GitURL_skipsTLS(t *testing.T) {
+	configMap := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kapp-controller-config",
+			Namespace: "default",
+		},
+		Data: map[string]string{
+			"dangerousSkipTLSVerify": "github.com, gitlab.com, hostname.com",
+		},
+	}
+	k8scs := k8sfake.NewSimpleClientset(configMap)
+	config, err := kcconfig.NewConfig(k8scs)
+	assert.NoError(t, err)
+
+	vendir := fetch.NewVendir("default", k8scs,
+		fetch.VendirOpts{SkipTLSConfig: config}, exec.NewPlainCmdRunner())
+
+	type testCase struct {
+		URL           string
+		shouldSkipTLS bool
+	}
+	testCases := []testCase{
+		{"https://github.com/bitnami/charts/", true},
+		{"https://gitlab.com/bitnami/charts/", true},
+		{"ssh://username@hostname.com:/path/to/repo.git", true},
+		{"https://bitbucket.org/bitnami/charts/", false},
+	}
+	for i, tc := range testCases {
+		err = vendir.AddDir(v1alpha1.AppFetch{
+			Git: &v1alpha1.AppFetchGit{URL: tc.URL},
+		},
+			"dirpath/0")
+		assert.NoError(t, err)
+
+		vConf := vendir.Config()
+		assert.Equal(t, i+1, len(vConf.Directories), "Failed on iteration %d", i)
+		assert.Equal(t, tc.shouldSkipTLS, vConf.Directories[i].Contents[0].Git.DangerousSkipTLSVerify, "Failed with URL %s", tc.URL)
+	}
+}
+
 func TestExtractHost(t *testing.T) {
 	tests := []struct {
 		name       string
-		sourceType fetch.SourceType
+		sourceType int
 		want       string
 	}{
 		{
@@ -90,9 +130,9 @@ func TestExtractHost(t *testing.T) {
 			want:       "github.com",
 		},
 		{
-			name:       "http://github.com/bitnami/charts/",
+			name:       "http://gitlab.com/bitnami/charts/",
 			sourceType: fetch.GitURL,
-			want:       "github.com",
+			want:       "gitlab.com",
 		},
 		{
 			name:       "ssh://username@hostname.com:/path/to/repo.git",
