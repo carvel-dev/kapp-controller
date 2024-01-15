@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704297869181,
+  "lastUpdate": 1705293429970,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13515,6 +13515,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5280876857,
             "unit": "ns/op\t         3.179 DeleteSeconds\t         2.079 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "pbhaskal@gmail.com",
+            "name": "premkumar bhaskal",
+            "username": "prembhaskal"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f0852ed7039c2d456dde7d8ed32699c3e34e3316",
+          "message": "Merge pull request #1435 from prembhaskal/reduce-apply-timeout\n\nupdating default value for apply-timeout option for kapp to 5mins",
+          "timestamp": "2024-01-15T10:00:18+05:30",
+          "tree_id": "ea878b581c37c1e1fa731f6894ff11293b0e61a9",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/f0852ed7039c2d456dde7d8ed32699c3e34e3316"
+        },
+        "date": 1705293428818,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35028565943,
+            "unit": "ns/op\t        17.66 DeleteSeconds\t        17.35 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8298368863,
+            "unit": "ns/op\t         4.174 DeleteSeconds\t         4.101 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5250920960,
+            "unit": "ns/op\t         3.146 DeleteSeconds\t         2.080 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
