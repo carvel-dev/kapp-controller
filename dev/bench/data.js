@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705293429970,
+  "lastUpdate": 1705407381489,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13557,6 +13557,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5250920960,
             "unit": "ns/op\t         3.146 DeleteSeconds\t         2.080 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "38600853+kumaritanushree@users.noreply.github.com",
+            "name": "kumari tanushree",
+            "username": "kumaritanushree"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1ad322b61b5b6543409decda83a3c1b7d185d5c7",
+          "message": "Merge pull request #1446 from carvel-dev/bump-grpc\n\nBumped grpc 1.58.3",
+          "timestamp": "2024-01-16T17:39:14+05:30",
+          "tree_id": "5c6a886f0aa19d8845e87d6d065ea3bc50b13d69",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/1ad322b61b5b6543409decda83a3c1b7d185d5c7"
+        },
+        "date": 1705407380362,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35098997459,
+            "unit": "ns/op\t        17.69 DeleteSeconds\t        17.38 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8316424489,
+            "unit": "ns/op\t         4.187 DeleteSeconds\t         4.105 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5289110568,
+            "unit": "ns/op\t         3.182 DeleteSeconds\t         2.082 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
