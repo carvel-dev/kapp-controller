@@ -45,6 +45,7 @@ func main() {
 	mainLog.Info("kapp-controller", "version", Version)
 
 	err := Run(ctrlOpts, log.WithName("controller"))
+
 	if err != nil {
 		mainLog.Error(err, "Exited run with error")
 		os.Exit(1)
