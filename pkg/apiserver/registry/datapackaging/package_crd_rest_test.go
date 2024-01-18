@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/internalpackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
 	datapkgreg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/registry/datapackaging"
@@ -20,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	cgtesting "k8s.io/client-go/testing"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const globalNamespace = "global.packaging.kapp-controller.carvel.dev"
@@ -31,7 +33,7 @@ func TestPackageVersionListIncludesGlobalAndNamespaced(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalIntPackageVersion(), namespacedIntPackageVersion(), excludedNonGlobalIntPackageVersion())
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace, logf.Log)
 
 	pkgvList, err := pkgvCRDREST.List(namespacedCtx(nonGlobalNamespace), &internalversion.ListOptions{})
 	if err != nil {
@@ -66,7 +68,7 @@ func TestPackageVersionListPrefersNamespacedOverGlobal(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalIntPackageVersion(), overrideIntPackageVersion())
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace, logf.Log)
 
 	// list package versions and verify all of them are there
 	pkgvList, err := pkgvCRDREST.List(namespacedCtx(nonGlobalNamespace), &internalversion.ListOptions{})
@@ -101,7 +103,7 @@ func TestPackageVersionGetNotPresentInNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace, logf.Log)
 
 	obj, err := pkgvCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err != nil {
@@ -126,7 +128,7 @@ func TestPackageVersionGetPresentInOnlyNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(namespacedPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace, logf.Log)
 
 	obj, err := pkgvCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err != nil {
@@ -146,21 +148,20 @@ func TestPackageVersionGetPresentInOnlyNS(t *testing.T) {
 func TestPackageVersionGetNotFound(t *testing.T) {
 	namespacedPackageVersion := excludedNonGlobalIntPackageVersion()
 	name := namespacedPackageName
+	expectedError := "package.data.packaging.carvel.dev \"" + name + "\" not found"
 
 	internalClient := fake.NewSimpleClientset(namespacedPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace, logf.Log)
 
 	_, err := pkgvCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err == nil {
 		t.Fatalf("Expected get operation to fail, but it didn't")
 	}
 
-	if !errors.IsNotFound(err) {
-		t.Fatalf("Expected a not found error, got: %v", err)
-	}
-
+	require.True(t, errors.IsNotFound(err))
+	require.ErrorContains(t, err, expectedError)
 }
 
 func TestPackageVersionGetPreferNS(t *testing.T) {
@@ -171,7 +172,7 @@ func TestPackageVersionGetPreferNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(overridePackageVersion, globalIntPackageVersion())
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace, logf.Log)
 
 	obj, err := pkgvCRDREST.Get(namespacedCtx(nonGlobalNamespace), name, &metav1.GetOptions{})
 	if err != nil {
@@ -201,7 +202,7 @@ func TestPackageVersionUpdateDoesntUpdateGlobal(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalPackageVersion, namespacedPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace, logf.Log)
 
 	obj, created, err := pkgvCRDREST.Update(namespacedCtx(nonGlobalNamespace), name, UpdatePackageVersionTestImpl{updateReleaseNotesFn(newReleaseNotes, name, packageName, version)}, nil, nil, false, &metav1.UpdateOptions{})
 	if err != nil {
@@ -242,7 +243,7 @@ func TestPackageVersionUpdateCreatesInNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace, logf.Log)
 
 	obj, created, err := pkgvCRDREST.Update(namespacedCtx(nonGlobalNamespace), name, UpdatePackageVersionTestImpl{updateReleaseNotesFn(newReleaseNotes, name, packageName, version)}, nil, nil, false, &metav1.UpdateOptions{})
 	if err != nil {
@@ -276,7 +277,7 @@ func TestPackageVersionDeleteExistsInNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(namespacedPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace, logf.Log)
 
 	_, _, err := pkgvCRDREST.Delete(namespacedCtx(nonGlobalNamespace), name, nil, &metav1.DeleteOptions{})
 	if err != nil {
@@ -308,7 +309,7 @@ func TestPackageVersionDeleteExistsGlobalNotInNS(t *testing.T) {
 	internalClient := fake.NewSimpleClientset(globalPackageVersion)
 	fakeCoreClient := k8sfake.NewSimpleClientset(namespace())
 
-	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace)
+	pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, fakeCoreClient, globalNamespace, logf.Log)
 
 	_, _, err := pkgvCRDREST.Delete(namespacedCtx(nonGlobalNamespace), name, nil, &metav1.DeleteOptions{})
 	if !errors.IsNotFound(err) {

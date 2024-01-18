@@ -6,15 +6,17 @@ package datapackaging
 import (
 	"context"
 	"encoding/base32"
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/go-logr/logr"
 	internalpkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/internalpackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/watchers"
 	internalclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
@@ -27,10 +29,12 @@ const (
 
 type PackageTranslator struct {
 	namespace string
+	logger    logr.Logger
 }
 
-func NewPackageTranslator(namespace string) PackageTranslator {
-	return PackageTranslator{namespace}
+// NewPackageTranslator creates a new instance of the PackageTranslator type
+func NewPackageTranslator(namespace string, logger logr.Logger) PackageTranslator {
+	return PackageTranslator{namespace, logger}
 }
 
 func (t PackageTranslator) ToInternalName(name string) string {
@@ -65,7 +69,7 @@ func (t PackageTranslator) ToExternalObj(intObj *internalpkgingv1alpha1.Internal
 	var err error
 	obj.Name, err = t.ToExternalName(intObj.Name)
 	if err != nil {
-		return nil, errors.NewInternalError(fmt.Errorf("decoding internal obj name '%s': %v", intObj.Name, err))
+		return nil, apierrors.NewInternalError(fmt.Errorf("decoding internal obj name '%s': %v", intObj.Name, err))
 	}
 
 	// Self link is deprecated and planned for removal, so we don't translate it
@@ -122,10 +126,10 @@ func (t PackageTranslator) ToExternalWatcher(intObjWatcher watch.Interface, fiel
 			evt.Object, err = t.ToExternalObj(intpkg)
 			if err != nil {
 				var status metav1.Status
-				if statusErr, ok := err.(*errors.StatusError); ok {
+				if statusErr, ok := err.(*apierrors.StatusError); ok {
 					status = statusErr.Status()
 				} else {
-					status = errors.NewInternalError(err).Status()
+					status = apierrors.NewInternalError(err).Status()
 				}
 				return watch.Event{Type: watch.Error, Object: &status}
 			}
@@ -152,7 +156,29 @@ func (t PackageTranslator) ToExternalWatcher(intObjWatcher watch.Interface, fiel
 }
 
 func (t PackageTranslator) ToExternalError(err error) error {
-	// TODO: implement
+	var status apierrors.APIStatus
+	if !(errors.As(err, &status)) {
+		return err
+	}
+
+	details := status.Status().Details
+	if details != nil && details.Kind == "internalpackages" && details.Group == internalpkgingv1alpha1.SchemeGroupVersion.Group {
+		packageName, translateErr := t.ToExternalName(details.Name)
+		if translateErr != nil {
+			t.logger.Error(translateErr, "Error translating to external name")
+			return err
+		}
+
+		switch status.Status().Reason {
+		case metav1.StatusReasonNotFound:
+			return apierrors.NewNotFound(datapkgingv1alpha1.Resource("package"), packageName)
+		case metav1.StatusReasonAlreadyExists:
+			return apierrors.NewAlreadyExists(datapkgingv1alpha1.Resource("package"), packageName)
+		default:
+			return err
+		}
+	}
+
 	return err
 }
 
