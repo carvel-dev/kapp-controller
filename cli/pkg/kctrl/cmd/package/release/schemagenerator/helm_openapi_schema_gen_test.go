@@ -81,6 +81,8 @@ arrExample:
 floatExample: 2.3
 # Integer example
 intExample: 3
+# Object example
+objExample: {}
 `,
 			want: `properties:
   arrExample:
@@ -111,6 +113,10 @@ intExample: 3
     default: test-container
     description: Container name
     type: string
+  objExample:
+    default: {}
+    description: Object example
+    type: object
 type: object
 `},
 		{

@@ -180,7 +180,7 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 		if len(properties) > 0 {
 			apiKeys = append(apiKeys, &MapItem{Key: propertiesKey, Value: &Map{Items: properties}})
 		} else {
-			apiKeys = append(apiKeys, &MapItem{Key: defaultKey, Value: "{}"})
+			apiKeys = append(apiKeys, &MapItem{Key: defaultKey, Value: &Map{}})
 		}
 	case yaml3.SequenceNode:
 		apiKeys = append(apiKeys, &MapItem{Key: typeKey, Value: arrayVal})
