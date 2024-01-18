@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 	"sigs.k8s.io/yaml"
@@ -407,5 +408,23 @@ spec:
 		if err == nil {
 			t.Fatalf("Expected not to find local namespace '%s', but did", localNS)
 		}
+	})
+}
+
+func TestPackageNotFound(t *testing.T) {
+	env := e2e.BuildEnv(t)
+	logger := e2e.Logger{}
+	k := e2e.Kubectl{t, env.Namespace, logger}
+	packageName := "foo.1.0.0"
+	expectedError := "stderr: 'Error from server (NotFound): package.data.packaging.carvel.dev \"foo.1.0.0\" not found"
+
+	logger.Section("Get Package", func() {
+		_, err := k.RunWithOpts([]string{"get", "package", packageName}, e2e.RunOpts{AllowError: true})
+		require.ErrorContains(t, err, expectedError)
+	})
+
+	logger.Section("delete Package", func() {
+		_, err := k.RunWithOpts([]string{"delete", "package", packageName}, e2e.RunOpts{AllowError: true})
+		require.ErrorContains(t, err, expectedError)
 	})
 }
