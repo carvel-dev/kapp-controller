@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705407381489,
+  "lastUpdate": 1705556957423,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13599,6 +13599,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5289110568,
             "unit": "ns/op\t         3.182 DeleteSeconds\t         2.082 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rcmadhankumar@gmail.com",
+            "name": "Madhankumar Chellamuthu",
+            "username": "rcmadhankumar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0972b2f8de9f1e64e5bee2612ed638dd29933ccf",
+          "message": "Return user friendly error when package doesn't exist (#1322)\n\nSigned-off-by: rcmadhankumar <rcmadhankumar@gmail.com>",
+          "timestamp": "2024-01-18T11:14:55+05:30",
+          "tree_id": "c67c74a515099cd78773f09e8452fe7aa9f6f493",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/0972b2f8de9f1e64e5bee2612ed638dd29933ccf"
+        },
+        "date": 1705556956280,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35086432517,
+            "unit": "ns/op\t        17.71 DeleteSeconds\t        17.35 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8309194960,
+            "unit": "ns/op\t         4.183 DeleteSeconds\t         4.101 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5281517292,
+            "unit": "ns/op\t         3.178 DeleteSeconds\t         2.078 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
