@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705933269979,
+  "lastUpdate": 1705934012968,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13767,6 +13767,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5270215364,
             "unit": "ns/op\t         3.152 DeleteSeconds\t         2.092 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "923d1c31e815b0f68dfae33e639a932b092ebf78",
+          "message": "Bump docker/login-action from 2 to 3 (#1327)\n\nBumps [docker/login-action](https://github.com/docker/login-action) from 2 to 3.\r\n- [Release notes](https://github.com/docker/login-action/releases)\r\n- [Commits](https://github.com/docker/login-action/compare/v2...v3)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: docker/login-action\r\n  dependency-type: direct:production\r\n  update-type: version-update:semver-major\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2024-01-22T19:56:16+05:30",
+          "tree_id": "098d4526fcab69ade9164fb2c786d96a5a205b7f",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/923d1c31e815b0f68dfae33e639a932b092ebf78"
+        },
+        "date": 1705934011167,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35030825243,
+            "unit": "ns/op\t        17.67 DeleteSeconds\t        17.34 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8329701033,
+            "unit": "ns/op\t         4.206 DeleteSeconds\t         4.100 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5240520176,
+            "unit": "ns/op\t         3.137 DeleteSeconds\t         2.080 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
