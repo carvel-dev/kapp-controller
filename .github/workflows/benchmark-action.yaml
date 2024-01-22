@@ -21,7 +21,7 @@ jobs:
     name: Performance regression check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3.5.2
+      - uses: actions/checkout@v4.1.1
       - uses: actions/setup-go@v4 # default version of go is 1.10
         with:
           go-version: 1.21.1
