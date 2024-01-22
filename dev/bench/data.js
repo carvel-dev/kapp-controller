@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705556957423,
+  "lastUpdate": 1705918716573,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13641,6 +13641,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5281517292,
             "unit": "ns/op\t         3.178 DeleteSeconds\t         2.078 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "iamjignyasa@gmail.com",
+            "name": "Jignyasa Mishra",
+            "username": "jignyasamishra"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d8e83a8189023ccfb62a0ec9d2f8b391853e9310",
+          "message": "changed e2e Tests Retry to iteration count (#1453)\n\nSigned-off-by: jignyasamishra <iamjignyasa@gmail.com>",
+          "timestamp": "2024-01-22T15:41:39+05:30",
+          "tree_id": "e3f52767bb3ed00dfeefcc957fd6391e4cc17efb",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/d8e83a8189023ccfb62a0ec9d2f8b391853e9310"
+        },
+        "date": 1705918715181,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35060970690,
+            "unit": "ns/op\t        17.69 DeleteSeconds\t        17.34 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8289597704,
+            "unit": "ns/op\t         4.167 DeleteSeconds\t         4.097 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5280417541,
+            "unit": "ns/op\t         3.175 DeleteSeconds\t         2.082 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
