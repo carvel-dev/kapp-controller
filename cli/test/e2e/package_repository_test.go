@@ -56,6 +56,31 @@ func TestPackageRepository(t *testing.T) {
 		require.Error(t, err)
 	})
 
+	logger.Section("list packages from a package repository", func() {
+		out, _ := kappCtrl.RunWithOpts([]string{"package", "repository", "list-packages", "--url", pkgrURL, "--json"}, RunOpts{NoNamespace: true})
+		output := uitest.JSONUIFromBytes(t, []byte(out))
+		expectedOutputRows := []map[string]string{{
+			"name":    "pkg.test.carvel.dev",
+			"version": "1.0.0",
+		}, {
+			"name":    "pkg.test.carvel.dev",
+			"version": "2.0.0",
+		}, {
+			"name":    "pkg.test.carvel.dev",
+			"version": "3.0.0-rc.1",
+		}}
+
+		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
+	})
+
+	logger.Section("list packages from a package repository with invalid URL", func() {
+		pkgrURL := "index.docker.io/k8slt/kc-e2e-test-repo:invalid"
+		_, err := kappCtrl.RunWithOpts([]string{"package", "repository", "list-packages", "--url", pkgrURL, "--json"}, RunOpts{
+			NoNamespace: true, AllowError: true})
+		require.Contains(t, err.Error(), "MANIFEST_UNKNOWN: manifest unknown")
+
+	})
+
 	logger.Section("adding a repository", func() {
 		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL})
 
