@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705918716573,
+  "lastUpdate": 1705932549932,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13683,6 +13683,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5280417541,
             "unit": "ns/op\t         3.175 DeleteSeconds\t         2.082 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b0915a410df5a2dc01832e40d992fad9f5488754",
+          "message": "Bump reviewdog/action-misspell from 1.12.4 to 1.15.0 (#1433)\n\nBumps [reviewdog/action-misspell](https://github.com/reviewdog/action-misspell) from 1.12.4 to 1.15.0.\r\n- [Release notes](https://github.com/reviewdog/action-misspell/releases)\r\n- [Commits](https://github.com/reviewdog/action-misspell/compare/ccb0441a34ac2a3ece1206c63d7b6dd757ffde4d...06d6a480724fa783c220081bbc22336a78dbbe82)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: reviewdog/action-misspell\r\n  dependency-type: direct:production\r\n  update-type: version-update:semver-minor\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2024-01-22T19:31:55+05:30",
+          "tree_id": "ab201939271827b4599317b0ada5e84f775076eb",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/b0915a410df5a2dc01832e40d992fad9f5488754"
+        },
+        "date": 1705932548490,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35233036639,
+            "unit": "ns/op\t        17.81 DeleteSeconds\t        17.40 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8307165935,
+            "unit": "ns/op\t         4.180 DeleteSeconds\t         4.103 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5251956694,
+            "unit": "ns/op\t         3.143 DeleteSeconds\t         2.082 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
