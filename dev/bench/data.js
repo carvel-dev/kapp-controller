@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705934012968,
+  "lastUpdate": 1705934092124,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13809,6 +13809,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5240520176,
             "unit": "ns/op\t         3.137 DeleteSeconds\t         2.080 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1d6c8d808c384fa0a9fdcd85ae54e29d4d6e1e92",
+          "message": "Bump golangci/golangci-lint-action from 3.6.0 to 3.7.0 (#1307)\n\nBumps [golangci/golangci-lint-action](https://github.com/golangci/golangci-lint-action) from 3.6.0 to 3.7.0.\r\n- [Release notes](https://github.com/golangci/golangci-lint-action/releases)\r\n- [Commits](https://github.com/golangci/golangci-lint-action/compare/v3.6.0...v3.7.0)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: golangci/golangci-lint-action\r\n  dependency-type: direct:production\r\n  update-type: version-update:semver-minor\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2024-01-22T19:57:17+05:30",
+          "tree_id": "53c049e127bdc922364f1ba8b8fcd8cea8e00eac",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/1d6c8d808c384fa0a9fdcd85ae54e29d4d6e1e92"
+        },
+        "date": 1705934090382,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35046418616,
+            "unit": "ns/op\t        17.67 DeleteSeconds\t        17.35 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8323236648,
+            "unit": "ns/op\t         4.197 DeleteSeconds\t         4.100 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5265511193,
+            "unit": "ns/op\t         3.155 DeleteSeconds\t         2.085 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
