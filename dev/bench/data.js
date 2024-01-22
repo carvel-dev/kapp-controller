@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705934092124,
+  "lastUpdate": 1705935343094,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13851,6 +13851,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5265511193,
             "unit": "ns/op\t         3.155 DeleteSeconds\t         2.085 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "df87efdcf0c0c140ff644c8286257cd38a74fd42",
+          "message": "Bump golang.org/x/crypto from 0.14.0 to 0.18.0 (#1436)\n\nBumps [golang.org/x/crypto](https://github.com/golang/crypto) from 0.14.0 to 0.18.0.\r\n- [Commits](https://github.com/golang/crypto/compare/v0.14.0...v0.18.0)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: golang.org/x/crypto\r\n  dependency-type: direct:production\r\n  update-type: version-update:semver-minor\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2024-01-22T20:18:23+05:30",
+          "tree_id": "4d847b617ef13d6442db0566d073565a5d9f5059",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/df87efdcf0c0c140ff644c8286257cd38a74fd42"
+        },
+        "date": 1705935341879,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35023033157,
+            "unit": "ns/op\t        17.66 DeleteSeconds\t        17.34 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8284439038,
+            "unit": "ns/op\t         4.168 DeleteSeconds\t         4.092 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5267748084,
+            "unit": "ns/op\t         3.168 DeleteSeconds\t         2.077 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
