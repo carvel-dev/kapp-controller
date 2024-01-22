@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705932549932,
+  "lastUpdate": 1705933269979,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13725,6 +13725,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5251956694,
             "unit": "ns/op\t         3.143 DeleteSeconds\t         2.082 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "98549719+carvel-bot@users.noreply.github.com",
+            "name": "Carvel Bot",
+            "username": "carvel-bot"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6911c804bd7a6cc0c72b4730339eaa4d0279d795",
+          "message": "Bump dependencies (#1385)\n\nSigned-off-by: Carvel Bot <svc.bot.carvel@vmware.com>",
+          "timestamp": "2024-01-22T19:43:47+05:30",
+          "tree_id": "7510857f2a81ba601d5f3b69527dfc5a103aa259",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/6911c804bd7a6cc0c72b4730339eaa4d0279d795"
+        },
+        "date": 1705933268537,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35090829759,
+            "unit": "ns/op\t        17.69 DeleteSeconds\t        17.37 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8407237113,
+            "unit": "ns/op\t         4.255 DeleteSeconds\t         4.109 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5270215364,
+            "unit": "ns/op\t         3.152 DeleteSeconds\t         2.092 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
