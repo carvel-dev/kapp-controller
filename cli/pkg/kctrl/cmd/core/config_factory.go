@@ -29,9 +29,6 @@ type ConfigFactoryImpl struct {
 
 	qps   float32
 	burst int
-
-	defaultKubeconfigOverridePath    string
-	defaultKubeconfigOverrideContext string
 }
 
 var _ ConfigFactory = &ConfigFactoryImpl{}
@@ -50,11 +47,6 @@ func (f *ConfigFactoryImpl) ConfigureContextResolver(resolverFunc func() (string
 
 func (f *ConfigFactoryImpl) ConfigureYAMLResolver(resolverFunc func() (string, error)) {
 	f.yamlResolverFunc = resolverFunc
-}
-
-func (f *ConfigFactoryImpl) ConfigureKubeconfigOverrides(defaultKubeconfigOverridePath string, defaultKubeconfigOverrideContext string) {
-	f.defaultKubeconfigOverridePath = defaultKubeconfigOverridePath
-	f.defaultKubeconfigOverrideContext = defaultKubeconfigOverrideContext
 }
 
 func (f *ConfigFactoryImpl) ConfigureClient(qps float32, burst int) {
@@ -130,11 +122,6 @@ func (f *ConfigFactoryImpl) clientConfig() (bool, clientcmd.ClientConfig, error)
 	// Based on https://github.com/kubernetes/kubernetes/blob/30c7df5cd822067016640aa267714204ac089172/staging/src/k8s.io/cli-runtime/pkg/genericclioptions/config_flags.go#L124
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	overrides := &clientcmd.ConfigOverrides{}
-
-	if len(path) == 0 && len(context) == 0 && f.defaultKubeconfigOverrideContext != "" && f.defaultKubeconfigOverridePath != "" {
-		path = f.defaultKubeconfigOverridePath
-		context = f.defaultKubeconfigOverrideContext
-	}
 
 	if len(path) > 0 {
 		loadingRules.ExplicitPath = path

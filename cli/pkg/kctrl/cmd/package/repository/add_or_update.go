@@ -65,7 +65,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	}
 
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
-	o.SecureNamespaceFlags.Set(cmd, o.pkgCmdTreeOpts.AllowSharedNamespaces)
+	o.SecureNamespaceFlags.Set(cmd)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
@@ -84,7 +84,6 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 		AllowDisableWait: true,
 		DefaultInterval:  1 * time.Second,
 		DefaultTimeout:   5 * time.Minute,
-		WaitByDefault:    o.pkgCmdTreeOpts.WaitByDefault,
 	})
 
 	o.CreateRepository = true
@@ -107,7 +106,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 	}
 
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
-	o.SecureNamespaceFlags.Set(cmd, o.pkgCmdTreeOpts.AllowSharedNamespaces)
+	o.SecureNamespaceFlags.Set(cmd)
 
 	if !o.pkgCmdTreeOpts.PositionalArgs {
 		cmd.Flags().StringVarP(&o.Name, "repository", "r", "", "Set package repository name (required)")
@@ -122,7 +121,6 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 		AllowDisableWait: true,
 		DefaultInterval:  1 * time.Second,
 		DefaultTimeout:   5 * time.Minute,
-		WaitByDefault:    o.pkgCmdTreeOpts.WaitByDefault,
 	})
 
 	return cmd

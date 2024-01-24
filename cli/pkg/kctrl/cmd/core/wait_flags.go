@@ -19,14 +19,13 @@ type WaitFlagsOpts struct {
 	AllowDisableWait bool
 	DefaultInterval  time.Duration
 	DefaultTimeout   time.Duration
-	WaitByDefault    bool
 }
 
 func (f *WaitFlags) Set(cmd *cobra.Command, flagsFactory FlagsFactory, opts *WaitFlagsOpts) {
-	if opts.AllowDisableWait || !opts.WaitByDefault {
-		cmd.Flags().BoolVar(&f.Enabled, "wait", opts.WaitByDefault, "Wait for reconciliation to complete")
+	if opts.AllowDisableWait {
+		cmd.Flags().BoolVar(&f.Enabled, "wait", true, "Wait for reconciliation to complete")
 	}
-	f.Enabled = opts.WaitByDefault
+	f.Enabled = true
 	cmd.Flags().DurationVar(&f.CheckInterval, "wait-check-interval", opts.DefaultInterval, "Amount of time to sleep between checks while waiting")
 	cmd.Flags().DurationVar(&f.Timeout, "wait-timeout", opts.DefaultTimeout, "Maximum amount of time to wait in wait phase")
 }
