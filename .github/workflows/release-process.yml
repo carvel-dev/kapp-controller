@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: read
+      packages: write
       id-token: write
     steps:
       - name: Check out code
