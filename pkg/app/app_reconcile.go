@@ -166,18 +166,24 @@ func (a *App) updateLastDeploy(result exec.CmdRunResult) exec.CmdRunResult {
 	result = result.WithFriendlyYAMLStrings()
 
 	a.app.Status.Deploy = &v1alpha1.AppStatusDeploy{
-		Stdout:    result.Stdout,
-		Stderr:    result.Stderr,
-		Finished:  result.Finished,
-		ExitCode:  result.ExitCode,
-		Error:     result.ErrorStr(),
-		StartedAt: a.app.Status.Deploy.StartedAt,
-		UpdatedAt: metav1.NewTime(time.Now().UTC()),
+		Stdout:           result.Stdout,
+		Stderr:           result.Stderr,
+		Finished:         result.Finished,
+		ExitCode:         result.ExitCode,
+		Error:            result.ErrorStr(),
+		StartedAt:        a.app.Status.Deploy.StartedAt,
+		UpdatedAt:        metav1.NewTime(time.Now().UTC()),
+		KappDeployStatus: a.app.Status.Deploy.KappDeployStatus,
 	}
 
 	defer a.updateStatus("marking last deploy")
 
 	if a.metadata == nil {
+		return result
+	}
+
+	// Do not overwrite kapp deploy status during delete
+	if len(a.metadata.LastChange.Namespaces) == 0 {
 		return result
 	}
 
