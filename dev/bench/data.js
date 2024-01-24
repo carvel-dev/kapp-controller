@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706109841336,
+  "lastUpdate": 1706112830658,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14019,6 +14019,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 6257587303,
             "unit": "ns/op\t         4.154 DeleteSeconds\t         2.079 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "joaod@vmware.com",
+            "name": "João Pereira",
+            "username": "joaopapereira"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "899e1a12245d4bb8e23b1fbf7f7f38bb43ff25ff",
+          "message": "Merge pull request #1449 from gcapizzi/fix-empty-obj-default\n\nDon't use a string as the OpenAPI default value for Helm values with an empty object default",
+          "timestamp": "2024-01-24T10:09:36-06:00",
+          "tree_id": "c1022d2f0849d56bca86fdd8ecee54a31c772c26",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/899e1a12245d4bb8e23b1fbf7f7f38bb43ff25ff"
+        },
+        "date": 1706112829537,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35039745445,
+            "unit": "ns/op\t        17.67 DeleteSeconds\t        17.34 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8353826662,
+            "unit": "ns/op\t         4.188 DeleteSeconds\t         4.141 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5291374831,
+            "unit": "ns/op\t         3.181 DeleteSeconds\t         2.088 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
