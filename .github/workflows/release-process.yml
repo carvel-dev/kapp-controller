@@ -90,104 +90,7 @@ jobs:
             --certificate-identity-regexp=https://github.com/${{ github.repository_owner }} \
             --certificate-oidc-issuer=https://token.actions.githubusercontent.com
 
-      - name: Add to formatted checksum
-        run: |
-          pushd release
-          shasum -a 256 ./release.yml ./kctrl-* ./package.yml ./package-metadata.yml | tee ../tmp/checksums.txt
-          popd
-          echo "# :open_file_folder: Files Checksum" | tee ./tmp/checksums-formatted.txt
-          echo '```' | tee -a ./tmp/checksums-formatted.txt
-          cat ./tmp/checksums.txt | tee -a ./tmp/checksums-formatted.txt
-          echo '```' | tee -a ./tmp/checksums-formatted.txt
-
-      - name: Sign checksums.txt
-        run: |
-          cosign sign-blob --yes ./tmp/checksums.txt --output-certificate release/checksums.txt.pem  --output-signature release/checksums.txt.sig
-
-      - name: Verify checksums signature
-        run: |
-          cosign verify-blob \
-            --cert release/checksums.txt.pem \
-            --signature release/checksums.txt.sig \
-            --certificate-identity-regexp=https://github.com/${{ github.repository_owner }} \
-            --certificate-oidc-issuer=https://token.actions.githubusercontent.com ./tmp/checksums.txt
-
-      - name: Create release draft and upload release yaml
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
-        with:
-          name: ${{ github.ref_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          body_path: ./tmp/checksums-formatted.txt
-          files: |
-            ./release/*
-            ./tmp/checksums.txt
-          draft: true
-          prerelease: true
-
-      - name: Get uploaded release YAML checksum
-        uses: actions/github-script@v6
-        id: get-checksums-from-draft-release
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          result-encoding: string
-          script: |
-            var crypto = require('crypto');
-            const { owner, repo } = context.repo;
-            // https://docs.github.com/en/rest/reference/repos#list-releases
-            // https://octokit.github.io/rest.js/v18#repos-list-releases
-            var releases = await github.rest.repos.listReleases({
-              owner: owner,
-              repo: repo
-            });
-            var crypto = require('crypto')
-            var fs = require('fs')
-            const url = require('url');
-            const https = require('https');
-            checksums = {}
-            for (const r of releases["data"]) {
-              if (r.draft && `refs/tags/${r.tag_name}` == "${{ github.ref }}") {
-                for (const asset of r.assets) {
-                  var release_asset = await github.rest.repos.getReleaseAsset({ headers: {accept: `application/octet-stream`}, accept: `application/octet-stream`, owner: owner, repo: repo, asset_id: asset.id });
-                  const hash = crypto.createHash('sha256');
-                  let http_promise = new Promise((resolve, reject) => {
-                    https.get(release_asset.url, (stream) => {
-                      stream.on('data', function (data) {
-                        hash.update(data);
-                      });
-                      stream.on('end', function () {
-                        checksums[asset.name]= hash.digest('hex');
-                        resolve(`${asset.name}`);
-                      });
-                    });
-                  });
-                  await http_promise;
-                }
-              }
-            }
-            console.log(checksums)
-            return `${checksums['release.yml']}  ./release.yml
-            ${checksums['kctrl-darwin-amd64']}  ./kctrl-darwin-amd64
-            ${checksums['kctrl-darwin-arm64']}  ./kctrl-darwin-arm64
-            ${checksums['kctrl-linux-amd64']}  ./kctrl-linux-amd64
-            ${checksums['kctrl-linux-arm64']}  ./kctrl-linux-arm64
-            ${checksums['kctrl-windows-amd64.exe']}  ./kctrl-windows-amd64.exe
-            ${checksums['package.yml']}  ./package.yml
-            ${checksums['package-metadata.yml']}  ./package-metadata.yml`
-
-      - name: Verify uploaded artifacts
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: |
-          set -e -x
-          cat ./tmp/checksums.txt
-          diff ./tmp/checksums.txt <(cat <<EOF
-          ${{steps.get-checksums-from-draft-release.outputs.result}}
-          EOF
-          )
-
-      - name: Updating release notes
+      - name: Generate release notes
         run: |
           RELEASE_TAG=$(git describe --tags --abbrev=0)
           KAPP_CONTROLLER_IMAGE=$(yq e '.spec.template.spec.containers[] | select(.name == "kapp-controller") | .image' release/release.yml)
@@ -288,16 +191,105 @@ jobs:
           \`\`\`
           </summary>
           </details>
+          
 
           "
+          echo "$RELEASE_NOTES" > ./tmp/release_notes.txt
 
-          RELEASE_NOTES_UPLOADED=$(gh release view $RELEASE_TAG --json body | jq -r '.body')
-          RELEASE_NOTES+=$RELEASE_NOTES_UPLOADED
-          echo "$RELEASE_NOTES" > release_notes.txt
-          gh release edit $RELEASE_TAG --notes-file release_notes.txt
+      - name: Create formatted checksum and add it to release notes
+        run: |
+          pushd release
+          shasum -a 256 ./release.yml ./kctrl-* ./package.yml ./package-metadata.yml | tee ../tmp/checksums.txt
+          popd
+          echo "# :open_file_folder: Files Checksum" | tee ./tmp/checksums-formatted.txt
+          echo '```' | tee -a ./tmp/checksums-formatted.txt
+          cat ./tmp/checksums.txt | tee -a ./tmp/checksums-formatted.txt
+          echo '```' | tee -a ./tmp/checksums-formatted.txt
+          cat ./tmp/checksums-formatted.txt | tee -a ./tmp/release_notes.txt
 
+      - name: Sign checksums.txt
+        run: |
+          cosign sign-blob --yes ./tmp/checksums.txt --output-certificate release/checksums.txt.pem  --output-signature release/checksums.txt.sig
+
+      - name: Verify checksums signature
+        run: |
+          cosign verify-blob \
+            --cert release/checksums.txt.pem \
+            --signature release/checksums.txt.sig \
+            --certificate-identity-regexp=https://github.com/${{ github.repository_owner }} \
+            --certificate-oidc-issuer=https://token.actions.githubusercontent.com ./tmp/checksums.txt
+
+      - name: Create release draft and upload release yaml
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
+        with:
+          name: ${{ github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body_path: ./tmp/release_notes.txt
+          files: |
+            ./release/*
+            ./tmp/checksums.txt
+          draft: true
+          prerelease: true
+
+      - name: Get uploaded release YAML checksum
+        uses: actions/github-script@v6
+        id: get-checksums-from-draft-release
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          result-encoding: string
+          script: |
+            var crypto = require('crypto');
+            const { owner, repo } = context.repo;
+            // https://docs.github.com/en/rest/reference/repos#list-releases
+            // https://octokit.github.io/rest.js/v18#repos-list-releases
+            var releases = await github.rest.repos.listReleases({
+              owner: owner,
+              repo: repo
+            });
+            var crypto = require('crypto')
+            var fs = require('fs')
+            const url = require('url');
+            const https = require('https');
+            checksums = {}
+            for (const r of releases["data"]) {
+              if (r.draft && `refs/tags/${r.tag_name}` == "${{ github.ref }}") {
+                for (const asset of r.assets) {
+                  var release_asset = await github.rest.repos.getReleaseAsset({ headers: {accept: `application/octet-stream`}, accept: `application/octet-stream`, owner: owner, repo: repo, asset_id: asset.id });
+                  const hash = crypto.createHash('sha256');
+                  let http_promise = new Promise((resolve, reject) => {
+                    https.get(release_asset.url, (stream) => {
+                      stream.on('data', function (data) {
+                        hash.update(data);
+                      });
+                      stream.on('end', function () {
+                        checksums[asset.name]= hash.digest('hex');
+                        resolve(`${asset.name}`);
+                      });
+                    });
+                  });
+                  await http_promise;
+                }
+              }
+            }
+            console.log(checksums)
+            return `${checksums['release.yml']}  ./release.yml
+            ${checksums['kctrl-darwin-amd64']}  ./kctrl-darwin-amd64
+            ${checksums['kctrl-darwin-arm64']}  ./kctrl-darwin-arm64
+            ${checksums['kctrl-linux-amd64']}  ./kctrl-linux-amd64
+            ${checksums['kctrl-linux-arm64']}  ./kctrl-linux-arm64
+            ${checksums['kctrl-windows-amd64.exe']}  ./kctrl-windows-amd64.exe
+            ${checksums['package.yml']}  ./package.yml
+            ${checksums['package-metadata.yml']}  ./package-metadata.yml`
+
+      - name: Verify uploaded artifacts
+        if: startsWith(github.ref, 'refs/tags/')
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
-
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          set -e -x
+          cat ./tmp/checksums.txt
+          diff ./tmp/checksums.txt <(cat <<EOF
+          ${{steps.get-checksums-from-draft-release.outputs.result}}
+          EOF
+          )
