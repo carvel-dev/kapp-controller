@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706099956439,
+  "lastUpdate": 1706109841336,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -13977,6 +13977,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5240763615,
             "unit": "ns/op\t         3.141 DeleteSeconds\t         2.077 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "soumikm@vmware.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "distinct": true,
+          "id": "bfbb83f6b57e33e9a135e36a6562cac9c93d1eba",
+          "message": "Remove options that can be manipulated downstream\n\nSigned-off-by: Soumik Majumder <soumikm@vmware.com>",
+          "timestamp": "2024-01-24T20:49:24+05:30",
+          "tree_id": "203f94e1ea6ed2ec8cdf2f0e040c0a4cd84cdb15",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/bfbb83f6b57e33e9a135e36a6562cac9c93d1eba"
+        },
+        "date": 1706109840052,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35043752733,
+            "unit": "ns/op\t        17.65 DeleteSeconds\t        17.37 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8307245079,
+            "unit": "ns/op\t         4.178 DeleteSeconds\t         4.104 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6257587303,
+            "unit": "ns/op\t         4.154 DeleteSeconds\t         2.079 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
