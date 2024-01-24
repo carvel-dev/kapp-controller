@@ -11,8 +11,8 @@ jobs:
     name: kapp-controller release
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write
+      contents: write
+      packages: read
       id-token: write
     steps:
       - name: Check out code
