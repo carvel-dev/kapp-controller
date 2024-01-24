@@ -61,7 +61,7 @@ type PackageInstallCR struct {
 
 // Kind return kind of pkg install
 func (pi *PackageInstallCR) Kind() string {
-	return "pkgi"
+	return "PackageInstall"
 }
 
 // nolint: revive

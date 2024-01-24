@@ -12,8 +12,6 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
-	//"fmt"
-	//"os/exec"
 	"testing"
 	"time"
 
