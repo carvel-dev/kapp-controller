@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706168836141,
+  "lastUpdate": 1706205735700,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14103,6 +14103,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5248399144,
             "unit": "ns/op\t         3.143 DeleteSeconds\t         2.080 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "joaod@vmware.com",
+            "name": "João Pereira",
+            "username": "joaopapereira"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7b7d3961937e41b892a1b4af5eb51aab79aacd3b",
+          "message": "Merge pull request #1465 from gcapizzi/fix-empty-array-items\n\nMake sure array Helm values always get an `items` field in OpenAPI schema",
+          "timestamp": "2024-01-25T11:57:55-06:00",
+          "tree_id": "80dae3586ffdeae8d14516557a4b6e51226c0d2e",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/7b7d3961937e41b892a1b4af5eb51aab79aacd3b"
+        },
+        "date": 1706205734537,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35036301863,
+            "unit": "ns/op\t        17.67 DeleteSeconds\t        17.34 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8306766759,
+            "unit": "ns/op\t         4.188 DeleteSeconds\t         4.095 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5242636116,
+            "unit": "ns/op\t         3.138 DeleteSeconds\t         2.080 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
