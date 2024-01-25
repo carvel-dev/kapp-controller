@@ -39,8 +39,13 @@ arrKeyWithIntValues:
 arrKeyWithFloatValues:
 - 1.1
 - 1.2
+arrKeyEmpty: []
 `,
 			want: `properties:
+  arrKeyEmpty:
+    default: []
+    items: {}
+    type: array
   arrKeyWithFloatValues:
     default: []
     description: default value is 1.1. 1.2 is ignored

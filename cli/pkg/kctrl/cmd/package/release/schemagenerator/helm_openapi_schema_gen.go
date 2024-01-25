@@ -203,6 +203,8 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 				return nil, err
 			}
 			apiKeys = append(apiKeys, &MapItem{Key: itemsKey, Value: calculatedProperties})
+		} else {
+			apiKeys = append(apiKeys, &MapItem{Key: itemsKey, Value: &Map{}})
 		}
 	case yaml3.ScalarNode:
 		defaultVal, err := h.getDefaultValue(value.Tag, value.Value)
