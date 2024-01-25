@@ -65,7 +65,7 @@ func Test_GitURL_skipsTLS(t *testing.T) {
 			Namespace: "default",
 		},
 		Data: map[string]string{
-			"dangerousSkipTLSVerify": "github.com, gitlab.com, hostname.com",
+			"dangerousSkipTLSVerify": "github.com, gitlab.com, hostname.com, 0.0.0.0",
 		},
 	}
 	k8scs := k8sfake.NewSimpleClientset(configMap)
@@ -84,6 +84,7 @@ func Test_GitURL_skipsTLS(t *testing.T) {
 		{"https://gitlab.com/bitnami/charts/", true},
 		{"ssh://username@hostname.com:/path/to/repo.git", true},
 		{"https://bitbucket.org/bitnami/charts/", false},
+		{"https://0.0.0.0/bitnami/charts/", true},
 	}
 	for i, tc := range testCases {
 		err = vendir.AddDir(v1alpha1.AppFetch{

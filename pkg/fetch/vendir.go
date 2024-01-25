@@ -433,7 +433,7 @@ func extractImageRegistry(name string) string {
 func extractGitHostname(input string) string {
 	u, err := url.Parse(input)
 	if err != nil {
-		return "github.com"
+		return ""
 	}
 	return u.Hostname()
 }
