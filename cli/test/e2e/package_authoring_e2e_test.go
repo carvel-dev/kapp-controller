@@ -252,6 +252,7 @@ spec:
           properties:
             clusters:
               default: []
+              items: {}
               type: array
             kubeConfigSecretName:
               default: mongodb-enterprise-operator-multi-cluster-kubeconfig
@@ -289,6 +290,7 @@ spec:
               type: string
             tolerations:
               default: []
+              items: {}
               type: array
             vaultSecretBackend:
               properties:
@@ -812,6 +814,7 @@ spec:
           type: object
         imagePullSecrets:
           default: []
+          items: {}
           type: array
         nameOverride:
           default: ""
