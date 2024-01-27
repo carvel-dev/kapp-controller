@@ -95,10 +95,6 @@ func Run(opts Options, runLog logr.Logger) error {
 		return fmt.Errorf("Building packaging client: %s", err)
 	}
 
-	runLog.Info("setting up metrics")
-	appMetrics := metrics.NewAppMetrics()
-	appMetrics.RegisterAllMetrics()
-
 	var server *apiserver.APIServer
 	if opts.StartAPIServer {
 		// assign bindPort to env var KAPPCTRL_API_PORT if available
@@ -187,6 +183,11 @@ func Run(opts Options, runLog logr.Logger) error {
 	kubeconf := kubeconfig.NewKubeconfig(coreClient, runLog)
 	compInfo := componentinfo.NewComponentInfo(coreClient, kubeconf, Version)
 
+	runLog.Info("setting up metrics")
+	appMetrics := metrics.NewMetrics()
+	appMetrics.ReconcileTimeMetrics.RegisterAllMetrics()
+	appMetrics.ReconcileCountMetrics.RegisterAllMetrics()
+
 	cacheFolderApps := memdir.NewTmpDir("cache-appcr")
 	err = cacheFolderApps.Create()
 	if err != nil {
@@ -227,7 +228,8 @@ func Run(opts Options, runLog logr.Logger) error {
 		pkgToPkgInstallHandler := pkginstall.NewPackageInstallVersionHandler(
 			kcClient, opts.PackagingGlobalNS, runLog.WithName("handler"))
 
-		reconciler := pkginstall.NewReconciler(kcClient, pkgClient, coreClient, pkgToPkgInstallHandler, runLog.WithName("pkgi"), compInfo, kcConfig)
+		reconciler := pkginstall.NewReconciler(kcClient, pkgClient, coreClient, pkgToPkgInstallHandler,
+			runLog.WithName("pkgi"), compInfo, kcConfig, appMetrics)
 
 		ctrl, err := controller.New("pkgi", mgr, controller.Options{
 			Reconciler:              reconciler,
@@ -254,6 +256,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			CoreClient:  coreClient,
 			AppClient:   kcClient,
 			KcConfig:    kcConfig,
+			AppMetrics:  appMetrics,
 			CmdRunner:   sidecarCmdExec,
 			Kubeconf:    kubeconf,
 			CacheFolder: cacheFolderPkgRepoApps,

@@ -52,6 +52,9 @@ spec:
         - containerPort: #@ data.values.apiPort
           name: api
           protocol: TCP
+        - containerPort: #@ data.values.metricsPort
+          name: metrics
+          protocol: TCP
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true

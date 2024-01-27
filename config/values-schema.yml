@@ -17,6 +17,8 @@ dangerousEnablePprof: false
 tlsCipherSuites: ""
 #@schema/desc "API port"
 apiPort: 8443
+#@schema/desc "Metrics port"
+metricsPort: 8080
 #@schema/desc "The coreDNSIP will be injected into /etc/resolv.conf of kapp-controller pod"
 coreDNSIP: ""
 #@schema/desc "HostNetwork of kapp-controller deployment."

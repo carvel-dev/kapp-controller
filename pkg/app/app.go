@@ -57,7 +57,7 @@ type App struct {
 
 	log        logr.Logger
 	opts       Opts
-	appMetrics *metrics.AppMetrics
+	appMetrics *metrics.Metrics
 
 	pendingStatusUpdate   bool
 	flushAllStatusUpdates bool
@@ -66,7 +66,7 @@ type App struct {
 
 func NewApp(app v1alpha1.App, hooks Hooks,
 	fetchFactory fetch.Factory, templateFactory template.Factory,
-	deployFactory deploy.Factory, log logr.Logger, opts Opts, appMetrics *metrics.AppMetrics, compInfo ComponentInfo) *App {
+	deployFactory deploy.Factory, log logr.Logger, opts Opts, appMetrics *metrics.Metrics, compInfo ComponentInfo) *App {
 
 	return &App{app: app, appPrev: *(app.DeepCopy()), hooks: hooks,
 		fetchFactory: fetchFactory, templateFactory: templateFactory,
@@ -75,6 +75,9 @@ func NewApp(app v1alpha1.App, hooks Hooks,
 
 func (a *App) Name() string      { return a.app.Name }
 func (a *App) Namespace() string { return a.app.Namespace }
+
+// Kind return kind of App
+func (a *App) Kind() string { return "App" }
 
 func (a *App) Status() v1alpha1.AppStatus { return a.app.Status }
 

@@ -14,6 +14,7 @@ import (
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	fakeapiserver "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
 	fakekappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -98,7 +99,9 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			GitVersion: "v0.20.0",
 		}
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s,
+			FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+			metrics.NewMetrics())
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
@@ -147,7 +150,9 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			GitVersion: "v0.20.0",
 		}
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s,
+			FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+			metrics.NewMetrics())
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
@@ -196,7 +201,9 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			GitVersion: "v0.20.0",
 		}
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s,
+			FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+			metrics.NewMetrics())
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
@@ -251,7 +258,9 @@ func Test_PackageInstallVersionDowngrades(t *testing.T) {
 			GitVersion: "v0.20.0",
 		}
 
-		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s, FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{})
+		ip := NewPackageInstallCR(pkgInstall, log, appClient, pkgClient, fakek8s,
+			FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+			metrics.NewMetrics())
 		_, err := ip.Reconcile()
 		assert.Nil(t, err)
 
