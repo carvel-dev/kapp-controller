@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706205735700,
+  "lastUpdate": 1706339912135,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14145,6 +14145,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5242636116,
             "unit": "ns/op\t         3.138 DeleteSeconds\t         2.080 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yashsethiya97@gmail.com",
+            "name": "Yash Sethiya",
+            "username": "sethiyash"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e82ab406bc58b97f00639078144558b6a84994a1",
+          "message": "Merge pull request #1415 from carvel-dev/expose-metrics\n\nExpose metrics to report time taken in fetch/template/deploy phase of app, pkgi, pkgr",
+          "timestamp": "2024-01-27T12:44:24+05:30",
+          "tree_id": "a65bb187b0df889048dbf9af627d64a6085a6d72",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/e82ab406bc58b97f00639078144558b6a84994a1"
+        },
+        "date": 1706339911018,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35128395279,
+            "unit": "ns/op\t        17.66 DeleteSeconds\t        17.44 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8334829140,
+            "unit": "ns/op\t         4.208 DeleteSeconds\t         4.100 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5253002782,
+            "unit": "ns/op\t         3.148 DeleteSeconds\t         2.080 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
