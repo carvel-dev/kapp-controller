@@ -26,7 +26,7 @@ type CRDAppFactory struct {
 	CoreClient       kubernetes.Interface
 	AppClient        kcclient.Interface
 	KcConfig         *config.Config
-	AppMetrics       *metrics.AppMetrics
+	AppMetrics       *metrics.Metrics
 	VendirConfigHook func(vendirconf.Config) vendirconf.Config
 	KbldAllowBuild   bool
 	CmdRunner        exec.CmdRunner

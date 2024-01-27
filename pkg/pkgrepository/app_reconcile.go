@@ -21,6 +21,8 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 
 	var err error
 
+	a.appMetrics.ReconcileCountMetrics.InitMetrics(a.Kind(), a.Name(), a.Namespace())
+
 	switch {
 	case a.app.Spec.Paused:
 		a.log.Info("PackageRepository is paused, not reconciling")
@@ -90,6 +92,13 @@ func (a *App) reconcileDeploy() error {
 }
 
 func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
+	reconcileStartTime := time.Now()
+	a.appMetrics.IsFirstReconcile = a.appMetrics.ReconcileCountMetrics.GetReconcileAttemptCounterValue(a.Kind(), a.Name(), a.Namespace()) == 1
+	defer func() {
+		a.appMetrics.ReconcileTimeMetrics.RegisterOverallTime(a.Kind(), a.Name(), a.Namespace(), a.appMetrics.IsFirstReconcile,
+			time.Since(reconcileStartTime))
+	}()
+
 	tmpDir := memdir.NewTmpDir("fetch-template-deploy")
 
 	err := tmpDir.Create()
@@ -116,6 +125,9 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 			UpdatedAt: metav1.NewTime(time.Now().UTC()),
 		}
 
+		a.appMetrics.ReconcileTimeMetrics.RegisterFetchTime(a.Kind(), a.Name(), a.Namespace(), a.appMetrics.IsFirstReconcile,
+			a.app.Status.Fetch.UpdatedAt.Sub(a.app.Status.Fetch.StartedAt.Time))
+
 		err := a.updateStatus("marking fetch completed")
 		if err != nil {
 			return exec.NewCmdRunResultWithErr(err)
@@ -126,6 +138,8 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 		}
 	}
 
+	templateStartTime := time.Now()
+
 	tplResult := a.template(assetsPath)
 
 	a.app.Status.Template = &v1alpha1.AppStatusTemplate{
@@ -134,6 +148,9 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 		Error:     tplResult.ErrorStr(),
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
+
+	a.appMetrics.ReconcileTimeMetrics.RegisterTemplateTime(a.Kind(), a.Name(), a.Namespace(), a.appMetrics.IsFirstReconcile,
+		a.app.Status.Template.UpdatedAt.Sub(templateStartTime))
 
 	err = a.updateStatus("marking template completed")
 	if err != nil {
@@ -161,6 +178,9 @@ func (a *App) updateLastDeploy(result exec.CmdRunResult) exec.CmdRunResult {
 		StartedAt: a.app.Status.Deploy.StartedAt,
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
+
+	a.appMetrics.ReconcileTimeMetrics.RegisterDeployTime(a.Kind(), a.Name(), a.Namespace(), a.appMetrics.IsFirstReconcile,
+		a.Status().Deploy.UpdatedAt.Sub(a.Status().Deploy.StartedAt.Time))
 
 	a.updateStatus("marking last deploy")
 
@@ -192,6 +212,8 @@ func (a *App) setReconciling() {
 		Type:   v1alpha1.Reconciling,
 		Status: corev1.ConditionTrue,
 	})
+
+	a.appMetrics.ReconcileCountMetrics.RegisterReconcileAttempt(a.Kind(), a.Name(), a.Namespace())
 
 	a.app.Status.FriendlyDescription = "Reconciling"
 }

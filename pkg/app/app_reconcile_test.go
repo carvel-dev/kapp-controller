@@ -29,7 +29,6 @@ import (
 
 func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	log := logf.Log.WithName("kc")
-	var appMetrics = metrics.NewAppMetrics()
 
 	// The url under fetch is invalid, which will cause this
 	// app to fail before deploy.
@@ -52,7 +51,7 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac, FakeComponentInfo{}, Opts{MinimumSyncPeriod: 30 * time.Second})
+	crdApp := NewCRDApp(&app, log, metrics.NewMetrics(), kappcs, fetchFac, tmpFac, deployFac, FakeComponentInfo{}, Opts{MinimumSyncPeriod: 30 * time.Second})
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "unexpected error with reconciling", err)
 
@@ -86,7 +85,6 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 
 func Test_NoInspectReconcile_IfInspectNotEnabled(t *testing.T) {
 	log := logf.Log.WithName("kc")
-	var appMetrics = metrics.NewAppMetrics()
 
 	app := v1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
@@ -119,7 +117,7 @@ func Test_NoInspectReconcile_IfInspectNotEnabled(t *testing.T) {
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac, FakeComponentInfo{}, Opts{MinimumSyncPeriod: 30 * time.Second})
+	crdApp := NewCRDApp(&app, log, metrics.NewMetrics(), kappcs, fetchFac, tmpFac, deployFac, FakeComponentInfo{}, Opts{MinimumSyncPeriod: 30 * time.Second})
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "unexpected error with reconciling", err)
 
@@ -164,7 +162,6 @@ func Test_NoInspectReconcile_IfInspectNotEnabled(t *testing.T) {
 
 func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.T) {
 	log := logf.Log.WithName("kc")
-	var appMetrics = metrics.NewAppMetrics()
 
 	fetchInline := map[string]string{
 		"file.yml": `foo: #@ data.values.nothere`,
@@ -191,7 +188,7 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 
-	crdApp := NewCRDApp(&app, log, appMetrics, kappcs, fetchFac, tmpFac, deployFac, FakeComponentInfo{}, Opts{MinimumSyncPeriod: 30 * time.Second})
+	crdApp := NewCRDApp(&app, log, metrics.NewMetrics(), kappcs, fetchFac, tmpFac, deployFac, FakeComponentInfo{}, Opts{MinimumSyncPeriod: 30 * time.Second})
 	_, err := crdApp.Reconcile(false)
 	assert.Nil(t, err, "Unexpected error with reconciling", err)
 

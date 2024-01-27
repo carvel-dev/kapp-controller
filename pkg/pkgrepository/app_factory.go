@@ -16,6 +16,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	"k8s.io/client-go/kubernetes"
 )
@@ -24,6 +25,7 @@ import (
 type AppFactory struct {
 	CoreClient  kubernetes.Interface
 	AppClient   kcclient.Interface
+	AppMetrics  *metrics.Metrics
 	KcConfig    *config.Config
 	CmdRunner   exec.CmdRunner
 	Kubeconf    *kubeconfig.Kubeconfig
@@ -39,5 +41,5 @@ func (f *AppFactory) NewCRDPackageRepo(app *kcv1alpha1.App, pkgr *pkgv1alpha1.Pa
 	fetchFactory := fetch.NewFactory(f.CoreClient, vendirOpts, f.CmdRunner)
 	templateFactory := template.NewFactory(f.CoreClient, fetchFactory, false, f.CmdRunner)
 	deployFactory := deploy.NewFactory(f.CoreClient, f.Kubeconf, nil, f.CmdRunner, log)
-	return NewCRDApp(app, pkgr, log, f.AppClient, fetchFactory, templateFactory, deployFactory)
+	return NewCRDApp(app, pkgr, log, f.AppClient, f.AppMetrics, fetchFactory, templateFactory, deployFactory)
 }

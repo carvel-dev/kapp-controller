@@ -14,6 +14,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
+	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,7 +47,8 @@ func Test_NoInspectReconcile_IfNoDeployAttempted(t *testing.T) {
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 	pkgr := v1alpha12.PackageRepository{}
 
-	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, metrics.NewMetrics(),
+		fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	if err != nil {
 		t.Fatalf("Unexpected error with reconciling: %v", err)
@@ -102,7 +104,8 @@ func Test_TemplateError_DisplayedInStatus_UsefulErrorMessageProperty(t *testing.
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 	pkgr := v1alpha12.PackageRepository{}
 
-	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, metrics.NewMetrics(),
+		fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	if err != nil {
 		t.Fatalf("Unexpected error with reconciling: %v", err)
@@ -158,7 +161,8 @@ func TestInvalidPackageRepositoryFormat(t *testing.T) {
 	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
 	pkgr := v1alpha12.PackageRepository{}
 
-	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, fetchFac, tmpFac, deployFac)
+	crdApp := NewCRDApp(&app, &pkgr, log, kappcs, metrics.NewMetrics(),
+		fetchFac, tmpFac, deployFac)
 	_, err := crdApp.Reconcile(false)
 	if err != nil {
 		t.Fatalf("Unexpected error with reconciling: %v", err)
