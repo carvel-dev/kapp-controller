@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706339912135,
+  "lastUpdate": 1706507991874,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14187,6 +14187,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5253002782,
             "unit": "ns/op\t         3.148 DeleteSeconds\t         2.080 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yashsethiya97@gmail.com",
+            "name": "Yash Sethiya",
+            "username": "sethiyash"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "855063edee53315811a13ee8d5df1431ba258ede",
+          "message": "adding option for skipping SSL verification when using Git  (#1419)\n\n* Updated vendir to v0.36.0\r\n\r\nSigned-off-by: sethiyash <yashsethiya97@gmail.com>\r\n\r\n* provide dangerousSkipTLSVerify flag to vendir\r\n\r\nSigned-off-by: sethiyash <yashsethiya97@gmail.com>\r\n\r\n* using existing skip tls flag available\r\n\r\nSigned-off-by: sethiyash <yashsethiya97@gmail.com>\r\n\r\n* defined source types and added switch statements\r\n\r\nSigned-off-by: sethiyash <yashsethiya97@gmail.com>\r\n\r\n* Added Test_GitURL_skipsTLS unit test\r\n\r\nSigned-off-by: sethiyash <yashsethiya97@gmail.com>\r\n\r\n* Added more testcases\r\n\r\nSigned-off-by: Yash Sethiya <ysethiya@ysethiya4MD6M.vmware.com>\r\n\r\n---------\r\n\r\nSigned-off-by: sethiyash <yashsethiya97@gmail.com>\r\nSigned-off-by: Yash Sethiya <ysethiya@ysethiya4MD6M.vmware.com>\r\nCo-authored-by: Yash Sethiya <ysethiya@ysethiya4MD6M.vmware.com>",
+          "timestamp": "2024-01-29T11:22:55+05:30",
+          "tree_id": "14c325acaebb16ef863b10545403229d8470ab6c",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/855063edee53315811a13ee8d5df1431ba258ede"
+        },
+        "date": 1706507990521,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35068542380,
+            "unit": "ns/op\t        17.71 DeleteSeconds\t        17.34 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8351017052,
+            "unit": "ns/op\t         4.222 DeleteSeconds\t         4.106 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5248171523,
+            "unit": "ns/op\t         3.143 DeleteSeconds\t         2.082 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
