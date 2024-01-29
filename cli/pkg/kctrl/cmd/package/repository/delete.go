@@ -13,8 +13,12 @@ import (
 	cmdapp "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type DeleteOptions struct {
@@ -104,12 +108,56 @@ func (o *DeleteOptions) Run(args []string) error {
 
 func (o *DeleteOptions) waitForDeletion(client versioned.Interface) error {
 	o.statusUI.PrintMessagef("Waiting for package repository reconciliation for '%s'", o.Name)
-	repoWatcher := NewRepoTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, RepoTailerOpts{})
 
-	err := repoWatcher.TailRepoStatus()
-	if err != nil {
-		return err
+	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
+	description := getPackageRepositoryDescription(o.Name, o.NamespaceFlags.Name)
+
+	repoStatusTailErrored := false
+	tailRepoStatusOutput := func(tailErrored *bool) {
+		repoWatcher := NewRepoTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, RepoTailerOpts{})
+
+		err := repoWatcher.TailRepoStatus()
+		if err != nil {
+			o.statusUI.PrintMessagef("Error tailing or reconciling Package Repository: %s", err.Error())
+			*tailErrored = true
+		}
 	}
 
+	go tailRepoStatusOutput(&repoStatusTailErrored)
+
+	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (bool, error) {
+		resource, err := client.PackagingV1alpha1().PackageRepositories(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
+		if err != nil {
+			if !(errors.IsNotFound(err)) {
+				return true, nil
+			}
+		}
+		if err != nil {
+			if errors.IsNotFound(err) {
+				msgsUI.NotifySection("%s: DeletionSucceeded", description)
+				return true, nil
+			}
+			return false, err
+		}
+
+		if resource.Generation != resource.Status.ObservedGeneration {
+			// Should wait for generation to be observed before checking the reconciliation status so that we know we are checking the new spec
+			return false, nil
+		}
+		status := resource.Status.GenericStatus
+
+		for _, cond := range status.Conditions {
+			if repoStatusTailErrored {
+				msgsUI.NotifySection("%s: %s", description, cond.Type)
+			}
+
+			if cond.Type == kcv1alpha1.DeleteFailed && cond.Status == corev1.ConditionTrue {
+				return false, fmt.Errorf("%s: Deleting: %s. %s", description, status.UsefulErrorMessage, status.FriendlyDescription)
+			}
+		}
+		return false, nil
+	}); err != nil {
+		return fmt.Errorf("%s: Deleting: %s", description, err)
+	}
 	return nil
 }
