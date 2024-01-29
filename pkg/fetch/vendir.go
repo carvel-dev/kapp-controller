@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	goexec "os/exec"
 	"path/filepath"
@@ -19,6 +20,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	kyaml "sigs.k8s.io/yaml"
+)
+
+const (
+	// GitURL source type to extract host
+	GitURL = iota
+	// ImageRegistry source type to extract host
+	ImageRegistry
 )
 
 const (
@@ -122,7 +130,7 @@ func (v *Vendir) imageConf(image v1alpha1.AppFetchImage) vendirconf.DirectoryCon
 			URL:                    image.URL,
 			TagSelection:           image.TagSelection,
 			SecretRef:              v.localRefConf(image.SecretRef),
-			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(image.URL),
+			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(image.URL, ImageRegistry),
 		},
 	}
 }
@@ -134,7 +142,7 @@ func (v *Vendir) imgpkgBundleConf(imgpkgBundle v1alpha1.AppFetchImgpkgBundle) ve
 			Image:                  imgpkgBundle.Image,
 			TagSelection:           imgpkgBundle.TagSelection,
 			SecretRef:              v.localRefConf(imgpkgBundle.SecretRef),
-			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(imgpkgBundle.Image),
+			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(imgpkgBundle.Image, ImageRegistry),
 		},
 	}
 }
@@ -156,11 +164,12 @@ func (v *Vendir) gitConf(git v1alpha1.AppFetchGit) vendirconf.DirectoryContents 
 		Path:        vendirEntireDirPath,
 		NewRootPath: git.SubPath,
 		Git: &vendirconf.DirectoryContentsGit{
-			URL:           git.URL,
-			RefSelection:  git.RefSelection,
-			Ref:           git.Ref,
-			SecretRef:     v.localRefConf(git.SecretRef),
-			LFSSkipSmudge: git.LFSSkipSmudge,
+			URL:                    git.URL,
+			RefSelection:           git.RefSelection,
+			Ref:                    git.Ref,
+			SecretRef:              v.localRefConf(git.SecretRef),
+			LFSSkipSmudge:          git.LFSSkipSmudge,
+			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(git.URL, GitURL),
 		},
 	}
 }
@@ -376,11 +385,9 @@ func (v *Vendir) configMapBytes(configMapRef vendirconf.DirectoryContentsLocalRe
 	return kyaml.Marshal(configMap)
 }
 
-// This function only works on image refs. If in the future we decide to
-// expand this option to other fetch options, we will need to add hostname
-// extraction for those
-func (v *Vendir) shouldSkipTLSVerify(url string) bool {
-	return v.opts.SkipTLSConfig.ShouldSkipTLSForAuthority(ExtractImageRegistry(url))
+// This function works on image refs and hostname extraction based on source type
+func (v *Vendir) shouldSkipTLSVerify(url string, sourceType int) bool {
+	return v.opts.SkipTLSConfig.ShouldSkipTLSForAuthority(ExtractHost(url, sourceType))
 }
 
 // Run executes vendir command based on given configuration.
@@ -410,8 +417,8 @@ func (v *Vendir) ClearCache(cacheID string) error {
 	return os.RemoveAll(filepath.Join(v.opts.BaseCacheFolder, cacheID))
 }
 
-// ExtractImageRegistry returns the registry portion of a Docker image reference
-func ExtractImageRegistry(name string) string {
+// extractImageRegistry returns the registry portion of a Docker image reference
+func extractImageRegistry(name string) string {
 	parts := strings.SplitN(name, "/", 2)
 	var registry string
 	if len(parts) == 2 && (strings.ContainsRune(parts[0], '.') || strings.ContainsRune(parts[0], ':')) {
@@ -420,4 +427,25 @@ func ExtractImageRegistry(name string) string {
 		registry = "index.docker.io"
 	}
 	return registry
+}
+
+// extractGitHostname extracts the hostname from the git URL.
+func extractGitHostname(input string) string {
+	u, err := url.Parse(input)
+	if err != nil {
+		return ""
+	}
+	return u.Hostname()
+}
+
+// ExtractHost return registry for Docker Image and Host for git url
+func ExtractHost(input string, sourceType int) string {
+	switch sourceType {
+	case GitURL:
+		return extractGitHostname(input)
+	case ImageRegistry:
+		return extractImageRegistry(input)
+	default:
+		return ""
+	}
 }
