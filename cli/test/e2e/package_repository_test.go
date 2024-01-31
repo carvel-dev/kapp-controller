@@ -144,6 +144,19 @@ func TestPackageRepository(t *testing.T) {
 		require.Contains(t, err.Error(), "not found")
 	})
 
+	logger.Section("deletion of a failed repository", func() {
+		repoName := "invalidrepo"
+		repoBundle := "invalid.bundle.com/invalid-account/test:1.0.0"
+		_, err := kappCtrl.RunWithOpts([]string{"package", "repository", "add", "-r", repoName, "--url", repoBundle}, RunOpts{AllowError: true})
+		require.Contains(t, err.Error(), "Fetch failed")
+
+		out := kappCtrl.Run([]string{"package", "repository", "delete", "-r", repoName})
+		require.Contains(t, out, "Succeeded")
+
+		_, err = kubectl.RunWithOpts([]string{"get", "packagerepository", repoName}, RunOpts{AllowError: true})
+		require.Contains(t, err.Error(), "not found")
+	})
+
 	logger.Section("updating a repository", func() {
 		_, err := kappCtrl.RunWithOpts([]string{"package", "repository", "add", "-r", pkgrName, "--url", "https://carvel.dev"}, RunOpts{
 			AllowError: true})
