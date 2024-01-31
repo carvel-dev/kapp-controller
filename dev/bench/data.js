@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706507991874,
+  "lastUpdate": 1706676121968,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14229,6 +14229,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5248171523,
             "unit": "ns/op\t         3.143 DeleteSeconds\t         2.082 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rcmadhankumar@gmail.com",
+            "name": "Madhankumar Chellamuthu",
+            "username": "rcmadhankumar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c4a9f9dd0c2df71b39ffb89080e790d9f7ae9390",
+          "message": "Merge pull request #1469 from rcmadhankumar/issue-1468\n\nkctrl hangs when deleting package repository - fix",
+          "timestamp": "2024-01-31T10:07:41+05:30",
+          "tree_id": "02c72db852cfae5c33841f49af60dcb983d28f83",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/c4a9f9dd0c2df71b39ffb89080e790d9f7ae9390"
+        },
+        "date": 1706676120875,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35087886325,
+            "unit": "ns/op\t        17.68 DeleteSeconds\t        17.38 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8302091088,
+            "unit": "ns/op\t         4.177 DeleteSeconds\t         4.102 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5257477259,
+            "unit": "ns/op\t         3.148 DeleteSeconds\t         2.083 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
