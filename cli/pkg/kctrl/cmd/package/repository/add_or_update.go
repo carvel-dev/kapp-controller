@@ -35,6 +35,7 @@ type AddOrUpdateOptions struct {
 	SecureNamespaceFlags cmdcore.SecureNamespaceFlags
 	Name                 string
 	URL                  string
+	SemverTagConstraints string
 	CreateNamespace      bool
 
 	DryRun bool
@@ -76,6 +77,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 
 	// TODO consider how to support other repository types
 	cmd.Flags().StringVar(&o.URL, "url", "", "OCI registry url for package repository bundle (required)")
+	cmd.Flags().StringVar(&o.SemverTagConstraints, "semver-tag-constraints", "", "Mention tag/semver constraint when tag is not present in URL (If both tags and semver are present, then tag gets precedence)")
 	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Print YAML for resources being applied to the cluster without applying them, optional")
 
 	cmd.Flags().BoolVar(&o.CreateNamespace, "create-namespace", false, "Create the package repository namespace if not present (default false)")
@@ -116,6 +118,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 	}
 
 	cmd.Flags().StringVarP(&o.URL, "url", "", "", "OCI registry url for package repository bundle (required)")
+	cmd.Flags().StringVarP(&o.SemverTagConstraints, "semver-tag-constraints", "", "", "Mention tag/semver constraint when tag is not present in URL (If both tags and semver are present, then tag gets precedence)")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -268,7 +271,9 @@ func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *kcpkg.Package
 
 	if tag == "" {
 		pkgr.Spec.Fetch.ImgpkgBundle.TagSelection = &versions.VersionSelection{
-			Semver: &versions.VersionSelectionSemver{},
+			Semver: &versions.VersionSelectionSemver{
+				Constraints: o.SemverTagConstraints,
+			},
 		}
 	}
 
@@ -325,7 +330,9 @@ func (o AddOrUpdateOptions) dryRun() error {
 
 	if tag == "" {
 		packageRepo.Spec.Fetch.ImgpkgBundle.TagSelection = &versions.VersionSelection{
-			Semver: &versions.VersionSelectionSemver{},
+			Semver: &versions.VersionSelectionSemver{
+				Constraints: o.SemverTagConstraints,
+			},
 		}
 	}
 
