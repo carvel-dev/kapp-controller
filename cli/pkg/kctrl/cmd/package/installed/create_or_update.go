@@ -388,9 +388,12 @@ func (o CreateOrUpdateOptions) update(client kubernetes.Interface, kcClient kccl
 		if err != nil {
 			return err
 		}
-		err = o.waitForAppPause(kcClient)
-		if err != nil {
-			return err
+
+		if o.WaitFlags.Enabled {
+			err = o.waitForAppPause(kcClient)
+			if err != nil {
+				return err
+			}
 		}
 		reconciliationPaused = true
 
