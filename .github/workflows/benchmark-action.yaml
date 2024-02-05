@@ -45,7 +45,7 @@ jobs:
           key: ${{ runner.os }}-benchmark
       # Run `github-action-benchmark` action
       - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@29e55772d85cc51b2a291bde13f33ef9014d2d1f
+        uses: benchmark-action/github-action-benchmark@cc9ac13ce81036c9b67fcfe2cb95ca366684b9ea
         if: github.ref == 'refs/heads/develop'
         with:
           # What benchmark tool the output.txt came from
@@ -62,7 +62,7 @@ jobs:
           comment-on-alert: true
       # I don't fully understand but the two storage options are mutually exclusive if they're in the same block
       - name: Store Result into Github Pages
-        uses: benchmark-action/github-action-benchmark@29e55772d85cc51b2a291bde13f33ef9014d2d1f
+        uses: benchmark-action/github-action-benchmark@cc9ac13ce81036c9b67fcfe2cb95ca366684b9ea
         if: github.ref == 'refs/heads/develop'
         with:
           tool: 'go'
