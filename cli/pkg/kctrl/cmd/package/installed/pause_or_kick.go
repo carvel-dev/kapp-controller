@@ -65,6 +65,12 @@ func NewPauseCmd(o *PauseOrKickOptions, flagsFactory cmdcore.FlagsFactory) *cobr
 		cmd.Use = "pause INSTALLED_PACKAGE_NAME"
 	}
 
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  2 * time.Second,
+		DefaultTimeout:   5 * time.Minute,
+	})
+
 	return cmd
 }
 
@@ -165,9 +171,11 @@ func (o *PauseOrKickOptions) Kick(args []string) error {
 		return err
 	}
 
-	err = o.waitForAppPause(client)
-	if err != nil {
-		return err
+	if o.WaitFlags.Enabled {
+		err = o.waitForAppPause(client)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = o.unpause(client)
