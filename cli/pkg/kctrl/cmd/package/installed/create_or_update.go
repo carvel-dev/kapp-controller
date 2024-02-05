@@ -920,6 +920,9 @@ func (o *CreateOrUpdateOptions) unpauseReconciliation(client kcclient.Interface)
 // TODO: Have common place for waiting logic and refactor based on
 // https://github.com/carvel-dev/kapp-controller/issues/639
 func (o *CreateOrUpdateOptions) waitForAppPause(client kcclient.Interface) error {
+	if !o.WaitFlags.Enabled {
+		return nil
+	}
 	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
 		appResource, err := client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 		if err != nil {

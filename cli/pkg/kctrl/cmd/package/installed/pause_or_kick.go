@@ -65,6 +65,12 @@ func NewPauseCmd(o *PauseOrKickOptions, flagsFactory cmdcore.FlagsFactory) *cobr
 		cmd.Use = "pause INSTALLED_PACKAGE_NAME"
 	}
 
+	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
+		AllowDisableWait: true,
+		DefaultInterval:  2 * time.Second,
+		DefaultTimeout:   5 * time.Minute,
+	})
+
 	return cmd
 }
 
@@ -228,6 +234,9 @@ func (o *PauseOrKickOptions) unpause(client kcclient.Interface) error {
 }
 
 func (o *PauseOrKickOptions) waitForAppPause(client kcclient.Interface) error {
+	if !o.WaitFlags.Enabled {
+		return nil
+	}
 	if err := wait.Poll(o.WaitFlags.CheckInterval, o.WaitFlags.Timeout, func() (done bool, err error) {
 		appResource, err := client.KappctrlV1alpha1().Apps(o.NamespaceFlags.Name).Get(context.Background(), o.Name, metav1.GetOptions{})
 		if err != nil {
