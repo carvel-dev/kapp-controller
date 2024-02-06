@@ -117,7 +117,7 @@ jobs:
           trivy rootfs --ignore-unfixed --format sarif --output trivy-results-kctrl.sarif "kctrl"
           trivy rootfs --ignore-unfixed --format json --output trivy-results-kctrl.json "kctrl"
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: '.'
       - name: Create Issues Summary
