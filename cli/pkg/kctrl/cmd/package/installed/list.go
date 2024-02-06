@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
+	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -22,6 +23,7 @@ type ListOptions struct {
 
 	NamespaceFlags cmdcore.NamespaceFlags
 	AllNamespaces  bool
+	Wide           bool
 
 	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
 }
@@ -49,6 +51,8 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	}
 	o.NamespaceFlags.SetWithPackageCommandTreeOpts(cmd, flagsFactory, o.pkgCmdTreeOpts)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List installed packages in all namespaces")
+
+	cmd.Flags().BoolVar(&o.Wide, "wide", false, "show additional info")
 	return cmd
 }
 
@@ -74,6 +78,9 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
+	messageHeader := uitable.NewHeader("Message")
+	messageHeader.Hidden = !o.Wide
+
 	table := uitable.Table{
 		Title: tableTitle,
 
@@ -83,6 +90,7 @@ func (o *ListOptions) Run() error {
 			uitable.NewHeader("Package Name"),
 			uitable.NewHeader("Package Version"),
 			uitable.NewHeader("Status"),
+			messageHeader,
 		},
 
 		SortBy: []uitable.ColumnSort{
@@ -99,10 +107,20 @@ func (o *ListOptions) Run() error {
 			uitable.NewValueString(pkgi.Spec.PackageRef.RefName),
 			uitable.NewValueString(pkgi.Status.Version),
 			uitable.ValueFmt{V: uitable.NewValueString(status), Error: isFailing},
+			cmdcore.NewValueTruncated(uitable.NewValueString(o.getPkgiStatusMessage(&pkgi)), 50),
 		})
 	}
 
 	o.ui.PrintTable(table)
 
 	return nil
+}
+
+func (o *ListOptions) getPkgiStatusMessage(pkgi *kcpkgv1alpha1.PackageInstall) string {
+	conditionsLen := len(pkgi.Status.Conditions)
+	if conditionsLen == 0 {
+		return ""
+	}
+	lastCondition := pkgi.Status.Conditions[conditionsLen-1]
+	return lastCondition.Message
 }
