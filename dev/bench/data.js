@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706676121968,
+  "lastUpdate": 1707201012068,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14271,6 +14271,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5257477259,
             "unit": "ns/op\t         3.148 DeleteSeconds\t         2.083 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3d1da6e80f924f0649c1b2a03622f0368658eaf9",
+          "message": "Bump actions/stale from 8.0.0 to 9.0.0 (#1458)\n\nBumps [actions/stale](https://github.com/actions/stale) from 8.0.0 to 9.0.0.\r\n- [Release notes](https://github.com/actions/stale/releases)\r\n- [Changelog](https://github.com/actions/stale/blob/main/CHANGELOG.md)\r\n- [Commits](https://github.com/actions/stale/compare/1160a2240286f5da8ec72b1c0816ce2481aabf84...28ca1036281a5e5922ead5184a1bbf96e5fc984e)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: actions/stale\r\n  dependency-type: direct:production\r\n  update-type: version-update:semver-major\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2024-02-06T11:53:00+05:30",
+          "tree_id": "e0a0c4b2497090204905ecf0a0a86f622f21262e",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/3d1da6e80f924f0649c1b2a03622f0368658eaf9"
+        },
+        "date": 1707201010887,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35060812805,
+            "unit": "ns/op\t        17.67 DeleteSeconds\t        17.36 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8302385799,
+            "unit": "ns/op\t         4.182 DeleteSeconds\t         4.098 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5252887745,
+            "unit": "ns/op\t         3.150 DeleteSeconds\t         2.078 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
