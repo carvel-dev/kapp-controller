@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707281764469,
+  "lastUpdate": 1707304895745,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14439,6 +14439,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5242684812,
             "unit": "ns/op\t         3.140 DeleteSeconds\t         2.078 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "soumikm@vmware.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "committer": {
+            "email": "33070011+100mik@users.noreply.github.com",
+            "name": "Soumik Majumder",
+            "username": "100mik"
+          },
+          "distinct": true,
+          "id": "3c008c1d0dd5ca983d907374d2de4ce0d910d7dd",
+          "message": "Do not wait for App pause on package install pause if wait is disabled. Add wait flags to pkg i pause.\n\nSigned-off-by: Soumik Majumder <soumikm@vmware.com>",
+          "timestamp": "2024-02-07T16:44:39+05:30",
+          "tree_id": "0ae6fe81f45ec7c1066b240aad608df312ee5bf0",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/3c008c1d0dd5ca983d907374d2de4ce0d910d7dd"
+        },
+        "date": 1707304893953,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35079205627,
+            "unit": "ns/op\t        17.66 DeleteSeconds\t        17.39 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8293374844,
+            "unit": "ns/op\t         4.168 DeleteSeconds\t         4.101 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5268357330,
+            "unit": "ns/op\t         3.168 DeleteSeconds\t         2.078 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
