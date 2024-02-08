@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707304895745,
+  "lastUpdate": 1707403999752,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14481,6 +14481,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5268357330,
             "unit": "ns/op\t         3.168 DeleteSeconds\t         2.078 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "pbhaskal@gmail.com",
+            "name": "premkumar bhaskal",
+            "username": "prembhaskal"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "87059e57194d2cca4a3b1f5008adb2f74ff046fe",
+          "message": "Merge pull request #1475 from prembhaskal/kctrl-list-new-msg-column\n\nadding new column message in kctrl pkg installed list command",
+          "timestamp": "2024-02-08T20:16:07+05:30",
+          "tree_id": "aee9d6e526f7c361de9e9f5ab7f8a27fc81a384a",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/87059e57194d2cca4a3b1f5008adb2f74ff046fe"
+        },
+        "date": 1707403998617,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35077658725,
+            "unit": "ns/op\t        17.69 DeleteSeconds\t        17.37 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8292376741,
+            "unit": "ns/op\t         4.169 DeleteSeconds\t         4.099 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5281431851,
+            "unit": "ns/op\t         3.176 DeleteSeconds\t         2.081 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
