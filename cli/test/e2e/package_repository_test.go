@@ -19,7 +19,7 @@ func TestPackageRepository(t *testing.T) {
 	kubectl := Kubectl{t, env.Namespace, logger}
 
 	pkgrName := "test-package-repository"
-	pkgrURL := `index.docker.io/k8slt/kc-e2e-test-repo:latest`
+	pkgrURL := `ghcr.io/carvel-dev/kc-e2e-test-repo:latest`
 
 	newRepoNamespace := "carvel-test-repo-a"
 
@@ -190,6 +190,53 @@ func TestPackageRepository(t *testing.T) {
 		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL, "-n", env.Namespace, "--create-namespace"})
 
 		kubectl.Run([]string{"get", kind, pkgrName, "-n", env.Namespace})
+	})
+
+}
+
+func TestPackageRepositoryTagSemver(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+
+	pkgrName := "test-package-repository"
+	pkgrURL := `ghcr.io/carvel-dev/kc-e2e-test-repo`
+
+	kind := "PackageRepository"
+
+	cleanUp := func() {
+		RemoveClusterResource(t, kind, pkgrName, env.Namespace, kubectl)
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("adding a repository", func() {
+		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL + ":v1.0.0"})
+
+		kubectl.Run([]string{"get", kind, pkgrName})
+		kubectl.Run([]string{"get", "pkgm/pkg.test.carvel.dev"})
+		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"})
+		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"})
+	})
+
+	logger.Section("adding a repository", func() {
+		kappCtrl.Run([]string{"package", "repository", "delete", "-r", pkgrName})
+	})
+
+	logger.Section("adding a repository", func() {
+		out := kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL + ":v2.0.0", "--semver-tag-constraints", "1.0.0"})
+		t.Logf(out)
+	})
+
+	logger.Section("adding a repository", func() {
+		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL, "--semver-tag-constraints", ">1.0.0"})
+
+		kubectl.Run([]string{"get", kind, pkgrName})
+		kubectl.Run([]string{"get", "pkgm/pkg.test.carvel.dev"})
+		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"})
+		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"})
 	})
 
 }
