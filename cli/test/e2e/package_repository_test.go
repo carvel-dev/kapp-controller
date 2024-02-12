@@ -4,11 +4,8 @@
 package e2e
 
 import (
-	"fmt"
 	"testing"
-	"time"
 
-	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/require"
 )
 
@@ -210,30 +207,33 @@ func TestPackageRepositoryTagSemver(t *testing.T) {
 	}
 
 	cleanUp()
-	defer cleanUp()
+	//defer cleanUp()
 
 	logger.Section("adding a repository", func() {
 		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL + ":v1.0.0"})
 
-		kubectl.Run([]string{"get", kind, pkgrName})
+		out := kubectl.Run([]string{"get", kind, pkgrName, "-oyaml"})
+		require.Contains(t, out, "tag: v1.0.0")
 		kubectl.Run([]string{"get", "pkgm/pkg.test.carvel.dev"})
 		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"})
 		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"})
 	})
 
-	logger.Section("adding a repository", func() {
+	logger.Section("deleting a repository", func() {
 		kappCtrl.Run([]string{"package", "repository", "delete", "-r", pkgrName})
 	})
 
 	logger.Section("adding a repository", func() {
-		out := kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL + ":v2.0.0", "--semver-tag-constraints", "1.0.0"})
-		t.Logf(out)
+		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL + ":v2.0.0", "--semver-tag-constraints", "1.0.0"})
+		out := kubectl.Run([]string{"get", kind, pkgrName, "-oyaml"})
+		require.Contains(t, out, "tag: v2.0.0")
 	})
 
-	logger.Section("adding a repository", func() {
-		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL, "--semver-tag-constraints", ">1.0.0"})
+	logger.Section("updating a repository", func() {
+		kappCtrl.Run([]string{"package", "repository", "update", "-r", pkgrName, "--url", pkgrURL, "--semver-tag-constraints", ">1.0.0"})
 
-		kubectl.Run([]string{"get", kind, pkgrName})
+		out := kubectl.Run([]string{"get", kind, pkgrName, "-oyaml"})
+		require.Contains(t, out, "tag: v3.0.0")
 		kubectl.Run([]string{"get", "pkgm/pkg.test.carvel.dev"})
 		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.1.0.0"})
 		kubectl.Run([]string{"get", "pkg/pkg.test.carvel.dev.2.0.0"})
