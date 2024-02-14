@@ -1532,7 +1532,6 @@ spec:
                 description: Dependencies can be controlled through this section
                 properties:
                   install:
-                    description: Indicates whether to install depencies along with or not
                     type: boolean
                 type: object
               noopDelete:

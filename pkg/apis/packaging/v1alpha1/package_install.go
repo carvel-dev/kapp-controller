@@ -115,8 +115,8 @@ type PackageInstallStatus struct {
 	LastAttemptedVersion string `json:"lastAttemptedVersion,omitempty"`
 }
 
+// Dependencies controls whether to install depency packages along with the current package or not
 type Dependencies struct {
-	// Indicates whether to install depencies along with or not
 	// +optional
 	Install bool `json:"install,omitempty"`
 }
