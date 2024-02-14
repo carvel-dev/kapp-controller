@@ -168,6 +168,14 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 
 	pi.model.Status.LastAttemptedVersion = pkg.Spec.Version
 
+	// Dependency resolution
+	if pi.model.Spec.Dependencies.Install {
+		err := pi.reconcileDependencies(pkg)
+		if err != nil {
+			return reconcile.Result{Requeue: true}, err
+		}
+	}
+
 	existingApp, err := pi.kcclient.KappctrlV1alpha1().Apps(pi.model.Namespace).Get(
 		context.Background(), pi.model.Name, metav1.GetOptions{})
 	if err != nil {
@@ -289,6 +297,10 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 		return datapkgingv1alpha1.Package{}, fmt.Errorf("Expected non-empty version selection")
 	}
 
+	return pi.getPkgVersion(pi.model.Spec.PackageRef.RefName, semverConfig)
+}
+
+func (pi PackageInstallCR) getPkgVersion(packageRef string, semverConfig *verv1alpha1.VersionSelectionSemver) (datapkgingv1alpha1.Package, error) {
 	pkgList, err := pi.pkgclient.DataV1alpha1().Packages(pi.model.Namespace).List(
 		context.Background(), metav1.ListOptions{})
 	if err != nil {
@@ -303,7 +315,7 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 
 	requiresClusterVersion := false
 	for _, pkg := range pkgList.Items {
-		if pkg.Spec.RefName == pi.model.Spec.PackageRef.RefName {
+		if pkg.Spec.RefName == packageRef {
 			versionStrs = append(versionStrs, pkg.Spec.Version)
 			versionToPkg[pkg.Spec.Version] = pkg
 
@@ -358,7 +370,7 @@ func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, 
 	}
 
 	return datapkgingv1alpha1.Package{}, fmt.Errorf("Could not find package with name '%s' and version '%s'",
-		pi.model.Spec.PackageRef.RefName, selectedVersion)
+		packageRef, selectedVersion)
 }
 
 func (pi *PackageInstallCR) reconcileDelete(modelStatus *reconciler.Status) (reconcile.Result, error) {

@@ -70,6 +70,9 @@ type PackageSpec struct {
 	// Must be valid semver (required)
 	// Cannot be empty
 	Version string `json:"version,omitempty"`
+	// List of dependencies to be resolved
+	// +optional
+	Dependencies []DependencyType `json:"dependencies,omitempty"`
 	// Description of the licenses that apply to the package software
 	// (optional; Array of strings)
 	Licenses []string `json:"licenses,omitempty"`
@@ -150,4 +153,21 @@ type IncludedSoftware struct {
 	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,1,opt,name=displayName"`
 	Version     string `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
 	Description string `json:"description,omitempty" protobuf:"bytes,3,opt,name=description"`
+}
+
+// DependencyType contains the list of type of depencies
+type DependencyType struct {
+	Package *PackageDependency `json:"package,omitempty"`
+}
+
+// PackageDependency contains package dependency related info
+type PackageDependency struct {
+	// The name of the PackageMetadata associated with this dependency
+	// Must be a valid PackageMetadata name (see PackageMetadata CR for details)
+	// Cannot be empty
+	RefName string `json:"refName,omitempty"`
+	// Package version; Will be Referenced by PackageInstall;
+	// Must be valid semver (required)
+	// Cannot be empty
+	Version string `json:"version,omitempty"`
 }

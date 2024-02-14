@@ -79,6 +79,9 @@ type PackageInstallSpec struct {
 	// same as the PackageInstall namespace (optional; v0.48.0+)
 	// +optional
 	DefaultNamespace string `json:"defaultNamespace,omitempty"`
+	// Dependencies can be controlled through this section
+	// +optional
+	Dependencies Dependencies `json:"dependencies,omitempty"`
 }
 
 type PackageRef struct {
@@ -110,4 +113,10 @@ type PackageInstallStatus struct {
 	// It does _not_ indicate it was successfully installed.
 	// +optional
 	LastAttemptedVersion string `json:"lastAttemptedVersion,omitempty"`
+}
+
+type Dependencies struct {
+	// Indicates whether to install depencies along with or not
+	// +optional
+	Install bool `json:"install,omitempty"`
 }

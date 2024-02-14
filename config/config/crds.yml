@@ -95,6 +95,23 @@ spec:
               capacityRequirementsDescription:
                 description: 'System requirements needed to install the package. Note: these requirements will not be verified by kapp-controller on installation. (optional; string)'
                 type: string
+              dependencies:
+                description: List of dependencies to be resolved
+                items:
+                  description: DependencyType contains the list of type of depencies
+                  properties:
+                    package:
+                      description: PackageDependency contains package dependency related info
+                      properties:
+                        refName:
+                          description: The name of the PackageMetadata associated with this dependency Must be a valid PackageMetadata name (see PackageMetadata CR for details) Cannot be empty
+                          type: string
+                        version:
+                          description: Package version; Will be Referenced by PackageInstall; Must be valid semver (required) Cannot be empty
+                          type: string
+                      type: object
+                  type: object
+                type: array
               includedSoftware:
                 description: IncludedSoftware can be used to show the software contents of a Package. This is especially useful if the underlying versions do not match the Package version
                 items:
@@ -1511,6 +1528,13 @@ spec:
               defaultNamespace:
                 description: Specifies the default namespace to install the Package resources, by default this is same as the PackageInstall namespace (optional; v0.48.0+)
                 type: string
+              dependencies:
+                description: Dependencies can be controlled through this section
+                properties:
+                  install:
+                    description: Indicates whether to install depencies along with or not
+                    type: boolean
+                type: object
               noopDelete:
                 description: When NoopDelete set to true, PackageInstall deletion should delete PackageInstall/App CR but preserve App's associated resources.
                 type: boolean
