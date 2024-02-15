@@ -4,8 +4,11 @@
 package e2e
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
+	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/require"
 )
 
@@ -207,7 +210,7 @@ func TestPackageRepositoryTagSemver(t *testing.T) {
 	}
 
 	cleanUp()
-	//defer cleanUp()
+	defer cleanUp()
 
 	logger.Section("adding a repository", func() {
 		kappCtrl.Run([]string{"package", "repository", "add", "-r", pkgrName, "--url", pkgrURL + ":v1.0.0"})
