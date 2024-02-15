@@ -20,7 +20,7 @@ containerdConfigPatches:
     endpoint = ["http://${reg_name}:5000"]
 EOF
 
-# 3. Add the registry config to the nodes
+# Add the registry config to the nodes
 #
 # This is necessary because localhost resolves to loopback addresses that are
 # network-namespace local.
