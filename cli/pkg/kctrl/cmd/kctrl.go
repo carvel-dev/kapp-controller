@@ -225,14 +225,16 @@ func AttachGlobalFlags(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcore
 	configureTTY(o, cmd)
 }
 
-func AttachKctrlPackageCommandTree(cmd *cobra.Command, confUI *ui.ConfUI, opts cmdcore.PackageCommandTreeOpts) {
-	configFactory := cmdcore.NewConfigFactoryImpl()
-	depsFactory := cmdcore.NewDepsFactoryImpl(configFactory, confUI)
-	options := NewKctrlOptions(confUI, configFactory, depsFactory)
-	flagsFactory := cmdcore.NewFlagsFactory(configFactory, depsFactory)
+func AttachKctrlPackageCommandTree(cmd *cobra.Command, configFactory cmdcore.ConfigFactory,
+	options *KctrlOptions, flagsFactory cmdcore.FlagsFactory, opts cmdcore.PackageCommandTreeOpts) {
+	//configFactory := cmdcore.NewConfigFactoryImpl()
+	//depsFactory := cmdcore.NewDepsFactoryImpl(configFactory, confUI)
+	//options := NewKctrlOptions(confUI, configFactory, depsFactory)
+	//flagsFactory := cmdcore.NewFlagsFactory(configFactory, depsFactory)
 
 	AddPackageCommands(options, cmd, flagsFactory, opts)
-	AttachGlobalFlags(options, cmd, flagsFactory, opts)
+	//AttachGlobalFlags(options, cmd, flagsFactory, opts)
+	//return options, &flagsFactory
 }
 
 type uiBlockWriter struct {
