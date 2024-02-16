@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707403999752,
+  "lastUpdate": 1708072988245,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14523,6 +14523,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5281431851,
             "unit": "ns/op\t         3.176 DeleteSeconds\t         2.081 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yashsethiya97@gmail.com",
+            "name": "Yash Sethiya",
+            "username": "sethiyash"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8d2a1c93bc74629d4f4999fde8a043967cab295c",
+          "message": "Merge pull request #1490 from carvel-dev/etcd-v3.5.9\n\nBumping etcd to v3.5.9",
+          "timestamp": "2024-02-16T14:05:52+05:30",
+          "tree_id": "5268c8ff5bf7668b5c788a4323ea5e31d34c46ca",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/8d2a1c93bc74629d4f4999fde8a043967cab295c"
+        },
+        "date": 1708072986454,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 34998793232,
+            "unit": "ns/op\t        17.62 DeleteSeconds\t        17.36 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8336615673,
+            "unit": "ns/op\t         4.213 DeleteSeconds\t         4.099 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5263858248,
+            "unit": "ns/op\t         3.150 DeleteSeconds\t         2.088 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
