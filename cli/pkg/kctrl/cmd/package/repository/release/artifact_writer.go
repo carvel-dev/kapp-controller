@@ -3,7 +3,6 @@ package release
 import (
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"time"
 
 	v1alpha12 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -15,15 +14,14 @@ import (
 
 type ArtifactWriter struct {
 	PackageRepoName string
-	TargetDir       string
 }
 
 const (
 	RepoVersionAnnKey = "kctrl.carvel.dev/repository-version"
 )
 
-func NewArtifactWriter(pkgRepoName string, directory string) *ArtifactWriter {
-	return &ArtifactWriter{PackageRepoName: pkgRepoName, TargetDir: directory}
+func NewArtifactWriter(pkgRepoName string) *ArtifactWriter {
+	return &ArtifactWriter{PackageRepoName: pkgRepoName}
 }
 
 func (w *ArtifactWriter) WritePackageRepositoryFile(imgpkgBundleLocation, version string) error {
@@ -52,9 +50,8 @@ func (w *ArtifactWriter) WritePackageRepositoryFile(imgpkgBundleLocation, versio
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(w.TargetDir, PkgRepositoryFileName)
 
-	return w.createOrOverwriteFile(path, packageRepoBytes)
+	return w.createOrOverwriteFile(PkgRepositoryFileName, packageRepoBytes)
 }
 
 func (w *ArtifactWriter) createOrOverwriteFile(path string, data []byte) error {
