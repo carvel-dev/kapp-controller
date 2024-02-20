@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"carvel.dev/vendir/pkg/vendir/versions"
+	verv1alpha1 "carvel.dev/vendir/pkg/vendir/versions/v1alpha1"
 	"github.com/go-logr/logr"
 	semver "github.com/k14s/semver/v4"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -19,8 +21,6 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reconciler"
-	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
-	verv1alpha1 "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"

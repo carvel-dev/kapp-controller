@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	ctlver "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	ctlver "carvel.dev/vendir/pkg/vendir/versions/v1alpha1"
 )
 
 const (
@@ -72,6 +72,7 @@ type DirectoryContentsGit struct {
 	DangerousSkipTLSVerify bool `json:"dangerousSkipTLSVerify,omitempty"`
 	SkipInitSubmodules     bool `json:"skipInitSubmodules,omitempty"`
 	Depth                  int  `json:"depth,omitempty"`
+	ForceHTTPBasicAuth     bool `json:"forceHTTPBasicAuth,omitempty"`
 }
 
 type DirectoryContentsGitVerification struct {
@@ -112,10 +113,11 @@ type DirectoryContentsImage struct {
 
 	// Secret may include one or more keys: username, password, token.
 	// By default anonymous access is used for authentication.
-	// TODO support docker config formated secret
+	// TODO support docker config formatted secret
 	// +optional
 	SecretRef *DirectoryContentsLocalRef `json:"secretRef,omitempty"`
 
+	ResponseHeaderTimeout  int  `json:"responseHeaderTimeout,omitempty"`
 	DangerousSkipTLSVerify bool `json:"dangerousSkipTLSVerify,omitempty"`
 }
 
@@ -130,10 +132,11 @@ type DirectoryContentsImgpkgBundle struct {
 
 	// Secret may include one or more keys: username, password, token.
 	// By default anonymous access is used for authentication.
-	// TODO support docker config formated secret
+	// TODO support docker config formatted secret
 	// +optional
 	SecretRef *DirectoryContentsLocalRef `json:"secretRef,omitempty"`
 
+	ResponseHeaderTimeout  int  `json:"responseHeaderTimeout,omitempty"`
 	DangerousSkipTLSVerify bool `json:"dangerousSkipTLSVerify,omitempty"`
 	Recursive              bool `json:"recursive,omitempty"`
 }

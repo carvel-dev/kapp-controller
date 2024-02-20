@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"strings"
 
+	"carvel.dev/vendir/pkg/vendir/version"
 	semver "github.com/hashicorp/go-version"
-	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/version"
 	"sigs.k8s.io/yaml"
 )
 
@@ -69,6 +69,7 @@ func NewConfigFromFiles(paths []string) (Config, []Secret, []ConfigMap, error) {
 
 		case res.APIVersion == knownAPIVersion && res.Kind == knownKind:
 			config, err := NewConfigFromBytes(docBytes)
+			config.cleanPaths()
 			if err != nil {
 				return fmt.Errorf("Unmarshaling config: %s", err)
 			}
@@ -208,25 +209,26 @@ func (c Config) Subset(paths []string) (Config, error) {
 	}
 
 	for _, dir := range c.Directories {
-		for _, con := range dir.Contents {
-			path := filepath.Join(dir.Path, con.Path)
+		newDir := dir
+		newDir.Contents = []DirectoryContents{}
 
-			seen, found := pathsToSeen[path]
+		for _, con := range dir.Contents {
+			entirePath := filepath.Join(dir.Path, con.Path)
+
+			seen, found := pathsToSeen[entirePath]
 			if !found {
 				continue
 			}
 			if seen {
-				return Config{}, fmt.Errorf("Expected to match path '%s' once, but matched multiple", path)
+				return Config{}, fmt.Errorf("Expected to match path '%s' once, but matched multiple", entirePath)
 			}
-			pathsToSeen[path] = true
+			pathsToSeen[entirePath] = true
 
-			newCon := con // copy (but not deep unfortunately)
-			newCon.Path = EntireDirPath
+			newDir.Contents = append(newDir.Contents, con)
+		}
 
-			result.Directories = append(result.Directories, Directory{
-				Path:     path,
-				Contents: []DirectoryContents{newCon},
-			})
+		if len(newDir.Contents) > 0 {
+			result.Directories = append(result.Directories, newDir)
 		}
 	}
 
@@ -259,22 +261,45 @@ func (c Config) Lock(lockConfig LockConfig) error {
 }
 
 func (c Config) checkOverlappingPaths() error {
-	paths := []string{}
-
-	for _, dir := range c.Directories {
-		for _, con := range dir.Contents {
-			paths = append(paths, filepath.Join(dir.Path, con.Path))
+	checkPaths := func(paths []string) error {
+		for i, path := range paths {
+			for i2, path2 := range paths {
+				if i != i2 && strings.HasPrefix(path2+string(filepath.Separator), path+string(filepath.Separator)) {
+					return fmt.Errorf("Expected to not manage overlapping paths: '%s' and '%s'", path2, path)
+				}
+			}
 		}
+		return nil
 	}
 
-	for i, path := range paths {
-		for i2, path2 := range paths {
-			if i != i2 && strings.HasPrefix(path2+string(filepath.Separator), path+string(filepath.Separator)) {
-				return fmt.Errorf("Expected to not "+
-					"manage overlapping paths: '%s' and '%s'", path2, path)
-			}
+	paths := []string{}
+	for _, dir := range c.Directories {
+		paths = append(paths, dir.Path)
+	}
+
+	if err := checkPaths(paths); err != nil {
+		return err
+	}
+
+	for _, dir := range c.Directories {
+		paths = []string{}
+		for _, cont := range dir.Contents {
+			paths = append(paths, filepath.Join(dir.Path, cont.Path))
+		}
+
+		if err := checkPaths(paths); err != nil {
+			return err
 		}
 	}
 
 	return nil
+}
+
+func (c *Config) cleanPaths() {
+	for i, dir := range c.Directories {
+		c.Directories[i].Path = filepath.Clean(dir.Path)
+		for j, con := range dir.Contents {
+			c.Directories[i].Contents[j].Path = filepath.Clean(con.Path)
+		}
+	}
 }
