@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"strings"
 
+	"carvel.dev/vendir/pkg/vendir/versions"
 	semver "github.com/k14s/semver/v4"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
-	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )

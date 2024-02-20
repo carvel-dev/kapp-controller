@@ -16,6 +16,9 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection":                                               schema_pkg_vendir_versions_v1alpha1_VersionSelection(ref),
+		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver":                                         schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemver(ref),
+		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases":                              schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemverPrereleases(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppCluster":                          schema_pkg_apis_kappctrl_v1alpha1_AppCluster(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppClusterKubeconfigSecretRef":       schema_pkg_apis_kappctrl_v1alpha1_AppClusterKubeconfigSecretRef(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeploy":                           schema_pkg_apis_kappctrl_v1alpha1_AppDeploy(ref),
@@ -63,9 +66,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageSpec":          schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema":         schema_apiserver_apis_datapackaging_v1alpha1_ValuesSchema(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection":     schema_apiserver_apis_datapackaging_v1alpha1_VersionSelection(ref),
-		"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection":                           schema_pkg_vendir_versions_v1alpha1_VersionSelection(ref),
-		"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver":                     schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemver(ref),
-		"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases":          schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemverPrereleases(ref),
 		"k8s.io/api/core/v1.AWSElasticBlockStoreVolumeSource":                                                           schema_k8sio_api_core_v1_AWSElasticBlockStoreVolumeSource(ref),
 		"k8s.io/api/core/v1.Affinity":                                    schema_k8sio_api_core_v1_Affinity(ref),
 		"k8s.io/api/core/v1.AttachedVolume":                              schema_k8sio_api_core_v1_AttachedVolume(ref),
@@ -333,6 +333,76 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"k8s.io/apimachinery/pkg/runtime.TypeMeta":                       schema_k8sio_apimachinery_pkg_runtime_TypeMeta(ref),
 		"k8s.io/apimachinery/pkg/runtime.Unknown":                        schema_k8sio_apimachinery_pkg_runtime_Unknown(ref),
 		"k8s.io/apimachinery/pkg/util/intstr.IntOrString":                schema_apimachinery_pkg_util_intstr_IntOrString(ref),
+	}
+}
+
+func schema_pkg_vendir_versions_v1alpha1_VersionSelection(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"semver": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver"},
+	}
+}
+
+func schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemver(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"constraints": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"prereleases": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases"},
+	}
+}
+
+func schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemverPrereleases(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"identifiers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -606,7 +676,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref common.ReferenceCallback)
 					"refSelection": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Specifies a strategy to resolve to an explicit ref (optional; v0.24.0+)",
-							Ref:         ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
+							Ref:         ref("carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
 						},
 					},
 					"secretRef": {
@@ -633,7 +703,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef", "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"},
+			"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"},
 	}
 }
 
@@ -752,7 +822,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImage(ref common.ReferenceCallbac
 					"tagSelection": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Specifies a strategy to choose a tag (optional; v0.24.0+) if specified, do not include a tag in url key",
-							Ref:         ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
+							Ref:         ref("carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
 						},
 					},
 					"secretRef": {
@@ -772,7 +842,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImage(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef", "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"},
+			"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"},
 	}
 }
 
@@ -792,7 +862,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImgpkgBundle(ref common.Reference
 					"tagSelection": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Specifies a strategy to choose a tag (optional; v0.24.0+) if specified, do not include a tag in url key",
-							Ref:         ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
+							Ref:         ref("carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
 						},
 					},
 					"secretRef": {
@@ -805,7 +875,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImgpkgBundle(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef", "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"},
+			"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"},
 	}
 }
 
@@ -2080,76 +2150,6 @@ func schema_apiserver_apis_datapackaging_v1alpha1_VersionSelection(ref common.Re
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func schema_pkg_vendir_versions_v1alpha1_VersionSelection(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"semver": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver"},
-	}
-}
-
-func schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemver(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"constraints": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"prereleases": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases"},
-	}
-}
-
-func schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemverPrereleases(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"identifiers": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
 						},
 					},
 				},

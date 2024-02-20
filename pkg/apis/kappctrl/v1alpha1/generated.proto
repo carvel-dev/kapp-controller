@@ -5,7 +5,7 @@ syntax = "proto2";
 
 package github.com.vmware_tanzu.carvel_kapp_controller.pkg.apis.kappctrl.v1alpha1;
 
-import "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1/generated.proto";
+import "carvel.dev/vendir/pkg/vendir/versions/v1alpha1/generated.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
@@ -109,7 +109,7 @@ message AppFetchGit {
 
   // Specifies a strategy to resolve to an explicit ref (optional; v0.24.0+)
   // +optional
-  optional github.com.vmware_tanzu.carvel_vendir.pkg.vendir.versions.v1alpha1.VersionSelection refSelection = 6;
+  optional carvel.dev.vendir.pkg.vendir.versions.v1alpha1.VersionSelection refSelection = 6;
 
   // Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password (optional)
   // (if ssh-knownhosts is not specified, git will not perform strict host checking)
@@ -178,7 +178,7 @@ message AppFetchImage {
   // Specifies a strategy to choose a tag (optional; v0.24.0+)
   // if specified, do not include a tag in url key
   // +optional
-  optional github.com.vmware_tanzu.carvel_vendir.pkg.vendir.versions.v1alpha1.VersionSelection tagSelection = 4;
+  optional carvel.dev.vendir.pkg.vendir.versions.v1alpha1.VersionSelection tagSelection = 4;
 
   // Secret may include one or more keys: username, password, token.
   // By default anonymous access is used for authentication.
@@ -199,7 +199,7 @@ message AppFetchImgpkgBundle {
   // Specifies a strategy to choose a tag (optional; v0.24.0+)
   // if specified, do not include a tag in url key
   // +optional
-  optional github.com.vmware_tanzu.carvel_vendir.pkg.vendir.versions.v1alpha1.VersionSelection tagSelection = 3;
+  optional carvel.dev.vendir.pkg.vendir.versions.v1alpha1.VersionSelection tagSelection = 3;
 
   // Secret may include one or more keys: username, password, token.
   // By default anonymous access is used for authentication.

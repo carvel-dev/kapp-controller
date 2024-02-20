@@ -15,8 +15,8 @@ import (
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	// we run vendir by shelling out to it, but we create the vendir configs with help from a vendored copy of vendir.
+	vendirconf "carvel.dev/vendir/pkg/vendir/config"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
-	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	kyaml "sigs.k8s.io/yaml"
@@ -226,7 +226,7 @@ func (v *Vendir) localRefConf(ref *v1alpha1.AppFetchLocalRef) *vendirconf.Direct
 
 // ConfigBytes fetches all the referenced Secrets & ConfigMaps and returns the
 // multi-document YAML-encoded config that vendir consumes.
-// https://github.com/vmware-tanzu/carvel-vendir/blob/develop/examples/secrets/vendir.yml
+// https://carvel.dev/vendir/blob/develop/examples/secrets/vendir.yml
 func (v *Vendir) ConfigBytes() ([]byte, error) {
 	var resourcesYaml [][]byte
 	for _, dir := range v.config.Directories {
