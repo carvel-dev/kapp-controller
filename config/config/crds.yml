@@ -209,6 +209,9 @@ spec:
                             git:
                               description: Uses git to clone repository
                               properties:
+                                forceHTTPBasicAuth:
+                                  description: Force the usage of HTTP Basic Auth when Basic Auth is provided (optional)
+                                  type: boolean
                                 lfsSkipSmudge:
                                   description: Skip lfs download (optional)
                                   type: boolean
@@ -825,6 +828,9 @@ spec:
                     git:
                       description: Uses git to clone repository
                       properties:
+                        forceHTTPBasicAuth:
+                          description: Force the usage of HTTP Basic Auth when Basic Auth is provided (optional)
+                          type: boolean
                         lfsSkipSmudge:
                           description: Skip lfs download (optional)
                           type: boolean
@@ -1647,6 +1653,9 @@ spec:
                   git:
                     description: Uses git to clone repository containing package list
                     properties:
+                      forceHTTPBasicAuth:
+                        description: Force the usage of HTTP Basic Auth when Basic Auth is provided (optional)
+                        type: boolean
                       lfsSkipSmudge:
                         description: Skip lfs download (optional)
                         type: boolean

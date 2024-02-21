@@ -106,6 +106,9 @@ type AppFetchGit struct {
 	// Skip lfs download (optional)
 	// +optional
 	LFSSkipSmudge bool `json:"lfsSkipSmudge,omitempty" protobuf:"varint,5,opt,name=lfsSkipSmudge"`
+	// Force the usage of HTTP Basic Auth when Basic Auth is provided (optional)
+	// +optional
+	ForceHTTPBasicAuth bool `json:"forceHTTPBasicAuth,omitempty" protobuf:"varint,7,opt,name=forceHTTPBasicAuth"`
 }
 
 // +k8s:openapi-gen=true

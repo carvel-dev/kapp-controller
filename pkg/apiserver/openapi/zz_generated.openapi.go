@@ -699,6 +699,13 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
+					"forceHTTPBasicAuth": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Force the usage of HTTP Basic Auth when Basic Auth is provided (optional)",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
