@@ -5,7 +5,7 @@ syntax = "proto2";
 
 package github.com.vmware_tanzu.carvel_kapp_controller.pkg.apis.kappctrl.v1alpha1;
 
-import "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1/generated.proto";
+import "carvel.dev/vendir/pkg/vendir/versions/v1alpha1/generated.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
@@ -496,4 +496,3 @@ message KubernetesAPIs {
 message Version {
   optional string version = 1;
 }
-

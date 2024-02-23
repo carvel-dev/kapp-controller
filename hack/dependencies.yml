@@ -43,9 +43,9 @@
       arm64: 012531a2f1a2de8bc89f1623edfc40a7ac5aee421fe609085278fb9e287f1cdf
   dev: true
   name: vendir
-  repo: vmware-tanzu/carvel-vendir
-  urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.39.0
+  repo: carvel-dev/vendir
+  urlTemplate: https://github.com/carvel-dev/{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
+  version: v0.40.0
 - checksums:
     linux:
       amd64: f43e1c3387de24547506ab05d24e5309c0ce0b228c23bd8aa64e9ec4b8206651

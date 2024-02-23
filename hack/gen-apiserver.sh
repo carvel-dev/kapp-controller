@@ -59,7 +59,7 @@ rm -f $(find pkg/apiserver|grep zz_generated.openapi)
 go run vendor/k8s.io/code-generator/cmd/openapi-gen/main.go \
   --input-dirs "${KC_PKG}/pkg/apiserver/apis/datapackaging/v1alpha1" \
   --input-dirs "${KC_PKG}/pkg/apis/kappctrl/v1alpha1" \
-  --input-dirs "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1,k8s.io/apimachinery/pkg/apis/meta/v1,k8s.io/apimachinery/pkg/runtime,k8s.io/apimachinery/pkg/util/intstr" \
+  --input-dirs "carvel.dev/vendir/pkg/vendir/versions/v1alpha1,k8s.io/apimachinery/pkg/apis/meta/v1,k8s.io/apimachinery/pkg/runtime,k8s.io/apimachinery/pkg/util/intstr" \
   --input-dirs "k8s.io/api/core/v1" \
   --output-package "${KC_PKG}/pkg/apiserver/openapi" \
   -O zz_generated.openapi \
@@ -86,7 +86,7 @@ rm -f $(find pkg|grep '\.proto')
 # TODO It seems this command messes around with protos in vendor directory
 go-to-protobuf \
   --proto-import "${GOPATH}/src/${KC_PKG}/vendor" \
-  --packages "-github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1,${KC_PKG}/pkg/apis/kappctrl/v1alpha1,${KC_PKG}/pkg/apiserver/apis/datapackaging/v1alpha1" \
+  --packages "-carvel.dev/vendir/pkg/vendir/versions/v1alpha1,${KC_PKG}/pkg/apis/kappctrl/v1alpha1,${KC_PKG}/pkg/apiserver/apis/datapackaging/v1alpha1" \
   --vendor-output-base="${GOPATH}/src/${KC_PKG}/vendor" \
   --go-header-file hack/gen-boilerplate.txt
 

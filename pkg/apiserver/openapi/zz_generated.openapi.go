@@ -63,9 +63,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageSpec":          schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema":         schema_apiserver_apis_datapackaging_v1alpha1_ValuesSchema(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection":     schema_apiserver_apis_datapackaging_v1alpha1_VersionSelection(ref),
-		"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection":                           schema_pkg_vendir_versions_v1alpha1_VersionSelection(ref),
-		"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver":                     schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemver(ref),
-		"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases":          schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemverPrereleases(ref),
+		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection":                           schema_pkg_vendir_versions_v1alpha1_VersionSelection(ref),
+		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver":                     schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemver(ref),
+		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases":          schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemverPrereleases(ref),
 		"k8s.io/api/core/v1.AWSElasticBlockStoreVolumeSource":                                                           schema_k8sio_api_core_v1_AWSElasticBlockStoreVolumeSource(ref),
 		"k8s.io/api/core/v1.Affinity":                                    schema_k8sio_api_core_v1_Affinity(ref),
 		"k8s.io/api/core/v1.AttachedVolume":                              schema_k8sio_api_core_v1_AttachedVolume(ref),
@@ -606,7 +606,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref common.ReferenceCallback)
 					"refSelection": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Specifies a strategy to resolve to an explicit ref (optional; v0.24.0+)",
-							Ref:         ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
+							Ref:         ref("carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
 						},
 					},
 					"secretRef": {
@@ -633,7 +633,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef", "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"},
+			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef", "carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection"},
 	}
 }
 
@@ -752,7 +752,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImage(ref common.ReferenceCallbac
 					"tagSelection": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Specifies a strategy to choose a tag (optional; v0.24.0+) if specified, do not include a tag in url key",
-							Ref:         ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
+							Ref:         ref("carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
 						},
 					},
 					"secretRef": {
@@ -772,7 +772,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImage(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef", "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"},
+			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef", "carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection"},
 	}
 }
 
@@ -792,7 +792,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImgpkgBundle(ref common.Reference
 					"tagSelection": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Specifies a strategy to choose a tag (optional; v0.24.0+) if specified, do not include a tag in url key",
-							Ref:         ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
+							Ref:         ref("carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection"),
 						},
 					},
 					"secretRef": {
@@ -805,7 +805,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImgpkgBundle(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef", "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelection"},
+			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef", "carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection"},
 	}
 }
 
@@ -2096,14 +2096,14 @@ func schema_pkg_vendir_versions_v1alpha1_VersionSelection(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"semver": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver"),
+							Ref: ref("carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver"},
+			"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver"},
 	}
 }
 
@@ -2121,14 +2121,14 @@ func schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemver(ref common.Refer
 					},
 					"prereleases": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases"),
+							Ref: ref("carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases"},
+			"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases"},
 	}
 }
 
