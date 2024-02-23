@@ -1,3 +1,9 @@
+# carvel.dev/vendir v0.40.0
+## explicit; go 1.21
+carvel.dev/vendir/pkg/vendir/config
+carvel.dev/vendir/pkg/vendir/version
+carvel.dev/vendir/pkg/vendir/versions
+carvel.dev/vendir/pkg/vendir/versions/v1alpha1
 # cloud.google.com/go v0.110.4 => cloud.google.com/go v0.60.0
 ## explicit; go 1.11
 # github.com/NYTimes/gziphandler v1.1.1
@@ -203,7 +209,7 @@ github.com/mailru/easyjson/jwriter
 # github.com/mattn/go-colorable v0.1.13
 ## explicit; go 1.15
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.19
+# github.com/mattn/go-isatty v0.0.20
 ## explicit; go 1.15
 github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.4
@@ -264,12 +270,6 @@ github.com/stretchr/testify/require
 # github.com/vito/go-interact v1.0.1
 ## explicit; go 1.12
 github.com/vito/go-interact/interact
-# github.com/vmware-tanzu/carvel-vendir v0.36.0
-## explicit; go 1.21
-github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config
-github.com/vmware-tanzu/carvel-vendir/pkg/vendir/version
-github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions
-github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1
 # go.etcd.io/etcd/api/v3 v3.5.9
 ## explicit; go 1.19
 go.etcd.io/etcd/api/v3/authpb
@@ -367,8 +367,8 @@ go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
 go.uber.org/zap/zapgrpc
-# golang.org/x/crypto v0.14.0
-## explicit; go 1.17
+# golang.org/x/crypto v0.17.0
+## explicit; go 1.18
 golang.org/x/crypto/cast5
 golang.org/x/crypto/cryptobyte
 golang.org/x/crypto/cryptobyte/asn1
@@ -405,19 +405,19 @@ golang.org/x/oauth2/internal
 ## explicit; go 1.17
 golang.org/x/sync/errgroup
 golang.org/x/sync/singleflight
-# golang.org/x/sys v0.13.0
-## explicit; go 1.17
+# golang.org/x/sys v0.15.0
+## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
-# golang.org/x/term v0.13.0
-## explicit; go 1.17
+# golang.org/x/term v0.15.0
+## explicit; go 1.18
 golang.org/x/term
-# golang.org/x/text v0.13.0
-## explicit; go 1.17
+# golang.org/x/text v0.14.0
+## explicit; go 1.18
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
@@ -1358,7 +1358,8 @@ sigs.k8s.io/structured-merge-diff/v4/merge
 sigs.k8s.io/structured-merge-diff/v4/schema
 sigs.k8s.io/structured-merge-diff/v4/typed
 sigs.k8s.io/structured-merge-diff/v4/value
-# sigs.k8s.io/yaml v1.3.0
+# sigs.k8s.io/yaml v1.4.0
 ## explicit; go 1.12
 sigs.k8s.io/yaml
+sigs.k8s.io/yaml/goyaml.v2
 # cloud.google.com/go => cloud.google.com/go v0.60.0
