@@ -3,7 +3,7 @@ package sources
 import (
 	"os"
 
-	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
+	vendirconf "carvel.dev/vendir/pkg/vendir/config"
 	"sigs.k8s.io/yaml"
 )
 

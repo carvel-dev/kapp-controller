@@ -4,8 +4,8 @@
 package core
 
 import (
+	versions "carvel.dev/vendir/pkg/vendir/versions"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
-	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 )
 
 type ValueSemver struct {

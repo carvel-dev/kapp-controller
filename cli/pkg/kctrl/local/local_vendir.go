@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
+	vendirconf "carvel.dev/vendir/pkg/vendir/config"
 )
 
 type localVendirConf struct {

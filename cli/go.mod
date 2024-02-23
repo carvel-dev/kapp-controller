@@ -3,6 +3,7 @@ module github.com/vmware-tanzu/carvel-kapp-controller/cli
 go 1.21
 
 require (
+	carvel.dev/vendir v0.40.0
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
 	github.com/cppforlife/go-cli-ui v0.0.0-20220520125801-e45d9169a663
@@ -15,7 +16,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.1
 	github.com/vmware-tanzu/carvel-kapp-controller v0.46.0
-	github.com/vmware-tanzu/carvel-vendir v0.33.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.26.1
