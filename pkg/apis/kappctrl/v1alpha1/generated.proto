@@ -427,6 +427,8 @@ message AppTemplateValuesSource {
 // +k8s:openapi-gen=true
 message AppTemplateValuesSourceRef {
   optional string name = 1;
+
+  optional string key = 2;
 }
 
 // +k8s:openapi-gen=true
