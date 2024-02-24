@@ -1455,6 +1455,12 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesSourceRef(ref common.Ref
 							Format: "",
 						},
 					},
+					"key": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 			},
 		},

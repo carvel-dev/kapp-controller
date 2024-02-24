@@ -71,6 +71,7 @@ type AppTemplateValuesSource struct {
 // +k8s:openapi-gen=true
 type AppTemplateValuesSourceRef struct {
 	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
+	Key  string `json:"key,omitempty" protobuf:"bytes,2,opt,name=key"`
 }
 
 // +k8s:openapi-gen=true

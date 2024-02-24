@@ -24,6 +24,43 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+func Test_AppTemplateValuesSourceRef_HandlesKeyField(t *testing.T) {
+	log := logf.Log.WithName("kc")
+
+	// Define an App that uses AppTemplateValuesSourceRef with a Key field
+	appWithKeyRefs := v1alpha1.App{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "app-with-key-refs",
+			Namespace: "default",
+		},
+		Spec: v1alpha1.AppSpec{
+			Template: []v1alpha1.AppTemplate{
+				{
+					Ytt: &v1alpha1.AppTemplateYtt{
+						ValuesFrom: []v1alpha1.AppTemplateValuesSource{
+							{
+								SecretRef: &v1alpha1.AppTemplateValuesSourceRef{
+									Name: "my-secret",
+									Key:  "my-key",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	k8scs := k8sfake.NewSimpleClientset()
+	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
+	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
+
+	app := apppkg.NewApp(appWithKeyRefs, apppkg.Hooks{}, fetchFac, tmpFac, deployFac, log, apppkg.Opts{}, metrics.NewMetrics(), FakeComponentInfo{})
+	assert.NotNil(t, app)
+
+}
+
 func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 	log := logf.Log.WithName("kc")
 	expected := map[reftracker.RefKey]struct{}{
@@ -45,7 +82,7 @@ func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 		},
 		Spec: v1alpha1.AppSpec{
 			Fetch: []v1alpha1.AppFetch{
-				v1alpha1.AppFetch{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{SecretRef: &v1alpha1.AppFetchInlineSourceRef{"", "s"}}}}},
+				v1alpha1.AppFetch{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{SecretRef: &v1alpha1.AppFetchInlineSourceRef{Name: "s"}}}}},
 				v1alpha1.AppFetch{Image: &v1alpha1.AppFetchImage{SecretRef: &v1alpha1.AppFetchLocalRef{Name: "s1"}}},
 				v1alpha1.AppFetch{HTTP: &v1alpha1.AppFetchHTTP{SecretRef: &v1alpha1.AppFetchLocalRef{Name: "s2"}}},
 				v1alpha1.AppFetch{Git: &v1alpha1.AppFetchGit{SecretRef: &v1alpha1.AppFetchLocalRef{Name: "s3"}}},
@@ -53,7 +90,7 @@ func Test_SecretRefs_RetrievesAllSecretRefs(t *testing.T) {
 				v1alpha1.AppFetch{ImgpkgBundle: &v1alpha1.AppFetchImgpkgBundle{SecretRef: &v1alpha1.AppFetchLocalRef{Name: "s5"}}},
 			},
 			Template: []v1alpha1.AppTemplate{
-				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{SecretRef: &v1alpha1.AppFetchInlineSourceRef{"", "s6"}}}}}},
+				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{SecretRef: &v1alpha1.AppFetchInlineSourceRef{Name: "s6"}}}}}},
 				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{ValuesFrom: []v1alpha1.AppTemplateValuesSource{{SecretRef: &v1alpha1.AppTemplateValuesSourceRef{Name: "s8"}}}}},
 				v1alpha1.AppTemplate{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{ValuesFrom: []v1alpha1.AppTemplateValuesSource{{SecretRef: &v1alpha1.AppTemplateValuesSourceRef{Name: "s7"}}}}},
 			},
@@ -112,12 +149,12 @@ func Test_ConfigMapRefs_RetrievesAllConfigMapRefs(t *testing.T) {
 		},
 		Spec: v1alpha1.AppSpec{
 			Fetch: []v1alpha1.AppFetch{
-				v1alpha1.AppFetch{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{ConfigMapRef: &v1alpha1.AppFetchInlineSourceRef{"", "c"}}}}},
+				v1alpha1.AppFetch{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{ConfigMapRef: &v1alpha1.AppFetchInlineSourceRef{Name: "c"}}}}},
 			},
 			Template: []v1alpha1.AppTemplate{
-				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{ConfigMapRef: &v1alpha1.AppFetchInlineSourceRef{"", "c1"}}}}}},
+				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{Inline: &v1alpha1.AppFetchInline{PathsFrom: []v1alpha1.AppFetchInlineSource{{ConfigMapRef: &v1alpha1.AppFetchInlineSourceRef{Name: "c1"}}}}}},
 				v1alpha1.AppTemplate{Ytt: &v1alpha1.AppTemplateYtt{ValuesFrom: []v1alpha1.AppTemplateValuesSource{{ConfigMapRef: &v1alpha1.AppTemplateValuesSourceRef{Name: "c3"}}}}},
-				v1alpha1.AppTemplate{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{ValuesFrom: []v1alpha1.AppTemplateValuesSource{{ConfigMapRef: &v1alpha1.AppTemplateValuesSourceRef{"c2"}}}}},
+				v1alpha1.AppTemplate{HelmTemplate: &v1alpha1.AppTemplateHelmTemplate{ValuesFrom: []v1alpha1.AppTemplateValuesSource{{ConfigMapRef: &v1alpha1.AppTemplateValuesSourceRef{Name: "c2"}}}}},
 			},
 		},
 	}
