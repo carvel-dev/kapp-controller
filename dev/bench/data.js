@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708696842172,
+  "lastUpdate": 1709050215431,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14607,6 +14607,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5228586191,
             "unit": "ns/op\t         3.132 DeleteSeconds\t         2.075 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "joaod@vmware.com",
+            "name": "João Pereira",
+            "username": "joaopapereira"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3cb96a5ba384d4be2e580d9ca07c28ff9eee17f1",
+          "message": "Merge pull request #1495 from carvel-dev/fixe-1485\n\nAdds ability to force HTTP Basic when fetching from git repos",
+          "timestamp": "2024-02-27T10:02:53-06:00",
+          "tree_id": "c2130d873f4777175cce9a32b26acc65a30a7699",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/3cb96a5ba384d4be2e580d9ca07c28ff9eee17f1"
+        },
+        "date": 1709050214019,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35038704856,
+            "unit": "ns/op\t        17.67 DeleteSeconds\t        17.35 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8288903463,
+            "unit": "ns/op\t         4.166 DeleteSeconds\t         4.098 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5248904875,
+            "unit": "ns/op\t         3.146 DeleteSeconds\t         2.078 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
