@@ -8,12 +8,12 @@ import (
 	"reflect"
 	"testing"
 
+	"carvel.dev/vendir/pkg/vendir/versions/v1alpha1"
 	"github.com/go-logr/logr/testr"
 	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	pkginstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
-	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
