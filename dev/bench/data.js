@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709050215431,
+  "lastUpdate": 1709180397886,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14649,6 +14649,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5248904875,
             "unit": "ns/op\t         3.146 DeleteSeconds\t         2.078 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yashsethiya97@gmail.com",
+            "name": "Yash Sethiya",
+            "username": "sethiyash"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d89101eb78b2c26a73a7afd8e8ae3111a6731dde",
+          "message": "Merge pull request #1471 from carvel-dev/add-tag-constraints\n\nAdding support for tag constraints when adding a package repo with kctrl",
+          "timestamp": "2024-02-29T09:45:39+05:30",
+          "tree_id": "a27bdd8fb408035fcc507daa315bab812b7f94cf",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/d89101eb78b2c26a73a7afd8e8ae3111a6731dde"
+        },
+        "date": 1709180396794,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35015165177,
+            "unit": "ns/op\t        17.65 DeleteSeconds\t        17.35 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8290991689,
+            "unit": "ns/op\t         4.171 DeleteSeconds\t         4.097 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5244150201,
+            "unit": "ns/op\t         3.141 DeleteSeconds\t         2.077 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
