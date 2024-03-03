@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -27,6 +28,7 @@ const (
 	ExtYttPathsFromSecretNameAnnKey  = "ext.packaging.carvel.dev/ytt-paths-from-secret-name"
 	ExtHelmPathsFromSecretNameAnnKey = "ext.packaging.carvel.dev/helm-template-values-from-secret-name"
 
+	// ExtYttDataValuesOverlaysAnnKey if set, adds the pkgi's values secrets as overlays/paths, not as values, to the app
 	ExtYttDataValuesOverlaysAnnKey = "ext.packaging.carvel.dev/ytt-data-values-overlays"
 
 	ExtFetchSecretNameAnnKeyFmt = "ext.packaging.carvel.dev/fetch-%d-secret-name"
@@ -98,88 +100,213 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 		}
 	}
 
-	valuesApplied := false
-	yttPathsApplied := false
-	helmPathsApplied := false
+	templatesPatcher := templateStepsPatcher{
+		yttPatcher: &yttStepPatcher{
+			addValuesAsInlinePaths: pkgiHasAnnotation(pkgInstall, ExtYttDataValuesOverlaysAnnKey),
+			additionalPaths:        secretNamesFromAnn(pkgInstall, ExtYttPathsFromSecretNameAnnKey),
+		},
+		helmPatcher: &helmStepPatcher{
+			additionalPaths: secretNamesFromAnn(pkgInstall, ExtHelmPathsFromSecretNameAnnKey),
+			name:            pkgiAnnotationValue(pkgInstall, HelmTemplateOverlayNameKey),
+			namespace:       pkgiAnnotationValue(pkgInstall, HelmTemplateOverlayNameSpaceKey),
+		},
+		cuePatcher: &cueStepPatcher{},
 
-	for i, templateStep := range desiredApp.Spec.Template {
-		if templateStep.HelmTemplate != nil {
-			if !helmPathsApplied {
-				helmPathsApplied = true
+		templateSteps: desiredApp.Spec.Template,
+		values:        pkgInstall.Spec.Values,
+	}
 
-				if _, found := pkgInstall.Annotations[HelmTemplateOverlayNameKey]; found {
-					templateStep.HelmTemplate.Name = pkgInstall.Annotations[HelmTemplateOverlayNameKey]
-				}
-				if _, found := pkgInstall.Annotations[HelmTemplateOverlayNameSpaceKey]; found {
-					templateStep.HelmTemplate.Namespace = pkgInstall.Annotations[HelmTemplateOverlayNameSpaceKey]
-				}
-				for _, secretName := range secretNamesFromAnn(pkgInstall, ExtHelmPathsFromSecretNameAnnKey) {
-					templateStep.HelmTemplate.ValuesFrom = append(templateStep.HelmTemplate.ValuesFrom, kcv1alpha1.AppTemplateValuesSource{
-						SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-							Name: secretName,
-						},
-					})
-				}
-			}
-			if !valuesApplied {
-				valuesApplied = true
-
-				for _, value := range pkgInstall.Spec.Values {
-					templateStep.HelmTemplate.ValuesFrom = append(templateStep.HelmTemplate.ValuesFrom, kcv1alpha1.AppTemplateValuesSource{
-						SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-							Name: value.SecretRef.Name,
-						},
-					})
-				}
-			}
-		}
-
-		if templateStep.Ytt != nil {
-			if !yttPathsApplied {
-				yttPathsApplied = true
-
-				for _, secretName := range secretNamesFromAnn(pkgInstall, ExtYttPathsFromSecretNameAnnKey) {
-					if templateStep.Ytt.Inline == nil {
-						templateStep.Ytt.Inline = &kcv1alpha1.AppFetchInline{}
-					}
-					templateStep.Ytt.Inline.PathsFrom = append(templateStep.Ytt.Inline.PathsFrom, kcv1alpha1.AppFetchInlineSource{
-						SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-							Name: secretName,
-						},
-					})
-				}
-			}
-
-			if !valuesApplied {
-				valuesApplied = true
-
-				if _, found := pkgInstall.Annotations[ExtYttDataValuesOverlaysAnnKey]; found {
-					if templateStep.Ytt.Inline == nil {
-						templateStep.Ytt.Inline = &kcv1alpha1.AppFetchInline{}
-					}
-					for _, value := range pkgInstall.Spec.Values {
-						templateStep.Ytt.Inline.PathsFrom = append(templateStep.Ytt.Inline.PathsFrom, kcv1alpha1.AppFetchInlineSource{
-							SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-								Name: value.SecretRef.Name,
-							},
-						})
-					}
-				} else {
-					for _, value := range pkgInstall.Spec.Values {
-						templateStep.Ytt.ValuesFrom = append(templateStep.Ytt.ValuesFrom, kcv1alpha1.AppTemplateValuesSource{
-							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								Name: value.SecretRef.Name,
-							},
-						})
-					}
-				}
-			}
-		}
-
-		desiredApp.Spec.Template[i] = templateStep
+	if err := templatesPatcher.patch(); err != nil {
+		return &v1alpha1.App{}, err
 	}
 
 	return desiredApp, nil
+}
+
+type stepClass string
+
+const (
+	// anything that can take values
+	stepClassValueable stepClass = "valueable"
+	// only helm template steps
+	stepClassHelm stepClass = "helm"
+	// only ytt template steps
+	stepClassYtt stepClass = "ytt"
+	// only cue template steps
+	stepClassCue stepClass = "cue"
+)
+
+type yttStepPatcher struct {
+	addValuesAsInlinePaths bool     // TODO: support multiple ytt steps
+	additionalPaths        []string // TODO: support multiple ytt steps
+}
+
+func (yp *yttStepPatcher) addValues(yttStep *kcv1alpha1.AppTemplateYtt, value pkgingv1alpha1.PackageInstallValues) {
+	if yp.addValuesAsInlinePaths {
+		addSecretAsInlinePath(&yttStep.Inline, value.SecretRef.Name)
+	} else {
+		addSecretAsValueSource(&yttStep.ValuesFrom, value.SecretRef.Name)
+	}
+}
+
+func (yp *yttStepPatcher) addPaths(yttStep *kcv1alpha1.AppTemplateYtt) {
+	for _, secretName := range yp.additionalPaths {
+		addSecretAsInlinePath(&yttStep.Inline, secretName)
+	}
+}
+
+type helmStepPatcher struct {
+	additionalPaths []string
+	name            string // TODO: support multiple helm steps
+	namespace       string // TODO: support multiple helm steps
+}
+
+func (hp *helmStepPatcher) addValues(helmStep *kcv1alpha1.AppTemplateHelmTemplate, value pkgingv1alpha1.PackageInstallValues) {
+	addSecretAsValueSource(&helmStep.ValuesFrom, value.SecretRef.Name)
+}
+
+func (hp *helmStepPatcher) addPaths(helmStep *kcv1alpha1.AppTemplateHelmTemplate) {
+	for _, secretName := range hp.additionalPaths {
+		addSecretAsValueSource(&helmStep.ValuesFrom, secretName)
+	}
+}
+
+func (hp *helmStepPatcher) setNameAndNamespace(helmStep *kcv1alpha1.AppTemplateHelmTemplate) {
+	if hp.name != "" {
+		helmStep.Name = hp.name
+	}
+	if hp.namespace != "" {
+		helmStep.Namespace = hp.namespace
+	}
+}
+
+type cueStepPatcher struct{}
+
+func (cp *cueStepPatcher) addValues(cueStep *kcv1alpha1.AppTemplateCue, value pkgingv1alpha1.PackageInstallValues) {
+	addSecretAsValueSource(&cueStep.ValuesFrom, value.SecretRef.Name)
+}
+
+type templateStepsPatcher struct {
+	templateSteps []kcv1alpha1.AppTemplate
+	values        []pkgingv1alpha1.PackageInstallValues
+
+	yttPatcher  *yttStepPatcher
+	helmPatcher *helmStepPatcher
+	cuePatcher  *cueStepPatcher
+
+	classifiedSteps [][]stepClass
+	once            sync.Once
+}
+
+func (p *templateStepsPatcher) classifySteps() {
+	p.classifiedSteps = make([][]stepClass, len(p.templateSteps))
+
+	for i, step := range p.templateSteps {
+		classes := []stepClass{}
+
+		if step.HelmTemplate != nil {
+			classes = append(classes, stepClassHelm, stepClassValueable)
+		}
+		if step.Ytt != nil {
+			classes = append(classes, stepClassYtt, stepClassValueable)
+		}
+		if step.Cue != nil {
+			classes = append(classes, stepClassCue, stepClassValueable)
+		}
+
+		p.classifiedSteps[i] = classes
+	}
+}
+
+func (p *templateStepsPatcher) stepHasClass(stepIdx int, class stepClass) bool {
+	p.once.Do(p.classifySteps)
+
+	for _, stepClass := range p.classifiedSteps[stepIdx] {
+		if stepClass == class {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (p *templateStepsPatcher) getClassifiedSteps(class stepClass) []int {
+	p.once.Do(p.classifySteps)
+
+	steps := []int{}
+	for i := range p.classifiedSteps {
+		if p.stepHasClass(i, class) {
+			steps = append(steps, i)
+		}
+	}
+
+	return steps
+}
+
+func (p *templateStepsPatcher) firstOf(class stepClass) (int, bool) {
+	classifiedSteps := p.getClassifiedSteps(class)
+	if len(classifiedSteps) < 1 {
+		return 0, false
+	}
+
+	return classifiedSteps[0], true
+}
+
+func (p *templateStepsPatcher) defaultStepIdxs(stepIdxs []int, class stepClass) ([]int, error) {
+	if len(stepIdxs) > 0 {
+		return stepIdxs, nil
+	}
+
+	first, ok := p.firstOf(class)
+	if ok {
+		return []int{first}, nil
+	}
+
+	return []int{}, fmt.Errorf("no template step of class '%s' found", class)
+}
+
+func (p *templateStepsPatcher) patch() error {
+	for _, values := range p.values {
+		stepIdxs, err := p.defaultStepIdxs(values.TemplateSteps, stepClassValueable)
+		if err != nil {
+			return err
+		}
+
+		for _, stepIdx := range stepIdxs {
+			if stepIdx < 0 || stepIdx >= len(p.templateSteps) {
+				return fmt.Errorf("template step %d out of range", stepIdx)
+			}
+			if !p.stepHasClass(stepIdx, stepClassValueable) {
+				return fmt.Errorf("template step %d does not support values", stepIdx)
+			}
+
+			templateStep := p.templateSteps[stepIdx]
+
+			switch {
+			case p.stepHasClass(stepIdx, stepClassYtt):
+				p.yttPatcher.addValues(templateStep.Ytt, values)
+
+			case p.stepHasClass(stepIdx, stepClassHelm):
+				p.helmPatcher.addValues(templateStep.HelmTemplate, values)
+
+			case p.stepHasClass(stepIdx, stepClassCue):
+				p.cuePatcher.addValues(templateStep.Cue, values)
+			}
+		}
+	}
+
+	for _, stepIdx := range p.getClassifiedSteps(stepClassYtt) {
+		p.yttPatcher.addPaths(p.templateSteps[stepIdx].Ytt)
+		break // TODO: support multiple ytt steps
+	}
+	for _, stepIdx := range p.getClassifiedSteps(stepClassHelm) {
+		ts := p.templateSteps[stepIdx].HelmTemplate
+		p.helmPatcher.addPaths(ts)
+		p.helmPatcher.setNameAndNamespace(ts)
+		break // TODO: support multiple helm steps
+	}
+
+	return nil
 }
 
 func secretNamesFromAnn(installedPkg *pkgingv1alpha1.PackageInstall, annKey string) []string {
@@ -205,4 +332,39 @@ func secretNamesFromAnn(installedPkg *pkgingv1alpha1.PackageInstall, annKey stri
 		result = append(result, suffixToSecretName[suffix])
 	}
 	return result
+}
+
+func pkgiAnnotationValue(pkgi *pkgingv1alpha1.PackageInstall, key string) string {
+	if anno, found := pkgi.Annotations[key]; found {
+		return anno
+	}
+	return ""
+}
+
+func pkgiHasAnnotation(pkgi *pkgingv1alpha1.PackageInstall, key string) bool {
+	_, found := pkgi.Annotations[key]
+	return found
+}
+
+// addSecretAsInlinePath adds a secret as an inline path to the provided inline
+// fetches. If the inline fetch is nil, it is initialized.
+func addSecretAsInlinePath(inline **kcv1alpha1.AppFetchInline, secretName string) {
+	if *inline == nil {
+		*inline = &kcv1alpha1.AppFetchInline{}
+	}
+	(*inline).PathsFrom = append((*inline).PathsFrom, kcv1alpha1.AppFetchInlineSource{
+		SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
+			Name: secretName,
+		},
+	})
+}
+
+// addSecretAsValueSource adds a secret as a value source to the provided
+// template values sources.
+func addSecretAsValueSource(values *[]kcv1alpha1.AppTemplateValuesSource, secretName string) {
+	*values = append(*values, kcv1alpha1.AppTemplateValuesSource{
+		SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
+			Name: secretName,
+		},
+	})
 }

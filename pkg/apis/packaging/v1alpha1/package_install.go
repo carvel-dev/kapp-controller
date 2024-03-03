@@ -91,6 +91,8 @@ type PackageRef struct {
 type PackageInstallValues struct {
 	// +optional
 	SecretRef *PackageInstallValuesSecretRef `json:"secretRef,omitempty"`
+	// +optional
+	TemplateSteps []int `json:"templateSteps,omitempty"`
 }
 
 type PackageInstallValuesSecretRef struct {
