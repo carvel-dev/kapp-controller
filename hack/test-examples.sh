@@ -33,6 +33,9 @@ time kapp delete -y -a simple-app-http
 time kapp deploy -y -a cue -f examples/cue.yml
 time kapp delete -y -a cue
 
+time kapp deploy -y -a step-values-and-config -f examples/pkgi-with-config-and-values-per-step.yaml
+time kapp delete -y -a step-values-and-config
+
 kapp delete -y -a rbac
 
 echo EXTERNAL SUCCESS
