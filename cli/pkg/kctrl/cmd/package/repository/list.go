@@ -101,9 +101,7 @@ func (o *ListOptions) Run() error {
 		})
 	}
 
-	o.ui.PrintTable(table)
-
-	return nil
+	return cmdcore.PrintTable(o.ui, table)
 }
 
 // NewSourceValue returns a string summarizing spec.fetch for humans

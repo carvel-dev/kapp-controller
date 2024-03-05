@@ -102,9 +102,7 @@ func (o *ListOptions) Run() error {
 		})
 	}
 
-	o.ui.PrintTable(table)
-
-	return nil
+	return cmdcore.PrintTable(o.ui, table)
 }
 
 func (o *ListOptions) owner(references []metav1.OwnerReference) string {

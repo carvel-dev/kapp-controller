@@ -111,9 +111,7 @@ func (o *ListOptions) Run() error {
 		})
 	}
 
-	o.ui.PrintTable(table)
-
-	return nil
+	return cmdcore.PrintTable(o.ui, table)
 }
 
 func (o *ListOptions) getPkgiStatusMessage(pkgi *kcpkgv1alpha1.PackageInstall) string {

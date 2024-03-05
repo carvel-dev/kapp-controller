@@ -143,9 +143,7 @@ func (o *ListOptions) listPackageMetadatas() error {
 		})
 	}
 
-	o.ui.PrintTable(table)
-
-	return err
+	return cmdcore.PrintTable(o.ui, table)
 }
 
 func (o *ListOptions) listPackages() error {
