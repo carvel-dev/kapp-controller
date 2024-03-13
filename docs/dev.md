@@ -270,3 +270,54 @@ label from the closed issue to signal no further attention is needed on the issu
 issue to signal maintainers should take a look.
 * [`kapp-controller release`](../.github/workflows/release-process.yml) - This job carries out the kapp-controller release. More information 
 available [here](#release).
+
+
+
+#### Adding Custom Metrics via Kube-state-metrics CustomResourceStateMetrics
+
+The kapp-controller provides a small number of default metrics for monitoring and alerting. However, in some cases, you might need to extend the available metrics for more granular monitoring of your applications.
+
+One solution is to add metrics to CustomResources using the `kube-state-metrics CustomResourceStateMetrics` project. This project is a Kubernetes addon that is widely installed and used for monitoring standard components like Deployments or StatefulSets.
+
+To demonstrate how to add custom metrics for the `App` resource, follow these steps:
+
+1. Create a file named `custom_metrics.yaml` with the example content provided below.
+
+```yaml
+# Example of CustomResourceStateMetrics for app.kappctrl.k14s.io:
+kind: CustomResourceStateMetrics
+spec:
+  resources:
+  - groupVersionKind:
+      group: kappctrl.k14s.io
+      kind: App
+      version: v1alpha1
+    labelsFromPath:
+      name:
+        - metadata
+        - name
+      namespace:
+        - metadata
+        - namespace
+    metricNamePrefix: kappctrl_app
+    metrics:
+      - name: spec_paused
+        help: Whether the App is paused and any of its resources will not be processed by the controllers.
+        each:
+          gauge:
+            nilIsZero: true
+            path:
+              - spec
+              - paused
+          type: Gauge
+      - name: status
+        help: The app current status.
+        each:
+          type: Gauge
+          gauge:
+            nilIsZero: true
+            path: [ status, conditions ]
+            labelsFromPath:
+              type: [ "type" ]
+            valueFrom: [ "status" ]
+```
