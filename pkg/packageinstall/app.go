@@ -125,7 +125,7 @@ type (
 
 const (
 	// anything that can take values
-	stepClassValueable stepClass = "valueable"
+	stepClassTakesValues stepClass = "takesValues"
 	// only helm template steps
 	stepClassHelm stepClass = "helm"
 	// only ytt template steps
@@ -150,13 +150,13 @@ func (p *templateStepsPatcher) classifySteps() {
 		classes := stepClasses{}
 
 		if step.HelmTemplate != nil {
-			classes.Insert(stepClassHelm, stepClassValueable)
+			classes.Insert(stepClassHelm, stepClassTakesValues)
 		}
 		if step.Ytt != nil {
-			classes.Insert(stepClassYtt, stepClassValueable)
+			classes.Insert(stepClassYtt, stepClassTakesValues)
 		}
 		if step.Cue != nil {
-			classes.Insert(stepClassCue, stepClassValueable)
+			classes.Insert(stepClassCue, stepClassTakesValues)
 		}
 
 		p.classifiedSteps[i] = classes
@@ -213,11 +213,11 @@ func (p *templateStepsPatcher) patch() error {
 	return nil
 }
 
-// patchFromValues patches all 'valueable' template steps with values from the
-// packageInstall
+// patchFromValues patches all template steps that take values with values from
+// the packageInstall
 func (p *templateStepsPatcher) patchFromValues() error {
 	for _, values := range p.values {
-		stepIdxs, err := p.defaultStepIdxs(values.TemplateSteps, stepClassValueable)
+		stepIdxs, err := p.defaultStepIdxs(values.TemplateSteps, stepClassTakesValues)
 		if err != nil {
 			return err
 		}
@@ -226,7 +226,7 @@ func (p *templateStepsPatcher) patchFromValues() error {
 			if stepIdx < 0 || stepIdx >= len(p.templateSteps) {
 				return fmt.Errorf("template step %d out of range", stepIdx)
 			}
-			if !p.stepHasClass(stepIdx, stepClassValueable) {
+			if !p.stepHasClass(stepIdx, stepClassTakesValues) {
 				return fmt.Errorf("template step %d does not support values", stepIdx)
 			}
 

@@ -402,7 +402,7 @@ func TestAppPackageIntallValuesForTemplateSteps(t *testing.T) {
 			},
 			exepectedErrMsg: "does not support values",
 		},
-		"some values, but no valueable step": {
+		"some values, but no steps which takes values": {
 			values: []pkgingv1alpha1.PackageInstallValues{
 				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "foo-bar"}},
 			},
@@ -412,7 +412,7 @@ func TestAppPackageIntallValuesForTemplateSteps(t *testing.T) {
 					{Sops: &kcv1alpha1.AppTemplateSops{}},
 				}
 			},
-			exepectedErrMsg: "no template step of class 'valueable' found",
+			exepectedErrMsg: "no template step of class 'takesValues' found",
 		},
 		"values for specific steps": {
 			values: []pkgingv1alpha1.PackageInstallValues{
