@@ -15,6 +15,7 @@ import (
 	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -117,7 +118,10 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 	return desiredApp, nil
 }
 
-type stepClass string
+type (
+	stepClass   string
+	stepClasses = sets.Set[stepClass]
+)
 
 const (
 	// anything that can take values
@@ -135,24 +139,24 @@ type templateStepsPatcher struct {
 	values        []pkgingv1alpha1.PackageInstallValues
 	annotations   map[string]string
 
-	classifiedSteps [][]stepClass
+	classifiedSteps []stepClasses
 	once            sync.Once
 }
 
 func (p *templateStepsPatcher) classifySteps() {
-	p.classifiedSteps = make([][]stepClass, len(p.templateSteps))
+	p.classifiedSteps = make([]stepClasses, len(p.templateSteps))
 
 	for i, step := range p.templateSteps {
-		classes := []stepClass{}
+		classes := stepClasses{}
 
 		if step.HelmTemplate != nil {
-			classes = append(classes, stepClassHelm, stepClassValueable)
+			classes.Insert(stepClassHelm, stepClassValueable)
 		}
 		if step.Ytt != nil {
-			classes = append(classes, stepClassYtt, stepClassValueable)
+			classes.Insert(stepClassYtt, stepClassValueable)
 		}
 		if step.Cue != nil {
-			classes = append(classes, stepClassCue, stepClassValueable)
+			classes.Insert(stepClassCue, stepClassValueable)
 		}
 
 		p.classifiedSteps[i] = classes
@@ -161,14 +165,7 @@ func (p *templateStepsPatcher) classifySteps() {
 
 func (p *templateStepsPatcher) stepHasClass(stepIdx int, class stepClass) bool {
 	p.once.Do(p.classifySteps)
-
-	for _, stepClass := range p.classifiedSteps[stepIdx] {
-		if stepClass == class {
-			return true
-		}
-	}
-
-	return false
+	return p.classifiedSteps[stepIdx].Has(class)
 }
 
 func (p *templateStepsPatcher) getClassifiedSteps(class stepClass) []int {
