@@ -30,10 +30,12 @@ type ListOptions struct {
 	Wide    bool
 
 	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
+
+	columns *[]string
 }
 
-func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *ListOptions {
-	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
+func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts, columns *[]string) *ListOptions {
+	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts, columns: columns}
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -143,9 +145,7 @@ func (o *ListOptions) listPackageMetadatas() error {
 		})
 	}
 
-	o.ui.PrintTable(table)
-
-	return err
+	return cmdcore.PrintTable(o.ui, table, o.columns)
 }
 
 func (o *ListOptions) listPackages() error {
@@ -201,9 +201,7 @@ func (o *ListOptions) listPackages() error {
 		})
 	}
 
-	o.ui.PrintTable(table)
-
-	return err
+	return cmdcore.PrintTable(o.ui, table, o.columns)
 }
 
 func formatTimestamp(timestamp metav1.Time) string {

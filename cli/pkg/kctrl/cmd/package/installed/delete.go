@@ -336,7 +336,7 @@ func (o *DeleteOptions) waitForResourceDelete(kcClient kcclient.Interface) error
 	tailAppStatusOutput := func(tailErrored *bool) {
 		appWatcher := cmdapp.NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, kcClient, cmdapp.AppTailerOpts{
 			IgnoreNotExists: true,
-		})
+		}, nil)
 
 		err := appWatcher.TailAppStatus()
 		if err != nil {
