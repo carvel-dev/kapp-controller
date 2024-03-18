@@ -23,10 +23,12 @@ type ListOptions struct {
 
 	NamespaceFlags cmdcore.NamespaceFlags
 	AllNamespaces  bool
+
+	columns *[]string
 }
 
-func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
-	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, columns *[]string) *ListOptions {
+	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, columns: columns}
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -102,9 +104,8 @@ func (o *ListOptions) Run() error {
 		})
 	}
 
-	o.ui.PrintTable(table)
+	return cmdcore.PrintTable(o.ui, table, o.columns)
 
-	return nil
 }
 
 func (o *ListOptions) owner(references []metav1.OwnerReference) string {

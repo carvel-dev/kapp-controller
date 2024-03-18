@@ -277,7 +277,7 @@ func (o *PauseOrKickOptions) waitForPackageInstallReconciliation(client kcclient
 	tailAppStatusOutput := func(tailErrored *bool) {
 		appWatcher := cmdapp.NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, cmdapp.AppTailerOpts{
 			IgnoreNotExists: true,
-		})
+		}, nil)
 
 		err := appWatcher.TailAppStatus()
 		if err != nil {

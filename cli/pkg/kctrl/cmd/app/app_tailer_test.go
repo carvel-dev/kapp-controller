@@ -36,7 +36,7 @@ func TestAppSuccessTail(t *testing.T) {
 			Stdout:    "kapp success",
 		},
 	}
-	appTailer := NewAppTailer("default", "test-app", ui.NewNoopUI(), fakeVersionedInterface, AppTailerOpts{})
+	appTailer := NewAppTailer("default", "test-app", ui.NewNoopUI(), fakeVersionedInterface, AppTailerOpts{}, nil)
 	appTailer.stopperChan = make(chan struct{})
 	err := appTailer.printTillCurrent(successStatus)
 
@@ -54,7 +54,7 @@ func TestAppFetchFail(t *testing.T) {
 			Stderr:    "vendir fail",
 		},
 	}
-	appTailer := NewAppTailer("default", "test-app", ui.NewNoopUI(), fakeVersionedInterface, AppTailerOpts{})
+	appTailer := NewAppTailer("default", "test-app", ui.NewNoopUI(), fakeVersionedInterface, AppTailerOpts{}, nil)
 	appTailer.stopperChan = make(chan struct{})
 	err := appTailer.printTillCurrent(successStatus)
 
@@ -78,7 +78,7 @@ func TestAppTemplateFail(t *testing.T) {
 			Stderr:    "ytt fail",
 		},
 	}
-	appTailer := NewAppTailer("default", "test-app", ui.NewNoopUI(), fakeVersionedInterface, AppTailerOpts{})
+	appTailer := NewAppTailer("default", "test-app", ui.NewNoopUI(), fakeVersionedInterface, AppTailerOpts{}, nil)
 	appTailer.stopperChan = make(chan struct{})
 	err := appTailer.printTillCurrent(successStatus)
 
@@ -108,12 +108,26 @@ func TestAppDeployFail(t *testing.T) {
 			Stderr:    "kapp fail",
 		},
 	}
-	appTailer := NewAppTailer("default", "test-app", ui.NewNoopUI(), fakeVersionedInterface, AppTailerOpts{})
+	appTailer := NewAppTailer("default", "test-app", ui.NewNoopUI(), fakeVersionedInterface, AppTailerOpts{}, nil)
 	appTailer.stopperChan = make(chan struct{})
 	err := appTailer.printTillCurrent(successStatus)
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "Deploy failed")
+}
+
+func TestAppPrintInfoFailOnInvalidColumns(t *testing.T) {
+	fakeVersionedInterface := &FakeVersionedInterface{t}
+	app := kcv1alpha1.App{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kctrl-builder",
+			Namespace: "in-memory",
+		},
+	}
+	cols := []string{"name", "namepsace", "invalid", "namespace"}
+	appTailer := NewAppTailer("default", "test-app", ui.NewNoopUI(), fakeVersionedInterface, AppTailerOpts{}, &cols)
+	err := appTailer.printInfo(app)
+	require.ErrorContains(t, err, "invalid column names: namepsace,invalid")
 }
 
 type FakeVersionedInterface struct {

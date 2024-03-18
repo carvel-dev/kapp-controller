@@ -26,10 +26,12 @@ type StatusOptions struct {
 	IgnoreNotExists bool
 
 	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
+
+	columns *[]string
 }
 
-func NewStatusOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *StatusOptions {
-	return &StatusOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
+func NewStatusOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts, columns *[]string) *StatusOptions {
+	return &StatusOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts, columns: columns}
 }
 
 func NewStatusCmd(o *StatusOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -89,7 +91,7 @@ func (o *StatusOptions) Run(args []string) error {
 	appWatcher := cmdapp.NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, cmdapp.AppTailerOpts{
 		PrintMetadata:     true,
 		PrintCurrentState: true,
-	})
+	}, o.columns)
 
 	err = appWatcher.TailAppStatus()
 	if err != nil {

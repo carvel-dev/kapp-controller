@@ -98,7 +98,7 @@ func (o *DevOptions) beforeAppReconcile(app kcv1alpha1.App, kcClient *fakekc.Cli
 
 	go func() {
 		appWatcher := cmdapp.NewAppTailer(app.Namespace, app.Name,
-			o.ui, kcClient, cmdapp.AppTailerOpts{IgnoreNotExists: true})
+			o.ui, kcClient, cmdapp.AppTailerOpts{IgnoreNotExists: true}, nil)
 
 		err := appWatcher.TailAppStatus()
 		if err != nil {

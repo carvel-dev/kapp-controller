@@ -183,6 +183,14 @@ key2: value2
 		require.Contains(t, out, "Deploy succeeded")
 	})
 
+	logger.Section("listing packages with non existing column names", func() {
+		_, err := kappCtrl.RunWithOpts([]string{"package", "installed", "status", "-i", pkgiName, "--column=name,invalid,namespace,ns"}, RunOpts{
+			AllowError: true,
+		})
+		expectedError := "kctrl: Error: invalid column names: invalid,ns"
+		require.ErrorContains(t, err, expectedError)
+	})
+
 	logger.Section("package installed update", func() {
 		_, err := kappCtrl.RunWithOpts([]string{
 			"package", "installed", "update",
