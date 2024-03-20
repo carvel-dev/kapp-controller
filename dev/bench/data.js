@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710832463808,
+  "lastUpdate": 1710911457275,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14733,6 +14733,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5268156146,
             "unit": "ns/op\t         3.160 DeleteSeconds\t         2.078 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rcmadhankumar@gmail.com",
+            "name": "Madhankumar Chellamuthu",
+            "username": "rcmadhankumar"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ae66c51fdc58a8c7ef52d5379beb399d9c23532a",
+          "message": "Merge pull request #1502 from rcmadhankumar/handle-invalid-column-names\n\nHandling invalid column names on kctrl list commands",
+          "timestamp": "2024-03-20T10:33:45+05:30",
+          "tree_id": "4a4abeb8a1e1a545543b8a9a2f8a49d82dfeecd9",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/ae66c51fdc58a8c7ef52d5379beb399d9c23532a"
+        },
+        "date": 1710911455454,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35054966166,
+            "unit": "ns/op\t        17.68 DeleteSeconds\t        17.35 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8292050653,
+            "unit": "ns/op\t         4.169 DeleteSeconds\t         4.101 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6271012081,
+            "unit": "ns/op\t         4.168 DeleteSeconds\t         2.079 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
