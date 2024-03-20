@@ -130,6 +130,24 @@ spec:
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
 
+	logger.Section("listing packages with column names", func() {
+		out := kappCtrl.Run([]string{"package", "available", "list", "--json", "--column=name,namespace"})
+		output := uitest.JSONUIFromBytes(t, []byte(out))
+		expectedOutputRows := []map[string]string{{
+			"name":      packageName,
+			"namespace": env.Namespace,
+		}}
+		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
+	})
+
+	logger.Section("listing packages with non existing column names", func() {
+		_, err := kappCtrl.RunWithOpts([]string{"package", "available", "list", "--json", "--column=name,invalid,namespace,ns"}, RunOpts{
+			AllowError: true,
+		})
+		expectedError := "kctrl: Error: invalid column names: invalid,ns"
+		require.ErrorContains(t, err, expectedError)
+	})
+
 	logger.Section("listing versions of a package", func() {
 		out := kappCtrl.Run([]string{"package", "available", "list", "-p", packageName, "--json"})
 
@@ -178,6 +196,14 @@ spec:
 			},
 		}
 		require.Exactly(t, expectedOutputRows, output.Tables[1].Rows)
+	})
+
+	logger.Section("getting a package with invalid column names", func() {
+		_, err := kappCtrl.RunWithOpts([]string{"package", "available", "get", "-p", packageName, "--column=name,invalid,namespace,ns"}, RunOpts{
+			AllowError: true,
+		})
+		expectedError := "kctrl: Error: invalid column names: invalid,namespace,ns"
+		require.ErrorContains(t, err, expectedError)
 	})
 
 	logger.Section("getting value schema of a package", func() {

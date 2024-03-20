@@ -62,10 +62,12 @@ type CreateOrUpdateOptions struct {
 	createdAnnotations   *CreatedResourceAnnotations
 
 	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
+
+	columns *[]string
 }
 
-func NewCreateOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *CreateOrUpdateOptions {
-	return &CreateOrUpdateOptions{ui: ui, statusUI: cmdcore.NewStatusLoggingUI(ui), depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
+func NewCreateOrUpdateOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts, columns *[]string) *CreateOrUpdateOptions {
+	return &CreateOrUpdateOptions{ui: ui, statusUI: cmdcore.NewStatusLoggingUI(ui), depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts, columns: columns}
 }
 
 func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -992,7 +994,7 @@ func (o *CreateOrUpdateOptions) waitForResourceInstallation(name, namespace stri
 	tailAppStatusOutput := func(tailErrored *bool) {
 		appWatcher := cmdapp.NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, cmdapp.AppTailerOpts{
 			IgnoreNotExists: true,
-		})
+		}, nil)
 
 		err := appWatcher.TailAppStatus()
 		if err != nil {
@@ -1069,9 +1071,7 @@ func (o *CreateOrUpdateOptions) showVersions(client pkgclient.Interface) error {
 		})
 	}
 
-	o.ui.PrintTable(table)
-
-	return nil
+	return cmdcore.PrintTable(o.ui, table, o.columns)
 }
 
 func (o *CreateOrUpdateOptions) createOrUpdateYttOverlaySecrets(pkgi *kcpkgv1alpha1.PackageInstall, client kubernetes.Interface) (*corev1.Secret, error) {

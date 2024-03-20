@@ -32,6 +32,8 @@ type AppTailer struct {
 	opts        AppTailerOpts
 
 	lastSeenDeployStdout string
+
+	columns *[]string
 }
 
 type AppTailerOpts struct {
@@ -40,8 +42,8 @@ type AppTailerOpts struct {
 	PrintCurrentState bool
 }
 
-func NewAppTailer(namespace string, name string, ui ui.UI, client kcclient.Interface, opts AppTailerOpts) *AppTailer {
-	return &AppTailer{Namespace: namespace, Name: name, opts: opts, ui: ui, statusUI: cmdcore.NewStatusLoggingUI(ui), client: client}
+func NewAppTailer(namespace string, name string, ui ui.UI, client kcclient.Interface, opts AppTailerOpts, columns *[]string) *AppTailer {
+	return &AppTailer{Namespace: namespace, Name: name, opts: opts, ui: ui, statusUI: cmdcore.NewStatusLoggingUI(ui), client: client, columns: columns}
 }
 
 func (o *AppTailer) printTillCurrent(status kcv1alpha1.AppStatus) error {
@@ -61,7 +63,7 @@ func (o *AppTailer) printTillCurrent(status kcv1alpha1.AppStatus) error {
 	return nil
 }
 
-func (o *AppTailer) printInfo(app kcv1alpha1.App) {
+func (o *AppTailer) printInfo(app kcv1alpha1.App) error {
 	status, isFailing := appStatus(&app)
 	table := uitable.Table{
 		Transpose: true,
@@ -82,7 +84,7 @@ func (o *AppTailer) printInfo(app kcv1alpha1.App) {
 		}},
 	}
 
-	o.ui.PrintTable(table)
+	return cmdcore.PrintTable(o.ui, table, o.columns)
 }
 
 func (o *AppTailer) metricString(status kcv1alpha1.AppStatus) string {
@@ -105,7 +107,10 @@ func (o *AppTailer) TailAppStatus() error {
 	}
 
 	if o.opts.PrintMetadata {
-		o.printInfo(*app)
+		err = o.printInfo(*app)
+		if err != nil {
+			return err
+		}
 	}
 
 	if o.opts.PrintCurrentState {
