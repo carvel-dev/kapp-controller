@@ -705,3 +705,283 @@ func generatePackageWithConstraints(name, version, kcConstraint string, k8sConst
 		},
 	}
 }
+
+func Test_Dependency_PackageInstallCreated(t *testing.T) {
+	pkg := datapkgingv1alpha1.Package{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "parent-pkg",
+		},
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "parent-pkg",
+			Version: "1.0.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &v1alpha1.AppSpec{
+					Fetch: []v1alpha1.AppFetch{
+						{
+							ImgpkgBundle: &v1alpha1.AppFetchImgpkgBundle{
+								// Since no secretRef, we expect a placeholder secret
+								// to be created by kapp-controller.
+								Image: "foo/bar",
+							},
+						},
+					},
+				},
+			},
+			Dependencies: []datapkgingv1alpha1.DependencyType{
+				{
+					Package: &datapkgingv1alpha1.PackageDependency{
+						RefName: "dependency-pkg",
+						Version: "1.0.0",
+					},
+				},
+			},
+		},
+	}
+
+	dependencyPkg := datapkgingv1alpha1.Package{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "dependency-pkg",
+		},
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "dependency-pkg",
+			Version: "1.0.0",
+		},
+	}
+
+	fakePkgClient := fakeapiserver.NewSimpleClientset(&pkg, &dependencyPkg)
+
+	model := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "parent-pkgi",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			PackageRef: &pkgingv1alpha1.PackageRef{
+				RefName: "parent-pkg",
+				VersionSelection: &versions.VersionSelectionSemver{
+					Constraints: "1.0.0",
+				},
+			},
+			ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
+			Dependencies: pkgingv1alpha1.Dependencies{
+				// Expecting kapp controller to create pkgis for dependency package
+				Install: true,
+			},
+		},
+	}
+
+	log := logf.Log.WithName("kc")
+	fakekctrl := fakekappctrl.NewSimpleClientset(model)
+	fakek8s := fake.NewSimpleClientset()
+
+	// mock the kubernetes server version
+	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.20.0",
+	}
+
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s,
+		FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+		metrics.NewMetrics())
+
+	_, err := ip.Reconcile()
+	assert.Nil(t, err)
+
+	gvr := schema.GroupVersionResource{"", "v1", "secrets"}
+	obj, err := fakek8s.Tracker().Get(gvr, "", "parent-pkgi-fetch-0")
+	assert.Nil(t, err)
+	require.NotNil(t, obj)
+	secret := obj.(*corev1.Secret)
+	_, ok := secret.Annotations["secretgen.carvel.dev/image-pull-secret"]
+	assert.True(t, ok)
+
+	gvr = schema.GroupVersionResource{"packaging.carvel.dev", "v1alpha1", "packageinstalls"}
+	obj, err = fakekctrl.Tracker().Get(gvr, "", "dependency-pkg.1.0.0")
+	require.NotNil(t, obj)
+	assert.Nil(t, err)
+	pkgi := obj.(*pkgingv1alpha1.PackageInstall)
+	require.Equal(t, pkgi.ObjectMeta.Annotations["kapp-controller.carvel.dev/owner"], "PackageInstall/parent-pkgi")
+}
+
+func Test_Dependency_PackageInstall_NotCreated_On_Install_False(t *testing.T) {
+	pkg := datapkgingv1alpha1.Package{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "parent-pkg",
+		},
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "parent-pkg",
+			Version: "1.0.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &v1alpha1.AppSpec{
+					Fetch: []v1alpha1.AppFetch{
+						{
+							ImgpkgBundle: &v1alpha1.AppFetchImgpkgBundle{
+								// Since no secretRef, we expect a placeholder secret
+								// to be created by kapp-controller.
+								Image: "foo/bar",
+							},
+						},
+					},
+				},
+			},
+			Dependencies: []datapkgingv1alpha1.DependencyType{
+				{
+					Package: &datapkgingv1alpha1.PackageDependency{
+						RefName: "dependency-pkg",
+						Version: "1.0.0",
+					},
+				},
+			},
+		},
+	}
+
+	dependencyPkg := datapkgingv1alpha1.Package{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "dependency-pkg",
+		},
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "dependency-pkg",
+			Version: "1.0.0",
+		},
+	}
+
+	fakePkgClient := fakeapiserver.NewSimpleClientset(&pkg, &dependencyPkg)
+
+	model := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "parent-pkgi",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			PackageRef: &pkgingv1alpha1.PackageRef{
+				RefName: "parent-pkg",
+				VersionSelection: &versions.VersionSelectionSemver{
+					Constraints: "1.0.0",
+				},
+			},
+			ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
+			Dependencies: pkgingv1alpha1.Dependencies{
+				// Expecting kapp controller to ignore creating dependency packages
+				Install: false,
+			},
+		},
+	}
+
+	log := logf.Log.WithName("kc")
+	fakekctrl := fakekappctrl.NewSimpleClientset(model)
+	fakek8s := fake.NewSimpleClientset()
+
+	// mock the kubernetes server version
+	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.20.0",
+	}
+
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s,
+		FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+		metrics.NewMetrics())
+
+	_, err := ip.Reconcile()
+	assert.Nil(t, err)
+
+	gvr := schema.GroupVersionResource{"", "v1", "secrets"}
+	obj, err := fakek8s.Tracker().Get(gvr, "", "parent-pkgi-fetch-0")
+	assert.Nil(t, err)
+	require.NotNil(t, obj)
+	secret := obj.(*corev1.Secret)
+	_, ok := secret.Annotations["secretgen.carvel.dev/image-pull-secret"]
+	assert.True(t, ok)
+
+	gvr = schema.GroupVersionResource{"packaging.carvel.dev", "v1alpha1", "packageinstalls"}
+	obj, err = fakekctrl.Tracker().Get(gvr, "", "dependency-pkg.1.0.0")
+	require.Nil(t, obj)
+	require.Error(t, err, "packageinstalls.packaging.carvel.dev \"dependency-pkg.1.0.0\" not found")
+}
+
+func Test_Dependency_PackageInstall_NotCreated_By_Default(t *testing.T) {
+	pkg := datapkgingv1alpha1.Package{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "parent-pkg",
+		},
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "parent-pkg",
+			Version: "1.0.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &v1alpha1.AppSpec{
+					Fetch: []v1alpha1.AppFetch{
+						{
+							ImgpkgBundle: &v1alpha1.AppFetchImgpkgBundle{
+								// Since no secretRef, we expect a placeholder secret
+								// to be created by kapp-controller.
+								Image: "foo/bar",
+							},
+						},
+					},
+				},
+			},
+			Dependencies: []datapkgingv1alpha1.DependencyType{
+				{
+					Package: &datapkgingv1alpha1.PackageDependency{
+						RefName: "dependency-pkg",
+						Version: "1.0.0",
+					},
+				},
+			},
+		},
+	}
+
+	dependencyPkg := datapkgingv1alpha1.Package{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "dependency-pkg",
+		},
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "dependency-pkg",
+			Version: "1.0.0",
+		},
+	}
+
+	fakePkgClient := fakeapiserver.NewSimpleClientset(&pkg, &dependencyPkg)
+
+	model := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "parent-pkgi",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			PackageRef: &pkgingv1alpha1.PackageRef{
+				RefName: "parent-pkg",
+				VersionSelection: &versions.VersionSelectionSemver{
+					Constraints: "1.0.0",
+				},
+			},
+			ServiceAccountName: "use-local-cluster-sa", // saname being present indicates use local cluster version
+		},
+	}
+
+	log := logf.Log.WithName("kc")
+	fakekctrl := fakekappctrl.NewSimpleClientset(model)
+	fakek8s := fake.NewSimpleClientset()
+
+	// mock the kubernetes server version
+	fakeDiscovery, _ := fakek8s.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.FakedServerVersion = &version.Info{
+		GitVersion: "v0.20.0",
+	}
+
+	ip := NewPackageInstallCR(model, log, fakekctrl, fakePkgClient, fakek8s,
+		FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+		metrics.NewMetrics())
+
+	_, err := ip.Reconcile()
+	assert.Nil(t, err)
+
+	gvr := schema.GroupVersionResource{"", "v1", "secrets"}
+	obj, err := fakek8s.Tracker().Get(gvr, "", "parent-pkgi-fetch-0")
+	assert.Nil(t, err)
+	require.NotNil(t, obj)
+	secret := obj.(*corev1.Secret)
+	_, ok := secret.Annotations["secretgen.carvel.dev/image-pull-secret"]
+	assert.True(t, ok)
+
+	gvr = schema.GroupVersionResource{"packaging.carvel.dev", "v1alpha1", "packageinstalls"}
+	obj, err = fakekctrl.Tracker().Get(gvr, "", "dependency-pkg.1.0.0")
+	require.Nil(t, obj)
+	require.Error(t, err, "packageinstalls.packaging.carvel.dev \"dependency-pkg.1.0.0\" not found")
+}

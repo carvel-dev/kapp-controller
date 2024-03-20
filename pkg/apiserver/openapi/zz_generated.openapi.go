@@ -56,9 +56,11 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.KubernetesAPIs":                      schema_pkg_apis_kappctrl_v1alpha1_KubernetesAPIs(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Version":                             schema_pkg_apis_kappctrl_v1alpha1_Version(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec":      schema_apiserver_apis_datapackaging_v1alpha1_AppTemplateSpec(ref),
+		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.DependencyType":       schema_apiserver_apis_datapackaging_v1alpha1_DependencyType(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware":     schema_apiserver_apis_datapackaging_v1alpha1_IncludedSoftware(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Maintainer":           schema_apiserver_apis_datapackaging_v1alpha1_Maintainer(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Package":              schema_apiserver_apis_datapackaging_v1alpha1_Package(ref),
+		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageDependency":    schema_apiserver_apis_datapackaging_v1alpha1_PackageDependency(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageList":          schema_apiserver_apis_datapackaging_v1alpha1_PackageList(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadata":      schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadata(ref),
 		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataList":  schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataList(ref),
@@ -1721,6 +1723,26 @@ func schema_apiserver_apis_datapackaging_v1alpha1_AppTemplateSpec(ref common.Ref
 	}
 }
 
+func schema_apiserver_apis_datapackaging_v1alpha1_DependencyType(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "DependencyType contains the list of type of depencies",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"package": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageDependency"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageDependency"},
+	}
+}
+
 func schema_apiserver_apis_datapackaging_v1alpha1_IncludedSoftware(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1809,6 +1831,33 @@ func schema_apiserver_apis_datapackaging_v1alpha1_Package(ref common.ReferenceCa
 		},
 		Dependencies: []string{
 			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_apiserver_apis_datapackaging_v1alpha1_PackageDependency(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "PackageDependency contains package dependency related info",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"refName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The name of the PackageMetadata associated with this dependency Must be a valid PackageMetadata name (see PackageMetadata CR for details) Cannot be empty",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Package version; Will be Referenced by PackageInstall; Must be valid semver (required) Cannot be empty",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -2047,6 +2096,20 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref common.Referen
 							Format: "",
 						},
 					},
+					"dependencies": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of dependencies to be resolved",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.DependencyType"),
+									},
+								},
+							},
+						},
+					},
 					"licenses": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
@@ -2122,7 +2185,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.DependencyType", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
 	}
 }
 
