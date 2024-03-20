@@ -100,9 +100,9 @@ func NewKctrlCmd(o *KctrlOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 		cmdcore.AppManagementCommandsHelpGroup,
 		cmdcore.RestOfCommandsHelpGroup,
 	}))
-	appCmd.AddCommand(app.NewGetCmd(app.NewGetOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	appCmd.AddCommand(app.NewListCmd(app.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	appCmd.AddCommand(app.NewStatusCmd(app.NewStatusOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	appCmd.AddCommand(app.NewGetCmd(app.NewGetOptions(o.ui, o.depsFactory, o.logger, &o.UIFlags.Columns), flagsFactory))
+	appCmd.AddCommand(app.NewListCmd(app.NewListOptions(o.ui, o.depsFactory, o.logger, &o.UIFlags.Columns), flagsFactory))
+	appCmd.AddCommand(app.NewStatusCmd(app.NewStatusOptions(o.ui, o.depsFactory, o.logger, &o.UIFlags.Columns), flagsFactory))
 	appCmd.AddCommand(app.NewPauseCmd(app.NewPauseOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	appCmd.AddCommand(app.NewKickCmd(app.NewKickOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	appCmd.AddCommand(app.NewDeleteCmd(app.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
@@ -181,8 +181,8 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 		cmdcore.PackageManagementCommandsHelpGroup,
 		cmdcore.PackageAuthoringCommandsHelpGroup,
 	}))
-	pkgrepoCmd.AddCommand(pkgrepo.NewListCmd(pkgrepo.NewListOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
-	pkgrepoCmd.AddCommand(pkgrepo.NewGetCmd(pkgrepo.NewGetOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgrepo.NewListCmd(pkgrepo.NewListOptions(o.ui, o.depsFactory, o.logger, opts, &o.UIFlags.Columns), flagsFactory))
+	pkgrepoCmd.AddCommand(pkgrepo.NewGetCmd(pkgrepo.NewGetOptions(o.ui, o.depsFactory, o.logger, opts, &o.UIFlags.Columns), flagsFactory))
 	pkgrepoCmd.AddCommand(pkgrepo.NewDeleteCmd(pkgrepo.NewDeleteOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgrepoCmd.AddCommand(pkgrepo.NewAddCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgrepoCmd.AddCommand(pkgrepo.NewUpdateCmd(pkgrepo.NewAddOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
@@ -193,26 +193,26 @@ func AddPackageCommands(o *KctrlOptions, cmd *cobra.Command, flagsFactory cmdcor
 	pkgiCmd.SetUsageTemplate(cobrautil.HelpSectionsUsageTemplate([]cobrautil.HelpSection{
 		cmdcore.PackageManagementCommandsHelpGroup,
 	}))
-	pkgiCmd.AddCommand(pkginst.NewListCmd(pkginst.NewListOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
-	pkgiCmd.AddCommand(pkginst.NewGetCmd(pkginst.NewGetOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
-	pkgiCmd.AddCommand(pkginst.NewCreateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
-	pkgiCmd.AddCommand(pkginst.NewUpdateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewListCmd(pkginst.NewListOptions(o.ui, o.depsFactory, o.logger, opts, &o.UIFlags.Columns), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewGetCmd(pkginst.NewGetOptions(o.ui, o.depsFactory, o.logger, opts, &o.UIFlags.Columns), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewCreateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts, &o.UIFlags.Columns), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewUpdateCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts, &o.UIFlags.Columns), flagsFactory))
 	pkgiCmd.AddCommand(pkginst.NewDeleteCmd(pkginst.NewDeleteOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgiCmd.AddCommand(pkginst.NewPauseCmd(pkginst.NewPauseOrKickOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
 	pkgiCmd.AddCommand(pkginst.NewKickCmd(pkginst.NewPauseOrKickOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
-	pkgiCmd.AddCommand(pkginst.NewStatusCmd(pkginst.NewStatusOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
+	pkgiCmd.AddCommand(pkginst.NewStatusCmd(pkginst.NewStatusOptions(o.ui, o.depsFactory, o.logger, opts, &o.UIFlags.Columns), flagsFactory))
 
 	pkgaCmd := pkgavail.NewCmd()
 	pkgaCmd.SetUsageTemplate(cobrautil.HelpSectionsUsageTemplate([]cobrautil.HelpSection{
 		cmdcore.PackageManagementCommandsHelpGroup,
 	}))
-	pkgaCmd.AddCommand(pkgavail.NewListCmd(pkgavail.NewListOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
-	pkgaCmd.AddCommand(pkgavail.NewGetCmd(pkgavail.NewGetOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
+	pkgaCmd.AddCommand(pkgavail.NewListCmd(pkgavail.NewListOptions(o.ui, o.depsFactory, o.logger, opts, &o.UIFlags.Columns), flagsFactory))
+	pkgaCmd.AddCommand(pkgavail.NewGetCmd(pkgavail.NewGetOptions(o.ui, o.depsFactory, o.logger, opts, &o.UIFlags.Columns), flagsFactory))
 
 	cmd.AddCommand(pkgrepoCmd)
 	cmd.AddCommand(pkgiCmd)
 	cmd.AddCommand(pkgaCmd)
-	cmd.AddCommand(pkginst.NewInstallCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts), flagsFactory))
+	cmd.AddCommand(pkginst.NewInstallCmd(pkginst.NewCreateOrUpdateOptions(o.ui, o.depsFactory, o.logger, opts, &o.UIFlags.Columns), flagsFactory))
 	cmd.AddCommand(cmdpkg.NewInitCmd(cmdpkg.NewInitOptions(o.ui, o.depsFactory, o.logger)))
 	cmd.AddCommand(pkgrel.NewReleaseCmd(pkgrel.NewReleaseOptions(o.ui, o.depsFactory, o.logger)))
 

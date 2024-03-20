@@ -24,10 +24,12 @@ type GetOptions struct {
 
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
+
+	columns *[]string
 }
 
-func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *GetOptions {
-	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, columns *[]string) *GetOptions {
+	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, columns: columns}
 }
 
 func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -95,9 +97,7 @@ func (o *GetOptions) Run() error {
 		}},
 	}
 
-	o.ui.PrintTable(table)
-
-	return nil
+	return cmdcore.PrintTable(o.ui, table, o.columns)
 }
 
 func (o *GetOptions) formatOwnerReferences(references []metav1.OwnerReference) []string {

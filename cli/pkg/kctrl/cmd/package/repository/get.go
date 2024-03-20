@@ -24,10 +24,12 @@ type GetOptions struct {
 	Name           string
 
 	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
+
+	columns *[]string
 }
 
-func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *GetOptions {
-	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
+func NewGetOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts, columns *[]string) *GetOptions {
+	return &GetOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts, columns: columns}
 }
 
 func NewGetCmd(o *GetOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -101,7 +103,5 @@ func (o *GetOptions) Run(args []string) error {
 		}},
 	}
 
-	o.ui.PrintTable(table)
-
-	return nil
+	return cmdcore.PrintTable(o.ui, table, o.columns)
 }

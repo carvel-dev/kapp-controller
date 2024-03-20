@@ -141,7 +141,7 @@ func (o *KickOptions) triggerReconciliation(client kcclient.Interface) error {
 
 func (o *KickOptions) waitForAppReconciliation(client kcclient.Interface) error {
 	o.statusUI.PrintMessagef("Waiting for app reconciliation for '%s'", o.Name)
-	appWatcher := NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, AppTailerOpts{})
+	appWatcher := NewAppTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, AppTailerOpts{}, nil)
 
 	err := appWatcher.TailAppStatus()
 	if err != nil {

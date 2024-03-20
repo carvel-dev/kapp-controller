@@ -21,10 +21,12 @@ type StatusOptions struct {
 	Name           string
 
 	IgnoreNotExists bool
+
+	columns *[]string
 }
 
-func NewStatusOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *StatusOptions {
-	return &StatusOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewStatusOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, columns *[]string) *StatusOptions {
+	return &StatusOptions{ui: ui, depsFactory: depsFactory, logger: logger, columns: columns}
 }
 
 func NewStatusCmd(o *StatusOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -58,7 +60,7 @@ func (o *StatusOptions) Run() error {
 		IgnoreNotExists:   o.IgnoreNotExists,
 		PrintMetadata:     true,
 		PrintCurrentState: true,
-	})
+	}, o.columns)
 
 	err = appWatcher.TailAppStatus()
 	if err != nil {

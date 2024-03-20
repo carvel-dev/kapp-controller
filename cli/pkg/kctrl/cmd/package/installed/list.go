@@ -26,10 +26,11 @@ type ListOptions struct {
 	Wide           bool
 
 	pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts
+	columns        *[]string
 }
 
-func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts) *ListOptions {
-	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts}
+func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, pkgCmdTreeOpts cmdcore.PackageCommandTreeOpts, columns *[]string) *ListOptions {
+	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger, pkgCmdTreeOpts: pkgCmdTreeOpts, columns: columns}
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -111,9 +112,8 @@ func (o *ListOptions) Run() error {
 		})
 	}
 
-	o.ui.PrintTable(table)
+	return cmdcore.PrintTable(o.ui, table, o.columns)
 
-	return nil
 }
 
 func (o *ListOptions) getPkgiStatusMessage(pkgi *kcpkgv1alpha1.PackageInstall) string {
