@@ -205,7 +205,7 @@ func Run(opts Options, runLog logr.Logger) error {
 			CacheFolder: cacheFolderApps,
 		}
 		reconciler := app.NewReconciler(kcClient, runLog.WithName("app"),
-			appFactory, refTracker, updateStatusTracker, compInfo)
+			&appFactory, refTracker, updateStatusTracker, compInfo)
 
 		ctrl, err := controller.New("app", mgr, controller.Options{
 			Reconciler: NewUniqueReconciler(&ErrReconciler{
