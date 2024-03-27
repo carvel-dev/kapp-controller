@@ -173,6 +173,7 @@ func (gc *Config) KappDeployRawOptions() []string {
 	// return append([]string{"--app-changes-max-to-keep=5"}, gc.data.kappDeployRawOptions...)
 	kappOptions = append(kappOptions, "--app-changes-max-to-keep=5")
 	kappOptions = append(kappOptions, "--apply-timeout=5m")
+	kappOptions = append(kappOptions, "--diff-anchored=true")
 	kappOptions = append(kappOptions, gc.data.kappDeployRawOptions...)
 	return kappOptions
 }

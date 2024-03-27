@@ -167,7 +167,7 @@ func Test_NewConfig_AppMinimumSyncPeriod(t *testing.T) {
 
 func Test_NewConfig_KappDeployRawOptions(t *testing.T) {
 	defaultRawOptions := []string{
-		"--app-changes-max-to-keep=5", "--apply-timeout=5m",
+		"--app-changes-max-to-keep=5", "--apply-timeout=5m", "--diff-anchored=true",
 	}
 	t.Run("with empty config value, returns just default", func(t *testing.T) {
 		secret := &v1.Secret{
