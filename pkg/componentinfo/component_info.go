@@ -1,4 +1,4 @@
-// Copyright 2022 VMware, Inc.
+// Copyright 2024 The Carvel Authors.
 // SPDX-License-Identifier: Apache-2.0
 
 // Package componentinfo provides access to version and configuration information about components of the system.

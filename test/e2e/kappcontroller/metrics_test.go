@@ -1,4 +1,4 @@
-// Copyright 2021 VMware, Inc.
+// Copyright 2024 The Carvel Authors.
 // SPDX-License-Identifier: Apache-2.0
 
 package kappcontroller
@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 )
-
 
 func TestPrometheusMetrics(t *testing.T) {
 	env := e2e.BuildEnv(t)

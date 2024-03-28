@@ -1,4 +1,4 @@
-// Copyright 2021 VMware, Inc.
+// Copyright 2024 The Carvel Authors.
 // SPDX-License-Identifier: Apache-2.0
 
 package kappcontroller
@@ -326,9 +326,9 @@ stringData:
 
 	logger.Section("deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, e2e.RunOpts{
-      StdinReader: strings.NewReader(appYaml),
-      OnErrKubectl: []string{"get", "app", name, "-oyaml"},
-    })
+			StdinReader:  strings.NewReader(appYaml),
+			OnErrKubectl: []string{"get", "app", name, "-oyaml"},
+		})
 	})
 
 	logger.Section("check ConfigMap exists", func() {
