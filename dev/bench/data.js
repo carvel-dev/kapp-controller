@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1711015878442,
+  "lastUpdate": 1711626121238,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14817,6 +14817,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5307483230,
             "unit": "ns/op\t         3.194 DeleteSeconds\t         2.085 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "btofel@redhat.com",
+            "name": "Brett Tofel",
+            "username": "bentito"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6f2515eb308e4238b24c8a78fe201dc06a566cd0",
+          "message": "Change copyright notices to Carvel Authors (#1506)\n\n* Change copyright notices to Carvel Authors\r\n\r\nSigned-off-by: Brett Tofel <btofel@redhat.com>\r\n\r\n* Update code header template to Carvel Authors\r\n\r\nSigned-off-by: Brett Tofel <btofel@redhat.com>\r\n\r\n---------\r\n\r\nSigned-off-by: Brett Tofel <btofel@redhat.com>",
+          "timestamp": "2024-03-28T17:04:55+05:30",
+          "tree_id": "d3625d5b637cd19966f8379d5045123d46852abd",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/6f2515eb308e4238b24c8a78fe201dc06a566cd0"
+        },
+        "date": 1711626119439,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35036642831,
+            "unit": "ns/op\t        17.66 DeleteSeconds\t        17.35 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8306788910,
+            "unit": "ns/op\t         4.184 DeleteSeconds\t         4.097 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5279956410,
+            "unit": "ns/op\t         3.178 DeleteSeconds\t         2.078 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
