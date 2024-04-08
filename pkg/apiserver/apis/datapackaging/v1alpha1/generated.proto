@@ -17,6 +17,11 @@ message AppTemplateSpec {
   optional github.com.vmware_tanzu.carvel_kapp_controller.pkg.apis.kappctrl.v1alpha1.AppSpec spec = 1;
 }
 
+// DependencyType contains the list of type of depencies
+message DependencyType {
+  optional PackageDependency package = 1;
+}
+
 // IncludedSoftware contains the underlying Software Contents of a Package
 message IncludedSoftware {
   optional string displayName = 1;
@@ -38,6 +43,19 @@ message Package {
   optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
 
   optional PackageSpec spec = 2;
+}
+
+// PackageDependency contains package dependency related info
+message PackageDependency {
+  // The name of the PackageMetadata associated with this dependency
+  // Must be a valid PackageMetadata name (see PackageMetadata CR for details)
+  // Cannot be empty
+  optional string refName = 1;
+
+  // Package version; Will be Referenced by PackageInstall;
+  // Must be valid semver (required)
+  // Cannot be empty
+  optional string version = 2;
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -92,6 +110,9 @@ message PackageSpec {
   optional string refName = 1;
 
   optional string version = 2;
+
+  // List of dependencies to be resolved
+  repeated DependencyType dependencies = 12;
 
   repeated string licenses = 3;
 

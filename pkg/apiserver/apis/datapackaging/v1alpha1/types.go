@@ -58,9 +58,11 @@ type PackageMetadataList struct {
 }
 
 type PackageSpec struct {
-	RefName  string   `json:"refName,omitempty" protobuf:"bytes,1,opt,name=refName"`
-	Version  string   `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
-	Licenses []string `json:"licenses,omitempty" protobuf:"bytes,3,rep,name=licenses"`
+	RefName string `json:"refName,omitempty" protobuf:"bytes,1,opt,name=refName"`
+	Version string `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
+	// List of dependencies to be resolved
+	Dependencies []DependencyType `json:"dependencies,omitempty" protobuf:"bytes,12,rep,name=dependencies"`
+	Licenses     []string         `json:"licenses,omitempty" protobuf:"bytes,3,rep,name=licenses"`
 	// +optional
 	// +nullable
 	ReleasedAt                      metav1.Time `json:"releasedAt,omitempty" protobuf:"bytes,4,opt,name=releasedAt"`
@@ -124,4 +126,21 @@ type IncludedSoftware struct {
 	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,1,opt,name=displayName"`
 	Version     string `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
 	Description string `json:"description,omitempty" protobuf:"bytes,3,opt,name=description"`
+}
+
+// DependencyType contains the list of type of depencies
+type DependencyType struct {
+	Package *PackageDependency `json:"package,omitempty" protobuf:"bytes,1,opt,name=package"`
+}
+
+// PackageDependency contains package dependency related info
+type PackageDependency struct {
+	// The name of the PackageMetadata associated with this dependency
+	// Must be a valid PackageMetadata name (see PackageMetadata CR for details)
+	// Cannot be empty
+	RefName string `json:"refName,omitempty" protobuf:"bytes,1,opt,name=refName"`
+	// Package version; Will be Referenced by PackageInstall;
+	// Must be valid semver (required)
+	// Cannot be empty
+	Version string `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
 }
