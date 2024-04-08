@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712614010953,
+  "lastUpdate": 1712616119204,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14943,6 +14943,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5253755957,
             "unit": "ns/op\t         3.152 DeleteSeconds\t         2.077 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d0ac31bb2eba86dbd14600d3968e1a00389d7867",
+          "message": "Bump google.golang.org/protobuf from 1.28.1 to 1.33.0 in /cli (#1504)\n\nBumps google.golang.org/protobuf from 1.28.1 to 1.33.0.\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: google.golang.org/protobuf\r\n  dependency-type: indirect\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2024-04-09T04:05:02+05:30",
+          "tree_id": "c498e5c2c84c759b3827dfdb9b349d313dd2bbff",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/d0ac31bb2eba86dbd14600d3968e1a00389d7867"
+        },
+        "date": 1712616118013,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35049613654,
+            "unit": "ns/op\t        17.68 DeleteSeconds\t        17.34 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8309985857,
+            "unit": "ns/op\t         4.173 DeleteSeconds\t         4.112 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5279808354,
+            "unit": "ns/op\t         3.181 DeleteSeconds\t         2.075 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
