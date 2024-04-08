@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712613633663,
+  "lastUpdate": 1712614010953,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -14901,6 +14901,48 @@ window.BENCHMARK_DATA = {
             "name": "Benchmark_pkgr_with_50_packages",
             "value": 5251905356,
             "unit": "ns/op\t         3.138 DeleteSeconds\t         2.082 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cdbc0eac3bb15ed0239a7795f421c91ce24d7346",
+          "message": "Bump actions/checkout from 3.5.2 to 4.1.2 (#1509)\n\nBumps [actions/checkout](https://github.com/actions/checkout) from 3.5.2 to 4.1.2.\r\n- [Release notes](https://github.com/actions/checkout/releases)\r\n- [Changelog](https://github.com/actions/checkout/blob/main/CHANGELOG.md)\r\n- [Commits](https://github.com/actions/checkout/compare/v3.5.2...v4.1.2)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: actions/checkout\r\n  dependency-type: direct:production\r\n  update-type: version-update:semver-major\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2024-04-09T03:29:37+05:30",
+          "tree_id": "8f48dfc0271c28d7384f99ae798f84ea572e2faa",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/cdbc0eac3bb15ed0239a7795f421c91ce24d7346"
+        },
+        "date": 1712614009093,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35104954826,
+            "unit": "ns/op\t        17.70 DeleteSeconds\t        17.37 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8293619270,
+            "unit": "ns/op\t         4.169 DeleteSeconds\t         4.100 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5253755957,
+            "unit": "ns/op\t         3.152 DeleteSeconds\t         2.077 DeploySeconds",
             "extra": "1 times\n4 procs"
           }
         ]
