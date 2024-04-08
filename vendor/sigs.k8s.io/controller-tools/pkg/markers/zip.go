@@ -58,6 +58,13 @@ func extractDoc(node ast.Node, decl *ast.GenDecl) string {
 		}
 		outGroup.List = append(outGroup.List, comment)
 	}
+	isAsteriskComment := false
+	for _, l := range outGroup.List {
+		if strings.HasPrefix(l.Text, "/*") {
+			isAsteriskComment = true
+			break
+		}
+	}
 
 	// split lines, and re-join together as a single
 	// paragraph, respecting double-newlines as
@@ -67,13 +74,24 @@ func extractDoc(node ast.Node, decl *ast.GenDecl) string {
 		// chop off the extraneous last part
 		outLines = outLines[:len(outLines)-1]
 	}
-	// respect double-newline meaning actual newline
+
 	for i, line := range outLines {
+		if isAsteriskComment {
+			// Trim any extranous whitespace,
+			// for handling /*…*/-style comments,
+			// which have whitespace preserved in go/ast:
+			line = strings.TrimSpace(line)
+		}
+
+		// Respect that double-newline means
+		// actual newline:
 		if line == "" {
 			outLines[i] = "\n"
+		} else {
+			outLines[i] = line
 		}
 	}
-	return strings.Join(outLines, " ")
+	return strings.Join(outLines, "\n")
 }
 
 // PackageMarkers collects all the package-level marker values for the given package.
@@ -139,11 +157,11 @@ type TypeCallback func(info *TypeInfo)
 // EachType collects all markers, then calls the given callback for each type declaration in a package.
 // Each individual spec is considered separate, so
 //
-//  type (
-//      Foo string
-//      Bar int
-//      Baz struct{}
-//  )
+//	type (
+//	    Foo string
+//	    Bar int
+//	    Baz struct{}
+//	)
 //
 // yields three calls to the callback.
 func EachType(col *Collector, pkg *loader.Package, cb TypeCallback) error {
