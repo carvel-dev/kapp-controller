@@ -55,9 +55,9 @@ func (a DownwardAPIValues) AsYAMLs() ([][]byte, error) {
 				if err != nil {
 					return nil, err
 				}
-				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: v})
+				keyValueContent, err = a.nestedKeyValue(item.Name, v)
 			} else {
-				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: item.KubernetesVersion.Version})
+				keyValueContent, err = a.nestedKeyValue(item.Name, item.KubernetesVersion.Version)
 			}
 		case item.KappControllerVersion != nil:
 			if item.KappControllerVersion.Version == "" {
@@ -65,9 +65,9 @@ func (a DownwardAPIValues) AsYAMLs() ([][]byte, error) {
 				if err != nil {
 					return nil, err
 				}
-				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: v})
+				keyValueContent, err = a.nestedKeyValue(item.Name, v)
 			} else {
-				keyValueContent, err = yaml.Marshal(map[string]string{item.Name: item.KappControllerVersion.Version})
+				keyValueContent, err = a.nestedKeyValue(item.Name, item.KappControllerVersion.Version)
 			}
 		case item.KubernetesAPIs != nil:
 			if item.KubernetesAPIs.GroupVersions == nil {
@@ -75,9 +75,9 @@ func (a DownwardAPIValues) AsYAMLs() ([][]byte, error) {
 				if err != nil {
 					return nil, err
 				}
-				keyValueContent, err = yaml.Marshal(map[string]interface{}{item.Name: v})
+				keyValueContent, err = a.nestedKeyValue(item.Name, v)
 			} else {
-				keyValueContent, err = yaml.Marshal(map[string]interface{}{item.Name: item.KubernetesAPIs.GroupVersions})
+				keyValueContent, err = a.nestedKeyValue(item.Name, item.KubernetesAPIs.GroupVersions)
 			}
 		default:
 			return nil, fmt.Errorf("Invalid downward API item given")
