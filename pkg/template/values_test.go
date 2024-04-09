@@ -65,22 +65,45 @@ func TestValues(t *testing.T) {
 
 		t.Run("name should allow nested key structure", func(t *testing.T) {
 			subject := subject
+			subject.AdditionalValues = AdditionalDownwardAPIValues{
+				KubernetesVersion: func() (string, error) {
+					return "test-kubernetes-version", nil
+				},
+				KubernetesAPIs: func() ([]string, error) {
+					return []string{"somegroup.example.com/someversion"}, nil
+				},
+				KappControllerVersion: func() (string, error) {
+					return "test-kapp-controller-version", nil
+				},
+			}
 			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
 				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
 					{Name: "parent.child", FieldPath: "metadata.name"},
 					{Name: "parent.child1.child2", FieldPath: "metadata.namespace"},
 					{Name: "parent.childwith\\.dot", FieldPath: "metadata.namespace"},
+					{Name: "parent.kubernetes_version", KubernetesVersion: &v1alpha1.Version{}},
+					{Name: "parent.kubernetes_version_custom", KubernetesVersion: &v1alpha1.Version{Version: "test-kubernetes-version-custom"}},
+					{Name: "parent.kubernetes_apis", KubernetesAPIs: &v1alpha1.KubernetesAPIs{}},
+					{Name: "parent.kubernetes_apis_custom", KubernetesAPIs: &v1alpha1.KubernetesAPIs{GroupVersions: []string{"somecustomgroup.example.com/someversion"}}},
+					{Name: "parent.kapp_controller_version", KappControllerVersion: &v1alpha1.Version{}},
+					{Name: "parent.kapp_controller_version_custom", KubernetesVersion: &v1alpha1.Version{Version: "test-kapp-controller-version-custom"}},
 				}},
 			}}
 
 			paths, cleanup, err := subject.AsPaths(os.TempDir())
 			require.NoError(t, err)
-			require.Len(t, paths, 3)
+			require.Len(t, paths, 9)
 			t.Cleanup(cleanup)
 
 			assertFileContents(t, paths[0], "parent:\n  child: some-name\n")
 			assertFileContents(t, paths[1], "parent:\n  child1:\n    child2: some-namespace\n")
 			assertFileContents(t, paths[2], "parent:\n  childwith.dot: some-namespace\n")
+			assertFileContents(t, paths[3], "parent:\n  kubernetes_version: test-kubernetes-version\n")
+			assertFileContents(t, paths[4], "parent:\n  kubernetes_version_custom: test-kubernetes-version-custom\n")
+			assertFileContents(t, paths[5], "parent:\n  kubernetes_apis:\n  - somegroup.example.com/someversion\n")
+			assertFileContents(t, paths[6], "parent:\n  kubernetes_apis_custom:\n  - somecustomgroup.example.com/someversion\n")
+			assertFileContents(t, paths[7], "parent:\n  kapp_controller_version: test-kapp-controller-version\n")
+			assertFileContents(t, paths[8], "parent:\n  kapp_controller_version_custom: test-kapp-controller-version-custom\n")
 		})
 
 		t.Run("map field paths should allow subpaths", func(t *testing.T) {
@@ -228,48 +251,6 @@ func TestValues(t *testing.T) {
 			_, _, err := subject.AsPaths(os.TempDir())
 			require.Error(t, err)
 			assert.ErrorContains(t, err, "Invalid field spec provided to DownwardAPI. Only single supported fields are allowed")
-		})
-
-		t.Run("return kubernetes cluster version if not supplied", func(t *testing.T) {
-			subject := subject
-			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
-				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
-					{Name: "k8s-version", KubernetesVersion: &v1alpha1.Version{}},
-				}},
-			}}
-			subject.AdditionalValues = AdditionalDownwardAPIValues{
-				KubernetesVersion: func() (string, error) {
-					return "0.20.0", nil
-				},
-			}
-
-			paths, cleanup, err := subject.AsPaths(os.TempDir())
-			require.NoError(t, err)
-			t.Cleanup(cleanup)
-
-			require.Len(t, paths, 1)
-			assertFileContents(t, paths[0], "k8s-version: 0.20.0\n")
-		})
-
-		t.Run("return kapp-controller version", func(t *testing.T) {
-			subject := subject
-			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
-				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
-					{Name: "kc-version", KappControllerVersion: &v1alpha1.Version{}},
-				}},
-			}}
-			subject.AdditionalValues = AdditionalDownwardAPIValues{
-				KappControllerVersion: func() (string, error) {
-					return "0.42.31337", nil
-				},
-			}
-
-			paths, cleanup, err := subject.AsPaths(os.TempDir())
-			require.NoError(t, err)
-			t.Cleanup(cleanup)
-
-			require.Len(t, paths, 1)
-			assertFileContents(t, paths[0], "kc-version: 0.42.31337\n")
 		})
 	})
 }
