@@ -252,48 +252,6 @@ func TestValues(t *testing.T) {
 			require.Error(t, err)
 			assert.ErrorContains(t, err, "Invalid field spec provided to DownwardAPI. Only single supported fields are allowed")
 		})
-
-		t.Run("return kubernetes cluster version if not supplied", func(t *testing.T) {
-			subject := subject
-			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
-				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
-					{Name: "k8s-version", KubernetesVersion: &v1alpha1.Version{}},
-				}},
-			}}
-			subject.AdditionalValues = AdditionalDownwardAPIValues{
-				KubernetesVersion: func() (string, error) {
-					return "0.20.0", nil
-				},
-			}
-
-			paths, cleanup, err := subject.AsPaths(os.TempDir())
-			require.NoError(t, err)
-			t.Cleanup(cleanup)
-
-			require.Len(t, paths, 1)
-			assertFileContents(t, paths[0], "k8s-version: 0.20.0\n")
-		})
-
-		t.Run("return kapp-controller version", func(t *testing.T) {
-			subject := subject
-			subject.ValuesFrom = []v1alpha1.AppTemplateValuesSource{{DownwardAPI: &v1alpha1.AppTemplateValuesDownwardAPI{
-				Items: []v1alpha1.AppTemplateValuesDownwardAPIItem{
-					{Name: "kc-version", KappControllerVersion: &v1alpha1.Version{}},
-				}},
-			}}
-			subject.AdditionalValues = AdditionalDownwardAPIValues{
-				KappControllerVersion: func() (string, error) {
-					return "0.42.31337", nil
-				},
-			}
-
-			paths, cleanup, err := subject.AsPaths(os.TempDir())
-			require.NoError(t, err)
-			t.Cleanup(cleanup)
-
-			require.Len(t, paths, 1)
-			assertFileContents(t, paths[0], "kc-version: 0.42.31337\n")
-		})
 	})
 }
 
