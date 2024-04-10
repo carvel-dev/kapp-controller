@@ -59,6 +59,8 @@ spec:
           capabilities:
             drop:
             - ALL
+          seccompProfile:
+            type: RuntimeDefault
       - name: kapp-controller-sidecarexec
         image: kapp-controller
         args: ["--sidecarexec"]
@@ -86,6 +88,8 @@ spec:
           capabilities:
             drop:
             - ALL
+          seccompProfile:
+            type: RuntimeDefault
       volumes:
       - name: template-fs
         emptyDir:
