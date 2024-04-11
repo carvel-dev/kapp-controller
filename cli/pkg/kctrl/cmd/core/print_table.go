@@ -16,7 +16,7 @@ func validateColumns(headers *[]uitable.Header, cols *[]string) error {
 	for _, col := range *cols {
 		found := false
 		for _, head := range *headers {
-			if col == head.Key || col == head.Title {
+			if uitable.KeyifyHeader(col) == head.Key || col == head.Title {
 				found = true
 				break
 			}
