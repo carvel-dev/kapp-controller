@@ -140,6 +140,16 @@ spec:
 		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
 	})
 
+	logger.Section("listing packages with column names in mixed cases", func() {
+		out := kappCtrl.Run([]string{"package", "available", "list", "--json", "--column=nAMe,NameSpace"})
+		output := uitest.JSONUIFromBytes(t, []byte(out))
+		expectedOutputRows := []map[string]string{{
+			"name":      packageName,
+			"namespace": env.Namespace,
+		}}
+		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
+	})
+
 	logger.Section("listing packages with non existing column names", func() {
 		_, err := kappCtrl.RunWithOpts([]string{"package", "available", "list", "--json", "--column=name,invalid,namespace,ns"}, RunOpts{
 			AllowError: true,
