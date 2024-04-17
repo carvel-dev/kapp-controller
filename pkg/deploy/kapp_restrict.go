@@ -41,6 +41,7 @@ var (
 		"--diff-mask",
 		"--diff-run",
 		"--diff-summary",
+		"--diff-anchored",
 
 		// Applying
 		"--apply-check-interval",
