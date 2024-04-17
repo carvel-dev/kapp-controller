@@ -1,4 +1,4 @@
-# carvel.dev/vendir v0.40.0
+# carvel.dev/vendir v0.40.1
 ## explicit; go 1.21
 carvel.dev/vendir/pkg/vendir/config
 carvel.dev/vendir/pkg/vendir/version
@@ -24,7 +24,7 @@ github.com/blang/semver
 # github.com/blang/semver/v4 v4.0.0
 ## explicit; go 1.14
 github.com/blang/semver/v4
-# github.com/carvel-dev/semver/v4 v4.0.1-0.20230221220520-8090ce423695
+# github.com/carvel-dev/semver/v4 v4.0.1-0.20240402203627-beb83fbf25e4
 ## explicit; go 1.14
 github.com/carvel-dev/semver/v4
 # github.com/cenkalti/backoff/v4 v4.1.3

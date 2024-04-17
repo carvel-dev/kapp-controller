@@ -36,16 +36,16 @@
   version: v0.60.0
 - checksums:
     darwin:
-      amd64: 0bf3840619436908b11fce2c7015d928450b41a3b9ef19fecc6223ff2ed084a4
-      arm64: b6defba97d36e26e02df8b263de17061bbbc432365c9d26070eb7a837d7e33fc
+      amd64: 3941cf7b7ba1219d574b93ce1bd8b77928ad9ff9cdf8e2debf3ae11ae695792f
+      arm64: 34974c9a6a6e32eb21adac47ce72df6340d36886b5ebe8b5937444a0d7ecc529
     linux:
-      amd64: 3e076a452d88d6e3bc190d527f4d7c949ab6eccae19bf5d3cbb910d53724f2b9
-      arm64: c43469a085dd0f6cebdab97a7747710f9dafa4886dd5e0ae7c1d3f975a12756e
+      amd64: d7c602d8882085be78cd02a575a6c3b437bb2fa1ff1067712f593d8cf05c94fa
+      arm64: 43e98922103ef30995a11bd4491b138b635c9b7bf17f98475fb5a06c87392e1d
   dev: true
   name: vendir
   repo: carvel-dev/vendir
   urlTemplate: https://github.com/carvel-dev/{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.40.0
+  version: v0.40.1
 - checksums:
     linux:
       amd64: 3c90f24e180f8c207b8a18e5ec82cb0fa49858a7a0a86e4ed52a98398681e00b
