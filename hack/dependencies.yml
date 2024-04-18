@@ -1,51 +1,51 @@
 - checksums:
     darwin:
-      amd64: 46e672afcf2c2c09c415f52f472d6dcc648324fd5acf7c83c6b6017223dc4042
-      arm64: d42295bbe137bdc08471ce61857ee1ee20761cd58a5a1827fde9c622e6b0e151
+      amd64: 115fef7a35cfe480bf38fbf7dee842a6529b3e1920860b3b9ed7bdf656e5cc71
+      arm64: 25772c85e6a05f9bb69250a194bd74978e0641c52ab322e5e52d0f540abb3f47
     linux:
-      amd64: 2b4ca5365c343bb1e903e8e845d9750b5d2776b3a99483912f27da6e95c480c0
-      arm64: 5372597c7165cb09657c7b9cfb5da1e58673940cf0ebbd4ecf8040e9ab9eb9e7
+      amd64: 7c1f1aabf60104c7d93c435de9eb625432f14809c3533ced6c5e6d4216b8e738
+      arm64: 8a4b6c09f5499344234938d881961cb9bed0f932659f42a423b8754620dd5e90
   dev: true
   name: ytt
   repo: vmware-tanzu/carvel-ytt
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.46.3
+  version: v0.46.4
 - checksums:
     darwin:
-      amd64: 6f84a70fffb97886b75f8a57615d6f4a031361704ee9a66cc36477a529c233e1
-      arm64: 517fc342e17560059a10155ac740b43e2781abd6b2c22714407601f8ad656f4d
+      amd64: 09bd9f00c6ba8f3e47e4f775a7fc6634b18fe9d6323d6f25ad9ca97fd041f94e
+      arm64: 30b5e56d1eea19987180c05e3aded43a1dcbaf9c42914adc0f299d280a922196
     linux:
-      amd64: bd471a1270481f04a3ad656b5911167cd4173ff7c1cc524ddc27569b02978a74
-      arm64: 36bb1e689247aca092c9cff7b349adb505760c257ccf1fcdf25a54086182c37c
+      amd64: b3135296360608c853177bb7af014c69d22d89edbce225b7360bfc792bf9723b
+      arm64: 58fc9ff07421e6f93966271fe4fc5a9b84b592feb4cf1cffbdabe0c59e908f22
   dev: true
   name: kbld
   repo: vmware-tanzu/carvel-kbld
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.38.2
+  version: v0.38.3
 - checksums:
     darwin:
-      amd64: c20034a347bf90d977daac29eadbb4db4a7dc172a18a9d27fe0a48c39c124d27
-      arm64: a404ed1bee2e0cb1a09498a991a3c897ee2ad08134a4eff01529ff73d7b47f3a
+      amd64: 7aa95e47e7c2a8c867de6d0af6f74182d8247267784a44668b760c44f201f461
+      arm64: 6be47a301146fb74c1460e5f48435a9d885d2b3e75a23a3deec5808b8a928d0f
     linux:
-      amd64: 6986369c06e89bcec366b2cc18f81634fcd95e2b52c6c6f7ee46b497ade25f7d
-      arm64: 03d8ef43aa467756a22fea6d32745b3bddef163fa22de4f8b5edd1d60fdc0585
+      amd64: d581c368a54b00e6addebf9f880b2844ef997c312b80bb8f664162a7df3e2b73
+      arm64: b2a9627239c13facbdd68eb4e683bbf645503c466da132668133e880969d6c16
   dev: true
   name: kapp
   repo: vmware-tanzu/carvel-kapp
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.59.2
+  version: v0.59.3
 - checksums:
     darwin:
-      amd64: 610f42df3c6af0a37524c7af6601c37707d1d148b28a3e598cdb0f40241e64da
-      arm64: 1dc363001d0d2542cf35058fb6cf86325f9d7c780bab1d584de94401db4493a4
+      amd64: 09652c164a7a131e5b68d7c85c0b101fe402ca6c0f82c17d697a7789f73655b5
+      arm64: 8ff848ec0038e90a075f22e12f4967577d74954f22e3922ca34f12959eb40948
     linux:
-      amd64: 4e88e2ccb9a7c72b79cad81a0391e30e7694cec0af114abb5cec81463d6dd7c4
-      arm64: 4436f6f48dc0f17067a8cf907966ae17bd573f77dbcb3a1e8b69002494d387ae
+      amd64: 45357260958277f43c3a3237c6b5c77df5d0919a311253645ab3e015957ebbb4
+      arm64: 4f1b984df382d094e226d138c83389f1f2a4ae95a65e22b97c6bd98c051b1846
   dev: true
   name: vendir
   repo: vmware-tanzu/carvel-vendir
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.35.3
+  version: v0.35.4
 - checksums:
     linux:
       amd64: 3c90f24e180f8c207b8a18e5ec82cb0fa49858a7a0a86e4ed52a98398681e00b
