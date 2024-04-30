@@ -1,4 +1,4 @@
-module github.com/vmware-tanzu/carvel-kapp-controller
+module carvel.dev/kapp-controller
 
 go 1.21
 

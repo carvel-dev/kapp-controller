@@ -16,57 +16,57 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection":                                               schema_pkg_vendir_versions_v1alpha1_VersionSelection(ref),
-		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver":                                         schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemver(ref),
-		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases":                              schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemverPrereleases(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppCluster":                          schema_pkg_apis_kappctrl_v1alpha1_AppCluster(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppClusterKubeconfigSecretRef":       schema_pkg_apis_kappctrl_v1alpha1_AppClusterKubeconfigSecretRef(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeploy":                           schema_pkg_apis_kappctrl_v1alpha1_AppDeploy(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKapp":                       schema_pkg_apis_kappctrl_v1alpha1_AppDeployKapp(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappDelete":                 schema_pkg_apis_kappctrl_v1alpha1_AppDeployKappDelete(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappInspect":                schema_pkg_apis_kappctrl_v1alpha1_AppDeployKappInspect(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetch":                            schema_pkg_apis_kappctrl_v1alpha1_AppFetch(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchGit":                         schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHTTP":                        schema_pkg_apis_kappctrl_v1alpha1_AppFetchHTTP(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChart":                   schema_pkg_apis_kappctrl_v1alpha1_AppFetchHelmChart(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChartRepo":               schema_pkg_apis_kappctrl_v1alpha1_AppFetchHelmChartRepo(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImage":                       schema_pkg_apis_kappctrl_v1alpha1_AppFetchImage(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImgpkgBundle":                schema_pkg_apis_kappctrl_v1alpha1_AppFetchImgpkgBundle(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline":                      schema_pkg_apis_kappctrl_v1alpha1_AppFetchInline(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInlineSource":                schema_pkg_apis_kappctrl_v1alpha1_AppFetchInlineSource(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInlineSourceRef":             schema_pkg_apis_kappctrl_v1alpha1_AppFetchInlineSourceRef(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef":                    schema_pkg_apis_kappctrl_v1alpha1_AppFetchLocalRef(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppSpec":                             schema_pkg_apis_kappctrl_v1alpha1_AppSpec(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplate":                         schema_pkg_apis_kappctrl_v1alpha1_AppTemplate(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateCue":                      schema_pkg_apis_kappctrl_v1alpha1_AppTemplateCue(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateHelmTemplate":             schema_pkg_apis_kappctrl_v1alpha1_AppTemplateHelmTemplate(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateJsonnet":                  schema_pkg_apis_kappctrl_v1alpha1_AppTemplateJsonnet(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateKbld":                     schema_pkg_apis_kappctrl_v1alpha1_AppTemplateKbld(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateKustomize":                schema_pkg_apis_kappctrl_v1alpha1_AppTemplateKustomize(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSops":                     schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSops(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsAge":                  schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSopsAge(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPGP":                  schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSopsPGP(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef": schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSopsPrivateKeysSecretRef(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPI":        schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesDownwardAPI(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPIItem":    schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesDownwardAPIItem(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource":             schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesSource(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSourceRef":          schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesSourceRef(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateYtt":                      schema_pkg_apis_kappctrl_v1alpha1_AppTemplateYtt(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Condition":                           schema_pkg_apis_kappctrl_v1alpha1_Condition(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.KubernetesAPIs":                      schema_pkg_apis_kappctrl_v1alpha1_KubernetesAPIs(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Version":                             schema_pkg_apis_kappctrl_v1alpha1_Version(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec":      schema_apiserver_apis_datapackaging_v1alpha1_AppTemplateSpec(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware":     schema_apiserver_apis_datapackaging_v1alpha1_IncludedSoftware(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Maintainer":           schema_apiserver_apis_datapackaging_v1alpha1_Maintainer(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Package":              schema_apiserver_apis_datapackaging_v1alpha1_Package(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageList":          schema_apiserver_apis_datapackaging_v1alpha1_PackageList(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadata":      schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadata(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataList":  schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataList(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataSpec":  schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataSpec(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageSpec":          schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema":         schema_apiserver_apis_datapackaging_v1alpha1_ValuesSchema(ref),
-		"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection":     schema_apiserver_apis_datapackaging_v1alpha1_VersionSelection(ref),
-		"k8s.io/api/core/v1.AWSElasticBlockStoreVolumeSource":                                                           schema_k8sio_api_core_v1_AWSElasticBlockStoreVolumeSource(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppCluster":                          schema_pkg_apis_kappctrl_v1alpha1_AppCluster(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppClusterKubeconfigSecretRef":       schema_pkg_apis_kappctrl_v1alpha1_AppClusterKubeconfigSecretRef(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeploy":                           schema_pkg_apis_kappctrl_v1alpha1_AppDeploy(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKapp":                       schema_pkg_apis_kappctrl_v1alpha1_AppDeployKapp(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappDelete":                 schema_pkg_apis_kappctrl_v1alpha1_AppDeployKappDelete(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappInspect":                schema_pkg_apis_kappctrl_v1alpha1_AppDeployKappInspect(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetch":                            schema_pkg_apis_kappctrl_v1alpha1_AppFetch(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchGit":                         schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHTTP":                        schema_pkg_apis_kappctrl_v1alpha1_AppFetchHTTP(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChart":                   schema_pkg_apis_kappctrl_v1alpha1_AppFetchHelmChart(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChartRepo":               schema_pkg_apis_kappctrl_v1alpha1_AppFetchHelmChartRepo(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImage":                       schema_pkg_apis_kappctrl_v1alpha1_AppFetchImage(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImgpkgBundle":                schema_pkg_apis_kappctrl_v1alpha1_AppFetchImgpkgBundle(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline":                      schema_pkg_apis_kappctrl_v1alpha1_AppFetchInline(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInlineSource":                schema_pkg_apis_kappctrl_v1alpha1_AppFetchInlineSource(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInlineSourceRef":             schema_pkg_apis_kappctrl_v1alpha1_AppFetchInlineSourceRef(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef":                    schema_pkg_apis_kappctrl_v1alpha1_AppFetchLocalRef(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppSpec":                             schema_pkg_apis_kappctrl_v1alpha1_AppSpec(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplate":                         schema_pkg_apis_kappctrl_v1alpha1_AppTemplate(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateCue":                      schema_pkg_apis_kappctrl_v1alpha1_AppTemplateCue(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateHelmTemplate":             schema_pkg_apis_kappctrl_v1alpha1_AppTemplateHelmTemplate(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateJsonnet":                  schema_pkg_apis_kappctrl_v1alpha1_AppTemplateJsonnet(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateKbld":                     schema_pkg_apis_kappctrl_v1alpha1_AppTemplateKbld(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateKustomize":                schema_pkg_apis_kappctrl_v1alpha1_AppTemplateKustomize(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSops":                     schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSops(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsAge":                  schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSopsAge(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPGP":                  schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSopsPGP(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef": schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSopsPrivateKeysSecretRef(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPI":        schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesDownwardAPI(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPIItem":    schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesDownwardAPIItem(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource":             schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesSource(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSourceRef":          schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesSourceRef(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateYtt":                      schema_pkg_apis_kappctrl_v1alpha1_AppTemplateYtt(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.Condition":                           schema_pkg_apis_kappctrl_v1alpha1_Condition(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.KubernetesAPIs":                      schema_pkg_apis_kappctrl_v1alpha1_KubernetesAPIs(ref),
+		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.Version":                             schema_pkg_apis_kappctrl_v1alpha1_Version(ref),
+		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec":      schema_apiserver_apis_datapackaging_v1alpha1_AppTemplateSpec(ref),
+		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware":     schema_apiserver_apis_datapackaging_v1alpha1_IncludedSoftware(ref),
+		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Maintainer":           schema_apiserver_apis_datapackaging_v1alpha1_Maintainer(ref),
+		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Package":              schema_apiserver_apis_datapackaging_v1alpha1_Package(ref),
+		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageList":          schema_apiserver_apis_datapackaging_v1alpha1_PackageList(ref),
+		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadata":      schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadata(ref),
+		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataList":  schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataList(ref),
+		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataSpec":  schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataSpec(ref),
+		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageSpec":          schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref),
+		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema":         schema_apiserver_apis_datapackaging_v1alpha1_ValuesSchema(ref),
+		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection":     schema_apiserver_apis_datapackaging_v1alpha1_VersionSelection(ref),
+		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection":                           schema_pkg_vendir_versions_v1alpha1_VersionSelection(ref),
+		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver":                     schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemver(ref),
+		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases":          schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemverPrereleases(ref),
+		"k8s.io/api/core/v1.AWSElasticBlockStoreVolumeSource":                                       schema_k8sio_api_core_v1_AWSElasticBlockStoreVolumeSource(ref),
 		"k8s.io/api/core/v1.Affinity":                                    schema_k8sio_api_core_v1_Affinity(ref),
 		"k8s.io/api/core/v1.AttachedVolume":                              schema_k8sio_api_core_v1_AttachedVolume(ref),
 		"k8s.io/api/core/v1.AvoidPods":                                   schema_k8sio_api_core_v1_AvoidPods(ref),
@@ -336,76 +336,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	}
 }
 
-func schema_pkg_vendir_versions_v1alpha1_VersionSelection(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"semver": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver"},
-	}
-}
-
-func schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemver(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"constraints": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"prereleases": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases"},
-	}
-}
-
-func schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemverPrereleases(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"identifiers": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_kappctrl_v1alpha1_AppCluster(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -422,14 +352,14 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppCluster(ref common.ReferenceCallback) 
 					"kubeconfigSecretRef": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Specifies secret containing kubeconfig (required)",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppClusterKubeconfigSecretRef"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppClusterKubeconfigSecretRef"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppClusterKubeconfigSecretRef"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppClusterKubeconfigSecretRef"},
 	}
 }
 
@@ -468,14 +398,14 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppDeploy(ref common.ReferenceCallback) c
 					"kapp": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Use kapp to deploy resources",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKapp"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKapp"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKapp"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKapp"},
 	}
 }
 
@@ -525,20 +455,20 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppDeployKapp(ref common.ReferenceCallbac
 					"inspect": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Configuration for inspect command (optional) as of kapp-controller v0.31.0, inspect is disabled by default add rawOptions or use an empty inspect config like `inspect: {}` to enable",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappInspect"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappInspect"),
 						},
 					},
 					"delete": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Configuration for delete command (optional)",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappDelete"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappDelete"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappDelete", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappInspect"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappDelete", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeployKappInspect"},
 	}
 }
 
@@ -605,37 +535,37 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetch(ref common.ReferenceCallback) co
 					"inline": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Pulls content from within this resource; or other resources in the cluster",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline"),
 						},
 					},
 					"image": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Pulls content from Docker/OCI registry",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImage"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImage"),
 						},
 					},
 					"http": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Uses http library to fetch file",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHTTP"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHTTP"),
 						},
 					},
 					"git": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Uses git to clone repository",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchGit"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchGit"),
 						},
 					},
 					"helmChart": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Uses helm fetch to fetch specified chart",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChart"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChart"),
 						},
 					},
 					"imgpkgBundle": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Pulls imgpkg bundle from Docker/OCI registry (v0.17.0+)",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImgpkgBundle"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImgpkgBundle"),
 						},
 					},
 					"path": {
@@ -649,7 +579,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetch(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchGit", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHTTP", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChart", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImage", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImgpkgBundle", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchGit", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHTTP", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChart", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImage", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchImgpkgBundle", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline"},
 	}
 }
 
@@ -682,7 +612,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref common.ReferenceCallback)
 					"secretRef": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password (optional) (if ssh-knownhosts is not specified, git will not perform strict host checking)",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"),
 						},
 					},
 					"subPath": {
@@ -710,7 +640,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef", "carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection"},
 	}
 }
 
@@ -737,7 +667,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchHTTP(ref common.ReferenceCallback
 					"secretRef": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Secret to provide auth details (optional) Secret may include one or more keys: username, password",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"),
 						},
 					},
 					"subPath": {
@@ -751,7 +681,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchHTTP(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"},
 	}
 }
 
@@ -776,14 +706,14 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchHelmChart(ref common.ReferenceCal
 					},
 					"repository": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChartRepo"),
+							Ref: ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChartRepo"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChartRepo"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchHelmChartRepo"},
 	}
 }
 
@@ -802,14 +732,14 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchHelmChartRepo(ref common.Referenc
 					},
 					"secretRef": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"),
+							Ref: ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"},
 	}
 }
 
@@ -835,7 +765,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImage(ref common.ReferenceCallbac
 					"secretRef": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication.",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"),
 						},
 					},
 					"subPath": {
@@ -849,7 +779,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImage(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef", "carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection"},
 	}
 }
 
@@ -875,14 +805,14 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchImgpkgBundle(ref common.Reference
 					"secretRef": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication.",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchLocalRef", "carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection"},
 	}
 }
 
@@ -916,7 +846,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchInline(ref common.ReferenceCallba
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInlineSource"),
+										Ref:     ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInlineSource"),
 									},
 								},
 							},
@@ -926,7 +856,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchInline(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInlineSource"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInlineSource"},
 	}
 }
 
@@ -938,19 +868,19 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchInlineSource(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"secretRef": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInlineSourceRef"),
+							Ref: ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInlineSourceRef"),
 						},
 					},
 					"configMapRef": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInlineSourceRef"),
+							Ref: ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInlineSourceRef"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInlineSourceRef"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInlineSourceRef"},
 	}
 }
 
@@ -1014,7 +944,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppSpec(ref common.ReferenceCallback) com
 					"cluster": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Specifies that app should be deployed to destination cluster; by default, cluster is same as where this resource resides (optional; v0.5.0+)",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppCluster"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppCluster"),
 						},
 					},
 					"fetch": {
@@ -1024,7 +954,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppSpec(ref common.ReferenceCallback) com
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetch"),
+										Ref:     ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetch"),
 									},
 								},
 							},
@@ -1037,7 +967,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppSpec(ref common.ReferenceCallback) com
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplate"),
+										Ref:     ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplate"),
 									},
 								},
 							},
@@ -1050,7 +980,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppSpec(ref common.ReferenceCallback) com
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeploy"),
+										Ref:     ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeploy"),
 									},
 								},
 							},
@@ -1094,7 +1024,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppSpec(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppCluster", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeploy", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetch", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplate", "k8s.io/apimachinery/pkg/apis/meta/v1.Duration"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppCluster", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppDeploy", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetch", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplate", "k8s.io/apimachinery/pkg/apis/meta/v1.Duration"},
 	}
 }
 
@@ -1107,47 +1037,47 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplate(ref common.ReferenceCallback)
 					"ytt": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Use ytt to template configuration",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateYtt"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateYtt"),
 						},
 					},
 					"kbld": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Use kbld to resolve image references to use digests",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateKbld"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateKbld"),
 						},
 					},
 					"helmTemplate": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Use helm template command to render helm chart",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateHelmTemplate"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateHelmTemplate"),
 						},
 					},
 					"kustomize": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateKustomize"),
+							Ref: ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateKustomize"),
 						},
 					},
 					"jsonnet": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateJsonnet"),
+							Ref: ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateJsonnet"),
 						},
 					},
 					"sops": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Use sops to decrypt *.sops.yml files (optional; v0.11.0+)",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSops"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSops"),
 						},
 					},
 					"cue": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateCue"),
+							Ref: ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateCue"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateCue", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateHelmTemplate", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateJsonnet", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateKbld", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateKustomize", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSops", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateYtt"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateCue", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateHelmTemplate", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateJsonnet", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateKbld", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateKustomize", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSops", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateYtt"},
 	}
 }
 
@@ -1180,7 +1110,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateCue(ref common.ReferenceCallba
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource"),
+										Ref:     ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource"),
 									},
 								},
 							},
@@ -1204,7 +1134,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateCue(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource"},
 	}
 }
 
@@ -1243,7 +1173,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateHelmTemplate(ref common.Refere
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource"),
+										Ref:     ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource"),
 									},
 								},
 							},
@@ -1252,20 +1182,20 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateHelmTemplate(ref common.Refere
 					"kubernetesVersion": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster. Can be manually overridden to a value instead.",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"),
 						},
 					},
 					"kubernetesAPIs": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Optional: Use kubernetes group/versions resources available in the live cluster",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.KubernetesAPIs"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.KubernetesAPIs"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.KubernetesAPIs", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.KubernetesAPIs", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"},
 	}
 }
 
@@ -1324,7 +1254,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSops(ref common.ReferenceCallb
 					"pgp": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Use PGP to decrypt files (required)",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPGP"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPGP"),
 						},
 					},
 					"paths": {
@@ -1344,14 +1274,14 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSops(ref common.ReferenceCallb
 					},
 					"age": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsAge"),
+							Ref: ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsAge"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsAge", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPGP"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsAge", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPGP"},
 	}
 }
 
@@ -1364,14 +1294,14 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSopsAge(ref common.ReferenceCa
 					"privateKeysSecretRef": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Secret with private armored PGP private keys (required)",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef"},
 	}
 }
 
@@ -1384,14 +1314,14 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateSopsPGP(ref common.ReferenceCa
 					"privateKeysSecretRef": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Secret with private armored PGP private keys (required)",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateSopsPrivateKeysSecretRef"},
 	}
 }
 
@@ -1426,7 +1356,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesDownwardAPI(ref common.R
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPIItem"),
+										Ref:     ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPIItem"),
 									},
 								},
 							},
@@ -1436,7 +1366,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesDownwardAPI(ref common.R
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPIItem"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPIItem"},
 	}
 }
 
@@ -1462,26 +1392,26 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesDownwardAPIItem(ref comm
 					"kubernetesVersion": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster. Can be manually supplied instead.",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"),
 						},
 					},
 					"kappControllerVersion": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Optional: Get running KappController version, defaults (empty) to retrieving the current running version.. Can be manually supplied instead.",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"),
 						},
 					},
 					"kubernetesAPIs": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g [\"group/version\", \"group2/version2\"]",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.KubernetesAPIs"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.KubernetesAPIs"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.KubernetesAPIs", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.KubernetesAPIs", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.Version"},
 	}
 }
 
@@ -1493,12 +1423,12 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesSource(ref common.Refere
 				Properties: map[string]spec.Schema{
 					"secretRef": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSourceRef"),
+							Ref: ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSourceRef"),
 						},
 					},
 					"configMapRef": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSourceRef"),
+							Ref: ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSourceRef"),
 						},
 					},
 					"path": {
@@ -1509,14 +1439,14 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateValuesSource(ref common.Refere
 					},
 					"downwardAPI": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPI"),
+							Ref: ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPI"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPI", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSourceRef"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesDownwardAPI", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSourceRef"},
 	}
 }
 
@@ -1561,7 +1491,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateYtt(ref common.ReferenceCallba
 					"inline": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Specify additional files, including data values (optional)",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline"),
 						},
 					},
 					"paths": {
@@ -1602,7 +1532,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateYtt(ref common.ReferenceCallba
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource"),
+										Ref:     ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource"),
 									},
 								},
 							},
@@ -1612,7 +1542,7 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateYtt(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppFetchInline", "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppTemplateValuesSource"},
 	}
 }
 
@@ -1709,7 +1639,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_AppTemplateSpec(ref common.Ref
 				Properties: map[string]spec.Schema{
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppSpec"),
+							Ref: ref("carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppSpec"),
 						},
 					},
 				},
@@ -1717,7 +1647,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_AppTemplateSpec(ref common.Ref
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1.AppSpec"},
+			"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.AppSpec"},
 	}
 }
 
@@ -1800,7 +1730,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_Package(ref common.ReferenceCa
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageSpec"),
+							Ref:     ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageSpec"),
 						},
 					},
 				},
@@ -1808,7 +1738,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_Package(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -1846,7 +1776,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageList(ref common.Referen
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Package"),
+										Ref:     ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Package"),
 									},
 								},
 							},
@@ -1857,7 +1787,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageList(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Package", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Package", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -1891,7 +1821,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadata(ref common.Ref
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataSpec"),
+							Ref:     ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataSpec"),
 						},
 					},
 				},
@@ -1899,7 +1829,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadata(ref common.Ref
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -1937,7 +1867,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataList(ref common
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadata"),
+										Ref:     ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadata"),
 									},
 								},
 							},
@@ -1948,7 +1878,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataList(ref common
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadata", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadata", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -1995,7 +1925,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataSpec(ref common
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Maintainer"),
+										Ref:     ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Maintainer"),
 									},
 								},
 							},
@@ -2025,7 +1955,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataSpec(ref common
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Maintainer"},
+			"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Maintainer"},
 	}
 }
 
@@ -2082,14 +2012,14 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref common.Referen
 					"template": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec"),
+							Ref:     ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec"),
 						},
 					},
 					"valuesSchema": {
 						SchemaProps: spec.SchemaProps{
 							Description: "valuesSchema can be used to show template values that can be configured by users when a Package is installed in an OpenAPI schema format.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema"),
 						},
 					},
 					"includedSoftware": {
@@ -2100,7 +2030,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref common.Referen
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware"),
+										Ref:     ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware"),
 									},
 								},
 							},
@@ -2109,20 +2039,20 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref common.Referen
 					"kappControllerVersionSelection": {
 						SchemaProps: spec.SchemaProps{
 							Description: "KappControllerVersionSelection specifies the versions of kapp-controller which can install this package",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection"),
 						},
 					},
 					"kubernetesVersionSelection": {
 						SchemaProps: spec.SchemaProps{
 							Description: "KubernetesVersionSelection specifies the versions of k8s which this package can be installed on",
-							Ref:         ref("github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection"),
+							Ref:         ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema", "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+			"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec", "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware", "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema", "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
 	}
 }
 
@@ -2157,6 +2087,76 @@ func schema_apiserver_apis_datapackaging_v1alpha1_VersionSelection(ref common.Re
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_vendir_versions_v1alpha1_VersionSelection(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"semver": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver"},
+	}
+}
+
+func schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemver(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"constraints": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"prereleases": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases"},
+	}
+}
+
+func schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemverPrereleases(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"identifiers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
 						},
 					},
 				},

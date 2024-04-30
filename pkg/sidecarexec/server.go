@@ -10,8 +10,8 @@ import (
 	"net/rpc"
 	"os"
 
+	"carvel.dev/kapp-controller/pkg/exec"
 	"github.com/go-logr/logr"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
 
 var (

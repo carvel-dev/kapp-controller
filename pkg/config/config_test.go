@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
+	kcconfig "carvel.dev/kapp-controller/pkg/config"
 	"github.com/stretchr/testify/assert"
-	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
