@@ -42,7 +42,7 @@ func NewKickCmd(o *KickOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	cmd := &cobra.Command{
 		Use:   "kick",
 		Short: "Trigger reconciliation for repository",
-		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		RunE:  func(_ *cobra.Command, args []string) error { return o.Run(args) },
 		Example: cmdcore.Examples{
 			cmdcore.Example{"Trigger reconciliation for repository",
 				[]string{"package", "repository", "kick", "-r", "sample-repo"}},
@@ -70,7 +70,13 @@ func NewKickCmd(o *KickOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	return cmd
 }
 
-func (o *KickOptions) Run() error {
+func (o *KickOptions) Run(args []string) error {
+	if o.pkgCmdTreeOpts.PositionalArgs {
+		if len(args) > 0 {
+			o.Name = args[0]
+		}
+	}
+
 	if len(o.Name) == 0 {
 		return fmt.Errorf("Expected repository name to be non empty")
 	}
