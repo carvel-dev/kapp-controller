@@ -35,8 +35,8 @@ spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
   - git:
-      url: https://github.com/k14s/kapp
-      ref: origin/develop
+      url: https://github.com/rcmadhankumar/kapp
+      ref: origin/fix-redis
       subPath: examples/gitops/guestbook
   template:
   - ytt: {}
