@@ -6,7 +6,7 @@
 package datapackaging
 
 import (
-	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	v1alpha1 "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 

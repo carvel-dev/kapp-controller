@@ -3,7 +3,7 @@
 package fake
 
 import (
-	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1"
+	v1alpha1 "carvel.dev/kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )

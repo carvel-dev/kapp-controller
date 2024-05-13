@@ -3,18 +3,18 @@
 
 syntax = "proto2";
 
-package github.com.vmware_tanzu.carvel_kapp_controller.pkg.apiserver.apis.datapackaging.v1alpha1;
+package carvel.dev.kapp_controller.pkg.apiserver.apis.datapackaging.v1alpha1;
 
-import "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1/generated.proto";
+import "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1/generated.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 
 // Package-wide variables from generator "generated".
-option go_package = "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1";
+option go_package = "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1";
 
 message AppTemplateSpec {
-  optional github.com.vmware_tanzu.carvel_kapp_controller.pkg.apis.kappctrl.v1alpha1.AppSpec spec = 1;
+  optional carvel.dev.kapp_controller.pkg.apis.kappctrl.v1alpha1.AppSpec spec = 1;
 }
 
 // IncludedSoftware contains the underlying Software Contents of a Package

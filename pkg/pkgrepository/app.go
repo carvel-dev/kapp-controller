@@ -4,13 +4,13 @@
 package pkgrepository
 
 import (
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"carvel.dev/kapp-controller/pkg/deploy"
+	"carvel.dev/kapp-controller/pkg/fetch"
+	"carvel.dev/kapp-controller/pkg/metrics"
+	"carvel.dev/kapp-controller/pkg/reftracker"
+	"carvel.dev/kapp-controller/pkg/template"
 	"github.com/go-logr/logr"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/template"
 	types "k8s.io/apimachinery/pkg/types"
 )
 

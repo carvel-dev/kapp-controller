@@ -4,7 +4,7 @@
 package deploy
 
 import (
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/exec"
 )
 
 type Deploy interface {

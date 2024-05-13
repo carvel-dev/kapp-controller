@@ -3,7 +3,7 @@
 
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package
-// +k8s:conversion-gen=github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging
+// +k8s:conversion-gen=carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging
 // +k8s:defaulter-gen=TypeMeta
 // +groupName=data.packaging.carvel.dev
 

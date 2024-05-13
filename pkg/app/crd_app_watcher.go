@@ -7,8 +7,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	kcclient "carvel.dev/kapp-controller/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 )

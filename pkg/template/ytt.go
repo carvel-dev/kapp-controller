@@ -9,10 +9,10 @@ import (
 	"io"
 	goexec "os/exec"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/fetch"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"carvel.dev/kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/fetch"
+	"carvel.dev/kapp-controller/pkg/memdir"
 	"k8s.io/client-go/kubernetes"
 )
 

@@ -4,7 +4,7 @@
 package v1alpha1
 
 import (
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging"
+	"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

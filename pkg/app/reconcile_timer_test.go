@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

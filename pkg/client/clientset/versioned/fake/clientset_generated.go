@@ -3,13 +3,13 @@
 package fake
 
 import (
-	clientset "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
-	internalv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/internalpackaging/v1alpha1"
-	fakeinternalv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/internalpackaging/v1alpha1/fake"
-	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1"
-	fakekappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1/fake"
-	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/packaging/v1alpha1"
-	fakepackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/typed/packaging/v1alpha1/fake"
+	clientset "carvel.dev/kapp-controller/pkg/client/clientset/versioned"
+	internalv1alpha1 "carvel.dev/kapp-controller/pkg/client/clientset/versioned/typed/internalpackaging/v1alpha1"
+	fakeinternalv1alpha1 "carvel.dev/kapp-controller/pkg/client/clientset/versioned/typed/internalpackaging/v1alpha1/fake"
+	kappctrlv1alpha1 "carvel.dev/kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1"
+	fakekappctrlv1alpha1 "carvel.dev/kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1/fake"
+	packagingv1alpha1 "carvel.dev/kapp-controller/pkg/client/clientset/versioned/typed/packaging/v1alpha1"
+	fakepackagingv1alpha1 "carvel.dev/kapp-controller/pkg/client/clientset/versioned/typed/packaging/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

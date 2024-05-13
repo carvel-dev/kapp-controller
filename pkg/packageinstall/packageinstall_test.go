@@ -8,16 +8,16 @@ import (
 	"reflect"
 	"testing"
 
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	pkgingv1alpha1 "carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
+	datapkgingv1alpha1 "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	fakeapiserver "carvel.dev/kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
+	fakekappctrl "carvel.dev/kapp-controller/pkg/client/clientset/versioned/fake"
+	"carvel.dev/kapp-controller/pkg/metrics"
 	versions "carvel.dev/vendir/pkg/vendir/versions/v1alpha1"
 	"github.com/k14s/semver/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	pkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	datapkgingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	fakeapiserver "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
-	fakekappctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,7 +28,7 @@ import (
 )
 
 // This test was developed for issue:
-// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
+// https://carvel.dev/kapp-controller/issues/116
 func Test_PackageRefWithPrerelease_IsFound(t *testing.T) {
 	log := logf.Log.WithName("kc")
 

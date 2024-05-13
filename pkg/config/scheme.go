@@ -4,10 +4,10 @@
 package config
 
 import (
-	internalpkging "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/internalpackaging/install"
-	installkctrl "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/install"
-	pkging "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/install"
-	datapackaging "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/install"
+	internalpkging "carvel.dev/kapp-controller/pkg/apis/internalpackaging/install"
+	installkctrl "carvel.dev/kapp-controller/pkg/apis/kappctrl/install"
+	pkging "carvel.dev/kapp-controller/pkg/apis/packaging/install"
+	datapackaging "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/install"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 

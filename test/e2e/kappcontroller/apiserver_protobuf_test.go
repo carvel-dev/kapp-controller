@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"carvel.dev/kapp-controller/test/e2e"
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 )
 
 func TestAPIServerProtobuf(t *testing.T) {

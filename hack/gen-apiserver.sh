@@ -8,7 +8,7 @@ set -o xtrace
 source hack/utils.sh
 export GOPATH="$(go_mod_gopath_hack)"
 trap "rm -rf ${GOPATH}; git checkout vendor" EXIT
-KC_PKG="github.com/vmware-tanzu/carvel-kapp-controller"
+KC_PKG="carvel.dev/kapp-controller"
 
 # Following patch allows us to name gen-s with a name Package
 # (without it generated Go code is not valid since word "package" is reserved)

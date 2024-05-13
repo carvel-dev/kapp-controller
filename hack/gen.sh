@@ -8,7 +8,7 @@ set -o xtrace
 source hack/utils.sh
 export GOPATH="$(go_mod_gopath_hack)"
 trap "rm -rf ${GOPATH}" EXIT
-KC_PKG="github.com/vmware-tanzu/carvel-kapp-controller"
+KC_PKG="carvel.dev/kapp-controller"
 
 rm -rf pkg/client
 

@@ -4,7 +4,7 @@
 package install
 
 import (
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	"carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 

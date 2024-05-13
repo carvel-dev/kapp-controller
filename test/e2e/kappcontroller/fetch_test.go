@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
+	"carvel.dev/kapp-controller/test/e2e"
 )
 
 func Test_App_FetchPath(t *testing.T) {

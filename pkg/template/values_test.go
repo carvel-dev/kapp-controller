@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
 func TestValues(t *testing.T) {

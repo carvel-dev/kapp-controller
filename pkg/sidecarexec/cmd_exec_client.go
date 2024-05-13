@@ -9,7 +9,7 @@ import (
 	goexec "os/exec"
 	"path/filepath"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/exec"
 )
 
 // CmdExecClient executes commands remotely (in a sidecar container)

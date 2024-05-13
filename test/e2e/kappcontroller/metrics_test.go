@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"carvel.dev/kapp-controller/test/e2e"
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware-tanzu/carvel-kapp-controller/test/e2e"
 )
 
 func TestPrometheusMetrics(t *testing.T) {

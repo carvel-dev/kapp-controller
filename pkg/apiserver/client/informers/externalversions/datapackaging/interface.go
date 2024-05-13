@@ -3,8 +3,8 @@
 package datapackaging
 
 import (
-	v1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/informers/externalversions/datapackaging/v1alpha1"
-	internalinterfaces "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/informers/externalversions/internalinterfaces"
+	v1alpha1 "carvel.dev/kapp-controller/pkg/apiserver/client/informers/externalversions/datapackaging/v1alpha1"
+	internalinterfaces "carvel.dev/kapp-controller/pkg/apiserver/client/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to each of this group's versions.
