@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"carvel.dev/kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/kubeconfig"
+	"carvel.dev/kapp-controller/pkg/memdir"
 	"sigs.k8s.io/yaml"
 )
 

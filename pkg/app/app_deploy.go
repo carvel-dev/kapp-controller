@@ -6,10 +6,10 @@ package app
 import (
 	"fmt"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	ctldep "github.com/vmware-tanzu/carvel-kapp-controller/pkg/deploy"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	ctldep "carvel.dev/kapp-controller/pkg/deploy"
+	"carvel.dev/kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/kubeconfig"
 )
 
 func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {

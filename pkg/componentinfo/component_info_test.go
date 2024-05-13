@@ -6,10 +6,10 @@ package componentinfo_test
 import (
 	"testing"
 
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	"carvel.dev/kapp-controller/pkg/componentinfo"
+	"carvel.dev/kapp-controller/pkg/kubeconfig"
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/componentinfo"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
 	fakediscovery "k8s.io/client-go/discovery/fake"

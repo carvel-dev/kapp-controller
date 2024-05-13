@@ -6,7 +6,7 @@ package sidecarexec
 import (
 	"fmt"
 
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
+	"carvel.dev/kapp-controller/pkg/config"
 )
 
 // OSConfigClient communicates over RPC client to configure runtime environment.
