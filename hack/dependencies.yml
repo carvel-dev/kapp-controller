@@ -1,61 +1,61 @@
 - checksums:
     darwin:
-      amd64: 1dc6f78a4f06cc6ff4d125e2bd4f4b1d8966f8b7ff3ef927572e9eacb0b71bd6
-      arm64: 1f4e1e7f227e2c906d33da3408cd698f8f880cfd69514b180966ee9d2117b107
+      amd64: 431c16b3389c7b03695d488d8226dc029803abf41b5cd831f2c9e29f95138660
+      arm64: ef45e2596f7448c4d5db709b823b8bfb7c32087e4d62bafcb6f6fba7a55d3202
     linux:
-      amd64: 803333c84a32553edb60b35cbae15b365bb7a969eff17ab675a37265b8b2408b
-      arm64: 169d882ea8c8a6e55a6a6494a27d6ee1f3fa9dd9cd59d391544b3b1c8a92bc30
+      amd64: 8fad1cbc5563638a49501ef623992872159a0a9d3d7cbe8d6c100c5478c8a10d
+      arm64: 449ff31a051506474b3c6d1296914fdf0f0e9c8dd689c508507e543aa1373468
   dev: true
   name: ytt
   repo: vmware-tanzu/carvel-ytt
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.45.11
+  version: v0.45.12
 - checksums:
     darwin:
-      amd64: 9fa4d5bd86a2e181067fd463e6a092fe0231648edf54eda4a1847d54faa3e95a
-      arm64: 43ccbd40ce295fa54cf8a562aa408dc52479e03cd9e2901665e7b769f788c244
+      amd64: 009f923a9961004e828a679a228fe0da82f79f076496c18cac48c05de9d6b1a0
+      arm64: aff96eb36fe67b339f1886ad5225bb25e1da990bc2a1f0e3f0bd4a86dbcb205f
     linux:
-      amd64: eea10c6c365fbf8fb94fb72859930722fcfe1962e985f4bd921166aa0f76e9c1
-      arm64: 2bebea1251bb11f3c7c468234fbda5c959a03c79834b1901d06a800a0b313d0e
+      amd64: 7783ee7d4eaae9a683e9926af4d01e1ee0602240419b14e5d7806a57d5bfe19e
+      arm64: ce9770ac980e95750de65210d6f56cfc84a82b12af3c383ddbcd232bb45b5fbf
   dev: true
   name: kbld
   repo: vmware-tanzu/carvel-kbld
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.37.12
+  version: v0.37.13
 - checksums:
     darwin:
-      amd64: c860dc2a44e99115c628e70e9ba6363f1870e5d6ef901f1e535481ef044aff91
-      arm64: dc07cb00bedac82837832b77700731f1594474cfe40145453e4044a4f5879877
+      amd64: b1ef1243624b0e09de25f7aeed770082b775a99f5ac692c4cac03ea943040714
+      arm64: be14987a1e72d53a051b448db35f1eb299115dacd3e2c9822de2b35b981d85d4
     linux:
-      amd64: 619306c45f5b9d1b1c07154f612d1a4b3e66639419ba82aef1c07a649511766e
-      arm64: 14e14ea11019dbef8336e8aed8d4a71c606d660601207b8148493a44f9e46255
+      amd64: cae22fbb3c54930b04537bb06f6153befef4ce642c9c30c811ba4c5cdaf97b9d
+      arm64: adbc72026307e93a6a1e95766fbf22963ca66426be8aebc35b1045a2308e9f30
   dev: true
   name: kapp
   repo: vmware-tanzu/carvel-kapp
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.57.7
+  version: v0.57.9
 - checksums:
     darwin:
-      amd64: cb93ea67a90bc35d491100577a9ba0a387d998d4b704e053e9a5b1d5af3a753c
-      arm64: a1d97a7ef1a9d977c6902d9fbdf1c904ba8c5eadbcc9bf015f59b16d551ff01b
+      amd64: 8ade62e16b1af1785de0ee8d51c5f2dd937df68b2a579c8eadb2f0b6dd227a3a
+      arm64: 831648e38de1a6a7de162191ffed9cdb574e4cd029693ee4c32542a9559fd3c1
     linux:
-      amd64: d9a622e4ae430ce83328c05616099b7d2bbb52577257d44700836defaae2b193
-      arm64: f45107e84eb71c0ba83530609e32c7bafc4286f907a5852e4b2f8d2c68d7b898
+      amd64: dd2dddd87f7914905934a6b9aca811b9c925f04c4189f0862dbf9eaa9c7c8a1f
+      arm64: 7d4a00345b73674f85d93089578f52daf58b4d4fb10f32c20409a758305d3569
   dev: true
   name: vendir
   repo: vmware-tanzu/carvel-vendir
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.34.11
+  version: v0.34.12
 - checksums:
     linux:
-      amd64: 3c90f24e180f8c207b8a18e5ec82cb0fa49858a7a0a86e4ed52a98398681e00b
-      arm64: 85e1573e76fa60af14ba7e9ec75db2129b6884203be866893fa0b3f7e41ccd5e
+      amd64: a5844ef2c38ef6ddf3b5a8f7d91e7e0e8ebc39a38bb3fc8013d629c1ef29c259
+      arm64: 113ccc53b7c57c2aba0cd0aa560b5500841b18b5210d78641acfddc53dac8ab2
   dev: false
   name: helm
   repo: helm/helm
   tarballSubpath: '{{.OS}}-{{.Arch}}/helm'
   urlTemplate: https://get.helm.sh/helm-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
-  version: v3.14.3
+  version: v3.14.4
 - checksums:
     linux:
       amd64: d6bf07fb61972127c9e0d622523124c2d81caf9f7971fb123228961021811697
