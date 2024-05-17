@@ -36,16 +36,16 @@
   version: v0.57.9
 - checksums:
     darwin:
-      amd64: 8ade62e16b1af1785de0ee8d51c5f2dd937df68b2a579c8eadb2f0b6dd227a3a
-      arm64: 831648e38de1a6a7de162191ffed9cdb574e4cd029693ee4c32542a9559fd3c1
+      amd64: 31a45fd3c9549ff70f6f07db63f5e1446440b92560b152e280aa65d769ee84a1 
+      arm64: 30b070d05f9fb6f5db47efa243f7513e198381be86f7c90bf07eb9c9e3cb8162
     linux:
-      amd64: dd2dddd87f7914905934a6b9aca811b9c925f04c4189f0862dbf9eaa9c7c8a1f
-      arm64: 7d4a00345b73674f85d93089578f52daf58b4d4fb10f32c20409a758305d3569
+      amd64: c0b163ab7bb809241feaeb70f0e8c7c65008d5feb715e2152218fe2784e7f65c
+      arm64: b3bcadb604fe25a7d0012b66f68f7741fd96a623123b54cafd96f996abf61dfa
   dev: true
   name: vendir
   repo: vmware-tanzu/carvel-vendir
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.34.12
+  version: v0.34.13
 - checksums:
     linux:
       amd64: a5844ef2c38ef6ddf3b5a8f7d91e7e0e8ebc39a38bb3fc8013d629c1ef29c259
