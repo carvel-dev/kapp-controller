@@ -6,10 +6,12 @@ package local
 import (
 	"context"
 
+	openapi_v2 "github.com/google/gnostic/openapiv2"
 	authenticationv1api "k8s.io/api/authentication/v1"
 	corev1api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
+	version "k8s.io/apimachinery/pkg/version"
 	watch "k8s.io/apimachinery/pkg/watch"
 	aplcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	discovery "k8s.io/client-go/discovery"
@@ -64,6 +66,7 @@ import (
 	storagev1 "k8s.io/client-go/kubernetes/typed/storage/v1"
 	storagev1alpha1 "k8s.io/client-go/kubernetes/typed/storage/v1alpha1"
 	storagev1beta1 "k8s.io/client-go/kubernetes/typed/storage/v1beta1"
+	"k8s.io/client-go/openapi"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -91,7 +94,7 @@ type MinCoreClient struct {
 
 var _ kubernetes.Interface = &MinCoreClient{}
 
-func (*MinCoreClient) Discovery() discovery.DiscoveryInterface { panic("Not implemented"); return nil }
+func (*MinCoreClient) Discovery() discovery.DiscoveryInterface { return &MinDiscoveryClient{} }
 func (*MinCoreClient) AdmissionregistrationV1() admissionregistrationv1.AdmissionregistrationV1Interface {
 	panic("Not implemented")
 	return nil
@@ -172,6 +175,11 @@ func (*MinCoreClient) CoordinationV1() coordinationv1.CoordinationV1Interface {
 	return nil
 }
 func (c *MinCoreClient) CoreV1() corev1.CoreV1Interface {
+	if c.client == nil {
+		// To be used only while releasing packages where we do not expect nil client to be used
+		// MinServiceAccount will mock necessary bits
+		return &MinCoreV1Client{nil, c.localSecrets, c.localConfigMaps}
+	}
 	return &MinCoreV1Client{c.client.CoreV1(), c.localSecrets, c.localConfigMaps}
 }
 func (*MinCoreClient) DiscoveryV1() discoveryv1.DiscoveryV1Interface {
@@ -324,6 +332,10 @@ func (*MinCoreV1Client) Services(namespace string) corev1.ServiceInterface {
 	return nil
 }
 func (c *MinCoreV1Client) ServiceAccounts(namespace string) corev1.ServiceAccountInterface {
+	if c.client == nil {
+		// To handle package release scenarios with DownwardsAPI
+		return &ServiceAccounts{namespace, nil}
+	}
 	return &ServiceAccounts{namespace, c.client.ServiceAccounts(namespace)}
 }
 
@@ -452,6 +464,10 @@ func (*ServiceAccounts) DeleteCollection(ctx context.Context, opts metav1.Delete
 	return nil
 }
 func (sa *ServiceAccounts) Get(ctx context.Context, name string, opts metav1.GetOptions) (*corev1api.ServiceAccount, error) {
+	if sa.client == nil {
+		// To handle package release scenarios with DownwardsAPI
+		return &corev1api.ServiceAccount{}, nil
+	}
 	return sa.client.Get(ctx, name, opts)
 }
 func (*ServiceAccounts) List(ctx context.Context, opts metav1.ListOptions) (*corev1api.ServiceAccountList, error) {
@@ -471,5 +487,39 @@ func (*ServiceAccounts) Apply(ctx context.Context, serviceAccount *aplcorev1.Ser
 	return nil, nil
 }
 func (sa *ServiceAccounts) CreateToken(ctx context.Context, serviceAccountName string, tokenRequest *authenticationv1api.TokenRequest, opts metav1.CreateOptions) (*authenticationv1api.TokenRequest, error) {
+	if sa.client == nil {
+		// To handle package release scenarios with DownwardsAPI
+		return &authenticationv1api.TokenRequest{}, nil
+	}
 	return sa.client.CreateToken(ctx, serviceAccountName, tokenRequest, opts)
 }
+
+// Minimum required values to
+type MinDiscoveryClient struct{}
+
+var _ discovery.DiscoveryInterface = &MinDiscoveryClient{}
+
+func (*MinDiscoveryClient) ServerVersion() (*version.Info, error) {
+	return &version.Info{Major: "1", Minor: "30.0-invalid", GitVersion: "1.30.0-invalid"}, nil
+}
+
+func (*MinDiscoveryClient) ServerGroups() (*metav1.APIGroupList, error) {
+	return &metav1.APIGroupList{}, nil
+}
+
+func (*MinDiscoveryClient) RESTClient() rest.Interface { panic("Not implemented") }
+func (*MinDiscoveryClient) ServerResourcesForGroupVersion(groupVersion string) (*metav1.APIResourceList, error) {
+	panic("Not implemented")
+}
+func (*MinDiscoveryClient) ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error) {
+	panic("Not implemented")
+}
+func (*MinDiscoveryClient) ServerPreferredResources() ([]*metav1.APIResourceList, error) {
+	panic("Not implemented")
+}
+func (*MinDiscoveryClient) ServerPreferredNamespacedResources() ([]*metav1.APIResourceList, error) {
+	panic("Not implemented")
+}
+func (*MinDiscoveryClient) OpenAPISchema() (*openapi_v2.Document, error) { panic("Not implemented") }
+func (*MinDiscoveryClient) OpenAPIV3() openapi.Client                    { panic("Not implemented") }
+func (*MinDiscoveryClient) WithLegacy() discovery.DiscoveryInterface     { panic("Not implemented") }

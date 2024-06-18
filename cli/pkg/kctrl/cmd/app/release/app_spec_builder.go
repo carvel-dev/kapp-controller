@@ -59,6 +59,7 @@ func (b *AppSpecBuilder) Build() (kcv1alpha1.AppSpec, error) {
 			},
 		},
 		Spec: kcv1alpha1.AppSpec{
+			ServiceAccountName: "fake-sa",
 			Fetch: []kcv1alpha1.AppFetch{
 				{
 					// To be replaced by local fetch
