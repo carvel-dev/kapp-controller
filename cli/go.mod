@@ -7,6 +7,7 @@ require (
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
 	github.com/cppforlife/go-cli-ui v0.0.0-20220520125801-e45d9169a663
 	github.com/getkin/kin-openapi v0.81.0
+	github.com/google/gnostic v0.5.7-v3refs
 	github.com/google/go-containerregistry v0.13.0
 	github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
 	github.com/mitchellh/go-wordwrap v1.0.1
@@ -45,7 +46,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.2.0 // indirect
