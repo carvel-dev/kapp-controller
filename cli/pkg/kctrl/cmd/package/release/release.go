@@ -134,7 +134,7 @@ func (o *ReleaseOptions) Run() error {
 		case release.Resource != nil:
 			err = o.releaseResources(appSpec, *pkgBuild, &pkgConfigs.Pkgs[0], &pkgConfigs.PkgMetadatas[0])
 			if err != nil {
-				return nil
+				return err
 			}
 		}
 	}
