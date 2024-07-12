@@ -35,6 +35,7 @@ const (
 	valuesFileKey        = "values.yaml"
 	yttOverlayPrefix     = "ext.packaging.carvel.dev/ytt-paths-from-secret-name"
 	yttOverlayAnnotation = yttOverlayPrefix + ".kctrl-ytt-overlays"
+	defaultPkgiVersion   = ">= 0.0.0"
 )
 
 type CreateOrUpdateOptions struct {
@@ -100,7 +101,7 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
-	cmd.Flags().StringVarP(&o.version, "version", "v", "", "Set package version (required)")
+	cmd.Flags().StringVarP(&o.version, "version", "v", defaultPkgiVersion, "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
@@ -146,7 +147,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 	}
 
 	cmd.Flags().StringVarP(&o.packageName, "package", "p", "", "Set package name (required)")
-	cmd.Flags().StringVarP(&o.version, "version", "v", "", "Set package version (required)")
+	cmd.Flags().StringVarP(&o.version, "version", "v", defaultPkgiVersion, "Set package version")
 	cmd.Flags().StringVar(&o.serviceAccountName, "service-account-name", "", "Name of an existing service account used to install underlying package contents, optional")
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
@@ -235,17 +236,9 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 		return nil
 	}
 
-	if len(o.version) == 0 {
-		pkgClient, err := o.depsFactory.PackageClient()
-		if err != nil {
-			return err
-		}
-
-		err = o.showVersions(pkgClient)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("Expected package version to be non empty")
+	if o.version == defaultPkgiVersion {
+		o.statusUI.PrintMessage(fmt.Sprintf(`Version constraint defaulted to '%s'. Use the '--version'
+		 flag to lock to a non-latest version.`, defaultPkgiVersion))
 	}
 
 	client, err := o.depsFactory.CoreClient()

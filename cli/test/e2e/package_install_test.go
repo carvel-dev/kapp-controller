@@ -327,3 +327,14 @@ key1: value1:
 			"--values-file", "-"}, RunOpts{StdinReader: strings.NewReader(valuesFile2)})
 	})
 }
+
+func TestPackageInstallVersionDefaults(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+
+	logger.Section("Listing with error in package install", func() {
+		out, _ := kappCtrl.RunWithOpts([]string{"package", "install", "-i", "asdf", "-p", "asdf.asdf.com", "--dry-run", "-n", "installs"}, RunOpts{})
+		require.Contains(t, out, "constraints: '>= 0.0.0'")
+	})
+}
