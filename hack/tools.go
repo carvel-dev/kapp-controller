@@ -6,6 +6,7 @@ package tools
 
 import (
 	"k8s.io/code-generator"
+	"k8s.io/kube-openapi/cmd/openapi-gen"
 	"sigs.k8s.io/controller-tools/cmd/controller-gen"
 	"k8s.io/apimachinery/pkg/apis/testapigroup/v1"
 	"github.com/gogo/protobuf/proto"

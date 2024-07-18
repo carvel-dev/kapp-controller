@@ -18,7 +18,6 @@ package cache
 
 import (
 	"errors"
-	"os"
 	"sync"
 	"time"
 
@@ -147,9 +146,6 @@ func (c *controller) Run(stopCh <-chan struct{}) {
 	r.WatchListPageSize = c.config.WatchListPageSize
 	if c.config.WatchErrorHandler != nil {
 		r.watchErrorHandler = c.config.WatchErrorHandler
-	}
-	if s := os.Getenv("ENABLE_CLIENT_GO_WATCH_LIST_ALPHA"); len(s) > 0 {
-		r.UseWatchList = true
 	}
 
 	c.reflectorMutex.Lock()
@@ -338,6 +334,16 @@ func DeletionHandlingMetaNamespaceKeyFunc(obj interface{}) (string, error) {
 		return d.Key, nil
 	}
 	return MetaNamespaceKeyFunc(obj)
+}
+
+// DeletionHandlingObjectToName checks for
+// DeletedFinalStateUnknown objects before calling
+// ObjectToName.
+func DeletionHandlingObjectToName(obj interface{}) (ObjectName, error) {
+	if d, ok := obj.(DeletedFinalStateUnknown); ok {
+		return ParseObjectName(d.Key)
+	}
+	return ObjectToName(obj)
 }
 
 // NewInformer returns a Store and a controller for populating the store

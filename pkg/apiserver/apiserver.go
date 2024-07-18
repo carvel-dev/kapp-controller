@@ -222,7 +222,7 @@ func newServerConfig(aggClient aggregatorclient.Interface, opts NewAPIServerOpts
 		return nil, err
 	}
 
-	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIConfig(
+	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
 		openapi.GetOpenAPIDefinitions,
 		genericopenapi.NewDefinitionNamer(Scheme))
 	serverConfig.OpenAPIV3Config.Info.Title = "Kapp-controller"

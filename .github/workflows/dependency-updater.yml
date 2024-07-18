@@ -15,8 +15,6 @@ jobs:
           fetch-depth: 0
       - name: Set up Go 1.x
         uses: actions/setup-go@v5
-        with:
-          go-version: 1.21.11
       - name: Update Dependencies File
         run: go run ./hack/dependencies.go update
       - name: Create Pull Request
