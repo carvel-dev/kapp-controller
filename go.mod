@@ -6,12 +6,12 @@ require (
 	carvel.dev/vendir v0.40.0
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/gogo/protobuf v1.3.2
-	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/prometheus/client_golang v1.15.1
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/crypto v0.21.0
-	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.12.0
+	golang.org/x/crypto v0.25.0
+	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.27.7
 	k8s.io/apimachinery v0.27.7
@@ -32,7 +32,7 @@ require (
 	github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115
 	github.com/prometheus/client_model v0.4.0
 	github.com/spf13/cobra v1.7.0
-	golang.org/x/sync v0.3.0
+	golang.org/x/sync v0.7.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/component-base v0.27.7
 	k8s.io/klog/v2 v2.90.1
@@ -108,11 +108,11 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/net v0.23.0 // indirect
+	golang.org/x/mod v0.17.0 // indirect
+	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/oauth2 v0.10.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
-	golang.org/x/term v0.18.0 // indirect
+	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
