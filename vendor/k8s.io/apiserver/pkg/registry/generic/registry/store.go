@@ -23,6 +23,8 @@ import (
 	"sync"
 	"time"
 
+	"sigs.k8s.io/structured-merge-diff/v4/fieldpath"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/api/validation"
@@ -40,15 +42,16 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/endpoints/handlers/fieldmanager"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/features"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	storeerr "k8s.io/apiserver/pkg/storage/errors"
 	"k8s.io/apiserver/pkg/storage/etcd3/metrics"
 	"k8s.io/apiserver/pkg/util/dryrun"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
 	"k8s.io/client-go/tools/cache"
-	"sigs.k8s.io/structured-merge-diff/v4/fieldpath"
 
 	"k8s.io/klog/v2"
 )
@@ -223,6 +226,10 @@ type Store struct {
 	// storageVersionHash as empty in the discovery document.
 	StorageVersioner runtime.GroupVersioner
 
+	// ReadinessCheckFunc checks if the storage is ready for accepting requests.
+	// The field is optional, if set needs to be thread-safe.
+	ReadinessCheckFunc func() error
+
 	// DestroyFunc cleans up clients used by the underlying Storage; optional.
 	// If set, DestroyFunc has to be implemented in thread-safe way and
 	// be prepared for being called more than once.
@@ -231,6 +238,7 @@ type Store struct {
 
 // Note: the rest.StandardStorage interface aggregates the common REST verbs
 var _ rest.StandardStorage = &Store{}
+var _ rest.StorageWithReadiness = &Store{}
 var _ rest.TableConvertor = &Store{}
 var _ GenericStore = &Store{}
 
@@ -287,6 +295,14 @@ func NoNamespaceKeyFunc(ctx context.Context, prefix string, name string) (string
 // New implements RESTStorage.New.
 func (e *Store) New() runtime.Object {
 	return e.NewFunc()
+}
+
+// ReadinessCheck checks if the storage is ready for accepting requests.
+func (e *Store) ReadinessCheck() error {
+	if e.ReadinessCheckFunc != nil {
+		return e.ReadinessCheckFunc()
+	}
+	return nil
 }
 
 // Destroy cleans up its resources on shutdown.
@@ -392,11 +408,54 @@ func (e *Store) ListPredicate(ctx context.Context, p storage.SelectionPredicate,
 // finishNothing is a do-nothing FinishFunc.
 func finishNothing(context.Context, bool) {}
 
+// maxNameGenerationCreateAttempts is the maximum number of
+// times create will be attempted when generateName is used
+// and create attempts fails due to name conflict errors.
+// Each attempt uses a newly randomly generated name.
+// 8 was selected as the max because it is sufficient to generate
+// 1 million names per generateName prefix, with only a 0.1%
+// probability of any generated name conflicting with existing names.
+// Without retry, a 0.1% probability occurs at ~500
+// generated names and a 50% probability occurs at ~4500
+// generated names.
+const maxNameGenerationCreateAttempts = 8
+
 // Create inserts a new item according to the unique key from the object.
 // Note that registries may mutate the input object (e.g. in the strategy
 // hooks).  Tests which call this might want to call DeepCopy if they expect to
 // be able to examine the input and output objects for differences.
 func (e *Store) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	if utilfeature.DefaultFeatureGate.Enabled(features.RetryGenerateName) && needsNameGeneration(obj) {
+		return e.createWithGenerateNameRetry(ctx, obj, createValidation, options)
+	}
+
+	return e.create(ctx, obj, createValidation, options)
+}
+
+// needsNameGeneration returns true if the obj has a generateName but no name.
+func needsNameGeneration(obj runtime.Object) bool {
+	if objectMeta, err := meta.Accessor(obj); err == nil {
+		if len(objectMeta.GetGenerateName()) > 0 && len(objectMeta.GetName()) == 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// createWithGenerateNameRetry attempts to create obj up to maxNameGenerationCreateAttempts
+// when create fails due to a name conflict error. Each attempt randomly generates a new
+// name based on generateName.
+func (e *Store) createWithGenerateNameRetry(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (resultObj runtime.Object, err error) {
+	for i := 0; i < maxNameGenerationCreateAttempts; i++ {
+		resultObj, err = e.create(ctx, obj.DeepCopyObject(), createValidation, options)
+		if err == nil || !apierrors.IsAlreadyExists(err) {
+			return resultObj, err
+		}
+	}
+	return resultObj, err
+}
+
+func (e *Store) create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	var finishCreate FinishFunc = finishNothing
 
 	// Init metadata as early as possible.
@@ -1143,6 +1202,11 @@ func (e *Store) DeleteReturnsDeletedObject() bool {
 	return e.ReturnDeletedObject
 }
 
+// deleteCollectionPageSize is the size of the page used when
+// listing objects from storage during DeleteCollection calls.
+// It's a variable to make allow overwriting in tests.
+var deleteCollectionPageSize = int64(10000)
+
 // DeleteCollection removes all items returned by List with a given ListOptions from storage.
 //
 // DeleteCollection is currently NOT atomic. It can happen that only subset of objects
@@ -1155,32 +1219,22 @@ func (e *Store) DeleteCollection(ctx context.Context, deleteValidation rest.Vali
 		listOptions = listOptions.DeepCopy()
 	}
 
-	listObj, err := e.List(ctx, listOptions)
-	if err != nil {
-		return nil, err
-	}
-	items, err := meta.ExtractList(listObj)
-	if err != nil {
-		return nil, err
-	}
-	if len(items) == 0 {
-		// Nothing to delete, return now
-		return listObj, nil
-	}
-	// Spawn a number of goroutines, so that we can issue requests to storage
-	// in parallel to speed up deletion.
-	// It is proportional to the number of items to delete, up to
-	// DeleteCollectionWorkers (it doesn't make much sense to spawn 16
-	// workers to delete 10 items).
+	var items []runtime.Object
+
+	// TODO(wojtek-t): Decide if we don't want to start workers more opportunistically.
 	workersNumber := e.DeleteCollectionWorkers
-	if workersNumber > len(items) {
-		workersNumber = len(items)
-	}
 	if workersNumber < 1 {
 		workersNumber = 1
 	}
 	wg := sync.WaitGroup{}
-	toProcess := make(chan int, 2*workersNumber)
+	// Ensure that chanSize is not too high (to avoid wasted work) but
+	// at the same time high enough to start listing before we process
+	// the whole page.
+	chanSize := 2 * workersNumber
+	if chanSize < 256 {
+		chanSize = 256
+	}
+	toProcess := make(chan runtime.Object, chanSize)
 	errs := make(chan error, workersNumber+1)
 	workersExited := make(chan struct{})
 
@@ -1193,8 +1247,8 @@ func (e *Store) DeleteCollection(ctx context.Context, deleteValidation rest.Vali
 			})
 			defer wg.Done()
 
-			for index := range toProcess {
-				accessor, err := meta.Accessor(items[index])
+			for item := range toProcess {
+				accessor, err := meta.Accessor(item)
 				if err != nil {
 					errs <- err
 					return
@@ -1220,20 +1274,82 @@ func (e *Store) DeleteCollection(ctx context.Context, deleteValidation rest.Vali
 		close(workersExited)
 	}()
 
-	func() {
+	hasLimit := listOptions.Limit > 0
+	if listOptions.Limit == 0 {
+		listOptions.Limit = deleteCollectionPageSize
+	}
+
+	// Paginate the list request and throw all items into workers.
+	listObj, err := func() (runtime.Object, error) {
 		defer close(toProcess)
 
-		for i := 0; i < len(items); i++ {
+		processedItems := 0
+		var originalList runtime.Object
+		for {
 			select {
-			case toProcess <- i:
-			case <-workersExited:
-				klog.V(4).InfoS("workers already exited, and there are some items waiting to be processed", "finished", i, "total", len(items))
-				return
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			default:
 			}
+
+			listObj, err := e.List(ctx, listOptions)
+			if err != nil {
+				return nil, err
+			}
+
+			newItems, err := meta.ExtractList(listObj)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, newItems...)
+
+			for i := 0; i < len(newItems); i++ {
+				select {
+				case toProcess <- newItems[i]:
+				case <-workersExited:
+					klog.V(4).InfoS("workers already exited, and there are some items waiting to be processed", "queued/finished", i, "total", processedItems+len(newItems))
+					// Try to propagate an error from the workers if possible.
+					select {
+					case err := <-errs:
+						return nil, err
+					default:
+						return nil, fmt.Errorf("all DeleteCollection workers exited")
+					}
+				}
+			}
+			processedItems += len(newItems)
+
+			// If the original request was setting the limit, finish after running it.
+			if hasLimit {
+				return listObj, nil
+			}
+
+			if originalList == nil {
+				originalList = listObj
+				meta.SetList(originalList, nil)
+			}
+
+			// If there are no more items, return the list.
+			m, err := meta.ListAccessor(listObj)
+			if err != nil {
+				return nil, err
+			}
+			if len(m.GetContinue()) == 0 {
+				meta.SetList(originalList, items)
+				return originalList, nil
+			}
+
+			// Set up the next loop.
+			listOptions.Continue = m.GetContinue()
+			listOptions.ResourceVersion = ""
+			listOptions.ResourceVersionMatch = ""
 		}
 	}()
+	if err != nil {
+		return nil, err
+	}
 
-	// Wait for all workers to exist.
+	// Wait for all workers to exit.
 	<-workersExited
 
 	select {
@@ -1415,7 +1531,7 @@ func (e *Store) CompleteWithOptions(options *generic.StoreOptions) error {
 		return err
 	}
 
-	opts, err := options.RESTOptions.GetRESTOptions(e.DefaultQualifiedResource)
+	opts, err := options.RESTOptions.GetRESTOptions(e.DefaultQualifiedResource, e.NewFunc())
 	if err != nil {
 		return err
 	}
@@ -1510,6 +1626,9 @@ func (e *Store) CompleteWithOptions(options *generic.StoreOptions) error {
 				})
 			}
 		}
+	}
+	if e.Storage.Storage != nil {
+		e.ReadinessCheckFunc = e.Storage.Storage.ReadinessCheck
 	}
 
 	return nil
