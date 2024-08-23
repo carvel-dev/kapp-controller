@@ -260,7 +260,7 @@ func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *kcpkg.Package
 		ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: o.URL},
 	}
 
-	if strings.TrimSpace(o.Secret) != "" {
+	if o.Secret != "" {
 		pkgr.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrl.AppFetchLocalRef{Name: o.Secret}
 	}
 
@@ -323,7 +323,7 @@ func (o AddOrUpdateOptions) dryRun() error {
 		},
 	}
 
-	if strings.TrimSpace(o.Secret) != "" {
+	if o.Secret != "" {
 		packageRepo.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrl.AppFetchLocalRef{Name: o.Secret}
 	}
 
