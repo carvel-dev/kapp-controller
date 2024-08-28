@@ -79,7 +79,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	// TODO consider how to support other repository types
 	cmd.Flags().StringVar(&o.URL, "url", "", "OCI registry url for package repository bundle (required)")
 	cmd.Flags().StringVar(&o.SemverTagConstraints, "semver-tag-constraints", "", "tag/semver constraint when tag is not present in URL (If both tags and semver are present, then tag gets precedence)")
-	cmd.Flags().StringVarP(&o.SecretRef, "secretref", "s", "", "SecretRef name for imgpkgbundle, optional")
+	cmd.Flags().StringVar(&o.SecretRef, "secret-ref", "", "SecretRef name for imgpkgbundle, optional")
 	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Print YAML for resources being applied to the cluster without applying them, optional")
 
 	cmd.Flags().BoolVar(&o.CreateNamespace, "create-namespace", false, "Create the package repository namespace if not present (default false)")
@@ -121,7 +121,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 
 	cmd.Flags().StringVarP(&o.URL, "url", "", "", "OCI registry url for package repository bundle (required)")
 	cmd.Flags().StringVarP(&o.SemverTagConstraints, "semver-tag-constraints", "", "", "tag/semver constraint when tag is not present in URL (If both tags and semver are present, then tag gets precedence)")
-	cmd.Flags().StringVarP(&o.SecretRef, "secretref", "s", "", "SecretRef name for imgpkgbundle, optional")
+	cmd.Flags().StringVarP(&o.SecretRef, "secret-ref", "", "", "SecretRef name for imgpkgbundle, optional")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
