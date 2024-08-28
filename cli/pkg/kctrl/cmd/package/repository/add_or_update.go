@@ -37,7 +37,7 @@ type AddOrUpdateOptions struct {
 	URL                  string
 	SemverTagConstraints string
 	CreateNamespace      bool
-	Secret               string
+	SecretRef            string
 
 	DryRun bool
 
@@ -79,7 +79,7 @@ func NewAddCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	// TODO consider how to support other repository types
 	cmd.Flags().StringVar(&o.URL, "url", "", "OCI registry url for package repository bundle (required)")
 	cmd.Flags().StringVar(&o.SemverTagConstraints, "semver-tag-constraints", "", "tag/semver constraint when tag is not present in URL (If both tags and semver are present, then tag gets precedence)")
-	cmd.Flags().StringVar(&o.Secret, "secret", "", "SecretRef name for imgpkgbundle, optional")
+	cmd.Flags().StringVarP(&o.SecretRef, "secretref", "s", "", "SecretRef name for imgpkgbundle, optional")
 	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Print YAML for resources being applied to the cluster without applying them, optional")
 
 	cmd.Flags().BoolVar(&o.CreateNamespace, "create-namespace", false, "Create the package repository namespace if not present (default false)")
@@ -121,7 +121,7 @@ func NewUpdateCmd(o *AddOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *cob
 
 	cmd.Flags().StringVarP(&o.URL, "url", "", "", "OCI registry url for package repository bundle (required)")
 	cmd.Flags().StringVarP(&o.SemverTagConstraints, "semver-tag-constraints", "", "", "tag/semver constraint when tag is not present in URL (If both tags and semver are present, then tag gets precedence)")
-	cmd.Flags().StringVarP(&o.Secret, "secret", "", "", "SecretRef name for imgpkgbundle, optional")
+	cmd.Flags().StringVarP(&o.SecretRef, "secretref", "s", "", "SecretRef name for imgpkgbundle, optional")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -260,8 +260,8 @@ func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *kcpkg.Package
 		ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: o.URL},
 	}
 
-	if o.Secret != "" {
-		pkgr.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrl.AppFetchLocalRef{Name: o.Secret}
+	if o.SecretRef != "" {
+		pkgr.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrl.AppFetchLocalRef{Name: o.SecretRef}
 	}
 
 	ref, err := name.ParseReference(o.URL, name.WeakValidation)
@@ -323,8 +323,8 @@ func (o AddOrUpdateOptions) dryRun() error {
 		},
 	}
 
-	if o.Secret != "" {
-		packageRepo.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrl.AppFetchLocalRef{Name: o.Secret}
+	if o.SecretRef != "" {
+		packageRepo.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrl.AppFetchLocalRef{Name: o.SecretRef}
 	}
 
 	ref, err := name.ParseReference(o.URL, name.WeakValidation)
