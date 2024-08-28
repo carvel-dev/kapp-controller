@@ -71,3 +71,32 @@ status:
 		require.Contains(t, tagSemverOutput, tagSemverExpectedOutput)
 	})
 }
+
+func TestPackageRepoSecretRefDryRun(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kappCtrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+
+	logger.Section("dry-run package repo add", func() {
+		expectedOutput := `apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageRepository
+metadata:
+  creationTimestamp: null
+  name: test-repo
+  namespace: kctrl-test
+spec:
+  fetch:
+    imgpkgBundle:
+      image: registry.carvel.dev/project/repo:1.0.0
+      secretRef:
+        name: regcred
+status:
+  conditions: null
+  friendlyDescription: ""
+  observedGeneration: 0`
+
+		output := kappCtrl.Run([]string{"package", "repo", "add", "-r", "test-repo", "--url",
+			"registry.carvel.dev/project/repo:1.0.0", "--semver-tag-constraints", "1.0.0", "--secret-ref", "regcred", "--dry-run"})
+		require.Contains(t, output, expectedOutput)
+	})
+}
