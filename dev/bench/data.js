@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721726289490,
+  "lastUpdate": 1724845044856,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -16753,6 +16753,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "Benchmark_pkgr_with_50_packages - DeploySeconds",
             "value": 2.067,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "87057459+devanshuVmware@users.noreply.github.com",
+            "name": "Devanshu",
+            "username": "devanshuVmware"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8a9b3f7b97b7fcac3dde2a8297ce3f2dda313b93",
+          "message": "kctrl: Add secret flag for package repo add/update (#1612)\n\n* Add secret flag for PackageRepository CRD in cli\r\n\r\nSigned-off-by: Devanshu <devanshu.d@broadcom.com>\r\n\r\n* Removed whitespace check\r\n\r\nSigned-off-by: Devanshu <devanshu.d@broadcom.com>\r\n\r\n* Changed flagname to secretref\r\n\r\nalso added a shorthand  for secretref flag\r\n\r\nSigned-off-by: Devanshu <devanshu.d@broadcom.com>\r\n\r\n* Add hyphen(-) in flag name, remove shorthand\r\n\r\nSigned-off-by: Devanshu <devanshu.d@broadcom.com>\r\n\r\n* Add dry-run test for secret-ref flag\r\n\r\nSigned-off-by: Devanshu <devanshu.d@broadcom.com>\r\n\r\n---------\r\n\r\nSigned-off-by: Devanshu <devanshu.d@broadcom.com>",
+          "timestamp": "2024-08-28T17:00:05+05:30",
+          "tree_id": "1d4f83b062cf2791d2e28a60422554a4d83c63ee",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/8a9b3f7b97b7fcac3dde2a8297ce3f2dda313b93"
+        },
+        "date": 1724845043092,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 35004153077,
+            "unit": "ns/op\t        17.61 DeleteSeconds\t        17.37 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - ns/op",
+            "value": 35004153077,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - DeleteSeconds",
+            "value": 17.61,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - DeploySeconds",
+            "value": 17.37,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8279470124,
+            "unit": "ns/op\t         4.163 DeleteSeconds\t         4.094 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - ns/op",
+            "value": 8279470124,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - DeleteSeconds",
+            "value": 4.163,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - DeploySeconds",
+            "value": 4.094,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5223226839,
+            "unit": "ns/op\t         3.127 DeleteSeconds\t         2.073 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - ns/op",
+            "value": 5223226839,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - DeleteSeconds",
+            "value": 3.127,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - DeploySeconds",
+            "value": 2.073,
             "unit": "DeploySeconds",
             "extra": "1 times\n4 procs"
           }
