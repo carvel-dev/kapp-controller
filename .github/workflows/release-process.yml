@@ -155,12 +155,12 @@ jobs:
           kapp-controller can be installed by using kapp
 
           \`\`\`shell
-          kapp deploy -a kc -f https://github.com/carvel-dev/kapp-controller/releases/$RELEASE_TAG/download/release.yml
+          kapp deploy -a kc -f https://github.com/carvel-dev/kapp-controller/releases/download/$RELEASE_TAG/release.yml
           \`\`\`
 
           or by using kubectl
           \`\`\`shell
-          kubectl deploy -f https://github.com/carvel-dev/kapp-controller/releases/$RELEASE_TAG/download/release.yml
+          kubectl deploy -f https://github.com/carvel-dev/kapp-controller/releases/download/$RELEASE_TAG/release.yml
           \`\`\`
 
           ### Container Images
