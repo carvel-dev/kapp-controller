@@ -149,3 +149,38 @@ func TestExtractHost(t *testing.T) {
 		})
 	}
 }
+
+func Test_GitConfig_depth(t *testing.T) {
+	k8scs := k8sfake.NewSimpleClientset()
+	config, err := kcconfig.NewConfig(k8scs)
+	assert.NoError(t, err)
+
+	vendir := fetch.NewVendir("default", k8scs,
+		fetch.VendirOpts{SkipTLSConfig: config}, exec.NewPlainCmdRunner())
+
+	type testCase struct {
+		URL           string
+		Depth         *int64
+		ExpectedDepth int
+	}
+	testCases := []testCase{
+		{"https://github.com/bitnami/charts/", convertToInt64(1), 1},
+		{"https://gitlab.com/bitnami/charts/", convertToInt64(0), 0},
+		{"https://gitlab.com/bitnami/charts/", nil, 1},
+	}
+	for i, tc := range testCases {
+		err = vendir.AddDir(v1alpha1.AppFetch{
+			Git: &v1alpha1.AppFetchGit{URL: tc.URL, Depth: tc.Depth},
+		},
+			"dirpath/0")
+		assert.NoError(t, err)
+
+		vConf := vendir.Config()
+		assert.Equal(t, i+1, len(vConf.Directories), "Failed on iteration %d", i)
+		assert.Equal(t, tc.ExpectedDepth, vConf.Directories[i].Contents[0].Git.Depth, "Expected depth: %d, Got: %d", tc.ExpectedDepth, vConf.Directories[i].Contents[0].Git.Depth)
+	}
+}
+
+func convertToInt64(x int64) *int64 {
+	return &x
+}

@@ -160,6 +160,13 @@ func (v *Vendir) httpConf(http v1alpha1.AppFetchHTTP) vendirconf.DirectoryConten
 }
 
 func (v *Vendir) gitConf(git v1alpha1.AppFetchGit) vendirconf.DirectoryContents {
+
+	// By default, we only fetch the latest commit.
+	depth := 1
+	if git.Depth != nil {
+		depth = int(*(git.Depth))
+	}
+
 	return vendirconf.DirectoryContents{
 		Path:        vendirEntireDirPath,
 		NewRootPath: git.SubPath,
@@ -171,6 +178,7 @@ func (v *Vendir) gitConf(git v1alpha1.AppFetchGit) vendirconf.DirectoryContents 
 			LFSSkipSmudge:          git.LFSSkipSmudge,
 			DangerousSkipTLSVerify: v.shouldSkipTLSVerify(git.URL, GitURL),
 			ForceHTTPBasicAuth:     git.ForceHTTPBasicAuth,
+			Depth:                  depth,
 		},
 	}
 }

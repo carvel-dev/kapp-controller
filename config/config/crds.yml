@@ -209,6 +209,10 @@ spec:
                             git:
                               description: Uses git to clone repository
                               properties:
+                                depth:
+                                  description: depth of commits to fetch; 1 (default) means only latest commit, 0 means everything (optional)
+                                  format: int64
+                                  type: integer
                                 forceHTTPBasicAuth:
                                   description: Force the usage of HTTP Basic Auth when Basic Auth is provided (optional)
                                   type: boolean
@@ -828,6 +832,10 @@ spec:
                     git:
                       description: Uses git to clone repository
                       properties:
+                        depth:
+                          description: depth of commits to fetch; 1 (default) means only latest commit, 0 means everything (optional)
+                          format: int64
+                          type: integer
                         forceHTTPBasicAuth:
                           description: Force the usage of HTTP Basic Auth when Basic Auth is provided (optional)
                           type: boolean
@@ -1653,6 +1661,10 @@ spec:
                   git:
                     description: Uses git to clone repository containing package list
                     properties:
+                      depth:
+                        description: depth of commits to fetch; 1 (default) means only latest commit, 0 means everything (optional)
+                        format: int64
+                        type: integer
                       forceHTTPBasicAuth:
                         description: Force the usage of HTTP Basic Auth when Basic Auth is provided (optional)
                         type: boolean

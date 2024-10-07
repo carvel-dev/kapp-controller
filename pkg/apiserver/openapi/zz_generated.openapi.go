@@ -636,6 +636,13 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppFetchGit(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
+					"depth": {
+						SchemaProps: spec.SchemaProps{
+							Description: "depth of commits to fetch; 1 (default) means only latest commit, 0 means everything (optional)",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 				},
 			},
 		},
