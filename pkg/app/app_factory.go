@@ -21,6 +21,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// ICRDAppFactory interface for CRDAppFactory
+type ICRDAppFactory interface {
+	NewCRDApp(*kcv1alpha1.App, logr.Logger) *CRDApp
+}
+
 // CRDAppFactory allows to create CRDApps.
 type CRDAppFactory struct {
 	CoreClient       kubernetes.Interface
