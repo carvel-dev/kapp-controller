@@ -57,18 +57,18 @@ var _ reconcile.Reconciler = &Reconciler{}
 
 // AttachWatches configures watches needed for reconciler to reconcile PackageInstalls.
 func (r *Reconciler) AttachWatches(controller controller.Controller, mgr manager.Manager) error {
-	err := controller.Watch(source.Kind(mgr.GetCache(), &pkgingv1alpha1.PackageInstall{}), &handler.EnqueueRequestForObject{})
+	err := controller.Watch(source.Kind(mgr.GetCache(), &pkgingv1alpha1.PackageInstall{}, &handler.TypedEnqueueRequestForObject[*pkgingv1alpha1.PackageInstall]{}))
 	if err != nil {
 		return fmt.Errorf("Watching PackageInstalls: %s", err)
 	}
 
-	err = controller.Watch(source.Kind(mgr.GetCache(), &datapkgingv1alpha1.Package{}), r.pkgToPkgInstallHandler)
+	err = controller.Watch(source.Kind(mgr.GetCache(), &datapkgingv1alpha1.Package{}, r.pkgToPkgInstallHandler))
 	if err != nil {
 		return fmt.Errorf("Watching Packages: %s", err)
 	}
 
-	err = controller.Watch(source.Kind(mgr.GetCache(), &kappctrlv1alpha1.App{}), handler.EnqueueRequestForOwner(
-		mgr.GetScheme(), mgr.GetRESTMapper(), &pkgingv1alpha1.PackageInstall{}, handler.OnlyControllerOwner()))
+	err = controller.Watch(source.Kind(mgr.GetCache(), &kappctrlv1alpha1.App{}, handler.TypedEnqueueRequestForOwner[*kappctrlv1alpha1.App](
+		mgr.GetScheme(), mgr.GetRESTMapper(), &pkgingv1alpha1.PackageInstall{}, handler.OnlyControllerOwner())))
 	if err != nil {
 		return fmt.Errorf("Watching Apps: %s", err)
 	}
