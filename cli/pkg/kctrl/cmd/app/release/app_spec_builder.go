@@ -85,15 +85,14 @@ func (b *AppSpecBuilder) Build() (kcv1alpha1.AppSpec, error) {
 	}
 
 	// Make lock output directory if it does not exist
-	tmpImgpkgFolder := LockOutputFolder
-	_, err := os.Stat(tmpImgpkgFolder)
+	_, err := os.Stat(LockOutputFolder)
 	if err != nil && os.IsNotExist(err) {
-		err := os.Mkdir(tmpImgpkgFolder, os.ModePerm)
+		err := os.Mkdir(LockOutputFolder, os.ModePerm)
 		if err != nil {
 			return kcv1alpha1.AppSpec{}, err
 		}
+		defer os.RemoveAll(LockOutputFolder)
 	}
-	defer os.RemoveAll(LockOutputFolder)
 
 	// Build images and resolve references using reconciler
 	tempImgpkgLockPath := filepath.Join(LockOutputFolder, LockOutputFile)
