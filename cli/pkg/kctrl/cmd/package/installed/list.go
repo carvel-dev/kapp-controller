@@ -124,3 +124,12 @@ func (o *ListOptions) getPkgiStatusMessage(pkgi *kcpkgv1alpha1.PackageInstall) s
 	lastCondition := pkgi.Status.Conditions[conditionsLen-1]
 	return lastCondition.Message
 }
+
+func (o *ListOptions) getPkgiStatusMessage(pkgi *kcpkgv1alpha1.PackageInstall) string {
+	conditionsLen := len(pkgi.Status.Conditions)
+	if conditionsLen == 0 {
+		return ""
+	}
+	lastCondition := pkgi.Status.Conditions[conditionsLen-1]
+	return lastCondition.Message
+}
