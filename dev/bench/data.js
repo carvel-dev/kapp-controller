@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1726162039957,
+  "lastUpdate": 1728383625627,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -16945,6 +16945,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "Benchmark_pkgr_with_50_packages - DeploySeconds",
             "value": 2.068,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rohit.aggarwal@broadcom.com",
+            "name": "Rohit Aggarwal",
+            "username": "rohitagg2020"
+          },
+          "committer": {
+            "email": "55523204+rohitagg2020@users.noreply.github.com",
+            "name": "rohitagg2020",
+            "username": "rohitagg2020"
+          },
+          "distinct": true,
+          "id": "c6dbae60dd3949e0074b507d61a645c0529f6b65",
+          "message": "Adding depth in case of git config in fetch section of app/package\n\nSigned-off-by: Rohit Aggarwal <rohit.aggarwal@broadcom.com>",
+          "timestamp": "2024-10-08T15:56:41+05:30",
+          "tree_id": "8605f38064e2a33acf9f303cdfa77017d7e7f3a4",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/c6dbae60dd3949e0074b507d61a645c0529f6b65"
+        },
+        "date": 1728383623815,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 34964110522,
+            "unit": "ns/op\t        17.51 DeleteSeconds\t        17.35 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - ns/op",
+            "value": 34964110522,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - DeleteSeconds",
+            "value": 17.51,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - DeploySeconds",
+            "value": 17.35,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8363507342,
+            "unit": "ns/op\t         4.177 DeleteSeconds\t         4.162 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - ns/op",
+            "value": 8363507342,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - DeleteSeconds",
+            "value": 4.177,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - DeploySeconds",
+            "value": 4.162,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6299185140,
+            "unit": "ns/op\t         4.125 DeleteSeconds\t         2.074 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - ns/op",
+            "value": 6299185140,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - DeleteSeconds",
+            "value": 4.125,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - DeploySeconds",
+            "value": 2.074,
             "unit": "DeploySeconds",
             "extra": "1 times\n4 procs"
           }
