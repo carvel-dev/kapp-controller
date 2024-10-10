@@ -246,7 +246,7 @@ spec:
                                       type: string
                                   type: object
                                 subPath:
-                                  description: Grab only portion of repository (optional)
+                                  description: Grab only portion of repository, subpath becomes new root (optional)
                                   type: string
                                 url:
                                   description: http or ssh urls are supported (required)
@@ -869,7 +869,7 @@ spec:
                               type: string
                           type: object
                         subPath:
-                          description: Grab only portion of repository (optional)
+                          description: Grab only portion of repository, subpath becomes new root (optional)
                           type: string
                         url:
                           description: http or ssh urls are supported (required)
@@ -1698,7 +1698,7 @@ spec:
                             type: string
                         type: object
                       subPath:
-                        description: Grab only portion of repository (optional)
+                        description: Grab only portion of repository, subpath becomes new root (optional)
                         type: string
                       url:
                         description: http or ssh urls are supported (required)
