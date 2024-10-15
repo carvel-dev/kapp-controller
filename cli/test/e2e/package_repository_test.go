@@ -4,12 +4,14 @@
 package e2e
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/require"
+	kcpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 )
 
 func TestPackageRepository(t *testing.T) {
@@ -19,7 +21,9 @@ func TestPackageRepository(t *testing.T) {
 	kubectl := Kubectl{t, env.Namespace, logger}
 
 	pkgrName := "test-package-repository"
+	pkgrWithSecretName := "test-package-repository-with-secret"
 	pkgrURL := `ghcr.io/carvel-dev/kc-e2e-test-repo:latest`
+	pkgrSecretRef := "sample-registry-secret"
 
 	newRepoNamespace := "carvel-test-repo-a"
 
@@ -27,6 +31,7 @@ func TestPackageRepository(t *testing.T) {
 
 	cleanUp := func() {
 		RemoveClusterResource(t, kind, pkgrName, env.Namespace, kubectl)
+		RemoveClusterResource(t, kind, pkgrWithSecretName, env.Namespace, kubectl)
 		RemoveClusterResource(t, kind, pkgrName, newRepoNamespace, kubectl)
 	}
 
@@ -205,6 +210,45 @@ func TestPackageRepository(t *testing.T) {
 		kubectl.Run([]string{"get", kind, pkgrName, "-n", env.Namespace})
 	})
 
+	logger.Section("create a repository with secretRef", func() {
+		_, _ = kappCtrl.RunWithOpts([]string{"package", "repository", "add", "-r", pkgrWithSecretName, "--url", pkgrURL, "--secret-ref", pkgrSecretRef}, RunOpts{
+			AllowError: true})
+
+		pkgrYaml := kubectl.Run([]string{"get", kind, pkgrWithSecretName, "-ojson"})
+		pkgr := &kcpkg.PackageRepository{}
+		err := json.Unmarshal([]byte(pkgrYaml), pkgr)
+		require.NoError(t, err)
+		require.Equal(t, pkgrSecretRef, pkgr.Spec.Fetch.ImgpkgBundle.SecretRef.Name)
+
+		kappCtrl.Run([]string{"package", "repository", "delete", "-r", pkgrWithSecretName})
+	})
+
+	logger.Section("updating a repository's secret with no change in url", func() {
+		_, err := kappCtrl.RunWithOpts([]string{"package", "repository", "add", "-r", pkgrWithSecretName, "--url", pkgrURL}, RunOpts{
+			AllowError: true})
+		require.NoError(t, err)
+
+		kubectl.Run([]string{"get", kind, pkgrWithSecretName})
+
+		kappCtrl.RunWithOpts([]string{"package", "repository", "update", "-r", pkgrWithSecretName, "--url", pkgrURL, "--secret-ref", pkgrSecretRef}, RunOpts{
+			AllowError: true})
+
+		pkgrYaml := kubectl.Run([]string{"get", kind, pkgrWithSecretName, "-ojson"})
+		pkgr := &kcpkg.PackageRepository{}
+		err = json.Unmarshal([]byte(pkgrYaml), pkgr)
+		require.NoError(t, err)
+		require.Equal(t, pkgrSecretRef, pkgr.Spec.Fetch.ImgpkgBundle.SecretRef.Name)
+
+		// update to a new secret
+		kappCtrl.RunWithOpts([]string{"package", "repository", "update", "-r", pkgrWithSecretName, "--url", pkgrURL, "--secret-ref", pkgrSecretRef + "-2"}, RunOpts{
+			AllowError: true})
+
+		pkgrYaml = kubectl.Run([]string{"get", kind, pkgrWithSecretName, "-ojson"})
+		pkgr = &kcpkg.PackageRepository{}
+		err = json.Unmarshal([]byte(pkgrYaml), pkgr)
+		require.NoError(t, err)
+		require.Equal(t, pkgrSecretRef+"-2", pkgr.Spec.Fetch.ImgpkgBundle.SecretRef.Name)
+	})
 }
 
 func TestPackageRepositoryTagSemver(t *testing.T) {

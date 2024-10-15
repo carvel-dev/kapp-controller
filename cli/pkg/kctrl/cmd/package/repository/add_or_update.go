@@ -196,7 +196,8 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 		return err
 	}
 
-	if o.URL != "" && o.URL == existingRepository.Spec.Fetch.ImgpkgBundle.Image {
+	if o.URL == existingRepository.Spec.Fetch.ImgpkgBundle.Image &&
+		(o.SecretRef == "" || (existingRepository.Spec.Fetch.ImgpkgBundle.SecretRef != nil && existingRepository.Spec.Fetch.ImgpkgBundle.SecretRef.Name == o.SecretRef)) {
 		return NewRepoTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, RepoTailerOpts{PrintCurrentState: true}).TailRepoStatus()
 	}
 
@@ -260,6 +261,7 @@ func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *kcpkg.Package
 		ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: o.URL},
 	}
 
+	// the case where a user would want to update the pkgr to remove the secretRef is not supported
 	if o.SecretRef != "" {
 		pkgr.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrl.AppFetchLocalRef{Name: o.SecretRef}
 	}
