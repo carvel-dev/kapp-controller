@@ -214,9 +214,9 @@ func TestPackageRepository(t *testing.T) {
 		_, _ = kappCtrl.RunWithOpts([]string{"package", "repository", "add", "-r", pkgrWithSecretName, "--url", pkgrURL, "--secret-ref", pkgrSecretRef}, RunOpts{
 			AllowError: true})
 
-		pkgrYaml := kubectl.Run([]string{"get", kind, pkgrWithSecretName, "-ojson"})
+		pkgrJson := kubectl.Run([]string{"get", kind, pkgrWithSecretName, "-ojson"})
 		pkgr := &kcpkg.PackageRepository{}
-		err := json.Unmarshal([]byte(pkgrYaml), pkgr)
+		err := json.Unmarshal([]byte(pkgrJson), pkgr)
 		require.NoError(t, err)
 		require.Equal(t, pkgrSecretRef, pkgr.Spec.Fetch.ImgpkgBundle.SecretRef.Name)
 
@@ -233,9 +233,9 @@ func TestPackageRepository(t *testing.T) {
 		kappCtrl.RunWithOpts([]string{"package", "repository", "update", "-r", pkgrWithSecretName, "--url", pkgrURL, "--secret-ref", pkgrSecretRef}, RunOpts{
 			AllowError: true})
 
-		pkgrYaml := kubectl.Run([]string{"get", kind, pkgrWithSecretName, "-ojson"})
+		pkgrJson := kubectl.Run([]string{"get", kind, pkgrWithSecretName, "-ojson"})
 		pkgr := &kcpkg.PackageRepository{}
-		err = json.Unmarshal([]byte(pkgrYaml), pkgr)
+		err = json.Unmarshal([]byte(pkgrJson), pkgr)
 		require.NoError(t, err)
 		require.Equal(t, pkgrSecretRef, pkgr.Spec.Fetch.ImgpkgBundle.SecretRef.Name)
 
@@ -243,10 +243,23 @@ func TestPackageRepository(t *testing.T) {
 		kappCtrl.RunWithOpts([]string{"package", "repository", "update", "-r", pkgrWithSecretName, "--url", pkgrURL, "--secret-ref", pkgrSecretRef + "-2"}, RunOpts{
 			AllowError: true})
 
-		pkgrYaml = kubectl.Run([]string{"get", kind, pkgrWithSecretName, "-ojson"})
+		pkgrJson = kubectl.Run([]string{"get", kind, pkgrWithSecretName, "-ojson"})
 		pkgr = &kcpkg.PackageRepository{}
-		err = json.Unmarshal([]byte(pkgrYaml), pkgr)
+		err = json.Unmarshal([]byte(pkgrJson), pkgr)
 		require.NoError(t, err)
+		require.Equal(t, pkgrSecretRef+"-2", pkgr.Spec.Fetch.ImgpkgBundle.SecretRef.Name)
+	})
+
+	logger.Section("updating just the url of a repository with secret", func() {
+		// update just the url, secret should be intact
+		kappCtrl.RunWithOpts([]string{"package", "repository", "update", "-r", pkgrWithSecretName, "--url", pkgrURL + "-new"}, RunOpts{
+			AllowError: true})
+
+		pkgrJson := kubectl.Run([]string{"get", kind, pkgrWithSecretName, "-ojson"})
+		pkgr := &kcpkg.PackageRepository{}
+		err := json.Unmarshal([]byte(pkgrJson), pkgr)
+		require.NoError(t, err)
+		require.Equal(t, pkgrURL+"-new", pkgr.Spec.Fetch.ImgpkgBundle.Image)
 		require.Equal(t, pkgrSecretRef+"-2", pkgr.Spec.Fetch.ImgpkgBundle.SecretRef.Name)
 	})
 }
