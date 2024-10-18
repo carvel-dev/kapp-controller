@@ -254,12 +254,16 @@ func (o *AddOrUpdateOptions) newPackageRepository() (*kcpkg.PackageRepository, e
 }
 
 func (o *AddOrUpdateOptions) updateExistingPackageRepository(pkgr *kcpkg.PackageRepository) (*kcpkg.PackageRepository, error) {
-
 	pkgr = pkgr.DeepCopy()
 
-	pkgr.Spec.Fetch = &kcpkg.PackageRepositoryFetch{
+	fetch := &kcpkg.PackageRepositoryFetch{
 		ImgpkgBundle: &kappctrl.AppFetchImgpkgBundle{Image: o.URL},
 	}
+
+	if pkgr.Spec.Fetch != nil && pkgr.Spec.Fetch.ImgpkgBundle != nil {
+		fetch.ImgpkgBundle.SecretRef = pkgr.Spec.Fetch.ImgpkgBundle.SecretRef
+	}
+	pkgr.Spec.Fetch = fetch
 
 	// the case where a user would want to update the pkgr to remove the secretRef is not supported
 	if o.SecretRef != "" {
