@@ -36,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -67,8 +68,18 @@ func Run(opts Options, runLog logr.Logger) error {
 		restConfig.Timeout = opts.APIRequestTimeout
 	}
 
-	mgr, err := manager.New(restConfig, manager.Options{Cache: cache.Options{Namespaces: []string{opts.Namespace}},
-		Scheme: kcconfig.Scheme, MetricsBindAddress: opts.MetricsBindAddress})
+	mgrOpts := manager.Options{
+		Scheme:  kcconfig.Scheme,
+		Metrics: metricsserver.Options{BindAddress: opts.MetricsBindAddress},
+	}
+
+	if opts.Namespace != "" {
+		// Run in namespaced mode
+		mgrOpts.Cache.DefaultNamespaces = make(map[string]cache.Config)
+		mgrOpts.Cache.DefaultNamespaces[opts.Namespace] = cache.Config{}
+	}
+
+	mgr, err := manager.New(restConfig, mgrOpts)
 	if err != nil {
 		return fmt.Errorf("Setting up overall controller manager: %s", err)
 	}

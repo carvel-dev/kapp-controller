@@ -31,14 +31,14 @@ type PackageInstallVersionHandler struct {
 	log      logr.Logger
 }
 
-var _ handler.EventHandler = &PackageInstallVersionHandler{}
+var _ handler.TypedEventHandler[*datapkgingv1alpha1.Package] = &PackageInstallVersionHandler{}
 
 func NewPackageInstallVersionHandler(c kcclient.Interface, globalNS string, log logr.Logger) *PackageInstallVersionHandler {
 	return &PackageInstallVersionHandler{c, globalNS, log}
 }
 
 // Create is called in response to an create event
-func (ipvh *PackageInstallVersionHandler) Create(_ context.Context, evt event.CreateEvent, q workqueue.RateLimitingInterface) {
+func (ipvh *PackageInstallVersionHandler) Create(_ context.Context, evt event.TypedCreateEvent[*datapkgingv1alpha1.Package], q workqueue.RateLimitingInterface) {
 	ipvh.log.Info("enqueueing PackageInstallList")
 	err := ipvh.enqueueEligiblePackageInstalls(q, evt.Object)
 	if err != nil {
@@ -47,7 +47,7 @@ func (ipvh *PackageInstallVersionHandler) Create(_ context.Context, evt event.Cr
 }
 
 // Update is called in response to an update event
-func (ipvh *PackageInstallVersionHandler) Update(_ context.Context, evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
+func (ipvh *PackageInstallVersionHandler) Update(_ context.Context, evt event.TypedUpdateEvent[*datapkgingv1alpha1.Package], q workqueue.RateLimitingInterface) {
 	ipvh.log.Info("enqueueing PackageInstallList")
 	err := ipvh.enqueueEligiblePackageInstalls(q, evt.ObjectNew)
 	if err != nil {
@@ -56,7 +56,7 @@ func (ipvh *PackageInstallVersionHandler) Update(_ context.Context, evt event.Up
 }
 
 // Delete is called in response to a delete event
-func (ipvh *PackageInstallVersionHandler) Delete(_ context.Context, evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
+func (ipvh *PackageInstallVersionHandler) Delete(_ context.Context, evt event.TypedDeleteEvent[*datapkgingv1alpha1.Package], q workqueue.RateLimitingInterface) {
 	ipvh.log.Info("enqueueing PackageInstallList")
 	err := ipvh.enqueueEligiblePackageInstalls(q, evt.Object)
 	if err != nil {
@@ -66,7 +66,7 @@ func (ipvh *PackageInstallVersionHandler) Delete(_ context.Context, evt event.De
 
 // Generic is called in response to an event of an unknown type or a synthetic event triggered as a cron or
 // external trigger request - e.g. reconcile Autoscaling, or a Webhook.
-func (ipvh *PackageInstallVersionHandler) Generic(_ context.Context, evt event.GenericEvent, q workqueue.RateLimitingInterface) {
+func (ipvh *PackageInstallVersionHandler) Generic(_ context.Context, evt event.TypedGenericEvent[*datapkgingv1alpha1.Package], q workqueue.RateLimitingInterface) {
 	ipvh.log.Info("enqueueing installedPkgList")
 	err := ipvh.enqueueEligiblePackageInstalls(q, evt.Object)
 	if err != nil {

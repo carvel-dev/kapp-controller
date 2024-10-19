@@ -48,14 +48,14 @@ func NewReconciler(appClient kcclient.Interface, coreClient kubernetes.Interface
 
 // AttachWatches configures watches needed for reconciler to reconcile PackageRepository.
 func (r *Reconciler) AttachWatches(controller controller.Controller, mgr manager.Manager) error {
-	err := controller.Watch(source.Kind(mgr.GetCache(), &pkgv1alpha1.PackageRepository{}), &handler.EnqueueRequestForObject{})
+	err := controller.Watch(source.Kind(mgr.GetCache(), &pkgv1alpha1.PackageRepository{}, &handler.TypedEnqueueRequestForObject[*pkgv1alpha1.PackageRepository]{}))
 	if err != nil {
 		return fmt.Errorf("Watching PackageRepositories: %s", err)
 	}
 
 	schRepo := reconciler.NewSecretHandler(r.log, r.appRefTracker, r.appUpdateStatus)
 
-	err = controller.Watch(source.Kind(mgr.GetCache(), &corev1.Secret{}), schRepo)
+	err = controller.Watch(source.Kind(mgr.GetCache(), &corev1.Secret{}, schRepo))
 	if err != nil {
 		return fmt.Errorf("Watching Secrets: %s", err)
 	}
