@@ -26,7 +26,9 @@ import (
 	"unicode"
 
 	restful "github.com/emicklei/go-restful/v3"
-	apidiscoveryv2beta1 "k8s.io/api/apidiscovery/v2beta1"
+	"sigs.k8s.io/structured-merge-diff/v4/fieldpath"
+
+	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -46,12 +48,12 @@ import (
 	"k8s.io/apiserver/pkg/storageversion"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	versioninfo "k8s.io/component-base/version"
-	"sigs.k8s.io/structured-merge-diff/v4/fieldpath"
 )
 
 const (
-	ROUTE_META_GVK    = "x-kubernetes-group-version-kind"
-	ROUTE_META_ACTION = "x-kubernetes-action"
+	RouteMetaGVK              = "x-kubernetes-group-version-kind"
+	RouteMetaSelectableFields = "x-kubernetes-selectable-fields"
+	RouteMetaAction           = "x-kubernetes-action"
 )
 
 type APIInstaller struct {
@@ -69,8 +71,8 @@ type action struct {
 	AllNamespaces bool // true iff the action is namespaced but works on aggregate result for all namespaces
 }
 
-func ConvertGroupVersionIntoToDiscovery(list []metav1.APIResource) ([]apidiscoveryv2beta1.APIResourceDiscovery, error) {
-	var apiResourceList []apidiscoveryv2beta1.APIResourceDiscovery
+func ConvertGroupVersionIntoToDiscovery(list []metav1.APIResource) ([]apidiscoveryv2.APIResourceDiscovery, error) {
+	var apiResourceList []apidiscoveryv2.APIResourceDiscovery
 	parentResources := make(map[string]int)
 
 	// Loop through all top-level resources
@@ -80,14 +82,14 @@ func ConvertGroupVersionIntoToDiscovery(list []metav1.APIResource) ([]apidiscove
 			continue
 		}
 
-		var scope apidiscoveryv2beta1.ResourceScope
+		var scope apidiscoveryv2.ResourceScope
 		if r.Namespaced {
-			scope = apidiscoveryv2beta1.ScopeNamespace
+			scope = apidiscoveryv2.ScopeNamespace
 		} else {
-			scope = apidiscoveryv2beta1.ScopeCluster
+			scope = apidiscoveryv2.ScopeCluster
 		}
 
-		resource := apidiscoveryv2beta1.APIResourceDiscovery{
+		resource := apidiscoveryv2.APIResourceDiscovery{
 			Resource: r.Name,
 			Scope:    scope,
 			ResponseKind: &metav1.GroupVersionKind{
@@ -114,17 +116,17 @@ func ConvertGroupVersionIntoToDiscovery(list []metav1.APIResource) ([]apidiscove
 			continue
 		}
 
-		var scope apidiscoveryv2beta1.ResourceScope
+		var scope apidiscoveryv2.ResourceScope
 		if r.Namespaced {
-			scope = apidiscoveryv2beta1.ScopeNamespace
+			scope = apidiscoveryv2.ScopeNamespace
 		} else {
-			scope = apidiscoveryv2beta1.ScopeCluster
+			scope = apidiscoveryv2.ScopeCluster
 		}
 
 		parentidx, exists := parentResources[split[0]]
 		if !exists {
 			// If a subresource exists without a parent, create a parent
-			apiResourceList = append(apiResourceList, apidiscoveryv2beta1.APIResourceDiscovery{
+			apiResourceList = append(apiResourceList, apidiscoveryv2.APIResourceDiscovery{
 				Resource: split[0],
 				Scope:    scope,
 				// avoid nil panics in v0.26.0-v0.26.3 client-go clients
@@ -140,7 +142,7 @@ func ConvertGroupVersionIntoToDiscovery(list []metav1.APIResource) ([]apidiscove
 			//
 		}
 
-		subresource := apidiscoveryv2beta1.APISubresourceDiscovery{
+		subresource := apidiscoveryv2.APISubresourceDiscovery{
 			Subresource: split[1],
 			Verbs:       r.Verbs,
 			// avoid nil panics in v0.26.0-v0.26.3 client-go clients
@@ -606,6 +608,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 		if a.group.ConvertabilityChecker != nil {
 			decodableVersions = a.group.ConvertabilityChecker.VersionsForGroupKind(fqKindToRegister.GroupKind())
 		}
+
 		resourceInfo = &storageversion.ResourceInfo{
 			GroupResource: schema.GroupResource{
 				Group:    a.group.GroupVersion.Group,
@@ -618,6 +621,8 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 			EquivalentResourceMapper: a.group.EquivalentResourceRegistry,
 
 			DirectlyDecodableVersions: decodableVersions,
+
+			ServedVersions: a.group.AllServedVersionsByResource[path],
 		}
 	}
 
@@ -717,7 +722,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 			requestScope = "resource"
 			operationSuffix = operationSuffix + "WithPath"
 		}
-		if strings.Index(action.Path, "/{name}") != -1 || action.Verb == "POST" {
+		if strings.Contains(action.Path, "/{name}") || action.Verb == "POST" {
 			requestScope = "resource"
 		}
 		if action.AllNamespaces {
@@ -793,7 +798,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 			}
 			route := ws.GET(action.Path).To(handler).
 				Doc(doc).
-				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed.")).
+				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).")).
 				Operation("read"+namespaced+kind+strings.Title(subresource)+operationSuffix).
 				Produces(append(storageMeta.ProducesMIMETypes(action.Verb), mediaTypes...)...).
 				Returns(http.StatusOK, "OK", producedObject).
@@ -814,7 +819,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 			handler = utilwarning.AddWarningsHandler(handler, warnings)
 			route := ws.GET(action.Path).To(handler).
 				Doc(doc).
-				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed.")).
+				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).")).
 				Operation("list"+namespaced+kind+strings.Title(subresource)+operationSuffix).
 				Produces(append(storageMeta.ProducesMIMETypes(action.Verb), allMediaTypes...)...).
 				Returns(http.StatusOK, "OK", versionedList).
@@ -847,7 +852,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 			handler = utilwarning.AddWarningsHandler(handler, warnings)
 			route := ws.PUT(action.Path).To(handler).
 				Doc(doc).
-				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed.")).
+				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).")).
 				Operation("replace"+namespaced+kind+strings.Title(subresource)+operationSuffix).
 				Produces(append(storageMeta.ProducesMIMETypes(action.Verb), mediaTypes...)...).
 				Returns(http.StatusOK, "OK", producedObject).
@@ -876,7 +881,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 			handler = utilwarning.AddWarningsHandler(handler, warnings)
 			route := ws.PATCH(action.Path).To(handler).
 				Doc(doc).
-				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed.")).
+				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).")).
 				Consumes(supportedTypes...).
 				Operation("patch"+namespaced+kind+strings.Title(subresource)+operationSuffix).
 				Produces(append(storageMeta.ProducesMIMETypes(action.Verb), mediaTypes...)...).
@@ -906,7 +911,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 			}
 			route := ws.POST(action.Path).To(handler).
 				Doc(doc).
-				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed.")).
+				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).")).
 				Operation("create"+namespaced+kind+strings.Title(subresource)+operationSuffix).
 				Produces(append(storageMeta.ProducesMIMETypes(action.Verb), mediaTypes...)...).
 				Returns(http.StatusOK, "OK", producedObject).
@@ -935,7 +940,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 			handler = utilwarning.AddWarningsHandler(handler, warnings)
 			route := ws.DELETE(action.Path).To(handler).
 				Doc(doc).
-				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed.")).
+				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).")).
 				Operation("delete"+namespaced+kind+strings.Title(subresource)+operationSuffix).
 				Produces(append(storageMeta.ProducesMIMETypes(action.Verb), mediaTypes...)...).
 				Writes(deleteReturnType).
@@ -959,7 +964,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 			handler = utilwarning.AddWarningsHandler(handler, warnings)
 			route := ws.DELETE(action.Path).To(handler).
 				Doc(doc).
-				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed.")).
+				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).")).
 				Operation("deletecollection"+namespaced+kind+strings.Title(subresource)+operationSuffix).
 				Produces(append(storageMeta.ProducesMIMETypes(action.Verb), mediaTypes...)...).
 				Writes(versionedStatus).
@@ -987,7 +992,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 			handler = utilwarning.AddWarningsHandler(handler, warnings)
 			route := ws.GET(action.Path).To(handler).
 				Doc(doc).
-				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed.")).
+				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).")).
 				Operation("watch"+namespaced+kind+strings.Title(subresource)+operationSuffix).
 				Produces(allMediaTypes...).
 				Returns(http.StatusOK, "OK", versionedWatchEvent).
@@ -1008,7 +1013,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 			handler = utilwarning.AddWarningsHandler(handler, warnings)
 			route := ws.GET(action.Path).To(handler).
 				Doc(doc).
-				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed.")).
+				Param(ws.QueryParameter("pretty", "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).")).
 				Operation("watch"+namespaced+kind+strings.Title(subresource)+"List"+operationSuffix).
 				Produces(allMediaTypes...).
 				Returns(http.StatusOK, "OK", versionedWatchEvent).
@@ -1056,12 +1061,12 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 			return nil, nil, fmt.Errorf("unrecognized action verb: %s", action.Verb)
 		}
 		for _, route := range routes {
-			route.Metadata(ROUTE_META_GVK, metav1.GroupVersionKind{
+			route.Metadata(RouteMetaGVK, metav1.GroupVersionKind{
 				Group:   reqScope.Kind.Group,
 				Version: reqScope.Kind.Version,
 				Kind:    reqScope.Kind.Kind,
 			})
-			route.Metadata(ROUTE_META_ACTION, strings.ToLower(action.Verb))
+			route.Metadata(RouteMetaAction, strings.ToLower(action.Verb))
 			ws.Route(route)
 		}
 		// Note: update GetAuthorizerAttributes() when adding a custom handler.
