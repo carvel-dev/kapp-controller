@@ -1,7 +1,7 @@
 package release
 
 import (
-	"os"
+	"bytes"
 	"os/exec"
 	"testing"
 
@@ -9,8 +9,13 @@ import (
 )
 
 func TestReleaseCmdRunnerForKappCmd(t *testing.T) {
-	ReleaseCmdRunner := NewReleaseCmdRunner(os.Stdout, false, "", false, nil)
+	var buf bytes.Buffer
+	ReleaseCmdRunner := NewReleaseCmdRunner(&buf, false, "", false, nil)
 	cmd := exec.Command("kapp", "deploy", "-f", "-", "-a", "pkg-test", "-y")
 	err := ReleaseCmdRunner.RunWithCancel(cmd, nil)
 	require.NoError(t, err)
+	expectedLength := 0
+	if actualLength := buf.Len(); actualLength != expectedLength {
+		t.Errorf("Got Buffer length = %d, Expected empty", actualLength)
+	}
 }
