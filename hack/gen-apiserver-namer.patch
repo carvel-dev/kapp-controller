@@ -1,7 +1,7 @@
-diff --git a/vendor/k8s.io/gengo/namer/namer.go b/vendor/k8s.io/gengo/namer/namer.go
+diff --git a/vendor/k8s.io/gengo/v2/namer/namer.go b/vendor/k8s.io/gengo/v2/namer/namer.go
 index 6feb2d0c..5ae36b12 100644
---- a/vendor/k8s.io/gengo/namer/namer.go
-+++ b/vendor/k8s.io/gengo/namer/namer.go
+--- a/vendor/k8s.io/gengo/v2/namer/namer.go
++++ b/vendor/k8s.io/gengo/v2/namer/namer.go
 @@ -61,6 +61,7 @@ func NewPublicNamer(prependPackageNames int, ignoreWords ...string) *NameStrateg
  // arguments to this constructor.
  func NewPrivateNamer(prependPackageNames int, ignoreWords ...string) *NameStrategy {

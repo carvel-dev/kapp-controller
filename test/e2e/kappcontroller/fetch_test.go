@@ -184,7 +184,7 @@ spec:
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.desc, func(t *testing.T) {
+		t.Run(tc.desc, func(_ *testing.T) {
 			cleanUp := func() {
 				kapp.Run([]string{"delete", "-a", tc.name})
 			}

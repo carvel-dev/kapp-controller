@@ -56,7 +56,7 @@ func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
 	kappcs := fake.NewSimpleClientset(&eligibleInstalledPkg, &ineligibleInstalledPkg)
 	ipvh := pkginstall.NewPackageInstallVersionHandler(kappcs, "", testr.New(t))
 
-	event := event.GenericEvent{
+	event := event.TypedGenericEvent[*datapkgingv1alpha1.Package]{
 		Object: &datapkgingv1alpha1.Package{
 			Spec: datapkgingv1alpha1.PackageSpec{
 				RefName: "expec-pkg",

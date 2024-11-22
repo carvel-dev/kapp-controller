@@ -629,7 +629,7 @@ spec:
 				t.Fatalf("\nExpected App spec.template.ytt.paths to contain file.yml\nGot: %s", tmpl.Ytt.Paths[0])
 			}
 		} else {
-			t.Fatalf("\nExpected App spec.template.ytt.paths to contain file.yml\nGot: %s", tmpl)
+			t.Fatalf("\nExpected App spec.template.ytt.paths to contain file.yml\nGot: %s", tmpl.Ytt.Paths[0])
 		}
 	})
 

@@ -49,7 +49,7 @@ var _ reconcile.Reconciler = &Reconciler{}
 
 // AttachWatches configures watches needed for reconciler to reconcile Apps.
 func (r *Reconciler) AttachWatches(controller controller.Controller, mgr manager.Manager) error {
-	err := controller.Watch(source.Kind(mgr.GetCache(), &kcv1alpha1.App{}), &handler.EnqueueRequestForObject{})
+	err := controller.Watch(source.Kind(mgr.GetCache(), &kcv1alpha1.App{}, &handler.TypedEnqueueRequestForObject[*kcv1alpha1.App]{}))
 	if err != nil {
 		return fmt.Errorf("Watch Apps: %s", err)
 	}
@@ -57,12 +57,12 @@ func (r *Reconciler) AttachWatches(controller controller.Controller, mgr manager
 	secretHandler := reconciler.NewSecretHandler(r.log, r.appRefTracker, r.appUpdateStatus)
 	cmHandler := reconciler.NewConfigMapHandler(r.log, r.appRefTracker, r.appUpdateStatus)
 
-	err = controller.Watch(source.Kind(mgr.GetCache(), &corev1.Secret{}), secretHandler)
+	err = controller.Watch(source.Kind(mgr.GetCache(), &corev1.Secret{}, secretHandler))
 	if err != nil {
 		return fmt.Errorf("Watch Secrets: %s", err)
 	}
 
-	err = controller.Watch(source.Kind(mgr.GetCache(), &corev1.ConfigMap{}), cmHandler)
+	err = controller.Watch(source.Kind(mgr.GetCache(), &corev1.ConfigMap{}, cmHandler))
 	if err != nil {
 		return fmt.Errorf("Watch ConfigMaps: %s", err)
 	}
