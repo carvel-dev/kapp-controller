@@ -24,12 +24,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apiserver/pkg/admission/plugin/namespace/lifecycle"
+	mutatingwebhook "k8s.io/apiserver/pkg/admission/plugin/webhook/mutating"
+	validatingwebhook "k8s.io/apiserver/pkg/admission/plugin/webhook/validating"
 	genericopenapi "k8s.io/apiserver/pkg/endpoints/openapi"
 	apirest "k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/dynamiccertificates"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
-	"k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -167,6 +169,7 @@ func (as *APIServer) isReady() (bool, error) {
 }
 
 func newServerConfig(aggClient aggregatorclient.Interface, opts NewAPIServerOpts) (*genericapiserver.RecommendedConfig, error) {
+
 	recommendedOptions := genericoptions.NewRecommendedOptions("", Codecs.LegacyCodec(v1alpha1.SchemeGroupVersion))
 	recommendedOptions.Etcd = nil
 
@@ -198,23 +201,33 @@ func newServerConfig(aggClient aggregatorclient.Interface, opts NewAPIServerOpts
 	if err != nil {
 		return nil, err
 	}
-	// this feature gate is not enabled in k8s <1.26 as the
-	// APIs it relies on were in v1beta2/v1beta1/alpha.
-	// the apiserver library hardcodes the v1beta3 version of the resource
+
+	// this feature gate is not enabled in k8s <1.29 as the
+	// APIs it relies on were in v1beta3/v1beta2/v1beta1/alpha.
+	// the apiserver library hardcodes the v1 version of the resource
 	// so the best we can do for older k8s clusters is to allow it to be disabled.
-	minSupportedVersionForAPF, err := semver.New("1.26.0")
+	minSupportedVersionForAPF, err := semver.New("1.29.0")
 	if err != nil {
 		return nil, err
 	}
 	isServerVerLTminSupportedVer := serverVersion.LT(*minSupportedVersionForAPF)
 	if !opts.EnableAPIPriorityAndFairness || isServerVerLTminSupportedVer {
 		if isServerVerLTminSupportedVer {
-			opts.Logger.Info("The current version of kapp-controller does not support api-priority-and-fairness for versions of kubernets prior to 1.26, disabling this option")
+			opts.Logger.Info("The current version of kapp-controller does not support api-priority-and-fairness for versions of kubernets prior to 1.29, disabling this option")
 		}
-		err := feature.DefaultMutableFeatureGate.Set("APIPriorityAndFairness=false")
-		if err != nil {
-			return nil, fmt.Errorf("error updating disabling feature gate for APIPriorityAndFairness: %v", err)
-		}
+		recommendedOptions.Features.EnablePriorityAndFairness = false
+	}
+
+	// validatingAdmissionPolicy has been made available by default for K8s >= 1.30.
+	// We will remove the validatingAdmissionPolicy from the execution in case K8s < 1.30.
+	// However, we will still run namespaceLifecycle, mutatingAdmissionWebhook and validatingAdmissionWebhooks.
+	minSupportedVersionForValidatingAdmissionPolicy, err := semver.New("1.30.0")
+	if err != nil {
+		return nil, err
+	}
+	isServerVerLTminSupportedVer = serverVersion.LT(*minSupportedVersionForValidatingAdmissionPolicy)
+	if isServerVerLTminSupportedVer {
+		recommendedOptions.Admission.RecommendedPluginOrder = []string{lifecycle.PluginName, mutatingwebhook.PluginName, validatingwebhook.PluginName}
 	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
@@ -222,7 +235,7 @@ func newServerConfig(aggClient aggregatorclient.Interface, opts NewAPIServerOpts
 		return nil, err
 	}
 
-	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIConfig(
+	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
 		openapi.GetOpenAPIDefinitions,
 		genericopenapi.NewDefinitionNamer(Scheme))
 	serverConfig.OpenAPIV3Config.Info.Title = "Kapp-controller"
