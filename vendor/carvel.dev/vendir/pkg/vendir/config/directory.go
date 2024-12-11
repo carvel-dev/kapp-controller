@@ -1,4 +1,4 @@
-// Copyright 2020 VMware, Inc.
+// Copyright 2024 The Carvel Authors.
 // SPDX-License-Identifier: Apache-2.0
 
 package config
@@ -139,6 +139,9 @@ type DirectoryContentsImgpkgBundle struct {
 	ResponseHeaderTimeout  int  `json:"responseHeaderTimeout,omitempty"`
 	DangerousSkipTLSVerify bool `json:"dangerousSkipTLSVerify,omitempty"`
 	Recursive              bool `json:"recursive,omitempty"`
+	// Paths to PEM files containing additional CA certificates
+	// +optional
+	AdditionalCACertificates []string `json:"additionalCACertificates,omitempty"`
 }
 
 func (c DirectoryContentsImgpkgBundle) PreresolvedTag() string { return c.preresolvedTag }
