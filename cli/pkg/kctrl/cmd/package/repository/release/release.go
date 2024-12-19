@@ -27,6 +27,7 @@ type ReleaseOptions struct {
 	chdir          string
 	outputLocation string
 	debug          bool
+	tag            string
 }
 
 const (
@@ -58,6 +59,7 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 	cmd.Flags().StringVar(&o.chdir, "chdir", "", "Location of the working directory")
 	cmd.Flags().StringVar(&o.outputLocation, "copy-to", "", "Output location for pkgrepo-build.yml")
 	cmd.Flags().BoolVar(&o.debug, "debug", false, "Include debug output")
+	cmd.Flags().StringVarP(&o.tag, "tag", "t", "", "Tag pushed with imgpkg bundle (default build-<TIMESTAMP>)")
 
 	return cmd
 }
@@ -157,10 +159,15 @@ func (o *ReleaseOptions) Run() error {
 
 	var bundleURL string
 
+	tag := o.pkgRepoVersion
+	if o.tag != "" {
+		tag = o.tag
+	}
+
 	switch {
 	case pkgRepoBuild.Spec.Export.ImgpkgBundle != nil:
 		imgpkgRunner := ImgpkgRunner{
-			BundlePath:        fmt.Sprintf("%s:%s", pkgRepoBuild.Spec.Export.ImgpkgBundle.Image, o.pkgRepoVersion),
+			BundlePath:        fmt.Sprintf("%s:%s", pkgRepoBuild.Spec.Export.ImgpkgBundle.Image, tag),
 			Paths:             []string{"packages"},
 			UseKbldImagesLock: true,
 			ImgLockFilepath:   tempImgpkgLockPath,
