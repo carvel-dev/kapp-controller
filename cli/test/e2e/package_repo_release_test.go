@@ -58,6 +58,23 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 		verifyPackageRepository(t, keysToBeIgnored)
 	})
 
+	logger.Section("Creating a package repository interactively with tags using pkg repo release", func() {
+		go func() {
+			promptOutput.WaitFor("Enter the package repository name")
+			promptOutput.Write(pkgrName)
+			promptOutput.WaitFor("Enter the registry url")
+			promptOutput.Write(env.Image)
+		}()
+
+		kctrl.RunWithOpts([]string{"pkg", "repo", "release", "--tty=true", "--chdir", workingDir, "--version", "1.0.0", "--tag", "build-tag-0001"},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+
+		keysToBeIgnored := []string{"creationTimestamp:", "image"}
+		verifyPackageRepoBuild(t, keysToBeIgnored)
+		verifyPackageRepository(t, keysToBeIgnored)
+	})
+
 	logger.Section(fmt.Sprintf("Installing package repository"), func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", pkgrKappAppName, "-f", filepath.Join(workingDir, pkgRepoOutputFile), "-c"},
 			RunOpts{StdinReader: promptOutput.StringReader(), StdoutWriter: promptOutput.BufferedOutputWriter()})
