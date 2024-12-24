@@ -62,7 +62,6 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 		args := []string{"tag", "list", "-i", os.Getenv("KCTRL_E2E_IMAGE")}
 		cmd := exec.Command("imgpkg", args...)
 		output, err := cmd.Output()
-		// t.Logf("the tags are: %s", output)
 		require.Contains(t, string(output), version)
 		require.NoError(t, err, "There was an error in listing the tags")
 	})
@@ -88,7 +87,6 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 		args := []string{"tag", "list", "-i", os.Getenv("KCTRL_E2E_IMAGE")}
 		cmd := exec.Command("imgpkg", args...)
 		output, err := cmd.Output()
-		// t.Logf("the tags are: %s", output)
 		require.Contains(t, string(output), tag)
 		require.NoError(t, err, "There was an error in listing the tags")
 	})
