@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -49,13 +50,45 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 			promptOutput.Write(env.Image)
 		}()
 
-		kctrl.RunWithOpts([]string{"pkg", "repo", "release", "--tty=true", "--chdir", workingDir, "--version", "1.0.0"},
+		version := "1.0.0"
+		kctrl.RunWithOpts([]string{"pkg", "repo", "release", "--tty=true", "--chdir", workingDir, "--version", version},
 			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
 				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
 
 		keysToBeIgnored := []string{"creationTimestamp:", "image"}
 		verifyPackageRepoBuild(t, keysToBeIgnored)
 		verifyPackageRepository(t, keysToBeIgnored)
+
+		args := []string{"tag", "list", "-i", os.Getenv("KCTRL_E2E_IMAGE")}
+		cmd := exec.Command("imgpkg", args...)
+		output, err := cmd.Output()
+		require.Contains(t, string(output), version)
+		require.NoError(t, err, "There was an error in listing the tags")
+	})
+
+	logger.Section("Creating a package repository interactively with tags using pkg repo release", func() {
+		go func() {
+			promptOutput.WaitFor("Enter the package repository name")
+			promptOutput.Write(pkgrName)
+			promptOutput.WaitFor("Enter the registry url")
+			promptOutput.Write(env.Image)
+		}()
+
+		version := "1.0.0"
+		tag := "build-tag-0001"
+		kctrl.RunWithOpts([]string{"pkg", "repo", "release", "--tty=true", "--chdir", workingDir, "--version", version, "--tag", tag},
+			RunOpts{NoNamespace: true, StdinReader: promptOutput.StringReader(),
+				StdoutWriter: promptOutput.BufferedOutputWriter(), Interactive: true})
+
+		keysToBeIgnored := []string{"creationTimestamp:", "image"}
+		verifyPackageRepoBuild(t, keysToBeIgnored)
+		verifyPackageRepository(t, keysToBeIgnored)
+
+		args := []string{"tag", "list", "-i", os.Getenv("KCTRL_E2E_IMAGE")}
+		cmd := exec.Command("imgpkg", args...)
+		output, err := cmd.Output()
+		require.Contains(t, string(output), tag)
+		require.NoError(t, err, "There was an error in listing the tags")
 	})
 
 	logger.Section(fmt.Sprintf("Installing package repository"), func() {
