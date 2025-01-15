@@ -767,11 +767,16 @@ func (o *CreateOrUpdateOptions) preparePackageInstallForUpdate(pkgInstall *kcpkg
 		return nil, fmt.Errorf("Failed to update package '%s' as no existing package reference/version was found in the package install", o.Name)
 	}
 
-	// If o.PackageName is provided by the user (via --package flag), verify that the package name in PackageInstall matches it.
-	// This will prevent the users from accidentally overwriting an installed package with another package content due to choosing a pre-existing name for the package isntall.
+	// If o.PackageName provided by the user (via --package flag) is not the same as the package name in PackageInstall
+	// Prompt user to confirm
 	// Otherwise if o.PackageName is not provided, fill it from the installed package spec
 	if o.packageName != "" && updatedPkgInstall.Spec.PackageRef.RefName != o.packageName {
-		return nil, fmt.Errorf("Installed package '%s' is already associated with package '%s'", o.Name, updatedPkgInstall.Spec.PackageRef.RefName)
+		o.ui.PrintLinef("Changing Package reference for installation '%s' from Package '%s' to Package '%s'", o.Name, updatedPkgInstall.Spec.PackageRef.RefName, o.packageName)
+		err := o.ui.AskForConfirmation()
+		if err != nil {
+			return nil, err
+		}
+		updatedPkgInstall.Spec.PackageRef.RefName = o.packageName
 	}
 	o.packageName = updatedPkgInstall.Spec.PackageRef.RefName
 
