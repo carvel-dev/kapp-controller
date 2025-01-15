@@ -23,20 +23,23 @@ func TestPackageInstalled(t *testing.T) {
 	appName := "test-package-name"
 	pkgiName := "testpkgi"
 	packageMetadataName := "test-pkg.carvel.dev"
+	packageMetadataNameNew := "test-pkg.carvel-new.dev"
 
-	packageMetadata := fmt.Sprintf(`---
+	packageMetadataCR := `---
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
 metadata:
   name: %s
 spec:
   displayName: "Carvel Test Package"
-  shortDescription: "Carvel package for testing installation"`, packageMetadataName)
+  shortDescription: "Carvel package for testing installation"`
 
-	packageName1 := "test-pkg.carvel.dev.1.0.0"
-	packageName2 := "test-pkg.carvel.dev.2.0.0"
+	packageMetadata := fmt.Sprintf(packageMetadataCR, packageMetadataName)
+	packageMetadataNew := fmt.Sprintf(packageMetadataCR, packageMetadataNameNew)
+
 	packageVersion1 := "1.0.0"
 	packageVersion2 := "2.0.0"
+	packageVersion3 := "3.0.0"
 
 	packageCR := `---
 apiVersion: data.packaging.carvel.dev/v1alpha1
@@ -44,7 +47,7 @@ kind: Package
 metadata:
   name: %s
 spec:
-  refName: test-pkg.carvel.dev
+  refName: %s
   version: %s
   template:
     spec:
@@ -69,12 +72,16 @@ key1: value1
 	valuesFile2 := `
 key2: value2
 `
+	valuesFile3 := `
+key3: value3
+`
+	packageCR1 := fmt.Sprintf(packageCR, packageMetadataName+"."+packageVersion1, packageMetadataName, packageVersion1)
 
-	packageCR1 := fmt.Sprintf(packageCR, packageName1, packageVersion1)
+	packageCR2 := fmt.Sprintf(packageCR, packageMetadataName+"."+packageVersion2, packageMetadataName, packageVersion2)
 
-	packageCR2 := fmt.Sprintf(packageCR, packageName2, packageVersion2)
+	packageCR3 := fmt.Sprintf(packageCR, packageMetadataNameNew+"."+packageVersion3, packageMetadataNameNew, packageVersion3)
 
-	yaml := packageMetadata + "\n" + packageCR1 + "\n" + packageCR2
+	yaml := packageMetadata + "\n" + packageCR1 + "\n" + packageCR2 + "\n" + packageMetadataNew + "\n" + packageCR3
 
 	cleanUp := func() {
 		// TODO: Check for error while uninstalling in cleanup?
@@ -212,6 +219,34 @@ key2: value2
 			"name":            "testpkgi",
 			"package_name":    "test-pkg.carvel.dev",
 			"package_version": "2.0.0",
+			"status":          "Reconcile succeeded",
+		}}
+
+		require.Exactly(t, expectedOutputRows, output.Tables[0].Rows)
+	})
+
+	logger.Section("package installed update with changing packageName", func() {
+		_, err := kappCtrl.RunWithOpts([]string{
+			"package", "installed", "update",
+			"--package-install", pkgiName,
+			"-p", packageMetadataNameNew,
+			"--version", packageVersion3,
+			"--values-file", "-",
+			"-y",
+		}, RunOpts{StdinReader: strings.NewReader(valuesFile3)})
+		require.NoError(t, err)
+
+		out, err := kappCtrl.RunWithOpts([]string{"package", "installed", "get", "--package-install", pkgiName, "--json"}, RunOpts{})
+		require.NoError(t, err)
+
+		output := uitest.JSONUIFromBytes(t, []byte(out))
+
+		expectedOutputRows := []map[string]string{{
+			"conditions":      "- type: ReconcileSucceeded\n  status: \"True\"\n  reason: \"\"\n  message: \"\"",
+			"namespace":       env.Namespace,
+			"name":            "testpkgi",
+			"package_name":    packageMetadataNameNew,
+			"package_version": packageVersion3,
 			"status":          "Reconcile succeeded",
 		}}
 
