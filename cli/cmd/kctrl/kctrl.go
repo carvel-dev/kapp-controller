@@ -4,9 +4,7 @@
 package main
 
 import (
-	"math/rand"
 	"os"
-	"time"
 
 	"github.com/cppforlife/cobrautil"
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
@@ -26,8 +24,6 @@ func main() {
 
 // nonExitingMain does not use os.Exit to make sure Go runs defers
 func nonExitingMain() error {
-	rand.Seed(time.Now().UTC().UnixNano())
-
 	// TODO logs
 	// TODO log flags used
 
