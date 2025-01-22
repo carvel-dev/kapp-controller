@@ -69,7 +69,8 @@ arrKeyEmpty: []
       type: string
     type: array
 type: object
-`},
+`,
+		},
 		{
 			name: "object with different values",
 			input: `
@@ -123,7 +124,8 @@ objExample: {}
     description: Object example
     type: object
 type: object
-`},
+`,
+		},
 		{
 			name: "nested complex object",
 			input: `
@@ -176,7 +178,8 @@ containers:
         type: string
     type: object
 type: object
-`},
+`,
+		},
 		{
 			name: "Alias Node",
 			input: `
@@ -223,7 +226,40 @@ aliasEx:
       type: object
     type: array
 type: object
-`},
+`,
+		},
+		{
+			name: "unknown type",
+			input: `
+# a field without a type
+anything: null
+`,
+			want: `properties:
+  anything:
+    description: a field without a type
+    oneOf:
+    - default: null
+      nullable: true
+      type: integer
+    - default: null
+      nullable: true
+      type: number
+    - default: null
+      nullable: true
+      type: boolean
+    - default: null
+      nullable: true
+      type: string
+    - default: null
+      nullable: true
+      type: object
+    - default: null
+      items: {}
+      nullable: true
+      type: array
+type: object
+`,
+		},
 	}
 
 	for _, test := range tests {

@@ -26,6 +26,7 @@ const (
 	itemsKey       = "items"
 	propertiesKey  = "properties"
 	defaultKey     = "default"
+	nullableKey    = "nullable"
 )
 
 var keyOrder = map[string]int{
@@ -35,6 +36,7 @@ var keyOrder = map[string]int{
 	itemsKey:       4,
 	propertiesKey:  5,
 	defaultKey:     6,
+	nullableKey:    7,
 }
 
 const (
@@ -211,6 +213,11 @@ func (h HelmValuesSchemaGen) calculateProperties(key *yaml3.Node, value *yaml3.N
 		if err != nil {
 			return nil, err
 		}
+		if value.Tag == nullTag {
+			// We cannot infer a key's type from a null value and must assume "any".
+			apiKeys = append(apiKeys, newAnyType())
+			break
+		}
 		apiKeys = append(apiKeys, &MapItem{Key: typeKey, Value: h.openAPIType(value.Tag, value.Value)})
 		apiKeys = append(apiKeys, &MapItem{Key: defaultKey, Value: defaultVal})
 		if value.Tag == floatTag {
@@ -266,7 +273,6 @@ func (h HelmValuesSchemaGen) openAPIType(tag, value string) string {
 		}
 	}
 	return "string"
-
 }
 
 func (h HelmValuesSchemaGen) getDefaultValue(tag, value string) (interface{}, error) {
@@ -281,3 +287,29 @@ func (h HelmValuesSchemaGen) getDefaultValue(tag, value string) (interface{}, er
 		return value, nil
 	}
 }
+
+func newAnyType() *MapItem {
+	nullable := func(t string) map[string]interface{} {
+		n := map[string]interface{}{
+			typeKey:     t,
+			defaultKey:  nil,
+			nullableKey: true,
+		}
+		if t == "array" {
+			n["items"] = map[string]string{}
+		}
+		return n
+	}
+	return &MapItem{
+		Key: "oneOf",
+		Value: []map[string]interface{}{
+			nullable("integer"),
+			nullable("number"),
+			nullable("boolean"),
+			nullable("string"),
+			nullable("object"),
+			nullable("array"),
+		},
+	}
+}
+

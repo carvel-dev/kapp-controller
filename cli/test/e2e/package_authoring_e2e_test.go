@@ -336,8 +336,26 @@ spec:
               default: quay.io/mongodb
               type: string
             imagePullSecrets:
-              default: ""
-              type: string
+              oneOf:
+              - default: null
+                nullable: true
+                type: integer
+              - default: null
+                nullable: true
+                type: number
+              - default: null
+                nullable: true
+                type: boolean
+              - default: null
+                nullable: true
+                type: string
+              - default: null
+                nullable: true
+                type: object
+              - default: null
+                items: {}
+                nullable: true
+                type: array
             initAppDb:
               default: quay.io/mongodb
               type: string
