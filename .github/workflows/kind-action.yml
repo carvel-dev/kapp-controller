@@ -18,33 +18,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create k8s Kind Cluster
-        uses: helm/kind-action@v1.8.0
+        uses: helm/kind-action@v1
         with:
-          kubectl_version: v1.25.0
           cluster_name: kinder
       - uses: actions/checkout@v4.1.2
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@v5 # default version of go is 1.10
+      - uses: actions/setup-go@v5
         with:
-          go-version: 1.23.3
+          go-version-file: go.mod
       - name: Install Carvel Tools
         run: ./hack/install-deps.sh
       # Run benchmark with `go test -bench` and stores the output to a file
       - name: Install kc and run e2e tests on kind
         run: |
           set -e -x
-          kubectl version --short
-
+          kubectl version
           source ./hack/version-util.sh
-
           ytt -f config/config -f config/values-schema.yml -f config-dev -v dev.version="$(get_kappctrl_ver)+develop" | kbld -f- > kbld.out 2> kbldmeta.out
           cat kbldmeta.out | tail -n 1 | sed 's/.*final: kapp-controller -> \(.*\)$/\1/p'  | tail -n 1 | xargs kind load docker-image --name kinder
           kapp deploy -a kc -f kbld.out -c -y
-
           export KAPPCTRL_E2E_SECRETGEN_CONTROLLER=true
           source ./hack/secretgen-controller.sh
           deploy_secretgen-controller
-
           mkdir tmp
           KAPPCTRL_E2E_NAMESPACE=kappctrl-test eval './hack/test-e2e.sh'
