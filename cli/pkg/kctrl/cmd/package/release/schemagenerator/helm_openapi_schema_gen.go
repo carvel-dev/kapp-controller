@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	kcdatav1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	kcdatav1alpha1 "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	yaml2 "gopkg.in/yaml.v2"
 	yaml3 "gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -312,4 +312,3 @@ func newAnyType() *MapItem {
 		},
 	}
 }
-

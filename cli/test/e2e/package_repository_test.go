@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
+	kcpkg "carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/require"
-	kcpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 )
 
 func TestPackageRepository(t *testing.T) {

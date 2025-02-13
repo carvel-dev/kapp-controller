@@ -6,9 +6,9 @@ package sources
 import (
 	"strings"
 
+	vendirconf "carvel.dev/vendir/pkg/vendir/config"
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
-	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
 )
 
 const (

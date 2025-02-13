@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	kcv1alpha1 "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	kcdatav1alpha1 "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 	cmdapprelease "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app/release"
@@ -18,8 +20,6 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
 	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
-	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	kcdatav1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 )
 
 type ReleaseOptions struct {

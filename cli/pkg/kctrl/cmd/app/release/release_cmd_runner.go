@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"carvel.dev/kapp-controller/pkg/exec"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 )
 
 type ReleaseCmdRunner struct {

@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"sync"
 
+	pkgclient "carvel.dev/kapp-controller/pkg/apiserver/client/clientset/versioned"
+	kcclient "carvel.dev/kapp-controller/pkg/client/clientset/versioned"
 	"github.com/cppforlife/go-cli-ui/ui"
-	pkgclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned"
-	kcclient "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"

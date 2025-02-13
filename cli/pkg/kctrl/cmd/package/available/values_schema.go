@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"strings"
 
+	"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 )
 
 // DataValueProperty holds the details of each property under Carvel package.spec.valuesSchema.openAPIv3.properties.

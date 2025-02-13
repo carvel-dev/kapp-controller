@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
+	kcv1alpha1 "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	fakekc "carvel.dev/kapp-controller/pkg/client/clientset/versioned/fake"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 	cmdlocal "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local"
 	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
 	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
-	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	fakekc "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
