@@ -1,6 +1,6 @@
-module github.com/vmware-tanzu/carvel-kapp-controller/cli
+module carvel.dev/kapp-controller/cli
 
-go 1.23.3
+go 1.23.6
 
 require (
 	carvel.dev/kapp-controller v0.55.0

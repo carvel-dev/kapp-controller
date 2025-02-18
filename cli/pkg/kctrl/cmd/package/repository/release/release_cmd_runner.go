@@ -9,8 +9,8 @@ import (
 	goexec "os/exec"
 	"strings"
 
+	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
 	"carvel.dev/kapp-controller/pkg/exec"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 )
 
 type ReleaseCmdRunner struct {

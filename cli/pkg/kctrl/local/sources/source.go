@@ -6,9 +6,9 @@ package sources
 import (
 	"fmt"
 
+	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
+	buildconfigs "carvel.dev/kapp-controller/cli/pkg/kctrl/local/buildconfigs"
 	"github.com/cppforlife/go-cli-ui/ui"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
-	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
 )
 
 const (

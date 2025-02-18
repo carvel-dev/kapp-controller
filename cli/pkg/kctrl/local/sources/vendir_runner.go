@@ -7,7 +7,7 @@ import (
 	"os"
 	goexec "os/exec"
 
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
 )
 
 type VendirRunner struct {

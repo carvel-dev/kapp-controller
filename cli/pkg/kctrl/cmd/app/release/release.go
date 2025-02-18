@@ -6,11 +6,11 @@ package release
 import (
 	"os"
 
+	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
+	buildconfigs "carvel.dev/kapp-controller/cli/pkg/kctrl/local/buildconfigs"
+	"carvel.dev/kapp-controller/cli/pkg/kctrl/logger"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
-	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
 )
 
 type ReleaseOptions struct {

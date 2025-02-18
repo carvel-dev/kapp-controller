@@ -6,10 +6,10 @@ package main
 import (
 	"os"
 
+	"carvel.dev/kapp-controller/cli/pkg/kctrl/cmd"
 	"github.com/cppforlife/cobrautil"
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
 	"github.com/cppforlife/go-cli-ui/ui"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd"
 
 	// Import to initialize client auth plugins.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"

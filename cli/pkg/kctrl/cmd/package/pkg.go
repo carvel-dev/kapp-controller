@@ -4,8 +4,8 @@
 package pkg
 
 import (
+	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 )
 
 func NewCmd() *cobra.Command {

@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
 	dircopy "github.com/otiai10/copy"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
 )
 
 type ImgpkgRunner struct {

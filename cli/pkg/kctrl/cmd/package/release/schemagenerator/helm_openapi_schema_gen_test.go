@@ -10,8 +10,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/release/schemagenerator"
 	"sigs.k8s.io/yaml"
+
+	"carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/package/release/schemagenerator"
 )
 
 func cleanup() {

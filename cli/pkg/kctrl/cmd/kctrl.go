@@ -6,20 +6,20 @@ package cmd
 import (
 	"io"
 
+	"carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/app"
+	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
+	"carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/dev"
+	cmdpkg "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/package"
+	pkgavail "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/package/available"
+	pkginst "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/package/installed"
+	pkgrel "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/package/release"
+	pkgrepo "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/package/repository"
+	pkgreporel "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/package/repository/release"
+	"carvel.dev/kapp-controller/cli/pkg/kctrl/logger"
+	"carvel.dev/kapp-controller/cli/pkg/kctrl/version"
 	"github.com/cppforlife/cobrautil"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/app"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/dev"
-	cmdpkg "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package"
-	pkgavail "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/available"
-	pkginst "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
-	pkgrel "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/release"
-	pkgrepo "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository"
-	pkgreporel "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository/release"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/version"
 )
 
 type KctrlOptions struct {
