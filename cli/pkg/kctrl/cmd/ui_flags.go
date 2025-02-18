@@ -7,7 +7,8 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+
+	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
 )
 
 type UIFlags struct {

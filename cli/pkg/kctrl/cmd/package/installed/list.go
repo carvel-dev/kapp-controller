@@ -7,12 +7,12 @@ import (
 	"context"
 	"fmt"
 
+	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
+	"carvel.dev/kapp-controller/cli/pkg/kctrl/logger"
+	kcpkgv1alpha1 "carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
-	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

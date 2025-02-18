@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
+	buildconfigs "carvel.dev/kapp-controller/cli/pkg/kctrl/local/buildconfigs"
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"github.com/cppforlife/go-cli-ui/ui"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
-	buildconfigs "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/local/buildconfigs"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
 type Template struct {

@@ -6,15 +6,15 @@ package local
 import (
 	"context"
 
-	openapi_v2 "github.com/google/gnostic/openapiv2"
+	openapi_v2 "github.com/google/gnostic-models/openapiv2"
 	authenticationv1api "k8s.io/api/authentication/v1"
 	corev1api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	types "k8s.io/apimachinery/pkg/types"
-	version "k8s.io/apimachinery/pkg/version"
-	watch "k8s.io/apimachinery/pkg/watch"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/version"
+	"k8s.io/apimachinery/pkg/watch"
 	aplcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	discovery "k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	admissionregistrationv1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1"
 	admissionregistrationv1alpha1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1alpha1"
@@ -35,6 +35,7 @@ import (
 	batchv1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 	batchv1beta1 "k8s.io/client-go/kubernetes/typed/batch/v1beta1"
 	certificatesv1 "k8s.io/client-go/kubernetes/typed/certificates/v1"
+	certificatesv1alpha1 "k8s.io/client-go/kubernetes/typed/certificates/v1alpha1"
 	certificatesv1beta1 "k8s.io/client-go/kubernetes/typed/certificates/v1beta1"
 	coordinationv1 "k8s.io/client-go/kubernetes/typed/coordination/v1"
 	coordinationv1beta1 "k8s.io/client-go/kubernetes/typed/coordination/v1beta1"
@@ -44,7 +45,7 @@ import (
 	eventsv1 "k8s.io/client-go/kubernetes/typed/events/v1"
 	eventsv1beta1 "k8s.io/client-go/kubernetes/typed/events/v1beta1"
 	extensionsv1beta1 "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
-	flowcontrolv1alpha1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1alpha1"
+	flowcontrolv1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1"
 	flowcontrolv1beta1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta1"
 	flowcontrolv1beta2 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta2"
 	flowcontrolv1beta3 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta3"
@@ -59,15 +60,16 @@ import (
 	rbacv1 "k8s.io/client-go/kubernetes/typed/rbac/v1"
 	rbacv1alpha1 "k8s.io/client-go/kubernetes/typed/rbac/v1alpha1"
 	rbacv1beta1 "k8s.io/client-go/kubernetes/typed/rbac/v1beta1"
-	resourcev1alpha1 "k8s.io/client-go/kubernetes/typed/resource/v1alpha1"
+	resourcev1alpha2 "k8s.io/client-go/kubernetes/typed/resource/v1alpha2"
 	schedulingv1 "k8s.io/client-go/kubernetes/typed/scheduling/v1"
 	schedulingv1alpha1 "k8s.io/client-go/kubernetes/typed/scheduling/v1alpha1"
 	schedulingv1beta1 "k8s.io/client-go/kubernetes/typed/scheduling/v1beta1"
 	storagev1 "k8s.io/client-go/kubernetes/typed/storage/v1"
 	storagev1alpha1 "k8s.io/client-go/kubernetes/typed/storage/v1alpha1"
 	storagev1beta1 "k8s.io/client-go/kubernetes/typed/storage/v1beta1"
+	storagemigrationv1alpha1 "k8s.io/client-go/kubernetes/typed/storagemigration/v1alpha1"
 	"k8s.io/client-go/openapi"
-	rest "k8s.io/client-go/rest"
+	"k8s.io/client-go/rest"
 )
 
 type localSecrets struct {
@@ -162,6 +164,9 @@ func (*MinCoreClient) CertificatesV1() certificatesv1.CertificatesV1Interface {
 	panic("Not implemented")
 	return nil
 }
+func (c *MinCoreClient) CertificatesV1alpha1() certificatesv1alpha1.CertificatesV1alpha1Interface {
+	panic("Not implemented")
+}
 func (*MinCoreClient) CertificatesV1beta1() certificatesv1beta1.CertificatesV1beta1Interface {
 	panic("Not implemented")
 	return nil
@@ -199,7 +204,7 @@ func (*MinCoreClient) ExtensionsV1beta1() extensionsv1beta1.ExtensionsV1beta1Int
 	panic("Not implemented")
 	return nil
 }
-func (*MinCoreClient) FlowcontrolV1alpha1() flowcontrolv1alpha1.FlowcontrolV1alpha1Interface {
+func (*MinCoreClient) FlowcontrolV1() flowcontrolv1.FlowcontrolV1Interface {
 	panic("Not implemented")
 	return nil
 }
@@ -247,7 +252,7 @@ func (*MinCoreClient) RbacV1alpha1() rbacv1alpha1.RbacV1alpha1Interface {
 	panic("Not implemented")
 	return nil
 }
-func (*MinCoreClient) ResourceV1alpha1() resourcev1alpha1.ResourceV1alpha1Interface {
+func (*MinCoreClient) ResourceV1alpha2() resourcev1alpha2.ResourceV1alpha2Interface {
 	panic("Not implemented")
 }
 func (*MinCoreClient) SchedulingV1alpha1() schedulingv1alpha1.SchedulingV1alpha1Interface {
@@ -270,6 +275,9 @@ func (*MinCoreClient) StorageV1() storagev1.StorageV1Interface { panic("Not impl
 func (*MinCoreClient) StorageV1alpha1() storagev1alpha1.StorageV1alpha1Interface {
 	panic("Not implemented")
 	return nil
+}
+func (c *MinCoreClient) StoragemigrationV1alpha1() storagemigrationv1alpha1.StoragemigrationV1alpha1Interface {
+	panic("Not implemented")
 }
 
 type MinCoreV1Client struct {

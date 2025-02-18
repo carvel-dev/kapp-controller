@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
+	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
+	"carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/package/repository/release/build"
+	"carvel.dev/kapp-controller/cli/pkg/kctrl/logger"
+	"carvel.dev/kapp-controller/pkg/exec"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/repository/release/build"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )

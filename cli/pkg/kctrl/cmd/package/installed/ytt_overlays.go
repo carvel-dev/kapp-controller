@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
+	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

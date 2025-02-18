@@ -10,21 +10,19 @@ import (
 	"os"
 	"time"
 
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
-	"github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/logger"
-	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	fakedpkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/app"
-	fakekc "github.com/vmware-tanzu/carvel-kapp-controller/pkg/client/clientset/versioned/fake"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/componentinfo"
-	kcconfig "github.com/vmware-tanzu/carvel-kapp-controller/pkg/config"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/exec"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/kubeconfig"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/memdir"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/metrics"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/reftracker"
-	vendirconf "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/config"
+	kcv1alpha1 "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	fakedpkg "carvel.dev/kapp-controller/pkg/apiserver/client/clientset/versioned/fake"
+	"carvel.dev/kapp-controller/pkg/app"
+	fakekc "carvel.dev/kapp-controller/pkg/client/clientset/versioned/fake"
+	"carvel.dev/kapp-controller/pkg/componentinfo"
+	kcconfig "carvel.dev/kapp-controller/pkg/config"
+	"carvel.dev/kapp-controller/pkg/exec"
+	"carvel.dev/kapp-controller/pkg/kubeconfig"
+	"carvel.dev/kapp-controller/pkg/memdir"
+	"carvel.dev/kapp-controller/pkg/metrics"
+	"carvel.dev/kapp-controller/pkg/packageinstall"
+	"carvel.dev/kapp-controller/pkg/reftracker"
+	vendirconf "carvel.dev/vendir/pkg/vendir/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -32,6 +30,9 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
+	"carvel.dev/kapp-controller/cli/pkg/kctrl/logger"
 )
 
 type Reconciler struct {
@@ -210,8 +211,9 @@ func (o *Reconciler) newReconcilers(
 
 	kcConfig := &kcconfig.Config{}
 
-	appMetrics := metrics.NewAppMetrics()
-	appMetrics.RegisterAllMetrics()
+	appMetrics := metrics.NewMetrics()
+	appMetrics.ReconcileCountMetrics.RegisterAllMetrics()
+	appMetrics.ReconcileTimeMetrics.RegisterAllMetrics()
 
 	refTracker := reftracker.NewAppRefTracker()
 	updateStatusTracker := reftracker.NewAppUpdateStatus()
@@ -241,7 +243,7 @@ func (o *Reconciler) newReconcilers(
 		// TODO do not need this in the constructor of Reconciler
 		(*packageinstall.PackageInstallVersionHandler)(nil),
 		runLog.WithName("pkgi"),
-		compInfo,
+		compInfo, kcConfig, appMetrics,
 	)
 
 	return appReconciler, pkgiReconciler

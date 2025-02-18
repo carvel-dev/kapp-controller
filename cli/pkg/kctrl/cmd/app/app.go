@@ -6,11 +6,11 @@ package app
 import (
 	"fmt"
 
+	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
+	kcv1alpha1 "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	kcpkgv1alpha1 "carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/cppforlife/color"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/core"
-	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	kcpkgv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 )
 
