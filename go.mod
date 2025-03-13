@@ -9,8 +9,8 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/prometheus/client_golang v1.18.0
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/crypto v0.32.0
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/crypto v0.35.0
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/tools v0.26.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.30.1
@@ -32,7 +32,7 @@ require (
 	github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115
 	github.com/prometheus/client_model v0.5.0
 	github.com/spf13/cobra v1.8.1
-	golang.org/x/sync v0.10.0
+	golang.org/x/sync v0.11.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/component-base v0.30.1
 	k8s.io/klog/v2 v2.120.1
@@ -107,10 +107,10 @@ require (
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/mod v0.21.0 // indirect
-	golang.org/x/net v0.34.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/term v0.28.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/term v0.29.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241202173237-19429a94021a // indirect
