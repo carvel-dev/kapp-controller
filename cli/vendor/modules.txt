@@ -1,5 +1,5 @@
-# carvel.dev/kapp-controller v0.55.0
-## explicit; go 1.23.3
+# carvel.dev/kapp-controller v0.55.1
+## explicit; go 1.23.6
 carvel.dev/kapp-controller/pkg/apis/internalpackaging/install
 carvel.dev/kapp-controller/pkg/apis/internalpackaging/v1alpha1
 carvel.dev/kapp-controller/pkg/apis/kappctrl/install
@@ -260,7 +260,7 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/pool
 go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.28.0
+# golang.org/x/crypto v0.32.0
 ## explicit; go 1.20
 golang.org/x/crypto/cast5
 golang.org/x/crypto/openpgp
@@ -272,7 +272,7 @@ golang.org/x/crypto/openpgp/s2k
 # golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 ## explicit; go 1.18
 golang.org/x/exp/maps
-# golang.org/x/net v0.30.0
+# golang.org/x/net v0.33.0
 ## explicit; go 1.18
 golang.org/x/net/context
 golang.org/x/net/http/httpguts
@@ -283,15 +283,15 @@ golang.org/x/net/idna
 ## explicit; go 1.18
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.27.0
+# golang.org/x/sys v0.29.0
 ## explicit; go 1.18
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.25.0
+# golang.org/x/term v0.28.0
 ## explicit; go 1.18
 golang.org/x/term
-# golang.org/x/text v0.19.0
+# golang.org/x/text v0.21.0
 ## explicit; go 1.18
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
