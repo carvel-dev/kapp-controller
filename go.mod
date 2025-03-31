@@ -128,4 +128,5 @@ require (
 )
 
 replace cloud.google.com/go => cloud.google.com/go v0.60.0
+
 replace carvel.dev/kapp-controller/cli => ./cli
