@@ -3,7 +3,7 @@ module carvel.dev/kapp-controller/cli
 go 1.23.6
 
 require (
-	carvel.dev/kapp-controller v0.55.0
+	carvel.dev/kapp-controller v0.55.1
 	carvel.dev/vendir v0.43.0
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
@@ -71,13 +71,13 @@ require (
 	github.com/vito/go-interact v1.0.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
-	golang.org/x/crypto v0.28.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
-	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/oauth2 v0.12.0 // indirect
-	golang.org/x/sys v0.27.0 // indirect
-	golang.org/x/term v0.25.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/term v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
