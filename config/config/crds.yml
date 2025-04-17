@@ -748,6 +748,10 @@ spec:
       jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - description: Paused
+      jsonPath: .spec.paused
+      name: Paused
+      type: boolean
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -1487,6 +1491,10 @@ spec:
       jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - description: Paused
+      jsonPath: .spec.paused
+      name: Paused
+      type: boolean
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -1641,6 +1649,10 @@ spec:
       jsonPath: .status.friendlyDescription
       name: Description
       type: string
+    - description: Paused
+      jsonPath: .spec.paused
+      name: Paused
+      type: boolean
     name: v1alpha1
     schema:
       openAPIV3Schema:
