@@ -361,6 +361,9 @@ message AppTemplateJsonnet {
 // +k8s:openapi-gen=true
 message AppTemplateKbld {
   repeated string paths = 1;
+
+  // Resolve to specific platform for image indexes (optional)
+  optional string platform = 2;
 }
 
 // TODO implement kustomize
