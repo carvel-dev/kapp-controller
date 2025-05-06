@@ -1243,6 +1243,13 @@ func schema_pkg_apis_kappctrl_v1alpha1_AppTemplateKbld(ref common.ReferenceCallb
 							},
 						},
 					},
+					"platform": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resolve to specific platform for image indexes (optional)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},

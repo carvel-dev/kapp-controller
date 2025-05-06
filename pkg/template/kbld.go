@@ -56,6 +56,10 @@ func (t *Kbld) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		args = append(args, "--build=false")
 	}
 
+	if len(t.opts.Platform) > 0 {
+		args = append(args, "--platform="+t.opts.Platform)
+	}
+
 	var stdoutBs, stderrBs bytes.Buffer
 
 	cmd := goexec.Command("kbld", args...)

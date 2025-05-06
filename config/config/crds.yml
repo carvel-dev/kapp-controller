@@ -560,6 +560,9 @@ spec:
                                   items:
                                     type: string
                                   type: array
+                                platform:
+                                  description: Resolve to specific platform for image indexes (optional)
+                                  type: string
                               type: object
                             kustomize:
                               description: TODO implement kustomize
@@ -1187,6 +1190,9 @@ spec:
                           items:
                             type: string
                           type: array
+                        platform:
+                          description: Resolve to specific platform for image indexes (optional)
+                          type: string
                       type: object
                     kustomize:
                       description: TODO implement kustomize
