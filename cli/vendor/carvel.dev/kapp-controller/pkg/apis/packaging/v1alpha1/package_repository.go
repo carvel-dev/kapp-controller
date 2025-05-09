@@ -14,6 +14,7 @@ import (
 // +kubebuilder:resource:shortName=pkgr,categories={carvel}
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
+// +kubebuilder:printcolumn:name=Paused,JSONPath=.spec.paused,description=Paused,type=boolean
 // A package repository is a collection of packages and their metadata.
 // Similar to a maven repository or a rpm repository, adding a package repository to a cluster gives users of that cluster the ability to install any of the packages from that repository.
 type PackageRepository struct {
