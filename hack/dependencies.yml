@@ -58,13 +58,13 @@
   version: v3.17.3
 - checksums:
     linux:
-      amd64: 79b0f844237bd4b0446e4dc884dbc1765fc7dedc3968f743d5949c6f2e701739
-      arm64: e91ddc04e6a78f5aed9e4fc347a279b539c43b74d99e6b8078e2f2f6f5b309f5
+      amd64: 0d65660fbe785647ff4f1764d7f69edf598f79d6d79ebbef4a501909b6ff6b82
+      arm64: 596f26de6d4f7d1cc44f9e27bfea3192ef77f810f31f3f4132a417860ab91ebc
   dev: false
   name: sops
   repo: mozilla/sops
   urlTemplate: https://github.com/mozilla/sops/releases/download/{{.Version}}/sops-{{.Version}}.{{.OS}}.{{.Arch}}
-  version: v3.10.2
+  version: v3.9.0
 - checksums:
     linux:
       amd64: 7df45a6cc87d4da11cc03a539a7470c15b1041ab2b396af088fe9990f7c79d50
