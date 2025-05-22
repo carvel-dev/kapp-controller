@@ -1,9 +1,9 @@
 module carvel.dev/kapp-controller/cli
 
-go 1.23.6
+go 1.23.8
 
 require (
-	carvel.dev/kapp-controller v0.56.2-0.20250506145110-5a51bb23420d
+	carvel.dev/kapp-controller v0.57.0
 	carvel.dev/vendir v0.43.0
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835

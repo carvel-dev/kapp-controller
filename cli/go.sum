@@ -1,5 +1,5 @@
-carvel.dev/kapp-controller v0.56.2-0.20250506145110-5a51bb23420d h1:V0qGWGPt6SImk8Z+4wktZh9O7J9vSZXySLtG6R38EwI=
-carvel.dev/kapp-controller v0.56.2-0.20250506145110-5a51bb23420d/go.mod h1:YMe5fTTKQfT6gGNfoPPF3tgoJn9BuIR5W6V/D9uBQgY=
+carvel.dev/kapp-controller v0.57.0 h1:rUnmE/Iry9gr5I5KxJ+P1tzj4kDPjRB1TI9Lf9PgTIs=
+carvel.dev/kapp-controller v0.57.0/go.mod h1:YMe5fTTKQfT6gGNfoPPF3tgoJn9BuIR5W6V/D9uBQgY=
 carvel.dev/vendir v0.43.0 h1:TEqLRQK4S/4rzyJEKB+ULrkS1BQSGUG5ZucBFCbZFxI=
 carvel.dev/vendir v0.43.0/go.mod h1:pK7tOW8jwz2CdwL4VirKwu4G7FoOn5HQ38++T0I0E/I=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=

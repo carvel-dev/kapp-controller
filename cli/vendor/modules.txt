@@ -1,4 +1,4 @@
-# carvel.dev/kapp-controller v0.56.2-0.20250506145110-5a51bb23420d
+# carvel.dev/kapp-controller v0.57.0
 ## explicit; go 1.23.3
 carvel.dev/kapp-controller/pkg/apis/internalpackaging/install
 carvel.dev/kapp-controller/pkg/apis/internalpackaging/v1alpha1
