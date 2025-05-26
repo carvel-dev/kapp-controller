@@ -21,7 +21,7 @@ jobs:
         uses: helm/kind-action@v1
         with:
           cluster_name: kinder
-      - uses: actions/checkout@v4.1.2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-go@v5
