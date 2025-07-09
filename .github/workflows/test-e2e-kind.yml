@@ -11,13 +11,8 @@ jobs:
   test-all:
     runs-on: ubuntu-latest
     env:
-      KIND_CLUSTER_NAME: kind-e2e
+      KIND_CLUSTER_NAME: kinder
       K8S_VERSION: v1.34.0-alpha.2
-    strategy:
-      fail-fast: false
-      max-parallel: 2
-      matrix:
-        k8s-version: [v1.27.0, latest]
     steps:
     - name: install kind
       uses: helm/kind-action@v1
@@ -69,13 +64,13 @@ jobs:
     - name: Run tests
       run: |
         set -e -x
-        mkdir /tmp/bin
-        export PATH=/tmp/bin:$PATH
-
+        kubectl version
+        source ./hack/version-util.sh
+        ytt -f config/config -f config/values-schema.yml -f config-dev -v dev.version="$(get_kappctrl_ver)+develop" | kbld -f- > kbld.out 2> kbldmeta.out
+        cat kbldmeta.out | tail -n 1 | sed 's/.*final: kapp-controller -> \(.*\)$/\1/p'  | tail -n 1 | xargs kind load docker-image --name kinder
+        kapp deploy -a kc -f kbld.out -c -y
         export KAPPCTRL_E2E_SECRETGEN_CONTROLLER=true
-        ./hack/deploy-test.sh
-
-        export KAPPCTRL_E2E_NAMESPACE=kappctrl-test
-        kubectl create ns $KAPPCTRL_E2E_NAMESPACE
-
-        ./hack/test-all.sh
+        source ./hack/secretgen-controller.sh
+        deploy_secretgen-controller
+        mkdir tmp
+        KAPPCTRL_E2E_NAMESPACE=kappctrl-test eval './hack/test-e2e.sh'
