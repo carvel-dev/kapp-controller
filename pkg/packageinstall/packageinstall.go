@@ -181,22 +181,25 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 		return reconcile.Result{Requeue: true}, err
 	}
 
-	if existingApp.Generation != existingApp.Status.ObservedGeneration {
-		modelStatus.SetReconciling(pi.model.ObjectMeta)
-	} else {
-		appStatus := reconciler.Status{S: existingApp.Status.GenericStatus}
-		switch {
-		case appStatus.IsReconciling():
+	// Create a status updater closure that sets PackageInstall status based on App state
+	statusUpdater := func(app *kcv1alpha1.App) {
+		if app.Generation != app.Status.ObservedGeneration {
 			modelStatus.SetReconciling(pi.model.ObjectMeta)
-		case appStatus.IsReconcileSucceeded():
-			modelStatus.SetReconcileCompleted(nil)
-		case appStatus.IsReconcileFailed():
-			modelStatus.SetUsefulErrorMessage(existingApp.Status.UsefulErrorMessage)
-			modelStatus.SetReconcileCompleted(fmt.Errorf("Error (see .status.usefulErrorMessage for details)"))
+		} else {
+			appStatus := reconciler.Status{S: app.Status.GenericStatus}
+			switch {
+			case appStatus.IsReconciling():
+				modelStatus.SetReconciling(pi.model.ObjectMeta)
+			case appStatus.IsReconcileSucceeded():
+				modelStatus.SetReconcileCompleted(nil)
+			case appStatus.IsReconcileFailed():
+				modelStatus.SetUsefulErrorMessage(app.Status.UsefulErrorMessage)
+				modelStatus.SetReconcileCompleted(fmt.Errorf("Error (see .status.usefulErrorMessage for details)"))
+			}
 		}
 	}
 
-	return pi.reconcileAppWithPackage(existingApp, pkg)
+	return pi.reconcileAppWithPackage(existingApp, pkg, statusUpdater)
 }
 
 func (pi *PackageInstallCR) createAppFromPackage(pkg datapkgingv1alpha1.Package) (reconcile.Result, error) {
@@ -213,7 +216,7 @@ func (pi *PackageInstallCR) createAppFromPackage(pkg datapkgingv1alpha1.Package)
 	return reconcile.Result{}, nil
 }
 
-func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App, pkg datapkgingv1alpha1.Package) (reconcile.Result, error) {
+func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App, pkg datapkgingv1alpha1.Package, statusUpdater func(*kcv1alpha1.App)) (reconcile.Result, error) {
 	pkgWithPlaceholderSecrets, err := pi.reconcileFetchPlaceholderSecrets(pkg)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -224,13 +227,19 @@ func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App,
 		return reconcile.Result{Requeue: true}, err
 	}
 
+	var appToCheckStatus *kcv1alpha1.App = existingApp
+
 	if !equality.Semantic.DeepEqual(desiredApp, existingApp) {
-		_, err = pi.kcclient.KappctrlV1alpha1().Apps(desiredApp.Namespace).Update(
+		updatedApp, err := pi.kcclient.KappctrlV1alpha1().Apps(desiredApp.Namespace).Update(
 			context.Background(), desiredApp, metav1.UpdateOptions{})
 		if err != nil {
 			return reconcile.Result{Requeue: true}, err
 		}
+		appToCheckStatus = updatedApp
 	}
+
+	// Call the status updater with the current app state (either existing or updated)
+	statusUpdater(appToCheckStatus)
 
 	return reconcile.Result{}, nil
 }
