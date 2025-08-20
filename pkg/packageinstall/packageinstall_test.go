@@ -690,15 +690,12 @@ func Test_PlaceHolderSecretCreated_WhenPackageInstallUpdated(t *testing.T) {
 	assert.Equal(t, "instl-pkg-fetch-0", app.Spec.Fetch[0].ImgpkgBundle.SecretRef.Name)
 }
 
-// Test_StatusUpdaterClosureWithAppUpdateFromReconcileFailed tests the exact bug scenario:
+// Test_StatusUpdaterClosureWithAppUpdateFromReconcileFailed tests this exact scenario:
 // 1. App exists in ReconcileFailed state (generation == observedGeneration)
 // 2. PackageInstall gets updated to reference a new package version
 // 3. This updates the App spec (and in real K8s would increment generation)
-// 4. Before the bug fix: PackageInstall would show status based on old App state
-// 5. After the bug fix: PackageInstall status reflects the updated App state
-// Test_StatusUpdaterClosureUsesUpdatedAppState tests that the status closure receives the updated App:
-// This test simulates what happens when generation increments due to App spec changes
-func Test_StatusUpdaterClosureUsesUpdatedAppState(t *testing.T) {
+// 4. PackageInstall status must now reflect the updated App state
+func Test_StatusUpdaterClosureWithAppUpdateFromReconcileFailed(t *testing.T) {
 	log := logf.Log.WithName("kc")
 
 	// Create a package
