@@ -16,11 +16,25 @@ concurrency:
 jobs:
   run-tests:
     runs-on: ubuntu-latest
+    env:
+      KIND_CLUSTER_NAME: kinder
+      K8S_VERSION: v1.34.0
     steps:
-      - name: Create k8s Kind Cluster
-        uses: helm/kind-action@v1
-        with:
-          cluster_name: kinder
+      - name: Install kind
+        run: |
+          KIND_VERSION="v0.30.0"
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64
+          chmod +x ./kind
+          sudo mv ./kind /usr/local/bin/kind
+          kind --version
+      - name: Create Kind Cluster
+        run: |
+          kind create cluster --name $KIND_CLUSTER_NAME --image kindest/node:${K8S_VERSION}
+      - name: Verify kind and k8s version
+        run: |
+          kind version
+          kubectl version
+          kubectl cluster-info --context kind-kinder
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
