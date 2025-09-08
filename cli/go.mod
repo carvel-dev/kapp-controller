@@ -1,6 +1,6 @@
 module carvel.dev/kapp-controller/cli
 
-go 1.23.8
+go 1.24.6
 
 require (
 	carvel.dev/kapp-controller v0.57.0
