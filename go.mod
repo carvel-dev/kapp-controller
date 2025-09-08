@@ -1,6 +1,6 @@
 module carvel.dev/kapp-controller
 
-go 1.23.8
+go 1.24.6
 
 require (
 	carvel.dev/vendir v0.44.0
