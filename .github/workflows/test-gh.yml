@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        k8s-version: [v1.27.0, latest]
+        k8s-version: [v1.28.0, latest]
     steps:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4
