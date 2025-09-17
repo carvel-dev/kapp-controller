@@ -21,8 +21,8 @@ time kapp delete -y -a simple-app
 # time kapp deploy -y -a istio-knative -f examples/istio-knative.yml
 # time kapp delete -y -a istio-knative
 
-time kapp deploy -y -a nginx-helm-git -f examples/nginx-helm-git.yml
-time kapp delete -y -a nginx-helm-git
+# time kapp deploy -y -a nginx-helm-git -f examples/nginx-helm-git.yml
+# time kapp delete -y -a nginx-helm-git
 
 time kapp deploy -y -a redis-helm -f examples/redis-helm.yml
 time kapp delete -y -a redis-helm
