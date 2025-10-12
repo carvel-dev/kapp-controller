@@ -1046,7 +1046,7 @@ func Test_UpdateAppWithRetry_HandlesConflictErrors(t *testing.T) {
 
 	// Add reactor to simulate fresh fetch on Get (after conflict)
 	getFreshCount := 0
-	fakekctrl.PrependReactor("get", "apps", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+	fakekctrl.PrependReactor("get", "apps", func(_ k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 		getFreshCount++
 		// Return fresh app with updated resource version
 		freshApp := existingApp.DeepCopy()
@@ -1112,7 +1112,7 @@ func Test_UpdateAppWithRetry_HandlesNotFoundError(t *testing.T) {
 	updateAttempts := 0
 
 	// Add reactor to simulate NotFound error on update
-	fakekctrl.PrependReactor("update", "apps", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+	fakekctrl.PrependReactor("update", "apps", func(_ k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 		updateAttempts++
 		// Simulate NotFound error
 		return true, nil, fmt.Errorf("apps.kappctrl.carvel.dev \"instl-pkg\" not found")
@@ -1176,7 +1176,7 @@ func Test_UpdateAppWithRetry_HandlesUpdateFunctionError(t *testing.T) {
 		metrics.NewMetrics())
 
 	// Test the updateAppWithRetry function with failing update function
-	updatedApp, err := ip.updateAppWithRetry(existingApp, func(app *v1alpha1.App) (*v1alpha1.App, error) {
+	updatedApp, err := ip.updateAppWithRetry(existingApp, func(_ *v1alpha1.App) (*v1alpha1.App, error) {
 		return nil, fmt.Errorf("update function failed")
 	})
 
