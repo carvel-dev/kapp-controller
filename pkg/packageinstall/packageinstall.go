@@ -230,8 +230,9 @@ func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App,
 	var appToCheckStatus *kcv1alpha1.App = existingApp
 
 	if !equality.Semantic.DeepEqual(desiredApp, existingApp) {
-		updatedApp, err := pi.kcclient.KappctrlV1alpha1().Apps(desiredApp.Namespace).Update(
-			context.Background(), desiredApp, metav1.UpdateOptions{})
+		updatedApp, err := pi.updateAppWithRetry(existingApp, func(app *kcv1alpha1.App) (*kcv1alpha1.App, error) {
+			return NewApp(app, pi.model, pkgWithPlaceholderSecrets, pi.opts)
+		})
 		if err != nil {
 			return reconcile.Result{Requeue: true}, err
 		}
@@ -404,14 +405,23 @@ func (pi *PackageInstallCR) reconcileDelete(modelStatus *reconciler.Status) (rec
 	existingApp.Spec.DefaultNamespace = pi.model.Spec.DefaultNamespace
 
 	if !equality.Semantic.DeepEqual(existingApp, unchangeExistingApp) {
-		existingApp, err = pi.kcclient.KappctrlV1alpha1().Apps(existingApp.Namespace).Update(
-			context.Background(), existingApp, metav1.UpdateOptions{})
+		updatedApp, err := pi.updateAppWithRetry(existingApp, func(app *kcv1alpha1.App) (*kcv1alpha1.App, error) {
+			// Apply the changes we made to existingApp
+			app.Spec.ServiceAccountName = existingApp.Spec.ServiceAccountName
+			app.Spec.Cluster = existingApp.Spec.Cluster
+			app.Spec.NoopDelete = existingApp.Spec.NoopDelete
+			app.Spec.Paused = existingApp.Spec.Paused
+			app.Spec.Canceled = existingApp.Spec.Canceled
+			app.Spec.DefaultNamespace = existingApp.Spec.DefaultNamespace
+			return app, nil
+		})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				return reconcile.Result{}, pi.unblockDeletion()
 			}
 			return reconcile.Result{Requeue: true}, err
 		}
+		existingApp = updatedApp
 	}
 
 	if existingApp.DeletionTimestamp == nil {
@@ -548,4 +558,38 @@ func (pi PackageInstallCR) createSecretForSecretgenController(iteration int) (st
 		}
 	}
 	return secretName, nil
+}
+
+// updateAppWithRetry updates an App CR with retry logic to handle conflicts
+func (pi *PackageInstallCR) updateAppWithRetry(app *kcv1alpha1.App, updateFunc func(*kcv1alpha1.App) (*kcv1alpha1.App, error)) (*kcv1alpha1.App, error) {
+	var lastErr error
+	for i := 0; i < 5; i++ {
+		// Apply the update function to get the desired app
+		desiredApp, err := updateFunc(app)
+		if err != nil {
+			return nil, fmt.Errorf("update function failed: %s", err)
+		}
+
+		// Try to update
+		updatedApp, err := pi.kcclient.KappctrlV1alpha1().Apps(desiredApp.Namespace).Update(
+			context.Background(), desiredApp, metav1.UpdateOptions{})
+		if err == nil {
+			return updatedApp, nil
+		}
+		lastErr = err
+
+		// If it's a NotFound error, return it immediately (don't retry)
+		if errors.IsNotFound(err) {
+			return nil, err
+		}
+
+		// If failure occurs, re-fetch the App using Get
+		app, err = pi.kcclient.KappctrlV1alpha1().Apps(app.Namespace).Get(
+			context.Background(), app.Name, metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return nil, fmt.Errorf("updating app after 5 retries: %s", lastErr)
 }
