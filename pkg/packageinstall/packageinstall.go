@@ -1,6 +1,7 @@
 // Copyright 2024 The Carvel Authors.
 // SPDX-License-Identifier: Apache-2.0
 
+// Package packageinstall provides package installation functionality
 package packageinstall
 
 import (
