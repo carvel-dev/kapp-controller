@@ -1,6 +1,8 @@
 ![logo](docs/CarvelLogo.png)
 
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/7746/badge)](https://bestpractices.coreinfrastructure.org/projects/7746)
+
+<!-- Test trigger comment -->
  
 # kapp-controller
 
