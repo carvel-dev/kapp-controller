@@ -406,7 +406,6 @@ func (pi *PackageInstallCR) reconcileDelete(modelStatus *reconciler.Status) (rec
 
 	if !equality.Semantic.DeepEqual(existingApp, unchangeExistingApp) {
 		updatedApp, err := pi.updateAppWithRetry(existingApp, func(app *kcv1alpha1.App) (*kcv1alpha1.App, error) {
-			// Apply the changes we made to existingApp
 			app.Spec.ServiceAccountName = existingApp.Spec.ServiceAccountName
 			app.Spec.Cluster = existingApp.Spec.Cluster
 			app.Spec.NoopDelete = existingApp.Spec.NoopDelete
@@ -564,13 +563,11 @@ func (pi PackageInstallCR) createSecretForSecretgenController(iteration int) (st
 func (pi *PackageInstallCR) updateAppWithRetry(app *kcv1alpha1.App, updateFunc func(*kcv1alpha1.App) (*kcv1alpha1.App, error)) (*kcv1alpha1.App, error) {
 	var lastErr error
 	for i := 0; i < 5; i++ {
-		// Apply the update function to get the desired app
 		desiredApp, err := updateFunc(app)
 		if err != nil {
 			return nil, fmt.Errorf("update function failed: %s", err)
 		}
 
-		// Try to update
 		updatedApp, err := pi.kcclient.KappctrlV1alpha1().Apps(desiredApp.Namespace).Update(
 			context.Background(), desiredApp, metav1.UpdateOptions{})
 		if err == nil {
@@ -578,12 +575,10 @@ func (pi *PackageInstallCR) updateAppWithRetry(app *kcv1alpha1.App, updateFunc f
 		}
 		lastErr = err
 
-		// If it's a NotFound error, return it immediately (don't retry)
-		if errors.IsNotFound(err) {
+		if !errors.IsConflict(err) {
 			return nil, err
 		}
 
-		// If failure occurs, re-fetch the App using Get
 		app, err = pi.kcclient.KappctrlV1alpha1().Apps(app.Namespace).Get(
 			context.Background(), app.Name, metav1.GetOptions{})
 		if err != nil {
