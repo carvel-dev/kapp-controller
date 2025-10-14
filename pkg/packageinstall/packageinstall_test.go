@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -987,4 +988,257 @@ func generatePackageWithConstraints(name, version, kcConstraint string, k8sConst
 			},
 		},
 	}
+}
+
+func Test_UpdateAppWithRetry_HandlesConflictErrors(t *testing.T) {
+	log := logf.Log.WithName("kc")
+
+	model := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "instl-pkg",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			ServiceAccountName: "default-ns-sa",
+			PackageRef: &pkgingv1alpha1.PackageRef{
+				RefName: "pkg.test.carvel.dev",
+				VersionSelection: &versions.VersionSelectionSemver{
+					Constraints: "1.0.0",
+				},
+			},
+		},
+	}
+
+	existingApp := &v1alpha1.App{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "instl-pkg",
+			Namespace:       "default",
+			ResourceVersion: "1",
+		},
+		Spec: v1alpha1.AppSpec{
+			ServiceAccountName: "old-sa",
+		},
+	}
+
+	fakekctrl := fakekappctrl.NewSimpleClientset(existingApp)
+	fakek8s := fake.NewSimpleClientset()
+
+	updateAttempts := 0
+	conflictCount := 3 // Fail first 3 attempts with conflict, succeed on 4th
+
+	// Add reactor to simulate conflict errors on update
+	fakekctrl.PrependReactor("update", "apps", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		updateAttempts++
+		updateAction := action.(k8stesting.UpdateAction)
+		app := updateAction.GetObject().(*v1alpha1.App)
+
+		if updateAttempts <= conflictCount {
+			// Simulate conflict error for first few attempts
+			return true, nil, errors.NewConflict(schema.GroupResource{Group: "kappctrl.carvel.dev", Resource: "apps"}, "instl-pkg", fmt.Errorf("the object has been modified; please apply your changes to the latest version and try again"))
+		}
+
+		// Succeed on final attempt
+		app.ResourceVersion = fmt.Sprintf("%d", updateAttempts)
+		return false, app, nil
+	})
+
+	// Add reactor to simulate fresh fetch on Get (after conflict)
+	getFreshCount := 0
+	fakekctrl.PrependReactor("get", "apps", func(_ k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		getFreshCount++
+		freshApp := existingApp.DeepCopy()
+		freshApp.ResourceVersion = fmt.Sprintf("fresh-%d", getFreshCount)
+		return true, freshApp, nil
+	})
+
+	ip := NewPackageInstallCR(model, log, fakekctrl, nil, fakek8s,
+		FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+		metrics.NewMetrics())
+
+	updatedApp, err := ip.updateAppWithRetry(existingApp, func(app *v1alpha1.App) (*v1alpha1.App, error) {
+		app.Spec.ServiceAccountName = "new-sa"
+		return app, nil
+	})
+
+	// Verify the retry logic worked
+	assert.Nil(t, err, "updateAppWithRetry should succeed after retries")
+	assert.NotNil(t, updatedApp, "should return updated app")
+	assert.Equal(t, "new-sa", updatedApp.Spec.ServiceAccountName, "should have applied the transformation")
+	assert.Equal(t, conflictCount+1, updateAttempts, "should have attempted update 4 times (3 conflicts + 1 success)")
+	assert.Equal(t, conflictCount, getFreshCount, "should have fetched fresh app 3 times after conflicts")
+}
+
+func Test_UpdateAppWithRetry_HandlesNotFoundError(t *testing.T) {
+	log := logf.Log.WithName("kc")
+
+	// Create a PackageInstall
+	model := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "instl-pkg",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			ServiceAccountName: "default-ns-sa",
+			PackageRef: &pkgingv1alpha1.PackageRef{
+				RefName: "pkg.test.carvel.dev",
+				VersionSelection: &versions.VersionSelectionSemver{
+					Constraints: "1.0.0",
+				},
+			},
+		},
+	}
+
+	// Create an existing App
+	existingApp := &v1alpha1.App{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "instl-pkg",
+			Namespace:       "default",
+			ResourceVersion: "1",
+		},
+		Spec: v1alpha1.AppSpec{
+			ServiceAccountName: "old-sa",
+		},
+	}
+
+	// Create fake clients
+	fakekctrl := fakekappctrl.NewSimpleClientset()
+	fakek8s := fake.NewSimpleClientset()
+
+	// Track update attempts
+	updateAttempts := 0
+
+	// Add reactor to simulate NotFound error on update
+	fakekctrl.PrependReactor("update", "apps", func(_ k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		updateAttempts++
+		// Simulate NotFound error
+		return true, nil, errors.NewNotFound(schema.GroupResource{Group: "kappctrl.carvel.dev", Resource: "apps"}, "instl-pkg")
+	})
+
+	ip := NewPackageInstallCR(model, log, fakekctrl, nil, fakek8s,
+		FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+		metrics.NewMetrics())
+
+	// Test the updateAppWithRetry function
+	updatedApp, err := ip.updateAppWithRetry(existingApp, func(app *v1alpha1.App) (*v1alpha1.App, error) {
+		// Simple transformation: update service account name
+		app.Spec.ServiceAccountName = "new-sa"
+		return app, nil
+	})
+
+	// Verify NotFound error is returned immediately (no retries)
+	assert.NotNil(t, err, "should return error")
+	assert.Contains(t, err.Error(), "not found", "should preserve NotFound error")
+	assert.Nil(t, updatedApp, "should not return updated app")
+	assert.Equal(t, 1, updateAttempts, "should only attempt update once for NotFound error")
+}
+
+func Test_UpdateAppWithRetry_HandlesUpdateFunctionError(t *testing.T) {
+	log := logf.Log.WithName("kc")
+
+	// Create a PackageInstall
+	model := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "instl-pkg",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			ServiceAccountName: "default-ns-sa",
+			PackageRef: &pkgingv1alpha1.PackageRef{
+				RefName: "pkg.test.carvel.dev",
+				VersionSelection: &versions.VersionSelectionSemver{
+					Constraints: "1.0.0",
+				},
+			},
+		},
+	}
+
+	// Create an existing App
+	existingApp := &v1alpha1.App{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "instl-pkg",
+			Namespace:       "default",
+			ResourceVersion: "1",
+		},
+		Spec: v1alpha1.AppSpec{
+			ServiceAccountName: "old-sa",
+		},
+	}
+
+	// Create fake clients
+	fakekctrl := fakekappctrl.NewSimpleClientset(existingApp)
+	fakek8s := fake.NewSimpleClientset()
+
+	ip := NewPackageInstallCR(model, log, fakekctrl, nil, fakek8s,
+		FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+		metrics.NewMetrics())
+
+	// Test the updateAppWithRetry function with failing update function
+	updatedApp, err := ip.updateAppWithRetry(existingApp, func(_ *v1alpha1.App) (*v1alpha1.App, error) {
+		return nil, fmt.Errorf("update function failed")
+	})
+
+	// Verify update function error is handled properly
+	assert.NotNil(t, err, "should return error")
+	assert.Contains(t, err.Error(), "update function failed", "should preserve update function error")
+	assert.Nil(t, updatedApp, "should not return updated app")
+}
+
+func Test_UpdateAppWithRetry_HandlesNonConflictError(t *testing.T) {
+	log := logf.Log.WithName("kc")
+
+	// Create a PackageInstall
+	model := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "instl-pkg",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			ServiceAccountName: "default-ns-sa",
+			PackageRef: &pkgingv1alpha1.PackageRef{
+				RefName: "pkg.test.carvel.dev",
+				VersionSelection: &versions.VersionSelectionSemver{
+					Constraints: "1.0.0",
+				},
+			},
+		},
+	}
+
+	// Create an existing App
+	existingApp := &v1alpha1.App{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "instl-pkg",
+			Namespace:       "default",
+			ResourceVersion: "1",
+		},
+		Spec: v1alpha1.AppSpec{
+			ServiceAccountName: "old-sa",
+		},
+	}
+
+	// Create fake clients
+	fakekctrl := fakekappctrl.NewSimpleClientset(existingApp)
+	fakek8s := fake.NewSimpleClientset()
+
+	// Track update attempts
+	updateAttempts := 0
+
+	// Add reactor to simulate non-conflict error on update (e.g., validation error)
+	fakekctrl.PrependReactor("update", "apps", func(_ k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		updateAttempts++
+		// Simulate a validation error (non-conflict error)
+		return true, nil, fmt.Errorf("validation failed: invalid spec")
+	})
+
+	ip := NewPackageInstallCR(model, log, fakekctrl, nil, fakek8s,
+		FakeComponentInfo{KCVersion: semver.MustParse("0.42.31337")}, Opts{},
+		metrics.NewMetrics())
+
+	// Test the updateAppWithRetry function
+	updatedApp, err := ip.updateAppWithRetry(existingApp, func(app *v1alpha1.App) (*v1alpha1.App, error) {
+		// Simple transformation: update service account name
+		app.Spec.ServiceAccountName = "new-sa"
+		return app, nil
+	})
+
+	// Verify non-conflict error is returned immediately (no retries)
+	assert.NotNil(t, err, "should return error")
+	assert.Contains(t, err.Error(), "validation failed", "should preserve non-conflict error")
+	assert.Nil(t, updatedApp, "should not return updated app")
+	assert.Equal(t, 1, updateAttempts, "should only attempt update once for non-conflict error")
 }
