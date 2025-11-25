@@ -1,6 +1,6 @@
 module carvel.dev/kapp-controller
 
-go 1.23.8
+go 1.24.10
 
 require (
 	carvel.dev/vendir v0.44.0
@@ -9,7 +9,7 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/prometheus/client_golang v1.18.0
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/crypto v0.36.0
+	golang.org/x/crypto v0.45.0
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/tools v0.29.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -108,7 +108,7 @@ require (
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/oauth2 v0.25.0 // indirect
+	golang.org/x/oauth2 v0.27.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/term v0.30.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
