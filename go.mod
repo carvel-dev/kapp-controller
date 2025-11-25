@@ -3,7 +3,7 @@ module carvel.dev/kapp-controller
 go 1.24.10
 
 require (
-	carvel.dev/vendir v0.44.0
+	carvel.dev/vendir v0.45.0
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/go-cmp v0.6.0 // indirect
@@ -28,7 +28,7 @@ require (
 require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14
-	github.com/go-logr/logr v1.4.2
+	github.com/go-logr/logr v1.4.3
 	github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115
 	github.com/prometheus/client_model v0.5.0
 	github.com/spf13/cobra v1.9.1
@@ -108,7 +108,7 @@ require (
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/oauth2 v0.27.0 // indirect
+	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/telemetry v0.0.0-20251008203120-078029d740a8 // indirect
 	golang.org/x/term v0.37.0 // indirect
