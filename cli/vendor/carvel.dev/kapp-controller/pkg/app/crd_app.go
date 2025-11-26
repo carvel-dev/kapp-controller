@@ -100,6 +100,18 @@ func (a *CRDApp) updateStatusOnce() error {
 func (a *CRDApp) updateApp(updateFunc func(*kcv1alpha1.App)) error {
 	a.log.Info("Updating app")
 
+	var lastErr error
+	for i := 0; i < 5; i++ {
+		lastErr = a.updateAppOnce(updateFunc)
+		if lastErr == nil {
+			return nil
+		}
+	}
+
+	return lastErr
+}
+
+func (a *CRDApp) updateAppOnce(updateFunc func(*kcv1alpha1.App)) error {
 	existingApp, err := a.appClient.KappctrlV1alpha1().Apps(a.appModel.Namespace).Get(context.Background(), a.appModel.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("Updating app: %s", err)

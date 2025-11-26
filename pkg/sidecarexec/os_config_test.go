@@ -89,7 +89,7 @@ func Test_TrustedCertsDeleteConfig(t *testing.T) {
 	assert.Equal(t, string(contents), "existing-cert\n")
 }
 
-func createCertTempFiles(_ *testing.T) (backup *os.File, certs *os.File, close func(), err error) {
+func createCertTempFiles(_ *testing.T) (backup *os.File, certs *os.File, closefn func(), err error) {
 	backup, err = os.CreateTemp("", "backup.crt")
 	if err != nil {
 		return nil, nil, nil, err

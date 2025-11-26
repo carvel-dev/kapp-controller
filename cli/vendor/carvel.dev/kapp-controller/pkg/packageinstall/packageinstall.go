@@ -181,22 +181,25 @@ func (pi *PackageInstallCR) reconcile(modelStatus *reconciler.Status) (reconcile
 		return reconcile.Result{Requeue: true}, err
 	}
 
-	if existingApp.Generation != existingApp.Status.ObservedGeneration {
-		modelStatus.SetReconciling(pi.model.ObjectMeta)
-	} else {
-		appStatus := reconciler.Status{S: existingApp.Status.GenericStatus}
-		switch {
-		case appStatus.IsReconciling():
+	// Create a status updater closure that sets PackageInstall status based on App state
+	statusUpdater := func(app *kcv1alpha1.App) {
+		if app.Generation != app.Status.ObservedGeneration {
 			modelStatus.SetReconciling(pi.model.ObjectMeta)
-		case appStatus.IsReconcileSucceeded():
-			modelStatus.SetReconcileCompleted(nil)
-		case appStatus.IsReconcileFailed():
-			modelStatus.SetUsefulErrorMessage(existingApp.Status.UsefulErrorMessage)
-			modelStatus.SetReconcileCompleted(fmt.Errorf("Error (see .status.usefulErrorMessage for details)"))
+		} else {
+			appStatus := reconciler.Status{S: app.Status.GenericStatus}
+			switch {
+			case appStatus.IsReconciling():
+				modelStatus.SetReconciling(pi.model.ObjectMeta)
+			case appStatus.IsReconcileSucceeded():
+				modelStatus.SetReconcileCompleted(nil)
+			case appStatus.IsReconcileFailed():
+				modelStatus.SetUsefulErrorMessage(app.Status.UsefulErrorMessage)
+				modelStatus.SetReconcileCompleted(fmt.Errorf("Error (see .status.usefulErrorMessage for details)"))
+			}
 		}
 	}
 
-	return pi.reconcileAppWithPackage(existingApp, pkg)
+	return pi.reconcileAppWithPackage(existingApp, pkg, statusUpdater)
 }
 
 func (pi *PackageInstallCR) createAppFromPackage(pkg datapkgingv1alpha1.Package) (reconcile.Result, error) {
@@ -213,7 +216,7 @@ func (pi *PackageInstallCR) createAppFromPackage(pkg datapkgingv1alpha1.Package)
 	return reconcile.Result{}, nil
 }
 
-func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App, pkg datapkgingv1alpha1.Package) (reconcile.Result, error) {
+func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App, pkg datapkgingv1alpha1.Package, statusUpdater func(*kcv1alpha1.App)) (reconcile.Result, error) {
 	pkgWithPlaceholderSecrets, err := pi.reconcileFetchPlaceholderSecrets(pkg)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -224,13 +227,20 @@ func (pi *PackageInstallCR) reconcileAppWithPackage(existingApp *kcv1alpha1.App,
 		return reconcile.Result{Requeue: true}, err
 	}
 
+	var appToCheckStatus *kcv1alpha1.App = existingApp
+
 	if !equality.Semantic.DeepEqual(desiredApp, existingApp) {
-		_, err = pi.kcclient.KappctrlV1alpha1().Apps(desiredApp.Namespace).Update(
-			context.Background(), desiredApp, metav1.UpdateOptions{})
+		updatedApp, err := pi.updateAppWithRetry(existingApp, func(app *kcv1alpha1.App) (*kcv1alpha1.App, error) {
+			return NewApp(app, pi.model, pkgWithPlaceholderSecrets, pi.opts)
+		})
 		if err != nil {
 			return reconcile.Result{Requeue: true}, err
 		}
+		appToCheckStatus = updatedApp
 	}
+
+	// Call the status updater with the current app state (either existing or updated)
+	statusUpdater(appToCheckStatus)
 
 	return reconcile.Result{}, nil
 }
@@ -395,14 +405,22 @@ func (pi *PackageInstallCR) reconcileDelete(modelStatus *reconciler.Status) (rec
 	existingApp.Spec.DefaultNamespace = pi.model.Spec.DefaultNamespace
 
 	if !equality.Semantic.DeepEqual(existingApp, unchangeExistingApp) {
-		existingApp, err = pi.kcclient.KappctrlV1alpha1().Apps(existingApp.Namespace).Update(
-			context.Background(), existingApp, metav1.UpdateOptions{})
+		updatedApp, err := pi.updateAppWithRetry(existingApp, func(app *kcv1alpha1.App) (*kcv1alpha1.App, error) {
+			app.Spec.ServiceAccountName = existingApp.Spec.ServiceAccountName
+			app.Spec.Cluster = existingApp.Spec.Cluster
+			app.Spec.NoopDelete = existingApp.Spec.NoopDelete
+			app.Spec.Paused = existingApp.Spec.Paused
+			app.Spec.Canceled = existingApp.Spec.Canceled
+			app.Spec.DefaultNamespace = existingApp.Spec.DefaultNamespace
+			return app, nil
+		})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				return reconcile.Result{}, pi.unblockDeletion()
 			}
 			return reconcile.Result{Requeue: true}, err
 		}
+		existingApp = updatedApp
 	}
 
 	if existingApp.DeletionTimestamp == nil {
@@ -539,4 +557,34 @@ func (pi PackageInstallCR) createSecretForSecretgenController(iteration int) (st
 		}
 	}
 	return secretName, nil
+}
+
+// updateAppWithRetry updates an App CR with retry logic to handle conflicts
+func (pi *PackageInstallCR) updateAppWithRetry(app *kcv1alpha1.App, updateFunc func(*kcv1alpha1.App) (*kcv1alpha1.App, error)) (*kcv1alpha1.App, error) {
+	var lastErr error
+	for i := 0; i < 5; i++ {
+		desiredApp, err := updateFunc(app)
+		if err != nil {
+			return nil, fmt.Errorf("update function failed: %s", err)
+		}
+
+		updatedApp, err := pi.kcclient.KappctrlV1alpha1().Apps(desiredApp.Namespace).Update(
+			context.Background(), desiredApp, metav1.UpdateOptions{})
+		if err == nil {
+			return updatedApp, nil
+		}
+		lastErr = err
+
+		if !errors.IsConflict(err) {
+			return nil, err
+		}
+
+		app, err = pi.kcclient.KappctrlV1alpha1().Apps(app.Namespace).Get(
+			context.Background(), app.Name, metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return nil, fmt.Errorf("updating app after 5 retries: %s", lastErr)
 }
