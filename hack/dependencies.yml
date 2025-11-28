@@ -48,14 +48,14 @@
   version: v0.45.0
 - checksums:
     linux:
-      amd64: e0365548f01ed52a58a1181ad310b604a3244f59257425bb1739499372bdff60
-      arm64: 959fa52d34e2e1f0154e3220ed5f22263c8593447647a43af07890bba4b004d1
+      amd64: 2114c9dea2844dce6d0ee2d792a9aae846be8cf53d5b19dc2988b5a0e8fec26e
+      arm64: 566e9f3a5a83a81e4b03503ae37e368edd52d699619e8a9bb1fdf21561ae0e88
   dev: false
   name: helm
   repo: helm/helm
   tarballSubpath: '{{.OS}}-{{.Arch}}/helm'
   urlTemplate: https://get.helm.sh/helm-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
-  version: v4.0.1
+  version: v3.19.2
 - checksums:
     linux:
       amd64: 775f1384d55decfad228e7196a3f683791914f92a473f78fc47700531c29dfef
