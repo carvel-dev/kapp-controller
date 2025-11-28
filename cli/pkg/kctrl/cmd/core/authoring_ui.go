@@ -59,13 +59,13 @@ func (uiImpl AuthoringUIImpl) PrintActionableText(text string) {
 
 func (uiImpl AuthoringUIImpl) AskForText(textOpts ui.TextOpts) (string, error) {
 	col := color.New(color.Bold)
-	textOpts.Label = fmt.Sprintf(col.Sprint("> ")) + textOpts.Label
+	textOpts.Label = col.Sprint("> ") + textOpts.Label
 	return uiImpl.ui.AskForText(textOpts)
 }
 
 func (uiImpl AuthoringUIImpl) AskForChoice(choiceOpts ui.ChoiceOpts) (int, error) {
 	col := color.New(color.Bold)
-	choiceOpts.Label = fmt.Sprintf(col.Sprint("> ")) + choiceOpts.Label
+	choiceOpts.Label = (col.Sprint("> ")) + choiceOpts.Label
 	return uiImpl.ui.AskForChoice(choiceOpts)
 }
 
@@ -74,5 +74,5 @@ func (uiImpl AuthoringUIImpl) PrintHeaderText(text string) {
 }
 
 func (uiImpl AuthoringUIImpl) PrintHeaderWithContextText(text string, context string) {
-	uiImpl.ui.BeginLinef("%s: %s\n", color.New(color.Bold).Sprintf(text), context)
+	uiImpl.ui.BeginLinef("%s: %s\n", color.New(color.Bold).Sprintf("%s", text), context)
 }

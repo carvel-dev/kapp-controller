@@ -1,17 +1,17 @@
 module carvel.dev/kapp-controller
 
-go 1.23.8
+go 1.24.10
 
 require (
-	carvel.dev/vendir v0.44.0
+	carvel.dev/vendir v0.45.0
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/prometheus/client_golang v1.18.0
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/crypto v0.36.0
-	golang.org/x/text v0.23.0 // indirect
-	golang.org/x/tools v0.29.0
+	golang.org/x/crypto v0.45.0
+	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/tools v0.38.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.30.1
 	k8s.io/apimachinery v0.30.1
@@ -27,12 +27,12 @@ require (
 
 require (
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14
-	github.com/go-logr/logr v1.4.2
+	github.com/cppforlife/go-cli-ui v0.0.0-20220520125801-e45d9169a663
+	github.com/go-logr/logr v1.4.3
 	github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115
 	github.com/prometheus/client_model v0.5.0
 	github.com/spf13/cobra v1.9.1
-	golang.org/x/sync v0.13.0
+	golang.org/x/sync v0.18.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/component-base v0.30.1
 	k8s.io/klog/v2 v2.120.1
@@ -59,9 +59,9 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-logr/zapr v1.3.0 // indirect
-	github.com/go-openapi/jsonpointer v0.19.6 // indirect
+	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
-	github.com/go-openapi/swag v0.22.3 // indirect
+	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/gobuffalo/flect v0.2.3 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
@@ -106,12 +106,14 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
-	golang.org/x/mod v0.22.0 // indirect
-	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/oauth2 v0.25.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
-	golang.org/x/term v0.30.0 // indirect
+	golang.org/x/mod v0.29.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/oauth2 v0.30.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/telemetry v0.0.0-20251008203120-078029d740a8 // indirect
+	golang.org/x/term v0.37.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
+	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241202173237-19429a94021a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250127172529-29210b9bc287 // indirect
