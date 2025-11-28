@@ -194,7 +194,7 @@ func (d *AppStatusDiff) PrintUpdate() (bool, string, error) {
 				msg := "Fetch failed"
 				errLog := d.new.Fetch.Stderr + "\n" + d.new.Fetch.Error
 				d.statusUI.PrintLogLine(msg, errLog, true, d.new.Fetch.UpdatedAt.Time)
-				return true, d.lastSeenDeployStdout, fmt.Errorf(msg)
+				return true, d.lastSeenDeployStdout, fmt.Errorf("%s", msg)
 			}
 			d.statusUI.PrintLogLine("Fetching", d.new.Fetch.Stdout, false, d.new.Fetch.UpdatedAt.Time)
 			d.statusUI.PrintLogLine("Fetch succeeded", "", false, d.new.Fetch.UpdatedAt.Time)
@@ -206,7 +206,7 @@ func (d *AppStatusDiff) PrintUpdate() (bool, string, error) {
 				msg := "Template failed"
 				errLog := d.new.Template.Stderr + "\n" + d.new.Template.Error
 				d.statusUI.PrintLogLine(msg, errLog, true, d.new.Template.UpdatedAt.Time)
-				return true, d.lastSeenDeployStdout, fmt.Errorf(msg)
+				return true, d.lastSeenDeployStdout, fmt.Errorf("%s", msg)
 			}
 			d.statusUI.PrintLogLine("Template succeeded", "", false, d.new.Template.UpdatedAt.Time)
 		}
@@ -226,7 +226,7 @@ func (d *AppStatusDiff) PrintUpdate() (bool, string, error) {
 				msg := fmt.Sprintf("%s failed", ongoingOp)
 				errLog := d.new.Deploy.Stderr + "\n" + d.new.Deploy.Error
 				d.statusUI.PrintLogLine(msg, errLog, true, d.new.Deploy.UpdatedAt.Time)
-				return true, d.lastSeenDeployStdout, fmt.Errorf(msg)
+				return true, d.lastSeenDeployStdout, fmt.Errorf("%s", msg)
 			}
 			d.printDeployStdout(d.new.Deploy.Stdout, d.new.Deploy.UpdatedAt.Time, isDeleting)
 		}
@@ -239,7 +239,7 @@ func (d *AppStatusDiff) PrintUpdate() (bool, string, error) {
 	failed, errMsg := HasFailed(d.new)
 	if failed {
 		d.statusUI.PrintLogLine(errMsg, "", true, time.Now())
-		return true, d.lastSeenDeployStdout, fmt.Errorf(errMsg)
+		return true, d.lastSeenDeployStdout, fmt.Errorf("%s", errMsg)
 	}
 	return false, d.lastSeenDeployStdout, nil
 }
