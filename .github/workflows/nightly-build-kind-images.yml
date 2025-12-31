@@ -5,6 +5,7 @@ on:
     # 2:00 AM IST = 20:30 UTC (previous day)
     - cron: '30 20 * * *'
   workflow_dispatch:
+  pull_request:
 
 env:
   REGISTRY: ghcr.io
@@ -30,16 +31,30 @@ jobs:
       - name: Resolve Kubernetes Versions
         id: set-matrix
         run: |
+          # 1. Fetch branches
           git ls-remote --heads https://github.com/kubernetes/kubernetes.git \
           | awk '{print $2}' | grep 'refs/heads/release-1.[0-9]*$' | sed 's|refs/heads/||' | sort -V > branches.txt
 
-        # 2. Determine Latest Release Branch (The highest number)
+          # 2. Define variables
           LATEST_BRANCH=$(tail -n1 branches.txt)
-        # 3. Min Supported Branch (e.g., currently 1.32)
-          MIN_BRANCH="release-1.32" 
+          MIN_BRANCH="release-1.32"
 
-          echo "Latest: $LATEST_BRANCH, Min: $MIN_BRANCH"
-          echo "matrix={\"k8s_branch\":[\"$LATEST_BRANCH\", \"$MIN_BRANCH\"]}" >> $GITHUB_OUTPUT
+          # 3. Safety Check
+          if [ -z "$LATEST_BRANCH" ]; then
+            echo "Error: Could not find any release-1.xx branches!"
+            exit 1
+          fi
+
+          echo "Resolved -> Latest: $LATEST_BRANCH, Min: $MIN_BRANCH"
+
+          # 4. Generate JSON using jq
+          MATRIX_JSON=$(jq -nc \
+            --arg latest "$LATEST_BRANCH" \
+            --arg min "$MIN_BRANCH" \
+            '{"k8s_branch": [$latest, $min]}')
+
+          # 5. Output to GitHub Actions
+          echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
 
   build-and-push:
     needs: resolve-versions
@@ -55,13 +70,13 @@ jobs:
         run: |
           sudo rm -rf /opt/hostedtoolcache || true
           docker system prune -af || true
-
       - name: Checkout Kubernetes & Get the exact commit SHA
         uses: actions/checkout@v4
         with:
           repository: kubernetes/kubernetes
           ref: ${{ matrix.k8s_branch }}
           path: kubernetes
+          fetch-depth: 0
 
       - name: Checkout Kind
         uses: actions/checkout@v4
@@ -91,7 +106,6 @@ jobs:
           # Log in and Push
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker push $FULL_IMAGE
-
   trigger-tests:
     needs: [resolve-versions, build-and-push]
     runs-on: ubuntu-latest
