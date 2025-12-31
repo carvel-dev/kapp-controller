@@ -12,7 +12,7 @@ env:
   # Replace with your actual org/repo name
   # git@github.com:carvel-dev/kapp-controller.git
   # docker pull ghcr.io/carvel-dev/kindest-node:v1.34.2
-  IMAGE_NAME: ${{ github.repository_owner }}/kindest-node
+  IMAGE_NAME: ${{ github.repository }}/kindest-node
 
 jobs:
   resolve-versions:
@@ -117,14 +117,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Or a PAT if GITHUB_TOKEN lacks permission
           TIMESTAMP: ${{ needs.resolve-versions.outputs.timestamp }}
           # List the branches we want to test against
-          TARGET_BRANCHES: "release-0.59 release-0.58"
+          TAGS_TO_TEST: "v0.59.1 v0.58.1"
+          WORKFLOW_BRANCH: "CodesbyUnnati:unnati/nightly-build-kind-images"
+
         run: |
-          for branch in $TARGET_BRANCHES; do
-            echo "Triggering test workflow on branch: $branch"
+          for tag in $TAGS_TO_TEST; do
+            echo "Triggering test for kapp-controller version: $tag"
             
-            # This calls the 'nightly-e2e.yml' workflow on the specific branch
-            # We pass the timestamp as an input so it knows which image to pull
             gh workflow run nightly-e2e.yml \
-              --ref $branch \
-              -f image_timestamp=$TIMESTAMP
+              --ref "$WORKFLOW_BRANCH" \
+              -f image_timestamp=$TIMESTAMP \
+              -f kapp_ctrl_ref=$tag
           done

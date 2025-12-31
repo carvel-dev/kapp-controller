@@ -6,12 +6,16 @@ on:
       image_timestamp:
         description: 'Timestamp of the Kind image to use (YYYYMMDD)'
         required: true
+        kapp_ctrl_ref:
+        description: 'Git ref to test (e.g., v0.59.1 or HEAD)'
+        required: true
+        default: 'HEAD'
 
 env:
   # Base for the Kind Node Image
   # git@github.com:carvel-dev/kapp-controller.git  
   # docker pull ghcr.io/carvel-dev/kindest-node:v1.34.2
-  KIND_NODE_IMAGE_BASE: ghcr.io/${{ github.repository_owner }}/kindest-node
+  KIND_NODE_IMAGE_BASE: ghcr.io/${{ github.repository }}/kindest-node
 
 jobs:
   e2e-tests:
@@ -24,6 +28,7 @@ jobs:
       - name: Checkout Kapp-Controller
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.kapp_ctrl_ref }}
           fetch-depth: 0
 
       - name: Setup Go
