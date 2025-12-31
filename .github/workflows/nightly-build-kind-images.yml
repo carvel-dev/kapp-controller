@@ -12,7 +12,7 @@ env:
   # Replace with your actual org/repo name
   # git@github.com:carvel-dev/kapp-controller.git
   # docker pull ghcr.io/carvel-dev/kindest-node:v1.34.2
-  IMAGE_NAME: ${{ github.actor }}/kindest-node
+  # IMAGE_NAME: ${{ github.actor }}/kindest-node
 
 jobs:
   resolve-versions:
@@ -70,6 +70,14 @@ jobs:
         run: |
           sudo rm -rf /opt/hostedtoolcache || true
           docker system prune -af || true
+      
+      - name: Setup Environment Variables
+        run: |
+          # Convert username to lowercase
+          OWNER_LC=$(echo "${{ github.actor }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_NAME=$OWNER_LC/kindest-node" >> $GITHUB_ENV
+          echo "REGISTRY_USER=$OWNER_LC" >> $GITHUB_ENV
+
       - name: Checkout Kubernetes & Get the exact commit SHA
         uses: actions/checkout@v4
         with:
