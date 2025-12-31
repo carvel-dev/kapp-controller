@@ -12,7 +12,7 @@ env:
   # Replace with your actual org/repo name
   # git@github.com:carvel-dev/kapp-controller.git
   # docker pull ghcr.io/carvel-dev/kindest-node:v1.34.2
-  IMAGE_NAME: ${{ github.repository }}/kindest-node
+  IMAGE_NAME: ${{ github.actor }}/kindest-node
 
 jobs:
   resolve-versions:
@@ -124,8 +124,10 @@ jobs:
           for tag in $TAGS_TO_TEST; do
             echo "Triggering test for kapp-controller version: $tag"
             
+            # We pass a new flag 'registry_user' so the test knows where to pull from
             gh workflow run nightly-e2e.yml \
               --ref "$WORKFLOW_BRANCH" \
               -f image_timestamp=$TIMESTAMP \
-              -f kapp_ctrl_ref=$tag
+              -f kapp_ctrl_ref=$tag \
+              -f registry_user=${{ github.actor }} 
           done

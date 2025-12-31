@@ -6,16 +6,20 @@ on:
       image_timestamp:
         description: 'Timestamp of the Kind image to use (YYYYMMDD)'
         required: true
-        kapp_ctrl_ref:
+      kapp_ctrl_ref:
         description: 'Git ref to test (e.g., v0.59.1 or HEAD)'
         required: true
         default: 'HEAD'
+      registry_user:
+        description: 'User to pull image from (defaults to org)'
+        required: false
+        default: 'carvel-dev'
 
 env:
   # Base for the Kind Node Image
   # git@github.com:carvel-dev/kapp-controller.git  
   # docker pull ghcr.io/carvel-dev/kindest-node:v1.34.2
-  KIND_NODE_IMAGE_BASE: ghcr.io/${{ github.repository }}/kindest-node
+  KIND_NODE_IMAGE_BASE: ghcr.io/${{ inputs.registry_user || github.repository_owner }}/kindest-node
 
 jobs:
   e2e-tests:
@@ -23,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        k8s_version: [release-1.35, release-1.32] # Sync these with build workflow
+        k8s_version: [release-1.35, release-1.32]
     steps:
       - name: Checkout Kapp-Controller
         uses: actions/checkout@v4
