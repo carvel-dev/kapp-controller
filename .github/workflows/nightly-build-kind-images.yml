@@ -1,0 +1,116 @@
+name: Nightly Build Kind Images
+
+on:
+  schedule:
+    # 2:00 AM IST = 20:30 UTC (previous day)
+    - cron: '30 20 * * *'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  # Replace with your actual org/repo name
+  # git@github.com:carvel-dev/kapp-controller.git
+  # docker pull ghcr.io/carvel-dev/kindest-node:v1.34.2
+  IMAGE_NAME: ${{ github.repository_owner }}/kindest-node
+
+jobs:
+  resolve-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      timestamp: ${{ steps.get-date.outputs.timestamp }}
+    steps:
+      - name: Get Date Timestamp
+        id: get-date
+        # Creates a timestamp like 20231025
+        run: echo "timestamp=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+        # 1. Fetch all remote branches from kubernetes/kubernetes
+        # We look for release-1.xx branches.
+      - name: Resolve Kubernetes Versions
+        id: set-matrix
+        run: |
+          git ls-remote --heads https://github.com/kubernetes/kubernetes.git \
+          | awk '{print $2}' | grep 'refs/heads/release-1.[0-9]*$' | sed 's|refs/heads/||' | sort -V > branches.txt
+
+        # 2. Determine Latest Release Branch (The highest number)
+          LATEST_BRANCH=$(tail -n1 branches.txt)
+        # 3. Min Supported Branch (e.g., currently 1.32)
+          MIN_BRANCH="release-1.32" 
+
+          echo "Latest: $LATEST_BRANCH, Min: $MIN_BRANCH"
+          echo "matrix={\"k8s_branch\":[\"$LATEST_BRANCH\", \"$MIN_BRANCH\"]}" >> $GITHUB_OUTPUT
+
+  build-and-push:
+    needs: resolve-versions
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.resolve-versions.outputs.matrix) }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /opt/hostedtoolcache || true
+          docker system prune -af || true
+
+      - name: Checkout Kubernetes & Get the exact commit SHA
+        uses: actions/checkout@v4
+        with:
+          repository: kubernetes/kubernetes
+          ref: ${{ matrix.k8s_branch }}
+          path: kubernetes
+
+      - name: Checkout Kind
+        uses: actions/checkout@v4
+        with:
+          repository: kubernetes-sigs/kind
+          path: kind
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build and Push Kind Node Image
+        run: |
+          cd kind
+          go install ./...
+          
+          # Construct Tag: release-1.35-20231025
+          TIMESTAMP="${{ needs.resolve-versions.outputs.timestamp }}"
+          TAG="${{ matrix.k8s_branch }}-${TIMESTAMP}"
+          FULL_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG"
+          
+          echo "Building $FULL_IMAGE..."
+          
+          kind build node-image --type=source $(pwd)/../kubernetes --image $FULL_IMAGE
+          
+          # Log in and Push
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push $FULL_IMAGE
+
+  trigger-tests:
+    needs: [resolve-versions, build-and-push]
+    runs-on: ubuntu-latest
+    # Only run if builds succeeded
+    if: success()
+    steps:
+      - name: Trigger Downstream E2E Tests
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Or a PAT if GITHUB_TOKEN lacks permission
+          TIMESTAMP: ${{ needs.resolve-versions.outputs.timestamp }}
+          # List the branches we want to test against
+          TARGET_BRANCHES: "release-0.59 release-0.58"
+        run: |
+          for branch in $TARGET_BRANCHES; do
+            echo "Triggering test workflow on branch: $branch"
+            
+            # This calls the 'nightly-e2e.yml' workflow on the specific branch
+            # We pass the timestamp as an input so it knows which image to pull
+            gh workflow run nightly-e2e.yml \
+              --ref $branch \
+              -f image_timestamp=$TIMESTAMP
+          done

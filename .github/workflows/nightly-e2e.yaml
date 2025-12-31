@@ -1,0 +1,84 @@
+name: Nightly E2E Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_timestamp:
+        description: 'Timestamp of the Kind image to use (YYYYMMDD)'
+        required: true
+
+env:
+  # Base for the Kind Node Image
+  # git@github.com:carvel-dev/kapp-controller.git  
+  # docker pull ghcr.io/carvel-dev/kindest-node:v1.34.2
+  KIND_NODE_IMAGE_BASE: ghcr.io/${{ github.repository_owner }}/kindest-node
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s_version: [release-1.35, release-1.32] # Sync these with build workflow
+    steps:
+      - name: Checkout Kapp-Controller
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Construct Image Tag
+        id: img
+        run: |
+          TIMESTAMP="${{ inputs.image_timestamp }}"
+          TAG="${{ matrix.k8s_version }}-${TIMESTAMP}"
+          echo "full_image=${{ env.KIND_NODE_IMAGE_BASE }}:$TAG" >> $GITHUB_ENV
+
+      - name: Create Kind Cluster (Nightly)
+        uses: helm/kind-action@v1
+        with:
+          version: v0.24.0
+          node_image: ${{ env.full_image }} 
+          cluster_name: kinder
+          wait: 1m 
+
+      - name: Verify Cluster Version
+        run: |
+          kubectl version
+          kubectl get nodes -o wide
+
+      - name: Install Dependencies
+        run: ./hack/install-deps.sh
+
+      - name: Build, Load and Deploy Kapp-Controller
+        run: |
+          set -e -x
+          
+          # 1. Helper for versioning
+          source ./hack/version-util.sh
+          
+          # 2. Build the Controller Image using kbld
+          # This compiles the code from the current branch
+          ytt -f config/config -f config/values-schema.yml -f config-dev -v dev.version="$(get_kappctrl_ver)+develop" | kbld -f- > kbld.out 2> kbldmeta.out
+          
+          # 3. Load the built image into the Custom Kind Cluster
+          cat kbldmeta.out | tail -n 1 | sed 's/.*final: kapp-controller -> \(.*\)$/\1/p'  | tail -n 1 | xargs kind load docker-image --name kinder
+          
+          # 4. Deploy using kapp
+          kapp deploy -a kc -f kbld.out -c -y
+
+      - name: Install Secretgen Controller
+        run: |
+          export KAPPCTRL_E2E_SECRETGEN_CONTROLLER=true
+          source ./hack/secretgen-controller.sh
+          deploy_secretgen-controller
+
+      - name: Run E2E Tests
+        run: |
+          mkdir tmp
+          # Run the actual tests
+          KAPPCTRL_E2E_NAMESPACE=kappctrl-test eval './hack/test-e2e.sh'
