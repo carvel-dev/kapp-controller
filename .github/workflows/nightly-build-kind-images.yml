@@ -91,14 +91,15 @@ jobs:
           username: codesbyunnati
           password: ${{ secrets.TEST_GHCR_PAT }}
 
-      - name: Force Install Kind v0.26.0
+      - name: Force Install Kind v0.31.0
         run: |
           echo "Removing pre-installed kind..."
           sudo rm -f /usr/bin/kind
           sudo rm -f /usr/local/bin/kind
           
-          echo "Downloading Kind v0.26.0..."
-          curl -Lo ./kind-bin https://kind.sigs.k8s.io/dl/v0.26.0/kind-linux-amd64
+          echo "Downloading Kind v0.31.0..."
+          # Download v0.31.0
+          curl -Lo ./kind-bin https://kind.sigs.k8s.io/dl/v0.31.0/kind-linux-amd64
           chmod +x ./kind-bin
           sudo mv ./kind-bin /usr/local/bin/kind
           
@@ -107,17 +108,13 @@ jobs:
 
       - name: Build and Push Kind Node Image
         run: |
-          cd kind
-          go install ./...
-          
           TIMESTAMP="${{ needs.resolve-versions.outputs.timestamp }}"
           TAG="${{ matrix.k8s_branch }}-${TIMESTAMP}"
           FULL_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG"
           
           echo "Building $FULL_IMAGE..."
           
-          # Using the new kind v0.26.0 to build the image
-          kind build node-image --type=source $(pwd)/../kubernetes --image $FULL_IMAGE
+          /usr/local/bin/kind build node-image --type=source $(pwd)/kubernetes --image $FULL_IMAGE
           
           docker push $FULL_IMAGE
 
