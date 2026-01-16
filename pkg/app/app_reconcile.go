@@ -4,7 +4,9 @@
 package app
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -14,6 +16,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
+
+// ResourceConflictError indicates a resource conflict was detected during kapp deploy.
+// This happens when kapp tries to update a resource that has been modified by another operator
+// between the time kapp fetched it and when it tried to apply the update.
+type ResourceConflictError struct {
+	Message string
+}
+
+func (e *ResourceConflictError) Error() string {
+	return e.Message
+}
 
 // Reconcile is not expected to be called concurrently
 func (a *App) Reconcile(force bool) (reconcile.Result, error) {
@@ -48,6 +61,13 @@ func (a *App) Reconcile(force bool) (reconcile.Result, error) {
 		defer func() { a.log.Info("Completed deploy") }()
 
 		err = a.reconcileDeploy()
+
+		// Check for resource conflict error and requeue quickly
+		var conflictErr *ResourceConflictError
+		if err != nil && errors.As(err, &conflictErr) {
+			a.log.Info("Resource conflict detected, requeuing quickly")
+			return reconcile.Result{RequeueAfter: 1 * time.Second}, nil
+		}
 
 	default:
 		a.log.Info("Reconcile noop")
@@ -92,6 +112,16 @@ func (a *App) reconcileDeploy() error {
 
 	result := a.reconcileFetchTemplateDeploy()
 	a.setReconcileCompleted(result)
+
+	if a.isResourceConflictError(result) {
+		err = a.updateStatus("marking reconciling")
+		if err != nil {
+			return err
+		}
+		return &ResourceConflictError{
+			Message: fmt.Sprintf("resource conflict detected, requeuing: %s", result.ErrorStr()),
+		}
+	}
 
 	// Reconcile inspect regardless of deploy success
 	// but don't inspect if deploy never attempted
@@ -279,16 +309,29 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 	a.removeAllConditions()
 
 	if result.Error != nil {
-		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.Condition{
-			Type:    v1alpha1.ReconcileFailed,
-			Status:  corev1.ConditionTrue,
-			Message: result.ErrorStr(),
-		})
-		a.app.Status.ConsecutiveReconcileFailures++
-		a.app.Status.ConsecutiveReconcileSuccesses = 0
-		a.app.Status.FriendlyDescription = fmt.Sprintf("Reconcile failed: %s", result.ErrorStr())
-		a.appMetrics.ReconcileCountMetrics.RegisterReconcileFailure(a.Kind(), a.Name(), a.Namespace())
-		a.setUsefulErrorMessage(result)
+		isConflict := a.isResourceConflictError(result)
+		if isConflict {
+			// Keep in Reconciling state for resource conflicts (transient errors)
+			a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.Condition{
+				Type:    v1alpha1.Reconciling,
+				Status:  corev1.ConditionTrue,
+				Message: fmt.Sprintf("Resource conflict detected, will retry: %s", result.ErrorStr()),
+			})
+			a.app.Status.FriendlyDescription = fmt.Sprintf("Reconciling (resource conflict, retrying): %s", result.ErrorStr())
+			a.setUsefulErrorMessage(result)
+		} else {
+			// Regular error - set to ReconcileFailed
+			a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.Condition{
+				Type:    v1alpha1.ReconcileFailed,
+				Status:  corev1.ConditionTrue,
+				Message: result.ErrorStr(),
+			})
+			a.app.Status.ConsecutiveReconcileFailures++
+			a.app.Status.ConsecutiveReconcileSuccesses = 0
+			a.app.Status.FriendlyDescription = fmt.Sprintf("Reconcile failed: %s", result.ErrorStr())
+			a.appMetrics.ReconcileCountMetrics.RegisterReconcileFailure(a.Kind(), a.Name(), a.Namespace())
+			a.setUsefulErrorMessage(result)
+		}
 	} else {
 		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.Condition{
 			Type:    v1alpha1.ReconcileSucceeded,
@@ -345,4 +388,31 @@ func (a *App) setUsefulErrorMessage(result exec.CmdRunResult) {
 	default:
 		a.app.Status.UsefulErrorMessage = result.ErrorStr()
 	}
+}
+
+// isResourceConflictError checks if the error from kapp deploy indicates a resource conflict.
+// This happens when kapp tries to update a resource that has been modified by another operator
+// between the time kapp fetched it and when it tried to apply the update.
+// Returns true only if BOTH required patterns are found in the error output.
+func (a *App) isResourceConflictError(result exec.CmdRunResult) bool {
+	if result.Error == nil {
+		return false
+	}
+
+	// Check error message, stderr, and stdout for conflict indicators
+	errorText := strings.ToLower(result.ErrorStr())
+	stderrText := strings.ToLower(result.Stderr)
+	stdoutText := strings.ToLower(result.Stdout)
+
+	// Combine all text sources to search
+	combinedText := errorText + " " + stderrText + " " + stdoutText
+
+	// Both patterns must be present for it to be a resource conflict
+	pattern1 := "approved diff no longer matches"
+	pattern2 := "the object has been modified; please apply your changes to the latest version and try again"
+
+	hasPattern1 := strings.Contains(combinedText, pattern1)
+	hasPattern2 := strings.Contains(combinedText, pattern2)
+
+	return hasPattern1 && hasPattern2
 }
