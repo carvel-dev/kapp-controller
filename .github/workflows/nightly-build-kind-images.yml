@@ -91,28 +91,6 @@ jobs:
           username: codesbyunnati
           password: ${{ secrets.TEST_GHCR_PAT }}
 
-      - name: Debug - Check Runner Default Kind Version
-        run: |
-          echo "=== Pre-installed Kind Version ==="
-          which kind
-          kind version
-          echo "=================================="
-
-      - name: Force Install Kind v0.31.0
-        run: |
-          echo "Removing pre-installed kind..."
-          sudo rm -f /usr/bin/kind
-          sudo rm -f /usr/local/bin/kind
-          
-          echo "Downloading Kind v0.31.0..."
-          # Download v0.31.0
-          curl -Lo ./kind-bin https://kind.sigs.k8s.io/dl/v0.31.0/kind-linux-amd64
-          chmod +x ./kind-bin
-          sudo mv ./kind-bin /usr/local/bin/kind
-          
-          echo "Verifying version..."
-          kind version
-
       - name: Build and Push Kind Node Image
         run: |
           TIMESTAMP="${{ needs.resolve-versions.outputs.timestamp }}"
