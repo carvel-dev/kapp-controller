@@ -63,26 +63,10 @@ jobs:
           username: codesbyunnati
           password: ${{ secrets.TEST_GHCR_PAT }}
 
-      - name: Force Install Kind v0.31.0
-        run: |
-          echo "Removing pre-installed kind..."
-          sudo rm -f /usr/bin/kind
-          sudo rm -f /usr/local/bin/kind
-          
-          echo "Downloading Kind v0.31.0..."
-          # Download v0.31.0
-          curl -Lo ./kind-bin https://kind.sigs.k8s.io/dl/v0.31.0/kind-linux-amd64
-          chmod +x ./kind-bin
-          sudo mv ./kind-bin /usr/local/bin/kind
-          
-          echo "Verifying version..."
-          kind version
-
       - name: Create Kind Cluster (Manual)
         run: |
           echo "Creating cluster with image: ${{ env.full_image }}"
           
-          # Create cluster using the v0.26.0 binary
           /usr/local/bin/kind create cluster --image ${{ env.full_image }} --name kinder --wait 1m
           
           # Ensure Kubeconfig is exported
