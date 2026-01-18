@@ -91,6 +91,13 @@ jobs:
           username: codesbyunnati
           password: ${{ secrets.TEST_GHCR_PAT }}
 
+      - name: Debug - Check Runner Default Kind Version
+        run: |
+          echo "=== Pre-installed Kind Version ==="
+          which kind
+          kind version
+          echo "=================================="
+
       - name: Force Install Kind v0.31.0
         run: |
           echo "Removing pre-installed kind..."
