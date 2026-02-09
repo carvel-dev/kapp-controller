@@ -7,16 +7,18 @@ on:
         description: 'Timestamp of the Kind image to use (YYYYMMDD)'
         required: true
       kapp_ctrl_ref:
-        description: 'Git ref to test (e.g., v0.59.1 or develop)'
+        description: 'Git ref to test (e.g., v0.59.1 or HEAD)'
         required: true
-        default: 'develop'
+        default: 'HEAD'
       registry_user:
         description: 'User to pull image from (defaults to org)'
         required: false
         default: 'carvel-dev'
 
 env:
-
+  # Base for the Kind Node Image
+  # git@github.com:carvel-dev/kapp-controller.git  
+  # docker pull ghcr.io/carvel-dev/kindest-node:v1.34.2
   KIND_NODE_IMAGE_BASE: ghcr.io/${{ inputs.registry_user || github.repository_owner }}/kindest-node
 
 jobs:
@@ -33,11 +35,6 @@ jobs:
           ref: ${{ inputs.kapp_ctrl_ref }}
           fetch-depth: 0
 
-      - name: Fetch Upstream Tags
-        run: |
-          git remote add upstream https://github.com/carvel-dev/kapp-controller.git || true
-          git fetch upstream --tags
-
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -46,15 +43,9 @@ jobs:
       - name: Construct Image Tag
         id: img
         run: |
-          RAW_USER="${{ inputs.registry_user || github.repository_owner }}"
-          USER_LC=$(echo "$RAW_USER" | tr '[:upper:]' '[:lower:]')
-          
           TIMESTAMP="${{ inputs.image_timestamp }}"
           TAG="${{ matrix.k8s_version }}-${TIMESTAMP}"
-          FULL_IMAGE="ghcr.io/${USER_LC}/kindest-node:$TAG"
-
-          echo "full_image=$FULL_IMAGE" >> $GITHUB_ENV
-          echo "Using Image: $FULL_IMAGE"
+          echo "full_image=${{ env.KIND_NODE_IMAGE_BASE }}:$TAG" >> $GITHUB_ENV
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -63,16 +54,13 @@ jobs:
           username: codesbyunnati
           password: ${{ secrets.TEST_GHCR_PAT }}
 
-      - name: Create Kind Cluster (Manual)
-        run: |
-          echo "Creating cluster with image: ${{ env.full_image }}"
-          
-          /usr/local/bin/kind create cluster --image ${{ env.full_image }} --name kinder --wait 1m
-          
-          # Ensure Kubeconfig is exported
-          /usr/local/bin/kind get kubeconfig --name kinder > kubeconfig.yaml
-          export KUBECONFIG=$(pwd)/kubeconfig.yaml
-          echo "KUBECONFIG=$KUBECONFIG" >> $GITHUB_ENV
+      - name: Create Kind Cluster (Nightly)
+        uses: helm/kind-action@v1
+        with:
+          version: v0.24.0
+          node_image: ${{ env.full_image }} 
+          cluster_name: kinder
+          wait: 1m 
 
       - name: Verify Cluster Version
         run: |
@@ -86,14 +74,17 @@ jobs:
         run: |
           set -e -x
           
+          # 1. Helper for versioning
           source ./hack/version-util.sh
           
-          # Build image
+          # 2. Build the Controller Image using kbld
+          # This compiles the code from the current branch
           ytt -f config/config -f config/values-schema.yml -f config-dev -v dev.version="$(get_kappctrl_ver)+develop" | kbld -f- > kbld.out 2> kbldmeta.out
           
-          # Load image using absolute path to the new v0.31.0 binary
-          cat kbldmeta.out | tail -n 1 | sed 's/.*final: kapp-controller -> \(.*\)$/\1/p'  | tail -n 1 | xargs /usr/local/bin/kind load docker-image --name kinder
-
+          # 3. Load the built image into the Custom Kind Cluster
+          cat kbldmeta.out | tail -n 1 | sed 's/.*final: kapp-controller -> \(.*\)$/\1/p'  | tail -n 1 | xargs kind load docker-image --name kinder
+          
+          # 4. Deploy using kapp
           kapp deploy -a kc -f kbld.out -c -y
 
       - name: Install Secretgen Controller
@@ -105,7 +96,5 @@ jobs:
       - name: Run E2E Tests
         run: |
           mkdir tmp
-          # Skip the failing test for double checking if package installed successfully 
-          sed -i 's|go test|go test -skip Test_PackageInstalled_FromPackageInstall_Successfully|g' ./hack/test-e2e.sh
           # Run the actual tests
           KAPPCTRL_E2E_NAMESPACE=kappctrl-test eval './hack/test-e2e.sh'

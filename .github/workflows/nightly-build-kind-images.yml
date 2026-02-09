@@ -9,6 +9,10 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  # Replace with your actual org/repo name
+  # git@github.com:carvel-dev/kapp-controller.git
+  # docker pull ghcr.io/carvel-dev/kindest-node:v1.34.2
+  # IMAGE_NAME: ${{ github.actor }}/kindest-node
 
 jobs:
   resolve-versions:
@@ -19,17 +23,23 @@ jobs:
     steps:
       - name: Get Date Timestamp
         id: get-date
+        # Creates a timestamp like 20231025
         run: echo "timestamp=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
 
+        # 1. Fetch all remote branches from kubernetes/kubernetes
+        # We look for release-1.xx branches.
       - name: Resolve Kubernetes Versions
         id: set-matrix
         run: |
+          # 1. Fetch branches
           git ls-remote --heads https://github.com/kubernetes/kubernetes.git \
           | awk '{print $2}' | grep 'refs/heads/release-1.[0-9]*$' | sed 's|refs/heads/||' | sort -V > branches.txt
 
+          # 2. Define variables
           LATEST_BRANCH=$(tail -n1 branches.txt)
           MIN_BRANCH="release-1.32"
 
+          # 3. Safety Check
           if [ -z "$LATEST_BRANCH" ]; then
             echo "Error: Could not find any release-1.xx branches!"
             exit 1
@@ -37,11 +47,13 @@ jobs:
 
           echo "Resolved -> Latest: $LATEST_BRANCH, Min: $MIN_BRANCH"
 
+          # 4. Generate JSON using jq
           MATRIX_JSON=$(jq -nc \
             --arg latest "$LATEST_BRANCH" \
             --arg min "$MIN_BRANCH" \
             '{"k8s_branch": [$latest, $min]}')
 
+          # 5. Output to GitHub Actions
           echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
 
   build-and-push:
@@ -61,11 +73,12 @@ jobs:
       
       - name: Setup Environment Variables
         run: |
+          # Convert username to lowercase
           OWNER_LC=$(echo "${{ github.actor }}" | tr '[:upper:]' '[:lower:]')
           echo "IMAGE_NAME=$OWNER_LC/kindest-node" >> $GITHUB_ENV
           echo "REGISTRY_USER=$OWNER_LC" >> $GITHUB_ENV
 
-      - name: Checkout Kubernetes
+      - name: Checkout Kubernetes & Get the exact commit SHA
         uses: actions/checkout@v4
         with:
           repository: kubernetes/kubernetes
@@ -93,39 +106,41 @@ jobs:
 
       - name: Build and Push Kind Node Image
         run: |
+          cd kind
+          go install ./...
+          
+          # Construct Tag: release-1.35-20231025
           TIMESTAMP="${{ needs.resolve-versions.outputs.timestamp }}"
           TAG="${{ matrix.k8s_branch }}-${TIMESTAMP}"
           FULL_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG"
           
           echo "Building $FULL_IMAGE..."
           
-          /usr/local/bin/kind build node-image --type=source $(pwd)/kubernetes --image $FULL_IMAGE
+          kind build node-image --type=source $(pwd)/../kubernetes --image $FULL_IMAGE
           
+          # Log in and Push
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker push $FULL_IMAGE
-
   trigger-tests:
     needs: [resolve-versions, build-and-push]
     runs-on: ubuntu-latest
+    # Only run if builds succeeded
     if: success()
-    permissions:
-      actions: write
-      contents: read
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        
       - name: Trigger Downstream E2E Tests
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Or a PAT if GITHUB_TOKEN lacks permission
           TIMESTAMP: ${{ needs.resolve-versions.outputs.timestamp }}
-          TAGS_TO_TEST: "v0.59.1 v0.58.1"
-          WORKFLOW_BRANCH: "develop"
+          # List the branches we want to test against
+          TAGS_TO_TEST: "v0.59.1 v0.58.2"
+          WORKFLOW_BRANCH: "CodesbyUnnati:unnati/nightly-build-kind-images"
 
         run: |
           for tag in $TAGS_TO_TEST; do
             echo "Triggering test for kapp-controller version: $tag"
             
-            gh workflow run nightly-e2e.yaml \
+            # We pass a new flag 'registry_user' so the test knows where to pull from
+            gh workflow run nightly-e2e.yml \
               --ref "$WORKFLOW_BRANCH" \
               -f image_timestamp=$TIMESTAMP \
               -f kapp_ctrl_ref=$tag \
