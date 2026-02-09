@@ -58,10 +58,10 @@ spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
   - helmChart:
-      name: redis
-      version: "17.3.17"
+      name: grafana
+      version: "8.5.2"
       repository:
-        url: https://charts.bitnami.com/bitnami
+        url: https://grafana.github.io/helm-charts
   template:
   - helmTemplate:
       valuesFrom:
@@ -80,8 +80,10 @@ metadata:
   name: test-helm-values
 stringData:
   data.yml: |
-    password: "1234567891234"
-`, env.Namespace) + sas.ForNamespaceYAML()
+    replicas: 1
+    testFramework:
+      enabled: false
+`, env.Namespace) + sas.ForClusterYAML()
 
 	tests := []struct {
 		desc           string
@@ -173,16 +175,16 @@ spec:
   serviceAccountName: kappctrl-e2e-ns-sa
   fetch:
   - helmChart:
-      name: redis
-      version: "17.3.17"
+      name: grafana
+      version: "8.5.2"
       repository:
-        url: https://charts.bitnami.com/bitnami
+        url: https://grafana.github.io/helm-charts
   - inline:
       paths:
         data.yml: |
-          global:
-            redis:
-              password: my-secret-password
+          replicas: 2
+          testFramework:
+            enabled: false
   template:
   - ytt:
       paths: ["1/data.yml"]
@@ -195,30 +197,24 @@ spec:
         paths:
           check.yml: |
             #@ load("@ytt:overlay", "overlay")
-            #@ load("@ytt:base64", "base64")
             #@ load("@ytt:assert", "assert")
 
-            #@ def check_password(l,_):
-            #@   actual_pass = base64.decode(l)
-            #@   if actual_pass != "my-secret-password":
-            #@     assert.fail("Expected password '{}' to == 'my-secret-password'".format(actual_pass))
+            #@ def check_replicas(r,_):
+            #@   if r != 2:
+            #@     assert.fail("Expected replicas '{}' to == 2".format(r))
             #@   end
             #@ end
 
-            #@overlay/match by=overlay.subset({"kind":"Secret"})
+            #@overlay/match by=overlay.subset({"kind":"Deployment"})
             ---
-            data:
-              #@overlay/assert via=check_password
-              redis-password:
+            spec:
+              #@overlay/assert via=check_replicas
+              replicas:
 
-            #! to speed up deploy just remove everything
-            #@overlay/match by=overlay.not_op(overlay.subset({"kind":"Secret"})),expects="1+"
-            #@overlay/remove
-            ---
   deploy:
   - kapp:
       intoNs: %s
-`, env.Namespace) + sas.ForNamespaceYAML()
+`, env.Namespace) + sas.ForClusterYAML()
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
