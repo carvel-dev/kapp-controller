@@ -1,0 +1,132 @@
+name: Nightly Build Kind Images
+
+on:
+  schedule:
+    # 2:00 AM IST = 20:30 UTC (previous day)
+    - cron: '30 20 * * *'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  resolve-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      timestamp: ${{ steps.get-date.outputs.timestamp }}
+    steps:
+      - name: Get Date Timestamp
+        id: get-date
+        run: echo "timestamp=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+      - name: Resolve Kubernetes Versions
+        id: set-matrix
+        run: |
+          git ls-remote --heads https://github.com/kubernetes/kubernetes.git \
+          | awk '{print $2}' | grep 'refs/heads/release-1.[0-9]*$' | sed 's|refs/heads/||' | sort -V > branches.txt
+
+          LATEST_BRANCH=$(tail -n1 branches.txt)
+          MIN_BRANCH="release-1.32"
+
+          if [ -z "$LATEST_BRANCH" ]; then
+            echo "Error: Could not find any release-1.xx branches!"
+            exit 1
+          fi
+
+          echo "Resolved -> Latest: $LATEST_BRANCH, Min: $MIN_BRANCH"
+
+          MATRIX_JSON=$(jq -nc \
+            --arg latest "$LATEST_BRANCH" \
+            --arg min "$MIN_BRANCH" \
+            '{"k8s_branch": [$latest, $min]}')
+
+          echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
+
+  build-and-push:
+    needs: resolve-versions
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.resolve-versions.outputs.matrix) }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /opt/hostedtoolcache || true
+          docker system prune -af || true
+      
+      - name: Setup Environment Variables
+        run: |
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_NAME=$OWNER_LC/kindest-node" >> $GITHUB_ENV
+          echo "REGISTRY_USER=$OWNER_LC" >> $GITHUB_ENV
+
+      - name: Checkout Kubernetes
+        uses: actions/checkout@v4
+        with:
+          repository: kubernetes/kubernetes
+          ref: ${{ matrix.k8s_branch }}
+          path: kubernetes
+          fetch-depth: 0
+
+      - name: Checkout Kind
+        uses: actions/checkout@v4
+        with:
+          repository: kubernetes-sigs/kind
+          path: kind
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Kind Node Image
+        run: |
+          TIMESTAMP="${{ needs.resolve-versions.outputs.timestamp }}"
+          TAG="${{ matrix.k8s_branch }}-${TIMESTAMP}"
+          FULL_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG"
+          
+          echo "Building $FULL_IMAGE..."
+          
+          /usr/local/bin/kind build node-image --type=source $(pwd)/kubernetes --image $FULL_IMAGE
+          
+          docker push $FULL_IMAGE
+
+  trigger-tests:
+    needs: [resolve-versions, build-and-push]
+    runs-on: ubuntu-latest
+    if: success()
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Trigger Downstream E2E Tests
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TIMESTAMP: ${{ needs.resolve-versions.outputs.timestamp }}
+          TAGS_TO_TEST: "v0.59.1 v0.58.2"
+          WORKFLOW_BRANCH: "develop"
+
+        run: |
+          for tag in $TAGS_TO_TEST; do
+            echo "Triggering test for kapp-controller version: $tag"
+            
+            gh workflow run nightly-e2e.yml \
+              --ref "$WORKFLOW_BRANCH" \
+              -f image_timestamp=$TIMESTAMP \
+              -f kapp_ctrl_ref=$tag \
+              -f registry_user=${{ github.repository_owner }} 
+          done
