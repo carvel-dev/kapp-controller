@@ -1,5 +1,5 @@
-carvel.dev/vendir v0.45.0 h1:OWFKkn6Rfi2zPZKS/z68SeIYGrlSgKBXn4DYR178PGk=
-carvel.dev/vendir v0.45.0/go.mod h1:I3xaoQUBf20tQOjW2A0eXC1Hn94tYCL9VTmWHas4VKE=
+carvel.dev/vendir v0.45.1 h1:vVZjAEZz/j1HVLfm1/avlRF235skXpHFrx77GDqJMgo=
+carvel.dev/vendir v0.45.1/go.mod h1:t7/ulJsKBhyOAFyJUt3m1JyIdyvZsAh8eLGr0n1MiLk=
 cloud.google.com/go v0.60.0/go.mod h1:yw2G51M9IfRboUH61Us8GqCeF1PzPblB823Mn2q2eAU=
 cloud.google.com/go/bigquery v1.3.0/go.mod h1:PjpwJnslEMmckchkHFfq+HTD2DmtT67aNFKH1/VBDHE=
 cloud.google.com/go/bigquery v1.4.0/go.mod h1:S8dzgnTigyfTmLBfrtrhyYhwRxG72rYxvftPBK2Dvzc=
