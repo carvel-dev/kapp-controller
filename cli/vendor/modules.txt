@@ -48,8 +48,8 @@ carvel.dev/kapp-controller/pkg/reconciler
 carvel.dev/kapp-controller/pkg/reftracker
 carvel.dev/kapp-controller/pkg/satoken
 carvel.dev/kapp-controller/pkg/template
-# carvel.dev/vendir v0.45.1
-## explicit; go 1.25.6
+# carvel.dev/vendir v0.45.2
+## explicit; go 1.25.7
 carvel.dev/vendir/pkg/vendir/config
 carvel.dev/vendir/pkg/vendir/version
 carvel.dev/vendir/pkg/vendir/versions

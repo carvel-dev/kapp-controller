@@ -4,7 +4,7 @@ go 1.25.7
 
 require (
 	carvel.dev/kapp-controller v0.59.0
-	carvel.dev/vendir v0.45.1
+	carvel.dev/vendir v0.45.2
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
 	github.com/cppforlife/go-cli-ui v0.0.0-20220520125801-e45d9169a663
