@@ -1,15 +1,15 @@
 - checksums:
     darwin:
-      amd64: 37fb4c7528e025582bc74a0692dded61f85e9192ddf4263fdebdeb8c7cd82660
-      arm64: 403dcbd6fef85bf40a086348f25c0ae3a817ad761755df4fe8cf5276dad18995
+      amd64: 764dadb577e680fa8fd09a28d281c570cb0e75accebb2ab0a328ab24b4032cfe
+      arm64: 2eaafe06d5e22203da2b74819685f9fd06ddc0a5cd38afc458821824990c78c0
     linux:
-      amd64: 2e4986f44f3908a0a220b645587eab4d0ec70ff4a6818ca26d3a44e29e25f13c
-      arm64: f4922e95801bc2b9b4baf553d4650b9300670e2821e20690026f1bfd78cf8cd5
+      amd64: ecdc1439e52139335e42a23d1aa8941f575c52e70e58da709d2bad5038ecadae
+      arm64: 5e479410a478385f6209624765e21c9880c07c6528ce6ed5e3dcca1e8b4a5677
   dev: true
   name: ytt
   repo: vmware-tanzu/carvel-ytt
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.53.0
+  version: v0.53.1
 - checksums:
     darwin:
       amd64: ed2ebfdd86ca3972c4966dca73e731b21571a7d9a35dd68cc7bfd9149c946b9c
@@ -36,16 +36,16 @@
   version: v0.65.1
 - checksums:
     darwin:
-      amd64: ea3e5091b983b79a09f9a0c1fc911d65a2eec4cd7ed86d96735ad2ec129bba40
-      arm64: a859539a021affa7962459556f57e2d8c8e353a9bff1e6673410d292d10033a2
+      amd64: c75abeca04cb9b0fabcb084b87fb465b3eb462a85bab1baab4853bf9a4c7ccc3
+      arm64: 01b3e5b922e8771cbc0bdb4c75acb3933327f7a63779bb8923f05de18b49fab6
     linux:
-      amd64: 1c2911750ac774d2806d67694788c55e66dad39b38761ea10da0a86283e9ae96
-      arm64: 9aaba37eeff49a819ab6fba832e184c41069af6ce5e5817d63691a240fda6fdf
+      amd64: ecd053b031fdebfe0486b263a7071320b033f60b6d9e6c6b74ad681f2d7068b5
+      arm64: 8fc36145ca85712f1d6d6b959d6240a7d1d5f6a6dd3850bad9ae848c65e42c56
   dev: true
   name: vendir
   repo: carvel-dev/vendir
   urlTemplate: https://github.com/carvel-dev/{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.45.1
+  version: v0.45.2
 - checksums:
     linux:
       amd64: 5d4c7623283e6dfb1971957f4b755468ab64917066a8567dd50464af298f4031
