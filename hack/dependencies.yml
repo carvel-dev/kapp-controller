@@ -49,7 +49,7 @@
 - checksums:
     linux:
       amd64: a0a5e8c592ed3f376ac110715eff214730c7422f9a44d96cf98117d2b8b0e6c0
-      arm64: 1367926ea842729b4312fbf800234d15bcaa419c92201727b776da4550078a09
+      arm64: ce02147ffee6d993bf8ae97a44a22e9e1daf0b69d2d5b69a0c8cf6706445ccf5
   dev: false
   name: helm
   repo: helm/helm
