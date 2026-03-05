@@ -135,8 +135,7 @@ jobs:
 
           ### Verify the checksums file
           cosign verify-blob checksums.txt \
-          --certificate checksums.txt.pem \
-          --signature checksums.txt.sig \
+          --bundle release/checksums.json \
           --certificate-identity-regexp=https://github.com/${{ github.repository_owner }} \
           --certificate-oidc-issuer=https://token.actions.githubusercontent.com 
           \`\`\`
@@ -209,13 +208,12 @@ jobs:
 
       - name: Sign checksums.txt
         run: |
-          cosign sign-blob --yes ./tmp/checksums.txt --output-certificate release/checksums.txt.pem  --output-signature release/checksums.txt.sig
+          cosign sign-blob --yes ./tmp/checksums.txt --bundle release/checksums.json
 
       - name: Verify checksums signature
         run: |
           cosign verify-blob \
-            --cert release/checksums.txt.pem \
-            --signature release/checksums.txt.sig \
+            --bundle release/checksums.json \
             --certificate-identity-regexp=https://github.com/${{ github.repository_owner }} \
             --certificate-oidc-issuer=https://token.actions.githubusercontent.com ./tmp/checksums.txt
 
