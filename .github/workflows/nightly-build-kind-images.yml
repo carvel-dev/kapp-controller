@@ -117,11 +117,33 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TIMESTAMP: ${{ needs.resolve-versions.outputs.timestamp }}
-          TAGS_TO_TEST: "v0.59.1 v0.58.2"
           WORKFLOW_BRANCH: "develop"
 
+
         run: |
-          for tag in $TAGS_TO_TEST; do
+          # 1. Fetch all stable tags sorted semantically
+          ALL_TAGS=$(git ls-remote --tags --refs https://github.com/carvel-dev/kapp-controller.git | awk -F/ '{print $3}' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V)
+          
+          # 2. Extract the two most recent minor versions
+          # - cut: extracts just the "vX.Y" part
+          # - uniq: removes duplicates (so v0.58.1 and v0.58.2 become "v0.58")
+          # - tail -n 2: grabs the latest two minor versions
+          MINORS=$(echo "$ALL_TAGS" | cut -d. -f1,2 | uniq | tail -n 2)
+          
+          # 3. Find the highest patch for each minor version
+          DYNAMIC_TAGS=""
+          for minor in $MINORS; do
+            # Grep tags matching the minor version, and pick the highest patch
+            LATEST_PATCH=$(echo "$ALL_TAGS" | grep "^${minor}\." | tail -n 1)
+            DYNAMIC_TAGS="$DYNAMIC_TAGS $LATEST_PATCH"
+          done
+          
+          # Clean up any leading/trailing spaces
+          DYNAMIC_TAGS=$(echo $DYNAMIC_TAGS | xargs)
+          
+          echo "Dynamically resolved tags to test: $DYNAMIC_TAGS"
+
+          for tag in $DYNAMIC_TAGS; do
             echo "Triggering test for kapp-controller version: $tag"
             
             gh workflow run nightly-e2e.yml \
