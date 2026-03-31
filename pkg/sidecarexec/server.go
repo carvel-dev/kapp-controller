@@ -10,7 +10,6 @@ import (
 	"net/rpc"
 	"os"
 
-	"carvel.dev/kapp-controller/pkg/exec"
 	"github.com/go-logr/logr"
 )
 
@@ -31,12 +30,12 @@ type ServerOpts struct {
 }
 
 // NewServer returns a new Server.
-func NewServer(local exec.CmdRunner, opts ServerOpts, log logr.Logger) *Server {
+func NewServer(reaper *Reaper, opts ServerOpts, log logr.Logger) *Server {
 	allowedCmdNames := map[string]struct{}{}
 	for _, cmd := range opts.AllowedCmdNames {
 		allowedCmdNames[cmd] = struct{}{}
 	}
-	return &Server{&CmdExec{local, allowedCmdNames}, log}
+	return &Server{&CmdExec{reaper, allowedCmdNames}, log}
 }
 
 // Serve starts an RPC server.
