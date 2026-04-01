@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772733656662,
+  "lastUpdate": 1775070871691,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -22223,6 +22223,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "Benchmark_pkgr_with_50_packages - DeploySeconds",
             "value": 2.067,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "m.dzhigarov@gmail.com",
+            "name": "Marin Dzhigarov",
+            "username": "mdzhigarov"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3a8f1e3ae7a0aa28028f223cbf3a3794a7b78bdc",
+          "message": "Fix zombie process race condition in sidecar container (#1806)\n\n* Fix zombie process race condition in sidecar container\n\nReplace custom reapZombies implementation with tini as PID 1 to eliminate\nrace condition causing \"waitid: no child processes\" errors during template\noperations.\n\nProblem:\n- reapZombies() used syscall.Wait4(-1, ...) which reaps ANY child process\n- This interfered with normal parent-child process waiting in CmdExec.Run\n- Race condition: reapZombies could reap ytt/vendir/imgpkg processes before\n  their actual parent (sidecar process) could wait for them\n- Result: cmd.Wait() failed with ECHILD (\"waitid: no child processes\")\n\nSolution:\n- Install and use tini as proper PID 1 init system in Dockerfile\n- Remove problematic reapZombies function entirely\n- tini correctly handles only orphaned processes, not normal children\n- Eliminates race condition while maintaining proper zombie cleanup\n\nChanges:\n- Dockerfile: Install tini package and set as entrypoint\n- sidecarexec.go: Remove reapZombies function and unused imports\n- deployment.yml: Add documentation comment about tini configuration\n\nThis fixes intermittent failures during PackageRepository reconciliation\nand other template-heavy operations under concurrent load.\n\nFixes: Race condition between zombie reaper and command execution\nMade-with: Cursor\nSigned-off-by: Marin Dzhigarov <m.dzhigarov@gmail.com>\nMade-with: Cursor\n\n* Fix ytt template comment syntax in deployment.yml\n\nUse ytt-specific comment syntax (#!) instead of regular comments (#)\nto avoid template compilation errors.\n\nSigned-off-by: Marin Dzhigarov <m.dzhigarov@gmail.com>\nMade-with: Cursor\n\n---------\n\nSigned-off-by: Marin Dzhigarov <m.dzhigarov@gmail.com>",
+          "timestamp": "2026-04-02T00:37:02+05:30",
+          "tree_id": "c249b8f023fbe5b1655635fce46a361bb65b9a45",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/3a8f1e3ae7a0aa28028f223cbf3a3794a7b78bdc"
+        },
+        "date": 1775070869602,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36109544268,
+            "unit": "ns/op\t        18.61 DeleteSeconds\t        17.42 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - ns/op",
+            "value": 36109544268,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - DeleteSeconds",
+            "value": 18.61,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - DeploySeconds",
+            "value": 17.42,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9375507547,
+            "unit": "ns/op\t         5.196 DeleteSeconds\t         4.090 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - ns/op",
+            "value": 9375507547,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - DeleteSeconds",
+            "value": 5.196,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - DeploySeconds",
+            "value": 4.09,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6331833795,
+            "unit": "ns/op\t         4.173 DeleteSeconds\t         2.075 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - ns/op",
+            "value": 6331833795,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - DeleteSeconds",
+            "value": 4.173,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - DeploySeconds",
+            "value": 2.075,
             "unit": "DeploySeconds",
             "extra": "1 times\n4 procs"
           }
