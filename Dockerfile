@@ -20,8 +20,8 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 # --- run image ---
 FROM photon:5.0
 
-# Install openssh for git
-RUN tdnf install -y git openssh-clients
+# Install openssh for git and tini for proper PID 1 handling
+RUN tdnf install -y git openssh-clients tini
 
 # Create the kapp-controller user in the root group, the home directory will be mounted as a volume
 RUN echo "kapp-controller:x:1000:0:/home/kapp-controller:/usr/sbin/nologin" > /etc/passwd
@@ -36,4 +36,5 @@ COPY --from=deps /workspace/out/* ./
 # Run as kapp-controller by default, will be overridden to a random uid on OpenShift
 USER 1000
 ENV PATH="/:${PATH}"
-ENTRYPOINT ["/kapp-controller"]
+# Use tini as PID 1 to properly handle zombie processes and signals
+ENTRYPOINT ["tini", "--", "/kapp-controller"]

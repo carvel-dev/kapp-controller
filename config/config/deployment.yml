@@ -67,6 +67,7 @@ spec:
       - name: kapp-controller-sidecarexec
         image: kapp-controller
         args: ["--sidecarexec"]
+        #! tini is already configured as ENTRYPOINT in Dockerfile
         resources:
           requests:
             cpu: 120m
