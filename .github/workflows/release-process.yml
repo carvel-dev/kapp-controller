@@ -45,6 +45,8 @@ jobs:
         uses: sigstore/cosign-installer@v4.0.0
 
       - name: Run release script
+        env:
+          BUILDX_NO_DEFAULT_ATTESTATIONS: 1
         run: |
           set -e -x
           minikube start --driver=docker --wait=all
