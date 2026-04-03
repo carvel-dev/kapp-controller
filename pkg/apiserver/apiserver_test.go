@@ -22,16 +22,15 @@ type fakeCAProvider struct {
 	bundle []byte
 }
 
-func (f *fakeCAProvider) Name() string                                      { return "fake-ca-provider" }
-func (f *fakeCAProvider) CurrentCABundleContent() []byte                    { return f.bundle }
-func (f *fakeCAProvider) AddListener(listener dynamiccertificates.Listener) {}
+func (f *fakeCAProvider) Name() string                               { return "fake-ca-provider" }
+func (f *fakeCAProvider) CurrentCABundleContent() []byte             { return f.bundle }
+func (f *fakeCAProvider) AddListener(_ dynamiccertificates.Listener) {}
 func (f *fakeCAProvider) VerifyOptions() (x509.VerifyOptions, bool) {
 	return x509.VerifyOptions{}, false
 }
 
 func Test_updateAPIService(t *testing.T) {
-	apiServiceName := "v1alpha1.data.packaging.carvel.dev"
-	dummyLogger := logr.Discard()
+	logger := logr.Discard()
 
 	tests := []struct {
 		name           string
@@ -65,7 +64,7 @@ func Test_updateAPIService(t *testing.T) {
 
 			fakeProvider := &fakeCAProvider{bundle: tc.newBundle}
 
-			err := updateAPIService(context.TODO(), dummyLogger, fakeClient, fakeProvider)
+			err := updateAPIService(context.TODO(), logger, fakeClient, fakeProvider)
 			require.NoError(t, err)
 
 			actions := fakeClient.Actions()
@@ -76,7 +75,10 @@ func Test_updateAPIService(t *testing.T) {
 			for _, action := range actions {
 				if action.GetVerb() == "update" {
 					updateActionFound = true
-					updateAction := action.(clienttesting.UpdateAction)
+					updateAction, ok := action.(clienttesting.UpdateAction)
+					if !ok {
+						t.Fatalf("Expected UpdateAction, got %T", action)
+					}
 					updatedSvc := updateAction.GetObject().(*apiregv1.APIService)
 					require.Equal(t, tc.newBundle, updatedSvc.Spec.CABundle)
 				}

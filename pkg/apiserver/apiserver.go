@@ -36,6 +36,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/retry"
 	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	aggregatorclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 )
@@ -294,19 +295,22 @@ func getServerVersion(discoveryClient discovery.DiscoveryInterface) (semver.Vers
 }
 
 func updateAPIService(ctx context.Context, logger logr.Logger, client aggregatorclient.Interface, caProvider dynamiccertificates.CAContentProvider) error {
-	apiService, err := client.ApiregistrationV1().APIServices().Get(ctx, apiServiceName, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("error getting APIService %s: %v", apiServiceName, err)
-	}
+	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		apiService, err := client.ApiregistrationV1().APIServices().Get(ctx, apiServiceName, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("error getting APIService %s: %v", apiServiceName, err)
+		}
 
-	caBundle := caProvider.CurrentCABundleContent()
-	if bytes.Equal(apiService.Spec.CABundle, caBundle) {
-		return nil
-	}
+		caBundle := caProvider.CurrentCABundleContent()
+		if bytes.Equal(apiService.Spec.CABundle, caBundle) {
+			return nil
+		}
 
-	logger.Info("Syncing CA certificate with APIServices")
-	apiService.Spec.CABundle = caBundle
-	if _, err := client.ApiregistrationV1().APIServices().Update(ctx, apiService, metav1.UpdateOptions{}); err != nil {
+		logger.Info("Syncing CA certificate with APIServices")
+		apiService.Spec.CABundle = caBundle
+		_, err = client.ApiregistrationV1().APIServices().Update(ctx, apiService, metav1.UpdateOptions{})
+		return err
+	}); err != nil {
 		return fmt.Errorf("error updating kapp-controller CA cert of APIService %s: %v", apiServiceName, err)
 	}
 	return nil
