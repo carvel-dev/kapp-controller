@@ -45,12 +45,12 @@ jobs:
         uses: sigstore/cosign-installer@v4.0.0
 
       - name: Run release script
-        env:
-          BUILDX_NO_DEFAULT_ATTESTATIONS: 1
         run: |
           set -e -x
           minikube start --driver=docker --wait=all
-          docker buildx create --name minikube --use --driver=kubernetes --bootstrap
+          # buildkit:v0.28.x has a bug that causes the build to fail, so we need to use a newer version
+          # We can remove this once v0.29.0 becomes the default.
+          docker buildx create --name minikube --use --driver=kubernetes --bootstrap --driver-opt image=moby/buildkit:v0.29.0
           ./hack/build-release.sh
           # Create release folder to store all the output artifacts
           mkdir release
