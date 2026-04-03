@@ -254,9 +254,6 @@ func newServerConfig(aggClient aggregatorclient.Interface, opts NewAPIServerOpts
 	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
-	if err := recommendedOptions.ApplyTo(serverConfig); err != nil {
-		return nil, nil, err
-	}
 
 	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
 		openapi.GetOpenAPIDefinitions,
