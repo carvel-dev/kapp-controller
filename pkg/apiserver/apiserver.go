@@ -231,14 +231,26 @@ func newServerConfig(aggClient aggregatorclient.Interface, opts NewAPIServerOpts
 	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
-	if err := recommendedOptions.ApplyTo(serverConfig); err != nil {
-		return nil, err
-	}
 
 	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
 		openapi.GetOpenAPIDefinitions,
 		genericopenapi.NewDefinitionNamer(Scheme))
 	serverConfig.OpenAPIV3Config.Info.Title = "Kapp-controller"
+	serverConfig.OpenAPIV3Config.Info.Version = "v1alpha1"
+
+	// Register OpenAPI v2 configuration to satisfy the Kubernetes Aggregation Controller.
+	// In K8s 1.30+, the aggregator syncs both v2 and v3 specs; providing v2 prevents
+	// "resource not found" errors in the kube-apiserver logs (Fixes #1703).
+	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
+		openapi.GetOpenAPIDefinitions,
+		genericopenapi.NewDefinitionNamer(Scheme))
+	serverConfig.OpenAPIConfig.Info.Title = "Kapp-controller"
+	serverConfig.OpenAPIConfig.Info.Version = "v1alpha1"
+
+	if err := recommendedOptions.ApplyTo(serverConfig); err != nil {
+		return nil, err
+	}
+
 	return serverConfig, nil
 }
 
