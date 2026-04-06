@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1775222093868,
+  "lastUpdate": 1775459069234,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -22511,6 +22511,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "Benchmark_pkgr_with_50_packages - DeploySeconds",
             "value": 2.089,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "59133308+himsngh@users.noreply.github.com",
+            "name": "Himanshu",
+            "username": "himsngh"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "46eb34c3bea709ade62aed55bfe7bd9a334e98ba",
+          "message": "fix(apiserver): register OpenAPI v2 spec for aggregation (#1803)\n\n* fix(apiserver): register OpenAPI v2 spec for aggregation\n\nSigned-off-by: Himanshu Singh <himansh.singh3@gmail.com>\n\n* fix(apiserver): initialize OpenAPI specs before applyTo and enforce v3 version\n\nThis commit addresses OpenAPI spec generation issues by ensuring both V2 and V3 configurations are instantiated before calling 'recommendedOptions.ApplyTo(serverConfig)'. This allows the authentication wiring to properly decorate the OpenAPI security definitions. Additionally, it explicitly sets the V3 spec 'Info.Version' to 'v1alpha1' to satisfy strict OpenAPI schema requirements.\n\nSigned-off-by: Himanshu Singh <himansh.singh3@gmail.com>\n\n---------\n\nSigned-off-by: Himanshu Singh <himansh.singh3@gmail.com>",
+          "timestamp": "2026-04-06T12:27:28+05:30",
+          "tree_id": "8f44a013614102a0f9c21d4bf040fce541e11d60",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/46eb34c3bea709ade62aed55bfe7bd9a334e98ba"
+        },
+        "date": 1775459067860,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 37011645008,
+            "unit": "ns/op\t        19.56 DeleteSeconds\t        17.36 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - ns/op",
+            "value": 37011645008,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - DeleteSeconds",
+            "value": 19.56,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - DeploySeconds",
+            "value": 17.36,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9343696943,
+            "unit": "ns/op\t         5.151 DeleteSeconds\t         4.100 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - ns/op",
+            "value": 9343696943,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - DeleteSeconds",
+            "value": 5.151,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - DeploySeconds",
+            "value": 4.1,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6295772506,
+            "unit": "ns/op\t         4.123 DeleteSeconds\t         2.078 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - ns/op",
+            "value": 6295772506,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - DeleteSeconds",
+            "value": 4.123,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - DeploySeconds",
+            "value": 2.078,
             "unit": "DeploySeconds",
             "extra": "1 times\n4 procs"
           }
