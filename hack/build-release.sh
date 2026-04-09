@@ -14,6 +14,9 @@ export version="$(get_kappctrl_ver)"
 sed 's/v0.0.0/'"$version"'/' config/config/deployment.yml > tmp/deployment.yml
 mv tmp/deployment.yml config/config/deployment.yml
 
+sed 's/v0.0.0/'"$version"'/' config/config/agg-api.yml > tmp/agg-api.yml
+mv tmp/agg-api.yml config/config/agg-api.yml
+
 ytt -f config/config -f config/values-schema.yml -f config-release -v dev.version="$version" --data-values-env=KCTRL | kbld --imgpkg-lock-output .imgpkg/images.yml -f- > ./tmp/release.yml
 
 # Update image url in kapp-controller package overlays
