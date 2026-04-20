@@ -28,18 +28,35 @@ func (a *AppRefTracker) AppsForRef(refKey RefKey) (map[RefKey]struct{}, error) {
 		return nil, fmt.Errorf("could not find ref %s", refKey.Description())
 	}
 
-	return apps, nil
+	// Return a copy. Callers (e.g. SecretHandler.enqueueAppsForUpdate)
+	// iterate this map without holding the tracker lock, and concurrent
+	// reconciles will call back into ReconcileRefs / RemoveAppFromAllRefs
+	// and mutate the same underlying map while the caller is iterating.
+	// Without the copy the Go runtime aborts the process with
+	// "concurrent map iteration and map write" under load (#1812).
+	return cloneRefKeySet(apps), nil
 }
 
 func (a *AppRefTracker) RefsForApp(appKey RefKey) (map[RefKey]struct{}, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	if a.appsToRefs[appKey] == nil {
+	refs := a.appsToRefs[appKey]
+	if refs == nil {
 		return nil, fmt.Errorf("could not find refs for App %s", appKey.RefName())
 	}
 
-	return a.appsToRefs[appKey], nil
+	// Same reasoning as AppsForRef: hand back a snapshot so callers can
+	// iterate safely while concurrent writers keep mutating the tracker.
+	return cloneRefKeySet(refs), nil
+}
+
+func cloneRefKeySet(s map[RefKey]struct{}) map[RefKey]struct{} {
+	out := make(map[RefKey]struct{}, len(s))
+	for k := range s {
+		out[k] = struct{}{}
+	}
+	return out
 }
 
 func (a *AppRefTracker) RemoveRef(refKey RefKey) {
