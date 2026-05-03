@@ -28,18 +28,27 @@ func (a *AppRefTracker) AppsForRef(refKey RefKey) (map[RefKey]struct{}, error) {
 		return nil, fmt.Errorf("could not find ref %s", refKey.Description())
 	}
 
-	return apps, nil
+	return cloneRefKeySet(apps), nil
 }
 
 func (a *AppRefTracker) RefsForApp(appKey RefKey) (map[RefKey]struct{}, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	if a.appsToRefs[appKey] == nil {
+	refs := a.appsToRefs[appKey]
+	if refs == nil {
 		return nil, fmt.Errorf("could not find refs for App %s", appKey.RefName())
 	}
 
-	return a.appsToRefs[appKey], nil
+	return cloneRefKeySet(refs), nil
+}
+
+func cloneRefKeySet(in map[RefKey]struct{}) map[RefKey]struct{} {
+	out := make(map[RefKey]struct{}, len(in))
+	for k := range in {
+		out[k] = struct{}{}
+	}
+	return out
 }
 
 func (a *AppRefTracker) RemoveRef(refKey RefKey) {
