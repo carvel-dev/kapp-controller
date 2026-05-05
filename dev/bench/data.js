@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1777072935327,
+  "lastUpdate": 1777994329184,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -22895,6 +22895,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "Benchmark_pkgr_with_50_packages - DeploySeconds",
             "value": 2.083,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "m.dzhigarov@gmail.com",
+            "name": "Marin Dzhigarov",
+            "username": "mdzhigarov"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6a6b291abb5efcac24088751a5707ac966011588",
+          "message": "Add version annotation to APIService to prevent race conditions during rolling upgrades (#1813)\n\nDuring kapp-controller rolling upgrades via `kapp deploy`, a race condition can occur\nwhere kapp reports success even though the APIService webhook is not ready yet. This\nhappens because kapp doesn't detect any changes in the APIService resource and\nconsiders the deployment complete before the new APIService is fully operational.\n\nThis change adds a version annotation to the APIService that gets updated with each\nrelease, ensuring kapp detects changes and properly waits for the APIService to be\nready during rolling upgrades.\n\nChanges:\n- Add kapp-controller.carvel.dev/version annotation to APIService metadata\n- Update build script to replace version placeholder with actual release version\n- Follow same pattern as existing Deployment resource versioning\n\nFixes race condition during kapp-controller upgrades where APIService readiness\nis not properly validated.\n\n\nMade-with: Cursor\n\nSigned-off-by: Marin Dzhigarov <m.dzhigarov@gmail.com>",
+          "timestamp": "2026-05-05T19:51:43+05:30",
+          "tree_id": "2e9d152a487386068112f1cee3d7a9c8cb2b0769",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/6a6b291abb5efcac24088751a5707ac966011588"
+        },
+        "date": 1777994328081,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 36061045497,
+            "unit": "ns/op\t        18.59 DeleteSeconds\t        17.39 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - ns/op",
+            "value": 36061045497,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - DeleteSeconds",
+            "value": 18.59,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - DeploySeconds",
+            "value": 17.39,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 9338761383,
+            "unit": "ns/op\t         5.154 DeleteSeconds\t         4.091 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - ns/op",
+            "value": 9338761383,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - DeleteSeconds",
+            "value": 5.154,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - DeploySeconds",
+            "value": 4.091,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 6295900869,
+            "unit": "ns/op\t         4.126 DeleteSeconds\t         2.072 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - ns/op",
+            "value": 6295900869,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - DeleteSeconds",
+            "value": 4.126,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - DeploySeconds",
+            "value": 2.072,
             "unit": "DeploySeconds",
             "extra": "1 times\n4 procs"
           }
