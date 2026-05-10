@@ -137,7 +137,7 @@ func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kc
 			if err := updateAPIService(ctx, opts.Logger, aggClient, caContentProvider); err != nil {
 				opts.Logger.Error(err, "Background APIService CA reconciliation failed")
 			}
-		}, apiServiceReconcileInterval, hookContext.StopCh)
+		}, apiServiceReconcileInterval, hookContext.Done())
 
 		return nil
 	}); err != nil {

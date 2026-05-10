@@ -22,42 +22,51 @@ type ConfigMapHandler struct {
 	appUpdateStatus *reftracker.AppUpdateStatus
 }
 
-var _ handler.TypedEventHandler[*corev1.ConfigMap] = &ConfigMapHandler{}
+var _ handler.TypedEventHandler[*corev1.ConfigMap, reconcile.Request] = &ConfigMapHandler{}
 
 func NewConfigMapHandler(log logr.Logger, as *reftracker.AppRefTracker, aus *reftracker.AppUpdateStatus) *ConfigMapHandler {
 	return &ConfigMapHandler{log, as, aus}
 }
 
 // Create is called in response to create event
-func (sch *ConfigMapHandler) Create(_ context.Context, evt event.TypedCreateEvent[*corev1.ConfigMap], q workqueue.RateLimitingInterface) {
-	sch.enqueueAppsForUpdate(evt.Object.GetName(), evt.Object.GetNamespace(), q)
+func (e *ConfigMapHandler) Create(ctx context.Context, evt event.TypedCreateEvent[*corev1.ConfigMap], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
+	err := e.enqueueAppsForUpdate(evt.Object.GetName(), evt.Object.GetNamespace(), q)
+	if err != nil {
+		e.log.Error(err, "enqueueing apps for configmap create")
+	}
 }
 
 // Update is called in response to an update event
-func (sch *ConfigMapHandler) Update(_ context.Context, evt event.TypedUpdateEvent[*corev1.ConfigMap], q workqueue.RateLimitingInterface) {
-	sch.enqueueAppsForUpdate(evt.ObjectNew.GetName(), evt.ObjectNew.GetNamespace(), q)
+func (e *ConfigMapHandler) Update(ctx context.Context, evt event.TypedUpdateEvent[*corev1.ConfigMap], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
+	err := e.enqueueAppsForUpdate(evt.ObjectNew.GetName(), evt.ObjectNew.GetNamespace(), q)
+	if err != nil {
+		e.log.Error(err, "enqueueing apps for configmap update")
+	}
 }
 
 // Delete is called in response to a delete event
-func (sch *ConfigMapHandler) Delete(_ context.Context, evt event.TypedDeleteEvent[*corev1.ConfigMap], q workqueue.RateLimitingInterface) {
-	sch.enqueueAppsForUpdate(evt.Object.GetName(), evt.Object.GetNamespace(), q)
-	sch.appRefTracker.RemoveRef(reftracker.NewConfigMapKey(evt.Object.GetName(), evt.Object.GetNamespace()))
+func (e *ConfigMapHandler) Delete(ctx context.Context, evt event.TypedDeleteEvent[*corev1.ConfigMap], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
+	err := e.enqueueAppsForUpdate(evt.Object.GetName(), evt.Object.GetNamespace(), q)
+	if err != nil {
+		e.log.Error(err, "enqueueing apps for configmap delete")
+	}
+	e.appRefTracker.RemoveRef(reftracker.NewConfigMapKey(evt.Object.GetName(), evt.Object.GetNamespace()))
 }
 
 // Generic is called in response to an event of an unknown type or a synthetic event triggered as a cron or
 // external trigger request - e.g. reconcile Autoscaling, or a Webhook.
-func (sch *ConfigMapHandler) Generic(_ context.Context, _ event.TypedGenericEvent[*corev1.ConfigMap], _ workqueue.RateLimitingInterface) {
+func (e *ConfigMapHandler) Generic(ctx context.Context, evt event.TypedGenericEvent[*corev1.ConfigMap], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
 }
 
-func (sch *ConfigMapHandler) enqueueAppsForUpdate(cfgmName, cfgmNamespace string, q workqueue.RateLimitingInterface) error {
-	apps, err := sch.appRefTracker.AppsForRef(reftracker.NewConfigMapKey(cfgmName, cfgmNamespace))
+func (e *ConfigMapHandler) enqueueAppsForUpdate(cfgmName, cfgmNamespace string, q workqueue.TypedRateLimitingInterface[reconcile.Request]) error {
+	apps, err := e.appRefTracker.AppsForRef(reftracker.NewConfigMapKey(cfgmName, cfgmNamespace))
 	if err != nil {
 		return err
 	}
 
 	for refKey := range apps {
-		sch.log.Info("enqueueing " + refKey.Description() + " from update to configmap " + cfgmName)
-		sch.appUpdateStatus.MarkNeedsUpdate(refKey)
+		e.log.Info("enqueueing " + refKey.Description() + " from update to configmap " + cfgmName)
+		e.appUpdateStatus.MarkNeedsUpdate(refKey)
 		q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
 			Name:      refKey.RefName(),
 			Namespace: cfgmNamespace,

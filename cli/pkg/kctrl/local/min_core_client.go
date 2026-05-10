@@ -38,6 +38,7 @@ import (
 	certificatesv1alpha1 "k8s.io/client-go/kubernetes/typed/certificates/v1alpha1"
 	certificatesv1beta1 "k8s.io/client-go/kubernetes/typed/certificates/v1beta1"
 	coordinationv1 "k8s.io/client-go/kubernetes/typed/coordination/v1"
+	coordinationv1alpha2 "k8s.io/client-go/kubernetes/typed/coordination/v1alpha2"
 	coordinationv1beta1 "k8s.io/client-go/kubernetes/typed/coordination/v1beta1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	discoveryv1 "k8s.io/client-go/kubernetes/typed/discovery/v1"
@@ -60,7 +61,9 @@ import (
 	rbacv1 "k8s.io/client-go/kubernetes/typed/rbac/v1"
 	rbacv1alpha1 "k8s.io/client-go/kubernetes/typed/rbac/v1alpha1"
 	rbacv1beta1 "k8s.io/client-go/kubernetes/typed/rbac/v1beta1"
-	resourcev1alpha2 "k8s.io/client-go/kubernetes/typed/resource/v1alpha2"
+	resourcev1alpha3 "k8s.io/client-go/kubernetes/typed/resource/v1alpha3"
+	resourcev1beta1 "k8s.io/client-go/kubernetes/typed/resource/v1beta1"
+	resourcev1beta2 "k8s.io/client-go/kubernetes/typed/resource/v1beta2"
 	schedulingv1 "k8s.io/client-go/kubernetes/typed/scheduling/v1"
 	schedulingv1alpha1 "k8s.io/client-go/kubernetes/typed/scheduling/v1alpha1"
 	schedulingv1beta1 "k8s.io/client-go/kubernetes/typed/scheduling/v1beta1"
@@ -252,7 +255,7 @@ func (*MinCoreClient) RbacV1alpha1() rbacv1alpha1.RbacV1alpha1Interface {
 	panic("Not implemented")
 	return nil
 }
-func (*MinCoreClient) ResourceV1alpha2() resourcev1alpha2.ResourceV1alpha2Interface {
+func (m *MinCoreClient) ResourceV1alpha3() resourcev1alpha3.ResourceV1alpha3Interface {
 	panic("Not implemented")
 }
 func (*MinCoreClient) SchedulingV1alpha1() schedulingv1alpha1.SchedulingV1alpha1Interface {
@@ -526,6 +529,15 @@ func (*MinDiscoveryClient) ServerPreferredResources() ([]*metav1.APIResourceList
 	panic("Not implemented")
 }
 func (*MinDiscoveryClient) ServerPreferredNamespacedResources() ([]*metav1.APIResourceList, error) {
+	panic("Not implemented")
+}
+func (m *MinCoreClient) CoordinationV1alpha2() coordinationv1alpha2.CoordinationV1alpha2Interface {
+	panic("Not implemented")
+}
+func (m *MinCoreClient) ResourceV1beta1() resourcev1beta1.ResourceV1beta1Interface {
+	panic("Not implemented")
+}
+func (m *MinCoreClient) ResourceV1beta2() resourcev1beta2.ResourceV1beta2Interface {
 	panic("Not implemented")
 }
 func (*MinDiscoveryClient) OpenAPISchema() (*openapi_v2.Document, error) { panic("Not implemented") }
