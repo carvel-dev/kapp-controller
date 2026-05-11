@@ -28,18 +28,31 @@ func (a *AppRefTracker) AppsForRef(refKey RefKey) (map[RefKey]struct{}, error) {
 		return nil, fmt.Errorf("could not find ref %s", refKey.Description())
 	}
 
-	return apps, nil
+	// Return a copy so callers can iterate without holding the lock.
+	// Returning the internal map directly races with mutations from
+	// ReconcileRefs and RemoveAppFromAllRefs and triggers the Go runtime's
+	// "concurrent map iteration and map write" fatal error.
+	return copyRefKeySet(apps), nil
 }
 
 func (a *AppRefTracker) RefsForApp(appKey RefKey) (map[RefKey]struct{}, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	if a.appsToRefs[appKey] == nil {
+	refs := a.appsToRefs[appKey]
+	if refs == nil {
 		return nil, fmt.Errorf("could not find refs for App %s", appKey.RefName())
 	}
 
-	return a.appsToRefs[appKey], nil
+	return copyRefKeySet(refs), nil
+}
+
+func copyRefKeySet(in map[RefKey]struct{}) map[RefKey]struct{} {
+	out := make(map[RefKey]struct{}, len(in))
+	for k := range in {
+		out[k] = struct{}{}
+	}
+	return out
 }
 
 func (a *AppRefTracker) RemoveRef(refKey RefKey) {
