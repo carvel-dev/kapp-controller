@@ -18,7 +18,7 @@ require (
 	k8s.io/apiserver v0.30.1
 	k8s.io/client-go v0.30.1
 	k8s.io/code-generator v0.30.1
-	k8s.io/kube-aggregator v0.22.17
+	k8s.io/kube-aggregator v0.30.1
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
 	sigs.k8s.io/controller-runtime v0.18.5
 	sigs.k8s.io/controller-tools v0.7.0
