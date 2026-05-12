@@ -9,8 +9,8 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/prometheus/client_golang v1.18.0
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/crypto v0.36.0
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/crypto v0.38.0
+	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/tools v0.29.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.30.1
@@ -18,21 +18,21 @@ require (
 	k8s.io/apiserver v0.30.1
 	k8s.io/client-go v0.30.1
 	k8s.io/code-generator v0.30.1
-	k8s.io/kube-aggregator v0.22.17
+	k8s.io/kube-aggregator v0.30.1
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
 	sigs.k8s.io/controller-runtime v0.18.5
-	sigs.k8s.io/controller-tools v0.7.0
+	sigs.k8s.io/controller-tools v0.15.0
 	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14
-	github.com/go-logr/logr v1.4.2
+	github.com/go-logr/logr v1.4.3
 	github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115
 	github.com/prometheus/client_model v0.5.0
-	github.com/spf13/cobra v1.9.1
-	golang.org/x/sync v0.13.0
+	github.com/spf13/cobra v1.10.2
+	golang.org/x/sync v0.14.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/component-base v0.30.1
 	k8s.io/klog/v2 v2.120.1
@@ -62,7 +62,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
-	github.com/gobuffalo/flect v0.2.3 // indirect
+	github.com/gobuffalo/flect v1.0.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/cel-go v0.17.8 // indirect
@@ -87,7 +87,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/spf13/pflag v1.0.6 // indirect
+	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/vito/go-interact v1.0.1 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.10 // indirect
@@ -109,8 +109,8 @@ require (
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/oauth2 v0.25.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
-	golang.org/x/term v0.30.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241202173237-19429a94021a // indirect
