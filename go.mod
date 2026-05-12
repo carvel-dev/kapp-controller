@@ -28,7 +28,7 @@ require (
 require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14
-	github.com/go-logr/logr v1.4.1
+	github.com/go-logr/logr v1.4.3
 	github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115
 	github.com/prometheus/client_model v0.5.0
 	github.com/spf13/cobra v1.10.2
