@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v2"
 	"k8s.io/client-go/util/jsonpath"
 )
 

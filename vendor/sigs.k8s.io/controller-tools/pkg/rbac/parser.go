@@ -19,17 +19,16 @@ limitations under the License.
 //
 // The markers take the form:
 //
-//  +kubebuilder:rbac:groups=<groups>,resources=<resources>,resourceNames=<resource names>,verbs=<verbs>,urls=<non resource urls>
+//	+kubebuilder:rbac:groups=<groups>,resources=<resources>,resourceNames=<resource names>,verbs=<verbs>,urls=<non resource urls>
 package rbac
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"sigs.k8s.io/controller-tools/pkg/genall"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
@@ -75,13 +74,6 @@ func (key ruleKey) String() string {
 	return fmt.Sprintf("%s + %s + %s + %s", key.Groups, key.Resources, key.ResourceNames, key.URLs)
 }
 
-// ruleKeys implements sort.Interface
-type ruleKeys []ruleKey
-
-func (keys ruleKeys) Len() int           { return len(keys) }
-func (keys ruleKeys) Swap(i, j int)      { keys[i], keys[j] = keys[j], keys[i] }
-func (keys ruleKeys) Less(i, j int) bool { return keys[i].String() < keys[j].String() }
-
 // key normalizes the Rule and returns a ruleKey object.
 func (r *Rule) key() ruleKey {
 	r.normalize()
@@ -91,6 +83,24 @@ func (r *Rule) key() ruleKey {
 		ResourceNames: strings.Join(r.ResourceNames, "&"),
 		URLs:          strings.Join(r.URLs, "&"),
 	}
+}
+
+func (r *Rule) keyWithGroupResourceNamesURLsVerbs() string {
+	key := r.key()
+	verbs := strings.Join(r.Verbs, "&")
+	return fmt.Sprintf("%s + %s + %s + %s", key.Groups, key.ResourceNames, key.URLs, verbs)
+}
+
+func (r *Rule) keyWithResourcesResourceNamesURLsVerbs() string {
+	key := r.key()
+	verbs := strings.Join(r.Verbs, "&")
+	return fmt.Sprintf("%s + %s + %s + %s", key.Resources, key.ResourceNames, key.URLs, verbs)
+}
+
+func (r *Rule) keyWitGroupResourcesResourceNamesVerbs() string {
+	key := r.key()
+	verbs := strings.Join(r.Verbs, "&")
+	return fmt.Sprintf("%s + %s + %s + %s", key.Groups, key.Resources, key.ResourceNames, verbs)
 }
 
 // addVerbs adds new verbs into a Rule.
@@ -122,18 +132,12 @@ func removeDupAndSort(strs []string) []string {
 	for str := range set {
 		result = append(result, str)
 	}
-	sort.Strings(result)
+	slices.Sort(result)
 	return result
 }
 
 // ToRule converts this rule to its Kubernetes API form.
 func (r *Rule) ToRule() rbacv1.PolicyRule {
-	// fix the group names first, since letting people type "core" is nice
-	for i, group := range r.Groups {
-		if group == "core" {
-			r.Groups[i] = ""
-		}
-	}
 	return rbacv1.PolicyRule{
 		APIGroups:       r.Groups,
 		Verbs:           r.Verbs,
@@ -149,6 +153,15 @@ func (r *Rule) ToRule() rbacv1.PolicyRule {
 type Generator struct {
 	// RoleName sets the name of the generated ClusterRole.
 	RoleName string
+
+	// FileName sets the file name for the generated manifest(s). If not set, defaults to "role.yaml".
+	FileName string `marker:",optional"`
+
+	// HeaderFile specifies the header text (e.g. license) to prepend to generated files.
+	HeaderFile string `marker:",optional"`
+
+	// Year specifies the year to substitute for " YEAR" in the header file.
+	Year string `marker:",optional"`
 }
 
 func (Generator) RegisterMarkers(into *markers.Registry) error {
@@ -161,23 +174,43 @@ func (Generator) RegisterMarkers(into *markers.Registry) error {
 
 // GenerateRoles generate a slice of objs representing either a ClusterRole or a Role object
 // The order of the objs in the returned slice is stable and determined by their namespaces.
-func GenerateRoles(ctx *genall.GenerationContext, roleName string) ([]interface{}, error) {
-	rulesByNS := make(map[string][]*Rule)
+func GenerateRoles(ctx *genall.GenerationContext, roleName string) ([]any, error) {
+	rulesByNSResource := make(map[string][]*Rule)
 	for _, root := range ctx.Roots {
 		markerSet, err := markers.PackageMarkers(ctx.Collector, root)
 		if err != nil {
 			root.AddError(err)
 		}
 
-		// group RBAC markers by namespace
+		// group RBAC markers by namespace and separate by resource
 		for _, markerValue := range markerSet[RuleDefinition.Name] {
 			rule := markerValue.(Rule)
-			namespace := rule.Namespace
-			if _, ok := rulesByNS[namespace]; !ok {
-				rules := make([]*Rule, 0)
-				rulesByNS[namespace] = rules
+			if len(rule.Resources) == 0 {
+				// Add a rule without any resource if Resources is empty.
+				r := Rule{
+					Groups:        rule.Groups,
+					Resources:     []string{},
+					ResourceNames: rule.ResourceNames,
+					URLs:          rule.URLs,
+					Namespace:     rule.Namespace,
+					Verbs:         rule.Verbs,
+				}
+				namespace := r.Namespace
+				rulesByNSResource[namespace] = append(rulesByNSResource[namespace], &r)
+				continue
 			}
-			rulesByNS[namespace] = append(rulesByNS[namespace], &rule)
+			for _, resource := range rule.Resources {
+				r := Rule{
+					Groups:        rule.Groups,
+					Resources:     []string{resource},
+					ResourceNames: rule.ResourceNames,
+					URLs:          rule.URLs,
+					Namespace:     rule.Namespace,
+					Verbs:         rule.Verbs,
+				}
+				namespace := r.Namespace
+				rulesByNSResource[namespace] = append(rulesByNSResource[namespace], &r)
+			}
 		}
 	}
 
@@ -186,6 +219,13 @@ func GenerateRoles(ctx *genall.GenerationContext, roleName string) ([]interface{
 		ruleMap := make(map[ruleKey]*Rule)
 		// all the Rules having the same ruleKey will be merged into the first Rule
 		for _, rule := range rules {
+			// fix the group name first, since letting people type "core" is nice
+			for i, name := range rule.Groups {
+				if name == "core" {
+					rule.Groups[i] = ""
+				}
+			}
+
 			key := rule.key()
 			if _, ok := ruleMap[key]; !ok {
 				ruleMap[key] = rule
@@ -194,32 +234,97 @@ func GenerateRoles(ctx *genall.GenerationContext, roleName string) ([]interface{
 			ruleMap[key].addVerbs(rule.Verbs)
 		}
 
+		// deduplicate resources
+		// 1. create map based on key without resources
+		ruleMapWithoutResources := make(map[string][]*Rule)
+		for _, rule := range ruleMap {
+			// get key without Resources
+			key := rule.keyWithGroupResourceNamesURLsVerbs()
+			ruleMapWithoutResources[key] = append(ruleMapWithoutResources[key], rule)
+		}
+		// 2. merge to ruleMap
+		ruleMap = make(map[ruleKey]*Rule)
+		for _, rules := range ruleMapWithoutResources {
+			rule := rules[0]
+			for _, mergeRule := range rules[1:] {
+				rule.Resources = append(rule.Resources, mergeRule.Resources...)
+			}
+
+			key := rule.key()
+			ruleMap[key] = rule
+		}
+
+		// deduplicate groups
+		// 1. create map based on key without group
+		ruleMapWithoutGroup := make(map[string][]*Rule)
+		for _, rule := range ruleMap {
+			// get key without Group
+			key := rule.keyWithResourcesResourceNamesURLsVerbs()
+			ruleMapWithoutGroup[key] = append(ruleMapWithoutGroup[key], rule)
+		}
+		// 2. merge to ruleMap
+		ruleMap = make(map[ruleKey]*Rule)
+		for _, rules := range ruleMapWithoutGroup {
+			rule := rules[0]
+			for _, mergeRule := range rules[1:] {
+				rule.Groups = append(rule.Groups, mergeRule.Groups...)
+			}
+			key := rule.key()
+			ruleMap[key] = rule
+		}
+
+		// deduplicate URLs
+		// 1. create map based on key without URLs
+		ruleMapWithoutURLs := make(map[string][]*Rule)
+		for _, rule := range ruleMap {
+			// get key without Group
+			key := rule.keyWitGroupResourcesResourceNamesVerbs()
+			ruleMapWithoutURLs[key] = append(ruleMapWithoutURLs[key], rule)
+		}
+		// 2. merge to ruleMap
+		ruleMap = make(map[ruleKey]*Rule)
+		for _, rules := range ruleMapWithoutURLs {
+			rule := rules[0]
+			for _, mergeRule := range rules[1:] {
+				rule.URLs = append(rule.URLs, mergeRule.URLs...)
+			}
+			key := rule.key()
+			ruleMap[key] = rule
+		}
+
 		// sort the Rules in rules according to their ruleKeys
 		keys := make([]ruleKey, 0, len(ruleMap))
 		for key := range ruleMap {
 			keys = append(keys, key)
 		}
-		sort.Sort(ruleKeys(keys))
+		slices.SortStableFunc(keys, func(a, b ruleKey) int {
+			return strings.Compare(a.String(), b.String())
+		})
 
+		// Normalize rule verbs to "*" if any verb in the rule is an asterisk
+		for _, rule := range ruleMap {
+			if slices.Contains(rule.Verbs, "*") {
+				rule.Verbs = []string{"*"}
+			}
+		}
 		var policyRules []rbacv1.PolicyRule
 		for _, key := range keys {
 			policyRules = append(policyRules, ruleMap[key].ToRule())
-
 		}
 		return policyRules
 	}
 
 	// collect all the namespaces and sort them
 	var namespaces []string
-	for ns := range rulesByNS {
+	for ns := range rulesByNSResource {
 		namespaces = append(namespaces, ns)
 	}
-	sort.Strings(namespaces)
+	slices.Sort(namespaces)
 
 	// process the items in rulesByNS by the order specified in `namespaces` to make sure that the Role order is stable
-	var objs []interface{}
+	var objs []any
 	for _, ns := range namespaces {
-		rules := rulesByNS[ns]
+		rules := rulesByNSResource[ns]
 		policyRules := NormalizeRules(rules)
 		if len(policyRules) == 0 {
 			continue
@@ -263,5 +368,20 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 		return nil
 	}
 
-	return ctx.WriteYAML("role.yaml", objs...)
+	var headerText string
+	if g.HeaderFile != "" {
+		headerBytes, err := ctx.ReadFile(g.HeaderFile)
+		if err != nil {
+			return err
+		}
+		headerText = string(headerBytes)
+	}
+	headerText = strings.ReplaceAll(headerText, " YEAR", " "+g.Year)
+
+	fileName := "role.yaml"
+	if g.FileName != "" {
+		fileName = g.FileName
+	}
+
+	return ctx.WriteYAML(fileName, headerText, objs, genall.WithTransform(genall.TransformRemoveCreationTimestamp))
 }

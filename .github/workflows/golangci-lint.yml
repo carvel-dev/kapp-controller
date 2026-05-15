@@ -22,11 +22,11 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Go 1.x
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.11
+          version: v2.12.2
           args: -v

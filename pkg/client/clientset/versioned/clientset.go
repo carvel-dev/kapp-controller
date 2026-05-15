@@ -3,8 +3,8 @@
 package versioned
 
 import (
-	"fmt"
-	"net/http"
+	fmt "fmt"
+	http "net/http"
 
 	internalv1alpha1 "carvel.dev/kapp-controller/pkg/client/clientset/versioned/typed/internalpackaging/v1alpha1"
 	kappctrlv1alpha1 "carvel.dev/kapp-controller/pkg/client/clientset/versioned/typed/kappctrl/v1alpha1"

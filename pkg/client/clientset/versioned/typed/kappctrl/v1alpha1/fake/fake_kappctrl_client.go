@@ -13,7 +13,7 @@ type FakeKappctrlV1alpha1 struct {
 }
 
 func (c *FakeKappctrlV1alpha1) Apps(namespace string) v1alpha1.AppInterface {
-	return &FakeApps{c, namespace}
+	return newFakeApps(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

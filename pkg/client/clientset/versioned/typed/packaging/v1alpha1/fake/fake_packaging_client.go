@@ -13,11 +13,11 @@ type FakePackagingV1alpha1 struct {
 }
 
 func (c *FakePackagingV1alpha1) PackageInstalls(namespace string) v1alpha1.PackageInstallInterface {
-	return &FakePackageInstalls{c, namespace}
+	return newFakePackageInstalls(c, namespace)
 }
 
 func (c *FakePackagingV1alpha1) PackageRepositories(namespace string) v1alpha1.PackageRepositoryInterface {
-	return &FakePackageRepositories{c, namespace}
+	return newFakePackageRepositories(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

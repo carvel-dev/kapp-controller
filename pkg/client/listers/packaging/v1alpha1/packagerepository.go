@@ -3,10 +3,10 @@
 package v1alpha1
 
 import (
-	v1alpha1 "carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	packagingv1alpha1 "carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // PackageRepositoryLister helps list PackageRepositories.
@@ -14,7 +14,7 @@ import (
 type PackageRepositoryLister interface {
 	// List lists all PackageRepositories in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.PackageRepository, err error)
+	List(selector labels.Selector) (ret []*packagingv1alpha1.PackageRepository, err error)
 	// PackageRepositories returns an object that can list and get PackageRepositories.
 	PackageRepositories(namespace string) PackageRepositoryNamespaceLister
 	PackageRepositoryListerExpansion
@@ -22,25 +22,17 @@ type PackageRepositoryLister interface {
 
 // packageRepositoryLister implements the PackageRepositoryLister interface.
 type packageRepositoryLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*packagingv1alpha1.PackageRepository]
 }
 
 // NewPackageRepositoryLister returns a new PackageRepositoryLister.
 func NewPackageRepositoryLister(indexer cache.Indexer) PackageRepositoryLister {
-	return &packageRepositoryLister{indexer: indexer}
-}
-
-// List lists all PackageRepositories in the indexer.
-func (s *packageRepositoryLister) List(selector labels.Selector) (ret []*v1alpha1.PackageRepository, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.PackageRepository))
-	})
-	return ret, err
+	return &packageRepositoryLister{listers.New[*packagingv1alpha1.PackageRepository](indexer, packagingv1alpha1.Resource("packagerepository"))}
 }
 
 // PackageRepositories returns an object that can list and get PackageRepositories.
 func (s *packageRepositoryLister) PackageRepositories(namespace string) PackageRepositoryNamespaceLister {
-	return packageRepositoryNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return packageRepositoryNamespaceLister{listers.NewNamespaced[*packagingv1alpha1.PackageRepository](s.ResourceIndexer, namespace)}
 }
 
 // PackageRepositoryNamespaceLister helps list and get PackageRepositories.
@@ -48,36 +40,15 @@ func (s *packageRepositoryLister) PackageRepositories(namespace string) PackageR
 type PackageRepositoryNamespaceLister interface {
 	// List lists all PackageRepositories in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.PackageRepository, err error)
+	List(selector labels.Selector) (ret []*packagingv1alpha1.PackageRepository, err error)
 	// Get retrieves the PackageRepository from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.PackageRepository, error)
+	Get(name string) (*packagingv1alpha1.PackageRepository, error)
 	PackageRepositoryNamespaceListerExpansion
 }
 
 // packageRepositoryNamespaceLister implements the PackageRepositoryNamespaceLister
 // interface.
 type packageRepositoryNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all PackageRepositories in the indexer for a given namespace.
-func (s packageRepositoryNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.PackageRepository, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.PackageRepository))
-	})
-	return ret, err
-}
-
-// Get retrieves the PackageRepository from the indexer for a given namespace and name.
-func (s packageRepositoryNamespaceLister) Get(name string) (*v1alpha1.PackageRepository, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("packagerepository"), name)
-	}
-	return obj.(*v1alpha1.PackageRepository), nil
+	listers.ResourceIndexer[*packagingv1alpha1.PackageRepository]
 }

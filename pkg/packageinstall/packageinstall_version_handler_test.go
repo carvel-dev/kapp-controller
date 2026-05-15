@@ -22,7 +22,9 @@ import (
 )
 
 func TestOnlyEligiblePackagesAreEnqueued(t *testing.T) {
-	q := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+	q := workqueue.NewTypedRateLimitingQueue[reconcile.Request](
+		workqueue.DefaultTypedControllerRateLimiter[reconcile.Request](),
+	)
 
 	eligibleInstalledPkg := pkgingv1alpha1.PackageInstall{
 		ObjectMeta: metav1.ObjectMeta{

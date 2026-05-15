@@ -31,16 +31,16 @@ import (
 type Collector struct {
 	*Registry
 
-	byPackage map[string]map[ast.Node]MarkerValues
+	byPackage map[*loader.Package]map[ast.Node]MarkerValues
 	mu        sync.Mutex
 }
 
 // MarkerValues are all the values for some set of markers.
-type MarkerValues map[string][]interface{}
+type MarkerValues map[string][]any
 
 // Get fetches the first value that for the given marker, returning
 // nil if no values are available.
-func (v MarkerValues) Get(name string) interface{} {
+func (v MarkerValues) Get(name string) any {
 	vals := v[name]
 	if len(vals) == 0 {
 		return nil
@@ -53,7 +53,7 @@ func (c *Collector) init() {
 		c.Registry = &Registry{}
 	}
 	if c.byPackage == nil {
-		c.byPackage = make(map[string]map[ast.Node]MarkerValues)
+		c.byPackage = make(map[*loader.Package]map[ast.Node]MarkerValues)
 	}
 }
 
@@ -65,17 +65,17 @@ func (c *Collector) init() {
 //
 // - it's in the Godoc for that AST node
 //
-// - it's in the closest non-godoc comment group above that node,
-//   *and* that node is a type or field node, *and* [it's either
-//   registered as type-level *or* it's not registered as being
-//   package-level]
+//   - it's in the closest non-godoc comment group above that node,
+//     *and* that node is a type or field node, *and* [it's either
+//     registered as type-level *or* it's not registered as being
+//     package-level]
 //
-// - it's not in the Godoc of a node, doesn't meet the above criteria, and
-//   isn't in a struct definition (in which case it's package-level)
+//   - it's not in the Godoc of a node, doesn't meet the above criteria, and
+//     isn't in a struct definition (in which case it's package-level)
 func (c *Collector) MarkersInPackage(pkg *loader.Package) (map[ast.Node]MarkerValues, error) {
 	c.mu.Lock()
 	c.init()
-	if markers, exist := c.byPackage[pkg.ID]; exist {
+	if markers, exist := c.byPackage[pkg]; exist {
 		c.mu.Unlock()
 		return markers, nil
 	}
@@ -91,8 +91,7 @@ func (c *Collector) MarkersInPackage(pkg *loader.Package) (map[ast.Node]MarkerVa
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.byPackage[pkg.ID] = markers
-
+	c.byPackage[pkg] = markers
 	return markers, nil
 }
 
@@ -110,7 +109,7 @@ func (c *Collector) parseMarkersInPackage(nodeMarkersRaw map[ast.Node][]markerCo
 		default:
 			target = DescribesType
 		}
-		markerVals := make(map[string][]interface{})
+		markerVals := make(map[string][]any)
 		for _, markerRaw := range markersRaw {
 			markerText := markerRaw.Text()
 			def := c.Registry.Lookup(markerText, target)
@@ -389,7 +388,6 @@ func (v markerSubVisitor) Visit(node ast.Node) ast.Visitor {
 	v.commentInd = lastCommentInd + 1
 
 	return resVisitor
-
 }
 
 // associatedCommentsFor returns the doc comment group (if relevant and present) and end-of-line comment

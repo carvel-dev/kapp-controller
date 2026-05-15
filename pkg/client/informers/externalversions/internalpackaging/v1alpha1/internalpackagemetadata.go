@@ -3,15 +3,16 @@
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	internalpackagingv1alpha1 "carvel.dev/kapp-controller/pkg/apis/internalpackaging/v1alpha1"
+	apisinternalpackagingv1alpha1 "carvel.dev/kapp-controller/pkg/apis/internalpackaging/v1alpha1"
 	versioned "carvel.dev/kapp-controller/pkg/client/clientset/versioned"
 	internalinterfaces "carvel.dev/kapp-controller/pkg/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "carvel.dev/kapp-controller/pkg/client/listers/internalpackaging/v1alpha1"
+	internalpackagingv1alpha1 "carvel.dev/kapp-controller/pkg/client/listers/internalpackaging/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -20,7 +21,7 @@ import (
 // InternalPackageMetadatas.
 type InternalPackageMetadataInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.InternalPackageMetadataLister
+	Lister() internalpackagingv1alpha1.InternalPackageMetadataLister
 }
 
 type internalPackageMetadataInformer struct {
@@ -33,42 +34,67 @@ type internalPackageMetadataInformer struct {
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
 func NewInternalPackageMetadataInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredInternalPackageMetadataInformer(client, namespace, resyncPeriod, indexers, nil)
+	return NewInternalPackageMetadataInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
 }
 
 // NewFilteredInternalPackageMetadataInformer constructs a new informer for InternalPackageMetadata type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredInternalPackageMetadataInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
+	return NewInternalPackageMetadataInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewInternalPackageMetadataInformerWithOptions constructs a new informer for InternalPackageMetadata type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewInternalPackageMetadataInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	gvr := schema.GroupVersionResource{Group: "internal.packaging.carvel.dev", Version: "v1alpha1", Resource: "internalpackagemetadatas"}
+	identifier := options.InformerName.WithResource(gvr)
+	tweakListOptions := options.TweakListOptions
+	return cache.NewSharedIndexInformerWithOptions(
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
+			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.InternalV1alpha1().InternalPackageMetadatas(namespace).List(context.TODO(), options)
+				return client.InternalV1alpha1().InternalPackageMetadatas(namespace).List(context.Background(), opts)
 			},
-			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.InternalV1alpha1().InternalPackageMetadatas(namespace).Watch(context.TODO(), options)
+				return client.InternalV1alpha1().InternalPackageMetadatas(namespace).Watch(context.Background(), opts)
 			},
+			ListWithContextFunc: func(ctx context.Context, opts v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.InternalV1alpha1().InternalPackageMetadatas(namespace).List(ctx, opts)
+			},
+			WatchFuncWithContext: func(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.InternalV1alpha1().InternalPackageMetadatas(namespace).Watch(ctx, opts)
+			},
+		}, client),
+		&apisinternalpackagingv1alpha1.InternalPackageMetadata{},
+		cache.SharedIndexInformerOptions{
+			ResyncPeriod: options.ResyncPeriod,
+			Indexers:     options.Indexers,
+			Identifier:   identifier,
 		},
-		&internalpackagingv1alpha1.InternalPackageMetadata{},
-		resyncPeriod,
-		indexers,
 	)
 }
 
 func (f *internalPackageMetadataInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredInternalPackageMetadataInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewInternalPackageMetadataInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *internalPackageMetadataInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&internalpackagingv1alpha1.InternalPackageMetadata{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisinternalpackagingv1alpha1.InternalPackageMetadata{}, f.defaultInformer)
 }
 
-func (f *internalPackageMetadataInformer) Lister() v1alpha1.InternalPackageMetadataLister {
-	return v1alpha1.NewInternalPackageMetadataLister(f.Informer().GetIndexer())
+func (f *internalPackageMetadataInformer) Lister() internalpackagingv1alpha1.InternalPackageMetadataLister {
+	return internalpackagingv1alpha1.NewInternalPackageMetadataLister(f.Informer().GetIndexer())
 }

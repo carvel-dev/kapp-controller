@@ -18,8 +18,10 @@ package genall
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 
+	"golang.org/x/tools/go/packages"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
 
@@ -30,6 +32,8 @@ var (
 // +controllertools:marker:generateHelp:category=""
 
 // InputPaths represents paths and go-style path patterns to use as package roots.
+//
+// Multiple paths can be specified using "{path1, path2, path3}".
 type InputPaths []string
 
 // RegisterOptionsMarkers registers "mandatory" options markers for FromOptions into the given registry.
@@ -39,7 +43,7 @@ func RegisterOptionsMarkers(into *markers.Registry) error {
 		return err
 	}
 	// NB(directxman12): we make this optional so we don't have a bootstrap problem with helpgen
-	if helpGiver, hasHelp := ((interface{})(InputPaths(nil))).(HasHelp); hasHelp {
+	if helpGiver, hasHelp := ((any)(InputPaths(nil))).(HasHelp); hasHelp {
 		into.AddHelp(InputPathsMarker, helpGiver.Help())
 	}
 	return nil
@@ -72,14 +76,17 @@ func RegistryFromOptions(optionsRegistry *markers.Registry, options []string) (*
 // further modified.  Not default generators are used if none are specified -- you can check
 // the output and rerun for that.
 func FromOptions(optionsRegistry *markers.Registry, options []string) (*Runtime, error) {
+	return FromOptionsWithConfig(&packages.Config{}, optionsRegistry, options)
+}
 
+func FromOptionsWithConfig(cfg *packages.Config, optionsRegistry *markers.Registry, options []string) (*Runtime, error) {
 	protoRt, err := protoFromOptions(optionsRegistry, options)
 	if err != nil {
 		return nil, err
 	}
 
 	// make the runtime
-	genRuntime, err := protoRt.Generators.ForRoots(protoRt.Paths...)
+	genRuntime, err := protoRt.Generators.ForRootsWithConfig(cfg, protoRt.Paths...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,9 +101,7 @@ func FromOptions(optionsRegistry *markers.Registry, options []string) (*Runtime,
 	}
 
 	outRules := DirectoryPerGenerator("config", protoRt.GeneratorsByName)
-	for gen, rule := range protoRt.OutputRules.ByGenerator {
-		outRules.ByGenerator[gen] = rule
-	}
+	maps.Copy(outRules.ByGenerator, protoRt.OutputRules.ByGenerator)
 
 	genRuntime.OutputRules = outRules
 	return genRuntime, nil
@@ -134,6 +139,9 @@ func protoFromOptions(optionsRegistry *markers.Registry, options []string) (prot
 		switch val := val.(type) {
 		case Generator:
 			gens = append(gens, &val)
+			if _, alreadyExists := gensByName[defn.Name]; alreadyExists {
+				return protoRuntime{}, fmt.Errorf("multiple instances of '%s' generator specified", defn.Name)
+			}
 			gensByName[defn.Name] = &val
 		case OutputRule:
 			_, genName := splitOutputRuleOption(defn.Name)
@@ -164,7 +172,7 @@ func protoFromOptions(optionsRegistry *markers.Registry, options []string) (prot
 
 	return protoRuntime{
 		Paths:            paths,
-		Generators:       Generators(gens),
+		Generators:       gens,
 		OutputRules:      rules,
 		GeneratorsByName: gensByName,
 	}, nil

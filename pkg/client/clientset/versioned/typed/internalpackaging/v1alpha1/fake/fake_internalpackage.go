@@ -3,111 +3,34 @@
 package fake
 
 import (
-	"context"
-
 	v1alpha1 "carvel.dev/kapp-controller/pkg/apis/internalpackaging/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	internalpackagingv1alpha1 "carvel.dev/kapp-controller/pkg/client/clientset/versioned/typed/internalpackaging/v1alpha1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeInternalPackages implements InternalPackageInterface
-type FakeInternalPackages struct {
+// fakeInternalPackages implements InternalPackageInterface
+type fakeInternalPackages struct {
+	*gentype.FakeClientWithList[*v1alpha1.InternalPackage, *v1alpha1.InternalPackageList]
 	Fake *FakeInternalV1alpha1
-	ns   string
 }
 
-var internalpackagesResource = v1alpha1.SchemeGroupVersion.WithResource("internalpackages")
-
-var internalpackagesKind = v1alpha1.SchemeGroupVersion.WithKind("InternalPackage")
-
-// Get takes name of the internalPackage, and returns the corresponding internalPackage object, and an error if there is any.
-func (c *FakeInternalPackages) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.InternalPackage, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(internalpackagesResource, c.ns, name), &v1alpha1.InternalPackage{})
-
-	if obj == nil {
-		return nil, err
+func newFakeInternalPackages(fake *FakeInternalV1alpha1, namespace string) internalpackagingv1alpha1.InternalPackageInterface {
+	return &fakeInternalPackages{
+		gentype.NewFakeClientWithList[*v1alpha1.InternalPackage, *v1alpha1.InternalPackageList](
+			fake.Fake,
+			namespace,
+			v1alpha1.SchemeGroupVersion.WithResource("internalpackages"),
+			v1alpha1.SchemeGroupVersion.WithKind("InternalPackage"),
+			func() *v1alpha1.InternalPackage { return &v1alpha1.InternalPackage{} },
+			func() *v1alpha1.InternalPackageList { return &v1alpha1.InternalPackageList{} },
+			func(dst, src *v1alpha1.InternalPackageList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.InternalPackageList) []*v1alpha1.InternalPackage {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1alpha1.InternalPackageList, items []*v1alpha1.InternalPackage) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.InternalPackage), err
-}
-
-// List takes label and field selectors, and returns the list of InternalPackages that match those selectors.
-func (c *FakeInternalPackages) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.InternalPackageList, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewListAction(internalpackagesResource, internalpackagesKind, c.ns, opts), &v1alpha1.InternalPackageList{})
-
-	if obj == nil {
-		return nil, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.InternalPackageList{ListMeta: obj.(*v1alpha1.InternalPackageList).ListMeta}
-	for _, item := range obj.(*v1alpha1.InternalPackageList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested internalPackages.
-func (c *FakeInternalPackages) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(internalpackagesResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a internalPackage and creates it.  Returns the server's representation of the internalPackage, and an error, if there is any.
-func (c *FakeInternalPackages) Create(ctx context.Context, internalPackage *v1alpha1.InternalPackage, opts v1.CreateOptions) (result *v1alpha1.InternalPackage, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(internalpackagesResource, c.ns, internalPackage), &v1alpha1.InternalPackage{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.InternalPackage), err
-}
-
-// Update takes the representation of a internalPackage and updates it. Returns the server's representation of the internalPackage, and an error, if there is any.
-func (c *FakeInternalPackages) Update(ctx context.Context, internalPackage *v1alpha1.InternalPackage, opts v1.UpdateOptions) (result *v1alpha1.InternalPackage, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(internalpackagesResource, c.ns, internalPackage), &v1alpha1.InternalPackage{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.InternalPackage), err
-}
-
-// Delete takes name of the internalPackage and deletes it. Returns an error if one occurs.
-func (c *FakeInternalPackages) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(internalpackagesResource, c.ns, name, opts), &v1alpha1.InternalPackage{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeInternalPackages) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(internalpackagesResource, c.ns, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.InternalPackageList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched internalPackage.
-func (c *FakeInternalPackages) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.InternalPackage, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(internalpackagesResource, c.ns, name, pt, data, subresources...), &v1alpha1.InternalPackage{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.InternalPackage), err
 }

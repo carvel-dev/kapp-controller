@@ -20,18 +20,24 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
-	jsonpatch "github.com/evanphx/json-patch"
+	"sigs.k8s.io/yaml"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	jsonpatch "gopkg.in/evanphx/json-patch.v4"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/api/meta/testrestmapper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/json"
+	"k8s.io/apimachinery/pkg/util/managedfields"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/watch"
 	restclient "k8s.io/client-go/rest"
@@ -46,26 +52,32 @@ type ObjectTracker interface {
 	Add(obj runtime.Object) error
 
 	// Get retrieves the object by its kind, namespace and name.
-	Get(gvr schema.GroupVersionResource, ns, name string) (runtime.Object, error)
+	Get(gvr schema.GroupVersionResource, ns, name string, opts ...metav1.GetOptions) (runtime.Object, error)
 
 	// Create adds an object to the tracker in the specified namespace.
-	Create(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error
+	Create(gvr schema.GroupVersionResource, obj runtime.Object, ns string, opts ...metav1.CreateOptions) error
 
 	// Update updates an existing object in the tracker in the specified namespace.
-	Update(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error
+	Update(gvr schema.GroupVersionResource, obj runtime.Object, ns string, opts ...metav1.UpdateOptions) error
+
+	// Patch patches an existing object in the tracker in the specified namespace.
+	Patch(gvr schema.GroupVersionResource, obj runtime.Object, ns string, opts ...metav1.PatchOptions) error
+
+	// Apply applies an object in the tracker in the specified namespace.
+	Apply(gvr schema.GroupVersionResource, applyConfiguration runtime.Object, ns string, opts ...metav1.PatchOptions) error
 
 	// List retrieves all objects of a given kind in the given
 	// namespace. Only non-List kinds are accepted.
-	List(gvr schema.GroupVersionResource, gvk schema.GroupVersionKind, ns string) (runtime.Object, error)
+	List(gvr schema.GroupVersionResource, gvk schema.GroupVersionKind, ns string, opts ...metav1.ListOptions) (runtime.Object, error)
 
 	// Delete deletes an existing object from the tracker. If object
 	// didn't exist in the tracker prior to deletion, Delete returns
 	// no error.
-	Delete(gvr schema.GroupVersionResource, ns, name string) error
+	Delete(gvr schema.GroupVersionResource, ns, name string, opts ...metav1.DeleteOptions) error
 
 	// Watch watches objects from the tracker. Watch returns a channel
 	// which will push added / modified / deleted object.
-	Watch(gvr schema.GroupVersionResource, ns string) (watch.Interface, error)
+	Watch(gvr schema.GroupVersionResource, ns string, opts ...metav1.ListOptions) (watch.Interface, error)
 }
 
 // ObjectScheme abstracts the implementation of common operations on objects.
@@ -76,146 +88,247 @@ type ObjectScheme interface {
 
 // ObjectReaction returns a ReactionFunc that applies core.Action to
 // the given tracker.
+//
+// If tracker also implements ManagedFieldObjectTracker, then managed fields
+// will be handled by the tracker and apply patch actions will be evaluated
+// using the field manager and will take field ownership into consideration.
+// Without a ManagedFieldObjectTracker, apply patch actions do not consider
+// field ownership.
+//
+// WARNING: There is no server side defaulting, validation, or conversion handled
+// by the fake client and subresources are not handled accurately (fields in the
+// root resource are not automatically updated when a scale resource is updated, for example).
 func ObjectReaction(tracker ObjectTracker) ReactionFunc {
+	reactor := objectTrackerReact{tracker: tracker}
 	return func(action Action) (bool, runtime.Object, error) {
-		ns := action.GetNamespace()
-		gvr := action.GetResource()
 		// Here and below we need to switch on implementation types,
 		// not on interfaces, as some interfaces are identical
 		// (e.g. UpdateAction and CreateAction), so if we use them,
 		// updates and creates end up matching the same case branch.
 		switch action := action.(type) {
-
 		case ListActionImpl:
-			obj, err := tracker.List(gvr, action.GetKind(), ns)
+			obj, err := reactor.List(action)
 			return true, obj, err
-
 		case GetActionImpl:
-			obj, err := tracker.Get(gvr, ns, action.GetName())
+			obj, err := reactor.Get(action)
 			return true, obj, err
-
 		case CreateActionImpl:
-			objMeta, err := meta.Accessor(action.GetObject())
-			if err != nil {
-				return true, nil, err
-			}
-			if action.GetSubresource() == "" {
-				err = tracker.Create(gvr, action.GetObject(), ns)
-			} else {
-				oldObj, getOldObjErr := tracker.Get(gvr, ns, objMeta.GetName())
-				if getOldObjErr != nil {
-					return true, nil, getOldObjErr
-				}
-				// Check whether the existing historical object type is the same as the current operation object type that needs to be updated, and if it is the same, perform the update operation.
-				if reflect.TypeOf(oldObj) == reflect.TypeOf(action.GetObject()) {
-					// TODO: Currently we're handling subresource creation as an update
-					// on the enclosing resource. This works for some subresources but
-					// might not be generic enough.
-					err = tracker.Update(gvr, action.GetObject(), ns)
-				} else {
-					// If the historical object type is different from the current object type, need to make sure we return the object submitted,don't persist the submitted object in the tracker.
-					return true, action.GetObject(), nil
-				}
-			}
-			if err != nil {
-				return true, nil, err
-			}
-			obj, err := tracker.Get(gvr, ns, objMeta.GetName())
+			obj, err := reactor.Create(action)
 			return true, obj, err
-
 		case UpdateActionImpl:
-			objMeta, err := meta.Accessor(action.GetObject())
-			if err != nil {
-				return true, nil, err
-			}
-			err = tracker.Update(gvr, action.GetObject(), ns)
-			if err != nil {
-				return true, nil, err
-			}
-			obj, err := tracker.Get(gvr, ns, objMeta.GetName())
+			obj, err := reactor.Update(action)
 			return true, obj, err
-
 		case DeleteActionImpl:
-			err := tracker.Delete(gvr, ns, action.GetName())
-			if err != nil {
-				return true, nil, err
-			}
-			return true, nil, nil
-
+			obj, err := reactor.Delete(action)
+			return true, obj, err
 		case PatchActionImpl:
-			obj, err := tracker.Get(gvr, ns, action.GetName())
-			if err != nil {
-				return true, nil, err
+			if action.GetPatchType() == types.ApplyPatchType {
+				obj, err := reactor.Apply(action)
+				return true, obj, err
 			}
-
-			old, err := json.Marshal(obj)
-			if err != nil {
-				return true, nil, err
-			}
-
-			// reset the object in preparation to unmarshal, since unmarshal does not guarantee that fields
-			// in obj that are removed by patch are cleared
-			value := reflect.ValueOf(obj)
-			value.Elem().Set(reflect.New(value.Type().Elem()).Elem())
-
-			switch action.GetPatchType() {
-			case types.JSONPatchType:
-				patch, err := jsonpatch.DecodePatch(action.GetPatch())
-				if err != nil {
-					return true, nil, err
-				}
-				modified, err := patch.Apply(old)
-				if err != nil {
-					return true, nil, err
-				}
-
-				if err = json.Unmarshal(modified, obj); err != nil {
-					return true, nil, err
-				}
-			case types.MergePatchType:
-				modified, err := jsonpatch.MergePatch(old, action.GetPatch())
-				if err != nil {
-					return true, nil, err
-				}
-
-				if err := json.Unmarshal(modified, obj); err != nil {
-					return true, nil, err
-				}
-			case types.StrategicMergePatchType, types.ApplyPatchType:
-				mergedByte, err := strategicpatch.StrategicMergePatch(old, action.GetPatch(), obj)
-				if err != nil {
-					return true, nil, err
-				}
-				if err = json.Unmarshal(mergedByte, obj); err != nil {
-					return true, nil, err
-				}
-			default:
-				return true, nil, fmt.Errorf("PatchType is not supported")
-			}
-
-			if err = tracker.Update(gvr, obj, ns); err != nil {
-				return true, nil, err
-			}
-
-			return true, obj, nil
-
+			obj, err := reactor.Patch(action)
+			return true, obj, err
 		default:
 			return false, nil, fmt.Errorf("no reaction implemented for %s", action)
 		}
 	}
 }
 
+type objectTrackerReact struct {
+	tracker ObjectTracker
+}
+
+func (o objectTrackerReact) List(action ListActionImpl) (runtime.Object, error) {
+	return o.tracker.List(action.GetResource(), action.GetKind(), action.GetNamespace(), action.ListOptions)
+}
+
+func (o objectTrackerReact) Get(action GetActionImpl) (runtime.Object, error) {
+	return o.tracker.Get(action.GetResource(), action.GetNamespace(), action.GetName(), action.GetOptions)
+}
+
+func (o objectTrackerReact) Create(action CreateActionImpl) (runtime.Object, error) {
+	ns := action.GetNamespace()
+	gvr := action.GetResource()
+	objMeta, err := meta.Accessor(action.GetObject())
+	if err != nil {
+		return nil, err
+	}
+	if action.GetSubresource() == "" {
+		err = o.tracker.Create(gvr, action.GetObject(), ns, action.CreateOptions)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		oldObj, getOldObjErr := o.tracker.Get(gvr, ns, objMeta.GetName(), metav1.GetOptions{})
+		if getOldObjErr != nil {
+			return nil, getOldObjErr
+		}
+		// Check whether the existing historical object type is the same as the current operation object type that needs to be updated, and if it is the same, perform the update operation.
+		if reflect.TypeOf(oldObj) == reflect.TypeOf(action.GetObject()) {
+			// TODO: Currently we're handling subresource creation as an update
+			// on the enclosing resource. This works for some subresources but
+			// might not be generic enough.
+			err = o.tracker.Update(gvr, action.GetObject(), ns, metav1.UpdateOptions{
+				DryRun:          action.CreateOptions.DryRun,
+				FieldManager:    action.CreateOptions.FieldManager,
+				FieldValidation: action.CreateOptions.FieldValidation,
+			})
+		} else {
+			// If the historical object type is different from the current object type, need to make sure we return the object submitted,don't persist the submitted object in the tracker.
+			return action.GetObject(), nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	obj, err := o.tracker.Get(gvr, ns, objMeta.GetName(), metav1.GetOptions{})
+	return obj, err
+}
+
+func (o objectTrackerReact) Update(action UpdateActionImpl) (runtime.Object, error) {
+	ns := action.GetNamespace()
+	gvr := action.GetResource()
+	objMeta, err := meta.Accessor(action.GetObject())
+	if err != nil {
+		return nil, err
+	}
+
+	err = o.tracker.Update(gvr, action.GetObject(), ns, action.UpdateOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	obj, err := o.tracker.Get(gvr, ns, objMeta.GetName(), metav1.GetOptions{})
+	return obj, err
+}
+
+func (o objectTrackerReact) Delete(action DeleteActionImpl) (runtime.Object, error) {
+	err := o.tracker.Delete(action.GetResource(), action.GetNamespace(), action.GetName(), action.DeleteOptions)
+	return nil, err
+}
+
+func (o objectTrackerReact) Apply(action PatchActionImpl) (runtime.Object, error) {
+	ns := action.GetNamespace()
+	gvr := action.GetResource()
+
+	patchObj := &unstructured.Unstructured{Object: map[string]interface{}{}}
+	if err := yaml.Unmarshal(action.GetPatch(), &patchObj.Object); err != nil {
+		return nil, err
+	}
+	patchObj.SetName(action.GetName())
+	err := o.tracker.Apply(gvr, patchObj, ns, action.PatchOptions)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := o.tracker.Get(gvr, ns, action.GetName(), metav1.GetOptions{})
+	return obj, err
+}
+
+func (o objectTrackerReact) Patch(action PatchActionImpl) (runtime.Object, error) {
+	ns := action.GetNamespace()
+	gvr := action.GetResource()
+
+	obj, err := o.tracker.Get(gvr, ns, action.GetName(), metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	old, err := json.Marshal(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	// reset the object in preparation to unmarshal, since unmarshal does not guarantee that fields
+	// in obj that are removed by patch are cleared
+	value := reflect.ValueOf(obj)
+	value.Elem().Set(reflect.New(value.Type().Elem()).Elem())
+
+	switch action.GetPatchType() {
+	case types.JSONPatchType:
+		patch, err := jsonpatch.DecodePatch(action.GetPatch())
+		if err != nil {
+			return nil, err
+		}
+		modified, err := patch.Apply(old)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = json.Unmarshal(modified, obj); err != nil {
+			return nil, err
+		}
+	case types.MergePatchType:
+		modified, err := jsonpatch.MergePatch(old, action.GetPatch())
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal(modified, obj); err != nil {
+			return nil, err
+		}
+	case types.StrategicMergePatchType:
+		mergedByte, err := strategicpatch.StrategicMergePatch(old, action.GetPatch(), obj)
+		if err != nil {
+			return nil, err
+		}
+		if err = json.Unmarshal(mergedByte, obj); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("PatchType %s is not supported", action.GetPatchType())
+	}
+
+	if err = o.tracker.Patch(gvr, obj, ns, action.PatchOptions); err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
 type tracker struct {
 	scheme  ObjectScheme
 	decoder runtime.Decoder
 	lock    sync.RWMutex
-	objects map[schema.GroupVersionResource]map[types.NamespacedName]runtime.Object
+	objects map[schema.GroupVersionResource]map[types.NamespacedName]versionedObject
 	// The value type of watchers is a map of which the key is either a namespace or
 	// all/non namespace aka "" and its value is list of fake watchers.
 	// Manipulations on resources will broadcast the notification events into the
 	// watchers' channel. Note that too many unhandled events (currently 100,
 	// see apimachinery/pkg/watch.DefaultChanSize) will cause a panic.
 	watchers map[schema.GroupVersionResource]map[string][]*watch.RaceFreeFakeWatcher
+	// resourceVersions is the highest resource version of any tracked object with
+	// a certain gvr. Conceptually it starts at 1 when no objects are stored (0 is
+	// special in queries) but the map contains no entries in that case.
+	// The resource version for that set of objects gets bumped before
+	// storing a new or modified object.
+	//
+	// Object content does not get changed to preserve the traditional behavior
+	// (hence also the versionedObject type instead of storing a runtime.Object
+	// with modified ResourceVersion).
+	//
+	// Resource version support (https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions)
+	// is very limited. It only supports one particular use case:
+	// List (no resource version check, returned ListMeta has ResourceVersion set) +
+	// Watch (Exact match for the ResourceVersion returned by List).
+	//
+	// This is sufficient for Reflector.ListAndWatch (https://github.com/kubernetes/kubernetes/blob/b53b9fb5573323484af9a19cf3f5bfe80760abba/staging/src/k8s.io/client-go/tools/cache/reflector.go#L401)
+	// when setting up informers in an informer factory.
+	//
+	// Strictly speaking, this should be by GroupVersion. But objects are
+	// also tracked by GroupVersionResource instead of GroupVersion, so the
+	// same is done here to match how List is implemented.
+	resourceVersions map[schema.GroupVersionResource]int64
+}
+
+// versionedObject stores an object together with the resource version that was
+// assigned to it by the tracker. The version could be stored inline in the object,
+// but this is not how fake client-go has traditionally worked and starting to do
+// that now might break tests.
+type versionedObject struct {
+	// resourceVersion is always > 1 for a stored object because 1
+	// is the initial value for an empty set of objects.
+	resourceVersion int64
+	runtime.Object
 }
 
 var _ ObjectTracker = &tracker{}
@@ -224,14 +337,19 @@ var _ ObjectTracker = &tracker{}
 // of objects for the fake clientset. Mostly useful for unit tests.
 func NewObjectTracker(scheme ObjectScheme, decoder runtime.Decoder) ObjectTracker {
 	return &tracker{
-		scheme:   scheme,
-		decoder:  decoder,
-		objects:  make(map[schema.GroupVersionResource]map[types.NamespacedName]runtime.Object),
-		watchers: make(map[schema.GroupVersionResource]map[string][]*watch.RaceFreeFakeWatcher),
+		scheme:           scheme,
+		decoder:          decoder,
+		objects:          make(map[schema.GroupVersionResource]map[types.NamespacedName]versionedObject),
+		watchers:         make(map[schema.GroupVersionResource]map[string][]*watch.RaceFreeFakeWatcher),
+		resourceVersions: make(map[schema.GroupVersionResource]int64),
 	}
 }
 
-func (t *tracker) List(gvr schema.GroupVersionResource, gvk schema.GroupVersionKind, ns string) (runtime.Object, error) {
+func (t *tracker) List(gvr schema.GroupVersionResource, gvk schema.GroupVersionKind, ns string, opts ...metav1.ListOptions) (runtime.Object, error) {
+	_, err := assertOptionalSingleArgument(opts)
+	if err != nil {
+		return nil, err
+	}
 	// Heuristic for list kind: original kind + List suffix. Might
 	// not always be true but this tracker has a pretty limited
 	// understanding of the actual API model.
@@ -255,14 +373,26 @@ func (t *tracker) List(gvr schema.GroupVersionResource, gvk schema.GroupVersionK
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 
+	if listMeta, err := meta.ListAccessor(list); err == nil {
+		resourceVersion, ok := t.resourceVersions[gvr]
+		if !ok {
+			resourceVersion = 1
+		}
+		listMeta.SetResourceVersion(fmt.Sprintf("%d", resourceVersion))
+	}
+
 	objs, ok := t.objects[gvr]
 	if !ok {
 		return list, nil
 	}
 
-	matchingObjs, err := filterByNamespace(objs, ns)
+	matchingVersionedObjs, err := filterByNamespace(objs, ns)
 	if err != nil {
 		return nil, err
+	}
+	matchingObjs := make([]runtime.Object, len(matchingVersionedObjs))
+	for i, obj := range matchingVersionedObjs {
+		matchingObjs[i] = obj.Object
 	}
 	if err := meta.SetList(list, matchingObjs); err != nil {
 		return nil, err
@@ -270,7 +400,33 @@ func (t *tracker) List(gvr schema.GroupVersionResource, gvk schema.GroupVersionK
 	return list.DeepCopyObject(), nil
 }
 
-func (t *tracker) Watch(gvr schema.GroupVersionResource, ns string) (watch.Interface, error) {
+func (t *tracker) Watch(gvr schema.GroupVersionResource, ns string, opts ...metav1.ListOptions) (watch.Interface, error) {
+	_, err := assertOptionalSingleArgument(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// By default, emulate the traditional behavior of the tracker and don't deliver
+	// *any* existing objects unless list options are provided.
+	addExisting := false
+	addFromRV := int64(0)
+	if len(opts) > 0 {
+		// Providing options, as the generated client-go fake does, enables support
+		// for existing objects depending on the resource version.
+		//
+		// The default if ResourceVersion is empty is "start at most recent",
+		// which includes delivering all existing objects. addFromRV == 0
+		// matches all objects below because all stored objects have addFromRV > 0.
+		addExisting = true
+		if opts[0].ResourceVersion != "" {
+			rv, err := strconv.ParseInt(opts[0].ResourceVersion, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid ResourceVersion %q in ListOptions, must be int64: %w", opts[0].ResourceVersion, err)
+			}
+			addFromRV = rv
+		}
+	}
+
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
@@ -280,11 +436,31 @@ func (t *tracker) Watch(gvr schema.GroupVersionResource, ns string) (watch.Inter
 		t.watchers[gvr] = make(map[string][]*watch.RaceFreeFakeWatcher)
 	}
 	t.watchers[gvr][ns] = append(t.watchers[gvr][ns], fakewatcher)
+
+	// Deliver all objects that match the list options, for example
+	// between the initial List and the following Watch.
+	if addExisting {
+		objs := t.objects[gvr]
+		matchingObjs, err := filterByNamespace(objs, ns)
+		if err != nil {
+			return nil, err
+		}
+		for _, obj := range matchingObjs {
+			if addFromRV < obj.resourceVersion {
+				fakewatcher.Add(obj.Object)
+			}
+		}
+	}
+
 	return fakewatcher, nil
 }
 
-func (t *tracker) Get(gvr schema.GroupVersionResource, ns, name string) (runtime.Object, error) {
-	errNotFound := errors.NewNotFound(gvr.GroupResource(), name)
+func (t *tracker) Get(gvr schema.GroupVersionResource, ns, name string, opts ...metav1.GetOptions) (runtime.Object, error) {
+	_, err := assertOptionalSingleArgument(opts)
+	if err != nil {
+		return nil, err
+	}
+	errNotFound := apierrors.NewNotFound(gvr.GroupResource(), name)
 
 	t.lock.RLock()
 	defer t.lock.RUnlock()
@@ -305,7 +481,7 @@ func (t *tracker) Get(gvr schema.GroupVersionResource, ns, name string) (runtime
 	obj := matchingObj.DeepCopyObject()
 	if status, ok := obj.(*metav1.Status); ok {
 		if status.Status != metav1.StatusSuccess {
-			return nil, &errors.StatusError{ErrStatus: *status}
+			return nil, &apierrors.StatusError{ErrStatus: *status}
 		}
 	}
 
@@ -352,12 +528,82 @@ func (t *tracker) Add(obj runtime.Object) error {
 	return nil
 }
 
-func (t *tracker) Create(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error {
+func (t *tracker) Create(gvr schema.GroupVersionResource, obj runtime.Object, ns string, opts ...metav1.CreateOptions) error {
+	_, err := assertOptionalSingleArgument(opts)
+	if err != nil {
+		return err
+	}
 	return t.add(gvr, obj, ns, false)
 }
 
-func (t *tracker) Update(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error {
+func (t *tracker) Update(gvr schema.GroupVersionResource, obj runtime.Object, ns string, opts ...metav1.UpdateOptions) error {
+	_, err := assertOptionalSingleArgument(opts)
+	if err != nil {
+		return err
+	}
 	return t.add(gvr, obj, ns, true)
+}
+
+func (t *tracker) Patch(gvr schema.GroupVersionResource, patchedObject runtime.Object, ns string, opts ...metav1.PatchOptions) error {
+	_, err := assertOptionalSingleArgument(opts)
+	if err != nil {
+		return err
+	}
+	return t.add(gvr, patchedObject, ns, true)
+}
+
+func (t *tracker) Apply(gvr schema.GroupVersionResource, applyConfiguration runtime.Object, ns string, opts ...metav1.PatchOptions) error {
+	_, err := assertOptionalSingleArgument(opts)
+	if err != nil {
+		return err
+	}
+	applyConfigurationMeta, err := meta.Accessor(applyConfiguration)
+	if err != nil {
+		return err
+	}
+
+	obj, err := t.Get(gvr, ns, applyConfigurationMeta.GetName(), metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	old, err := json.Marshal(obj)
+	if err != nil {
+		return err
+	}
+
+	// reset the object in preparation to unmarshal, since unmarshal does not guarantee that fields
+	// in obj that are removed by patch are cleared
+	value := reflect.ValueOf(obj)
+	value.Elem().Set(reflect.New(value.Type().Elem()).Elem())
+
+	// For backward compatibility with behavior 1.30 and earlier, continue to handle apply
+	// via strategic merge patch (clients may use fake.NewClientset and ManagedFieldObjectTracker
+	// for full field manager support).
+	patch, err := json.Marshal(applyConfiguration)
+	if err != nil {
+		return err
+	}
+	mergedByte, err := strategicpatch.StrategicMergePatch(old, patch, obj)
+	if err != nil {
+		return err
+	}
+	if err = json.Unmarshal(mergedByte, obj); err != nil {
+		return err
+	}
+
+	return t.add(gvr, obj, ns, true)
+}
+
+// IsWatchListSemanticsUnSupported informs the reflector that this client
+// doesn't support WatchList semantics.
+//
+// This is a synthetic method whose sole purpose is to satisfy the optional
+// interface check performed by the reflector.
+// Returning true signals that WatchList can NOT be used.
+// No additional logic is implemented here.
+func (t *tracker) IsWatchListSemanticsUnSupported() bool {
+	return true
 }
 
 func (t *tracker) getWatches(gvr schema.GroupVersionResource, ns string) []*watch.RaceFreeFakeWatcher {
@@ -398,33 +644,43 @@ func (t *tracker) add(gvr schema.GroupVersionResource, obj runtime.Object, ns st
 
 	if ns != newMeta.GetNamespace() {
 		msg := fmt.Sprintf("request namespace does not match object namespace, request: %q object: %q", ns, newMeta.GetNamespace())
-		return errors.NewBadRequest(msg)
+		return apierrors.NewBadRequest(msg)
 	}
 
 	_, ok := t.objects[gvr]
 	if !ok {
-		t.objects[gvr] = make(map[types.NamespacedName]runtime.Object)
+		t.objects[gvr] = make(map[types.NamespacedName]versionedObject)
 	}
+
+	// Determine resource version for the new or updated object.
+	resourceVersion, ok := t.resourceVersions[gvr]
+	if !ok {
+		resourceVersion = 1
+	}
+	resourceVersion++
 
 	namespacedName := types.NamespacedName{Namespace: newMeta.GetNamespace(), Name: newMeta.GetName()}
 	if _, ok = t.objects[gvr][namespacedName]; ok {
 		if replaceExisting {
+			t.resourceVersions[gvr] = resourceVersion
+			t.objects[gvr][namespacedName] = versionedObject{resourceVersion, obj}
+
 			for _, w := range t.getWatches(gvr, ns) {
 				// To avoid the object from being accidentally modified by watcher
 				w.Modify(obj.DeepCopyObject())
 			}
-			t.objects[gvr][namespacedName] = obj
 			return nil
 		}
-		return errors.NewAlreadyExists(gr, newMeta.GetName())
+		return apierrors.NewAlreadyExists(gr, newMeta.GetName())
 	}
 
 	if replaceExisting {
 		// Tried to update but no matching object was found.
-		return errors.NewNotFound(gr, newMeta.GetName())
+		return apierrors.NewNotFound(gr, newMeta.GetName())
 	}
 
-	t.objects[gvr][namespacedName] = obj
+	t.resourceVersions[gvr] = resourceVersion
+	t.objects[gvr][namespacedName] = versionedObject{resourceVersion, obj}
 
 	for _, w := range t.getWatches(gvr, ns) {
 		// To avoid the object from being accidentally modified by watcher
@@ -451,19 +707,23 @@ func (t *tracker) addList(obj runtime.Object, replaceExisting bool) error {
 	return nil
 }
 
-func (t *tracker) Delete(gvr schema.GroupVersionResource, ns, name string) error {
+func (t *tracker) Delete(gvr schema.GroupVersionResource, ns, name string, opts ...metav1.DeleteOptions) error {
+	_, err := assertOptionalSingleArgument(opts)
+	if err != nil {
+		return err
+	}
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
 	objs, ok := t.objects[gvr]
 	if !ok {
-		return errors.NewNotFound(gvr.GroupResource(), name)
+		return apierrors.NewNotFound(gvr.GroupResource(), name)
 	}
 
 	namespacedName := types.NamespacedName{Namespace: ns, Name: name}
 	obj, ok := objs[namespacedName]
 	if !ok {
-		return errors.NewNotFound(gvr.GroupResource(), name)
+		return apierrors.NewNotFound(gvr.GroupResource(), name)
 	}
 
 	delete(objs, namespacedName)
@@ -473,14 +733,213 @@ func (t *tracker) Delete(gvr schema.GroupVersionResource, ns, name string) error
 	return nil
 }
 
+type managedFieldObjectTracker struct {
+	ObjectTracker
+	scheme          ObjectScheme
+	objectConverter runtime.ObjectConvertor
+	mapper          func() meta.RESTMapper
+	typeConverter   managedfields.TypeConverter
+}
+
+var _ ObjectTracker = &managedFieldObjectTracker{}
+
+// NewFieldManagedObjectTracker returns an ObjectTracker that can be used to keep track
+// of objects and managed fields for the fake clientset. Mostly useful for unit tests.
+func NewFieldManagedObjectTracker(scheme *runtime.Scheme, decoder runtime.Decoder, typeConverter managedfields.TypeConverter) ObjectTracker {
+	return &managedFieldObjectTracker{
+		ObjectTracker:   NewObjectTracker(scheme, decoder),
+		scheme:          scheme,
+		objectConverter: scheme,
+		mapper: func() meta.RESTMapper {
+			return testrestmapper.TestOnlyStaticRESTMapper(scheme)
+		},
+		typeConverter: typeConverter,
+	}
+}
+
+func (t *managedFieldObjectTracker) Create(gvr schema.GroupVersionResource, obj runtime.Object, ns string, vopts ...metav1.CreateOptions) error {
+	opts, err := assertOptionalSingleArgument(vopts)
+	if err != nil {
+		return err
+	}
+	gvk, err := t.mapper().KindFor(gvr)
+	if err != nil {
+		return err
+	}
+	mgr, err := t.fieldManagerFor(gvk)
+	if err != nil {
+		return err
+	}
+
+	objType, err := meta.TypeAccessor(obj)
+	if err != nil {
+		return err
+	}
+	// Stamp GVK
+	apiVersion, kind := gvk.ToAPIVersionAndKind()
+	objType.SetAPIVersion(apiVersion)
+	objType.SetKind(kind)
+
+	objMeta, err := meta.Accessor(obj)
+	if err != nil {
+		return err
+	}
+	liveObject, err := t.ObjectTracker.Get(gvr, ns, objMeta.GetName(), metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		liveObject, err = t.scheme.New(gvk)
+		if err != nil {
+			return err
+		}
+		liveObject.GetObjectKind().SetGroupVersionKind(gvk)
+	} else if err != nil {
+		return err
+	}
+	objWithManagedFields, err := mgr.Update(liveObject, obj, opts.FieldManager)
+	if err != nil {
+		return err
+	}
+	return t.ObjectTracker.Create(gvr, objWithManagedFields, ns, opts)
+}
+
+func (t *managedFieldObjectTracker) Update(gvr schema.GroupVersionResource, obj runtime.Object, ns string, vopts ...metav1.UpdateOptions) error {
+	opts, err := assertOptionalSingleArgument(vopts)
+	if err != nil {
+		return err
+	}
+	gvk, err := t.mapper().KindFor(gvr)
+	if err != nil {
+		return err
+	}
+	mgr, err := t.fieldManagerFor(gvk)
+	if err != nil {
+		return err
+	}
+
+	objMeta, err := meta.Accessor(obj)
+	if err != nil {
+		return err
+	}
+	oldObj, err := t.ObjectTracker.Get(gvr, ns, objMeta.GetName(), metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	objWithManagedFields, err := mgr.Update(oldObj, obj, opts.FieldManager)
+	if err != nil {
+		return err
+	}
+
+	return t.ObjectTracker.Update(gvr, objWithManagedFields, ns, opts)
+}
+
+func (t *managedFieldObjectTracker) Patch(gvr schema.GroupVersionResource, patchedObject runtime.Object, ns string, vopts ...metav1.PatchOptions) error {
+	opts, err := assertOptionalSingleArgument(vopts)
+	if err != nil {
+		return err
+	}
+	gvk, err := t.mapper().KindFor(gvr)
+	if err != nil {
+		return err
+	}
+	mgr, err := t.fieldManagerFor(gvk)
+	if err != nil {
+		return err
+	}
+
+	objMeta, err := meta.Accessor(patchedObject)
+	if err != nil {
+		return err
+	}
+	oldObj, err := t.ObjectTracker.Get(gvr, ns, objMeta.GetName(), metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	objWithManagedFields, err := mgr.Update(oldObj, patchedObject, opts.FieldManager)
+	if err != nil {
+		return err
+	}
+	return t.ObjectTracker.Patch(gvr, objWithManagedFields, ns, vopts...)
+}
+
+func (t *managedFieldObjectTracker) Apply(gvr schema.GroupVersionResource, applyConfiguration runtime.Object, ns string, vopts ...metav1.PatchOptions) error {
+	opts, err := assertOptionalSingleArgument(vopts)
+	if err != nil {
+		return err
+	}
+	gvk, err := t.mapper().KindFor(gvr)
+	if err != nil {
+		return err
+	}
+	applyConfigurationMeta, err := meta.Accessor(applyConfiguration)
+	if err != nil {
+		return err
+	}
+
+	exists := true
+	liveObject, err := t.ObjectTracker.Get(gvr, ns, applyConfigurationMeta.GetName(), metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		exists = false
+		liveObject, err = t.scheme.New(gvk)
+		if err != nil {
+			return err
+		}
+		liveObject.GetObjectKind().SetGroupVersionKind(gvk)
+	} else if err != nil {
+		return err
+	}
+	mgr, err := t.fieldManagerFor(gvk)
+	if err != nil {
+		return err
+	}
+	force := false
+	if opts.Force != nil {
+		force = *opts.Force
+	}
+	objWithManagedFields, err := mgr.Apply(liveObject, applyConfiguration, opts.FieldManager, force)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return t.ObjectTracker.Create(gvr, objWithManagedFields, ns, metav1.CreateOptions{
+			DryRun:          opts.DryRun,
+			FieldManager:    opts.FieldManager,
+			FieldValidation: opts.FieldValidation,
+		})
+	} else {
+		return t.ObjectTracker.Update(gvr, objWithManagedFields, ns, metav1.UpdateOptions{
+			DryRun:          opts.DryRun,
+			FieldManager:    opts.FieldManager,
+			FieldValidation: opts.FieldValidation,
+		})
+	}
+}
+
+func (t *managedFieldObjectTracker) fieldManagerFor(gvk schema.GroupVersionKind) (*managedfields.FieldManager, error) {
+	return managedfields.NewDefaultFieldManager(
+		t.typeConverter,
+		t.objectConverter,
+		&objectDefaulter{},
+		t.scheme,
+		gvk,
+		gvk.GroupVersion(),
+		"",
+		nil)
+}
+
+// objectDefaulter implements runtime.Defaulter, but it actually
+// does nothing.
+type objectDefaulter struct{}
+
+func (d *objectDefaulter) Default(_ runtime.Object) {}
+
 // filterByNamespace returns all objects in the collection that
 // match provided namespace. Empty namespace matches
 // non-namespaced objects.
-func filterByNamespace(objs map[types.NamespacedName]runtime.Object, ns string) ([]runtime.Object, error) {
-	var res []runtime.Object
+func filterByNamespace(objs map[types.NamespacedName]versionedObject, ns string) ([]versionedObject, error) {
+	var res []versionedObject
 
 	for _, obj := range objs {
-		acc, err := meta.Accessor(obj)
+		acc, err := meta.Accessor(obj.Object)
 		if err != nil {
 			return nil, err
 		}
@@ -492,8 +951,8 @@ func filterByNamespace(objs map[types.NamespacedName]runtime.Object, ns string) 
 
 	// Sort res to get deterministic order.
 	sort.Slice(res, func(i, j int) bool {
-		acc1, _ := meta.Accessor(res[i])
-		acc2, _ := meta.Accessor(res[j])
+		acc1, _ := meta.Accessor(res[i].Object)
+		acc2, _ := meta.Accessor(res[j].Object)
 		if acc1.GetNamespace() != acc2.GetNamespace() {
 			return acc1.GetNamespace() < acc2.GetNamespace()
 		}
@@ -578,4 +1037,18 @@ func resourceCovers(resource string, action Action) bool {
 	}
 
 	return false
+}
+
+// assertOptionalSingleArgument returns an error if there is more than one variadic argument.
+// Otherwise, it returns the first variadic argument, or zero value if there are no arguments.
+func assertOptionalSingleArgument[T any](arguments []T) (T, error) {
+	var a T
+	switch len(arguments) {
+	case 0:
+		return a, nil
+	case 1:
+		return arguments[0], nil
+	default:
+		return a, fmt.Errorf("expected only one option argument but got %d", len(arguments))
+	}
 }

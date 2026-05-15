@@ -52,8 +52,9 @@ func (r *Registry) init() {
 
 // Define defines a new marker with the given name, target, and output type.
 // It's a shortcut around
-//  r.Register(MakeDefinition(name, target, obj))
-func (r *Registry) Define(name string, target TargetType, obj interface{}) error {
+//
+//	r.Register(MakeDefinition(name, target, obj))
+func (r *Registry) Define(name string, target TargetType, obj any) error {
 	def, err := MakeDefinition(name, target, obj)
 	if err != nil {
 		return err

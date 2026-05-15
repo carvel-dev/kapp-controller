@@ -3,10 +3,10 @@
 package v1alpha1
 
 import (
-	v1alpha1 "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	datapackagingv1alpha1 "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // PackageMetadataLister helps list PackageMetadatas.
@@ -14,7 +14,7 @@ import (
 type PackageMetadataLister interface {
 	// List lists all PackageMetadatas in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.PackageMetadata, err error)
+	List(selector labels.Selector) (ret []*datapackagingv1alpha1.PackageMetadata, err error)
 	// PackageMetadatas returns an object that can list and get PackageMetadatas.
 	PackageMetadatas(namespace string) PackageMetadataNamespaceLister
 	PackageMetadataListerExpansion
@@ -22,25 +22,17 @@ type PackageMetadataLister interface {
 
 // foo_PackageMetadataLister implements the PackageMetadataLister interface.
 type foo_PackageMetadataLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*datapackagingv1alpha1.PackageMetadata]
 }
 
 // NewPackageMetadataLister returns a new PackageMetadataLister.
 func NewPackageMetadataLister(indexer cache.Indexer) PackageMetadataLister {
-	return &foo_PackageMetadataLister{indexer: indexer}
-}
-
-// List lists all PackageMetadatas in the indexer.
-func (s *foo_PackageMetadataLister) List(selector labels.Selector) (ret []*v1alpha1.PackageMetadata, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.PackageMetadata))
-	})
-	return ret, err
+	return &foo_PackageMetadataLister{listers.New[*datapackagingv1alpha1.PackageMetadata](indexer, datapackagingv1alpha1.Resource("packagemetadata"))}
 }
 
 // PackageMetadatas returns an object that can list and get PackageMetadatas.
 func (s *foo_PackageMetadataLister) PackageMetadatas(namespace string) PackageMetadataNamespaceLister {
-	return foo_PackageMetadataNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return foo_PackageMetadataNamespaceLister{listers.NewNamespaced[*datapackagingv1alpha1.PackageMetadata](s.ResourceIndexer, namespace)}
 }
 
 // PackageMetadataNamespaceLister helps list and get PackageMetadatas.
@@ -48,36 +40,15 @@ func (s *foo_PackageMetadataLister) PackageMetadatas(namespace string) PackageMe
 type PackageMetadataNamespaceLister interface {
 	// List lists all PackageMetadatas in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.PackageMetadata, err error)
+	List(selector labels.Selector) (ret []*datapackagingv1alpha1.PackageMetadata, err error)
 	// Get retrieves the PackageMetadata from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.PackageMetadata, error)
+	Get(name string) (*datapackagingv1alpha1.PackageMetadata, error)
 	PackageMetadataNamespaceListerExpansion
 }
 
 // foo_PackageMetadataNamespaceLister implements the PackageMetadataNamespaceLister
 // interface.
 type foo_PackageMetadataNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all PackageMetadatas in the indexer for a given namespace.
-func (s foo_PackageMetadataNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.PackageMetadata, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.PackageMetadata))
-	})
-	return ret, err
-}
-
-// Get retrieves the PackageMetadata from the indexer for a given namespace and name.
-func (s foo_PackageMetadataNamespaceLister) Get(name string) (*v1alpha1.PackageMetadata, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("packagemetadata"), name)
-	}
-	return obj.(*v1alpha1.PackageMetadata), nil
+	listers.ResourceIndexer[*datapackagingv1alpha1.PackageMetadata]
 }

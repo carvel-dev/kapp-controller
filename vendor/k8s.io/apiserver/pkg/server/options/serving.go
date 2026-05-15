@@ -44,6 +44,8 @@ type SecureServingOptions struct {
 	// BindNetwork is the type of network to bind to - defaults to "tcp", accepts "tcp",
 	// "tcp4", and "tcp6".
 	BindNetwork string
+	// DisableHTTP2Serving indicates that http2 serving should not be enabled.
+	DisableHTTP2Serving bool
 	// Required set to true means that BindPort cannot be zero.
 	Required bool
 	// ExternalAddress is the address advertised, even if BindAddress is a loopback. By default this
@@ -62,6 +64,14 @@ type SecureServingOptions struct {
 	// CipherSuites is the list of allowed cipher suites for the server.
 	// Values are from tls package constants (https://golang.org/pkg/crypto/tls/#pkg-constants).
 	CipherSuites []string
+	// CurvePreferences is the set of allowed key exchange mechanisms for the server,
+	// specified as numeric Go crypto/tls CurveID values.
+	// The supported values depend on the Go version used.
+	// See https://pkg.go.dev/crypto/tls#CurveID for values supported for each Go version.
+	// The order of the list is ignored, and key exchange mechanisms are
+	// chosen by Go from this list using an internal preference order.
+	// If empty, the default Go curves will be used.
+	CurvePreferences []int32
 	// MinTLSVersion is the minimum TLS version supported.
 	// Values are from tls package constants (https://golang.org/pkg/crypto/tls/#pkg-constants).
 	MinTLSVersion string
@@ -163,6 +173,9 @@ func (s *SecureServingOptions) AddFlags(fs *pflag.FlagSet) {
 	}
 	fs.IntVar(&s.BindPort, "secure-port", s.BindPort, desc)
 
+	fs.BoolVar(&s.DisableHTTP2Serving, "disable-http2-serving", s.DisableHTTP2Serving,
+		"If true, HTTP2 serving will be disabled [default=false]")
+
 	fs.StringVar(&s.ServerCert.CertDirectory, "cert-dir", s.ServerCert.CertDirectory, ""+
 		"The directory where the TLS certs are located. "+
 		"If --tls-cert-file and --tls-private-key-file are provided, this flag will be ignored.")
@@ -183,6 +196,15 @@ func (s *SecureServingOptions) AddFlags(fs *pflag.FlagSet) {
 			"If omitted, the default Go cipher suites will be used. \n"+
 			"Preferred values: "+strings.Join(tlsCipherPreferredValues, ", ")+". \n"+
 			"Insecure values: "+strings.Join(tlsCipherInsecureValues, ", ")+".")
+
+	fs.Int32SliceVar(&s.CurvePreferences, "tls-curve-preferences", s.CurvePreferences,
+		"Comma-separated list of numeric Go crypto/tls CurveID values, "+
+			"as the allowed key exchange mechanisms for the server. "+
+			"The supported values depend on the Go version used. "+
+			"See https://pkg.go.dev/crypto/tls#CurveID for values supported for each Go version. "+
+			"The order of the list is ignored, and key exchange mechanisms are chosen "+
+			"by Go from this list using an internal preference order. "+
+			"If omitted, the default Go curves will be used.")
 
 	tlsPossibleVersions := cliflag.TLSPossibleVersions()
 	fs.StringVar(&s.MinTLSVersion, "tls-min-version", s.MinTLSVersion,
@@ -256,6 +278,7 @@ func (s *SecureServingOptions) ApplyTo(config **server.SecureServingInfo) error 
 	*config = &server.SecureServingInfo{
 		Listener:                     s.Listener,
 		HTTP2MaxStreamsPerConnection: s.HTTP2MaxStreamsPerConnection,
+		DisableHTTP2:                 s.DisableHTTP2Serving,
 	}
 	c := *config
 
@@ -309,6 +332,14 @@ func (s *SecureServingOptions) ApplyTo(config **server.SecureServingInfo) error 
 			return err
 		}
 		c.CipherSuites = cipherSuites
+	}
+
+	if len(s.CurvePreferences) != 0 {
+		curvePreferences, err := cliflag.TLSCurvePreferences(s.CurvePreferences)
+		if err != nil {
+			return err
+		}
+		c.CurvePreferences = curvePreferences
 	}
 
 	var err error

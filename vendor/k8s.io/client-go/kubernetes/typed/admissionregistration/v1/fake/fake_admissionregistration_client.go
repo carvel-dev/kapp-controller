@@ -28,20 +28,28 @@ type FakeAdmissionregistrationV1 struct {
 	*testing.Fake
 }
 
+func (c *FakeAdmissionregistrationV1) MutatingAdmissionPolicies() v1.MutatingAdmissionPolicyInterface {
+	return newFakeMutatingAdmissionPolicies(c)
+}
+
+func (c *FakeAdmissionregistrationV1) MutatingAdmissionPolicyBindings() v1.MutatingAdmissionPolicyBindingInterface {
+	return newFakeMutatingAdmissionPolicyBindings(c)
+}
+
 func (c *FakeAdmissionregistrationV1) MutatingWebhookConfigurations() v1.MutatingWebhookConfigurationInterface {
-	return &FakeMutatingWebhookConfigurations{c}
+	return newFakeMutatingWebhookConfigurations(c)
 }
 
 func (c *FakeAdmissionregistrationV1) ValidatingAdmissionPolicies() v1.ValidatingAdmissionPolicyInterface {
-	return &FakeValidatingAdmissionPolicies{c}
+	return newFakeValidatingAdmissionPolicies(c)
 }
 
 func (c *FakeAdmissionregistrationV1) ValidatingAdmissionPolicyBindings() v1.ValidatingAdmissionPolicyBindingInterface {
-	return &FakeValidatingAdmissionPolicyBindings{c}
+	return newFakeValidatingAdmissionPolicyBindings(c)
 }
 
 func (c *FakeAdmissionregistrationV1) ValidatingWebhookConfigurations() v1.ValidatingWebhookConfigurationInterface {
-	return &FakeValidatingWebhookConfigurations{c}
+	return newFakeValidatingWebhookConfigurations(c)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

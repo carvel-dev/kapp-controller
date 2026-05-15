@@ -19,7 +19,7 @@ package markers
 import (
 	"fmt"
 
-	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
 
@@ -28,11 +28,19 @@ import (
 var TopologyMarkers = []*definitionWithHelp{
 	must(markers.MakeDefinition("listMapKey", markers.DescribesField, ListMapKey(""))).
 		WithHelp(ListMapKey("").Help()),
+	must(markers.MakeDefinition("listMapKey", markers.DescribesType, ListMapKey(""))).
+		WithHelp(ListMapKey("").Help()),
 	must(markers.MakeDefinition("listType", markers.DescribesField, ListType(""))).
+		WithHelp(ListType("").Help()),
+	must(markers.MakeDefinition("listType", markers.DescribesType, ListType(""))).
 		WithHelp(ListType("").Help()),
 	must(markers.MakeDefinition("mapType", markers.DescribesField, MapType(""))).
 		WithHelp(MapType("").Help()),
+	must(markers.MakeDefinition("mapType", markers.DescribesType, MapType(""))).
+		WithHelp(MapType("").Help()),
 	must(markers.MakeDefinition("structType", markers.DescribesField, StructType(""))).
+		WithHelp(StructType("").Help()),
+	must(markers.MakeDefinition("structType", markers.DescribesType, StructType(""))).
 		WithHelp(StructType("").Help()),
 }
 
@@ -47,16 +55,26 @@ func init() {
 //
 // Possible data-structure types of a list are:
 //
-// - "map": it needs to have a key field, which will be used to build an
-//   associative list. A typical example is a the pod container list,
-//   which is indexed by the container name.
+//   - "map": it needs to have a key field, which will be used to build an
+//     associative list. A typical example is a the pod container list,
+//     which is indexed by the container name.
 //
-// - "set": Fields need to be "scalar", and there can be only one
-//   occurrence of each.
+//   - "set": Fields need to be "scalar", and there can be only one
+//     occurrence of each.
 //
-// - "atomic": All the fields in the list are treated as a single value,
-//   are typically manipulated together by the same actor.
+//   - "atomic": All the fields in the list are treated as a single value,
+//     are typically manipulated together by the same actor.
 type ListType string
+
+const (
+	Map     ListType = "map"
+	Set     ListType = "set"
+	Atomic  ListType = "atomic"
+	Array   ListType = "array"
+	Object  ListType = "object"
+	Integer ListType = "integer"
+	Number  ListType = "number"
+)
 
 // +controllertools:marker:generateHelp:category="CRD processing"
 
@@ -75,12 +93,12 @@ type ListMapKey string
 //
 // Possible values:
 //
-// - "granular": items in the map are independent of each other,
-//   and can be manipulated by different actors.
-//   This is the default behavior.
+//   - "granular": items in the map are independent of each other,
+//     and can be manipulated by different actors.
+//     This is the default behavior.
 //
-// - "atomic": all fields are treated as one unit.
-//   Any changes have to replace the entire map.
+//   - "atomic": all fields are treated as one unit.
+//     Any changes have to replace the entire map.
 type MapType string
 
 // +controllertools:marker:generateHelp:category="CRD processing"
@@ -91,19 +109,19 @@ type MapType string
 //
 // Possible values:
 //
-// - "granular": fields in the struct are independent of each other,
-//   and can be manipulated by different actors.
-//   This is the default behavior.
+//   - "granular": fields in the struct are independent of each other,
+//     and can be manipulated by different actors.
+//     This is the default behavior.
 //
-// - "atomic": all fields are treated as one unit.
-//   Any changes have to replace the entire struct.
+//   - "atomic": all fields are treated as one unit.
+//     Any changes have to replace the entire struct.
 type StructType string
 
-func (l ListType) ApplyToSchema(schema *apiext.JSONSchemaProps) error {
-	if schema.Type != "array" {
+func (l ListType) ApplyToSchema(schema *apiextensionsv1.JSONSchemaProps) error {
+	if schema.Type != string(Array) {
 		return fmt.Errorf("must apply listType to an array, found %s", schema.Type)
 	}
-	if l != "map" && l != "atomic" && l != "set" {
+	if l != Map && l != Atomic && l != Set {
 		return fmt.Errorf(`ListType must be either "map", "set" or "atomic"`)
 	}
 	p := string(l)
@@ -111,21 +129,23 @@ func (l ListType) ApplyToSchema(schema *apiext.JSONSchemaProps) error {
 	return nil
 }
 
-func (l ListType) ApplyFirst() {}
+func (l ListType) ApplyPriority() ApplyPriority {
+	return ApplyPriorityDefault - 1
+}
 
-func (l ListMapKey) ApplyToSchema(schema *apiext.JSONSchemaProps) error {
-	if schema.Type != "array" {
+func (l ListMapKey) ApplyToSchema(schema *apiextensionsv1.JSONSchemaProps) error {
+	if schema.Type != string(Array) {
 		return fmt.Errorf("must apply listMapKey to an array, found %s", schema.Type)
 	}
-	if schema.XListType == nil || *schema.XListType != "map" {
+	if schema.XListType == nil || *schema.XListType != string(Map) {
 		return fmt.Errorf("must apply listMapKey to an associative-list")
 	}
 	schema.XListMapKeys = append(schema.XListMapKeys, string(l))
 	return nil
 }
 
-func (m MapType) ApplyToSchema(schema *apiext.JSONSchemaProps) error {
-	if schema.Type != "object" {
+func (m MapType) ApplyToSchema(schema *apiextensionsv1.JSONSchemaProps) error {
+	if schema.Type != string(Object) {
 		return fmt.Errorf("must apply mapType to an object")
 	}
 
@@ -139,8 +159,8 @@ func (m MapType) ApplyToSchema(schema *apiext.JSONSchemaProps) error {
 	return nil
 }
 
-func (s StructType) ApplyToSchema(schema *apiext.JSONSchemaProps) error {
-	if schema.Type != "object" && schema.Type != "" {
+func (s StructType) ApplyToSchema(schema *apiextensionsv1.JSONSchemaProps) error {
+	if schema.Type != string(Object) && schema.Type != "" {
 		return fmt.Errorf("must apply structType to an object; either explicitly set or defaulted through an empty schema type")
 	}
 

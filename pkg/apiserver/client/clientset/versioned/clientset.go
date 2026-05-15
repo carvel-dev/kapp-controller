@@ -3,8 +3,8 @@
 package versioned
 
 import (
-	"fmt"
-	"net/http"
+	fmt "fmt"
+	http "net/http"
 
 	datav1alpha1 "carvel.dev/kapp-controller/pkg/apiserver/client/clientset/versioned/typed/datapackaging/v1alpha1"
 	discovery "k8s.io/client-go/discovery"

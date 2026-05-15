@@ -14,7 +14,7 @@ import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 option go_package = "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1";
 
 message AppTemplateSpec {
-  optional carvel.dev.kapp_controller.pkg.apis.kappctrl.v1alpha1.AppSpec spec = 1;
+  optional .carvel.dev.kapp_controller.pkg.apis.kappctrl.v1alpha1.AppSpec spec = 1;
 }
 
 // IncludedSoftware contains the underlying Software Contents of a Package
@@ -35,7 +35,7 @@ message Maintainer {
 message Package {
   // Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
   // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+  optional .k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
 
   optional PackageSpec spec = 2;
 }
@@ -45,7 +45,7 @@ message PackageList {
   // Standard list metadata.
   // More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
   // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+  optional .k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
 
   repeated Package items = 2;
 }
@@ -55,7 +55,7 @@ message PackageList {
 message PackageMetadata {
   // Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
   // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+  optional .k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
 
   optional PackageMetadataSpec spec = 2;
 }
@@ -65,7 +65,7 @@ message PackageMetadataList {
   // Standard list metadata.
   // More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
   // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+  optional .k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
 
   repeated PackageMetadata items = 2;
 }
@@ -97,7 +97,7 @@ message PackageSpec {
 
   // +optional
   // +nullable
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time releasedAt = 4;
+  optional .k8s.io.apimachinery.pkg.apis.meta.v1.Time releasedAt = 4;
 
   optional string capacityRequirementsDescription = 5;
 
@@ -129,7 +129,7 @@ message ValuesSchema {
   // +optional
   // +nullable
   // +kubebuilder:pruning:PreserveUnknownFields
-  optional k8s.io.apimachinery.pkg.runtime.RawExtension openAPIv3 = 1;
+  optional .k8s.io.apimachinery.pkg.runtime.RawExtension openAPIv3 = 1;
 }
 
 // VersionSelection provides version range constraints but will always accept prereleases

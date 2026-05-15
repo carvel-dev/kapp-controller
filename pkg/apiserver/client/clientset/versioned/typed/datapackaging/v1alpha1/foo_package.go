@@ -3,15 +3,14 @@
 package v1alpha1
 
 import (
-	"context"
-	"time"
+	context "context"
 
-	v1alpha1 "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	datapackagingv1alpha1 "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	scheme "carvel.dev/kapp-controller/pkg/apiserver/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
-	rest "k8s.io/client-go/rest"
+	gentype "k8s.io/client-go/gentype"
 )
 
 // PackagesGetter has a method to return a PackageInterface.
@@ -22,141 +21,32 @@ type PackagesGetter interface {
 
 // PackageInterface has methods to work with Package resources.
 type PackageInterface interface {
-	Create(ctx context.Context, foo_Package *v1alpha1.Package, opts v1.CreateOptions) (*v1alpha1.Package, error)
-	Update(ctx context.Context, foo_Package *v1alpha1.Package, opts v1.UpdateOptions) (*v1alpha1.Package, error)
+	Create(ctx context.Context, foo_Package *datapackagingv1alpha1.Package, opts v1.CreateOptions) (*datapackagingv1alpha1.Package, error)
+	Update(ctx context.Context, foo_Package *datapackagingv1alpha1.Package, opts v1.UpdateOptions) (*datapackagingv1alpha1.Package, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.Package, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.PackageList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*datapackagingv1alpha1.Package, error)
+	List(ctx context.Context, opts v1.ListOptions) (*datapackagingv1alpha1.PackageList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.Package, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *datapackagingv1alpha1.Package, err error)
 	PackageExpansion
 }
 
 // packages implements PackageInterface
 type packages struct {
-	client rest.Interface
-	ns     string
+	*gentype.ClientWithList[*datapackagingv1alpha1.Package, *datapackagingv1alpha1.PackageList]
 }
 
 // newPackages returns a Packages
 func newPackages(c *DataV1alpha1Client, namespace string) *packages {
 	return &packages{
-		client: c.RESTClient(),
-		ns:     namespace,
+		gentype.NewClientWithList[*datapackagingv1alpha1.Package, *datapackagingv1alpha1.PackageList](
+			"packages",
+			c.RESTClient(),
+			scheme.ParameterCodec,
+			namespace,
+			func() *datapackagingv1alpha1.Package { return &datapackagingv1alpha1.Package{} },
+			func() *datapackagingv1alpha1.PackageList { return &datapackagingv1alpha1.PackageList{} },
+		),
 	}
-}
-
-// Get takes name of the foo_Package, and returns the corresponding foo_Package object, and an error if there is any.
-func (c *packages) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.Package, err error) {
-	result = &v1alpha1.Package{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("packages").
-		Name(name).
-		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of Packages that match those selectors.
-func (c *packages) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.PackageList, err error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result = &v1alpha1.PackageList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("packages").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested packages.
-func (c *packages) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(c.ns).
-		Resource("packages").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-// Create takes the representation of a foo_Package and creates it.  Returns the server's representation of the foo_Package, and an error, if there is any.
-func (c *packages) Create(ctx context.Context, foo_Package *v1alpha1.Package, opts v1.CreateOptions) (result *v1alpha1.Package, err error) {
-	result = &v1alpha1.Package{}
-	err = c.client.Post().
-		Namespace(c.ns).
-		Resource("packages").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(foo_Package).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Update takes the representation of a foo_Package and updates it. Returns the server's representation of the foo_Package, and an error, if there is any.
-func (c *packages) Update(ctx context.Context, foo_Package *v1alpha1.Package, opts v1.UpdateOptions) (result *v1alpha1.Package, err error) {
-	result = &v1alpha1.Package{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("packages").
-		Name(foo_Package.Name).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(foo_Package).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Delete takes name of the foo_Package and deletes it. Returns an error if one occurs.
-func (c *packages) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("packages").
-		Name(name).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *packages) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	var timeout time.Duration
-	if listOpts.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
-	}
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("packages").
-		VersionedParams(&listOpts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// Patch applies the patch and returns the patched foo_Package.
-func (c *packages) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.Package, err error) {
-	result = &v1alpha1.Package{}
-	err = c.client.Patch(pt).
-		Namespace(c.ns).
-		Resource("packages").
-		Name(name).
-		SubResource(subresources...).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(data).
-		Do(ctx).
-		Into(result)
-	return
 }

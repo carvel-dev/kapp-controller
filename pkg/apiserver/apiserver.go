@@ -33,6 +33,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/dynamiccertificates"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
+	apiservercompatibility "k8s.io/apiserver/pkg/util/compatibility"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -137,7 +138,7 @@ func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kc
 			if err := updateAPIService(ctx, opts.Logger, aggClient, caContentProvider); err != nil {
 				opts.Logger.Error(err, "Background APIService CA reconciliation failed")
 			}
-		}, apiServiceReconcileInterval, hookContext.StopCh)
+		}, apiServiceReconcileInterval, hookContext.Done())
 
 		return nil
 	}); err != nil {
@@ -254,6 +255,10 @@ func newServerConfig(aggClient aggregatorclient.Interface, opts NewAPIServerOpts
 	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
+
+	// EffectiveVersion must be set in k8s v0.36.0+ or config.Complete() will panic.
+	// Use the default build effective version for this aggregated API server.
+	serverConfig.EffectiveVersion = apiservercompatibility.DefaultBuildEffectiveVersion()
 
 	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
 		openapi.GetOpenAPIDefinitions,

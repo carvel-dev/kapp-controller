@@ -5,123 +5,111 @@
 package slices
 
 import (
-	"math/bits"
-
-	"golang.org/x/exp/constraints"
+	"cmp"
+	"slices"
 )
 
 // Sort sorts a slice of any ordered type in ascending order.
-// Sort may fail to sort correctly when sorting slices of floating-point
-// numbers containing Not-a-number (NaN) values.
-// Use slices.SortFunc(x, func(a, b float64) bool {return a < b || (math.IsNaN(a) && !math.IsNaN(b))})
-// instead if the input may contain NaNs.
-func Sort[E constraints.Ordered](x []E) {
-	n := len(x)
-	pdqsortOrdered(x, 0, n, bits.Len(uint(n)))
-}
-
-// SortFunc sorts the slice x in ascending order as determined by the less function.
-// This sort is not guaranteed to be stable.
+// When sorting floating-point numbers, NaNs are ordered before other values.
 //
-// SortFunc requires that less is a strict weak ordering.
-// See https://en.wikipedia.org/wiki/Weak_ordering#Strict_weak_orderings.
-func SortFunc[E any](x []E, less func(a, b E) bool) {
-	n := len(x)
-	pdqsortLessFunc(x, 0, n, bits.Len(uint(n)), less)
+//go:fix inline
+func Sort[S ~[]E, E cmp.Ordered](x S) {
+	slices.Sort(x)
 }
 
-// SortStable sorts the slice x while keeping the original order of equal
-// elements, using less to compare elements.
-func SortStableFunc[E any](x []E, less func(a, b E) bool) {
-	stableLessFunc(x, len(x), less)
+// SortFunc sorts the slice x in ascending order as determined by the cmp
+// function. This sort is not guaranteed to be stable.
+// cmp(a, b) should return a negative number when a < b, a positive number when
+// a > b and zero when a == b or when a is not comparable to b in the sense
+// of the formal definition of Strict Weak Ordering.
+//
+// SortFunc requires that cmp is a strict weak ordering.
+// See https://en.wikipedia.org/wiki/Weak_ordering#Strict_weak_orderings.
+// To indicate 'uncomparable', return 0 from the function.
+//
+//go:fix inline
+func SortFunc[S ~[]E, E any](x S, cmp func(a, b E) int) {
+	slices.SortFunc(x, cmp)
+}
+
+// SortStableFunc sorts the slice x while keeping the original order of equal
+// elements, using cmp to compare elements in the same way as [SortFunc].
+//
+//go:fix inline
+func SortStableFunc[S ~[]E, E any](x S, cmp func(a, b E) int) {
+	slices.SortStableFunc(x, cmp)
 }
 
 // IsSorted reports whether x is sorted in ascending order.
-func IsSorted[E constraints.Ordered](x []E) bool {
-	for i := len(x) - 1; i > 0; i-- {
-		if x[i] < x[i-1] {
-			return false
-		}
-	}
-	return true
+//
+//go:fix inline
+func IsSorted[S ~[]E, E cmp.Ordered](x S) bool {
+	return slices.IsSorted(x)
 }
 
-// IsSortedFunc reports whether x is sorted in ascending order, with less as the
-// comparison function.
-func IsSortedFunc[E any](x []E, less func(a, b E) bool) bool {
-	for i := len(x) - 1; i > 0; i-- {
-		if less(x[i], x[i-1]) {
-			return false
-		}
-	}
-	return true
+// IsSortedFunc reports whether x is sorted in ascending order, with cmp as the
+// comparison function as defined by [SortFunc].
+//
+//go:fix inline
+func IsSortedFunc[S ~[]E, E any](x S, cmp func(a, b E) int) bool {
+	return slices.IsSortedFunc(x, cmp)
+}
+
+// Min returns the minimal value in x. It panics if x is empty.
+// For floating-point numbers, Min propagates NaNs (any NaN value in x
+// forces the output to be NaN).
+//
+//go:fix inline
+func Min[S ~[]E, E cmp.Ordered](x S) E {
+	return slices.Min(x)
+}
+
+// MinFunc returns the minimal value in x, using cmp to compare elements.
+// It panics if x is empty. If there is more than one minimal element
+// according to the cmp function, MinFunc returns the first one.
+//
+//go:fix inline
+func MinFunc[S ~[]E, E any](x S, cmp func(a, b E) int) E {
+	return slices.MinFunc(x, cmp)
+}
+
+// Max returns the maximal value in x. It panics if x is empty.
+// For floating-point E, Max propagates NaNs (any NaN value in x
+// forces the output to be NaN).
+//
+//go:fix inline
+func Max[S ~[]E, E cmp.Ordered](x S) E {
+	return slices.Max(x)
+}
+
+// MaxFunc returns the maximal value in x, using cmp to compare elements.
+// It panics if x is empty. If there is more than one maximal element
+// according to the cmp function, MaxFunc returns the first one.
+//
+//go:fix inline
+func MaxFunc[S ~[]E, E any](x S, cmp func(a, b E) int) E {
+	return slices.MaxFunc(x, cmp)
 }
 
 // BinarySearch searches for target in a sorted slice and returns the position
 // where target is found, or the position where target would appear in the
 // sort order; it also returns a bool saying whether the target is really found
 // in the slice. The slice must be sorted in increasing order.
-func BinarySearch[E constraints.Ordered](x []E, target E) (int, bool) {
-	// search returns the leftmost position where f returns true, or len(x) if f
-	// returns false for all x. This is the insertion position for target in x,
-	// and could point to an element that's either == target or not.
-	pos := search(len(x), func(i int) bool { return x[i] >= target })
-	if pos >= len(x) || x[pos] != target {
-		return pos, false
-	} else {
-		return pos, true
-	}
+//
+//go:fix inline
+func BinarySearch[S ~[]E, E cmp.Ordered](x S, target E) (int, bool) {
+	return slices.BinarySearch(x, target)
 }
 
-// BinarySearchFunc works like BinarySearch, but uses a custom comparison
-// function. The slice must be sorted in increasing order, where "increasing" is
-// defined by cmp. cmp(a, b) is expected to return an integer comparing the two
-// parameters: 0 if a == b, a negative number if a < b and a positive number if
-// a > b.
-func BinarySearchFunc[E any](x []E, target E, cmp func(E, E) int) (int, bool) {
-	pos := search(len(x), func(i int) bool { return cmp(x[i], target) >= 0 })
-	if pos >= len(x) || cmp(x[pos], target) != 0 {
-		return pos, false
-	} else {
-		return pos, true
-	}
-}
-
-func search(n int, f func(int) bool) int {
-	// Define f(-1) == false and f(n) == true.
-	// Invariant: f(i-1) == false, f(j) == true.
-	i, j := 0, n
-	for i < j {
-		h := int(uint(i+j) >> 1) // avoid overflow when computing h
-		// i ≤ h < j
-		if !f(h) {
-			i = h + 1 // preserves f(i-1) == false
-		} else {
-			j = h // preserves f(j) == true
-		}
-	}
-	// i == j, f(i-1) == false, and f(j) (= f(i)) == true  =>  answer is i.
-	return i
-}
-
-type sortedHint int // hint for pdqsort when choosing the pivot
-
-const (
-	unknownHint sortedHint = iota
-	increasingHint
-	decreasingHint
-)
-
-// xorshift paper: https://www.jstatsoft.org/article/view/v008i14/xorshift.pdf
-type xorshift uint64
-
-func (r *xorshift) Next() uint64 {
-	*r ^= *r << 13
-	*r ^= *r >> 17
-	*r ^= *r << 5
-	return uint64(*r)
-}
-
-func nextPowerOfTwo(length int) uint {
-	return 1 << bits.Len(uint(length))
+// BinarySearchFunc works like [BinarySearch], but uses a custom comparison
+// function. The slice must be sorted in increasing order, where "increasing"
+// is defined by cmp. cmp should return 0 if the slice element matches
+// the target, a negative number if the slice element precedes the target,
+// or a positive number if the slice element follows the target.
+// cmp must implement the same ordering as the slice, such that if
+// cmp(a, t) < 0 and cmp(b, t) >= 0, then a must precede b in the slice.
+//
+//go:fix inline
+func BinarySearchFunc[S ~[]E, E, T any](x S, target T, cmp func(E, T) int) (int, bool) {
+	return slices.BinarySearchFunc(x, target, cmp)
 }

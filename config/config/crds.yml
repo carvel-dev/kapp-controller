@@ -16,10 +16,19 @@ spec:
       openAPIV3Schema:
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -40,7 +49,9 @@ spec:
                 description: Long description of the package (optional; string)
                 type: string
               maintainers:
-                description: List of maintainer info for the package. Currently only supports the name key. (optional; array of maintner info)
+                description: |-
+                  List of maintainer info for the package.
+                  Currently only supports the name key. (optional; array of maintner info)
                 items:
                   properties:
                     name:
@@ -83,20 +94,34 @@ spec:
       openAPIV3Schema:
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
           spec:
             properties:
               capacityRequirementsDescription:
-                description: 'System requirements needed to install the package. Note: these requirements will not be verified by kapp-controller on installation. (optional; string)'
+                description: |-
+                  System requirements needed to install the package.
+                  Note: these requirements will not be verified by kapp-controller on
+                  installation. (optional; string)
                 type: string
               includedSoftware:
-                description: IncludedSoftware can be used to show the software contents of a Package. This is especially useful if the underlying versions do not match the Package version
+                description: |-
+                  IncludedSoftware can be used to show the software contents of a Package.
+                  This is especially useful if the underlying versions do not match the Package version
                 items:
                   description: IncludedSoftware contains the underlying Software Contents of a Package
                   properties:
@@ -121,12 +146,17 @@ spec:
                     type: string
                 type: object
               licenses:
-                description: Description of the licenses that apply to the package software (optional; Array of strings)
+                description: |-
+                  Description of the licenses that apply to the package software
+                  (optional; Array of strings)
                 items:
                   type: string
                 type: array
               refName:
-                description: The name of the PackageMetadata associated with this version Must be a valid PackageMetadata name (see PackageMetadata CR for details) Cannot be empty
+                description: |-
+                  The name of the PackageMetadata associated with this version
+                  Must be a valid PackageMetadata name (see PackageMetadata CR for details)
+                  Cannot be empty
                 type: string
               releaseNotes:
                 description: Version release notes (optional; string)
@@ -144,7 +174,9 @@ spec:
                         description: Cancels current and future reconciliations (optional; default=false)
                         type: boolean
                       cluster:
-                        description: Specifies that app should be deployed to destination cluster; by default, cluster is same as where this resource resides (optional; v0.5.0+)
+                        description: |-
+                          Specifies that app should be deployed to destination cluster;
+                          by default, cluster is same as where this resource resides (optional; v0.5.0+)
                         properties:
                           kubeconfigSecretRef:
                             description: Specifies secret containing kubeconfig (required)
@@ -161,7 +193,9 @@ spec:
                             type: string
                         type: object
                       defaultNamespace:
-                        description: Specifies the default namespace to install the App resources, by default this is same as the App's namespace (optional; v0.48.0+)
+                        description: |-
+                          Specifies the default namespace to install the App resources, by default this is
+                          same as the App's namespace (optional; v0.48.0+)
                         type: string
                       deploy:
                         items:
@@ -179,7 +213,10 @@ spec:
                                       type: array
                                   type: object
                                 inspect:
-                                  description: 'Configuration for inspect command (optional) as of kapp-controller v0.31.0, inspect is disabled by default add rawOptions or use an empty inspect config like `inspect: {}` to enable'
+                                  description: |-
+                                    Configuration for inspect command (optional)
+                                    as of kapp-controller v0.31.0, inspect is disabled by default
+                                    add rawOptions or use an empty inspect config like `inspect: {}` to enable
                                   properties:
                                     rawOptions:
                                       description: Pass through options to kapp inspect (optional)
@@ -239,7 +276,9 @@ spec:
                                       type: object
                                   type: object
                                 secretRef:
-                                  description: 'Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password (optional) (if ssh-knownhosts is not specified, git will not perform strict host checking)'
+                                  description: |-
+                                    Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password (optional)
+                                    (if ssh-knownhosts is not specified, git will not perform strict host checking)
                                   properties:
                                     name:
                                       description: Object is expected to be within same namespace
@@ -267,7 +306,10 @@ spec:
                                           type: string
                                       type: object
                                     url:
-                                      description: Repository url; scheme of oci:// will fetch experimental helm oci chart (v0.19.0+) (required)
+                                      description: |-
+                                        Repository url;
+                                        scheme of oci:// will fetch experimental helm oci chart (v0.19.0+)
+                                        (required)
                                       type: string
                                   type: object
                                 version:
@@ -277,7 +319,9 @@ spec:
                               description: Uses http library to fetch file
                               properties:
                                 secretRef:
-                                  description: 'Secret to provide auth details (optional) Secret may include one or more keys: username, password'
+                                  description: |-
+                                    Secret to provide auth details (optional)
+                                    Secret may include one or more keys: username, password
                                   properties:
                                     name:
                                       description: Object is expected to be within same namespace
@@ -290,14 +334,19 @@ spec:
                                   description: Grab only portion of download (optional)
                                   type: string
                                 url:
-                                  description: 'URL can point to one of following formats: text, tgz, zip http and https url are supported; plain file, tgz and tar types are supported (required)'
+                                  description: |-
+                                    URL can point to one of following formats: text, tgz, zip
+                                    http and https url are supported;
+                                    plain file, tgz and tar types are supported (required)
                                   type: string
                               type: object
                             image:
                               description: Pulls content from Docker/OCI registry
                               properties:
                                 secretRef:
-                                  description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication.'
+                                  description: |-
+                                    Secret may include one or more keys: username, password, token.
+                                    By default anonymous access is used for authentication.
                                   properties:
                                     name:
                                       description: Object is expected to be within same namespace
@@ -307,7 +356,9 @@ spec:
                                   description: Grab only portion of image (optional)
                                   type: string
                                 tagSelection:
-                                  description: Specifies a strategy to choose a tag (optional; v0.24.0+) if specified, do not include a tag in url key
+                                  description: |-
+                                    Specifies a strategy to choose a tag (optional; v0.24.0+)
+                                    if specified, do not include a tag in url key
                                   properties:
                                     semver:
                                       properties:
@@ -323,24 +374,33 @@ spec:
                                       type: object
                                   type: object
                                 url:
-                                  description: 'Docker image url; unqualified, tagged, or digest references supported (required) Example: username/app1-config:v0.1.0'
+                                  description: |-
+                                    Docker image url; unqualified, tagged, or
+                                    digest references supported (required)
+                                    Example: username/app1-config:v0.1.0
                                   type: string
                               type: object
                             imgpkgBundle:
                               description: Pulls imgpkg bundle from Docker/OCI registry (v0.17.0+)
                               properties:
                                 image:
-                                  description: Docker image url; unqualified, tagged, or digest references supported (required)
+                                  description: |-
+                                    Docker image url; unqualified, tagged, or
+                                    digest references supported (required)
                                   type: string
                                 secretRef:
-                                  description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication.'
+                                  description: |-
+                                    Secret may include one or more keys: username, password, token.
+                                    By default anonymous access is used for authentication.
                                   properties:
                                     name:
                                       description: Object is expected to be within same namespace
                                       type: string
                                   type: object
                                 tagSelection:
-                                  description: Specifies a strategy to choose a tag (optional; v0.24.0+) if specified, do not include a tag in url key
+                                  description: |-
+                                    Specifies a strategy to choose a tag (optional; v0.24.0+)
+                                    if specified, do not include a tag in url key
                                   properties:
                                     semver:
                                       properties:
@@ -362,10 +422,14 @@ spec:
                                 paths:
                                   additionalProperties:
                                     type: string
-                                  description: Specifies mapping of paths to their content; not recommended for sensitive values as CR is not encrypted (optional)
+                                  description: |-
+                                    Specifies mapping of paths to their content;
+                                    not recommended for sensitive values as CR is not encrypted (optional)
                                   type: object
                                 pathsFrom:
-                                  description: Specifies content via secrets and config maps; data values are recommended to be placed in secrets (optional)
+                                  description: |-
+                                    Specifies content via secrets and config maps;
+                                    data values are recommended to be placed in secrets (optional)
                                   items:
                                     properties:
                                       configMapRef:
@@ -393,16 +457,26 @@ spec:
                           type: object
                         type: array
                       noopDelete:
-                        description: Deletion requests for the App will result in the App CR being deleted, but its associated resources will not be deleted (optional; default=false; v0.18.0+)
+                        description: |-
+                          Deletion requests for the App will result in the App CR being
+                          deleted, but its associated resources will not be deleted
+                          (optional; default=false; v0.18.0+)
                         type: boolean
                       paused:
-                        description: Pauses _future_ reconciliation; does _not_ affect currently running reconciliation (optional; default=false)
+                        description: |-
+                          Pauses _future_ reconciliation; does _not_ affect
+                          currently running reconciliation (optional; default=false)
                         type: boolean
                       serviceAccountName:
-                        description: Specifies that app should be deployed authenticated via given service account, found in this namespace (optional; v0.6.0+)
+                        description: |-
+                          Specifies that app should be deployed authenticated via
+                          given service account, found in this namespace (optional; v0.6.0+)
                         type: string
                       syncPeriod:
-                        description: Specifies the length of time to wait, in time + unit format, before reconciling. Always >= 30s. If value below 30s is specified, 30s will be used. (optional; v0.9.0+; default=30s)
+                        description: |-
+                          Specifies the length of time to wait, in time + unit
+                          format, before reconciling. Always >= 30s. If value below
+                          30s is specified, 30s will be used. (optional; v0.9.0+; default=30s)
                         type: string
                       template:
                         items:
@@ -438,13 +512,17 @@ spec:
                                                   description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
                                                   type: string
                                                 kappControllerVersion:
-                                                  description: 'Optional: Get running KappController version, defaults (empty) to retrieving the current running version.. Can be manually supplied instead.'
+                                                  description: |-
+                                                    Optional: Get running KappController version, defaults (empty) to retrieving the current running version..
+                                                    Can be manually supplied instead.
                                                   properties:
                                                     version:
                                                       type: string
                                                   type: object
                                                 kubernetesAPIs:
-                                                  description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
+                                                  description: |-
+                                                    Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster.
+                                                    Can be manually supplied instead, e.g ["group/version", "group2/version2"]
                                                   properties:
                                                     groupVersions:
                                                       items:
@@ -452,7 +530,9 @@ spec:
                                                       type: array
                                                   type: object
                                                 kubernetesVersion:
-                                                  description: 'Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster. Can be manually supplied instead.'
+                                                  description: |-
+                                                    Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster.
+                                                    Can be manually supplied instead.
                                                   properties:
                                                     version:
                                                       type: string
@@ -484,7 +564,9 @@ spec:
                                       type: array
                                   type: object
                                 kubernetesVersion:
-                                  description: 'Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster. Can be manually overridden to a value instead.'
+                                  description: |-
+                                    Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster.
+                                    Can be manually overridden to a value instead.
                                   properties:
                                     version:
                                       type: string
@@ -516,13 +598,17 @@ spec:
                                                   description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
                                                   type: string
                                                 kappControllerVersion:
-                                                  description: 'Optional: Get running KappController version, defaults (empty) to retrieving the current running version.. Can be manually supplied instead.'
+                                                  description: |-
+                                                    Optional: Get running KappController version, defaults (empty) to retrieving the current running version..
+                                                    Can be manually supplied instead.
                                                   properties:
                                                     version:
                                                       type: string
                                                   type: object
                                                 kubernetesAPIs:
-                                                  description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
+                                                  description: |-
+                                                    Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster.
+                                                    Can be manually supplied instead, e.g ["group/version", "group2/version2"]
                                                   properties:
                                                     groupVersions:
                                                       items:
@@ -530,7 +616,9 @@ spec:
                                                       type: array
                                                   type: object
                                                 kubernetesVersion:
-                                                  description: 'Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster. Can be manually supplied instead.'
+                                                  description: |-
+                                                    Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster.
+                                                    Can be manually supplied instead.
                                                   properties:
                                                     version:
                                                       type: string
@@ -551,7 +639,6 @@ spec:
                                   type: array
                               type: object
                             jsonnet:
-                              description: TODO implement jsonnet
                               type: object
                             kbld:
                               description: Use kbld to resolve image references to use digests
@@ -565,7 +652,6 @@ spec:
                                   type: string
                               type: object
                             kustomize:
-                              description: TODO implement kustomize
                               type: object
                             sops:
                               description: Use sops to decrypt *.sops.yml files (optional; v0.11.0+)
@@ -599,12 +685,16 @@ spec:
                               description: Use ytt to template configuration
                               properties:
                                 fileMarks:
-                                  description: Control metadata about input files passed to ytt (optional; v0.18.0+) see https://carvel.dev/ytt/docs/latest/file-marks/ for more details
+                                  description: |-
+                                    Control metadata about input files passed to ytt (optional; v0.18.0+)
+                                    see https://carvel.dev/ytt/docs/latest/file-marks/ for more details
                                   items:
                                     type: string
                                   type: array
                                 ignoreUnknownComments:
-                                  description: Ignores comments that ytt doesn't recognize (optional; default=false)
+                                  description: |-
+                                    Ignores comments that ytt doesn't recognize
+                                    (optional; default=false)
                                   type: boolean
                                 inline:
                                   description: Specify additional files, including data values (optional)
@@ -612,10 +702,14 @@ spec:
                                     paths:
                                       additionalProperties:
                                         type: string
-                                      description: Specifies mapping of paths to their content; not recommended for sensitive values as CR is not encrypted (optional)
+                                      description: |-
+                                        Specifies mapping of paths to their content;
+                                        not recommended for sensitive values as CR is not encrypted (optional)
                                       type: object
                                     pathsFrom:
-                                      description: Specifies content via secrets and config maps; data values are recommended to be placed in secrets (optional)
+                                      description: |-
+                                        Specifies content via secrets and config maps;
+                                        data values are recommended to be placed in secrets (optional)
                                       items:
                                         properties:
                                           configMapRef:
@@ -643,7 +737,9 @@ spec:
                                     type: string
                                   type: array
                                 strict:
-                                  description: Forces strict mode https://github.com/k14s/ytt/blob/develop/docs/strict.md (optional; default=false)
+                                  description: |-
+                                    Forces strict mode https://github.com/k14s/ytt/blob/develop/docs/strict.md
+                                    (optional; default=false)
                                   type: boolean
                                 valuesFrom:
                                   description: Provide values via ytt's --data-values-file (optional; v0.19.0-alpha.9)
@@ -663,13 +759,17 @@ spec:
                                                   description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
                                                   type: string
                                                 kappControllerVersion:
-                                                  description: 'Optional: Get running KappController version, defaults (empty) to retrieving the current running version.. Can be manually supplied instead.'
+                                                  description: |-
+                                                    Optional: Get running KappController version, defaults (empty) to retrieving the current running version..
+                                                    Can be manually supplied instead.
                                                   properties:
                                                     version:
                                                       type: string
                                                   type: object
                                                 kubernetesAPIs:
-                                                  description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
+                                                  description: |-
+                                                    Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster.
+                                                    Can be manually supplied instead, e.g ["group/version", "group2/version2"]
                                                   properties:
                                                     groupVersions:
                                                       items:
@@ -677,7 +777,9 @@ spec:
                                                       type: array
                                                   type: object
                                                 kubernetesVersion:
-                                                  description: 'Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster. Can be manually supplied instead.'
+                                                  description: |-
+                                                    Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster.
+                                                    Can be manually supplied instead.
                                                   properties:
                                                     version:
                                                       type: string
@@ -704,7 +806,10 @@ spec:
                 - spec
                 type: object
               valuesSchema:
-                description: valuesSchema can be used to show template values that can be configured by users when a Package is installed in an OpenAPI schema format.
+                description: |-
+                  valuesSchema can be used to show template values that
+                  can be configured by users when a Package is installed
+                  in an OpenAPI schema format.
                 properties:
                   openAPIv3:
                     nullable: true
@@ -712,7 +817,10 @@ spec:
                     x-kubernetes-preserve-unknown-fields: true
                 type: object
               version:
-                description: Package version; Referenced by PackageInstall; Must be valid semver (required) Cannot be empty
+                description: |-
+                  Package version; Referenced by PackageInstall;
+                  Must be valid semver (required)
+                  Cannot be empty
                 type: string
             type: object
         required:
@@ -758,13 +866,27 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: 'An App is a set of Kubernetes resources. These resources could span any number of namespaces or could be cluster-wide (e.g. CRDs). An App is represented in kapp-controller using a App CR. The App CR comprises of three main sections: spec.fetch – declare source for fetching configuration and OCI images spec.template – declare templating tool and values spec.deploy – declare deployment tool and any deploy specific configuration'
+        description: |-
+          An App is a set of Kubernetes resources. These resources could span any number of namespaces or could be cluster-wide (e.g. CRDs). An App is represented in kapp-controller using a App CR.
+          The App CR comprises of three main sections:
+          spec.fetch – declare source for fetching configuration and OCI images
+          spec.template – declare templating tool and values
+          spec.deploy – declare deployment tool and any deploy specific configuration
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -774,7 +896,9 @@ spec:
                 description: Cancels current and future reconciliations (optional; default=false)
                 type: boolean
               cluster:
-                description: Specifies that app should be deployed to destination cluster; by default, cluster is same as where this resource resides (optional; v0.5.0+)
+                description: |-
+                  Specifies that app should be deployed to destination cluster;
+                  by default, cluster is same as where this resource resides (optional; v0.5.0+)
                 properties:
                   kubeconfigSecretRef:
                     description: Specifies secret containing kubeconfig (required)
@@ -791,7 +915,9 @@ spec:
                     type: string
                 type: object
               defaultNamespace:
-                description: Specifies the default namespace to install the App resources, by default this is same as the App's namespace (optional; v0.48.0+)
+                description: |-
+                  Specifies the default namespace to install the App resources, by default this is
+                  same as the App's namespace (optional; v0.48.0+)
                 type: string
               deploy:
                 items:
@@ -809,7 +935,10 @@ spec:
                               type: array
                           type: object
                         inspect:
-                          description: 'Configuration for inspect command (optional) as of kapp-controller v0.31.0, inspect is disabled by default add rawOptions or use an empty inspect config like `inspect: {}` to enable'
+                          description: |-
+                            Configuration for inspect command (optional)
+                            as of kapp-controller v0.31.0, inspect is disabled by default
+                            add rawOptions or use an empty inspect config like `inspect: {}` to enable
                           properties:
                             rawOptions:
                               description: Pass through options to kapp inspect (optional)
@@ -869,7 +998,9 @@ spec:
                               type: object
                           type: object
                         secretRef:
-                          description: 'Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password (optional) (if ssh-knownhosts is not specified, git will not perform strict host checking)'
+                          description: |-
+                            Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password (optional)
+                            (if ssh-knownhosts is not specified, git will not perform strict host checking)
                           properties:
                             name:
                               description: Object is expected to be within same namespace
@@ -897,7 +1028,10 @@ spec:
                                   type: string
                               type: object
                             url:
-                              description: Repository url; scheme of oci:// will fetch experimental helm oci chart (v0.19.0+) (required)
+                              description: |-
+                                Repository url;
+                                scheme of oci:// will fetch experimental helm oci chart (v0.19.0+)
+                                (required)
                               type: string
                           type: object
                         version:
@@ -907,7 +1041,9 @@ spec:
                       description: Uses http library to fetch file
                       properties:
                         secretRef:
-                          description: 'Secret to provide auth details (optional) Secret may include one or more keys: username, password'
+                          description: |-
+                            Secret to provide auth details (optional)
+                            Secret may include one or more keys: username, password
                           properties:
                             name:
                               description: Object is expected to be within same namespace
@@ -920,14 +1056,19 @@ spec:
                           description: Grab only portion of download (optional)
                           type: string
                         url:
-                          description: 'URL can point to one of following formats: text, tgz, zip http and https url are supported; plain file, tgz and tar types are supported (required)'
+                          description: |-
+                            URL can point to one of following formats: text, tgz, zip
+                            http and https url are supported;
+                            plain file, tgz and tar types are supported (required)
                           type: string
                       type: object
                     image:
                       description: Pulls content from Docker/OCI registry
                       properties:
                         secretRef:
-                          description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication.'
+                          description: |-
+                            Secret may include one or more keys: username, password, token.
+                            By default anonymous access is used for authentication.
                           properties:
                             name:
                               description: Object is expected to be within same namespace
@@ -937,7 +1078,9 @@ spec:
                           description: Grab only portion of image (optional)
                           type: string
                         tagSelection:
-                          description: Specifies a strategy to choose a tag (optional; v0.24.0+) if specified, do not include a tag in url key
+                          description: |-
+                            Specifies a strategy to choose a tag (optional; v0.24.0+)
+                            if specified, do not include a tag in url key
                           properties:
                             semver:
                               properties:
@@ -953,24 +1096,33 @@ spec:
                               type: object
                           type: object
                         url:
-                          description: 'Docker image url; unqualified, tagged, or digest references supported (required) Example: username/app1-config:v0.1.0'
+                          description: |-
+                            Docker image url; unqualified, tagged, or
+                            digest references supported (required)
+                            Example: username/app1-config:v0.1.0
                           type: string
                       type: object
                     imgpkgBundle:
                       description: Pulls imgpkg bundle from Docker/OCI registry (v0.17.0+)
                       properties:
                         image:
-                          description: Docker image url; unqualified, tagged, or digest references supported (required)
+                          description: |-
+                            Docker image url; unqualified, tagged, or
+                            digest references supported (required)
                           type: string
                         secretRef:
-                          description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication.'
+                          description: |-
+                            Secret may include one or more keys: username, password, token.
+                            By default anonymous access is used for authentication.
                           properties:
                             name:
                               description: Object is expected to be within same namespace
                               type: string
                           type: object
                         tagSelection:
-                          description: Specifies a strategy to choose a tag (optional; v0.24.0+) if specified, do not include a tag in url key
+                          description: |-
+                            Specifies a strategy to choose a tag (optional; v0.24.0+)
+                            if specified, do not include a tag in url key
                           properties:
                             semver:
                               properties:
@@ -992,10 +1144,14 @@ spec:
                         paths:
                           additionalProperties:
                             type: string
-                          description: Specifies mapping of paths to their content; not recommended for sensitive values as CR is not encrypted (optional)
+                          description: |-
+                            Specifies mapping of paths to their content;
+                            not recommended for sensitive values as CR is not encrypted (optional)
                           type: object
                         pathsFrom:
-                          description: Specifies content via secrets and config maps; data values are recommended to be placed in secrets (optional)
+                          description: |-
+                            Specifies content via secrets and config maps;
+                            data values are recommended to be placed in secrets (optional)
                           items:
                             properties:
                               configMapRef:
@@ -1023,16 +1179,26 @@ spec:
                   type: object
                 type: array
               noopDelete:
-                description: Deletion requests for the App will result in the App CR being deleted, but its associated resources will not be deleted (optional; default=false; v0.18.0+)
+                description: |-
+                  Deletion requests for the App will result in the App CR being
+                  deleted, but its associated resources will not be deleted
+                  (optional; default=false; v0.18.0+)
                 type: boolean
               paused:
-                description: Pauses _future_ reconciliation; does _not_ affect currently running reconciliation (optional; default=false)
+                description: |-
+                  Pauses _future_ reconciliation; does _not_ affect
+                  currently running reconciliation (optional; default=false)
                 type: boolean
               serviceAccountName:
-                description: Specifies that app should be deployed authenticated via given service account, found in this namespace (optional; v0.6.0+)
+                description: |-
+                  Specifies that app should be deployed authenticated via
+                  given service account, found in this namespace (optional; v0.6.0+)
                 type: string
               syncPeriod:
-                description: Specifies the length of time to wait, in time + unit format, before reconciling. Always >= 30s. If value below 30s is specified, 30s will be used. (optional; v0.9.0+; default=30s)
+                description: |-
+                  Specifies the length of time to wait, in time + unit
+                  format, before reconciling. Always >= 30s. If value below
+                  30s is specified, 30s will be used. (optional; v0.9.0+; default=30s)
                 type: string
               template:
                 items:
@@ -1068,13 +1234,17 @@ spec:
                                           description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
                                           type: string
                                         kappControllerVersion:
-                                          description: 'Optional: Get running KappController version, defaults (empty) to retrieving the current running version.. Can be manually supplied instead.'
+                                          description: |-
+                                            Optional: Get running KappController version, defaults (empty) to retrieving the current running version..
+                                            Can be manually supplied instead.
                                           properties:
                                             version:
                                               type: string
                                           type: object
                                         kubernetesAPIs:
-                                          description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
+                                          description: |-
+                                            Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster.
+                                            Can be manually supplied instead, e.g ["group/version", "group2/version2"]
                                           properties:
                                             groupVersions:
                                               items:
@@ -1082,7 +1252,9 @@ spec:
                                               type: array
                                           type: object
                                         kubernetesVersion:
-                                          description: 'Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster. Can be manually supplied instead.'
+                                          description: |-
+                                            Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster.
+                                            Can be manually supplied instead.
                                           properties:
                                             version:
                                               type: string
@@ -1114,7 +1286,9 @@ spec:
                               type: array
                           type: object
                         kubernetesVersion:
-                          description: 'Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster. Can be manually overridden to a value instead.'
+                          description: |-
+                            Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster.
+                            Can be manually overridden to a value instead.
                           properties:
                             version:
                               type: string
@@ -1146,13 +1320,17 @@ spec:
                                           description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
                                           type: string
                                         kappControllerVersion:
-                                          description: 'Optional: Get running KappController version, defaults (empty) to retrieving the current running version.. Can be manually supplied instead.'
+                                          description: |-
+                                            Optional: Get running KappController version, defaults (empty) to retrieving the current running version..
+                                            Can be manually supplied instead.
                                           properties:
                                             version:
                                               type: string
                                           type: object
                                         kubernetesAPIs:
-                                          description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
+                                          description: |-
+                                            Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster.
+                                            Can be manually supplied instead, e.g ["group/version", "group2/version2"]
                                           properties:
                                             groupVersions:
                                               items:
@@ -1160,7 +1338,9 @@ spec:
                                               type: array
                                           type: object
                                         kubernetesVersion:
-                                          description: 'Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster. Can be manually supplied instead.'
+                                          description: |-
+                                            Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster.
+                                            Can be manually supplied instead.
                                           properties:
                                             version:
                                               type: string
@@ -1181,7 +1361,6 @@ spec:
                           type: array
                       type: object
                     jsonnet:
-                      description: TODO implement jsonnet
                       type: object
                     kbld:
                       description: Use kbld to resolve image references to use digests
@@ -1195,7 +1374,6 @@ spec:
                           type: string
                       type: object
                     kustomize:
-                      description: TODO implement kustomize
                       type: object
                     sops:
                       description: Use sops to decrypt *.sops.yml files (optional; v0.11.0+)
@@ -1229,12 +1407,16 @@ spec:
                       description: Use ytt to template configuration
                       properties:
                         fileMarks:
-                          description: Control metadata about input files passed to ytt (optional; v0.18.0+) see https://carvel.dev/ytt/docs/latest/file-marks/ for more details
+                          description: |-
+                            Control metadata about input files passed to ytt (optional; v0.18.0+)
+                            see https://carvel.dev/ytt/docs/latest/file-marks/ for more details
                           items:
                             type: string
                           type: array
                         ignoreUnknownComments:
-                          description: Ignores comments that ytt doesn't recognize (optional; default=false)
+                          description: |-
+                            Ignores comments that ytt doesn't recognize
+                            (optional; default=false)
                           type: boolean
                         inline:
                           description: Specify additional files, including data values (optional)
@@ -1242,10 +1424,14 @@ spec:
                             paths:
                               additionalProperties:
                                 type: string
-                              description: Specifies mapping of paths to their content; not recommended for sensitive values as CR is not encrypted (optional)
+                              description: |-
+                                Specifies mapping of paths to their content;
+                                not recommended for sensitive values as CR is not encrypted (optional)
                               type: object
                             pathsFrom:
-                              description: Specifies content via secrets and config maps; data values are recommended to be placed in secrets (optional)
+                              description: |-
+                                Specifies content via secrets and config maps;
+                                data values are recommended to be placed in secrets (optional)
                               items:
                                 properties:
                                   configMapRef:
@@ -1273,7 +1459,9 @@ spec:
                             type: string
                           type: array
                         strict:
-                          description: Forces strict mode https://github.com/k14s/ytt/blob/develop/docs/strict.md (optional; default=false)
+                          description: |-
+                            Forces strict mode https://github.com/k14s/ytt/blob/develop/docs/strict.md
+                            (optional; default=false)
                           type: boolean
                         valuesFrom:
                           description: Provide values via ytt's --data-values-file (optional; v0.19.0-alpha.9)
@@ -1293,13 +1481,17 @@ spec:
                                           description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
                                           type: string
                                         kappControllerVersion:
-                                          description: 'Optional: Get running KappController version, defaults (empty) to retrieving the current running version.. Can be manually supplied instead.'
+                                          description: |-
+                                            Optional: Get running KappController version, defaults (empty) to retrieving the current running version..
+                                            Can be manually supplied instead.
                                           properties:
                                             version:
                                               type: string
                                           type: object
                                         kubernetesAPIs:
-                                          description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
+                                          description: |-
+                                            Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster.
+                                            Can be manually supplied instead, e.g ["group/version", "group2/version2"]
                                           properties:
                                             groupVersions:
                                               items:
@@ -1307,7 +1499,9 @@ spec:
                                               type: array
                                           type: object
                                         kubernetesVersion:
-                                          description: 'Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster. Can be manually supplied instead.'
+                                          description: |-
+                                            Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster.
+                                            Can be manually supplied instead.
                                           properties:
                                             version:
                                               type: string
@@ -1339,7 +1533,10 @@ spec:
                       description: Human-readable message indicating details about last transition.
                       type: string
                     reason:
-                      description: Unique, this should be a short, machine understandable string that gives the reason for condition's last transition. If it reports "ResizeStarted" that means the underlying persistent volume is being resized.
+                      description: |-
+                        Unique, this should be a short, machine understandable string that gives the reason
+                        for condition's last transition. If it reports "ResizeStarted" that means the underlying
+                        persistent volume is being resized.
                       type: string
                     status:
                       type: string
@@ -1371,7 +1568,9 @@ spec:
                         properties:
                           groupKinds:
                             items:
-                              description: GroupKind specifies a Group and a Kind, but does not force a version.  This is useful for identifying concepts during lookup stages without having partially valid types
+                              description: |-
+                                GroupKind specifies a Group and a Kind, but does not force a version.  This is useful for identifying
+                                concepts during lookup stages without having partially valid types
                               properties:
                                 group:
                                   type: string
@@ -1437,7 +1636,10 @@ spec:
               managedAppName:
                 type: string
               observedGeneration:
-                description: Populated based on metadata.generation when controller observes a change to the resource; if this value is out of data, other status fields do not reflect latest state
+                description: |-
+                  Populated based on metadata.generation when controller
+                  observes a change to the resource; if this value is
+                  out of data, other status fields do not reflect latest state
                 format: int64
                 type: integer
               template:
@@ -1504,13 +1706,25 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A Package Install is an actual installation of a package and its underlying resources on a Kubernetes cluster. It is represented in kapp-controller by a PackageInstall CR. A PackageInstall CR must reference a Package CR.
+        description: |-
+          A Package Install is an actual installation of a package and its underlying resources on a Kubernetes cluster.
+          It is represented in kapp-controller by a PackageInstall CR.
+          A PackageInstall CR must reference a Package CR.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -1520,7 +1734,9 @@ spec:
                 description: Canceled when set to true will stop all active changes
                 type: boolean
               cluster:
-                description: Specifies that Package should be deployed to destination cluster; by default, cluster is same as where this resource resides (optional)
+                description: |-
+                  Specifies that Package should be deployed to destination cluster;
+                  by default, cluster is same as where this resource resides (optional)
                 properties:
                   kubeconfigSecretRef:
                     description: Specifies secret containing kubeconfig (required)
@@ -1537,10 +1753,15 @@ spec:
                     type: string
                 type: object
               defaultNamespace:
-                description: Specifies the default namespace to install the Package resources, by default this is same as the PackageInstall namespace (optional; v0.48.0+)
+                description: |-
+                  Specifies the default namespace to install the Package resources, by default this is
+                  same as the PackageInstall namespace (optional; v0.48.0+)
                 type: string
               noopDelete:
-                description: When NoopDelete set to true, PackageInstall deletion should delete PackageInstall/App CR but preserve App's associated resources.
+                description: |-
+                  When NoopDelete set to true, PackageInstall deletion
+                  should delete PackageInstall/App CR but preserve App's
+                  associated resources.
                 type: boolean
               packageRef:
                 description: Specifies the name of the package to install (required)
@@ -1561,16 +1782,23 @@ spec:
                     type: object
                 type: object
               paused:
-                description: Paused when set to true will ignore all pending changes, once it set back to false, pending changes will be applied
+                description: |-
+                  Paused when set to true will ignore all pending changes,
+                  once it set back to false, pending changes will be applied
                 type: boolean
               serviceAccountName:
                 description: Specifies service account that will be used to install underlying package contents
                 type: string
               syncPeriod:
-                description: Controls frequency of App reconciliation in time + unit format. Always >= 30s. If value below 30s is specified, 30s will be used.
+                description: |-
+                  Controls frequency of App reconciliation in time + unit
+                  format. Always >= 30s. If value below 30s is specified,
+                  30s will be used.
                 type: string
               values:
-                description: Values to be included in package's templating step (currently only included in the first templating step) (optional)
+                description: |-
+                  Values to be included in package's templating step
+                  (currently only included in the first templating step) (optional)
                 items:
                   properties:
                     secretRef:
@@ -1592,7 +1820,10 @@ spec:
                       description: Human-readable message indicating details about last transition.
                       type: string
                     reason:
-                      description: Unique, this should be a short, machine understandable string that gives the reason for condition's last transition. If it reports "ResizeStarted" that means the underlying persistent volume is being resized.
+                      description: |-
+                        Unique, this should be a short, machine understandable string that gives the reason
+                        for condition's last transition. If it reports "ResizeStarted" that means the underlying
+                        persistent volume is being resized.
                       type: string
                     status:
                       type: string
@@ -1607,16 +1838,20 @@ spec:
               friendlyDescription:
                 type: string
               lastAttemptedVersion:
-                description: LastAttemptedVersion specifies what version was last attempted to be installed. It does _not_ indicate it was successfully installed.
+                description: |-
+                  LastAttemptedVersion specifies what version was last attempted to be installed.
+                  It does _not_ indicate it was successfully installed.
                 type: string
               observedGeneration:
-                description: Populated based on metadata.generation when controller observes a change to the resource; if this value is out of data, other status fields do not reflect latest state
+                description: |-
+                  Populated based on metadata.generation when controller
+                  observes a change to the resource; if this value is
+                  out of data, other status fields do not reflect latest state
                 format: int64
                 type: integer
               usefulErrorMessage:
                 type: string
               version:
-                description: TODO this is desired resolved version (not actually deployed)
                 type: string
             type: object
         required:
@@ -1662,13 +1897,24 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A package repository is a collection of packages and their metadata. Similar to a maven repository or a rpm repository, adding a package repository to a cluster gives users of that cluster the ability to install any of the packages from that repository.
+        description: |-
+          A package repository is a collection of packages and their metadata.
+          Similar to a maven repository or a rpm repository, adding a package repository to a cluster gives users of that cluster the ability to install any of the packages from that repository.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -1709,7 +1955,9 @@ spec:
                             type: object
                         type: object
                       secretRef:
-                        description: 'Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password (optional) (if ssh-knownhosts is not specified, git will not perform strict host checking)'
+                        description: |-
+                          Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password (optional)
+                          (if ssh-knownhosts is not specified, git will not perform strict host checking)
                         properties:
                           name:
                             description: Object is expected to be within same namespace
@@ -1726,7 +1974,9 @@ spec:
                     description: Uses http library to fetch file containing packages
                     properties:
                       secretRef:
-                        description: 'Secret to provide auth details (optional) Secret may include one or more keys: username, password'
+                        description: |-
+                          Secret to provide auth details (optional)
+                          Secret may include one or more keys: username, password
                         properties:
                           name:
                             description: Object is expected to be within same namespace
@@ -1739,14 +1989,21 @@ spec:
                         description: Grab only portion of download (optional)
                         type: string
                       url:
-                        description: 'URL can point to one of following formats: text, tgz, zip http and https url are supported; plain file, tgz and tar types are supported (required)'
+                        description: |-
+                          URL can point to one of following formats: text, tgz, zip
+                          http and https url are supported;
+                          plain file, tgz and tar types are supported (required)
                         type: string
                     type: object
                   image:
-                    description: Image url; unqualified, tagged, or digest references supported (required)
+                    description: |-
+                      Image url; unqualified, tagged, or
+                      digest references supported (required)
                     properties:
                       secretRef:
-                        description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication.'
+                        description: |-
+                          Secret may include one or more keys: username, password, token.
+                          By default anonymous access is used for authentication.
                         properties:
                           name:
                             description: Object is expected to be within same namespace
@@ -1756,7 +2013,9 @@ spec:
                         description: Grab only portion of image (optional)
                         type: string
                       tagSelection:
-                        description: Specifies a strategy to choose a tag (optional; v0.24.0+) if specified, do not include a tag in url key
+                        description: |-
+                          Specifies a strategy to choose a tag (optional; v0.24.0+)
+                          if specified, do not include a tag in url key
                         properties:
                           semver:
                             properties:
@@ -1772,24 +2031,33 @@ spec:
                             type: object
                         type: object
                       url:
-                        description: 'Docker image url; unqualified, tagged, or digest references supported (required) Example: username/app1-config:v0.1.0'
+                        description: |-
+                          Docker image url; unqualified, tagged, or
+                          digest references supported (required)
+                          Example: username/app1-config:v0.1.0
                         type: string
                     type: object
                   imgpkgBundle:
                     description: Pulls imgpkg bundle from Docker/OCI registry
                     properties:
                       image:
-                        description: Docker image url; unqualified, tagged, or digest references supported (required)
+                        description: |-
+                          Docker image url; unqualified, tagged, or
+                          digest references supported (required)
                         type: string
                       secretRef:
-                        description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication.'
+                        description: |-
+                          Secret may include one or more keys: username, password, token.
+                          By default anonymous access is used for authentication.
                         properties:
                           name:
                             description: Object is expected to be within same namespace
                             type: string
                         type: object
                       tagSelection:
-                        description: Specifies a strategy to choose a tag (optional; v0.24.0+) if specified, do not include a tag in url key
+                        description: |-
+                          Specifies a strategy to choose a tag (optional; v0.24.0+)
+                          if specified, do not include a tag in url key
                         properties:
                           semver:
                             properties:
@@ -1811,10 +2079,14 @@ spec:
                       paths:
                         additionalProperties:
                           type: string
-                        description: Specifies mapping of paths to their content; not recommended for sensitive values as CR is not encrypted (optional)
+                        description: |-
+                          Specifies mapping of paths to their content;
+                          not recommended for sensitive values as CR is not encrypted (optional)
                         type: object
                       pathsFrom:
-                        description: Specifies content via secrets and config maps; data values are recommended to be placed in secrets (optional)
+                        description: |-
+                          Specifies content via secrets and config maps;
+                          data values are recommended to be placed in secrets (optional)
                         items:
                           properties:
                             configMapRef:
@@ -1838,7 +2110,9 @@ spec:
                     type: object
                 type: object
               paused:
-                description: Paused when set to true will ignore all pending changes, once it set back to false, pending changes will be applied
+                description: |-
+                  Paused when set to true will ignore all pending changes,
+                  once it set back to false, pending changes will be applied
                 type: boolean
               syncPeriod:
                 description: Controls frequency of PackageRepository reconciliation
@@ -1855,7 +2129,10 @@ spec:
                       description: Human-readable message indicating details about last transition.
                       type: string
                     reason:
-                      description: Unique, this should be a short, machine understandable string that gives the reason for condition's last transition. If it reports "ResizeStarted" that means the underlying persistent volume is being resized.
+                      description: |-
+                        Unique, this should be a short, machine understandable string that gives the reason
+                        for condition's last transition. If it reports "ResizeStarted" that means the underlying
+                        persistent volume is being resized.
                       type: string
                     status:
                       type: string
@@ -1887,7 +2164,9 @@ spec:
                         properties:
                           groupKinds:
                             items:
-                              description: GroupKind specifies a Group and a Kind, but does not force a version.  This is useful for identifying concepts during lookup stages without having partially valid types
+                              description: |-
+                                GroupKind specifies a Group and a Kind, but does not force a version.  This is useful for identifying
+                                concepts during lookup stages without having partially valid types
                               properties:
                                 group:
                                   type: string
@@ -1937,7 +2216,10 @@ spec:
               friendlyDescription:
                 type: string
               observedGeneration:
-                description: Populated based on metadata.generation when controller observes a change to the resource; if this value is out of data, other status fields do not reflect latest state
+                description: |-
+                  Populated based on metadata.generation when controller
+                  observes a change to the resource; if this value is
+                  out of data, other status fields do not reflect latest state
                 format: int64
                 type: integer
               template:

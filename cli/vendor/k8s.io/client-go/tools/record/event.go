@@ -203,8 +203,8 @@ func NewBroadcaster(opts ...BroadcasterOption) EventBroadcaster {
 	// - The context was nil.
 	// - The context was context.Background() to begin with.
 	//
-	// Both cases get checked here.
-	haveCtxCancelation := ctx.Done() == nil
+	// Both cases get checked here: we have cancelation if (and only if) there is a channel.
+	haveCtxCancelation := ctx.Done() != nil
 
 	eventBroadcaster.cancelationCtx, eventBroadcaster.cancel = context.WithCancel(ctx)
 
@@ -334,7 +334,7 @@ func recordEvent(ctx context.Context, sink EventSink, event *v1.Event, patch []b
 		newEvent, err = sink.Patch(event, patch)
 	}
 	// Update can fail because the event may have been removed and it no longer exists.
-	if !updateExistingEvent || (updateExistingEvent && util.IsKeyNotFoundError(err)) {
+	if !updateExistingEvent || util.IsKeyNotFoundError(err) {
 		// Making sure that ResourceVersion is empty on creation
 		event.ResourceVersion = ""
 		newEvent, err = sink.Create(event)
@@ -395,7 +395,11 @@ func (e *eventBroadcasterImpl) StartStructuredLogging(verbosity klog.Level) watc
 func (e *eventBroadcasterImpl) StartEventWatcher(eventHandler func(*v1.Event)) watch.Interface {
 	watcher, err := e.Watch()
 	if err != nil {
+		// This function traditionally returns no error even though it can fail.
+		// Instead, it logs the error and returns an empty watch. The empty
+		// watch ensures that callers don't crash when calling Stop.
 		klog.FromContext(e.cancelationCtx).Error(err, "Unable start event watcher (will not retry!)")
+		return watch.NewEmptyWatch()
 	}
 	go func() {
 		defer utilruntime.HandleCrash()
@@ -404,7 +408,10 @@ func (e *eventBroadcasterImpl) StartEventWatcher(eventHandler func(*v1.Event)) w
 			case <-e.cancelationCtx.Done():
 				watcher.Stop()
 				return
-			case watchEvent := <-watcher.ResultChan():
+			case watchEvent, ok := <-watcher.ResultChan():
+				if !ok {
+					return
+				}
 				event, ok := watchEvent.Object.(*v1.Event)
 				if !ok {
 					// This is all local, so there's no reason this should
@@ -485,7 +492,7 @@ func (recorder *recorderImpl) makeEvent(ref *v1.ObjectReference, annotations map
 	}
 	return &v1.Event{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        fmt.Sprintf("%v.%x", ref.Name, t.UnixNano()),
+			Name:        util.GenerateEventName(ref.Name, t.UnixNano()),
 			Namespace:   namespace,
 			Annotations: annotations,
 		},

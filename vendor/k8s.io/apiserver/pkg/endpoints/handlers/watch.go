@@ -21,26 +21,30 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync/atomic"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/net/websocket"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/httpstream/wsstream"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/apiserver/pkg/audit"
 	"k8s.io/apiserver/pkg/endpoints/handlers/negotiation"
 	"k8s.io/apiserver/pkg/endpoints/metrics"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/features"
+	"k8s.io/apiserver/pkg/server/httplog"
 	"k8s.io/apiserver/pkg/storage"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
+	compbasemetrics "k8s.io/component-base/metrics"
+	"k8s.io/component-base/tracing"
+	"k8s.io/klog/v2"
+	"k8s.io/streaming/pkg/httpstream/wsstream"
 )
-
-// nothing will ever be sent down this channel
-var neverExitWatch <-chan time.Time = make(chan time.Time)
 
 // timeoutFactory abstracts watch timeout logic for testing
 type TimeoutFactory interface {
@@ -56,7 +60,8 @@ type realTimeoutFactory struct {
 // and a cleanup function to call when this happens.
 func (w *realTimeoutFactory) TimeoutCh() (<-chan time.Time, func() bool) {
 	if w.timeout == 0 {
-		return neverExitWatch, func() bool { return false }
+		// nothing will ever be sent down this channel
+		return nil, func() bool { return false }
 	}
 	t := time.NewTimer(w.timeout)
 	return t.C, t.Stop
@@ -64,7 +69,7 @@ func (w *realTimeoutFactory) TimeoutCh() (<-chan time.Time, func() bool) {
 
 // serveWatchHandler returns a handle to serve a watch response.
 // TODO: the functionality in this method and in WatchServer.Serve is not cleanly decoupled.
-func serveWatchHandler(watcher watch.Interface, scope *RequestScope, mediaTypeOptions negotiation.MediaTypeOptions, req *http.Request, w http.ResponseWriter, timeout time.Duration, metricsScope string) (http.Handler, error) {
+func serveWatchHandler(watcher watch.Interface, scope *RequestScope, mediaTypeOptions negotiation.MediaTypeOptions, req *http.Request, w http.ResponseWriter, timeout time.Duration, metricsScope string, completeHook WatchListCompleteHook) (http.Handler, error) {
 	options, err := optionsForTransform(mediaTypeOptions, req)
 	if err != nil {
 		return nil, err
@@ -76,40 +81,62 @@ func serveWatchHandler(watcher watch.Interface, scope *RequestScope, mediaTypeOp
 		return nil, err
 	}
 	framer := serializer.StreamSerializer.Framer
-	streamSerializer := serializer.StreamSerializer.Serializer
-	encoder := scope.Serializer.EncoderForVersion(streamSerializer, scope.Kind.GroupVersion())
+	var encoder runtime.Encoder
+	if utilfeature.DefaultFeatureGate.Enabled(features.CBORServingAndStorage) {
+		encoder = scope.Serializer.EncoderForVersion(runtime.UseNondeterministicEncoding(serializer.StreamSerializer.Serializer), scope.Kind.GroupVersion())
+	} else {
+		encoder = scope.Serializer.EncoderForVersion(serializer.StreamSerializer.Serializer, scope.Kind.GroupVersion())
+	}
 	useTextFraming := serializer.EncodesAsText
 	if framer == nil {
 		return nil, fmt.Errorf("no framer defined for %q available for embedded encoding", serializer.MediaType)
 	}
 	// TODO: next step, get back mediaTypeOptions from negotiate and return the exact value here
 	mediaType := serializer.MediaType
-	if mediaType != runtime.ContentTypeJSON {
+	switch mediaType {
+	case runtime.ContentTypeJSON:
+		// as-is
+	case runtime.ContentTypeCBOR:
+		// If a client indicated it accepts application/cbor (exactly one data item) on a
+		// watch request, set the conformant application/cbor-seq media type the watch
+		// response. RFC 9110 allows an origin server to deviate from the indicated
+		// preference rather than send a 406 (Not Acceptable) response (see
+		// https://www.rfc-editor.org/rfc/rfc9110.html#section-12.1-5).
+		mediaType = runtime.ContentTypeCBORSequence
+	default:
 		mediaType += ";stream=watch"
 	}
 
 	ctx := req.Context()
 
 	// locate the appropriate embedded encoder based on the transform
-	var embeddedEncoder runtime.Encoder
+	var negotiatedEncoder runtime.Encoder
 	contentKind, contentSerializer, transform := targetEncodingForTransform(scope, mediaTypeOptions, req)
 	if transform {
 		info, ok := runtime.SerializerInfoForMediaType(contentSerializer.SupportedMediaTypes(), serializer.MediaType)
 		if !ok {
 			return nil, fmt.Errorf("no encoder for %q exists in the requested target %#v", serializer.MediaType, contentSerializer)
 		}
-		embeddedEncoder = contentSerializer.EncoderForVersion(info.Serializer, contentKind.GroupVersion())
+		if utilfeature.DefaultFeatureGate.Enabled(features.CBORServingAndStorage) {
+			negotiatedEncoder = contentSerializer.EncoderForVersion(runtime.UseNondeterministicEncoding(info.Serializer), contentKind.GroupVersion())
+		} else {
+			negotiatedEncoder = contentSerializer.EncoderForVersion(info.Serializer, contentKind.GroupVersion())
+		}
 	} else {
-		embeddedEncoder = scope.Serializer.EncoderForVersion(serializer.Serializer, contentKind.GroupVersion())
+		if utilfeature.DefaultFeatureGate.Enabled(features.CBORServingAndStorage) {
+			negotiatedEncoder = scope.Serializer.EncoderForVersion(runtime.UseNondeterministicEncoding(serializer.Serializer), contentKind.GroupVersion())
+		} else {
+			negotiatedEncoder = scope.Serializer.EncoderForVersion(serializer.Serializer, contentKind.GroupVersion())
+		}
 	}
 
 	var memoryAllocator runtime.MemoryAllocator
 
-	if encoderWithAllocator, supportsAllocator := embeddedEncoder.(runtime.EncoderWithAllocator); supportsAllocator {
+	if encoderWithAllocator, supportsAllocator := negotiatedEncoder.(runtime.EncoderWithAllocator); supportsAllocator {
 		// don't put the allocator inside the embeddedEncodeFn as that would allocate memory on every call.
 		// instead, we allocate the buffer for the entire watch session and release it when we close the connection.
 		memoryAllocator = runtime.AllocatorPool.Get().(*runtime.Allocator)
-		embeddedEncoder = runtime.NewEncoderWithAllocator(encoderWithAllocator, memoryAllocator)
+		negotiatedEncoder = runtime.NewEncoderWithAllocator(encoderWithAllocator, memoryAllocator)
 	}
 	var tableOptions *metav1.TableOptions
 	if options != nil {
@@ -119,7 +146,7 @@ func serveWatchHandler(watcher watch.Interface, scope *RequestScope, mediaTypeOp
 			return nil, fmt.Errorf("unexpected options type: %T", options)
 		}
 	}
-	embeddedEncoder = newWatchEmbeddedEncoder(ctx, embeddedEncoder, mediaTypeOptions.Convert, tableOptions, scope)
+	embeddedEncoder := newWatchEmbeddedEncoder(ctx, negotiatedEncoder, mediaTypeOptions.Convert, tableOptions, scope)
 
 	if encoderWithAllocator, supportsAllocator := encoder.(runtime.EncoderWithAllocator); supportsAllocator {
 		if memoryAllocator == nil {
@@ -149,7 +176,8 @@ func serveWatchHandler(watcher watch.Interface, scope *RequestScope, mediaTypeOp
 		TimeoutFactory:       &realTimeoutFactory{timeout},
 		ServerShuttingDownCh: serverShuttingDownCh,
 
-		metricsScope: metricsScope,
+		metricsScope:          metricsScope,
+		watchListCompleteHook: completeHook,
 	}
 
 	if wsstream.IsWebSocketRequest(req) {
@@ -179,12 +207,47 @@ type WatchServer struct {
 	TimeoutFactory       TimeoutFactory
 	ServerShuttingDownCh <-chan struct{}
 
-	metricsScope string
+	metricsScope          string
+	watchListCompleteHook WatchListCompleteHook
+}
+
+type WatchListCompleteHook func()
+
+// watchEventMetricsRecorder allows the caller to count bytes written and report the size of the event.
+// It is thread-safe, as long as underlying io.Writer is thread-safe.
+// Once all Write calls for a given watch event have finished, RecordEvent must be called.
+type watchEventMetricsRecorder struct {
+	writer      io.Writer
+	countMetric compbasemetrics.CounterMetric
+	sizeMetric  compbasemetrics.ObserverMetric
+	byteCount   atomic.Int64
+}
+
+// Write implements io.Writer.
+func (c *watchEventMetricsRecorder) Write(p []byte) (n int, err error) {
+	n, err = c.writer.Write(p)
+	c.byteCount.Add(int64(n))
+	return
+}
+
+// Record reports the metrics and resets the byte count.
+func (c *watchEventMetricsRecorder) RecordEvent() {
+	c.countMetric.Inc()
+	c.sizeMetric.Observe(float64(c.byteCount.Swap(0)))
 }
 
 // HandleHTTP serves a series of encoded events via HTTP with Transfer-Encoding: chunked.
 // or over a websocket connection.
 func (s *WatchServer) HandleHTTP(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	ctx, span := tracing.Start(ctx, "WatchServer.HandleHTTP",
+		attribute.String("audit-id", audit.GetAuditIDTruncated(ctx)),
+		attribute.String("method", req.Method),
+		attribute.String("url", req.URL.Path),
+		attribute.String("protocol", req.Proto),
+		attribute.String("mediaType", s.MediaType),
+		attribute.String("encoder", string(s.Encoder.Identifier())))
+	req = req.WithContext(ctx)
 	defer func() {
 		if s.MemoryAllocator != nil {
 			runtime.AllocatorPool.Put(s.MemoryAllocator)
@@ -194,7 +257,7 @@ func (s *WatchServer) HandleHTTP(w http.ResponseWriter, req *http.Request) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		err := fmt.Errorf("unable to start watch - can't get http.Flusher: %#v", w)
-		utilruntime.HandleError(err)
+		utilruntime.HandleErrorWithContext(req.Context(), err, "Unable to start watch")
 		s.Scope.err(errors.NewInternalError(err), w, req)
 		return
 	}
@@ -203,7 +266,7 @@ func (s *WatchServer) HandleHTTP(w http.ResponseWriter, req *http.Request) {
 	if framer == nil {
 		// programmer error
 		err := fmt.Errorf("no stream framing support is available for media type %q", s.MediaType)
-		utilruntime.HandleError(err)
+		utilruntime.HandleErrorWithContext(req.Context(), err, "No stream framing support available")
 		s.Scope.err(errors.NewBadRequest(err.Error()), w, req)
 		return
 	}
@@ -218,11 +281,19 @@ func (s *WatchServer) HandleHTTP(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	flusher.Flush()
 
-	kind := s.Scope.Kind
-	watchEncoder := newWatchEncoder(req.Context(), kind, s.EmbeddedEncoder, s.Encoder, framer)
+	gvr := s.Scope.Resource
+
+	recorder := &watchEventMetricsRecorder{
+		writer:      framer,
+		countMetric: metrics.WatchEvents.WithContext(req.Context()).WithLabelValues(gvr.Group, gvr.Version, gvr.Resource),
+		sizeMetric:  metrics.WatchEventsSizes.WithContext(req.Context()).WithLabelValues(gvr.Group, gvr.Version, gvr.Resource),
+	}
+
+	watchEncoder := newWatchEncoder(req.Context(), gvr, s.EmbeddedEncoder, s.Encoder, recorder)
 	ch := s.Watching.ResultChan()
 	done := req.Context().Done()
 
+	span.AddEvent("About to start writing response")
 	for {
 		select {
 		case <-s.ServerShuttingDownCh:
@@ -243,20 +314,33 @@ func (s *WatchServer) HandleHTTP(w http.ResponseWriter, req *http.Request) {
 				// End of results.
 				return
 			}
-			metrics.WatchEvents.WithContext(req.Context()).WithLabelValues(kind.Group, kind.Version, kind.Kind).Inc()
-			isWatchListLatencyRecordingRequired := shouldRecordWatchListLatency(event)
+			isWatchListLatencyRecordingRequired := shouldRecordWatchListLatency(req.Context(), event)
 
 			if err := watchEncoder.Encode(event); err != nil {
-				utilruntime.HandleError(err)
+				utilruntime.HandleErrorWithContext(req.Context(), err, "Failed to encode watch event")
 				// client disconnect.
 				return
 			}
+			recorder.RecordEvent()
 
 			if len(ch) == 0 {
 				flusher.Flush()
 			}
 			if isWatchListLatencyRecordingRequired {
-				metrics.RecordWatchListLatency(req.Context(), s.Scope.Resource, s.metricsScope)
+				// Record completion of initial listing phase for WatchList
+				receivedTimestamp, ok := apirequest.ReceivedTimestampFrom(req.Context())
+				if !ok {
+					utilruntime.HandleErrorWithContext(req.Context(), nil, "Unable to measure watchlist latency, no received timestamp found in the context", "gvr", s.Scope.Resource)
+				} else {
+					initLatency := time.Since(receivedTimestamp)
+					metrics.RecordWatchListLatency(req.Context(), s.Scope.Resource, s.metricsScope, initLatency)
+					auditID := audit.GetAuditIDTruncated(req.Context())
+					klog.V(3).InfoS("WatchList initial events sent", "path", req.URL.Path, "auditID", auditID, "initLatency", initLatency)
+					httplog.AddKeyValue(req.Context(), "watchlist_init_latency", initLatency)
+					span.AddEvent("Writing initial events done")
+					span.End(5 * time.Second)
+					s.watchListCompleteHook()
+				}
 			}
 		}
 	}
@@ -264,6 +348,9 @@ func (s *WatchServer) HandleHTTP(w http.ResponseWriter, req *http.Request) {
 
 // HandleWS serves a series of encoded events over a websocket connection.
 func (s *WatchServer) HandleWS(ws *websocket.Conn) {
+	ctx := ws.Request().Context()
+	logger := klog.FromContext(ctx)
+
 	defer func() {
 		if s.MemoryAllocator != nil {
 			runtime.AllocatorPool.Put(s.MemoryAllocator)
@@ -277,18 +364,18 @@ func (s *WatchServer) HandleWS(ws *websocket.Conn) {
 	defer cleanup()
 
 	go func() {
-		defer utilruntime.HandleCrash()
+		defer utilruntime.HandleCrashWithLogger(logger)
 		// This blocks until the connection is closed.
 		// Client should not send anything.
-		wsstream.IgnoreReceives(ws, 0)
+		wsstream.IgnoreReceivesWithLogger(logger, ws, 0)
 		// Once the client closes, we should also close
 		close(done)
 	}()
 
 	framer := newWebsocketFramer(ws, s.UseTextFraming)
 
-	kind := s.Scope.Kind
-	watchEncoder := newWatchEncoder(context.TODO(), kind, s.EmbeddedEncoder, s.Encoder, framer)
+	gvr := s.Scope.Resource
+	watchEncoder := newWatchEncoder(ctx, gvr, s.EmbeddedEncoder, s.Encoder, framer)
 	ch := s.Watching.ResultChan()
 
 	for {
@@ -304,7 +391,7 @@ func (s *WatchServer) HandleWS(ws *websocket.Conn) {
 			}
 
 			if err := watchEncoder.Encode(event); err != nil {
-				utilruntime.HandleError(err)
+				utilruntime.HandleErrorWithLogger(logger, err, "Failed to encode watch event")
 				// client disconnect.
 				return
 			}
@@ -341,7 +428,7 @@ func (w *websocketFramer) Write(p []byte) (int, error) {
 
 var _ io.Writer = &websocketFramer{}
 
-func shouldRecordWatchListLatency(event watch.Event) bool {
+func shouldRecordWatchListLatency(ctx context.Context, event watch.Event) bool {
 	if event.Type != watch.Bookmark || !utilfeature.DefaultFeatureGate.Enabled(features.WatchList) {
 		return false
 	}
@@ -351,7 +438,7 @@ func shouldRecordWatchListLatency(event watch.Event) bool {
 	// for more please read https://github.com/kubernetes/enhancements/tree/master/keps/sig-api-machinery/3157-watch-list
 	hasAnnotation, err := storage.HasInitialEventsEndBookmarkAnnotation(event.Object)
 	if err != nil {
-		utilruntime.HandleError(fmt.Errorf("unable to determine if the obj has the required annotation for measuring watchlist latency, obj %T: %v", event.Object, err))
+		utilruntime.HandleErrorWithContext(ctx, err, "Unable to determine if the object has the required annotation for measuring watchlist latency", "object", fmt.Sprintf("%T", event.Object))
 		return false
 	}
 	return hasAnnotation

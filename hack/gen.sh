@@ -22,7 +22,6 @@ go run vendor/k8s.io/code-generator/cmd/deepcopy-gen/main.go \
 	${KC_PKG}/pkg/apis/packaging/v1alpha1 \
 	${KC_PKG}/pkg/apis/internalpackaging/v1alpha1 \
 	--output-file zz_generated.deepcopy.go \
-	--bounding-dirs ${KC_PKG}/pkg/apis \
 	--go-header-file ./hack/gen-boilerplate.txt
 
 echo "Generating clientset"

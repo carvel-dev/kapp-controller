@@ -3,15 +3,16 @@
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	packagingv1alpha1 "carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
+	apispackagingv1alpha1 "carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
 	versioned "carvel.dev/kapp-controller/pkg/client/clientset/versioned"
 	internalinterfaces "carvel.dev/kapp-controller/pkg/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "carvel.dev/kapp-controller/pkg/client/listers/packaging/v1alpha1"
+	packagingv1alpha1 "carvel.dev/kapp-controller/pkg/client/listers/packaging/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -20,7 +21,7 @@ import (
 // PackageInstalls.
 type PackageInstallInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.PackageInstallLister
+	Lister() packagingv1alpha1.PackageInstallLister
 }
 
 type packageInstallInformer struct {
@@ -33,42 +34,67 @@ type packageInstallInformer struct {
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
 func NewPackageInstallInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredPackageInstallInformer(client, namespace, resyncPeriod, indexers, nil)
+	return NewPackageInstallInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
 }
 
 // NewFilteredPackageInstallInformer constructs a new informer for PackageInstall type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredPackageInstallInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
+	return NewPackageInstallInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewPackageInstallInformerWithOptions constructs a new informer for PackageInstall type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewPackageInstallInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	gvr := schema.GroupVersionResource{Group: "packaging.carvel.dev", Version: "v1alpha1", Resource: "packageinstalls"}
+	identifier := options.InformerName.WithResource(gvr)
+	tweakListOptions := options.TweakListOptions
+	return cache.NewSharedIndexInformerWithOptions(
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
+			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.PackagingV1alpha1().PackageInstalls(namespace).List(context.TODO(), options)
+				return client.PackagingV1alpha1().PackageInstalls(namespace).List(context.Background(), opts)
 			},
-			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.PackagingV1alpha1().PackageInstalls(namespace).Watch(context.TODO(), options)
+				return client.PackagingV1alpha1().PackageInstalls(namespace).Watch(context.Background(), opts)
 			},
+			ListWithContextFunc: func(ctx context.Context, opts v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.PackagingV1alpha1().PackageInstalls(namespace).List(ctx, opts)
+			},
+			WatchFuncWithContext: func(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.PackagingV1alpha1().PackageInstalls(namespace).Watch(ctx, opts)
+			},
+		}, client),
+		&apispackagingv1alpha1.PackageInstall{},
+		cache.SharedIndexInformerOptions{
+			ResyncPeriod: options.ResyncPeriod,
+			Indexers:     options.Indexers,
+			Identifier:   identifier,
 		},
-		&packagingv1alpha1.PackageInstall{},
-		resyncPeriod,
-		indexers,
 	)
 }
 
 func (f *packageInstallInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredPackageInstallInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewPackageInstallInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *packageInstallInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&packagingv1alpha1.PackageInstall{}, f.defaultInformer)
+	return f.factory.InformerFor(&apispackagingv1alpha1.PackageInstall{}, f.defaultInformer)
 }
 
-func (f *packageInstallInformer) Lister() v1alpha1.PackageInstallLister {
-	return v1alpha1.NewPackageInstallLister(f.Informer().GetIndexer())
+func (f *packageInstallInformer) Lister() packagingv1alpha1.PackageInstallLister {
+	return packagingv1alpha1.NewPackageInstallLister(f.Informer().GetIndexer())
 }

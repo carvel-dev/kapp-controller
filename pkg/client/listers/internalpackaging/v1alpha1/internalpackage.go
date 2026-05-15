@@ -3,10 +3,10 @@
 package v1alpha1
 
 import (
-	v1alpha1 "carvel.dev/kapp-controller/pkg/apis/internalpackaging/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	internalpackagingv1alpha1 "carvel.dev/kapp-controller/pkg/apis/internalpackaging/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // InternalPackageLister helps list InternalPackages.
@@ -14,7 +14,7 @@ import (
 type InternalPackageLister interface {
 	// List lists all InternalPackages in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.InternalPackage, err error)
+	List(selector labels.Selector) (ret []*internalpackagingv1alpha1.InternalPackage, err error)
 	// InternalPackages returns an object that can list and get InternalPackages.
 	InternalPackages(namespace string) InternalPackageNamespaceLister
 	InternalPackageListerExpansion
@@ -22,25 +22,17 @@ type InternalPackageLister interface {
 
 // internalPackageLister implements the InternalPackageLister interface.
 type internalPackageLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*internalpackagingv1alpha1.InternalPackage]
 }
 
 // NewInternalPackageLister returns a new InternalPackageLister.
 func NewInternalPackageLister(indexer cache.Indexer) InternalPackageLister {
-	return &internalPackageLister{indexer: indexer}
-}
-
-// List lists all InternalPackages in the indexer.
-func (s *internalPackageLister) List(selector labels.Selector) (ret []*v1alpha1.InternalPackage, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.InternalPackage))
-	})
-	return ret, err
+	return &internalPackageLister{listers.New[*internalpackagingv1alpha1.InternalPackage](indexer, internalpackagingv1alpha1.Resource("internalpackage"))}
 }
 
 // InternalPackages returns an object that can list and get InternalPackages.
 func (s *internalPackageLister) InternalPackages(namespace string) InternalPackageNamespaceLister {
-	return internalPackageNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return internalPackageNamespaceLister{listers.NewNamespaced[*internalpackagingv1alpha1.InternalPackage](s.ResourceIndexer, namespace)}
 }
 
 // InternalPackageNamespaceLister helps list and get InternalPackages.
@@ -48,36 +40,15 @@ func (s *internalPackageLister) InternalPackages(namespace string) InternalPacka
 type InternalPackageNamespaceLister interface {
 	// List lists all InternalPackages in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.InternalPackage, err error)
+	List(selector labels.Selector) (ret []*internalpackagingv1alpha1.InternalPackage, err error)
 	// Get retrieves the InternalPackage from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.InternalPackage, error)
+	Get(name string) (*internalpackagingv1alpha1.InternalPackage, error)
 	InternalPackageNamespaceListerExpansion
 }
 
 // internalPackageNamespaceLister implements the InternalPackageNamespaceLister
 // interface.
 type internalPackageNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all InternalPackages in the indexer for a given namespace.
-func (s internalPackageNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.InternalPackage, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.InternalPackage))
-	})
-	return ret, err
-}
-
-// Get retrieves the InternalPackage from the indexer for a given namespace and name.
-func (s internalPackageNamespaceLister) Get(name string) (*v1alpha1.InternalPackage, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("internalpackage"), name)
-	}
-	return obj.(*v1alpha1.InternalPackage), nil
+	listers.ResourceIndexer[*internalpackagingv1alpha1.InternalPackage]
 }

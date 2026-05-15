@@ -13,11 +13,11 @@ type FakeDataV1alpha1 struct {
 }
 
 func (c *FakeDataV1alpha1) Packages(namespace string) v1alpha1.PackageInterface {
-	return &FakePackages{c, namespace}
+	return newFakePackages(c, namespace)
 }
 
 func (c *FakeDataV1alpha1) PackageMetadatas(namespace string) v1alpha1.PackageMetadataInterface {
-	return &FakePackageMetadatas{c, namespace}
+	return newFakePackageMetadatas(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

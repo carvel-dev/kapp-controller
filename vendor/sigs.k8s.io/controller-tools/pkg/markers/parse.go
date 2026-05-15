@@ -50,8 +50,8 @@ func peekNoSpace(scanner *sc.Scanner) rune {
 
 var (
 	// interfaceType is a pre-computed reflect.Type representing the empty interface.
-	interfaceType = reflect.TypeOf((*interface{})(nil)).Elem()
-	rawArgsType   = reflect.TypeOf((*RawArguments)(nil)).Elem()
+	interfaceType = reflect.TypeFor[*any]().Elem()
+	rawArgsType   = reflect.TypeFor[*RawArguments]().Elem()
 )
 
 // lowerCamelCase converts PascalCase string to
@@ -69,7 +69,7 @@ func lowerCamelCase(in string) string {
 
 // RawArguments is a special type that can be used for a marker
 // to receive *all* raw, underparsed argument data for a marker.
-// You probably want to use `interface{}` to match any type instead.
+// You probably want to use `any` to match any type instead.
 // Use *only* for legacy markers that don't follow Definition's normal
 // parsing logic.  It should *not* be used as a field in a marker struct.
 type RawArguments []byte
@@ -80,10 +80,12 @@ type RawArguments []byte
 type ArgumentType int
 
 const (
-	// Invalid represents a type that can't be parsed, and should never be used.
+	// InvalidType represents a type that can't be parsed, and should never be used.
 	InvalidType ArgumentType = iota
 	// IntType is an int
 	IntType
+	// NumberType is a float64
+	NumberType
 	// StringType is a string
 	StringType
 	// BoolType is a bool
@@ -127,6 +129,8 @@ func (a Argument) typeString(out *strings.Builder) {
 		out.WriteString("<invalid>")
 	case IntType:
 		out.WriteString("int")
+	case NumberType:
+		out.WriteString("float64")
 	case StringType:
 		out.WriteString("string")
 	case BoolType:
@@ -179,11 +183,13 @@ func makeSliceType(itemType Argument) (reflect.Type, error) {
 	var itemReflectedType reflect.Type
 	switch itemType.Type {
 	case IntType:
-		itemReflectedType = reflect.TypeOf(int(0))
+		itemReflectedType = reflect.TypeFor[int]()
+	case NumberType:
+		itemReflectedType = reflect.TypeFor[float64]()
 	case StringType:
-		itemReflectedType = reflect.TypeOf("")
+		itemReflectedType = reflect.TypeFor[string]()
 	case BoolType:
-		itemReflectedType = reflect.TypeOf(false)
+		itemReflectedType = reflect.TypeFor[bool]()
 	case SliceType:
 		subItemType, err := makeSliceType(*itemType.ItemType)
 		if err != nil {
@@ -202,7 +208,7 @@ func makeSliceType(itemType Argument) (reflect.Type, error) {
 	}
 
 	if itemType.Pointer {
-		itemReflectedType = reflect.PtrTo(itemReflectedType)
+		itemReflectedType = reflect.PointerTo(itemReflectedType)
 	}
 
 	return reflect.SliceOf(itemReflectedType), nil
@@ -214,11 +220,13 @@ func makeMapType(itemType Argument) (reflect.Type, error) {
 	var itemReflectedType reflect.Type
 	switch itemType.Type {
 	case IntType:
-		itemReflectedType = reflect.TypeOf(int(0))
+		itemReflectedType = reflect.TypeFor[int]()
+	case NumberType:
+		itemReflectedType = reflect.TypeFor[float64]()
 	case StringType:
-		itemReflectedType = reflect.TypeOf("")
+		itemReflectedType = reflect.TypeFor[string]()
 	case BoolType:
-		itemReflectedType = reflect.TypeOf(false)
+		itemReflectedType = reflect.TypeFor[bool]()
 	case SliceType:
 		subItemType, err := makeSliceType(*itemType.ItemType)
 		if err != nil {
@@ -240,10 +248,10 @@ func makeMapType(itemType Argument) (reflect.Type, error) {
 	}
 
 	if itemType.Pointer {
-		itemReflectedType = reflect.PtrTo(itemReflectedType)
+		itemReflectedType = reflect.PointerTo(itemReflectedType)
 	}
 
-	return reflect.MapOf(reflect.TypeOf(""), itemReflectedType), nil
+	return reflect.MapOf(reflect.TypeFor[string](), itemReflectedType), nil
 }
 
 // guessType takes an educated guess about the type of the next field.  If allowSlice
@@ -260,7 +268,11 @@ func guessType(scanner *sc.Scanner, raw string, allowSlice bool) *Argument {
 		subScanner := parserScanner(subRaw, scanner.Error)
 
 		var tok rune
-		for tok = subScanner.Scan(); tok != ',' && tok != sc.EOF && tok != ';'; tok = subScanner.Scan() {
+		for {
+			tok = subScanner.Scan()
+			if tok == ',' || tok == sc.EOF || tok == ';' {
+				break
+			}
 			// wait till we get something interesting
 		}
 
@@ -298,6 +310,7 @@ func guessType(scanner *sc.Scanner, raw string, allowSlice bool) *Argument {
 		// We'll cross that bridge when we get there.
 
 		// look ahead till we can figure out if this is a map or a slice
+		hint = peekNoSpace(subScanner)
 		firstElemType := guessType(subScanner, subRaw, false)
 		if firstElemType.Type == StringType {
 			// might be a map or slice, parse the string and check for colon
@@ -305,8 +318,9 @@ func guessType(scanner *sc.Scanner, raw string, allowSlice bool) *Argument {
 			var keyVal string // just ignore this
 			(&Argument{Type: StringType}).parseString(subScanner, raw, reflect.Indirect(reflect.ValueOf(&keyVal)))
 
-			if subScanner.Scan() == ':' {
+			if token := subScanner.Scan(); token == ':' || hint == '}' {
 				// it's got a string followed by a colon -- it's a map
+				// or an empty map in case of {}
 				return &Argument{
 					Type:     MapType,
 					ItemType: &Argument{Type: AnyType},
@@ -346,8 +360,12 @@ func guessType(scanner *sc.Scanner, raw string, allowSlice bool) *Argument {
 		if nextTok == '-' {
 			nextTok = subScanner.Scan()
 		}
+
 		if nextTok == sc.Int {
 			return &Argument{Type: IntType}
+		}
+		if nextTok == sc.Float {
+			return &Argument{Type: NumberType}
 		}
 	}
 
@@ -357,6 +375,14 @@ func guessType(scanner *sc.Scanner, raw string, allowSlice bool) *Argument {
 
 // parseString parses either of the two accepted string forms (quoted, or bare tokens).
 func (a *Argument) parseString(scanner *sc.Scanner, raw string, out reflect.Value) {
+	// we need to temporarily disable the scanner's int/float parsing, since we want to
+	// prevent number parsing errors.
+	oldMode := scanner.Mode
+	scanner.Mode = oldMode &^ sc.ScanInts &^ sc.ScanFloats
+	defer func() {
+		scanner.Mode = oldMode
+	}()
+
 	// strings are a bit weird -- the "easy" case is quoted strings (tokenized as strings),
 	// the "hard" case (present for backwards compat) is a bare sequence of tokens that aren't
 	// a comma.
@@ -469,9 +495,8 @@ func (a *Argument) parseMap(scanner *sc.Scanner, raw string, out reflect.Value) 
 // parse functions like Parse, except that it allows passing down whether or not we're
 // already in a slice, to avoid duplicate legacy slice detection for AnyType
 func (a *Argument) parse(scanner *sc.Scanner, raw string, out reflect.Value, inSlice bool) {
-	// nolint:gocyclo
 	if a.Type == InvalidType {
-		scanner.Error(scanner, fmt.Sprintf("cannot parse invalid type"))
+		scanner.Error(scanner, "cannot parse invalid type")
 		return
 	}
 	if a.Pointer {
@@ -483,8 +508,39 @@ func (a *Argument) parse(scanner *sc.Scanner, raw string, out reflect.Value, inS
 		// raw consumes everything else
 		castAndSet(out, reflect.ValueOf(raw[scanner.Pos().Offset:]))
 		// consume everything else
-		for tok := scanner.Scan(); tok != sc.EOF; tok = scanner.Scan() {
+		var tok rune
+		for {
+			tok = scanner.Scan()
+			if tok == sc.EOF {
+				break
+			}
 		}
+	case NumberType:
+		nextChar := scanner.Peek()
+		isNegative := false
+		if nextChar == '-' {
+			isNegative = true
+			scanner.Scan() // eat the '-'
+		}
+
+		tok := scanner.Scan()
+		if tok != sc.Float && tok != sc.Int {
+			scanner.Error(scanner, fmt.Sprintf("expected integer or float, got %q", scanner.TokenText()))
+			return
+		}
+
+		text := scanner.TokenText()
+		if isNegative {
+			text = "-" + text
+		}
+
+		val, err := strconv.ParseFloat(text, 64)
+		if err != nil {
+			scanner.Error(scanner, fmt.Sprintf("unable to parse number: %v", err))
+			return
+		}
+
+		castAndSet(out, reflect.ValueOf(val))
 	case IntType:
 		nextChar := scanner.Peek()
 		isNegative := false
@@ -597,6 +653,8 @@ func ArgumentFromType(rawType reflect.Type) (Argument, error) {
 		arg.Type = StringType
 	case reflect.Int, reflect.Int32: // NB(directxman12): all ints in kubernetes are int32, so explicitly support that
 		arg.Type = IntType
+	case reflect.Float64:
+		arg.Type = NumberType
 	case reflect.Bool:
 		arg.Type = BoolType
 	case reflect.Slice:
@@ -698,8 +756,7 @@ func argumentInfo(fieldName string, tag reflect.StructTag) (argName string, opti
 	}
 	optionalOpt = false
 	for _, tagOption := range markerTagParts[1:] {
-		switch tagOption {
-		case "optional":
+		if tagOption == "optional" {
 			optionalOpt = true
 		}
 	}
@@ -755,19 +812,29 @@ func (d *Definition) loadFields() error {
 func parserScanner(raw string, err func(*sc.Scanner, string)) *sc.Scanner {
 	scanner := &sc.Scanner{}
 	scanner.Init(bytes.NewBufferString(raw))
-	scanner.Mode = sc.ScanIdents | sc.ScanInts | sc.ScanStrings | sc.ScanRawStrings | sc.SkipComments
+	scanner.Mode = sc.ScanIdents | sc.ScanInts | sc.ScanFloats | sc.ScanStrings | sc.ScanRawStrings | sc.SkipComments
 	scanner.Error = err
 
 	return scanner
 }
 
+type markerParser interface {
+	ParseMarker(name string, anonymousName string, restFields string) error
+}
+
 // Parse uses the type information in this Definition to parse the given
 // raw marker in the form `+a:b:c=arg,d=arg` into an output object of the
 // type specified in the definition.
-func (d *Definition) Parse(rawMarker string) (interface{}, error) {
+func (d *Definition) Parse(rawMarker string) (any, error) {
 	name, anonName, fields := splitMarker(rawMarker)
 
-	out := reflect.Indirect(reflect.New(d.Output))
+	outPointer := reflect.New(d.Output)
+	out := reflect.Indirect(outPointer)
+
+	if parser, ok := outPointer.Interface().(markerParser); ok {
+		err := parser.ParseMarker(name, anonName, fields)
+		return out.Interface(), err
+	}
 
 	// if we're a not a struct or have no arguments, treat the full `a:b:c` as the name,
 	// otherwise, treat `c` as a field name, and `a:b` as the marker name.
@@ -801,11 +868,8 @@ func (d *Definition) Parse(rawMarker string) (interface{}, error) {
 		seen[""] = struct{}{} // mark as seen for strict definitions
 	} else if !d.Empty() && scanner.Peek() != sc.EOF {
 		// if we expect *and* actually have arguments passed
-		for {
-			// parse the argument name
-			if !expect(scanner, sc.Ident, "argument name") {
-				break
-			}
+		// parse the argument name
+		for expect(scanner, sc.Ident, "argument name") {
 			argName := scanner.TokenText()
 			if !expect(scanner, '=', "equals") {
 				break
@@ -865,7 +929,7 @@ func (d *Definition) Parse(rawMarker string) (interface{}, error) {
 // type, its public fields will automatically be populated into Fields (and similar
 // fields in Definition).  Other values will have a single, empty-string-named Fields
 // entry.
-func MakeDefinition(name string, target TargetType, output interface{}) (*Definition, error) {
+func MakeDefinition(name string, target TargetType, output any) (*Definition, error) {
 	def := &Definition{
 		Name:   name,
 		Target: target,
@@ -881,9 +945,9 @@ func MakeDefinition(name string, target TargetType, output interface{}) (*Defini
 }
 
 // MakeAnyTypeDefinition constructs a definition for an output struct with a
-// field named `Value` of type `interface{}`. The argument to the marker will
+// field named `Value` of type `any`. The argument to the marker will
 // be parsed as AnyType and assigned to the field named `Value`.
-func MakeAnyTypeDefinition(name string, target TargetType, output interface{}) (*Definition, error) {
+func MakeAnyTypeDefinition(name string, target TargetType, output any) (*Definition, error) {
 	defn, err := MakeDefinition(name, target, output)
 	if err != nil {
 		return nil, err

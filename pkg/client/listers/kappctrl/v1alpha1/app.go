@@ -3,10 +3,10 @@
 package v1alpha1
 
 import (
-	v1alpha1 "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	kappctrlv1alpha1 "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // AppLister helps list Apps.
@@ -14,7 +14,7 @@ import (
 type AppLister interface {
 	// List lists all Apps in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.App, err error)
+	List(selector labels.Selector) (ret []*kappctrlv1alpha1.App, err error)
 	// Apps returns an object that can list and get Apps.
 	Apps(namespace string) AppNamespaceLister
 	AppListerExpansion
@@ -22,25 +22,17 @@ type AppLister interface {
 
 // appLister implements the AppLister interface.
 type appLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*kappctrlv1alpha1.App]
 }
 
 // NewAppLister returns a new AppLister.
 func NewAppLister(indexer cache.Indexer) AppLister {
-	return &appLister{indexer: indexer}
-}
-
-// List lists all Apps in the indexer.
-func (s *appLister) List(selector labels.Selector) (ret []*v1alpha1.App, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.App))
-	})
-	return ret, err
+	return &appLister{listers.New[*kappctrlv1alpha1.App](indexer, kappctrlv1alpha1.Resource("app"))}
 }
 
 // Apps returns an object that can list and get Apps.
 func (s *appLister) Apps(namespace string) AppNamespaceLister {
-	return appNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return appNamespaceLister{listers.NewNamespaced[*kappctrlv1alpha1.App](s.ResourceIndexer, namespace)}
 }
 
 // AppNamespaceLister helps list and get Apps.
@@ -48,36 +40,15 @@ func (s *appLister) Apps(namespace string) AppNamespaceLister {
 type AppNamespaceLister interface {
 	// List lists all Apps in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.App, err error)
+	List(selector labels.Selector) (ret []*kappctrlv1alpha1.App, err error)
 	// Get retrieves the App from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.App, error)
+	Get(name string) (*kappctrlv1alpha1.App, error)
 	AppNamespaceListerExpansion
 }
 
 // appNamespaceLister implements the AppNamespaceLister
 // interface.
 type appNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all Apps in the indexer for a given namespace.
-func (s appNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.App, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.App))
-	})
-	return ret, err
-}
-
-// Get retrieves the App from the indexer for a given namespace and name.
-func (s appNamespaceLister) Get(name string) (*v1alpha1.App, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("app"), name)
-	}
-	return obj.(*v1alpha1.App), nil
+	listers.ResourceIndexer[*kappctrlv1alpha1.App]
 }

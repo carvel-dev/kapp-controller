@@ -19,22 +19,24 @@ package validating
 import (
 	"context"
 	"io"
+	"sync"
 
 	v1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/admission/initializer"
 	"k8s.io/apiserver/pkg/admission/plugin/cel"
+	"k8s.io/apiserver/pkg/admission/plugin/manifest/metrics"
+	"k8s.io/apiserver/pkg/admission/plugin/policy/config"
 	"k8s.io/apiserver/pkg/admission/plugin/policy/generic"
+	"k8s.io/apiserver/pkg/admission/plugin/policy/manifest/source"
 	"k8s.io/apiserver/pkg/admission/plugin/policy/matching"
 	"k8s.io/apiserver/pkg/admission/plugin/webhook/matchconditions"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/cel/environment"
-	"k8s.io/apiserver/pkg/features"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/component-base/featuregate"
 )
 
 const (
@@ -43,20 +45,21 @@ const (
 )
 
 var (
-	compositionEnvTemplate *cel.CompositionEnv = func() *cel.CompositionEnv {
-		compositionEnvTemplate, err := cel.NewCompositionEnv(cel.VariablesTypeName, environment.MustBaseEnvSet(environment.DefaultCompatibilityVersion()))
-		if err != nil {
-			panic(err)
-		}
-
-		return compositionEnvTemplate
-	}()
+	lazyCompositionEnvTemplateWithStrictCostInit sync.Once
+	lazyCompositionEnvTemplateWithStrictCost     *environment.EnvSet
 )
+
+func getCompositionEnvTemplateWithStrictCost() *environment.EnvSet {
+	lazyCompositionEnvTemplateWithStrictCostInit.Do(func() {
+		lazyCompositionEnvTemplateWithStrictCost = environment.MustBaseEnvSet(environment.DefaultCompatibilityVersion())
+	})
+	return lazyCompositionEnvTemplateWithStrictCost
+}
 
 // Register registers a plugin
 func Register(plugins *admission.Plugins) {
 	plugins.Register(PluginName, func(configFile io.Reader) (admission.Interface, error) {
-		return NewPlugin(configFile), nil
+		return NewPlugin(configFile)
 	})
 }
 
@@ -72,13 +75,46 @@ type Plugin struct {
 
 var _ admission.Interface = &Plugin{}
 var _ admission.ValidationInterface = &Plugin{}
-var _ initializer.WantsFeatures = &Plugin{}
 var _ initializer.WantsExcludedAdmissionResources = &Plugin{}
+var _ initializer.WantsManifestLoaders = &Plugin{}
 
-func NewPlugin(_ io.Reader) *Plugin {
+// SetManifestLoaders provides the manifest load functions for scheme-based defaulting and validation.
+func (a *Plugin) SetManifestLoaders(loaders *initializer.ManifestLoaders) {
+	if loaders == nil || loaders.LoadValidatingPolicyManifests == nil {
+		return
+	}
+	loadFunc := loaders.LoadValidatingPolicyManifests
+	a.SetStaticSourceFactory(func(manifestsDir string) (generic.ReloadableSource[PolicyHook], error) {
+		staticSource := source.NewStaticPolicySource(manifestsDir, a.GetAPIServerID(),
+			func(p *v1.ValidatingAdmissionPolicy) (Validator, error) {
+				v := compilePolicy(p)
+				if err := v.CompileError(); err != nil {
+					return nil, err
+				}
+				return v, nil
+			},
+			func(dir string) ([]*v1.ValidatingAdmissionPolicy, []*v1.ValidatingAdmissionPolicyBinding, string, error) {
+				return loadFunc(dir)
+			},
+			func(b *v1.ValidatingAdmissionPolicyBinding) string { return b.Spec.PolicyName },
+			metrics.VAPManifestType,
+		)
+		if err := staticSource.LoadInitial(); err != nil {
+			return nil, err
+		}
+		return staticSource, nil
+	})
+}
+
+func NewPlugin(configFile io.Reader) (*Plugin, error) {
+	cfg, err := config.LoadValidatingConfig(configFile)
+	if err != nil {
+		return nil, err
+	}
+
 	handler := admission.NewHandler(admission.Connect, admission.Create, admission.Delete, admission.Update)
 
-	return &Plugin{
+	p := &Plugin{
 		Plugin: generic.NewPlugin(
 			handler,
 			func(f informers.SharedInformerFactory, client kubernetes.Interface, dynamicClient dynamic.Interface, restMapper meta.RESTMapper) generic.Source[PolicyHook] {
@@ -93,20 +129,19 @@ func NewPlugin(_ io.Reader) *Plugin {
 					restMapper,
 				)
 			},
-			func(a authorizer.Authorizer, m *matching.Matcher) generic.Dispatcher[PolicyHook] {
+			func(a authorizer.Authorizer, m *matching.Matcher, client kubernetes.Interface) generic.Dispatcher[PolicyHook] {
 				return NewDispatcher(a, generic.NewPolicyMatcher(m))
 			},
 		),
 	}
+	p.SetEnabled(true)
+	p.SetStaticManifestsDir(cfg.StaticManifestsDir)
+	return p, nil
 }
 
 // Validate makes an admission decision based on the request attributes.
 func (a *Plugin) Validate(ctx context.Context, attr admission.Attributes, o admission.ObjectInterfaces) error {
 	return a.Plugin.Dispatch(ctx, attr, o)
-}
-
-func (a *Plugin) InspectFeatureGates(featureGates featuregate.FeatureGate) {
-	a.Plugin.SetEnabled(featureGates.Enabled(features.ValidatingAdmissionPolicy))
 }
 
 func compilePolicy(policy *Policy) Validator {
@@ -119,8 +154,11 @@ func compilePolicy(policy *Policy) Validator {
 	failurePolicy := policy.Spec.FailurePolicy
 	var matcher matchconditions.Matcher = nil
 	matchConditions := policy.Spec.MatchConditions
-
-	filterCompiler := cel.NewCompositedCompilerFromTemplate(compositionEnvTemplate)
+	compositionEnvTemplate := getCompositionEnvTemplateWithStrictCost()
+	filterCompiler, err := cel.NewCompositedCompiler(compositionEnvTemplate)
+	if err != nil {
+		return NewValidator(nil, nil, nil, nil, failurePolicy, err)
+	}
 	filterCompiler.CompileAndStoreVariables(convertv1beta1Variables(policy.Spec.Variables), optionalVars, environment.StoredExpressions)
 
 	if len(matchConditions) > 0 {
@@ -128,14 +166,15 @@ func compilePolicy(policy *Policy) Validator {
 		for i := range matchConditions {
 			matchExpressionAccessors[i] = (*matchconditions.MatchCondition)(&matchConditions[i])
 		}
-		matcher = matchconditions.NewMatcher(filterCompiler.Compile(matchExpressionAccessors, optionalVars, environment.StoredExpressions), failurePolicy, "policy", "validate", policy.Name)
+		matcher = matchconditions.NewMatcher(filterCompiler.CompileCondition(matchExpressionAccessors, optionalVars, environment.StoredExpressions), failurePolicy, "policy", "validate", policy.Name)
 	}
 	res := NewValidator(
-		filterCompiler.Compile(convertv1Validations(policy.Spec.Validations), optionalVars, environment.StoredExpressions),
+		filterCompiler.CompileCondition(convertv1Validations(policy.Spec.Validations), optionalVars, environment.StoredExpressions),
 		matcher,
-		filterCompiler.Compile(convertv1AuditAnnotations(policy.Spec.AuditAnnotations), optionalVars, environment.StoredExpressions),
-		filterCompiler.Compile(convertv1MessageExpressions(policy.Spec.Validations), expressionOptionalVars, environment.StoredExpressions),
+		filterCompiler.CompileCondition(convertv1AuditAnnotations(policy.Spec.AuditAnnotations), optionalVars, environment.StoredExpressions),
+		filterCompiler.CompileCondition(convertv1MessageExpressions(policy.Spec.Validations), expressionOptionalVars, environment.StoredExpressions),
 		failurePolicy,
+		nil,
 	)
 
 	return res

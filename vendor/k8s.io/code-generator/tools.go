@@ -1,5 +1,4 @@
 //go:build tools
-// +build tools
 
 /*
 Copyright 2019 The Kubernetes Authors.
@@ -31,4 +30,5 @@ import (
 	_ "k8s.io/code-generator/cmd/informer-gen"
 	_ "k8s.io/code-generator/cmd/lister-gen"
 	_ "k8s.io/code-generator/cmd/register-gen"
+	_ "k8s.io/kube-openapi/cmd/openapi-gen"
 )

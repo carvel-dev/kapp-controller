@@ -13,11 +13,11 @@ type FakeInternalV1alpha1 struct {
 }
 
 func (c *FakeInternalV1alpha1) InternalPackages(namespace string) v1alpha1.InternalPackageInterface {
-	return &FakeInternalPackages{c, namespace}
+	return newFakeInternalPackages(c, namespace)
 }
 
 func (c *FakeInternalV1alpha1) InternalPackageMetadatas(namespace string) v1alpha1.InternalPackageMetadataInterface {
-	return &FakeInternalPackageMetadatas{c, namespace}
+	return newFakeInternalPackageMetadatas(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

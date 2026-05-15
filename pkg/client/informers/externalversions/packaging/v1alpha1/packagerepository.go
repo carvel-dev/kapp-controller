@@ -3,15 +3,16 @@
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	packagingv1alpha1 "carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
+	apispackagingv1alpha1 "carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
 	versioned "carvel.dev/kapp-controller/pkg/client/clientset/versioned"
 	internalinterfaces "carvel.dev/kapp-controller/pkg/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "carvel.dev/kapp-controller/pkg/client/listers/packaging/v1alpha1"
+	packagingv1alpha1 "carvel.dev/kapp-controller/pkg/client/listers/packaging/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -20,7 +21,7 @@ import (
 // PackageRepositories.
 type PackageRepositoryInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.PackageRepositoryLister
+	Lister() packagingv1alpha1.PackageRepositoryLister
 }
 
 type packageRepositoryInformer struct {
@@ -33,42 +34,67 @@ type packageRepositoryInformer struct {
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
 func NewPackageRepositoryInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredPackageRepositoryInformer(client, namespace, resyncPeriod, indexers, nil)
+	return NewPackageRepositoryInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
 }
 
 // NewFilteredPackageRepositoryInformer constructs a new informer for PackageRepository type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredPackageRepositoryInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
+	return NewPackageRepositoryInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewPackageRepositoryInformerWithOptions constructs a new informer for PackageRepository type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewPackageRepositoryInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	gvr := schema.GroupVersionResource{Group: "packaging.carvel.dev", Version: "v1alpha1", Resource: "packagerepositorys"}
+	identifier := options.InformerName.WithResource(gvr)
+	tweakListOptions := options.TweakListOptions
+	return cache.NewSharedIndexInformerWithOptions(
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
+			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.PackagingV1alpha1().PackageRepositories(namespace).List(context.TODO(), options)
+				return client.PackagingV1alpha1().PackageRepositories(namespace).List(context.Background(), opts)
 			},
-			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.PackagingV1alpha1().PackageRepositories(namespace).Watch(context.TODO(), options)
+				return client.PackagingV1alpha1().PackageRepositories(namespace).Watch(context.Background(), opts)
 			},
+			ListWithContextFunc: func(ctx context.Context, opts v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.PackagingV1alpha1().PackageRepositories(namespace).List(ctx, opts)
+			},
+			WatchFuncWithContext: func(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.PackagingV1alpha1().PackageRepositories(namespace).Watch(ctx, opts)
+			},
+		}, client),
+		&apispackagingv1alpha1.PackageRepository{},
+		cache.SharedIndexInformerOptions{
+			ResyncPeriod: options.ResyncPeriod,
+			Indexers:     options.Indexers,
+			Identifier:   identifier,
 		},
-		&packagingv1alpha1.PackageRepository{},
-		resyncPeriod,
-		indexers,
 	)
 }
 
 func (f *packageRepositoryInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredPackageRepositoryInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewPackageRepositoryInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *packageRepositoryInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&packagingv1alpha1.PackageRepository{}, f.defaultInformer)
+	return f.factory.InformerFor(&apispackagingv1alpha1.PackageRepository{}, f.defaultInformer)
 }
 
-func (f *packageRepositoryInformer) Lister() v1alpha1.PackageRepositoryLister {
-	return v1alpha1.NewPackageRepositoryLister(f.Informer().GetIndexer())
+func (f *packageRepositoryInformer) Lister() packagingv1alpha1.PackageRepositoryLister {
+	return packagingv1alpha1.NewPackageRepositoryLister(f.Informer().GetIndexer())
 }

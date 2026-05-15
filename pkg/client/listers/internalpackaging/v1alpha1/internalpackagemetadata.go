@@ -3,10 +3,10 @@
 package v1alpha1
 
 import (
-	v1alpha1 "carvel.dev/kapp-controller/pkg/apis/internalpackaging/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	internalpackagingv1alpha1 "carvel.dev/kapp-controller/pkg/apis/internalpackaging/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // InternalPackageMetadataLister helps list InternalPackageMetadatas.
@@ -14,7 +14,7 @@ import (
 type InternalPackageMetadataLister interface {
 	// List lists all InternalPackageMetadatas in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.InternalPackageMetadata, err error)
+	List(selector labels.Selector) (ret []*internalpackagingv1alpha1.InternalPackageMetadata, err error)
 	// InternalPackageMetadatas returns an object that can list and get InternalPackageMetadatas.
 	InternalPackageMetadatas(namespace string) InternalPackageMetadataNamespaceLister
 	InternalPackageMetadataListerExpansion
@@ -22,25 +22,17 @@ type InternalPackageMetadataLister interface {
 
 // internalPackageMetadataLister implements the InternalPackageMetadataLister interface.
 type internalPackageMetadataLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*internalpackagingv1alpha1.InternalPackageMetadata]
 }
 
 // NewInternalPackageMetadataLister returns a new InternalPackageMetadataLister.
 func NewInternalPackageMetadataLister(indexer cache.Indexer) InternalPackageMetadataLister {
-	return &internalPackageMetadataLister{indexer: indexer}
-}
-
-// List lists all InternalPackageMetadatas in the indexer.
-func (s *internalPackageMetadataLister) List(selector labels.Selector) (ret []*v1alpha1.InternalPackageMetadata, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.InternalPackageMetadata))
-	})
-	return ret, err
+	return &internalPackageMetadataLister{listers.New[*internalpackagingv1alpha1.InternalPackageMetadata](indexer, internalpackagingv1alpha1.Resource("internalpackagemetadata"))}
 }
 
 // InternalPackageMetadatas returns an object that can list and get InternalPackageMetadatas.
 func (s *internalPackageMetadataLister) InternalPackageMetadatas(namespace string) InternalPackageMetadataNamespaceLister {
-	return internalPackageMetadataNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return internalPackageMetadataNamespaceLister{listers.NewNamespaced[*internalpackagingv1alpha1.InternalPackageMetadata](s.ResourceIndexer, namespace)}
 }
 
 // InternalPackageMetadataNamespaceLister helps list and get InternalPackageMetadatas.
@@ -48,36 +40,15 @@ func (s *internalPackageMetadataLister) InternalPackageMetadatas(namespace strin
 type InternalPackageMetadataNamespaceLister interface {
 	// List lists all InternalPackageMetadatas in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.InternalPackageMetadata, err error)
+	List(selector labels.Selector) (ret []*internalpackagingv1alpha1.InternalPackageMetadata, err error)
 	// Get retrieves the InternalPackageMetadata from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.InternalPackageMetadata, error)
+	Get(name string) (*internalpackagingv1alpha1.InternalPackageMetadata, error)
 	InternalPackageMetadataNamespaceListerExpansion
 }
 
 // internalPackageMetadataNamespaceLister implements the InternalPackageMetadataNamespaceLister
 // interface.
 type internalPackageMetadataNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all InternalPackageMetadatas in the indexer for a given namespace.
-func (s internalPackageMetadataNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.InternalPackageMetadata, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.InternalPackageMetadata))
-	})
-	return ret, err
-}
-
-// Get retrieves the InternalPackageMetadata from the indexer for a given namespace and name.
-func (s internalPackageMetadataNamespaceLister) Get(name string) (*v1alpha1.InternalPackageMetadata, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("internalpackagemetadata"), name)
-	}
-	return obj.(*v1alpha1.InternalPackageMetadata), nil
+	listers.ResourceIndexer[*internalpackagingv1alpha1.InternalPackageMetadata]
 }

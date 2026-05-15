@@ -20,10 +20,11 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
+	"slices"
+	"strings"
 
-	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	crdmarkers "sigs.k8s.io/controller-tools/pkg/crd/markers"
 	"sigs.k8s.io/controller-tools/pkg/genall"
 	"sigs.k8s.io/controller-tools/pkg/loader"
@@ -41,6 +42,11 @@ const defaultVersion = v1
 
 // Generator generates CustomResourceDefinition objects.
 type Generator struct {
+	// IgnoreUnexportedFields indicates that we should skip unexported fields.
+	//
+	// Left unspecified, the default is false.
+	IgnoreUnexportedFields *bool `marker:",optional"`
+
 	// AllowDangerousTypes allows types which are usually omitted from CRD generation
 	// because they are not recommended.
 	//
@@ -72,6 +78,26 @@ type Generator struct {
 
 	// GenerateEmbeddedObjectMeta specifies if any embedded ObjectMeta in the CRD should be generated
 	GenerateEmbeddedObjectMeta *bool `marker:",optional"`
+
+	// HeaderFile specifies the header text (e.g. license) to prepend to generated files.
+	HeaderFile string `marker:",optional"`
+
+	// Year specifies the year to substitute for " YEAR" in the header file.
+	Year string `marker:",optional"`
+
+	// DeprecatedV1beta1CompatibilityPreserveUnknownFields indicates whether
+	// or not we should turn off field pruning for this resource.
+	//
+	// Specifies spec.preserveUnknownFields value that is false and omitted by default.
+	// This value can only be specified for CustomResourceDefinitions that were created with
+	// `apiextensions.k8s.io/v1beta1`.
+	//
+	// The field can be set for compatibility reasons, although strongly discouraged, resource
+	// authors should move to a structural OpenAPI schema instead.
+	//
+	// See https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#field-pruning
+	// for more information about field pruning and v1beta1 resources compatibility.
+	DeprecatedV1beta1CompatibilityPreserveUnknownFields *bool `marker:",optional"`
 }
 
 func (Generator) CheckFilter() loader.NodeFilter {
@@ -80,14 +106,32 @@ func (Generator) CheckFilter() loader.NodeFilter {
 func (Generator) RegisterMarkers(into *markers.Registry) error {
 	return crdmarkers.Register(into)
 }
+
+// transformRemoveCRDStatus ensures we do not write the CRD status field.
+func transformRemoveCRDStatus(obj map[string]any) error {
+	delete(obj, "status")
+	return nil
+}
+
+// transformPreserveUnknownFields adds spec.preserveUnknownFields=value.
+func transformPreserveUnknownFields(value bool) func(map[string]any) error {
+	return func(obj map[string]any) error {
+		if spec, ok := obj["spec"].(map[any]any); ok {
+			spec["preserveUnknownFields"] = value
+		}
+		return nil
+	}
+}
+
 func (g Generator) Generate(ctx *genall.GenerationContext) error {
 	parser := &Parser{
 		Collector: ctx.Collector,
 		Checker:   ctx.Checker,
 		// Perform defaulting here to avoid ambiguity later
-		AllowDangerousTypes: g.AllowDangerousTypes != nil && *g.AllowDangerousTypes == true,
+		IgnoreUnexportedFields: g.IgnoreUnexportedFields != nil && *g.IgnoreUnexportedFields,
+		AllowDangerousTypes:    g.AllowDangerousTypes != nil && *g.AllowDangerousTypes,
 		// Indicates the parser on whether to register the ObjectMeta type or not
-		GenerateEmbeddedObjectMeta: g.GenerateEmbeddedObjectMeta != nil && *g.GenerateEmbeddedObjectMeta == true,
+		GenerateEmbeddedObjectMeta: g.GenerateEmbeddedObjectMeta != nil && *g.GenerateEmbeddedObjectMeta,
 	}
 
 	AddKnownTypes(parser)
@@ -114,7 +158,26 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 		crdVersions = []string{defaultVersion}
 	}
 
-	for groupKind := range kubeKinds {
+	var headerText string
+
+	if g.HeaderFile != "" {
+		headerBytes, err := ctx.ReadFile(g.HeaderFile)
+		if err != nil {
+			return err
+		}
+		headerText = string(headerBytes)
+	}
+	headerText = strings.ReplaceAll(headerText, " YEAR", " "+g.Year)
+
+	yamlOpts := []*genall.WriteYAMLOptions{
+		genall.WithTransform(transformRemoveCRDStatus),
+		genall.WithTransform(genall.TransformRemoveCreationTimestamp),
+	}
+	if g.DeprecatedV1beta1CompatibilityPreserveUnknownFields != nil {
+		yamlOpts = append(yamlOpts, genall.WithTransform(transformPreserveUnknownFields(*g.DeprecatedV1beta1CompatibilityPreserveUnknownFields)))
+	}
+
+	for _, groupKind := range kubeKinds {
 		parser.NeedCRDFor(groupKind, g.MaxDescLen)
 		crdRaw := parser.CustomResourceDefinitions[groupKind]
 		addAttribution(&crdRaw)
@@ -122,9 +185,9 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 		// Prevent the top level metadata for the CRD to be generate regardless of the intention in the arguments
 		FixTopLevelMetadata(crdRaw)
 
-		versionedCRDs := make([]interface{}, len(crdVersions))
+		versionedCRDs := make([]any, len(crdVersions))
 		for i, ver := range crdVersions {
-			conv, err := AsVersion(crdRaw, schema.GroupVersion{Group: apiext.SchemeGroupVersion.Group, Version: ver})
+			conv, err := AsVersion(crdRaw, schema.GroupVersion{Group: apiextensionsv1.SchemeGroupVersion.Group, Version: ver})
 			if err != nil {
 				return err
 			}
@@ -132,14 +195,14 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 		}
 
 		for i, crd := range versionedCRDs {
-			removeDescriptionFromMetadata(crd.(*apiext.CustomResourceDefinition))
+			removeDescriptionFromMetadata(crd.(*apiextensionsv1.CustomResourceDefinition))
 			var fileName string
 			if i == 0 {
 				fileName = fmt.Sprintf("%s_%s.yaml", crdRaw.Spec.Group, crdRaw.Spec.Names.Plural)
 			} else {
 				fileName = fmt.Sprintf("%s_%s.%s.yaml", crdRaw.Spec.Group, crdRaw.Spec.Names.Plural, crdVersions[i])
 			}
-			if err := ctx.WriteYAML(fileName, crd); err != nil {
+			if err := ctx.WriteYAML(fileName, headerText, []any{crd}, yamlOpts...); err != nil {
 				return err
 			}
 		}
@@ -148,7 +211,7 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 	return nil
 }
 
-func removeDescriptionFromMetadata(crd *apiext.CustomResourceDefinition) {
+func removeDescriptionFromMetadata(crd *apiextensionsv1.CustomResourceDefinition) {
 	for _, versionSpec := range crd.Spec.Versions {
 		if versionSpec.Schema != nil {
 			removeDescriptionFromMetadataProps(versionSpec.Schema.OpenAPIV3Schema)
@@ -156,24 +219,23 @@ func removeDescriptionFromMetadata(crd *apiext.CustomResourceDefinition) {
 	}
 }
 
-func removeDescriptionFromMetadataProps(v *apiext.JSONSchemaProps) {
+func removeDescriptionFromMetadataProps(v *apiextensionsv1.JSONSchemaProps) {
 	if m, ok := v.Properties["metadata"]; ok {
 		meta := &m
 		if meta.Description != "" {
 			meta.Description = ""
 			v.Properties["metadata"] = m
-
 		}
 	}
 }
 
 // FixTopLevelMetadata resets the schema for the top-level metadata field which is needed for CRD validation
-func FixTopLevelMetadata(crd apiext.CustomResourceDefinition) {
+func FixTopLevelMetadata(crd apiextensionsv1.CustomResourceDefinition) {
 	for _, v := range crd.Spec.Versions {
 		if v.Schema != nil && v.Schema.OpenAPIV3Schema != nil && v.Schema.OpenAPIV3Schema.Properties != nil {
 			schemaProperties := v.Schema.OpenAPIV3Schema.Properties
 			if _, ok := schemaProperties["metadata"]; ok {
-				schemaProperties["metadata"] = apiext.JSONSchemaProps{Type: "object"}
+				schemaProperties["metadata"] = apiextensionsv1.JSONSchemaProps{Type: "object"}
 			}
 		}
 	}
@@ -181,7 +243,7 @@ func FixTopLevelMetadata(crd apiext.CustomResourceDefinition) {
 
 // addAttribution adds attribution info to indicate controller-gen tool was used
 // to generate this CRD definition along with the version info.
-func addAttribution(crd *apiext.CustomResourceDefinition) {
+func addAttribution(crd *apiextensionsv1.CustomResourceDefinition) {
 	if crd.ObjectMeta.Annotations == nil {
 		crd.ObjectMeta.Annotations = map[string]string{}
 	}
@@ -203,7 +265,7 @@ func FindMetav1(roots []*loader.Package) *loader.Package {
 // FindKubeKinds locates all types that contain TypeMeta and ObjectMeta
 // (and thus may be a Kubernetes object), and returns the corresponding
 // group-kinds.
-func FindKubeKinds(parser *Parser, metav1Pkg *loader.Package) map[schema.GroupKind]struct{} {
+func FindKubeKinds(parser *Parser, metav1Pkg *loader.Package) []schema.GroupKind {
 	// TODO(directxman12): technically, we should be finding metav1 per-package
 	kubeKinds := map[schema.GroupKind]struct{}{}
 	for typeIdent, info := range parser.Types {
@@ -234,7 +296,12 @@ func FindKubeKinds(parser *Parser, metav1Pkg *loader.Package) map[schema.GroupKi
 			}
 			fieldPkgPath := loader.NonVendorPath(namedField.Obj().Pkg().Path())
 			fieldPkg := pkg.Imports()[fieldPkgPath]
-			if fieldPkg != metav1Pkg {
+
+			// Compare the metav1 package by ID and not by the actual instance
+			// of the object. The objects in memory could be different due to
+			// loading from different root paths, even when they both refer to
+			// the same metav1 package.
+			if fieldPkg == nil || fieldPkg.ID != metav1Pkg.ID {
 				continue
 			}
 
@@ -257,7 +324,15 @@ func FindKubeKinds(parser *Parser, metav1Pkg *loader.Package) map[schema.GroupKi
 		kubeKinds[groupKind] = struct{}{}
 	}
 
-	return kubeKinds
+	groupKindList := make([]schema.GroupKind, 0, len(kubeKinds))
+	for groupKind := range kubeKinds {
+		groupKindList = append(groupKindList, groupKind)
+	}
+	slices.SortStableFunc(groupKindList, func(a, b schema.GroupKind) int {
+		return strings.Compare(a.String(), b.String())
+	})
+
+	return groupKindList
 }
 
 // filterTypesForCRDs filters out all nodes that aren't used in CRD generation,
