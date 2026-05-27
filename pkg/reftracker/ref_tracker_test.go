@@ -59,3 +59,55 @@ func Test_RemoveAppFromAllRefs_RemovesApp(t *testing.T) {
 		t.Fatalf("expected app to be removed from appRefTracker after deletion")
 	}
 }
+
+func Test_AppsForRef_ReturnsSnapshot(t *testing.T) {
+	// Mutating the map returned by AppsForRef must not affect the tracker's
+	// internal state (regression test for concurrent-map panic fix).
+	appRefTracker := reftracker.NewAppRefTracker()
+
+	refKey := reftracker.NewSecretKey("secretName", "default")
+	appKey := reftracker.NewAppKey("app", "default")
+	appRefTracker.ReconcileRefs(map[reftracker.RefKey]struct{}{refKey: {}}, appKey)
+
+	apps, err := appRefTracker.AppsForRef(refKey)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Mutate the returned map.
+	delete(apps, appKey)
+
+	// The tracker should still know about the app.
+	apps2, err := appRefTracker.AppsForRef(refKey)
+	if err != nil {
+		t.Fatalf("unexpected error on second call: %v", err)
+	}
+	if _, ok := apps2[appKey]; !ok {
+		t.Fatalf("mutating the returned snapshot corrupted internal tracker state")
+	}
+}
+
+func Test_RefsForApp_ReturnsSnapshot(t *testing.T) {
+	appRefTracker := reftracker.NewAppRefTracker()
+
+	refKey := reftracker.NewSecretKey("secretName", "default")
+	appKey := reftracker.NewAppKey("app", "default")
+	appRefTracker.ReconcileRefs(map[reftracker.RefKey]struct{}{refKey: {}}, appKey)
+
+	refs, err := appRefTracker.RefsForApp(appKey)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Mutate the returned map.
+	delete(refs, refKey)
+
+	// The tracker should still know about the ref.
+	refs2, err := appRefTracker.RefsForApp(appKey)
+	if err != nil {
+		t.Fatalf("unexpected error on second call: %v", err)
+	}
+	if _, ok := refs2[refKey]; !ok {
+		t.Fatalf("mutating the returned snapshot corrupted internal tracker state")
+	}
+}
