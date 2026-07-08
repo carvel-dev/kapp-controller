@@ -20,6 +20,7 @@ import (
 	kcclient "carvel.dev/kapp-controller/pkg/client/clientset/versioned"
 	"github.com/carvel-dev/semver/v4"
 	"github.com/go-logr/logr"
+	authorizationv1 "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -151,7 +152,7 @@ func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kc
 		return nil, fmt.Errorf("building aggregation client: %v", err)
 	}
 
-	config, caContentProvider, err := newServerConfig(aggClient, opts)
+	config, caContentProvider, err := newServerConfig(aggClient, coreClient, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +236,7 @@ func (as *APIServer) isReady() (bool, error) {
 	return false, nil
 }
 
-func newServerConfig(aggClient aggregatorclient.Interface, opts NewAPIServerOpts) (*genericapiserver.RecommendedConfig, *dynamiccertificates.DynamicFileCAContent, error) {
+func newServerConfig(aggClient aggregatorclient.Interface, coreClient kubernetes.Interface, opts NewAPIServerOpts) (*genericapiserver.RecommendedConfig, *dynamiccertificates.DynamicFileCAContent, error) {
 
 	recommendedOptions := genericoptions.NewRecommendedOptions("", Codecs.LegacyCodec(v1alpha1.SchemeGroupVersion))
 	recommendedOptions.Etcd = nil
@@ -281,16 +282,25 @@ func newServerConfig(aggClient aggregatorclient.Interface, opts NewAPIServerOpts
 		recommendedOptions.Features.EnablePriorityAndFairness = false
 	}
 
-	// Always explicitly set the admission plugin order. Only include admission policy
-	// plugins if their backing API resources actually exist in the cluster — some plugins
-	// (MutatingAdmissionPolicy) require a feature gate that is not enabled by default even
-	// on clusters that meet the minimum version, and will spam watch errors if loaded
-	// against a cluster where the resource is absent.
+	// Always explicitly set the admission plugin order. Only include an admission
+	// policy plugin if BOTH of these hold:
+	//   - Its backing API resource is served by the cluster (some plugins are
+	//     gated by feature flags — e.g. MutatingAdmissionPolicy defaults on only
+	//     from k8s 1.36 — and their resources are absent on older clusters).
+	//   - The ServiceAccount kapp-controller runs under can list+watch that
+	//     resource. If discovery says the resource exists but our RBAC does not
+	//     grant list+watch, loading the plugin causes its SharedInformer to
+	//     never sync. WaitForReady() then never returns true and every mutating
+	//     admission decision fails with "not yet ready to handle request
+	//     (reason: Forbidden)" — a very hard failure mode to diagnose because
+	//     the APIService still reports Available=True. Probing RBAC up-front
+	//     lets us skip the plugin cleanly and log an actionable warning
+	//     instead.
 	pluginOrder := []string{lifecycle.PluginName, mutatingwebhook.PluginName, validatingwebhook.PluginName}
-	if serverResourceExists(aggClient.Discovery(), "admissionregistration.k8s.io/v1", "validatingadmissionpolicies") {
+	if canUseAdmissionPolicyPlugin(aggClient.Discovery(), coreClient, "validatingadmissionpolicies", "validatingadmissionpolicybindings", opts.Logger) {
 		pluginOrder = append(pluginOrder, validatingadmissionpolicy.PluginName)
 	}
-	if serverResourceExists(aggClient.Discovery(), "admissionregistration.k8s.io/v1", "mutatingadmissionpolicies") {
+	if canUseAdmissionPolicyPlugin(aggClient.Discovery(), coreClient, "mutatingadmissionpolicies", "mutatingadmissionpolicybindings", opts.Logger) {
 		pluginOrder = append(pluginOrder, mutatingadmissionpolicy.PluginName)
 	}
 	recommendedOptions.Admission.RecommendedPluginOrder = pluginOrder
@@ -321,6 +331,79 @@ func newServerConfig(aggClient aggregatorclient.Interface, opts NewAPIServerOpts
 	}
 
 	return serverConfig, caContentProvider, nil
+}
+
+// admissionPolicyAPIGroupVersion is the API group/version the vendored admission
+// policy plugins operate against. Alpha/beta groupversions are intentionally not
+// probed: the vendored plugin implementations only support the v1 shape, so on
+// clusters where only alpha/beta is served we treat the plugin as unavailable.
+const admissionPolicyAPIGroupVersion = "admissionregistration.k8s.io/v1"
+
+// canUseAdmissionPolicyPlugin reports whether it is safe to load the admission
+// policy plugin identified by (policyResource, bindingResource) into the
+// aggregated apiserver's admission chain.
+//
+// The plugin is safe to load only if:
+//  1. Both resources are present in cluster discovery under
+//     admissionPolicyAPIGroupVersion (skips gracefully on older k8s or when
+//     the plugin's feature gate is disabled).
+//  2. The ServiceAccount this aggregated apiserver runs under is allowed to
+//     list AND watch both resources at cluster scope. This is required
+//     because the plugin's own SharedInformer performs a List+Watch at
+//     startup; if List returns 403 the informer's cache never syncs and
+//     every mutating admission decision that plugin evaluates will
+//     permanently fail with "not yet ready to handle request".
+//
+// Discovery or SubjectAccessReview errors are treated conservatively as
+// "cannot use" and cause the plugin to be skipped with a clear warning log.
+// The aggregated apiserver's own startup is never blocked by this check.
+func canUseAdmissionPolicyPlugin(discoveryClient discovery.DiscoveryInterface, coreClient kubernetes.Interface, policyResource, bindingResource string, logger logr.Logger) bool {
+	for _, resource := range []string{policyResource, bindingResource} {
+		if !serverResourceExists(discoveryClient, admissionPolicyAPIGroupVersion, resource) {
+			logger.Info("Skipping admission-policy plugin: resource not present in cluster discovery",
+				"apiGroupVersion", admissionPolicyAPIGroupVersion, "resource", resource)
+			return false
+		}
+		for _, verb := range []string{"list", "watch"} {
+			allowed, err := selfSubjectAccessAllowed(coreClient, "admissionregistration.k8s.io", resource, verb)
+			if err != nil {
+				logger.Error(err, "Skipping admission-policy plugin: SelfSubjectAccessReview failed",
+					"resource", resource, "verb", verb)
+				return false
+			}
+			if !allowed {
+				logger.Info("Skipping admission-policy plugin: ServiceAccount lacks required permission. "+
+					"Loading this plugin without list+watch permission would cause its informer cache to never sync, "+
+					"resulting in every mutating admission request being rejected with \"not yet ready to handle request\". "+
+					"Grant list+watch on this resource (in group admissionregistration.k8s.io) to the kapp-controller ClusterRole to enable this plugin.",
+					"resource", resource, "verb", verb)
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// selfSubjectAccessAllowed checks whether the caller is permitted to perform
+// verb on the cluster-scoped resource in group. It uses SelfSubjectAccessReview
+// so no additional RBAC is required beyond the subjectaccessreviews/create
+// permission already granted to kapp-controller.
+func selfSubjectAccessAllowed(coreClient kubernetes.Interface, group, resource, verb string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	review, err := coreClient.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &authorizationv1.SelfSubjectAccessReview{
+		Spec: authorizationv1.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authorizationv1.ResourceAttributes{
+				Group:    group,
+				Resource: resource,
+				Verb:     verb,
+			},
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		return false, err
+	}
+	return review.Status.Allowed, nil
 }
 
 // serverResourceExists returns true if the given groupVersion + resource kind is
