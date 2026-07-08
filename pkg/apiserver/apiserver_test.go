@@ -6,12 +6,17 @@ package apiserver
 import (
 	"context"
 	"crypto/x509"
+	"fmt"
 	"testing"
 
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/require"
+	authorizationv1 "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/server/dynamiccertificates"
+	fakediscovery "k8s.io/client-go/discovery/fake"
+	fakekube "k8s.io/client-go/kubernetes/fake"
 	clienttesting "k8s.io/client-go/testing"
 	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	fakeaggregator "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/fake"
@@ -89,6 +94,132 @@ func Test_updateAPIService(t *testing.T) {
 			} else {
 				require.False(t, updateActionFound, "expected NO UPDATE action, but one was executed")
 			}
+		})
+	}
+}
+
+func Test_canUseAdmissionPolicyPlugin(t *testing.T) {
+	const (
+		policyResource  = "mutatingadmissionpolicies"
+		bindingResource = "mutatingadmissionpolicybindings"
+	)
+	fullDiscovery := []*metav1.APIResourceList{{
+		GroupVersion: admissionPolicyAPIGroupVersion,
+		APIResources: []metav1.APIResource{
+			{Name: policyResource, Namespaced: false, Kind: "MutatingAdmissionPolicy"},
+			{Name: bindingResource, Namespaced: false, Kind: "MutatingAdmissionPolicyBinding"},
+		},
+	}}
+
+	// ssarReactor builds a testing reactor that allows the given
+	// (resource, verb) pairs and denies everything else. This lets each
+	// test model a specific RBAC state without a real cluster.
+	ssarReactor := func(allowed map[string]bool) clienttesting.ReactionFunc {
+		return func(action clienttesting.Action) (bool, runtime.Object, error) {
+			create, ok := action.(clienttesting.CreateAction)
+			if !ok {
+				return false, nil, nil
+			}
+			ssar, ok := create.GetObject().(*authorizationv1.SelfSubjectAccessReview)
+			if !ok {
+				return false, nil, nil
+			}
+			attrs := ssar.Spec.ResourceAttributes
+			key := fmt.Sprintf("%s/%s", attrs.Resource, attrs.Verb)
+			ssar.Status.Allowed = allowed[key]
+			return true, ssar, nil
+		}
+	}
+
+	tests := []struct {
+		name       string
+		resources  []*metav1.APIResourceList
+		ssarAllow  map[string]bool
+		ssarError  error
+		wantResult bool
+	}{
+		{
+			name:       "resource absent from discovery -> skip plugin",
+			resources:  nil,
+			wantResult: false,
+		},
+		{
+			name: "policy present but binding missing -> skip plugin",
+			resources: []*metav1.APIResourceList{{
+				GroupVersion: admissionPolicyAPIGroupVersion,
+				APIResources: []metav1.APIResource{
+					{Name: policyResource, Namespaced: false, Kind: "MutatingAdmissionPolicy"},
+				},
+			}},
+			wantResult: false,
+		},
+		{
+			name:      "both resources present, list+watch allowed on both -> enable plugin",
+			resources: fullDiscovery,
+			ssarAllow: map[string]bool{
+				policyResource + "/list":   true,
+				policyResource + "/watch":  true,
+				bindingResource + "/list":  true,
+				bindingResource + "/watch": true,
+			},
+			wantResult: true,
+		},
+		{
+			name:      "list allowed but watch denied on policy -> skip plugin",
+			resources: fullDiscovery,
+			ssarAllow: map[string]bool{
+				policyResource + "/list":   true,
+				policyResource + "/watch":  false,
+				bindingResource + "/list":  true,
+				bindingResource + "/watch": true,
+			},
+			wantResult: false,
+		},
+		{
+			name:      "list+watch denied on policy -> skip plugin",
+			resources: fullDiscovery,
+			ssarAllow: map[string]bool{
+				policyResource + "/list":   false,
+				policyResource + "/watch":  false,
+				bindingResource + "/list":  true,
+				bindingResource + "/watch": true,
+			},
+			wantResult: false,
+		},
+		{
+			name:      "policy allowed but binding denied -> skip plugin",
+			resources: fullDiscovery,
+			ssarAllow: map[string]bool{
+				policyResource + "/list":   true,
+				policyResource + "/watch":  true,
+				bindingResource + "/list":  false,
+				bindingResource + "/watch": false,
+			},
+			wantResult: false,
+		},
+		{
+			name:       "SubjectAccessReview API error -> skip plugin conservatively",
+			resources:  fullDiscovery,
+			ssarError:  fmt.Errorf("simulated api error"),
+			wantResult: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			kubeClient := fakekube.NewSimpleClientset()
+			kubeClient.Discovery().(*fakediscovery.FakeDiscovery).Resources = tc.resources
+
+			if tc.ssarError != nil {
+				kubeClient.PrependReactor("create", "selfsubjectaccessreviews", func(action clienttesting.Action) (bool, runtime.Object, error) {
+					return true, nil, tc.ssarError
+				})
+			} else if tc.ssarAllow != nil {
+				kubeClient.PrependReactor("create", "selfsubjectaccessreviews", ssarReactor(tc.ssarAllow))
+			}
+
+			got := canUseAdmissionPolicyPlugin(kubeClient.Discovery(), kubeClient, policyResource, bindingResource, logr.Discard())
+			require.Equal(t, tc.wantResult, got)
 		})
 	}
 }
