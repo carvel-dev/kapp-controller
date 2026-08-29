@@ -52,6 +52,7 @@ type CreateOrUpdateOptions struct {
 	valuesFile         string
 	values             bool
 	serviceAccountName string
+	targetCluster      string
 
 	install bool
 
@@ -106,6 +107,7 @@ func NewCreateCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) *
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
 	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Print YAML for resources being applied to the cluster without applying them, optional")
+	cmd.Flags().StringVar(&o.targetCluster, "target", "", "Set target cluster, optional")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -152,6 +154,7 @@ func NewInstallCmd(o *CreateOrUpdateOptions, flagsFactory cmdcore.FlagsFactory) 
 	cmd.Flags().StringVar(&o.valuesFile, "values-file", "", "The path to the configuration values file, optional")
 	cmd.Flags().BoolVar(&o.values, "values", true, "Add or keep values supplied to package install, optional")
 	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Print YAML for resources being applied to the cluster without applying them, optional")
+	cmd.Flags().StringVar(&o.targetCluster, "target", "", "Set target cluster, optional")
 
 	o.WaitFlags.Set(cmd, flagsFactory, &cmdcore.WaitFlagsOpts{
 		AllowDisableWait: true,
@@ -530,23 +533,8 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 		err                     error
 	)
 
-	if o.serviceAccountName == "" {
-
-		o.statusUI.PrintMessagef("Creating service account '%s'", o.createdAnnotations.ServiceAccountAnnValue())
-		if isServiceAccountCreated, err = o.createOrUpdateServiceAccount(client); err != nil {
-			return isServiceAccountCreated, isSecretCreated, err
-		}
-
-		o.statusUI.PrintMessagef("Creating cluster admin role '%s'", o.createdAnnotations.ClusterRoleAnnValue())
-		if err := o.createOrUpdateClusterAdminRole(client); err != nil {
-			return isServiceAccountCreated, isSecretCreated, err
-		}
-
-		o.statusUI.PrintMessagef("Creating cluster role binding '%s'", o.createdAnnotations.ClusterRoleBindingAnnValue())
-		if err := o.createOrUpdateClusterRoleBinding(client); err != nil {
-			return isServiceAccountCreated, isSecretCreated, err
-		}
-	} else {
+	switch {
+	case o.serviceAccountName != "":
 		client, err := o.depsFactory.CoreClient()
 		if err != nil {
 			return isServiceAccountCreated, isSecretCreated, err
@@ -569,6 +557,23 @@ func (o *CreateOrUpdateOptions) createRelatedResources(client kubernetes.Interfa
 				err = fmt.Errorf("Provided service account '%s' is already used by another package in namespace '%s': %s", o.serviceAccountName, o.NamespaceFlags.Name, err.Error())
 				return isServiceAccountCreated, isSecretCreated, err
 			}
+		}
+	case o.targetCluster != "":
+		// do nothing, kubeconfig secret is provided
+	default:
+		o.statusUI.PrintMessagef("Creating service account '%s'", o.createdAnnotations.ServiceAccountAnnValue())
+		if isServiceAccountCreated, err = o.createOrUpdateServiceAccount(client); err != nil {
+			return isServiceAccountCreated, isSecretCreated, err
+		}
+
+		o.statusUI.PrintMessagef("Creating cluster admin role '%s'", o.createdAnnotations.ClusterRoleAnnValue())
+		if err := o.createOrUpdateClusterAdminRole(client); err != nil {
+			return isServiceAccountCreated, isSecretCreated, err
+		}
+
+		o.statusUI.PrintMessagef("Creating cluster role binding '%s'", o.createdAnnotations.ClusterRoleBindingAnnValue())
+		if err := o.createOrUpdateClusterRoleBinding(client); err != nil {
+			return isServiceAccountCreated, isSecretCreated, err
 		}
 	}
 
@@ -685,16 +690,10 @@ func (o *CreateOrUpdateOptions) createOrUpdateDataValuesSecret(client kubernetes
 }
 
 func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secretCreated bool, overlaysSecretName string, kcClient kcclient.Interface) error {
-	svcAccount := o.serviceAccountName
-	if svcAccount == "" {
-		svcAccount = o.createdAnnotations.ServiceAccountAnnValue()
-	}
-
 	// construct the PackageInstall CR
 	packageInstall := &kcpkgv1alpha1.PackageInstall{
 		ObjectMeta: metav1.ObjectMeta{Name: o.Name, Namespace: o.NamespaceFlags.Name},
 		Spec: kcpkgv1alpha1.PackageInstallSpec{
-			ServiceAccountName: svcAccount,
 			PackageRef: &kcpkgv1alpha1.PackageRef{
 				RefName: o.packageName,
 				VersionSelection: &versions.VersionSelectionSemver{
@@ -703,6 +702,15 @@ func (o *CreateOrUpdateOptions) createPackageInstall(serviceAccountCreated, secr
 				},
 			},
 		},
+	}
+
+	switch {
+	case o.serviceAccountName != "":
+		packageInstall.Spec.ServiceAccountName = o.serviceAccountName
+	case o.targetCluster != "":
+		packageInstall.Spec.Cluster = &kcv1alpha1.AppCluster{KubeconfigSecretRef: &kcv1alpha1.AppClusterKubeconfigSecretRef{Name: o.targetCluster}}
+	default:
+		packageInstall.Spec.ServiceAccountName = o.createdAnnotations.ServiceAccountAnnValue()
 	}
 
 	// if configuration data file was provided, reference the secret name in the PackageInstall
