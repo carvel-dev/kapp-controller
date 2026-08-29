@@ -4,13 +4,15 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"os"
-	"time"
-
+	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
+	"os"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"time"
 )
 
 // Version of kapp-controller is set via ldflags at build-time from the most recent git tag; see hack/build.sh
@@ -36,19 +38,27 @@ func main() {
 		sidecarexecMain()
 		return
 	}
-
 	log := zap.New(zap.UseDevMode(false)).WithName("kc")
 	logf.SetLogger(log)
 	klog.SetLogger(log)
-
 	mainLog := log.WithName("main")
 	mainLog.Info("kapp-controller", "version", Version)
+	var (
+		leaseLockName      string
+		leaseLockNamespace string
+		podName            = os.Getenv("POD_NAME")
+	)
+	config, err := rest.InClusterConfig()
+	client = clientset.NewForConfigOrDie(config)
 
-	err := Run(ctrlOpts, log.WithName("controller"))
 	if err != nil {
-		mainLog.Error(err, "Exited run with error")
-		os.Exit(1)
+		klog.Fatalf("failed to get kubeconfig")
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	lock := getNewLock(leaseLockName, podName, leaseLockNamespace)
+	runLeaderElection(ctx, lock, podName, ctrlOpts, log)
 
 	os.Exit(0)
 }
