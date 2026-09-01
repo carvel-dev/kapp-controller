@@ -71,6 +71,7 @@ go run vendor/k8s.io/kube-openapi/cmd/openapi-gen/openapi-gen.go \
   --output-pkg "${KC_PKG}/pkg/apiserver/openapi" \
   --output-dir "pkg/apiserver/openapi" \
   --output-file zz_generated.openapi.go \
+  --output-model-name-file zz_generated.model_name.go \
   --go-header-file hack/gen-boilerplate.txt
 
 # Install protoc binary as directed by https://github.com/gogo/protobuf#installation

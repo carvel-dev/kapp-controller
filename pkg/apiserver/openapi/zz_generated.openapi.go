@@ -6,6 +6,7 @@
 package openapi
 
 import (
+	v1alpha1 "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -52,17 +53,17 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.Condition":                           schema_pkg_apis_kappctrl_v1alpha1_Condition(ref),
 		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.KubernetesAPIs":                      schema_pkg_apis_kappctrl_v1alpha1_KubernetesAPIs(ref),
 		"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1.Version":                             schema_pkg_apis_kappctrl_v1alpha1_Version(ref),
-		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec":      schema_apiserver_apis_datapackaging_v1alpha1_AppTemplateSpec(ref),
-		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware":     schema_apiserver_apis_datapackaging_v1alpha1_IncludedSoftware(ref),
-		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Maintainer":           schema_apiserver_apis_datapackaging_v1alpha1_Maintainer(ref),
-		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Package":              schema_apiserver_apis_datapackaging_v1alpha1_Package(ref),
-		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageList":          schema_apiserver_apis_datapackaging_v1alpha1_PackageList(ref),
-		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadata":      schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadata(ref),
-		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataList":  schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataList(ref),
-		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataSpec":  schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataSpec(ref),
-		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageSpec":          schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref),
-		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema":         schema_apiserver_apis_datapackaging_v1alpha1_ValuesSchema(ref),
-		"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection":     schema_apiserver_apis_datapackaging_v1alpha1_VersionSelection(ref),
+		v1alpha1.AppTemplateSpec{}.OpenAPIModelName():                                               schema_apiserver_apis_datapackaging_v1alpha1_AppTemplateSpec(ref),
+		v1alpha1.IncludedSoftware{}.OpenAPIModelName():                                              schema_apiserver_apis_datapackaging_v1alpha1_IncludedSoftware(ref),
+		v1alpha1.Maintainer{}.OpenAPIModelName():                                                    schema_apiserver_apis_datapackaging_v1alpha1_Maintainer(ref),
+		v1alpha1.Package{}.OpenAPIModelName():                                                       schema_apiserver_apis_datapackaging_v1alpha1_Package(ref),
+		v1alpha1.PackageList{}.OpenAPIModelName():                                                   schema_apiserver_apis_datapackaging_v1alpha1_PackageList(ref),
+		v1alpha1.PackageMetadata{}.OpenAPIModelName():                                               schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadata(ref),
+		v1alpha1.PackageMetadataList{}.OpenAPIModelName():                                           schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataList(ref),
+		v1alpha1.PackageMetadataSpec{}.OpenAPIModelName():                                           schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataSpec(ref),
+		v1alpha1.PackageSpec{}.OpenAPIModelName():                                                   schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref),
+		v1alpha1.ValuesSchema{}.OpenAPIModelName():                                                  schema_apiserver_apis_datapackaging_v1alpha1_ValuesSchema(ref),
+		v1alpha1.VersionSelection{}.OpenAPIModelName():                                              schema_apiserver_apis_datapackaging_v1alpha1_VersionSelection(ref),
 		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelection":                           schema_pkg_vendir_versions_v1alpha1_VersionSelection(ref),
 		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemver":                     schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemver(ref),
 		"carvel.dev/vendir/pkg/vendir/versions/v1alpha1.VersionSelectionSemverPrereleases":          schema_pkg_vendir_versions_v1alpha1_VersionSelectionSemverPrereleases(ref),
@@ -1771,7 +1772,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_Package(ref common.ReferenceCa
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageSpec"),
+							Ref:     ref(v1alpha1.PackageSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -1779,7 +1780,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_Package(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageSpec", metav1.ObjectMeta{}.OpenAPIModelName()},
+			v1alpha1.PackageSpec{}.OpenAPIModelName(), metav1.ObjectMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -1817,7 +1818,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageList(ref common.Referen
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Package"),
+										Ref:     ref(v1alpha1.Package{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1828,7 +1829,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageList(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Package", metav1.ListMeta{}.OpenAPIModelName()},
+			v1alpha1.Package{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -1862,7 +1863,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadata(ref common.Ref
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataSpec"),
+							Ref:     ref(v1alpha1.PackageMetadataSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -1870,7 +1871,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadata(ref common.Ref
 			},
 		},
 		Dependencies: []string{
-			"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadataSpec", metav1.ObjectMeta{}.OpenAPIModelName()},
+			v1alpha1.PackageMetadataSpec{}.OpenAPIModelName(), metav1.ObjectMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -1908,7 +1909,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataList(ref common
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadata"),
+										Ref:     ref(v1alpha1.PackageMetadata{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1919,7 +1920,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataList(ref common
 			},
 		},
 		Dependencies: []string{
-			"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadata", metav1.ListMeta{}.OpenAPIModelName()},
+			v1alpha1.PackageMetadata{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -1966,7 +1967,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataSpec(ref common
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Maintainer"),
+										Ref:     ref(v1alpha1.Maintainer{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1996,7 +1997,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageMetadataSpec(ref common
 			},
 		},
 		Dependencies: []string{
-			"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.Maintainer"},
+			v1alpha1.Maintainer{}.OpenAPIModelName()},
 	}
 }
 
@@ -2052,14 +2053,14 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref common.Referen
 					"template": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec"),
+							Ref:     ref(v1alpha1.AppTemplateSpec{}.OpenAPIModelName()),
 						},
 					},
 					"valuesSchema": {
 						SchemaProps: spec.SchemaProps{
 							Description: "valuesSchema can be used to show template values that can be configured by users when a Package is installed in an OpenAPI schema format.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema"),
+							Ref:         ref(v1alpha1.ValuesSchema{}.OpenAPIModelName()),
 						},
 					},
 					"includedSoftware": {
@@ -2070,7 +2071,7 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref common.Referen
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware"),
+										Ref:     ref(v1alpha1.IncludedSoftware{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2079,20 +2080,20 @@ func schema_apiserver_apis_datapackaging_v1alpha1_PackageSpec(ref common.Referen
 					"kappControllerVersionSelection": {
 						SchemaProps: spec.SchemaProps{
 							Description: "KappControllerVersionSelection specifies the versions of kapp-controller which can install this package",
-							Ref:         ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection"),
+							Ref:         ref(v1alpha1.VersionSelection{}.OpenAPIModelName()),
 						},
 					},
 					"kubernetesVersionSelection": {
 						SchemaProps: spec.SchemaProps{
 							Description: "KubernetesVersionSelection specifies the versions of k8s which this package can be installed on",
-							Ref:         ref("carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection"),
+							Ref:         ref(v1alpha1.VersionSelection{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.AppTemplateSpec", "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.IncludedSoftware", "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.ValuesSchema", "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.VersionSelection", metav1.Time{}.OpenAPIModelName()},
+			v1alpha1.AppTemplateSpec{}.OpenAPIModelName(), v1alpha1.IncludedSoftware{}.OpenAPIModelName(), v1alpha1.ValuesSchema{}.OpenAPIModelName(), v1alpha1.VersionSelection{}.OpenAPIModelName(), metav1.Time{}.OpenAPIModelName()},
 	}
 }
 
