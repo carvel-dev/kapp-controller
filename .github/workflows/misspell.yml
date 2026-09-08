@@ -6,11 +6,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code.
-        uses: actions/checkout@v4.1.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
       - name: misspell
-        uses: reviewdog/action-misspell@v1.26.3
+        uses: reviewdog/action-misspell@ba7ac4030fa6812f8c8b2d4e516af8bc99553c32 #v1.28.0
         with:
-          fail_on_error: true
+          fail_level: error
           locale: "US"
           exclude: |
             ./vendor/*
