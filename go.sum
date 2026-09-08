@@ -1,5 +1,5 @@
-carvel.dev/vendir v0.46.1 h1:bDYTvudX28aJ73KMSvwooaukl+474rEjKIjBy+a3Gus=
-carvel.dev/vendir v0.46.1/go.mod h1:CgF41YRwJcvCBbiMoppsrA/Jw3TUssH4b/ZKWX3t7kY=
+carvel.dev/vendir v0.46.2 h1:nAzLEJ6aCAPYLtG8pifI3CMshfImsME8XIpcG2J0JLw=
+carvel.dev/vendir v0.46.2/go.mod h1:CgF41YRwJcvCBbiMoppsrA/Jw3TUssH4b/ZKWX3t7kY=
 cel.dev/expr v0.25.1 h1:1KrZg61W6TWSxuNZ37Xy49ps13NUovb66QLprthtwi4=
 cel.dev/expr v0.25.1/go.mod h1:hrXvqGP6G6gyx8UAHSHJ5RGk//1Oj5nXQ2NI02Nrsg4=
 github.com/Masterminds/semver/v3 v3.4.0 h1:Zog+i5UMtVoCU8oKka5P7i9q9HgrJeGzI9SA1Xbatp0=

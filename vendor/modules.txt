@@ -1,4 +1,4 @@
-# carvel.dev/vendir v0.46.1
+# carvel.dev/vendir v0.46.2
 ## explicit; go 1.26.5
 carvel.dev/vendir/pkg/vendir/config
 carvel.dev/vendir/pkg/vendir/version
