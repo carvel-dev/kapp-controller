@@ -3,7 +3,7 @@ module carvel.dev/kapp-controller
 go 1.26.5
 
 require (
-	carvel.dev/vendir v0.46.1
+	carvel.dev/vendir v0.46.2
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/prometheus/client_golang v1.23.2

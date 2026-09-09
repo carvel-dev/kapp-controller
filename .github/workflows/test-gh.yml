@@ -50,6 +50,7 @@ jobs:
       with: 
         kubernetes-version: ${{ env.k8s_version }}
         driver: docker
+        container-runtime: docker
         start: true
         cpus: 3
         memory: 8192m
