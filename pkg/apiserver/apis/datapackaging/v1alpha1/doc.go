@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // +k8s:openapi-gen=true
+// +k8s:openapi-model-package=dev.carvel.kapp-controller.pkg.apiserver.apis.datapackaging.v1alpha1
 // +k8s:deepcopy-gen=package
 // +k8s:conversion-gen=carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging
 // +k8s:defaulter-gen=TypeMeta
