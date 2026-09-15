@@ -100,7 +100,7 @@ type AppFetchGit struct {
 	// (if ssh-knownhosts is not specified, git will not perform strict host checking)
 	// +optional
 	SecretRef *AppFetchLocalRef `json:"secretRef,omitempty" protobuf:"bytes,3,opt,name=secretRef"`
-	// Grab only portion of repository (optional)
+	// Grab only portion of repository, subpath becomes new root (optional)
 	// +optional
 	SubPath string `json:"subPath,omitempty" protobuf:"bytes,4,opt,name=subPath"`
 	// Skip lfs download (optional)
