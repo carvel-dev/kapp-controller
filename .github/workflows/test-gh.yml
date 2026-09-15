@@ -47,10 +47,9 @@ jobs:
         echo "k8s_version=$k8s_version" >> $GITHUB_ENV
     - name: start minikube(k8s version ${{ env.k8s_version }})
       uses: medyagh/setup-minikube@latest
-      with: 
+      with:
         kubernetes-version: ${{ env.k8s_version }}
         driver: docker
-        container-runtime: docker
         start: true
         cpus: 3
         memory: 8192m
@@ -74,8 +73,7 @@ jobs:
 
         ./hack/verify-no-dirty-files.sh
 
-        eval $(minikube docker-env --shell=bash)
-
+        export KAPPCTRL_MINIKUBE_LOAD_IMAGES=true
         export KAPPCTRL_E2E_SECRETGEN_CONTROLLER=true
         ./hack/deploy-test.sh
 

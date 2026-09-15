@@ -37,9 +37,9 @@ jobs:
         run: |
           set -e -x
 
-          minikube start --driver=docker --container-runtime=docker
-          eval $(minikube docker-env --shell=bash)
+          minikube start --driver=docker
 
           kapp deploy -a kc -f https://github.com/carvel-dev/kapp-controller/releases/latest/download/release.yml -y
 
+          export KAPPCTRL_MINIKUBE_LOAD_IMAGES=true
           ./hack/deploy.sh
