@@ -31,7 +31,7 @@ jobs:
       - name: Setup k8s and Run benchmark
         run: |
           set -e -x
-          minikube start --driver=docker
+          minikube start --driver=docker --container-runtime=docker
           eval $(minikube docker-env --shell=bash)
 
           ./hack/deploy-test.sh
