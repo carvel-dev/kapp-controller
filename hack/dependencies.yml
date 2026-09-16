@@ -48,14 +48,14 @@
   version: v0.46.2
 - checksums:
     linux:
-      amd64: e9b88b4ee95b18c706839c28d3a0220e5bc470e9cd9262410c90793c45ff8b7c
-      arm64: 21abd9354d39b2cd79a8d76be6912cd137a983cbf997193503fb8a6a6e2f2785
+      amd64: 86584a54def73570558f66f5111cc53dfed56689637ae32c1201205d494f54fb
+      arm64: 31c5794dd55c66a51e6b7d2e2ac7a114ae8b1de41ff1d9ba51748ac973b06a08
   dev: false
   name: helm
   repo: helm/helm
   tarballSubpath: '{{.OS}}-{{.Arch}}/helm'
   urlTemplate: https://get.helm.sh/helm-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
-  version: v4.2.3
+  version: v4.3.0
 - checksums:
     linux:
       amd64: e5bec3346a873ae91d871550f3e698c1aad962aff462a080e40f25fde17fef6b
@@ -67,14 +67,14 @@
   version: v3.13.3
 - checksums:
     linux:
-      amd64: bdc69c09cbdd6cf8b1f333d372a1f58247b3a33146406333e30c0f26e8f51377
-      arm64: c6878a324421b69e3e20b00ba17c04bc5c6dab0030cfe55bf8f68fa8d9e9093a
+      amd64: cbe24006683f8eb669266162894b9a522a1af52f2665fbc63a4bb032ed26ac10
+      arm64: 6b8dc4333c53a5a57c9e5834e3a48f92605d7154014cd07269ff3327db5d37f4
   dev: false
   name: age
   repo: FiloSottile/age
   tarballSubpath: age/age
   urlTemplate: https://github.com/FiloSottile/age/releases/download/{{.Version}}/age-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
-  version: v1.3.1
+  version: v1.3.2
 - checksums:
     linux:
       amd64: a39b0c97695069d95d276d99be0f5dbabb081d801bfdc9ba49b76efaf94e2369
