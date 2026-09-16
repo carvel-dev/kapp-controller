@@ -716,3 +716,186 @@ func TestAppPackageIntallDefaultNamespace(t *testing.T) {
 
 	require.Equal(t, expectedApp, app, "App does not match expected app")
 }
+
+func valuesFromNames(sources []kcv1alpha1.AppTemplateValuesSource) []string {
+	names := make([]string, 0, len(sources))
+	for _, source := range sources {
+		if source.SecretRef != nil {
+			names = append(names, source.SecretRef.Name)
+		} else {
+			names = append(names, source.Path)
+		}
+	}
+	return names
+}
+
+// NewApp must not write back into the Package it is given. The PackageInstall
+// reconciler shares a single Package across calls, so mutating it makes every
+// call append the PackageInstall's values again.
+func TestAppDoesNotMutatePackage(t *testing.T) {
+	ipkg := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "app",
+			Namespace: "default",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			Values: []pkgingv1alpha1.PackageInstallValues{
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values1"}},
+			},
+		},
+	}
+
+	pkgVersion := datapkgingv1alpha1.Package{
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "expec-pkg",
+			Version: "1.5.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &kcv1alpha1.AppSpec{
+					Template: []kcv1alpha1.AppTemplate{
+						{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+					},
+				},
+			},
+		},
+	}
+
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
+	require.NoError(t, err)
+
+	// The App picks up the PackageInstall's values...
+	require.Equal(t, []string{"values1"}, valuesFromNames(app.Spec.Template[0].Ytt.ValuesFrom))
+
+	// ...without the Package it was built from seeing them.
+	require.Empty(t, pkgVersion.Spec.Template.Spec.Template[0].Ytt.ValuesFrom,
+		"NewApp mutated the Package it was given")
+}
+
+// The PackageInstall reconciler calls NewApp twice with the same Package: once to
+// detect whether the App needs updating, and once inside the update closure. Both
+// calls have to produce the same App, otherwise the App is rewritten on every
+// reconcile instead of converging.
+func TestAppValuesFromNotAppendedTwice(t *testing.T) {
+	ipkg := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "app",
+			Namespace: "default",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			Values: []pkgingv1alpha1.PackageInstallValues{
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values1"}},
+			},
+		},
+	}
+
+	pkgVersion := datapkgingv1alpha1.Package{
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "expec-pkg",
+			Version: "1.5.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &kcv1alpha1.AppSpec{
+					Template: []kcv1alpha1.AppTemplate{
+						{Ytt: &kcv1alpha1.AppTemplateYtt{
+							ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
+								kcv1alpha1.AppTemplateValuesSource{Path: "values.yaml"},
+							},
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	opts := packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute}
+
+	first, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, opts)
+	require.NoError(t, err)
+
+	second, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, opts)
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"values.yaml", "values1"}, valuesFromNames(first.Spec.Template[0].Ytt.ValuesFrom))
+	require.Equal(t, valuesFromNames(first.Spec.Template[0].Ytt.ValuesFrom),
+		valuesFromNames(second.Spec.Template[0].Ytt.ValuesFrom),
+		"the second NewApp call appended the PackageInstall values again")
+}
+
+// A Package that already declares the secret a PackageInstall passes must not end
+// up referencing that secret twice.
+func TestAppYttValuesSkipsAlreadyDeclaredSecret(t *testing.T) {
+	ipkg := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "app",
+			Namespace: "default",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			Values: []pkgingv1alpha1.PackageInstallValues{
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values1"}},
+			},
+		},
+	}
+
+	pkgVersion := datapkgingv1alpha1.Package{
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "expec-pkg",
+			Version: "1.5.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &kcv1alpha1.AppSpec{
+					Template: []kcv1alpha1.AppTemplate{
+						{Ytt: &kcv1alpha1.AppTemplateYtt{
+							ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
+								kcv1alpha1.AppTemplateValuesSource{
+									SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{Name: "values1"},
+								},
+							},
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"values1"}, valuesFromNames(app.Spec.Template[0].Ytt.ValuesFrom))
+}
+
+// Same as above for the helmTemplate step.
+func TestAppHelmTemplateValuesSkipsAlreadyDeclaredSecret(t *testing.T) {
+	ipkg := &pkgingv1alpha1.PackageInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "app",
+			Namespace: "default",
+		},
+		Spec: pkgingv1alpha1.PackageInstallSpec{
+			Values: []pkgingv1alpha1.PackageInstallValues{
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values1"}},
+			},
+		},
+	}
+
+	pkgVersion := datapkgingv1alpha1.Package{
+		Spec: datapkgingv1alpha1.PackageSpec{
+			RefName: "expec-pkg",
+			Version: "1.5.0",
+			Template: datapkgingv1alpha1.AppTemplateSpec{
+				Spec: &kcv1alpha1.AppSpec{
+					Template: []kcv1alpha1.AppTemplate{
+						{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{
+							ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
+								kcv1alpha1.AppTemplateValuesSource{
+									SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{Name: "values1"},
+								},
+							},
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"values1"}, valuesFromNames(app.Spec.Template[0].HelmTemplate.ValuesFrom))
+}
