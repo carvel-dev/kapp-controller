@@ -51,7 +51,10 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 	desiredApp.Annotations["packaging.carvel.dev/package-ref-name"] = pkgVersion.Spec.RefName
 	desiredApp.Annotations["packaging.carvel.dev/package-version"] = pkgVersion.Spec.Version
 
-	desiredApp.Spec = *pkgVersion.Spec.Template.Spec
+	// Deep copy the package's spec: the caller's PackageInstall reconciler shares
+	// this Package across calls, and the values appended below would otherwise
+	// mutate it in place (the App spec holds pointers into it).
+	desiredApp.Spec = *pkgVersion.Spec.Template.Spec.DeepCopy()
 	desiredApp.Spec.ServiceAccountName = pkgInstall.Spec.ServiceAccountName
 	if pkgInstall.Spec.SyncPeriod == nil {
 		desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: opts.DefaultSyncPeriod}
@@ -125,11 +128,7 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 				valuesApplied = true
 
 				for _, value := range pkgInstall.Spec.Values {
-					templateStep.HelmTemplate.ValuesFrom = append(templateStep.HelmTemplate.ValuesFrom, kcv1alpha1.AppTemplateValuesSource{
-						SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-							Name: value.SecretRef.Name,
-						},
-					})
+					templateStep.HelmTemplate.ValuesFrom = appendValuesFromSecret(templateStep.HelmTemplate.ValuesFrom, value.SecretRef.Name)
 				}
 			}
 		}
@@ -166,11 +165,7 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 					}
 				} else {
 					for _, value := range pkgInstall.Spec.Values {
-						templateStep.Ytt.ValuesFrom = append(templateStep.Ytt.ValuesFrom, kcv1alpha1.AppTemplateValuesSource{
-							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								Name: value.SecretRef.Name,
-							},
-						})
+						templateStep.Ytt.ValuesFrom = appendValuesFromSecret(templateStep.Ytt.ValuesFrom, value.SecretRef.Name)
 					}
 				}
 			}
@@ -180,6 +175,24 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 	}
 
 	return desiredApp, nil
+}
+
+// appendValuesFromSecret returns sources with a secretRef for secretName added,
+// unless that secret is already referenced by one of them. Referencing the same
+// secret twice does not change how the values are applied, so it would only be
+// noise in the App spec.
+func appendValuesFromSecret(sources []kcv1alpha1.AppTemplateValuesSource, secretName string) []kcv1alpha1.AppTemplateValuesSource {
+	for _, source := range sources {
+		if source.SecretRef != nil && source.SecretRef.Name == secretName {
+			return sources
+		}
+	}
+
+	return append(sources, kcv1alpha1.AppTemplateValuesSource{
+		SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
+			Name: secretName,
+		},
+	})
 }
 
 func secretNamesFromAnn(installedPkg *pkgingv1alpha1.PackageInstall, annKey string) []string {
