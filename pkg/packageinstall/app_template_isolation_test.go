@@ -1,3 +1,35 @@
+// Copyright 2026 The Carvel Authors.
+// SPDX-License-Identifier: Apache-2.0
+
+package packageinstall
+
+import (
+	"context"
+	"fmt"
+	"testing"
+	"time"
+
+	kcv1alpha1 "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	pkgingv1alpha1 "carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1"
+	datapkgingv1alpha1 "carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	fakekappctrl "carvel.dev/kapp-controller/pkg/client/clientset/versioned/fake"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8stesting "k8s.io/client-go/testing"
+)
+
+func TestNewAppPreservesPackageTemplate(t *testing.T) {
+	for _, template := range []string{"ytt", "helm"} {
+		t.Run(template, func(t *testing.T) {
+			install, pkg := syntheticTemplateIsolationFixture(template)
+			original := pkg.DeepCopy()
+			var first *kcv1alpha1.App
+			for i := 0; i < 6; i++ {
+				app, err := NewApp(&kcv1alpha1.App{}, install, pkg, Opts{DefaultSyncPeriod: time.Minute})
+				require.NoError(t, err)
 				var values []kcv1alpha1.AppTemplateValuesSource
 				if template == "ytt" {
 					values = app.Spec.Template[0].Ytt.ValuesFrom
