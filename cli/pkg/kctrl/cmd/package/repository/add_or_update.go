@@ -196,7 +196,10 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 		return err
 	}
 
-	if o.URL == existingRepository.Spec.Fetch.ImgpkgBundle.Image &&
+	// registry hostnames are case-insensitive per RFC 1035, and o.URL (freshly typed by the
+	// operator) and the stored Image (persisted by a possibly earlier invocation) are typed
+	// independently, so compare without regard to case
+	if strings.EqualFold(o.URL, existingRepository.Spec.Fetch.ImgpkgBundle.Image) &&
 		(o.SecretRef == "" || (existingRepository.Spec.Fetch.ImgpkgBundle.SecretRef != nil && existingRepository.Spec.Fetch.ImgpkgBundle.SecretRef.Name == o.SecretRef)) {
 		return NewRepoTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, RepoTailerOpts{PrintCurrentState: true}).TailRepoStatus()
 	}

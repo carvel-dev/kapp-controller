@@ -147,11 +147,12 @@ func (gc *Config) ShouldSkipTLSForAuthority(candidateAuthority string) bool {
 		// in case user gives domains in form "a, b"
 		authority := strings.TrimSpace(spaceyAuthority)
 		// check if the host matches the allowed authority, meaning all ports for that host are allowed
-		if authority == host {
+		// (hostnames are case-insensitive per RFC 3986/4343)
+		if strings.EqualFold(authority, host) {
 			return true
 		}
 		// check the full candidate string in case they both have a port and its the same port
-		if authority == candidateAuthority {
+		if strings.EqualFold(authority, candidateAuthority) {
 			return true
 		}
 	}
