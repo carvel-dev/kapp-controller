@@ -352,4 +352,9 @@ func Test_ShouldSkipTLSForAuthority(t *testing.T) {
 	assert.False(t, config.ShouldSkipTLSForAuthority("1fff:0:a88:85a3::ac1f"))
 	assert.True(t, config.ShouldSkipTLSForAuthority("1aaa:0:a88:85a3::ac1f"))
 	assert.True(t, config.ShouldSkipTLSForAuthority("[1aaa:0:a88:85a3::ac1f]:888"))
+
+	// hostnames are case-insensitive (RFC 3986/4343): a fetch URL host resolved with
+	// different casing than the configured allow-list entry must still match.
+	assert.True(t, config.ShouldSkipTLSForAuthority("Always.Trustworthy.COM"))
+	assert.True(t, config.ShouldSkipTLSForAuthority("Selectively.Trusted.NET:123456"))
 }
