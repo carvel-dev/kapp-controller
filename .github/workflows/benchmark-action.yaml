@@ -32,8 +32,8 @@ jobs:
         run: |
           set -e -x
           minikube start --driver=docker
-          eval $(minikube docker-env --shell=bash)
 
+          export KAPPCTRL_MINIKUBE_LOAD_IMAGES=true
           ./hack/deploy-test.sh
 
           go test ./test/bench/... -bench=. | tee output.txt

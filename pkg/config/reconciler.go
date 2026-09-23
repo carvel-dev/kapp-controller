@@ -80,13 +80,13 @@ func (r *Reconciler) Reconcile(_ context.Context, request reconcile.Request) (re
 	err = r.osConfig.ApplyCACerts(r.config.CACerts())
 	if err != nil {
 		log.Error(err, "Failed applying CA certificates")
-		// continue on
+		return reconcile.Result{}, err
 	}
 
 	err = r.osConfig.ApplyProxy(r.config.ProxyOpts())
 	if err != nil {
 		log.Error(err, "Failed applying proxy opts")
-		// continue on
+		return reconcile.Result{}, err
 	}
 
 	return reconcile.Result{}, nil // no re-queue

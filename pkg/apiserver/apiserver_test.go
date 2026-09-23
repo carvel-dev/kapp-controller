@@ -17,10 +17,23 @@ import (
 	"k8s.io/apiserver/pkg/server/dynamiccertificates"
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	fakekube "k8s.io/client-go/kubernetes/fake"
+	genericfeatures "k8s.io/apiserver/pkg/features"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	clienttesting "k8s.io/client-go/testing"
 	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	fakeaggregator "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/fake"
 )
+
+// The packaging apiserver must run with the WatchList feature disabled so that
+// watch&resourceVersion=0 requests are not defaulted with sendInitialEvents,
+// which host clusters that ship WatchList off (e.g. K8s 1.33) reject with 422.
+func Test_disableWatchListFeatureGate(t *testing.T) {
+	err := disableWatchListFeatureGate()
+	require.NoError(t, err)
+
+	require.False(t, utilfeature.DefaultFeatureGate.Enabled(genericfeatures.WatchList),
+		"WatchList feature gate must be disabled for the packaging apiserver")
+}
 
 // fakeCAProvider implements dynamiccertificates.CAContentProvider
 type fakeCAProvider struct {

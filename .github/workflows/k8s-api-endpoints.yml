@@ -1,0 +1,101 @@
+name: K8s API Endpoints Compatibility
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  k8s-api-endpoints:
+    name: TestK8APIEndpoints (all k8s versions)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Install kind + kubectl
+        uses: helm/kind-action@v1
+        with:
+          install_only: true
+          version: v0.33.0
+      - name: Install Carvel Tools
+        run: ./hack/install-deps.sh
+      - name: Resolve k8s versions kapp-controller supports
+        run: |
+          set -e -x
+          # Derive the minors to test from the client-go version already
+          # pinned in go.mod instead of hand-maintaining a version list here
+          # - it shifts automatically as dependency-updater.yml bumps go.mod.
+          # Covers the last 4 released minors plus the next (not-yet-pinned)
+          # one, wider than client-go's own +/-1 minor skew guarantee, since
+          # kapp-controller's CRD/aggregated-API surface tends to stay
+          # compatible well beyond that window in practice.
+          client_go_minor=$(grep -oE 'k8s\.io/client-go v0\.[0-9]+\.[0-9]+' go.mod | grep -oE '[0-9]+\.[0-9]+$' | cut -d. -f1)
+          minors=(v1.$((client_go_minor - 3)) v1.$((client_go_minor - 2)) v1.$((client_go_minor - 1)) v1.${client_go_minor} v1.$((client_go_minor + 1)))
+
+          # kindest/node images are cut by the kind maintainers on their own
+          # cadence, not one-for-one with every kubernetes/kubernetes patch
+          # tag (e.g. kubernetes/kubernetes had v1.33.13 with no matching
+          # kindest/node image yet), so the only accurate source for "which
+          # node images actually exist" is the registry itself.
+          url="https://hub.docker.com/v2/repositories/kindest/node/tags?page_size=100"
+          all_tags=""
+          while [ -n "$url" ] && [ "$url" != "null" ]; do
+            page=$(curl -sf "$url")
+            all_tags="$all_tags
+          $(echo "$page" | jq -r '.results[].name')"
+            url=$(echo "$page" | jq -r '.next')
+          done
+
+          versions=()
+          for m in "${minors[@]}"; do
+            latest=$(echo "$all_tags" | grep -E "^${m}\.[0-9]+$" | sort -V | tail -1)
+            if [ -z "$latest" ]; then
+              echo "::error::No kubernetes/kubernetes tag found for $m"
+              exit 1
+            fi
+            versions+=("$latest")
+          done
+          echo "Resolved versions: ${versions[*]}"
+          {
+            echo "K8S_VERSIONS<<EOF"
+            printf '%s\n' "${versions[@]}"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
+      - name: Build kapp-controller image
+        run: |
+          set -e -x
+          source ./hack/version-util.sh
+          ytt -f config/config -f config/values-schema.yml -f config-dev -v dev.version="$(get_kappctrl_ver)+develop" | kbld -f- > kbld.out 2> kbldmeta.out
+          echo "KC_IMAGE=$(cat kbldmeta.out | tail -n 1 | sed 's/.*final: kapp-controller -> \(.*\)$/\1/p' | tail -n 1)" >> "$GITHUB_ENV"
+      - name: Run TestK8APIEndpoints across k8s versions
+        run: |
+          set -x
+          mkdir -p tmp
+          failed=()
+          while IFS= read -r version; do
+            [ -z "$version" ] && continue
+            echo "::group::TestK8APIEndpoints (kindest/node:${version})"
+            ok=true
+            kind create cluster --name kinder --image "kindest/node:${version}" || ok=false
+            if $ok; then kind load docker-image "$KC_IMAGE" --name kinder || ok=false; fi
+            if $ok; then kapp deploy -a kc -f kbld.out -c -y || ok=false; fi
+            if $ok; then
+              KAPPCTRL_E2E_NAMESPACE=kappctrl-test ./hack/test-e2e.sh -run TestK8APIEndpoints || ok=false
+            fi
+            if $ok; then
+              echo "TestK8APIEndpoints passed for kindest/node:${version}"
+            else
+              echo "::error::TestK8APIEndpoints FAILED for kindest/node:${version}"
+              failed+=("$version")
+            fi
+            kind delete cluster --name kinder || true
+            echo "::endgroup::"
+          done <<< "$K8S_VERSIONS"
+          if [ ${#failed[@]} -ne 0 ]; then
+            echo "::error::TestK8APIEndpoints failed for k8s version(s): ${failed[*]}"
+            exit 1
+          fi
