@@ -6,6 +6,7 @@ package config
 const (
 	SecretK8sCorev1BasicAuthUsernameKey = "username"
 	SecretK8sCorev1BasicAuthPasswordKey = "password"
+	SecretK8sCorev1HTTPBearerTokenKey   = "token"
 
 	SecretK8sCoreV1SSHAuthPrivateKey = "ssh-privatekey"
 	SecretSSHAuthKnownHosts          = "ssh-knownhosts" // not part of k8s

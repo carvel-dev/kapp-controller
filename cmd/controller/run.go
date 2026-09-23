@@ -28,6 +28,7 @@ import (
 	"carvel.dev/kapp-controller/pkg/reftracker"
 	"carvel.dev/kapp-controller/pkg/sidecarexec"
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp" // Initialize gcp client auth plugin
 	"k8s.io/component-base/cli/flag"
@@ -181,7 +182,19 @@ func Run(opts Options, runLog logr.Logger) error {
 
 		// Reconcile once synchronously to ensure controller configuration
 		// (e.g. proxy, CA certs) is applied to sidecar before any tool execution happens.
-		_, err = reconciler.Reconcile(context.TODO(), reconcile.Request{})
+		// The sidecarexec container may still be starting up when this process
+		// runs (there is no ordering guarantee between containers in the same
+		// Pod), so retry with backoff for a bounded amount of time instead of
+		// failing on the very first transient RPC error.
+		err = wait.PollUntilContextTimeout(context.TODO(), time.Second, time.Minute, true,
+			func(ctx context.Context) (bool, error) {
+				_, err := reconciler.Reconcile(ctx, reconcile.Request{})
+				if err != nil {
+					runLog.Error(err, "Reconciling config once at startup; will retry")
+					return false, nil
+				}
+				return true, nil
+			})
 		if err != nil {
 			return fmt.Errorf("Reconcile config reconciler once: %s", err)
 		}

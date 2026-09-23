@@ -1,0 +1,143 @@
+// Copyright 2024 The Carvel Authors.
+// SPDX-License-Identifier: Apache-2.0
+
+package template
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+// testPGPPrivateKey is a throwaway test-only key (also used by
+// test/e2e/kappcontroller/sops_test.go), regenerated for CI and not used
+// anywhere else.
+const testPGPPrivateKey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+Version: GnuPG v1
+
+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
+=2uSU
+-----END PGP PRIVATE KEY BLOCK-----
+`
+
+// TestGpgKeyringWrite_UnderFIPS140Only guards against regressing on
+// crypto/fips140.WithoutEnforcement in gpgKeyring.Write: parsing an OpenPGP
+// key computes its RFC 4880 SHA-1 fingerprint internally, which panics
+// under GODEBUG=fips140=only if not wrapped. Run this test's binary with
+// GODEBUG=fips140=only (as the shipped, FIPS-built kapp-controller image
+// does by default) to exercise that path.
+func TestGpgKeyringWrite_UnderFIPS140Only(t *testing.T) {
+	dir := t.TempDir()
+
+	err := gpgKeyring{testPGPPrivateKey}.Write(dir)
+	if err != nil {
+		t.Fatalf("Write: %s", err)
+	}
+
+	fi, err := os.Stat(filepath.Join(dir, "secring.gpg"))
+	if err != nil {
+		t.Fatalf("stat secring.gpg: %s", err)
+	}
+	if fi.Size() == 0 {
+		t.Fatalf("secring.gpg is empty")
+	}
+}

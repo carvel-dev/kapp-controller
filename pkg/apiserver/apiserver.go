@@ -31,11 +31,13 @@ import (
 	mutatingwebhook "k8s.io/apiserver/pkg/admission/plugin/webhook/mutating"
 	validatingwebhook "k8s.io/apiserver/pkg/admission/plugin/webhook/validating"
 	genericopenapi "k8s.io/apiserver/pkg/endpoints/openapi"
+	genericfeatures "k8s.io/apiserver/pkg/features"
 	apirest "k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/dynamiccertificates"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 	apiservercompatibility "k8s.io/apiserver/pkg/util/compatibility"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -146,6 +148,10 @@ type NewAPIServerOpts struct {
 }
 
 func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kcClient kcclient.Interface, opts NewAPIServerOpts) (*APIServer, error) { //nolint
+	if err := disableWatchListFeatureGate(); err != nil {
+		return nil, err
+	}
+
 	aggClient, err := aggregatorclient.NewForConfig(clientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("building aggregation client: %v", err)
@@ -199,6 +205,29 @@ func NewAPIServer(clientConfig *rest.Config, coreClient kubernetes.Interface, kc
 	}
 
 	return &APIServer{server, make(chan struct{}), aggClient, opts.Logger}, nil
+}
+
+// disableWatchListFeatureGate turns off the WatchList feature for the packaging
+// aggregated API server. This server is a thin proxy whose storage is the host
+// cluster's InternalPackage(Metadata) CRDs, and its custom REST watch does not
+// synthesize the WatchList "initial-events-end" bookmark.
+//
+// With WatchList enabled, the embedded apiserver's SetListOptionsDefaults injects
+// sendInitialEvents + resourceVersionMatch=NotOlderThan into watch requests with
+// resourceVersion=0. Those defaulted options are then rejected with 422 by host
+// clusters that ship the WatchList feature gate disabled (e.g. Kubernetes 1.33,
+// which turned it off by default), breaking a plain "watch&resourceVersion=0".
+//
+// Disabling it here means such requests are served as a plain watch, and
+// WatchList-capable clients (e.g. client-go informers) receive a 422 for the
+// streaming request and transparently fall back to list+watch.
+func disableWatchListFeatureGate() error {
+	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(map[string]bool{
+		string(genericfeatures.WatchList): false,
+	}); err != nil {
+		return fmt.Errorf("disabling WatchList feature gate: %v", err)
+	}
+	return nil
 }
 
 // Run spawns a go routine that exits when apiserver is stopped.

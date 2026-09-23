@@ -6,6 +6,7 @@ package template
 import (
 	"bytes"
 	"context"
+	"crypto/fips140"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -313,7 +314,18 @@ type gpgKeyring struct {
 
 func (k gpgKeyring) Write(dirPath string) error {
 	// TODO currently this only reads a single key
-	entityList, err := openpgp.ReadArmoredKeyRing(strings.NewReader(k.contents))
+	//
+	// Parsing an OpenPGP key packet unconditionally computes its RFC 4880 V4
+	// fingerprint using SHA-1, which panics under GODEBUG=fips140=only. That
+	// fingerprint is only used here as an OpenPGP key identifier while loading
+	// a user-supplied private key for later use by the external sops binary;
+	// it is not used to verify or trust any signature, so relaxing FIPS
+	// enforcement for just this parse is safe.
+	var entityList openpgp.EntityList
+	var err error
+	fips140.WithoutEnforcement(func() {
+		entityList, err = openpgp.ReadArmoredKeyRing(strings.NewReader(k.contents))
+	})
 	if err != nil {
 		return fmt.Errorf("Reading private keys: %s", err)
 	}
