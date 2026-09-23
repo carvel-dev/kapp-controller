@@ -196,10 +196,23 @@ func (o *AddOrUpdateOptions) Run(args []string) error {
 		return err
 	}
 
-	// registry hostnames are case-insensitive per RFC 1035, and o.URL (freshly typed by the
-	// operator) and the stored Image (persisted by a possibly earlier invocation) are typed
-	// independently, so compare without regard to case
-	if strings.EqualFold(o.URL, existingRepository.Spec.Fetch.ImgpkgBundle.Image) &&
+	// Only registry hostnames are case-insensitive per RFC 1035; org/repo paths and tags may be
+	// case-sensitive (e.g., GHCR). Parse both references to compare correctly.
+	newRef, newParseErr := name.ParseReference(o.URL)
+	existingRef, existingParseErr := name.ParseReference(existingRepository.Spec.Fetch.ImgpkgBundle.Image)
+
+	var isSameImage bool
+	if newParseErr == nil && existingParseErr == nil {
+		// Both references parsed successfully; compare with correct case sensitivity
+		isSameImage = strings.EqualFold(newRef.Context().RegistryStr(), existingRef.Context().RegistryStr()) &&
+			newRef.Context().RepositoryStr() == existingRef.Context().RepositoryStr() &&
+			newRef.Identifier() == existingRef.Identifier()
+	} else {
+		// Fallback to string comparison if parsing fails (maintains backward compatibility)
+		isSameImage = strings.EqualFold(o.URL, existingRepository.Spec.Fetch.ImgpkgBundle.Image)
+	}
+
+	if isSameImage &&
 		(o.SecretRef == "" || (existingRepository.Spec.Fetch.ImgpkgBundle.SecretRef != nil && existingRepository.Spec.Fetch.ImgpkgBundle.SecretRef.Name == o.SecretRef)) {
 		return NewRepoTailer(o.NamespaceFlags.Name, o.Name, o.ui, client, RepoTailerOpts{PrintCurrentState: true}).TailRepoStatus()
 	}
