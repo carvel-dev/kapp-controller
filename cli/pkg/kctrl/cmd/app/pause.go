@@ -49,7 +49,7 @@ func NewPauseCmd(o *PauseOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 
 func (o *PauseOptions) Run() error {
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected app name to be non empty")
+		return fmt.Errorf("Expected app name to be non-empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()

@@ -57,7 +57,7 @@ func NewKickCmd(o *KickOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 
 func (o *KickOptions) Run() error {
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected app name to be non empty")
+		return fmt.Errorf("Expected app name to be non-empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()

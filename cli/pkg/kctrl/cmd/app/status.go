@@ -48,7 +48,7 @@ func NewStatusCmd(o *StatusOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 
 func (o *StatusOptions) Run() error {
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected app name to be non empty")
+		return fmt.Errorf("Expected app name to be non-empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
