@@ -21,6 +21,7 @@ jobs:
         uses: helm/kind-action@v1
         with:
           cluster_name: kinder
+          node_image: ghcr.io/carvel-dev/kindest/node:v1.36.0
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
