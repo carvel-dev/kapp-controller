@@ -136,6 +136,11 @@ func (in *PackageInstallValues) DeepCopyInto(out *PackageInstallValues) {
 		*out = new(PackageInstallValuesSecretRef)
 		**out = **in
 	}
+	if in.TemplateSteps != nil {
+		in, out := &in.TemplateSteps, &out.TemplateSteps
+		*out = make([]int, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
