@@ -78,7 +78,7 @@ func (o *KickOptions) Run(args []string) error {
 	}
 
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected repository name to be non empty")
+		return fmt.Errorf("Expected repository name to be non-empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
