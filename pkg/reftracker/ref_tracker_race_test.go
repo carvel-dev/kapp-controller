@@ -19,8 +19,8 @@ import (
 // ReconcileRefs/RemoveAppFromAllRefs, causing a
 // "fatal error: concurrent map iteration and map write" crash.
 //
-// Before the fix this test crashes the process; after it (AppsForRef returns a
-// copy) it passes. Run with -race for extra signal.
+// Before the fix, which makes AppsForRef return a copy, `go test -race` reports
+// the race on every run, while a plain run only sometimes crashes.
 func Test_AppsForRef_ConcurrentIterationAndWrite_DoesNotPanic(t *testing.T) {
 	appRefTracker := reftracker.NewAppRefTracker()
 	appKey := reftracker.NewAppKey("app", "default")
@@ -33,8 +33,11 @@ func Test_AppsForRef_ConcurrentIterationAndWrite_DoesNotPanic(t *testing.T) {
 
 	var wg sync.WaitGroup
 	stop := make(chan struct{})
+	iterated := 0
 
-	// Writer: continuously mutate the internal maps under the lock.
+	// Writer: add and remove a second App, so each ref's app set keeps being
+	// written to but never becomes empty for the reader.
+	otherAppKey := reftracker.NewAppKey("other-app", "default")
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -44,8 +47,8 @@ func Test_AppsForRef_ConcurrentIterationAndWrite_DoesNotPanic(t *testing.T) {
 				return
 			default:
 			}
-			appRefTracker.ReconcileRefs(seedRefs, appKey)
-			appRefTracker.RemoveAppFromAllRefs(appKey)
+			appRefTracker.ReconcileRefs(seedRefs, otherAppKey)
+			appRefTracker.RemoveAppFromAllRefs(otherAppKey)
 		}
 	}()
 
@@ -66,6 +69,7 @@ func Test_AppsForRef_ConcurrentIterationAndWrite_DoesNotPanic(t *testing.T) {
 				continue
 			}
 			for range apps {
+				iterated++
 			}
 		}
 	}()
@@ -73,6 +77,10 @@ func Test_AppsForRef_ConcurrentIterationAndWrite_DoesNotPanic(t *testing.T) {
 	time.Sleep(200 * time.Millisecond)
 	close(stop)
 	wg.Wait()
+
+	if iterated == 0 {
+		t.Fatal("the reader never iterated a result, so the race was not exercised")
+	}
 }
 
 // Test_RefsForApp_ConcurrentIterationAndWrite_DoesNotPanic covers the symmetric
@@ -89,6 +97,7 @@ func Test_RefsForApp_ConcurrentIterationAndWrite_DoesNotPanic(t *testing.T) {
 
 	var wg sync.WaitGroup
 	stop := make(chan struct{})
+	iterated := 0
 
 	wg.Add(1)
 	go func() {
@@ -117,6 +126,7 @@ func Test_RefsForApp_ConcurrentIterationAndWrite_DoesNotPanic(t *testing.T) {
 				continue
 			}
 			for range refs {
+				iterated++
 			}
 		}
 	}()
@@ -124,4 +134,8 @@ func Test_RefsForApp_ConcurrentIterationAndWrite_DoesNotPanic(t *testing.T) {
 	time.Sleep(200 * time.Millisecond)
 	close(stop)
 	wg.Wait()
+
+	if iterated == 0 {
+		t.Fatal("the reader never iterated a result, so the race was not exercised")
+	}
 }
