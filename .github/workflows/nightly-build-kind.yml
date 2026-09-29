@@ -1,0 +1,189 @@
+name: Nightly Build Kind Images
+
+on:
+  schedule:
+    - cron: '30 20 * * *'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  resolve-versions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      timestamp: ${{ steps.get-date.outputs.timestamp }}
+    steps:
+      - name: Get Date Timestamp
+        id: get-date
+        run: echo "timestamp=$(date +'%Y%m%d')" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve Kubernetes Versions
+        id: set-matrix
+        run: |
+          set -euo pipefail
+          
+          echo "Fetching upstream Kubernetes branches..."
+          BRANCHES=$(git ls-remote --heads https://github.com/kubernetes/kubernetes.git \
+            | awk '{print $2}' | grep -Eo 'release-1\.[0-9]+$' | sort -V)
+          
+          if [[ -z "$BRANCHES" ]]; then
+            echo "::error::Failed to fetch Kubernetes branches."
+            exit 1
+          fi
+
+          LATEST_BRANCH=$(echo "$BRANCHES" | tail -n 1)
+          MIN_BRANCH=$(echo "$BRANCHES" | tail -n 4 | head -n 1)
+
+          echo "Resolved -> Latest: $LATEST_BRANCH | Min (N-3): $MIN_BRANCH"
+
+          MATRIX_JSON=$(jq -nc \
+            --arg latest "$LATEST_BRANCH" \
+            --arg min "$MIN_BRANCH" \
+            '{"k8s_branch": [$latest, $min]}')
+
+          echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
+
+  build-and-push:
+    needs: resolve-versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.resolve-versions.outputs.matrix) }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Free Disk Space
+        run: |
+          docker system prune -af --volumes || true
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android || true
+      
+      - name: Setup Environment Variables
+        run: |
+          set -euo pipefail
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_BASE=${{ env.REGISTRY }}/${OWNER_LC}/kindest-node" >> "$GITHUB_ENV"
+          
+          BRANCH_SHA=$(git ls-remote https://github.com/kubernetes/kubernetes.git refs/heads/${{ matrix.k8s_branch }} | awk '{print $1}' | cut -c1-7)
+          echo "BRANCH_SHA=$BRANCH_SHA" >> "$GITHUB_ENV"
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check GHCR for Cached Build
+        id: check-cache
+        run: |
+          set -euo pipefail
+          TIMESTAMP="${{ needs.resolve-versions.outputs.timestamp }}"
+          
+          CACHE_IMAGE="${{ env.IMAGE_BASE }}:${{ matrix.k8s_branch }}-${{ env.BRANCH_SHA }}"
+          DAILY_IMAGE="${{ env.IMAGE_BASE }}:${{ matrix.k8s_branch }}-${TIMESTAMP}"
+          
+          echo "CACHE_IMAGE=$CACHE_IMAGE" >> "$GITHUB_ENV"
+          echo "DAILY_IMAGE=$DAILY_IMAGE" >> "$GITHUB_ENV"
+
+          export DOCKER_CLI_EXPERIMENTAL=enabled
+          if docker manifest inspect "$CACHE_IMAGE" > /dev/null 2>&1; then
+            echo "Cache Hit! Image already exists: $CACHE_IMAGE"
+            echo "skip_build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Cache Miss. Proceeding with source build."
+            echo "skip_build=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout Kubernetes
+        if: steps.check-cache.outputs.skip_build == 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: kubernetes/kubernetes
+          ref: ${{ matrix.k8s_branch }}
+          path: kubernetes
+          fetch-depth: 0
+
+      - name: Checkout Kind
+        if: steps.check-cache.outputs.skip_build == 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: kubernetes-sigs/kind
+          path: kind
+
+      - name: Install Go
+        if: steps.check-cache.outputs.skip_build == 'false'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Build and Push (Cache Miss)
+        if: steps.check-cache.outputs.skip_build == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          /usr/local/bin/kind build node-image --type=source "$PWD/kubernetes" --image "${{ env.CACHE_IMAGE }}"
+
+          echo "Re-authenticating to GHCR to prevent session timeout..."
+          echo "$GH_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+          docker push "${{ env.CACHE_IMAGE }}"
+          
+          docker tag "${{ env.CACHE_IMAGE }}" "${{ env.DAILY_IMAGE }}"
+          docker push "${{ env.DAILY_IMAGE }}"
+
+      - name: Retag Existing Build (Cache Hit)
+        if: steps.check-cache.outputs.skip_build == 'true'
+        run: |
+          set -euo pipefail
+          docker pull "${{ env.CACHE_IMAGE }}"
+          docker tag "${{ env.CACHE_IMAGE }}" "${{ env.DAILY_IMAGE }}"
+          docker push "${{ env.DAILY_IMAGE }}"
+
+  trigger-tests:
+    needs: [resolve-versions, build-and-push]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: success()
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Trigger Downstream E2E Tests
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TIMESTAMP: ${{ needs.resolve-versions.outputs.timestamp }}
+          WORKFLOW_BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          
+          ALL_TAGS=$(git ls-remote --tags --refs https://github.com/carvel-dev/kapp-controller.git \
+            | awk -F/ '{print $3}' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V)
+          
+          MINORS=$(echo "$ALL_TAGS" | cut -d. -f1,2 | uniq | tail -n 2)
+          
+          DYNAMIC_TAGS=""
+          for minor in $MINORS; do
+            LATEST_PATCH=$(echo "$ALL_TAGS" | grep "^${minor}\." | tail -n 1)
+            DYNAMIC_TAGS="$DYNAMIC_TAGS $LATEST_PATCH"
+          done
+          
+          for tag in $DYNAMIC_TAGS; do
+            echo "Dispatching E2E test for kapp-controller: $tag"
+            
+            gh workflow run nightly-e2e.yml \
+              --ref "$WORKFLOW_BRANCH" \
+              -f image_timestamp="$TIMESTAMP" \
+              -f kapp_ctrl_ref="$tag" \
+              -f registry_user="${{ github.repository_owner }}" 
+            
+            sleep 3
+          done
