@@ -56,12 +56,10 @@ func NewKubeconfigRestricted(input string) (*Restricted, error) {
 			AuthInfo: clientcmd.AuthInfo{
 				ClientCertificateData: inputAI.AuthInfo.ClientCertificateData,
 				ClientKeyData:         inputAI.AuthInfo.ClientKeyData,
-				Token:                 inputAI.AuthInfo.Token,
 				Impersonate:           inputAI.AuthInfo.Impersonate,
 				ImpersonateGroups:     inputAI.AuthInfo.ImpersonateGroups,
 				ImpersonateUserExtra:  inputAI.AuthInfo.ImpersonateUserExtra,
 				Username:              inputAI.AuthInfo.Username,
-				Password:              inputAI.AuthInfo.Password,
 				AuthProvider:          inputAI.AuthInfo.AuthProvider,
 			},
 		})

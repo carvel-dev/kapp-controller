@@ -123,6 +123,11 @@ current-context: dst-ctx
 `
 	caB64Encoded := base64.StdEncoding.EncodeToString(caCert)
 
+	// Security Note: Token is embedded in the kubeconfig YAML, which is necessary for kubeconfig functionality.
+	// The token is safely protected because:
+	// 1. This kubeconfig string is written to a temporary file with restricted permissions (0600)
+	// 2. The temporary file path is passed to kapp via command-line argument, not environment variable
+	// 3. This prevents token exposure through process inspection, debug logs, or environment variable leaks
 	return fmt.Sprintf(kubeconfigYAMLTpl, caB64Encoded, []byte(token), []byte(nsBytes)), nil
 }
 

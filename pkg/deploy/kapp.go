@@ -68,7 +68,13 @@ func (a *Kapp) Deploy(tplOutput string, startedApplyingFunc func(),
 		return exec.NewCmdRunResultWithErr(err)
 	}
 
-	args, env := a.addGenericArgs(args, a.clusterAccess.Name+a.appSuffix)
+	kubeconfigFile, kubeconfigCleanup, err := a.createTempKubeconfig()
+	if err != nil {
+		return exec.NewCmdRunResultWithErr(err)
+	}
+	defer kubeconfigCleanup()
+
+	args, env := a.addGenericArgs(args, a.clusterAccess.Name+a.appSuffix, kubeconfigFile)
 
 	cmd := goexec.Command("kapp", args...)
 	cmd.Env = append(os.Environ(), env...)
@@ -95,7 +101,13 @@ func (a *Kapp) Delete(startedApplyingFunc func(), changedFunc func(exec.CmdRunRe
 		return exec.NewCmdRunResultWithErr(err)
 	}
 
-	args, env := a.addGenericArgs(args, a.clusterAccess.Name+a.appSuffix)
+	kubeconfigFile, kubeconfigCleanup, err := a.createTempKubeconfig()
+	if err != nil {
+		return exec.NewCmdRunResultWithErr(err)
+	}
+	defer kubeconfigCleanup()
+
+	args, env := a.addGenericArgs(args, a.clusterAccess.Name+a.appSuffix, kubeconfigFile)
 
 	cmd := goexec.Command("kapp", args...)
 	cmd.Env = append(os.Environ(), env...)
@@ -125,7 +137,13 @@ func (a *Kapp) Inspect() exec.CmdRunResult {
 		return exec.NewCmdRunResultWithErr(err)
 	}
 
-	args, env := a.addGenericArgs(args, a.clusterAccess.Name+a.appSuffix)
+	kubeconfigFile, kubeconfigCleanup, err := a.createTempKubeconfig()
+	if err != nil {
+		return exec.NewCmdRunResultWithErr(err)
+	}
+	defer kubeconfigCleanup()
+
+	args, env := a.addGenericArgs(args, a.clusterAccess.Name+a.appSuffix, kubeconfigFile)
 
 	var stdoutBs, stderrBs bytes.Buffer
 
@@ -251,7 +269,7 @@ func (a *Kapp) addRawOpts(args []string, opts []string, allowedFlagSet exec.Flag
 	return args, nil
 }
 
-func (a *Kapp) addGenericArgs(args []string, appName string) ([]string, []string) {
+func (a *Kapp) addGenericArgs(args []string, appName string, kubeconfigFile string) ([]string, []string) {
 	args = append(args, []string{"--app", appName}...)
 	env := []string{}
 
@@ -265,8 +283,7 @@ func (a *Kapp) addGenericArgs(args []string, appName string) ([]string, []string
 
 	switch {
 	case a.clusterAccess.Kubeconfig != nil:
-		env = append(env, "KAPP_KUBECONFIG_YAML="+a.clusterAccess.Kubeconfig.AsYAML())
-		args = append(args, "--kubeconfig=/dev/null") // not used due to above env var
+		args = append(args, "--kubeconfig", kubeconfigFile)
 	case a.clusterAccess.DangerousUsePodServiceAccount:
 		// do nothing
 	default:
@@ -276,6 +293,31 @@ func (a *Kapp) addGenericArgs(args []string, appName string) ([]string, []string
 	args = append(args, "--yes")
 
 	return args, env
+}
+
+// createTempKubeconfig writes the kubeconfig to a temporary file and returns the path and cleanup function
+func (a *Kapp) createTempKubeconfig() (string, func(), error) {
+	if a.clusterAccess.Kubeconfig == nil {
+		return "", func() {}, nil
+	}
+
+	tmpDir, err := os.MkdirTemp("", "kapp-kubeconfig-*")
+	if err != nil {
+		return "", func() {}, fmt.Errorf("creating temporary kubeconfig directory: %w", err)
+	}
+
+	kubeconfigPath := filepath.Join(tmpDir, "kubeconfig.yaml")
+	err = os.WriteFile(kubeconfigPath, []byte(a.clusterAccess.Kubeconfig.AsYAML()), 0600)
+	if err != nil {
+		_ = os.RemoveAll(tmpDir)
+		return "", func() {}, fmt.Errorf("writing kubeconfig to temporary file: %w", err)
+	}
+
+	cleanup := func() {
+		_ = os.RemoveAll(tmpDir)
+	}
+
+	return kubeconfigPath, cleanup, nil
 }
 
 // trySaveAppMeta if unable to save the kapp configmap metadata, then continue and do not fail the deploy.

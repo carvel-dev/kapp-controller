@@ -122,9 +122,10 @@ func (m *Manager) expired(t *authenticationv1.TokenRequest) bool {
 // requiresRefresh returns true if the token is older half of it's maxTTL
 func (m *Manager) requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 	if tr.Spec.ExpirationSeconds == nil {
-		cpy := tr.DeepCopy()
-		cpy.Status.Token = ""
-		m.log.Info("Expiration seconds was nil for token request", "tokenRequest", cpy)
+		m.log.Info("Expiration seconds was nil for token request",
+			"tokenRequestName", tr.Name,
+			"tokenRequestNamespace", tr.Namespace,
+			"tokenRequestUID", tr.UID)
 		return false
 	}
 	now := m.clock.Now()
