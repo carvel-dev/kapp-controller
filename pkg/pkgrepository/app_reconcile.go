@@ -117,10 +117,10 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 		assetsPath, fetchResult = a.fetch(assetsPath)
 
 		a.app.Status.Fetch = &v1alpha1.AppStatusFetch{
-			Stderr:    fetchResult.Stderr,
-			Stdout:    fetchResult.Stdout,
+			Stderr:    exec.RedactSecrets(fetchResult.Stderr),
+			Stdout:    exec.RedactSecrets(fetchResult.Stdout),
 			ExitCode:  fetchResult.ExitCode,
-			Error:     fetchResult.ErrorStr(),
+			Error:     exec.RedactSecrets(fetchResult.ErrorStr()),
 			StartedAt: a.app.Status.Fetch.StartedAt,
 			UpdatedAt: metav1.NewTime(time.Now().UTC()),
 		}
@@ -143,9 +143,9 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 	tplResult := a.template(assetsPath)
 
 	a.app.Status.Template = &v1alpha1.AppStatusTemplate{
-		Stderr:    tplResult.Stderr,
+		Stderr:    exec.RedactSecrets(tplResult.Stderr),
 		ExitCode:  tplResult.ExitCode,
-		Error:     tplResult.ErrorStr(),
+		Error:     exec.RedactSecrets(tplResult.ErrorStr()),
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
 
@@ -170,11 +170,11 @@ func (a *App) updateLastDeploy(result exec.CmdRunResult) exec.CmdRunResult {
 	result = result.WithFriendlyYAMLStrings()
 
 	a.app.Status.Deploy = &v1alpha1.AppStatusDeploy{
-		Stdout:    result.Stdout,
-		Stderr:    result.Stderr,
+		Stdout:    exec.RedactSecrets(result.Stdout),
+		Stderr:    exec.RedactSecrets(result.Stderr),
 		Finished:  result.Finished,
 		ExitCode:  result.ExitCode,
-		Error:     result.ErrorStr(),
+		Error:     exec.RedactSecrets(result.ErrorStr()),
 		StartedAt: a.app.Status.Deploy.StartedAt,
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
@@ -225,11 +225,11 @@ func (a *App) setReconcileCompleted(result exec.CmdRunResult) {
 		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.Condition{
 			Type:    v1alpha1.ReconcileFailed,
 			Status:  corev1.ConditionTrue,
-			Message: result.ErrorStr(),
+			Message: exec.RedactSecrets(result.ErrorStr()),
 		})
 		a.app.Status.ConsecutiveReconcileFailures++
 		a.app.Status.ConsecutiveReconcileSuccesses = 0
-		a.app.Status.FriendlyDescription = fmt.Sprintf("Reconcile failed: %s", result.ErrorStr())
+		a.app.Status.FriendlyDescription = fmt.Sprintf("Reconcile failed: %s", exec.RedactSecrets(result.ErrorStr()))
 		a.setUsefulErrorMessage(result)
 	} else {
 		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.Condition{
@@ -262,11 +262,11 @@ func (a *App) setDeleteCompleted(result exec.CmdRunResult) {
 		a.app.Status.Conditions = append(a.app.Status.Conditions, v1alpha1.Condition{
 			Type:    v1alpha1.DeleteFailed,
 			Status:  corev1.ConditionTrue,
-			Message: result.ErrorStr(),
+			Message: exec.RedactSecrets(result.ErrorStr()),
 		})
 		a.app.Status.ConsecutiveReconcileFailures++
 		a.app.Status.ConsecutiveReconcileSuccesses = 0
-		a.app.Status.FriendlyDescription = fmt.Sprintf("Delete failed: %s", result.ErrorStr())
+		a.app.Status.FriendlyDescription = fmt.Sprintf("Delete failed: %s", exec.RedactSecrets(result.ErrorStr()))
 		a.setUsefulErrorMessage(result)
 	} else {
 		// assume resource will be deleted, hence nothing to update
@@ -280,8 +280,8 @@ func (a *App) removeAllConditions() {
 func (a *App) setUsefulErrorMessage(result exec.CmdRunResult) {
 	switch {
 	case result.Stderr != "":
-		a.app.Status.UsefulErrorMessage = result.Stderr
+		a.app.Status.UsefulErrorMessage = exec.RedactSecrets(result.Stderr)
 	default:
-		a.app.Status.UsefulErrorMessage = result.ErrorStr()
+		a.app.Status.UsefulErrorMessage = exec.RedactSecrets(result.ErrorStr())
 	}
 }
