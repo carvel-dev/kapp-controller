@@ -35,7 +35,7 @@ metricsBindAddress: ""
 #@schema/desc "Controller Configuration Spec"
 #@overlay/match-child-defaults missing_ok=True
 config:
-  #@schema/desc "A cert chain of trusted ca certs. These will be added to the system-wide cert pool of trusted ca's. Default is empty"
+  #@schema/desc "A cert chain of trusted ca certs. These will be added to the system-wide cert pool of trusted CAs. Default is empty"
   caCerts: ""
   #@schema/desc "The url/ip of a proxy for kapp controller to use when making network requests. Default is empty"
   httpProxy: ""
