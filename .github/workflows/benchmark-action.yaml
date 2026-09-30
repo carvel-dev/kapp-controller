@@ -37,16 +37,20 @@ jobs:
           ./hack/deploy-test.sh
 
           go test ./test/bench/... -bench=. | tee output.txt
-      # Download previous benchmark result from cache (if exists)
+      # Download the latest benchmark baseline saved by develop (if exists). A unique key per run with
+      # a prefix restore lets the baseline roll forward; a fixed key is never re-saved once it exists.
       - name: Download previous benchmark data
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ./cache
-          key: ${{ runner.os }}-benchmark
+          key: ${{ runner.os }}-benchmark-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-benchmark-
       # Run `github-action-benchmark` action
-      - name: Store benchmark result
+      # On develop the result is compared and appended to the baseline; on pull requests it is only
+      # compared against the latest develop baseline (PRs can read caches saved on the base branch).
+      - name: Compare (and on develop, store) benchmark result
         uses: benchmark-action/github-action-benchmark@1846227a307d8c0149b960b986d46f8f4c95db0c
-        if: github.ref == 'refs/heads/develop'
         with:
           # What benchmark tool the output.txt came from
           tool: 'go'
@@ -54,12 +58,23 @@ jobs:
           output-file-path: output.txt
           # Where the previous data file is stored
           external-data-json-path: ./cache/benchmark-data.json
+          # Do not append PR results to the baseline
+          save-data-file: ${{ github.ref == 'refs/heads/develop' }}
           alert-threshold: '125%'
           fail-on-alert: true
           # GitHub API token to make a commit comment
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          # Enable alert commit comment
-          comment-on-alert: true
+          # Enable alert commit comment on develop (token is read-only on fork PRs)
+          comment-on-alert: ${{ github.ref == 'refs/heads/develop' }}
+          # Write the comparison table to the job summary (on alert it is in the failure message instead)
+          summary-always: true
+      # Save even when the alert fails the job so a regression is reported once, not on every later run
+      - name: Save benchmark data
+        uses: actions/cache/save@v4
+        if: ${{ !cancelled() && github.ref == 'refs/heads/develop' && hashFiles('cache/benchmark-data.json') != '' }}
+        with:
+          path: ./cache
+          key: ${{ runner.os }}-benchmark-${{ github.run_id }}
       # I don't fully understand but the two storage options are mutually exclusive if they're in the same block
       - name: Store Result into Github Pages
         uses: benchmark-action/github-action-benchmark@1846227a307d8c0149b960b986d46f8f4c95db0c
