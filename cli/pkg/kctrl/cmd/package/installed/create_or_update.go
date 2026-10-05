@@ -214,11 +214,11 @@ func (o *CreateOrUpdateOptions) RunCreate(args []string) error {
 	}
 
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected package install name to be non empty")
+		return fmt.Errorf("Expected package install name to be non-empty")
 	}
 
 	if len(o.packageName) == 0 {
-		return fmt.Errorf("Expected package name to be non empty")
+		return fmt.Errorf("Expected package name to be non-empty")
 	}
 
 	err := o.SecureNamespaceFlags.CheckForDisallowedSharedNamespaces(o.NamespaceFlags.Name)

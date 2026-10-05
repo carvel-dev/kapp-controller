@@ -88,7 +88,7 @@ func (o *DeleteOptions) Run(args []string) error {
 	}
 
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected package install name to be non empty")
+		return fmt.Errorf("Expected package install name to be non-empty")
 	}
 
 	o.ui.PrintLinef("Delete package install '%s' from namespace '%s'", o.Name, o.NamespaceFlags.Name)

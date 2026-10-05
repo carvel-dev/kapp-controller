@@ -51,7 +51,7 @@ func NewApp(existingApp *v1alpha1.App, pkgInstall *pkgingv1alpha1.PackageInstall
 	desiredApp.Annotations["packaging.carvel.dev/package-ref-name"] = pkgVersion.Spec.RefName
 	desiredApp.Annotations["packaging.carvel.dev/package-version"] = pkgVersion.Spec.Version
 
-	desiredApp.Spec = *pkgVersion.Spec.Template.Spec
+	desiredApp.Spec = *pkgVersion.Spec.Template.Spec.DeepCopy()
 	desiredApp.Spec.ServiceAccountName = pkgInstall.Spec.ServiceAccountName
 	if pkgInstall.Spec.SyncPeriod == nil {
 		desiredApp.Spec.SyncPeriod = &metav1.Duration{Duration: opts.DefaultSyncPeriod}

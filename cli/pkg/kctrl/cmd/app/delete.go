@@ -64,7 +64,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 
 func (o *DeleteOptions) Run() error {
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected app name to be non empty")
+		return fmt.Errorf("Expected app name to be non-empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()

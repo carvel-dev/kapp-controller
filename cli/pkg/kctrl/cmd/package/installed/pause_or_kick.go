@@ -115,7 +115,7 @@ func (o *PauseOrKickOptions) Pause(args []string) error {
 	}
 
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected package install name to be non empty")
+		return fmt.Errorf("Expected package install name to be non-empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
@@ -146,7 +146,7 @@ func (o *PauseOrKickOptions) Kick(args []string) error {
 	}
 
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected package install name to be non empty")
+		return fmt.Errorf("Expected package install name to be non-empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()

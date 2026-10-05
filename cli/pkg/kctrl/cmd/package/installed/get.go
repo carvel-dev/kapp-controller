@@ -84,7 +84,7 @@ func (o *GetOptions) Run(args []string) error {
 	}
 
 	if len(o.Name) == 0 {
-		return fmt.Errorf("Expected package install name to be non empty")
+		return fmt.Errorf("Expected package install name to be non-empty")
 	}
 
 	client, err := o.depsFactory.KappCtrlClient()
