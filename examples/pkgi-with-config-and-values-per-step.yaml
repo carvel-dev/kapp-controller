@@ -1,0 +1,108 @@
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: thingamajig.acme.corp.0.0.1
+spec:
+  refName: thingamajig.acme.corp
+  version: 0.0.1
+  template:
+    spec:
+      fetch:
+      - path: helm-chart
+        helmChart:
+          name: nginx
+          repository:
+            url: oci://registry-1.docker.io/bitnamicharts
+          version: 15.12.2
+      - path: patcher
+        inline:
+          paths:
+            schema.yaml: |
+              #@data/values-schema
+              ---
+              #! These validations would fail if we were not able to add data
+              #! values to the ytt step
+
+              #@schema/validation min_len=1
+              existingServerBlockConfigmap: ""
+              #@schema/validation min_len=1
+              customServerBlock: ""
+            server-block-cm.yaml: |
+              #@ load("@ytt:data", "data")
+              ---
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: #@ data.values.existingServerBlockConfigmap
+              data:
+                custom-server-block.conf: #@ data.values.customServerBlock
+      template:
+      - helmTemplate:
+          path: helm-chart
+      - ytt:
+          paths:
+          - "-"
+          - patcher
+      deploy:
+      - kapp: {}
+
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: thingamajig
+  annotations:
+    ext.packaging.carvel.dev/helm-0-template-name: foobar
+spec:
+  serviceAccountName: default-ns-sa
+  packageRef:
+    refName: thingamajig.acme.corp
+    versionSelection:
+      constraints: 0.0.1
+  values:
+  - secretRef:
+      name: thingamajig-shared-values
+    templateSteps: [ 0 , 1 ]
+  - secretRef:
+      name: thingamajig-helm-values
+    templateSteps: [ 0 ]
+  - secretRef:
+      name: thingamajig-ytt-values
+    templateSteps: [ 1 ]
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: thingamajig-shared-values
+stringData:
+  values.yaml: |
+    existingServerBlockConfigmap: custom-server-block
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: thingamajig-helm-values
+stringData:
+  values.yaml: |
+    service:
+      type: ClusterIP
+    replicaCount: 2
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: thingamajig-ytt-values
+stringData:
+  values.yaml: |
+    customServerBlock: |
+      server {
+        listen 0.0.0.0:8080;
+        location / {
+          return 200 "hello from kapp-controller, helm, ytt and friends!";
+          add_header Content-Type text/plain;
+        }
+      }

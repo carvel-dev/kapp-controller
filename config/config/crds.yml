@@ -1808,6 +1808,10 @@ spec:
                         name:
                           type: string
                       type: object
+                    templateSteps:
+                      items:
+                        type: integer
+                      type: array
                   type: object
                 type: array
             type: object
