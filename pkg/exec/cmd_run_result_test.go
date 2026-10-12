@@ -206,12 +206,74 @@ func Test_RedactSecrets(t *testing.T) {
 			input:    "https://user:pass@host.com and some other text",
 			expected: "https://[REDACTED]@host.com and some other text",
 		},
+		{
+			name:     "ssh URL with user",
+			input:    "ssh://user@example.com/path",
+			expected: "ssh://[REDACTED]@example.com/path",
+		},
+		{
+			name:     "ssh git URL (common git over SSH)",
+			input:    "ssh://git@github.com/carvel-dev/kapp-controller.git",
+			expected: "ssh://[REDACTED]@github.com/carvel-dev/kapp-controller.git",
+		},
+		{
+			name:     "ssh URL with port",
+			input:    "Cloning ssh://user:token@git.example.com:2222/repo.git",
+			expected: "Cloning ssh://[REDACTED]@git.example.com:2222/repo.git",
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			got := RedactSecrets(tc.input)
 			assert.Equal(t, tc.expected, got)
+		})
+	}
+}
+
+func Test_RedactSecrets_Idempotence(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{
+			name:  "simple https URL",
+			input: "https://user:password@example.com/path",
+		},
+		{
+			name:  "multiple URLs",
+			input: "fetching https://user:pass1@host1.com and https://user2:pass2@host2.com",
+		},
+		{
+			name:  "ssh git URL",
+			input: "Cloning ssh://git@github.com/repo.git",
+		},
+		{
+			name:  "GOPROXY with auth",
+			input: "GOPROXY=https://user:token@proxy.example.com",
+		},
+		{
+			name:  "password with @ symbol",
+			input: "https://user:pass@word@example.com/path",
+		},
+		{
+			name:  "no credentials",
+			input: "This is normal output",
+		},
+		{
+			name:  "empty string",
+			input: "",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// First redaction
+			redacted := RedactSecrets(tc.input)
+			// Second redaction should be identical (idempotent)
+			redactedTwice := RedactSecrets(redacted)
+			assert.Equal(t, redacted, redactedTwice,
+				"RedactSecrets should be idempotent: calling it twice should produce the same result")
 		})
 	}
 }

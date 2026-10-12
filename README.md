@@ -29,6 +29,10 @@ Kubernetes native continuous delivery and package management experience through 
   - Use a git repository as your single source of truth for Kubernetes Package Management
   - [Checkout our tutorial](https://carvel.dev/kapp-controller/docs/latest/packaging-gitops/)
 
+🔒 **Security** 🔒:
+  - Credential-bearing URLs are automatically redacted from App and PackageRepository status fields
+  - [Learn more](docs/credential-redaction.md) about credential redaction and data protection
+
 ## Contribute
 
 Check out our [contributing guidelines](CONTRIBUTING.md).
