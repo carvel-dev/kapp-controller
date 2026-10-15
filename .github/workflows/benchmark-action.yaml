@@ -8,6 +8,11 @@ on:
     types: [opened, reopened, synchronize]
   workflow_dispatch:
 
+# Serialize baseline writers. The publication check below also rejects reruns of old commits.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   # deployments permission to deploy GitHub pages website
   deployments: write
@@ -22,34 +27,55 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5 # default version of go is 1.10
+      - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
       - name: Install Carvel Tools
         run: ./hack/install-deps.sh
       # Run benchmark with `go test -bench` and stores the output to a file
       - name: Setup k8s and Run benchmark
+        shell: bash
         run: |
-          set -e -x
+          set -euxo pipefail
           minikube start --driver=docker
 
           export KAPPCTRL_MINIKUBE_LOAD_IMAGES=true
           ./hack/deploy-test.sh
 
           go test ./test/bench/... -bench=. | tee output.txt
-      # Download the latest benchmark baseline saved by develop (if exists). A unique key per run with
+      # Download the latest benchmark baseline saved by develop (if exists). A unique key per attempt with
       # a prefix restore lets the baseline roll forward; a fixed key is never re-saved once it exists.
       - name: Download previous benchmark data
         uses: actions/cache/restore@v4
         with:
           path: ./cache
-          key: ${{ runner.os }}-benchmark-${{ github.run_id }}
+          key: ${{ runner.os }}-benchmark-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             ${{ runner.os }}-benchmark-
+      - name: Check baseline publication
+        id: baseline
+        shell: bash
+        env:
+          PREVIOUS_DATA_HASH: ${{ hashFiles('cache/benchmark-data.json') }}
+        run: |
+          set -euo pipefail
+          echo "data-hash=${PREVIOUS_DATA_HASH}" >> "${GITHUB_OUTPUT}"
+          if [[ ! -f cache/benchmark-data.json ]]; then
+            echo "No benchmark baseline found; this run cannot check relative regressions." >> "${GITHUB_STEP_SUMMARY}"
+          fi
+          if [[ "${GITHUB_REF}" == refs/heads/develop ]]; then
+            develop_sha=$(git ls-remote --exit-code origin refs/heads/develop | cut -f1)
+            if [[ "${GITHUB_SHA}" == "${develop_sha}" ]]; then
+              echo "publish=true" >> "${GITHUB_OUTPUT}"
+            else
+              echo "::notice::Develop has advanced; comparing this commit without publishing its results."
+            fi
+          fi
       # Run `github-action-benchmark` action
-      # On develop the result is compared and appended to the baseline; on pull requests it is only
-      # compared against the latest develop baseline (PRs can read caches saved on the base branch).
+      # Only the current develop tip may update the baseline. PRs compare without publishing
+      # (PRs can read caches saved on the base branch).
       - name: Compare (and on develop, store) benchmark result
+        id: compare
         uses: benchmark-action/github-action-benchmark@1846227a307d8c0149b960b986d46f8f4c95db0c
         with:
           # What benchmark tool the output.txt came from
@@ -58,30 +84,36 @@ jobs:
           output-file-path: output.txt
           # Where the previous data file is stored
           external-data-json-path: ./cache/benchmark-data.json
-          # Do not append PR results to the baseline
-          save-data-file: ${{ github.ref == 'refs/heads/develop' }}
+          # Keep manual runs tied to the checked-out commit if the branch advances during the job
+          ref: ${{ github.sha }}
+          # Do not append PR results or obsolete develop results to the baseline
+          save-data-file: ${{ steps.baseline.outputs.publish == 'true' }}
           alert-threshold: '125%'
           fail-on-alert: true
           # GitHub API token to make a commit comment
           github-token: ${{ secrets.GITHUB_TOKEN }}
           # Enable alert commit comment on develop (token is read-only on fork PRs)
-          comment-on-alert: ${{ github.ref == 'refs/heads/develop' }}
+          comment-on-alert: ${{ steps.baseline.outputs.publish == 'true' }}
           # Write the comparison table to the job summary (on alert it is in the failure message instead)
           summary-always: true
-      # Save even when the alert fails the job so a regression is reported once, not on every later run
+      # Save fresh results even after an alert. An unchanged restored file must not become a new baseline.
       - name: Save benchmark data
         uses: actions/cache/save@v4
-        if: ${{ !cancelled() && github.ref == 'refs/heads/develop' && hashFiles('cache/benchmark-data.json') != '' }}
+        if: >-
+          ${{ !cancelled() && steps.baseline.outputs.publish == 'true' &&
+              steps.compare.outcome != 'skipped' && hashFiles('cache/benchmark-data.json') != '' &&
+              hashFiles('cache/benchmark-data.json') != steps.baseline.outputs.data-hash }}
         with:
           path: ./cache
-          key: ${{ runner.os }}-benchmark-${{ github.run_id }}
-      # I don't fully understand but the two storage options are mutually exclusive if they're in the same block
+          key: ${{ runner.os }}-benchmark-${{ github.run_id }}-${{ github.run_attempt }}
+      # Publishing charts uses a separate invocation from external JSON storage.
       - name: Store Result into Github Pages
         uses: benchmark-action/github-action-benchmark@1846227a307d8c0149b960b986d46f8f4c95db0c
-        if: github.ref == 'refs/heads/develop'
+        if: steps.baseline.outputs.publish == 'true'
         with:
           tool: 'go'
           output-file-path: output.txt
+          ref: ${{ github.sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           # Push and deploy GitHub pages branch automatically
           auto-push: true
