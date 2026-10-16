@@ -71,6 +71,21 @@ func (r CmdRunResult) IsEmpty() bool {
 	return r == (CmdRunResult{})
 }
 
+// WithRedactedSecrets returns a copy of r with Stdout, Stderr, and Error fields
+// redacted to mask credential-bearing substrings before truncation or output.
+// Redaction must happen before truncation to avoid losing the URL scheme prefix,
+// which would prevent pattern matching (e.g., https://user:pass@host becomes
+// pass@host after tail-truncation, and the regex won't match without the scheme).
+func (r CmdRunResult) WithRedactedSecrets() CmdRunResult {
+	return CmdRunResult{
+		Stdout:   RedactSecrets(r.Stdout),
+		Stderr:   RedactSecrets(r.Stderr),
+		ExitCode: r.ExitCode,
+		Error:    r.Error,
+		Finished: r.Finished,
+	}
+}
+
 // WithTruncatedStrings returns a copy of r with Stdout and Stderr each capped
 // to maxBytes by keeping the tail (the most actionable kapp output always
 // appears last).  When a field is under the limit it is left unchanged.
@@ -97,4 +112,19 @@ func truncateOutput(s string, maxBytes int) string {
 		start++
 	}
 	return TruncationMarker + s[start:]
+}
+
+var (
+	// urlUserinfo matches user:password@ and user@ patterns in URLs (http, https, ssh, git schemes)
+	urlUserinfo = regexp.MustCompile(`([a-zA-Z][a-zA-Z0-9+.-]*://)[^\s/@]+@|ssh://[^\s/@]+@`)
+)
+
+// RedactSecrets masks credential-bearing substrings in subprocess output.
+// It redacts URL userinfo (user:password@host or user@host) to prevent credential
+// leakage in resource status fields, logs, and debug output.
+// For example: https://token:x@registry → https://[REDACTED]@registry
+//
+// RedactSecrets is idempotent: calling it multiple times produces the same result.
+func RedactSecrets(s string) string {
+	return urlUserinfo.ReplaceAllString(s, "${1}[REDACTED]@")
 }

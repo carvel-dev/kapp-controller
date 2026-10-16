@@ -119,3 +119,37 @@ func Test_WithTruncatedStrings(t *testing.T) {
 	assert.Equal(t, r.Finished, got.Finished, "Finished must be preserved")
 	assert.Equal(t, r.Error, got.Error, "Error must be preserved")
 }
+
+func TestRedactSecrets(t *testing.T) {
+	tests := []struct {
+		input       string
+		expected    string
+		description string
+	}{
+		{"https://user:token@github.com/repo", "https://[REDACTED]@github.com/repo", "HTTPS URL with user:password"},
+		{"http://admin:password@registry:5000/path", "http://[REDACTED]@registry:5000/path", "HTTP registry URL with credentials"},
+		{"ssh://git@github.com/org/repo.git", "ssh://[REDACTED]@github.com/org/repo.git", "SSH URL with user"},
+		{"git@github.com:org/repo.git", "git@github.com:org/repo.git", "Git SSH shorthand (no scheme)"},
+		{"plain error message", "plain error message", "Plain text unchanged"},
+		{"https://[REDACTED]@github.com/repo", "https://[REDACTED]@github.com/repo", "Already redacted"},
+		{"https://user:token@host1 and https://user2:pass2@host2", "https://[REDACTED]@host1 and https://[REDACTED]@host2", "Multiple URLs"},
+		{"GOPROXY=https://token:x@proxy.example.com/path", "GOPROXY=https://[REDACTED]@proxy.example.com/path", "GOPROXY variable"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			result := RedactSecrets(tt.input)
+			if result != tt.expected {
+				t.Errorf("RedactSecrets(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+
+	t.Run("idempotence", func(t *testing.T) {
+		input := "https://user:password@github.com/repo"
+		once := RedactSecrets(input)
+		twice := RedactSecrets(once)
+		if once != twice {
+			t.Errorf("RedactSecrets is not idempotent: once=%q, twice=%q", once, twice)
+		}
+	})
+}

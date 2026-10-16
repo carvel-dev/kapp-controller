@@ -63,7 +63,7 @@ func (r ReleaseCmdRunner) RunWithCancel(cmd *goexec.Cmd, cancelCh chan struct{})
 		cmd.Stderr = io.MultiWriter(r.log, cmd.Stderr)
 	}
 
-	fmt.Fprintf(r.log, "==> Executing %s %v\n", cmd.Path, cmd.Args)
+	fmt.Fprintf(r.log, "==> Executing %s\n", cmd.Path) // Omit args to prevent secret leakage
 	defer fmt.Fprintf(r.log, "==> Finished executing %s\n\n", cmd.Path)
 
 	return exec.PlainCmdRunner{}.RunWithCancel(cmd, cancelCh)

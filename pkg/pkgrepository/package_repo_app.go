@@ -35,7 +35,8 @@ func NewPackageRepoApp(pkgRepository *pkgingv1alpha1.PackageRepository) (*kcv1al
 		"--wait=false",
 	}
 
-	if kappDebug {
+	// kapp --debug may expose kubeconfig tokens; disabled by default
+	if kappDebug && os.Getenv("KAPP_DEBUG_UNSAFE") == "true" {
 		kappRawOpts = append(kappRawOpts, "--debug=true")
 	}
 
