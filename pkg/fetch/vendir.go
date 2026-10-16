@@ -91,7 +91,7 @@ func (v *Vendir) AddDir(fetch v1alpha1.AppFetch, dirPath string) error {
 	case fetch.ImgpkgBundle != nil:
 		v.config.Directories = append(v.config.Directories, v.dir(v.imgpkgBundleConf(*fetch.ImgpkgBundle), dirPath))
 	default:
-		return fmt.Errorf("Unsupported way to fetch templates")
+		return fmt.Errorf("fetch operation is not supported for this configuration")
 	}
 
 	return nil

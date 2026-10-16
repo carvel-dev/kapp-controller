@@ -85,7 +85,7 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 		},
 	})
 	if err != nil {
-		return "", fmt.Errorf("Get service account token: %s", err)
+		return "", fmt.Errorf("failed to retrieve service account token: %s", err)
 	}
 
 	s.caCertMutex.Lock()
@@ -93,7 +93,7 @@ func (s *ServiceAccounts) fetchServiceAccount(nsName string, saName string) (str
 	if len(s.caCert) == 0 {
 		s.caCert, err = os.ReadFile(caCertPath)
 		if err != nil {
-			return "", fmt.Errorf("Read ca cert from %s: %s", caCertPath, err)
+			return "", fmt.Errorf("failed to read CA certificate from %s: %s", caCertPath, err)
 		}
 	}
 

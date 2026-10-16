@@ -51,7 +51,7 @@ var _ reconcile.Reconciler = &Reconciler{}
 func (r *Reconciler) AttachWatches(controller controller.Controller, mgr manager.Manager) error {
 	err := controller.Watch(source.Kind(mgr.GetCache(), &kcv1alpha1.App{}, &handler.TypedEnqueueRequestForObject[*kcv1alpha1.App]{}))
 	if err != nil {
-		return fmt.Errorf("Watch Apps: %s", err)
+		return fmt.Errorf("failed to watch Apps resource: %s", err)
 	}
 
 	secretHandler := reconciler.NewSecretHandler(r.log, r.appRefTracker, r.appUpdateStatus)
@@ -59,12 +59,12 @@ func (r *Reconciler) AttachWatches(controller controller.Controller, mgr manager
 
 	err = controller.Watch(source.Kind(mgr.GetCache(), &corev1.Secret{}, secretHandler))
 	if err != nil {
-		return fmt.Errorf("Watch Secrets: %s", err)
+		return fmt.Errorf("failed to watch Secrets resource: %s", err)
 	}
 
 	err = controller.Watch(source.Kind(mgr.GetCache(), &corev1.ConfigMap{}, cmHandler))
 	if err != nil {
-		return fmt.Errorf("Watch ConfigMaps: %s", err)
+		return fmt.Errorf("failed to watch ConfigMaps resource: %s", err)
 	}
 
 	return nil

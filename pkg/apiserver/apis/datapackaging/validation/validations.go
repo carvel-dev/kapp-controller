@@ -105,7 +105,7 @@ func ValidatePackageSpecPackageName(name string, fldPath *field.Path) field.Erro
 	allErrs := field.ErrorList{}
 
 	if name == "" {
-		allErrs = append(allErrs, field.Required(fldPath, "can not be empty"))
+		allErrs = append(allErrs, field.Required(fldPath, "cannot be empty"))
 	}
 
 	allErrs = append(allErrs, ValidatePackageMetadataName(name, fldPath)...)

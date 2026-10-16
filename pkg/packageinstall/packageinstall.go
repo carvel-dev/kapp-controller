@@ -291,7 +291,7 @@ func (pi *PackageInstallCR) kcVersionConstraintsSatisfied(pkg *datapkgingv1alpha
 
 func (pi *PackageInstallCR) referencedPkgVersion() (datapkgingv1alpha1.Package, error) {
 	if pi.model.Spec.PackageRef == nil {
-		return datapkgingv1alpha1.Package{}, fmt.Errorf("Expected non nil PackageRef")
+		return datapkgingv1alpha1.Package{}, fmt.Errorf("PackageRef is required and cannot be nil")
 	}
 
 	semverConfig := pi.model.Spec.PackageRef.VersionSelection

@@ -113,7 +113,7 @@ func (a DownwardAPIValues) extractFieldPathAsKeyValue(name string, fieldPath str
 	}
 
 	if len(results) != 1 || len(results[0]) != 1 {
-		return nil, errors.New("Invalid field spec provided to DownwardAPI. Only single supported fields are allowed")
+		return nil, errors.New("invalid field spec provided to DownwardAPI. Only single-field references are supported")
 	}
 
 	return a.nestedKeyValue(name, results[0][0].Interface())
@@ -174,7 +174,7 @@ func relaxedJSONPathExpression(pathExpression string) (string, error) {
 	}
 	submatches := jsonRegexp.FindStringSubmatch(pathExpression)
 	if submatches == nil {
-		return "", fmt.Errorf("unexpected path string, expected a 'name1.name2' or '.name1.name2' or '{name1.name2}' or '{.name1.name2}'")
+		return "", fmt.Errorf("invalid path format; expected 'name1.name2' or '.name1.name2' or '{name1.name2}' or '{.name1.name2}'")
 	}
 	if len(submatches) != 3 {
 		return "", fmt.Errorf("unexpected submatch list: %v", submatches)

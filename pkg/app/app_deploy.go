@@ -39,7 +39,7 @@ func (a *App) deploy(tplOutput string, changedFunc func(exec.CmdRunResult)) exec
 			a.trySaveMetadata(kapp)
 
 		default:
-			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to deploy"))
+			result.AttachErrorf("%s", fmt.Errorf("deploy operation is not supported for this configuration"))
 		}
 
 		if result.Error != nil {
@@ -72,7 +72,7 @@ func (a *App) delete(changedFunc func(exec.CmdRunResult)) exec.CmdRunResult {
 				result = kapp.Delete(a.startFlushingAllStatusUpdates, changedFunc)
 
 			default:
-				result.AttachErrorf("%s", fmt.Errorf("Unsupported way to delete"))
+				result.AttachErrorf("%s", fmt.Errorf("delete operation is not supported for this configuration"))
 			}
 
 			if result.Error != nil {
@@ -114,7 +114,7 @@ func (a *App) inspect() exec.CmdRunResult {
 			}
 
 		default:
-			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to inspect"))
+			result.AttachErrorf("%s", fmt.Errorf("inspect operation is not supported for this configuration"))
 		}
 
 		if result.Error != nil {

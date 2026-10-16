@@ -57,7 +57,7 @@ func (g *GitSource) initializeContentWithGit() error {
 
 func (g *GitSource) configureGitURL() error {
 	contents := g.vendirConfig.Contents()
-	g.ui.PrintInformationalText("Both https and ssh URL's are supported, e.g. https://github.com/vmware-tanzu/carvel-kapp-controller")
+	g.ui.PrintInformationalText("Both HTTPS and SSH URLs are supported, e.g. https://github.com/vmware-tanzu/carvel-kapp-controller")
 	textOpts := ui.TextOpts{
 		Label:        "Enter Git URL",
 		Default:      contents[0].Git.URL,

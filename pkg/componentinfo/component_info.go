@@ -71,7 +71,7 @@ func (ci *ComponentInfo) KubernetesVersion(serviceAccountName string, specCluste
 		return ci.parseAndScrubVersion(v.String())
 
 	default:
-		return semver.Version{}, fmt.Errorf("Expected service account or cluster specified")
+		return semver.Version{}, fmt.Errorf("service account or cluster must be specified")
 	}
 }
 
