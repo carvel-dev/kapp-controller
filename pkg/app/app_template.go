@@ -43,7 +43,7 @@ func (a *App) template(dirPath string) exec.CmdRunResult {
 		case tpl.Cue != nil:
 			template = a.templateFactory.NewCue(*tpl.Cue, appContext, additionalValues)
 		default:
-			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to template"))
+			result.AttachErrorf("%s", fmt.Errorf("template operation is not supported for this configuration"))
 			return result
 		}
 

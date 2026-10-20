@@ -72,7 +72,7 @@ func (k Kubeconfig) ClusterAccess(saName string, clusterOpts *v1alpha1.AppCluste
 		}
 
 	default:
-		return AccessInfo{}, fmt.Errorf("Expected service account or cluster specified")
+		return AccessInfo{}, fmt.Errorf("service account or cluster must be specified")
 	}
 
 	if defaultNamespace != "" {

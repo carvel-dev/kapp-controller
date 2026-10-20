@@ -64,7 +64,7 @@ func (f Source) Configure() (string, error) {
 	currentFetchOptionSelected := options[currentFetchOptionIndex]
 
 	if previousFetchOptionSelected != "" && currentFetchOptionSelected != previousFetchOptionSelected {
-		return "", fmt.Errorf("Transitioning from one fetch option to another is not allowed. Earlier option selected: %s, Current Option selected: %s", previousFetchOptionSelected, currentFetchOptionSelected)
+		return "", fmt.Errorf("cannot transition between fetch options. Earlier option selected: %s, Current Option selected: %s", previousFetchOptionSelected, currentFetchOptionSelected)
 	}
 
 	// For the local directory options, all files/directories in working directory are used while releasing
@@ -75,7 +75,7 @@ func (f Source) Configure() (string, error) {
 	vendirDirectories := vendirConfig.Directories()
 	switch {
 	case len(vendirDirectories) > 1:
-		return currentFetchOptionSelected, fmt.Errorf("More than 1 directory config found in the vendir file. (hint: Run vendir sync manually)")
+		return currentFetchOptionSelected, fmt.Errorf("multiple directory configs found in vendir; run vendir sync")
 	case len(vendirDirectories) == 0:
 		err := vendirConfig.InitiatliseDirectories()
 		if err != nil {
@@ -84,7 +84,7 @@ func (f Source) Configure() (string, error) {
 	default:
 		directory := vendirDirectories[0]
 		if len(directory.Contents) > 1 {
-			return currentFetchOptionSelected, fmt.Errorf("More than 1 content config found in the vendir file. (hint: Run vendir sync manually)")
+			return currentFetchOptionSelected, fmt.Errorf("multiple content configs found in vendir; run vendir sync")
 		}
 	}
 
@@ -96,7 +96,7 @@ func (f Source) Configure() (string, error) {
 	case Git, ChartFromGit:
 		return currentFetchOptionSelected, NewGitSource(f.ui, vendirConfig).Configure()
 	}
-	return currentFetchOptionSelected, fmt.Errorf("Unexppected: Invalid fetch mode encountered while configuring vendir")
+	return currentFetchOptionSelected, fmt.Errorf("Unexpected: Invalid fetch mode encountered while configuring vendir")
 }
 
 func (f Source) getPreviousFetchOptionIndex(manifestOptions []string, previousFetchOption string) int {

@@ -33,7 +33,7 @@ func (a *App) deploy(tplOutput string) exec.CmdRunResult {
 		return kapp.Deploy(tplOutput, a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
 
 	default:
-		return exec.NewCmdRunResultWithErr(fmt.Errorf("Unsupported way to deploy"))
+		return exec.NewCmdRunResultWithErr(fmt.Errorf("deploy operation is not supported for this configuration"))
 	}
 }
 
@@ -57,7 +57,7 @@ func (a *App) delete() exec.CmdRunResult {
 			result = kapp.Delete(a.startFlushingAllStatusUpdates, func(exec.CmdRunResult) {})
 
 		default:
-			result.AttachErrorf("%s", fmt.Errorf("Unsupported way to delete"))
+			result.AttachErrorf("%s", fmt.Errorf("delete operation is not supported for this configuration"))
 		}
 	}
 

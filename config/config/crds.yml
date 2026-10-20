@@ -51,7 +51,7 @@ spec:
               maintainers:
                 description: |-
                   List of maintainer info for the package.
-                  Currently only supports the name key. (optional; array of maintner info)
+                  Currently only supports the name key. (optional; array of maintainer info)
                 items:
                   properties:
                     name:

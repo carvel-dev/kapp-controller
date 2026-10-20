@@ -122,7 +122,7 @@ type PackageMetadataSpec struct {
 	// Name of the entity distributing the package (optional; string)
 	ProviderName string `json:"providerName,omitempty"`
 	// List of maintainer info for the package.
-	// Currently only supports the name key. (optional; array of maintner info)
+	// Currently only supports the name key. (optional; array of maintainer info)
 	Maintainers []Maintainer `json:"maintainers,omitempty"`
 	// Classifiers of the package (optional; Array of strings)
 	Categories []string `json:"categories,omitempty"`

@@ -92,7 +92,7 @@ func (o *ReleaseOptions) Run() error {
 		return err
 	}
 	if len(pkgConfigs.Pkgs) != 1 || len(pkgConfigs.PkgMetadatas) != 1 {
-		return fmt.Errorf("Reading package-resource.yml: file malformed. (hint: delete the file and run `package init` again)")
+		return fmt.Errorf("invalid package-resource.yml format; delete and re-run package init")
 	}
 
 	o.printPrerequisites()
@@ -113,7 +113,7 @@ func (o *ReleaseOptions) Run() error {
 
 	buildAppSpec := pkgBuild.GetAppSpec()
 	if buildAppSpec == nil {
-		return fmt.Errorf("Releasing package: 'package init' was not run successfully. (hint: re-run the 'init' command)")
+		return fmt.Errorf("cannot release package; run package init first")
 	}
 	builderOpts := cmdapprelease.AppSpecBuilderOpts{
 		BuildTemplate:       buildAppSpec.Template,

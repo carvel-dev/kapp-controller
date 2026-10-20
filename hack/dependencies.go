@@ -16,7 +16,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"path"
 	"runtime"
@@ -420,11 +419,7 @@ func (t githubTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 	if resp.StatusCode >= 400 {
-		respBody, err := httputil.DumpResponse(resp, true)
-		if err != nil {
-			return nil, fmt.Errorf("error dumping response: status %s", resp.Status)
-		}
-		log.Printf("%s:\n%s", r.URL, respBody)
+		log.Printf("%s: HTTP %s", r.URL, resp.Status)
 		return nil, fmt.Errorf("non-200 status code from server: %s", resp.Status)
 	}
 	return resp, err

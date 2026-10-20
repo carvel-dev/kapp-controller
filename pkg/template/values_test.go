@@ -250,7 +250,7 @@ func TestValues(t *testing.T) {
 
 			_, _, err := subject.AsPaths(os.TempDir())
 			require.Error(t, err)
-			assert.ErrorContains(t, err, "Invalid field spec provided to DownwardAPI. Only single supported fields are allowed")
+			assert.ErrorContains(t, err, "invalid field spec provided to DownwardAPI. Only single-field references are supported")
 		})
 	})
 }
