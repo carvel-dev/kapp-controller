@@ -12,6 +12,8 @@ jobs:
         with:
           fail_level: error
           locale: "US"
+          # GitHub Actions spells its status function cancelled().
+          ignore: cancelled
           exclude: |
             ./vendor/*
             ./cli/vendor/*
