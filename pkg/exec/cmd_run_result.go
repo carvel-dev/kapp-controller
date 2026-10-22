@@ -77,11 +77,15 @@ func (r CmdRunResult) IsEmpty() bool {
 // which would prevent pattern matching (e.g., https://user:pass@host becomes
 // pass@host after tail-truncation, and the regex won't match without the scheme).
 func (r CmdRunResult) WithRedactedSecrets() CmdRunResult {
+	var safeError error
+	if r.Error != nil {
+		safeError = fmt.Errorf("%s", RedactSecrets(r.Error.Error()))
+	}
 	return CmdRunResult{
 		Stdout:   RedactSecrets(r.Stdout),
 		Stderr:   RedactSecrets(r.Stderr),
 		ExitCode: r.ExitCode,
-		Error:    r.Error,
+		Error:    safeError,
 		Finished: r.Finished,
 	}
 }
@@ -116,6 +120,7 @@ func truncateOutput(s string, maxBytes int) string {
 
 var (
 	// urlUserinfo matches user:password@ and user@ patterns in URLs (http, https, ssh, git schemes)
+	urlQuery    = regexp.MustCompile(`([a-zA-Z][a-zA-Z0-9+.-]*://[^\s?\#]+[?\#])[^\s"'<>]+`)
 	urlUserinfo = regexp.MustCompile(`([a-zA-Z][a-zA-Z0-9+.-]*://)[^\s/@]+@|ssh://[^\s/@]+@`)
 )
 
@@ -126,5 +131,7 @@ var (
 //
 // RedactSecrets is idempotent: calling it multiple times produces the same result.
 func RedactSecrets(s string) string {
-	return urlUserinfo.ReplaceAllString(s, "${1}[REDACTED]@")
+	s = urlUserinfo.ReplaceAllString(s, "${1}[REDACTED]@")
+	// Query/fragment values may carry credentials independently of userinfo.
+	return urlQuery.ReplaceAllString(s, "${1}[REDACTED]")
 }
