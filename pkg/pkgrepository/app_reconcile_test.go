@@ -4,6 +4,7 @@
 package pkgrepository
 
 import (
+	"context"
 	"testing"
 
 	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -16,6 +17,7 @@ import (
 	"carvel.dev/kapp-controller/pkg/metrics"
 	"carvel.dev/kapp-controller/pkg/template"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/uuid"
@@ -191,6 +193,48 @@ func TestInvalidPackageRepositoryFormat(t *testing.T) {
 	}
 
 	assertStatusEqual(t, crdApp, expectedStatus)
+}
+
+func TestPausedPackageRepositoryIsDeleted(t *testing.T) {
+	log := logf.Log.WithName("kc")
+
+	now := metav1.Now()
+	pkgr := v1alpha12.PackageRepository{
+		ObjectMeta: metav1.ObjectMeta{
+			UID:               uuid.NewUUID(),
+			Name:              "paused-repo",
+			Namespace:         "default",
+			DeletionTimestamp: &now,
+			Finalizers:        []string{deleteFinalizerName},
+		},
+		Spec: v1alpha12.PackageRepositorySpec{
+			Paused: true,
+			Fetch: &v1alpha12.PackageRepositoryFetch{
+				Inline: &v1alpha1.AppFetchInline{},
+			},
+		},
+	}
+
+	app, err := NewPackageRepoApp(&pkgr)
+	require.NoError(t, err)
+	// Skip running kapp delete as there is no cluster to delete resources from
+	app.Spec.NoopDelete = true
+
+	k8scs := k8sfake.NewSimpleClientset()
+	kappcs := fake.NewSimpleClientset(&pkgr)
+	fetchFac := fetch.NewFactory(k8scs, fetch.VendirOpts{}, exec.NewPlainCmdRunner())
+	tmpFac := template.NewFactory(k8scs, fetchFac, false, exec.NewPlainCmdRunner())
+	deployFac := deploy.NewFactory(k8scs, kubeconfig.NewKubeconfig(k8scs, log), nil, exec.NewPlainCmdRunner(), log)
+
+	crdApp := NewCRDApp(app, &pkgr, log, kappcs, metrics.NewMetrics(),
+		fetchFac, tmpFac, deployFac)
+	_, err = crdApp.Reconcile(false)
+	require.NoError(t, err)
+
+	updatedPkgr, err := kappcs.PackagingV1alpha1().PackageRepositories(pkgr.Namespace).Get(context.Background(), pkgr.Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.NotContains(t, updatedPkgr.Finalizers, deleteFinalizerName,
+		"expected paused PackageRepository to be deleted, but finalizer was not removed")
 }
 
 func assertStatusEqual(t *testing.T, crdApp *CRDApp, expectedStatus v1alpha1.AppStatus) {
