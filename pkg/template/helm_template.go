@@ -73,6 +73,15 @@ func (t *HelmTemplate) template(dirPath string, input io.Reader) exec.CmdRunResu
 		namespace = t.opts.Namespace
 	}
 
+	// name is passed to helm as a positional argument, so a leading '-'
+	// would be parsed as a helm flag instead of a release name.
+	if strings.HasPrefix(name, "-") {
+		return exec.NewCmdRunResultWithErr(fmt.Errorf("invalid helm template name '%s': must not start with '-'", name))
+	}
+	if strings.HasPrefix(namespace, "-") {
+		return exec.NewCmdRunResultWithErr(fmt.Errorf("invalid helm template namespace '%s': must not start with '-'", namespace))
+	}
+
 	args := []string{"template", name, chartPath, "--namespace", namespace, "--include-crds"}
 	vals := Values{t.opts.ValuesFrom, t.additionalValues, t.appContext, t.coreClient}
 
