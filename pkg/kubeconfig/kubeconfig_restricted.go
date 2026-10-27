@@ -62,7 +62,9 @@ func NewKubeconfigRestricted(input string) (*Restricted, error) {
 				ImpersonateUserExtra:  inputAI.AuthInfo.ImpersonateUserExtra,
 				Username:              inputAI.AuthInfo.Username,
 				Password:              inputAI.AuthInfo.Password,
-				AuthProvider:          inputAI.AuthInfo.AuthProvider,
+				// AuthProvider is not copied, same as Exec and TokenFile:
+				// auth provider plugins are configured by the kubeconfig
+				// and may run commands or read files on the local filesystem.
 			},
 		})
 	}
