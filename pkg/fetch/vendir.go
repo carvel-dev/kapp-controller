@@ -74,6 +74,11 @@ func NewVendir(nsName string, coreClient kubernetes.Interface,
 // vendir fetches resources into your filesystem, so the destination directory is a core part of vendir config.
 func (v *Vendir) AddDir(fetch v1alpha1.AppFetch, dirPath string) error {
 	if fetch.Path != "" {
+		// fetch.Path is used as a vendir directory path relative to the
+		// App's working directory, so it must stay within that directory.
+		if !filepath.IsLocal(fetch.Path) {
+			return fmt.Errorf("invalid fetch path '%s': must be a relative path within the working directory", fetch.Path)
+		}
 		dirPath = fetch.Path
 	}
 
