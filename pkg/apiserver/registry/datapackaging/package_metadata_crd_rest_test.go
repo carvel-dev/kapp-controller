@@ -5,6 +5,7 @@ package datapackaging_test
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -12,6 +13,7 @@ import (
 	"carvel.dev/kapp-controller/pkg/apiserver/apis/datapackaging"
 	datapkgreg "carvel.dev/kapp-controller/pkg/apiserver/registry/datapackaging"
 	"carvel.dev/kapp-controller/pkg/client/clientset/versioned/fake"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -254,6 +256,53 @@ func TestPackageUpdateCreatesInNS(t *testing.T) {
 	if globalPackage.Spec.DisplayName != originalDisplayName {
 		t.Fatalf("Expected update not to affect the global package, but DisplayName was updated")
 	}
+}
+
+func TestPackageUpdateExistingInNSRunsUpdateValidation(t *testing.T) {
+	name := namespacedIntPackage().Name
+	newDisplayName := "im-new"
+	updateFn := func(pkg *datapackaging.PackageMetadata) *datapackaging.PackageMetadata {
+		updated := pkg.DeepCopy()
+		updated.Spec.DisplayName = newDisplayName
+		return updated
+	}
+
+	t.Run("update is persisted when validation succeeds", func(t *testing.T) {
+		namespacedPackage := namespacedIntPackage()
+		internalClient := fake.NewSimpleClientset(namespacedPackage)
+		pkgCRDREST := datapkgreg.NewPackageMetadataCRDREST(internalClient, k8sfake.NewSimpleClientset(namespace()), globalNamespace)
+
+		var validatedObj, validatedOldObj runtime.Object
+		updateValidation := func(_ context.Context, obj, old runtime.Object) error {
+			validatedObj, validatedOldObj = obj, old
+			return nil
+		}
+
+		obj, created, err := pkgCRDREST.Update(namespacedCtx(nonGlobalNamespace), name, UpdatePackageTestImpl{updateFn}, nil, updateValidation, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.False(t, created)
+		require.Equal(t, newDisplayName, obj.(*datapackaging.PackageMetadata).Spec.DisplayName)
+
+		require.NotNil(t, validatedObj, "Expected updateValidation to be called")
+		require.Equal(t, newDisplayName, validatedObj.(*datapackaging.PackageMetadata).Spec.DisplayName)
+		require.Equal(t, namespacedPackage.Spec.DisplayName, validatedOldObj.(*datapackaging.PackageMetadata).Spec.DisplayName)
+	})
+
+	t.Run("update is rejected when validation fails", func(t *testing.T) {
+		namespacedPackage := namespacedIntPackage()
+		internalClient := fake.NewSimpleClientset(namespacedPackage)
+		pkgCRDREST := datapkgreg.NewPackageMetadataCRDREST(internalClient, k8sfake.NewSimpleClientset(namespace()), globalNamespace)
+
+		validationErr := errors.NewForbidden(datapackaging.Resource("packagemetadatas"), name, fmt.Errorf("denied by test"))
+		updateValidation := func(_ context.Context, _, _ runtime.Object) error { return validationErr }
+
+		_, _, err := pkgCRDREST.Update(namespacedCtx(nonGlobalNamespace), name, UpdatePackageTestImpl{updateFn}, nil, updateValidation, false, &metav1.UpdateOptions{})
+		require.Equal(t, validationErr, err)
+
+		stored, err := internalClient.InternalV1alpha1().InternalPackageMetadatas(nonGlobalNamespace).Get(context.Background(), namespacedPackage.Name, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, namespacedPackage.Spec.DisplayName, stored.Spec.DisplayName, "Expected stored package metadata not to be updated")
+	})
 }
 
 // deleting

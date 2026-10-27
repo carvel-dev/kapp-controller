@@ -218,6 +218,12 @@ func (r *PackageMetadataCRDREST) Update(ctx context.Context, name string, objInf
 		return nil, false, err
 	}
 
+	if updateValidation != nil {
+		if err := updateValidation(ctx, updatedObj, pkg); err != nil {
+			return nil, false, err
+		}
+	}
+
 	updatedPkg := updatedObj.(*datapackaging.PackageMetadata)
 	errList := validation.ValidatePackageMetadata(*updatedPkg)
 	if len(errList) != 0 {
