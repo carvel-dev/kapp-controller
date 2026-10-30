@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793279947398,
+  "lastUpdate": 1793366045068,
   "repoUrl": "https://github.com/carvel-dev/kapp-controller",
   "entries": {
     "Benchmark": [
@@ -24527,6 +24527,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "Benchmark_pkgr_with_50_packages - DeploySeconds",
             "value": 1.107,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "joaopapereira@gmail.com",
+            "name": "João Pereira",
+            "username": "joaopapereira"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e85f11cc1145e5468b85ebb55bff9861b4275b50",
+          "message": "Merge pull request #1880 from carvel-dev/dependabot/go_modules/github.com/google/cel-go-0.29.0\n\nbuild(deps): Bump github.com/google/cel-go from 0.26.0 to 0.29.0",
+          "timestamp": "2026-10-30T08:05:21-05:00",
+          "tree_id": "3a70a3a7d1f081347722bb478df8526d72e9fd0b",
+          "url": "https://github.com/carvel-dev/kapp-controller/commit/e85f11cc1145e5468b85ebb55bff9861b4275b50"
+        },
+        "date": 1793366042525,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "Benchmark_pkgr_with_500_packages",
+            "value": 34877692760,
+            "unit": "ns/op\t        18.49 DeleteSeconds\t        16.35 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - ns/op",
+            "value": 34877692760,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - DeleteSeconds",
+            "value": 18.49,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_500_packages - DeploySeconds",
+            "value": 16.35,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages",
+            "value": 8405236280,
+            "unit": "ns/op\t         5.117 DeleteSeconds\t         3.190 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - ns/op",
+            "value": 8405236280,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - DeleteSeconds",
+            "value": 5.117,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_100_packages - DeploySeconds",
+            "value": 3.19,
+            "unit": "DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages",
+            "value": 5256966474,
+            "unit": "ns/op\t         4.181 DeleteSeconds\t         1.056 DeploySeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - ns/op",
+            "value": 5256966474,
+            "unit": "ns/op",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - DeleteSeconds",
+            "value": 4.181,
+            "unit": "DeleteSeconds",
+            "extra": "1 times\n4 procs"
+          },
+          {
+            "name": "Benchmark_pkgr_with_50_packages - DeploySeconds",
+            "value": 1.056,
             "unit": "DeploySeconds",
             "extra": "1 times\n4 procs"
           }
