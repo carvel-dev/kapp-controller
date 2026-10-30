@@ -77,6 +77,9 @@ var (
 
 		"--app-changes-max-to-keep",
 
+		// Preflight checks (e.g. --preflight=PermissionValidation=true)
+		"--preflight",
+
 		"--labels",
 		"--patch",
 	})
