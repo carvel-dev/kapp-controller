@@ -17,6 +17,7 @@ import (
 	"carvel.dev/kapp-controller/pkg/template"
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -107,14 +108,19 @@ func (a *CRDApp) updateStatusOnce() error {
 func (a *CRDApp) updatePackageRepository(updateFunc func(*pkgingv1alpha1.PackageRepository)) error {
 	a.log.Info("Updating PackageRepository")
 
-	existingRepo, err := a.appClient.PackagingV1alpha1().PackageRepositories(a.pkgrModel.Namespace).Get(context.Background(), a.pkgrModel.Name, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("Updating PackageRepository: %s", err)
-	}
+	// PackageRepository may be modified concurrently (e.g. by other controllers),
+	// so refetch and reapply changes when update is rejected due to a conflict
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		existingRepo, err := a.appClient.PackagingV1alpha1().PackageRepositories(a.pkgrModel.Namespace).Get(context.Background(), a.pkgrModel.Name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
 
-	updateFunc(existingRepo)
+		updateFunc(existingRepo)
 
-	_, err = a.appClient.PackagingV1alpha1().PackageRepositories(existingRepo.Namespace).Update(context.Background(), existingRepo, metav1.UpdateOptions{})
+		_, err = a.appClient.PackagingV1alpha1().PackageRepositories(existingRepo.Namespace).Update(context.Background(), existingRepo, metav1.UpdateOptions{})
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Updating PackageRepository: %s", err)
 	}
