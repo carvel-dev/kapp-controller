@@ -135,6 +135,34 @@ func (d PackageInstalledDryRun) PrintResources() error {
 			},
 		}
 	}
+
+	overlaysSecretYAML := ""
+	if d.YttOverlayFlags.yttOverlays && len(d.YttOverlayFlags.yttOverlayFiles) > 0 {
+		overlaysSecret, err := NewYttOverlays(d.YttOverlayFlags.yttOverlayFiles, d.Name, d.NamespaceFlags.Name).OverlaysSecret()
+		if err != nil {
+			return fmt.Errorf("Structuring overlays secret: %s", err)
+		}
+		overlaysSecret.TypeMeta = metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"}
+		overlaysSecret.Namespace = d.NamespaceFlags.Name
+
+		// Print overlays as plain text to keep the output readable
+		overlaysSecret.StringData = make(map[string]string)
+		for key, value := range overlaysSecret.Data {
+			overlaysSecret.StringData[key] = string(value)
+		}
+		overlaysSecret.Data = nil
+
+		secretYAML, err := yaml.Marshal(overlaysSecret)
+		if err != nil {
+			return fmt.Errorf("Marshaling overlays Secret YAML: %s", err)
+		}
+		overlaysSecretYAML = yamlSeperator + string(secretYAML)
+
+		packageInstall.Annotations = map[string]string{
+			yttOverlayAnnotation: overlaysSecret.Name,
+		}
+	}
+
 	d.addCreatedResourceAnnotations(&packageInstall.ObjectMeta, createRBAC, createSecret, false)
 
 	packageInstallYAML, err := yaml.Marshal(packageInstall)
@@ -142,6 +170,6 @@ func (d PackageInstalledDryRun) PrintResources() error {
 		return fmt.Errorf("Marshaling PackageInstall YAML: %s", err)
 	}
 
-	d.ui.PrintBlock([]byte(rbacResourcesYAML + secretResourcesYAML + yamlSeperator + string(packageInstallYAML)))
+	d.ui.PrintBlock([]byte(rbacResourcesYAML + secretResourcesYAML + overlaysSecretYAML + yamlSeperator + string(packageInstallYAML)))
 	return nil
 }
