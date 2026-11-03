@@ -184,3 +184,46 @@ func Test_GitConfig_depth(t *testing.T) {
 func convertToInt64(x int64) *int64 {
 	return &x
 }
+
+func Test_AddDir_FetchPath(t *testing.T) {
+	k8scs := k8sfake.NewSimpleClientset()
+	config, err := kcconfig.NewConfig(k8scs)
+	assert.NoError(t, err)
+
+	testCases := []struct {
+		path        string
+		expectedDir string
+		expectedErr bool
+	}{
+		{path: "", expectedDir: "0"},
+		{path: "subdir", expectedDir: "subdir"},
+		{path: "a/b/c", expectedDir: "a/b/c"},
+		{path: "./relative", expectedDir: "./relative"},
+		{path: "a/../b", expectedDir: "a/../b"},
+		{path: "..", expectedErr: true},
+		{path: "../sibling", expectedErr: true},
+		{path: "../../pki/tls/certs", expectedErr: true},
+		{path: "a/../../escape", expectedErr: true},
+		{path: "/etc/pki/tls/certs", expectedErr: true},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.path, func(t *testing.T) {
+			vendir := fetch.NewVendir("default", k8scs,
+				fetch.VendirOpts{SkipTLSConfig: config}, exec.NewPlainCmdRunner())
+
+			err := vendir.AddDir(v1alpha1.AppFetch{
+				Inline: &v1alpha1.AppFetchInline{Paths: map[string]string{"file.yml": "foo: bar"}},
+				Path:   tc.path,
+			}, "0")
+
+			if tc.expectedErr {
+				assert.ErrorContains(t, err, "invalid fetch path")
+				assert.Empty(t, vendir.Config().Directories)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Len(t, vendir.Config().Directories, 1)
+			assert.Equal(t, tc.expectedDir, vendir.Config().Directories[0].Path)
+		})
+	}
+}
