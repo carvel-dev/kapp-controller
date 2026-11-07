@@ -28,6 +28,8 @@ type ReleaseOptions struct {
 	outputLocation string
 	debug          bool
 	tag            string
+	pkgRepoName    string
+	registryURL    string
 }
 
 const (
@@ -60,6 +62,8 @@ func NewReleaseCmd(o *ReleaseOptions) *cobra.Command {
 	cmd.Flags().StringVar(&o.outputLocation, "copy-to", "", "Output location for pkgrepo-build.yml")
 	cmd.Flags().BoolVar(&o.debug, "debug", false, "Include debug output")
 	cmd.Flags().StringVarP(&o.tag, "tag", "t", "", "Tag pushed with imgpkg bundle (default build-<TIMESTAMP>)")
+	cmd.Flags().StringVar(&o.pkgRepoName, "name", "", "Name of the package repository (prompted for if not specified)")
+	cmd.Flags().StringVar(&o.registryURL, "registry-url", "", "OCI registry URL to push the bundle to, in the format <REGISTRY_URL/REPOSITORY_NAME> (prompted for if not specified)")
 
 	return cmd
 }
@@ -85,37 +89,11 @@ func (o *ReleaseOptions) Run() error {
 		return err
 	}
 
-	o.ui.PrintHeaderText("\nBasic Information")
-	pkgRepoName := pkgRepoBuild.Name
-	if pkgRepoName == "" {
-		pkgRepoName = DefaultPkgRepoName
-	}
-	textOpts := ui.TextOpts{
-		Label:        "Enter the package repository name",
-		Default:      pkgRepoName,
-		ValidateFunc: nil,
-	}
-	pkgRepoName, err = o.ui.AskForText(textOpts)
-	if err != nil {
-		return err
-	}
-	pkgRepoBuild.Name = pkgRepoName
-
-	o.ui.PrintHeaderText("Registry URL")
-	o.ui.PrintInformationalText("The bundle created needs to be pushed to an OCI registry (format: <REGISTRY_URL/REPOSITORY_NAME>) " +
-		"e.g. index.docker.io/k8slt/sample-bundle")
-	defaultRegistryURL := pkgRepoBuild.Spec.Export.ImgpkgBundle.Image
-	textOpts = ui.TextOpts{
-		Label:        "Enter the registry url",
-		Default:      defaultRegistryURL,
-		ValidateFunc: nil,
-	}
-	registryURL, err := o.ui.AskForText(textOpts)
+	err = o.configureBasicInformation(pkgRepoBuild)
 	if err != nil {
 		return err
 	}
 
-	pkgRepoBuild.Spec.Export.ImgpkgBundle.Image = strings.TrimSpace(registryURL)
 	err = pkgRepoBuild.WriteToFile()
 	if err != nil {
 		return err
@@ -179,7 +157,7 @@ func (o *ReleaseOptions) Run() error {
 		}
 	}
 
-	artifactWriter := NewArtifactWriter(pkgRepoName, wd)
+	artifactWriter := NewArtifactWriter(pkgRepoBuild.Name, wd)
 	err = artifactWriter.WritePackageRepositoryFile(bundleURL, o.pkgRepoVersion)
 	if err != nil {
 		return err
@@ -188,6 +166,54 @@ func (o *ReleaseOptions) Run() error {
 	o.ui.PrintHeaderText("\nNext steps")
 	o.ui.PrintInformationalText("1. Add the package repository to the cluster by running `package repository add`\n" +
 		"2. Alternatively, apply 'package-repository.yml' directly to your cluster.\n")
+	return nil
+}
+
+// configureBasicInformation sets the name and registry URL of the package repository
+// from the flags, and asks for the ones that were not specified.
+func (o *ReleaseOptions) configureBasicInformation(pkgRepoBuild *build.PackageRepoBuild) error {
+	o.ui.PrintHeaderText("\nBasic Information")
+
+	pkgRepoName := o.pkgRepoName
+	if pkgRepoName == "" {
+		defaultPkgRepoName := pkgRepoBuild.Name
+		if defaultPkgRepoName == "" {
+			defaultPkgRepoName = DefaultPkgRepoName
+		}
+		var err error
+		pkgRepoName, err = o.ui.AskForText(ui.TextOpts{
+			Label:        "Enter the package repository name",
+			Default:      defaultPkgRepoName,
+			ValidateFunc: nil,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	pkgRepoBuild.Name = pkgRepoName
+
+	registryURL := o.registryURL
+	if registryURL == "" {
+		o.ui.PrintHeaderText("Registry URL")
+		o.ui.PrintInformationalText("The bundle created needs to be pushed to an OCI registry (format: <REGISTRY_URL/REPOSITORY_NAME>) " +
+			"e.g. index.docker.io/k8slt/sample-bundle")
+		var err error
+		registryURL, err = o.ui.AskForText(ui.TextOpts{
+			Label:        "Enter the registry url",
+			Default:      pkgRepoBuild.Spec.Export.ImgpkgBundle.Image,
+			ValidateFunc: nil,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	registryURL = strings.TrimSpace(registryURL)
+	if registryURL == "" {
+		return fmt.Errorf("expected registry URL to be specified (hint: use --registry-url flag)")
+	}
+	pkgRepoBuild.Spec.Export.ImgpkgBundle.Image = registryURL
+
 	return nil
 }
 

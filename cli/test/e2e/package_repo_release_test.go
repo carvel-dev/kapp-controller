@@ -102,6 +102,47 @@ func TestPackageRepositoryReleaseInteractively(t *testing.T) {
 	})
 }
 
+func TestPackageRepositoryReleaseNonInteractively(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kctrl := Kctrl{t, env.Namespace, env.KctrlBinaryPath, logger}
+
+	cleanUp := func() {
+		os.RemoveAll(workingDir)
+	}
+	cleanUp()
+	defer cleanUp()
+
+	err := os.MkdirAll(filepath.Join(workingDir, packagesDir), fs.ModePerm)
+	if err != nil {
+		t.Errorf("Unable to create packages directory: %s", err.Error())
+	}
+
+	setupPackageToRelease(t)
+
+	logger.Section("Creating a package repository using flags without answering any prompts", func() {
+		version := "1.0.0"
+		tag := "build-tag-non-interactive"
+		// Interactive skips adding --yes, and no stdin means that prompts can not be answered
+		kctrl.RunWithOpts([]string{"pkg", "repo", "release", "--chdir", workingDir, "--version", version, "--tag", tag,
+			"--name", pkgrName, "--registry-url", env.Image}, RunOpts{NoNamespace: true, Interactive: true})
+
+		keysToBeIgnored := []string{"creationTimestamp:", "image"}
+		verifyPackageRepoBuild(t, keysToBeIgnored)
+		verifyPackageRepository(t, keysToBeIgnored)
+
+		out, err := readFile(pkgRepoOutputFile)
+		require.NoError(t, err)
+		require.Contains(t, out, env.Image)
+
+		args := []string{"tag", "list", "-i", os.Getenv("KCTRL_E2E_IMAGE")}
+		cmd := exec.Command("imgpkg", args...)
+		output, err := cmd.Output()
+		require.NoError(t, err, "There was an error in listing the tags")
+		require.Contains(t, string(output), tag)
+	})
+}
+
 func verifyPackageRepoBuild(t *testing.T, keysToBeIgnored []string) {
 	packageRepoBuildExpectedOutput := `
 apiVersion: kctrl.carvel.dev/v1alpha1
