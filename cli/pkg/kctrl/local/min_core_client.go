@@ -97,7 +97,15 @@ type MinCoreClient struct {
 
 var _ kubernetes.Interface = &MinCoreClient{}
 
-func (*MinCoreClient) Discovery() discovery.DiscoveryInterface { return &MinDiscoveryClient{} }
+// Discovery returns the discovery client of the cluster that resources are deployed to.
+func (c *MinCoreClient) Discovery() discovery.DiscoveryInterface {
+	if c.client == nil {
+		// To be used only while releasing packages where we do not have a cluster to ask
+		// MinDiscoveryClient will mock necessary bits
+		return &MinDiscoveryClient{}
+	}
+	return c.client.Discovery()
+}
 func (*MinCoreClient) AdmissionregistrationV1() admissionregistrationv1.AdmissionregistrationV1Interface {
 	panic("Not implemented")
 	return nil
