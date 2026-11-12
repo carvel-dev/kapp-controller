@@ -1,10 +1,8 @@
 package sources
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
-	"os"
 	goexec "os/exec"
 
 	cmdcore "carvel.dev/kapp-controller/cli/pkg/kctrl/cmd/core"
@@ -26,28 +24,9 @@ func (r VendirRunner) Sync(fetchMode string) error {
 	r.ui.PrintInformationalText("We will use vendir to fetch the data from the source to the local directory.\n" +
 		"Vendir allows us to declaratively state what should be in a directory and sync data sources into it.\n" +
 		"All the information entered above has been persisted into a vendir.yml file.")
-	r.ui.PrintActionableText(fmt.Sprintf("Printing %s \n", vendirFileName))
-	err := r.printFile(vendirFileName)
+	err := r.sync()
 	if err != nil {
 		return err
-	}
-	err = r.sync()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r VendirRunner) printFile(filePath string) error {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return fmt.Errorf("Printing file: %w", err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		r.ui.PrintCmdExecutionOutput(scanner.Text())
 	}
 	return nil
 }
@@ -65,7 +44,7 @@ func (r VendirRunner) sync() error {
 	cmd.Stderr = &stderrBs
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("Running vendir sync: %s", stderrBs.String())
+		return fmt.Errorf("running vendir sync failed; check the source configuration and authentication: %w", err)
 	}
 	return nil
 }
