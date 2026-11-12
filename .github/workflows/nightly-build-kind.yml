@@ -1,0 +1,155 @@
+name: Nightly Build Kind Images
+
+on:
+  schedule:
+    # 20:30 UTC is 02:00 IST the following day.
+    - cron: '30 20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Serialize builds so overlapping scheduled/manual runs do not push the same tag.
+concurrency:
+  group: nightly-kind-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  resolve-versions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.resolve.outputs.matrix }}
+      kind_sha: ${{ steps.resolve.outputs.kind_sha }}
+      controller_refs: ${{ steps.resolve.outputs.controller_refs }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve Source Revisions and Test Targets
+        id: resolve
+        run: python3 hack/resolve-nightly-versions.py >> "$GITHUB_OUTPUT"
+
+  build-and-push:
+    needs: resolve-versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.resolve-versions.outputs.matrix) }}
+    permissions:
+      contents: read
+      packages: write
+      actions: write
+    env:
+      K8S_BRANCH: ${{ matrix.k8s_branch }}
+      K8S_SHA: ${{ matrix.k8s_sha }}
+      KIND_SHA: ${{ needs.resolve-versions.outputs.kind_sha }}
+    steps:
+      - name: Set Image Reference
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          OWNER_LC=$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')
+          # Both complete source SHAs form the cache key. No mutable daily alias.
+          echo "KIND_IMAGE=ghcr.io/${OWNER_LC}/kindest-node:${K8S_BRANCH}-${K8S_SHA}-kind-${KIND_SHA}" >> "$GITHUB_ENV"
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check GHCR for Existing Image
+        id: check-cache
+        run: |
+          set -euo pipefail
+          if docker manifest inspect "$KIND_IMAGE" > /dev/null 2> manifest-error.log; then
+            echo "Image already exists; skipping build and E2E dispatch: $KIND_IMAGE"
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          elif grep -Eqi 'manifest unknown|no such manifest' manifest-error.log; then
+            echo "Image not found; building $KIND_IMAGE"
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          else
+            cat manifest-error.log >&2
+            echo "::error::Cannot check GHCR; refusing to treat an authentication or network error as a cache miss."
+            exit 1
+          fi
+          echo "Kind image: $KIND_IMAGE" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Free Disk Space
+        if: steps.check-cache.outputs.build == 'true'
+        run: |
+          docker system prune -af --volumes
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android
+
+      - name: Checkout Kubernetes
+        if: steps.check-cache.outputs.build == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: kubernetes/kubernetes
+          ref: ${{ matrix.k8s_sha }}
+          path: kubernetes
+          # Kubernetes uses git history/tags when determining the build version.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout Kind
+        if: steps.check-cache.outputs.build == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: kubernetes-sigs/kind
+          ref: ${{ needs.resolve-versions.outputs.kind_sha }}
+          path: kind
+          persist-credentials: false
+
+      - name: Install Go
+        if: steps.check-cache.outputs.build == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: kind/.go-version
+          cache-dependency-path: kind/go.sum
+
+      - name: Build Kind
+        if: steps.check-cache.outputs.build == 'true'
+        working-directory: kind
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/bin"
+          go build -o "$RUNNER_TEMP/bin/kind" .
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Build and Push Node Image
+        if: steps.check-cache.outputs.build == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          kind build node-image --type=source "$PWD/kubernetes" --image "$KIND_IMAGE"
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+          docker push "$KIND_IMAGE"
+
+      # Dispatch within each successful matrix leg. A failed sibling build cannot
+      # suppress these tests, and cache hits do not download, retag, or dispatch.
+      - name: Trigger Downstream E2E Tests
+        if: steps.check-cache.outputs.build == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          WORKFLOW_BRANCH: ${{ github.ref_name }}
+          CONTROLLER_REFS: ${{ needs.resolve-versions.outputs.controller_refs }}
+        run: |
+          set -euo pipefail
+          failed=0
+          while IFS= read -r ref; do
+            echo "Dispatching E2E for $ref on $KIND_IMAGE"
+            if ! gh workflow run nightly-e2e.yml --repo "$REPOSITORY" \
+              --ref "$WORKFLOW_BRANCH" \
+              -f kind_image="$KIND_IMAGE" \
+              -f kind_version="$KIND_SHA" \
+              -f kapp_ctrl_ref="$ref"; then
+              failed=1
+            fi
+          done < <(jq -r '.[]' <<< "$CONTROLLER_REFS")
+          exit "$failed"
