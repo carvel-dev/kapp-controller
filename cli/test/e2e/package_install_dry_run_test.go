@@ -148,4 +148,57 @@ status:
 			RunOpts{StdinReader: strings.NewReader("foo: bar\n")})
 		require.Contains(t, output, expectedOutput)
 	})
+
+	logger.Section("package install dry-run with service account and ytt overlay file", func() {
+		expectedOutput := `---
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    packaging.carvel.dev/package: test-kctrl-test
+  name: test-kctrl-test-overlays
+  namespace: kctrl-test
+stringData:
+  0000-stdin.yaml: |
+    #@ load("@ytt:overlay", "overlay")
+    #@overlay/match by=overlay.all
+    ---
+    metadata:
+      #@overlay/match missing_ok=True
+      labels:
+        foo: bar
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  annotations:
+    ext.packaging.carvel.dev/ytt-paths-from-secret-name.kctrl-ytt-overlays: test-kctrl-test-overlays
+  name: test
+  namespace: kctrl-test
+spec:
+  packageRef:
+    refName: test.carvel.dev
+    versionSelection:
+      constraints: 1.0.0
+      prereleases: {}
+  serviceAccountName: test-svc-acc
+status:
+  conditions: null
+  friendlyDescription: ""
+  observedGeneration: 0`
+
+		overlay := `#@ load("@ytt:overlay", "overlay")
+#@overlay/match by=overlay.all
+---
+metadata:
+  #@overlay/match missing_ok=True
+  labels:
+    foo: bar
+`
+
+		output, _ := kappCtrl.RunWithOpts([]string{"package", "install", "-i", "test", "-p", "test.carvel.dev", "--version", "1.0.0", "--ytt-overlay-file", "-",
+			"--service-account-name", "test-svc-acc", "--dry-run"},
+			RunOpts{StdinReader: strings.NewReader(overlay)})
+		require.Contains(t, output, expectedOutput)
+	})
 }
