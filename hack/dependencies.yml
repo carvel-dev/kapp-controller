@@ -24,16 +24,16 @@
   version: v0.49.2
 - checksums:
     darwin:
-      amd64: 07d8bca1556e0cb3355a82f11a4a1aadfd676795ee407b30f4c99d3d0594e963
-      arm64: 42a508769f0c3d2bef48c5d82028d5ad41632fdea10bafb348a16d12ca23c613
+      amd64: e93b89fbd1a15495725119bb4a0fd70b98efaa206532f9c8398ad4ad7a05c8aa
+      arm64: 80fedd817c6df60253ba73b1f3d15a87daba5d401113cd74b2332899036a5a93
     linux:
-      amd64: af3a5051fdaacc477528f288a45516811bcc8b35c67ba68c04c95a7543daba2e
-      arm64: d64989caa229a3427376de44bf2e739e4631a21f69d2968758d01c903c004fe0
+      amd64: 48122dc249e48f8c92e2b3613fb4672950aaef2570248655fbede4c4d57b08a3
+      arm64: 3c2fc725afee527a0e38b4da55e41bdddf608d27a1ee830c29ba566132366fcb
   dev: true
   name: kapp
   repo: vmware-tanzu/carvel-kapp
   urlTemplate: https://github.com/vmware-tanzu/carvel-{{.Name}}/releases/download/{{.Version}}/{{.Name}}-{{.OS}}-{{.Arch}}
-  version: v0.66.1
+  version: v0.66.2
 - checksums:
     darwin:
       amd64: 39b1025eb03142790d5b8d262edd1c9dd5987ae97a81d0c5c4affb13850caccb
@@ -48,14 +48,14 @@
   version: v0.46.3
 - checksums:
     linux:
-      amd64: 0403a88ae20913d11b10a2467b50087721fea7581736da6b9d3992f5357fe54b
-      arm64: 8cf8f66ecbc252ac8f7f06cca68aba88508ddfde3a6a34feb1678ad1694b4f88
+      amd64: d1c0278d46beab79582d7e50f5b3dc206944ba8e577cde618513fd07daa53983
+      arm64: df31cb61680ef728f82c770e5280dd565617bee6b039d37e85c677288be4bbb0
   dev: false
   name: helm
   repo: helm/helm
   tarballSubpath: '{{.OS}}-{{.Arch}}/helm'
   urlTemplate: https://get.helm.sh/helm-{{.Version}}-{{.OS}}-{{.Arch}}.tar.gz
-  version: v4.3.1
+  version: v4.3.2
 - checksums:
     linux:
       amd64: e5bec3346a873ae91d871550f3e698c1aad962aff462a080e40f25fde17fef6b
