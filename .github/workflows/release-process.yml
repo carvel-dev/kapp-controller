@@ -42,7 +42,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Set up Cosign
-        uses: sigstore/cosign-installer@v4.0.0
+        uses: sigstore/cosign-installer@v4.1.1
 
       - name: Run release script
         run: |
