@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 FROM photon:5.0
 
 # Install openssh for git and tini for proper PID 1 handling
-RUN tdnf install -y git openssh-clients tini
+RUN tdnf install -y git openssh-clients tini && tdnf update -y ca-certificates
 
 # Create the kapp-controller user in the root group, the home directory will be mounted as a volume
 RUN echo "kapp-controller:x:1000:0:/home/kapp-controller:/usr/sbin/nologin" > /etc/passwd
