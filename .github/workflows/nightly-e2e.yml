@@ -1,0 +1,144 @@
+name: Nightly E2E Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      kind_image:
+        description: 'Exact Kind image reference produced by Nightly Build Kind Images'
+        required: true
+      kind_version:
+        description: 'Full Kind source commit SHA used to build the node image'
+        required: true
+      kapp_ctrl_ref:
+        description: 'Upstream kapp-controller branch, tag, or commit to test'
+        required: true
+        default: 'develop'
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      FULL_IMAGE: ${{ inputs.kind_image }}
+      KIND_VERSION: ${{ inputs.kind_version }}
+      TARGET_REF: ${{ inputs.kapp_ctrl_ref }}
+      KAPPCTRL_E2E_NAMESPACE: kappctrl-test
+      KAPPCTRL_E2E_SECRETGEN_CONTROLLER: 'true'
+    steps:
+      - name: Validate Inputs
+        run: |
+          set -euo pipefail
+          if [[ ! "$KIND_VERSION" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::kind_version must be a full Kind commit SHA."
+            exit 1
+          fi
+          if [[ ! "$FULL_IMAGE" =~ ^ghcr\.io/[a-z0-9._/-]+:[a-zA-Z0-9._-]+$ ]]; then
+            echo "::error::kind_image must be a tagged GHCR image."
+            exit 1
+          fi
+
+      - name: Checkout Upstream Kapp-Controller
+        uses: actions/checkout@v4
+        with:
+          # Checkout directly from upstream so fork tags/branches cannot shadow the target.
+          repository: carvel-dev/kapp-controller
+          ref: ${{ inputs.kapp_ctrl_ref }}
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify Image Existence
+        run: |
+          set -euo pipefail
+          echo "Verifying image exists in GHCR: $FULL_IMAGE"
+          docker manifest inspect "$FULL_IMAGE" > /dev/null
+
+      - name: Install Kind
+        run: |
+          set -euo pipefail
+          export GOBIN="$RUNNER_TEMP/kind-bin"
+          mkdir -p "$GOBIN"
+          # Match the builder instead of relying on a preinstalled or unrelated Kind binary.
+          GOTOOLCHAIN=auto go install "sigs.k8s.io/kind@$KIND_VERSION"
+          echo "$GOBIN" >> "$GITHUB_PATH"
+          "$GOBIN/kind" version
+
+      - name: Create Kind Cluster
+        run: |
+          set -euo pipefail
+          kind create cluster --image "$FULL_IMAGE" --name kinder --wait 5m
+          kind get kubeconfig --name kinder > "$RUNNER_TEMP/kubeconfig.yaml"
+          echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig.yaml" >> "$GITHUB_ENV"
+
+      - name: Install Dependencies
+        run: ./hack/install-deps.sh
+
+      - name: Build, Load and Deploy Kapp-Controller
+        run: |
+          set -euo pipefail
+          source ./hack/version-util.sh
+          VERSION=$(get_kappctrl_ver)
+          if [[ -z "$VERSION" ]]; then
+            echo "::error::Failed to determine the kapp-controller version from upstream tags."
+            exit 1
+          fi
+          if [[ "$TARGET_REF" == "develop" ]]; then
+            VERSION="${VERSION}+develop"
+          fi
+
+          # dev.version is passed through config-dev to Docker's KCTRL_VER build argument.
+          if ! ytt -f config/config -f config/values-schema.yml -f config-dev -v dev.version="$VERSION" \
+            | kbld -f- > kbld.out 2> kbldmeta.out; then
+            cat kbldmeta.out >&2
+            exit 1
+          fi
+          BUILT_IMAGE=$(awk '/final: kapp-controller ->/ {print $NF}' kbldmeta.out | tail -n 1)
+          if [[ -z "$BUILT_IMAGE" ]]; then
+            cat kbldmeta.out >&2
+            echo "::error::Failed to extract built image from kbld output."
+            exit 1
+          fi
+          kind load docker-image "$BUILT_IMAGE" --name kinder
+          kapp deploy -a kc -f kbld.out -c -y
+
+      - name: Install Secretgen Controller
+        run: |
+          set -euo pipefail
+          source ./hack/secretgen-controller.sh
+          deploy_secretgen-controller
+
+      - name: Run E2E Tests
+        run: |
+          set -euo pipefail
+          mkdir -p tmp
+          kubectl create namespace "$KAPPCTRL_E2E_NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+          ./hack/test-e2e.sh
+
+      - name: Export Kind Logs
+        if: failure()
+        run: kind export logs "$RUNNER_TEMP/kind-logs" --name kinder
+
+      - name: Upload Test Diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-e2e-diagnostics
+          path: |
+            ${{ runner.temp }}/kind-logs
+            tmp/e2eoutput.txt
+            kbldmeta.out
+          retention-days: 7
