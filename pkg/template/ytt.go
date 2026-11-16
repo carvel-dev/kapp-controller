@@ -89,7 +89,17 @@ func (t *Ytt) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		Stderr: stderrBs.String(),
 	}
 	result.AttachErrorf("Templating dir: %s", err)
-
+	for _, source := range t.opts.ValuesFrom {
+		if source.SecretRef != nil {
+			if result.Stderr != "" {
+				result.Stderr = "ytt diagnostics omitted for Secret-backed values; check the template schema and the referenced Secret's keys and value types"
+			}
+			if result.Error != nil {
+				result.Error = fmt.Errorf("templating failed with Secret-backed values; check the template schema and referenced Secret")
+			}
+			break
+		}
+	}
 	return result
 }
 

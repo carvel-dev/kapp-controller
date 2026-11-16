@@ -153,12 +153,12 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 	templateStartTime := time.Now()
 
 	tplResult := a.template(assetsPath)
-	tplResult = tplResult.WithRedactedSecrets()
+	tplDiagnostics := tplResult.WithRedactedSecrets()
 
 	a.app.Status.Template = &v1alpha1.AppStatusTemplate{
-		Stderr:    tplResult.Stderr,
+		Stderr:    tplDiagnostics.Stderr,
 		ExitCode:  tplResult.ExitCode,
-		Error:     tplResult.ErrorStr(),
+		Error:     tplDiagnostics.ErrorStr(),
 		UpdatedAt: metav1.NewTime(time.Now().UTC()),
 	}
 
@@ -171,7 +171,7 @@ func (a *App) reconcileFetchTemplateDeploy() exec.CmdRunResult {
 	}
 
 	if tplResult.Error != nil {
-		return tplResult
+		return tplDiagnostics
 	}
 
 	a.resetLastDeployStartedAt()

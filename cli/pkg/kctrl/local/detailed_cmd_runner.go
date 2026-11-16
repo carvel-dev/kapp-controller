@@ -24,27 +24,27 @@ func NewDetailedCmdRunner(log io.Writer, fullOutput bool) *DetailedCmdRunner {
 }
 
 func (r DetailedCmdRunner) Run(cmd *goexec.Cmd) error {
+	// Preserve child output for its consumer; never tee it into diagnostics.
 	if r.fullOutput {
-		cmd.Stdout = io.MultiWriter(r.log, cmd.Stdout)
-		cmd.Stderr = io.MultiWriter(r.log, cmd.Stderr)
+		_, _ = fmt.Fprintln(r.log, "Child output omitted from debug diagnostics")
 	}
 
 	// Adding os environment keys to cmd environment
 	cmd.Env = append(os.Environ(), cmd.Env...)
 
-	fmt.Fprintf(r.log, "==> Executing %s %v\n", cmd.Path, cmd.Args)
+	_, _ = fmt.Fprintf(r.log, "==> Executing %s\n", cmd.Path)
 	defer fmt.Fprintf(r.log, "==> Finished executing %s\n\n", cmd.Path)
 
 	return exec.PlainCmdRunner{}.Run(cmd)
 }
 
 func (r DetailedCmdRunner) RunWithCancel(cmd *goexec.Cmd, cancelCh chan struct{}) error {
+	// Preserve child output for its consumer; never tee it into diagnostics.
 	if r.fullOutput {
-		cmd.Stdout = io.MultiWriter(r.log, cmd.Stdout)
-		cmd.Stderr = io.MultiWriter(r.log, cmd.Stderr)
+		_, _ = fmt.Fprintln(r.log, "Child output omitted from debug diagnostics")
 	}
 
-	fmt.Fprintf(r.log, "==> Executing %s %v\n", cmd.Path, cmd.Args)
+	_, _ = fmt.Fprintf(r.log, "==> Executing %s\n", cmd.Path)
 	defer fmt.Fprintf(r.log, "==> Finished executing %s\n\n", cmd.Path)
 
 	return exec.PlainCmdRunner{}.RunWithCancel(cmd, cancelCh)

@@ -18,7 +18,6 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/yaml"
 )
 
 type DevOptions struct {
@@ -119,22 +118,12 @@ func (o *DevOptions) afterAppReconcile(app kcv1alpha1.App, kcClient *fakekc.Clie
 func (o *DevOptions) printRs(nsName metav1.ObjectMeta, kcClient *fakekc.Clientset) error {
 	app, err := kcClient.KappctrlV1alpha1().Apps(nsName.Namespace).Get(context.Background(), nsName.Name, metav1.GetOptions{})
 	if err == nil {
-		bs, err := yaml.Marshal(app)
-		if err != nil {
-			return fmt.Errorf("Marshaling App CR: %s", err)
-		}
-
-		o.ui.PrintBlock(bs)
+		o.ui.PrintLinef("app/%s (namespace: %s)", app.Name, app.Namespace)
 	}
 
 	pkgi, err := kcClient.PackagingV1alpha1().PackageInstalls(nsName.Namespace).Get(context.Background(), nsName.Name, metav1.GetOptions{})
 	if err == nil {
-		bs, err := yaml.Marshal(pkgi)
-		if err != nil {
-			return fmt.Errorf("Marshaling PackageInstall CR: %s", err)
-		}
-
-		o.ui.PrintBlock(bs)
+		o.ui.PrintLinef("packageinstall/%s (namespace: %s)", pkgi.Name, pkgi.Namespace)
 	}
 
 	return nil
