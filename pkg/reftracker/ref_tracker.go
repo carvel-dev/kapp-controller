@@ -28,7 +28,10 @@ func (a *AppRefTracker) AppsForRef(refKey RefKey) (map[RefKey]struct{}, error) {
 		return nil, fmt.Errorf("could not find ref %s", refKey.Description())
 	}
 
-	return apps, nil
+	// Return a copy so callers can iterate the result after the lock is
+	// released without racing map writers, which would otherwise crash with
+	// "concurrent map iteration and map write".
+	return copyRefKeySet(apps), nil
 }
 
 func (a *AppRefTracker) RefsForApp(appKey RefKey) (map[RefKey]struct{}, error) {
@@ -39,7 +42,18 @@ func (a *AppRefTracker) RefsForApp(appKey RefKey) (map[RefKey]struct{}, error) {
 		return nil, fmt.Errorf("could not find refs for App %s", appKey.RefName())
 	}
 
-	return a.appsToRefs[appKey], nil
+	// Return a copy for the same reason as AppsForRef above.
+	return copyRefKeySet(a.appsToRefs[appKey]), nil
+}
+
+// copyRefKeySet returns a shallow copy of a RefKey set so callers can safely
+// iterate it without holding the tracker lock.
+func copyRefKeySet(in map[RefKey]struct{}) map[RefKey]struct{} {
+	out := make(map[RefKey]struct{}, len(in))
+	for k := range in {
+		out[k] = struct{}{}
+	}
+	return out
 }
 
 func (a *AppRefTracker) RemoveRef(refKey RefKey) {
