@@ -6,6 +6,7 @@ package datapackaging_test
 import (
 	"context"
 	"encoding/base32"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -266,6 +267,53 @@ func TestPackageVersionUpdateCreatesInNS(t *testing.T) {
 	if globalPackageVersion.Spec.ReleaseNotes != originalReleaseNotes {
 		t.Fatalf("Expected update not to affect the global package, but ReleaseNotes was updated")
 	}
+}
+
+func TestPackageVersionUpdateExistingInNSRunsUpdateValidation(t *testing.T) {
+	name := namespacedPackageName
+	newReleaseNotes := "im-new"
+	updateFn := func(pkgv *datapackaging.Package) *datapackaging.Package {
+		updated := pkgv.DeepCopy()
+		updated.Spec.ReleaseNotes = newReleaseNotes
+		return updated
+	}
+
+	t.Run("update is persisted when validation succeeds", func(t *testing.T) {
+		namespacedPackageVersion := namespacedIntPackageVersion()
+		internalClient := fake.NewSimpleClientset(namespacedPackageVersion)
+		pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, k8sfake.NewSimpleClientset(namespace()), globalNamespace, logf.Log)
+
+		var validatedObj, validatedOldObj runtime.Object
+		updateValidation := func(_ context.Context, obj, old runtime.Object) error {
+			validatedObj, validatedOldObj = obj, old
+			return nil
+		}
+
+		obj, created, err := pkgvCRDREST.Update(namespacedCtx(nonGlobalNamespace), name, UpdatePackageVersionTestImpl{updateFn}, nil, updateValidation, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.False(t, created)
+		require.Equal(t, newReleaseNotes, obj.(*datapackaging.Package).Spec.ReleaseNotes)
+
+		require.NotNil(t, validatedObj, "Expected updateValidation to be called")
+		require.Equal(t, newReleaseNotes, validatedObj.(*datapackaging.Package).Spec.ReleaseNotes)
+		require.Equal(t, namespacedPackageVersion.Spec.ReleaseNotes, validatedOldObj.(*datapackaging.Package).Spec.ReleaseNotes)
+	})
+
+	t.Run("update is rejected when validation fails", func(t *testing.T) {
+		namespacedPackageVersion := namespacedIntPackageVersion()
+		internalClient := fake.NewSimpleClientset(namespacedPackageVersion)
+		pkgvCRDREST := datapkgreg.NewPackageCRDREST(internalClient, k8sfake.NewSimpleClientset(namespace()), globalNamespace, logf.Log)
+
+		validationErr := errors.NewForbidden(datapackaging.Resource("packages"), name, fmt.Errorf("denied by test"))
+		updateValidation := func(_ context.Context, _, _ runtime.Object) error { return validationErr }
+
+		_, _, err := pkgvCRDREST.Update(namespacedCtx(nonGlobalNamespace), name, UpdatePackageVersionTestImpl{updateFn}, nil, updateValidation, false, &metav1.UpdateOptions{})
+		require.Equal(t, validationErr, err)
+
+		stored, err := internalClient.InternalV1alpha1().InternalPackages(nonGlobalNamespace).Get(context.Background(), namespacedPackageVersion.Name, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, namespacedPackageVersion.Spec.ReleaseNotes, stored.Spec.ReleaseNotes, "Expected stored package not to be updated")
+	})
 }
 
 // deleting

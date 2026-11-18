@@ -216,6 +216,12 @@ func (r *PackageCRDREST) Update(ctx context.Context, name string, objInfo rest.U
 		return nil, false, err
 	}
 
+	if updateValidation != nil {
+		if err := updateValidation(ctx, updatedObj, pkg); err != nil {
+			return nil, false, err
+		}
+	}
+
 	updatedPkg := updatedObj.(*datapackaging.Package)
 	errs := validation.ValidatePackage(*updatedPkg)
 	if len(errs) != 0 {
