@@ -116,7 +116,7 @@ message AppFetchGit {
   // +optional
   optional AppFetchLocalRef secretRef = 3;
 
-  // Grab only portion of repository (optional)
+  // Grab only portion of repository, subpath becomes new root (optional)
   // +optional
   optional string subPath = 4;
 
