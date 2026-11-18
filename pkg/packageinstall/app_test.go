@@ -20,404 +20,6 @@ import (
 // several tests below have no SyncPeriod set so they'll all use the same default.
 var defaultSyncPeriod metav1.Duration = metav1.Duration{Duration: 10 * time.Minute}
 
-func TestAppExtPathsFromSecretNameAnn(t *testing.T) {
-	ipkg := &pkgingv1alpha1.PackageInstall{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "app",
-			Namespace: "default",
-			Annotations: map[string]string{
-				"ext.packaging.carvel.dev/ytt-paths-from-secret-name":                 "ytt-no-suffix",
-				"ext.packaging.carvel.dev/ytt-paths-from-secret-name.4":               "ytt-suffix-4",
-				"ext.packaging.carvel.dev/ytt-paths-from-secret-name.2":               "ytt-suffix-2",
-				"ext.packaging.carvel.dev/ytt-paths-from-secret-name.text":            "ytt-suffix-text",
-				"ext.packaging.carvel.dev/helm-template-values-from-secret-name":      "helm-no-suffix",
-				"ext.packaging.carvel.dev/helm-template-values-from-secret-name.4":    "helm-suffix-4",
-				"ext.packaging.carvel.dev/helm-template-values-from-secret-name.2":    "helm-suffix-2",
-				"ext.packaging.carvel.dev/helm-template-values-from-secret-name.text": "helm-suffix-text",
-			},
-		},
-	}
-
-	pkgVersion := datapkgingv1alpha1.Package{
-		Spec: datapkgingv1alpha1.PackageSpec{
-			RefName: "expec-pkg",
-			Version: "1.5.0",
-			Template: datapkgingv1alpha1.AppTemplateSpec{
-				Spec: &kcv1alpha1.AppSpec{
-					Template: []kcv1alpha1.AppTemplate{
-						{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
-						{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
-						{Ytt: &kcv1alpha1.AppTemplateYtt{}},
-						{Ytt: &kcv1alpha1.AppTemplateYtt{}},
-					},
-				},
-			},
-		},
-	}
-
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
-	if err != nil {
-		t.Fatalf("Expected no err, but was: %s", err)
-	}
-
-	expectedApp := &kcv1alpha1.App{
-		Spec: kcv1alpha1.AppSpec{
-			SyncPeriod: &defaultSyncPeriod,
-			Template: []kcv1alpha1.AppTemplate{
-				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{
-					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
-						kcv1alpha1.AppTemplateValuesSource{
-							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								Name: "helm-no-suffix",
-							},
-						},
-						kcv1alpha1.AppTemplateValuesSource{
-							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								Name: "helm-suffix-2",
-							},
-						},
-						kcv1alpha1.AppTemplateValuesSource{
-							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								Name: "helm-suffix-4",
-							},
-						},
-						kcv1alpha1.AppTemplateValuesSource{
-							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								Name: "helm-suffix-text",
-							},
-						},
-					},
-				}},
-				// Second Helm template step is untouched
-				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
-
-				{Ytt: &kcv1alpha1.AppTemplateYtt{
-					Inline: &kcv1alpha1.AppFetchInline{
-						PathsFrom: []kcv1alpha1.AppFetchInlineSource{
-							kcv1alpha1.AppFetchInlineSource{
-								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									Name: "ytt-no-suffix",
-								},
-							},
-							kcv1alpha1.AppFetchInlineSource{
-								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									Name: "ytt-suffix-2",
-								},
-							},
-							kcv1alpha1.AppFetchInlineSource{
-								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									Name: "ytt-suffix-4",
-								},
-							},
-							kcv1alpha1.AppFetchInlineSource{
-								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									Name: "ytt-suffix-text",
-								},
-							},
-						},
-					},
-				}},
-				// Second ytt templating step is untouched
-				{Ytt: &kcv1alpha1.AppTemplateYtt{}},
-			},
-		},
-	}
-
-	// Not interesting in metadata in this test
-	app.ObjectMeta = metav1.ObjectMeta{}
-
-	if !reflect.DeepEqual(expectedApp, app) {
-		bs, _ := yaml.Marshal(app)
-		t.Fatalf("App does not match expected app: (actual)\n%s", bs)
-	}
-}
-func TestAppHelmOverlaysFromAnn(t *testing.T) {
-	ipkg := &pkgingv1alpha1.PackageInstall{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "app",
-			Namespace: "default",
-			Annotations: map[string]string{
-				"ext.packaging.carvel.dev/helm-template-name":      "helm-new-name",
-				"ext.packaging.carvel.dev/helm-template-namespace": "helm-new-namespace",
-			},
-		},
-		Spec: pkgingv1alpha1.PackageInstallSpec{
-			Values: []pkgingv1alpha1.PackageInstallValues{
-				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values1"}},
-				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values2"}},
-			},
-		},
-	}
-
-	pkgVersion := datapkgingv1alpha1.Package{
-		Spec: datapkgingv1alpha1.PackageSpec{
-			RefName: "expec-pkg",
-			Version: "1.5.0",
-			Template: datapkgingv1alpha1.AppTemplateSpec{
-				Spec: &kcv1alpha1.AppSpec{
-					Template: []kcv1alpha1.AppTemplate{
-						{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{
-							Name:      "helm-default-name",
-							Namespace: "helm-default-namespace",
-						}},
-						{Ytt: &kcv1alpha1.AppTemplateYtt{}},
-					},
-				},
-			},
-		},
-	}
-
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
-	if err != nil {
-		t.Fatalf("Expected no err, but was: %s", err)
-	}
-
-	expectedApp := &kcv1alpha1.App{
-		Spec: kcv1alpha1.AppSpec{
-			SyncPeriod: &defaultSyncPeriod,
-			Template: []kcv1alpha1.AppTemplate{
-				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{
-					Name:      "helm-new-name",
-					Namespace: "helm-new-namespace",
-					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
-						kcv1alpha1.AppTemplateValuesSource{
-							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								Name: "values1",
-							},
-						},
-						kcv1alpha1.AppTemplateValuesSource{
-							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								Name: "values2",
-							},
-						},
-					},
-				}},
-				// Ytt template step is untouched
-				{Ytt: &kcv1alpha1.AppTemplateYtt{}},
-			},
-		},
-	}
-
-	// Not interesting in metadata in this test
-	app.ObjectMeta = metav1.ObjectMeta{}
-
-	if !reflect.DeepEqual(expectedApp, app) {
-		bs, _ := yaml.Marshal(app)
-		t.Fatalf("App does not match expected app: (actual)\n%s", bs)
-	}
-}
-
-func TestAppExtYttDataValuesOverlaysAnn(t *testing.T) {
-	ipkg := &pkgingv1alpha1.PackageInstall{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "app",
-			Namespace: "default",
-			Annotations: map[string]string{
-				"ext.packaging.carvel.dev/ytt-data-values-overlays": "",
-			},
-		},
-		Spec: pkgingv1alpha1.PackageInstallSpec{
-			Values: []pkgingv1alpha1.PackageInstallValues{
-				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values1"}},
-				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values2"}},
-			},
-		},
-	}
-
-	pkgVersion := datapkgingv1alpha1.Package{
-		Spec: datapkgingv1alpha1.PackageSpec{
-			RefName: "expec-pkg",
-			Version: "1.5.0",
-			Template: datapkgingv1alpha1.AppTemplateSpec{
-				Spec: &kcv1alpha1.AppSpec{
-					Template: []kcv1alpha1.AppTemplate{
-						{Ytt: &kcv1alpha1.AppTemplateYtt{}},
-						{Ytt: &kcv1alpha1.AppTemplateYtt{}},
-					},
-				},
-			},
-		},
-	}
-
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
-	if err != nil {
-		t.Fatalf("Expected no err, but was: %s", err)
-	}
-
-	expectedApp := &kcv1alpha1.App{
-		Spec: kcv1alpha1.AppSpec{
-			SyncPeriod: &defaultSyncPeriod,
-			Template: []kcv1alpha1.AppTemplate{
-				{Ytt: &kcv1alpha1.AppTemplateYtt{
-					Inline: &kcv1alpha1.AppFetchInline{
-						PathsFrom: []kcv1alpha1.AppFetchInlineSource{
-							kcv1alpha1.AppFetchInlineSource{
-								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									Name: "values1",
-								},
-							},
-							kcv1alpha1.AppFetchInlineSource{
-								SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{
-									Name: "values2",
-								},
-							},
-						},
-					},
-				}},
-				// Second ytt templating step is untouched
-				{Ytt: &kcv1alpha1.AppTemplateYtt{}},
-			},
-		},
-	}
-
-	// Not interesting in metadata in this test
-	app.ObjectMeta = metav1.ObjectMeta{}
-
-	if !reflect.DeepEqual(expectedApp, app) {
-		bs, _ := yaml.Marshal(app)
-		t.Fatalf("App does not match expected app: (actual)\n%s", bs)
-	}
-}
-
-func TestAppYttValues(t *testing.T) {
-	ipkg := &pkgingv1alpha1.PackageInstall{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "app",
-			Namespace: "default",
-		},
-		Spec: pkgingv1alpha1.PackageInstallSpec{
-			Values: []pkgingv1alpha1.PackageInstallValues{
-				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values1"}},
-				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values2"}},
-			},
-		},
-	}
-
-	pkgVersion := datapkgingv1alpha1.Package{
-		Spec: datapkgingv1alpha1.PackageSpec{
-			RefName: "expec-pkg",
-			Version: "1.5.0",
-			Template: datapkgingv1alpha1.AppTemplateSpec{
-				Spec: &kcv1alpha1.AppSpec{
-					Template: []kcv1alpha1.AppTemplate{
-						{Ytt: &kcv1alpha1.AppTemplateYtt{}},
-						{Ytt: &kcv1alpha1.AppTemplateYtt{}},
-						{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
-					},
-				},
-			},
-		},
-	}
-
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
-	if err != nil {
-		t.Fatalf("Expected no err, but was: %s", err)
-	}
-
-	expectedApp := &kcv1alpha1.App{
-		Spec: kcv1alpha1.AppSpec{
-			SyncPeriod: &defaultSyncPeriod,
-			Template: []kcv1alpha1.AppTemplate{
-				{Ytt: &kcv1alpha1.AppTemplateYtt{
-					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
-						kcv1alpha1.AppTemplateValuesSource{
-							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								Name: "values1",
-							},
-						},
-						kcv1alpha1.AppTemplateValuesSource{
-							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								Name: "values2",
-							},
-						},
-					},
-				}},
-				// Second ytt templating step is untouched
-				{Ytt: &kcv1alpha1.AppTemplateYtt{}},
-				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
-			},
-		},
-	}
-
-	// Not interesting in metadata in this test
-	app.ObjectMeta = metav1.ObjectMeta{}
-
-	if !reflect.DeepEqual(expectedApp, app) {
-		bs, _ := yaml.Marshal(app)
-		t.Fatalf("App does not match expected app: (actual)\n%s", bs)
-	}
-}
-
-func TestAppHelmTemplateValues(t *testing.T) {
-	ipkg := &pkgingv1alpha1.PackageInstall{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "app",
-			Namespace: "default",
-		},
-		Spec: pkgingv1alpha1.PackageInstallSpec{
-			Values: []pkgingv1alpha1.PackageInstallValues{
-				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values1"}},
-				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values2"}},
-			},
-		},
-	}
-
-	pkgVersion := datapkgingv1alpha1.Package{
-		Spec: datapkgingv1alpha1.PackageSpec{
-			RefName: "expec-pkg",
-			Version: "1.5.0",
-			Template: datapkgingv1alpha1.AppTemplateSpec{
-				Spec: &kcv1alpha1.AppSpec{
-					Template: []kcv1alpha1.AppTemplate{
-						{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
-						{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
-						{Ytt: &kcv1alpha1.AppTemplateYtt{}},
-					},
-				},
-			},
-		},
-	}
-
-	app, err := packageinstall.NewApp(&kcv1alpha1.App{}, ipkg, pkgVersion, packageinstall.Opts{DefaultSyncPeriod: 10 * time.Minute})
-	if err != nil {
-		t.Fatalf("Expected no err, but was: %s", err)
-	}
-
-	expectedApp := &kcv1alpha1.App{
-		Spec: kcv1alpha1.AppSpec{
-			SyncPeriod: &defaultSyncPeriod,
-			Template: []kcv1alpha1.AppTemplate{
-				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{
-					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
-						kcv1alpha1.AppTemplateValuesSource{
-							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								Name: "values1",
-							},
-						},
-						kcv1alpha1.AppTemplateValuesSource{
-							SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{
-								Name: "values2",
-							},
-						},
-					},
-				}},
-				// Second helm templating step is untouched
-				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
-				// Second ytt templating step is untouched
-				{Ytt: &kcv1alpha1.AppTemplateYtt{}},
-			},
-		},
-	}
-
-	// Not interesting in metadata in this test
-	app.ObjectMeta = metav1.ObjectMeta{}
-
-	if !reflect.DeepEqual(expectedApp, app) {
-		bs, _ := yaml.Marshal(app)
-		t.Fatalf("App does not match expected app: (actual)\n%s", bs)
-	}
-}
-
 func TestAppManuallyControlled(t *testing.T) {
 	existingApp := &kcv1alpha1.App{
 		ObjectMeta: metav1.ObjectMeta{
@@ -715,4 +317,332 @@ func TestAppPackageIntallDefaultNamespace(t *testing.T) {
 	app.ObjectMeta = metav1.ObjectMeta{}
 
 	require.Equal(t, expectedApp, app, "App does not match expected app")
+}
+
+func TestAppPackageIntallValuesForTemplateSteps(t *testing.T) {
+	pkgi := func(values []pkgingv1alpha1.PackageInstallValues) *pkgingv1alpha1.PackageInstall {
+		return &pkgingv1alpha1.PackageInstall{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "app",
+				Namespace: "default",
+			},
+			Spec: pkgingv1alpha1.PackageInstallSpec{
+				Values: values,
+			},
+		}
+	}
+
+	pkg := func() datapkgingv1alpha1.Package {
+		return datapkgingv1alpha1.Package{
+			Spec: datapkgingv1alpha1.PackageSpec{
+				RefName: "expec-pkg",
+				Version: "1.5.0",
+				Template: datapkgingv1alpha1.AppTemplateSpec{
+					Spec: &kcv1alpha1.AppSpec{
+						Template: []kcv1alpha1.AppTemplate{
+							{Sops: &kcv1alpha1.AppTemplateSops{}},
+							{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+							{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+							{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
+							{Kbld: &kcv1alpha1.AppTemplateKbld{}},
+							{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+							{Cue: &kcv1alpha1.AppTemplateCue{}},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	testCases := map[string]struct {
+		values           []pkgingv1alpha1.PackageInstallValues
+		patchPkg         func(*datapkgingv1alpha1.Package)
+		patchPkgi        func(*pkgingv1alpha1.PackageInstall)
+		expectedTemplate []kcv1alpha1.AppTemplate
+		exepectedErrMsg  string
+	}{
+		"no values": {
+			expectedTemplate: []kcv1alpha1.AppTemplate{
+				{Sops: &kcv1alpha1.AppTemplateSops{}},
+				{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+				{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
+				{Kbld: &kcv1alpha1.AppTemplateKbld{}},
+				{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+				{Cue: &kcv1alpha1.AppTemplateCue{}},
+			},
+		},
+		"only add to first step": {
+			values: []pkgingv1alpha1.PackageInstallValues{
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values-for-first"}},
+			},
+			expectedTemplate: []kcv1alpha1.AppTemplate{
+				{Sops: &kcv1alpha1.AppTemplateSops{}},
+				{Ytt: &kcv1alpha1.AppTemplateYtt{
+					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
+						{SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{Name: "values-for-first"}},
+					},
+				}},
+				{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
+				{Kbld: &kcv1alpha1.AppTemplateKbld{}},
+				{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+				{Cue: &kcv1alpha1.AppTemplateCue{}},
+			},
+		},
+		"invalid step index": {
+			values: []pkgingv1alpha1.PackageInstallValues{
+				{TemplateSteps: []int{100}},
+			},
+			exepectedErrMsg: "out of range",
+		},
+		"specific values, but step does not support values": {
+			values: []pkgingv1alpha1.PackageInstallValues{
+				{TemplateSteps: []int{0}, SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "foo-bar"}},
+			},
+			exepectedErrMsg: "does not support values",
+		},
+		"some values, but no steps which takes values": {
+			values: []pkgingv1alpha1.PackageInstallValues{
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "foo-bar"}},
+			},
+			patchPkg: func(pkg *datapkgingv1alpha1.Package) {
+				// pkg does define any template steps that support values
+				pkg.Spec.Template.Spec.Template = []kcv1alpha1.AppTemplate{
+					{Sops: &kcv1alpha1.AppTemplateSops{}},
+				}
+			},
+			exepectedErrMsg: "no template step of class 'takesValues' found",
+		},
+		"values for specific steps": {
+			values: []pkgingv1alpha1.PackageInstallValues{
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values-for-first"}},
+				{TemplateSteps: []int{6}, SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values-for-specific-cue"}},
+				{TemplateSteps: []int{3, 6}, SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values-for-multiple-steps"}},
+				{TemplateSteps: []int{5}, SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values-for-specific-ytt"}},
+			},
+			expectedTemplate: []kcv1alpha1.AppTemplate{
+				{Sops: &kcv1alpha1.AppTemplateSops{}},
+				{Ytt: &kcv1alpha1.AppTemplateYtt{
+					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
+						{SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{Name: "values-for-first"}},
+					},
+				}},
+				{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{
+					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
+						{SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{Name: "values-for-multiple-steps"}},
+					},
+				}},
+				{Kbld: &kcv1alpha1.AppTemplateKbld{}},
+				{Ytt: &kcv1alpha1.AppTemplateYtt{
+					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
+						{SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{Name: "values-for-specific-ytt"}},
+					},
+				}},
+				{Cue: &kcv1alpha1.AppTemplateCue{
+					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
+						{SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{Name: "values-for-specific-cue"}},
+						{SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{Name: "values-for-multiple-steps"}},
+					},
+				}},
+			},
+		},
+		"values for ytt, as inline paths": {
+			patchPkgi: func(pkgi *pkgingv1alpha1.PackageInstall) {
+				pkgi.ObjectMeta.SetAnnotations(map[string]string{
+					"ext.packaging.carvel.dev/ytt-data-values-overlays":   "",
+					"ext.packaging.carvel.dev/ytt-5-data-values-overlays": "",
+				})
+			},
+			values: []pkgingv1alpha1.PackageInstallValues{
+				{SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values-for-first"}},
+				{TemplateSteps: []int{2}, SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values-for-specific-ytt"}},
+				{TemplateSteps: []int{5}, SecretRef: &pkgingv1alpha1.PackageInstallValuesSecretRef{Name: "values-for-another-ytt"}},
+			},
+			expectedTemplate: []kcv1alpha1.AppTemplate{
+				{Sops: &kcv1alpha1.AppTemplateSops{}},
+				{Ytt: &kcv1alpha1.AppTemplateYtt{
+					Inline: &kcv1alpha1.AppFetchInline{
+						PathsFrom: []kcv1alpha1.AppFetchInlineSource{
+							{SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{Name: "values-for-first"}},
+						},
+					},
+				}},
+				{Ytt: &kcv1alpha1.AppTemplateYtt{
+					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
+						{SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{Name: "values-for-specific-ytt"}},
+					},
+				}},
+				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
+				{Kbld: &kcv1alpha1.AppTemplateKbld{}},
+				{Ytt: &kcv1alpha1.AppTemplateYtt{
+					Inline: &kcv1alpha1.AppFetchInline{
+						PathsFrom: []kcv1alpha1.AppFetchInlineSource{
+							{SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{Name: "values-for-another-ytt"}},
+						},
+					},
+				}},
+				{Cue: &kcv1alpha1.AppTemplateCue{}},
+			},
+		},
+	}
+
+	for tn, tc := range testCases {
+		t.Run(tn, func(t *testing.T) {
+			pkg := pkg()
+			if tc.patchPkg != nil {
+				tc.patchPkg(&pkg)
+			}
+
+			pkgi := pkgi(tc.values)
+			if tc.patchPkgi != nil {
+				tc.patchPkgi(pkgi)
+			}
+
+			app, err := packageinstall.NewApp(&kcv1alpha1.App{}, pkgi, pkg, packageinstall.Opts{})
+
+			if errMsg := tc.exepectedErrMsg; errMsg != "" {
+				require.ErrorContains(t, err, errMsg)
+			} else {
+				require.NoError(t, err)
+			}
+
+			require.Equal(t, tc.expectedTemplate, app.Spec.Template, "App template does not match expected template")
+		})
+	}
+}
+
+func TestAppPackageIntallAnnotationsForTemplateSteps(t *testing.T) {
+	pkgi := func(annotations map[string]string) *pkgingv1alpha1.PackageInstall {
+		pkgi := &pkgingv1alpha1.PackageInstall{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "app",
+				Namespace: "default",
+			},
+		}
+
+		pkgi.ObjectMeta.SetAnnotations(annotations)
+
+		return pkgi
+	}
+
+	pkg := func(templateSteps []kcv1alpha1.AppTemplate) datapkgingv1alpha1.Package {
+		return datapkgingv1alpha1.Package{
+			Spec: datapkgingv1alpha1.PackageSpec{
+				RefName: "expec-pkg",
+				Version: "1.5.0",
+				Template: datapkgingv1alpha1.AppTemplateSpec{
+					Spec: &kcv1alpha1.AppSpec{
+						Template: templateSteps,
+					},
+				},
+			},
+		}
+	}
+
+	someHelmTemplateSteps := func() []kcv1alpha1.AppTemplate {
+		return []kcv1alpha1.AppTemplate{
+			{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
+			{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
+			{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
+		}
+	}
+	someYttTemplateSteps := func() []kcv1alpha1.AppTemplate {
+		return []kcv1alpha1.AppTemplate{
+			{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+			{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+			{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+		}
+	}
+
+	testCases := map[string]struct {
+		pkgiAnnotations  map[string]string
+		pkgTemplateSteps []kcv1alpha1.AppTemplate
+		expectedTemplate []kcv1alpha1.AppTemplate
+	}{
+		"no annotations": {
+			pkgTemplateSteps: someHelmTemplateSteps(),
+			expectedTemplate: []kcv1alpha1.AppTemplate{
+				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
+				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
+				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{}},
+			},
+		},
+		"helm annotations": {
+			pkgTemplateSteps: someHelmTemplateSteps(),
+			pkgiAnnotations: map[string]string{
+				"ext.packaging.carvel.dev/helm-template-name":          "some-default-helm-name",
+				"ext.packaging.carvel.dev/helm-1-template-name":        "some-specific-helm-name",
+				"ext.packaging.carvel.dev/helm-2-template-namespace":   "some-specific-helm-namespace",
+				"ext.packaging.carvel.dev/helm-100-template-namespace": "no-such-step",
+
+				"ext.packaging.carvel.dev/helm-template-values-from-secret-name":       "some-helm-secret",
+				"ext.packaging.carvel.dev/helm-template-values-from-secret-name.blipp": "some-helm-secret.blipp",
+				"ext.packaging.carvel.dev/helm-1-template-values-from-secret-name.foo": "some-helm-secret.foo",
+				"ext.packaging.carvel.dev/helm-1-template-values-from-secret-name.bar": "some-helm-secret.bar",
+			},
+			expectedTemplate: []kcv1alpha1.AppTemplate{
+				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{
+					Name: "some-default-helm-name",
+					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
+						{SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{Name: "some-helm-secret"}},
+						{SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{Name: "some-helm-secret.blipp"}},
+					},
+				}},
+				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{
+					Name: "some-specific-helm-name",
+					ValuesFrom: []kcv1alpha1.AppTemplateValuesSource{
+						{SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{Name: "some-helm-secret.bar"}},
+						{SecretRef: &kcv1alpha1.AppTemplateValuesSourceRef{Name: "some-helm-secret.foo"}},
+					},
+				}},
+				{HelmTemplate: &kcv1alpha1.AppTemplateHelmTemplate{
+					Namespace: "some-specific-helm-namespace",
+				}},
+			},
+		},
+		"ytt annotations": {
+			pkgTemplateSteps: someYttTemplateSteps(),
+			pkgiAnnotations: map[string]string{
+				"ext.packaging.carvel.dev/ytt-paths-from-secret-name":          "some-ytt-secret",
+				"ext.packaging.carvel.dev/ytt-paths-from-secret-name.1":        "some-other-ytt-secret",
+				"ext.packaging.carvel.dev/ytt-0-paths-from-secret-name.foobar": "some-third-ytt-secret",
+				"ext.packaging.carvel.dev/ytt-2-paths-from-secret-name":        "some-specific-ytt-secret",
+				"ext.packaging.carvel.dev/ytt-100-paths-from-secret-name":      "no such step",
+			},
+			expectedTemplate: []kcv1alpha1.AppTemplate{
+				{Ytt: &kcv1alpha1.AppTemplateYtt{
+					Inline: &kcv1alpha1.AppFetchInline{
+						PathsFrom: []kcv1alpha1.AppFetchInlineSource{
+							{SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{Name: "some-ytt-secret"}},
+							{SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{Name: "some-other-ytt-secret"}},
+							{SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{Name: "some-third-ytt-secret"}},
+						},
+					},
+				}},
+				{Ytt: &kcv1alpha1.AppTemplateYtt{}},
+				{Ytt: &kcv1alpha1.AppTemplateYtt{
+					Inline: &kcv1alpha1.AppFetchInline{
+						PathsFrom: []kcv1alpha1.AppFetchInlineSource{
+							{SecretRef: &kcv1alpha1.AppFetchInlineSourceRef{Name: "some-specific-ytt-secret"}},
+						},
+					},
+				}},
+			},
+		},
+	}
+
+	for tn, tc := range testCases {
+		t.Run(tn, func(t *testing.T) {
+			app, err := packageinstall.NewApp(
+				&kcv1alpha1.App{},
+				pkgi(tc.pkgiAnnotations),
+				pkg(tc.pkgTemplateSteps),
+				packageinstall.Opts{},
+			)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedTemplate, app.Spec.Template, "App template does not match expected template")
+		})
+	}
 }
