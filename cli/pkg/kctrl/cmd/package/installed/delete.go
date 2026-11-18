@@ -175,15 +175,19 @@ func (o *DeleteOptions) patchNoopDelete(client kcclient.Interface) error {
 func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.PackageInstall, dynamicClient dynamic.Interface) error {
 	deletedResources := map[CreatedResourceKind]bool{}
 	for k, resourceName := range pkgInstall.GetAnnotations() {
-		split := strings.Split(k, "/")
-		if len(split) <= 1 {
+		// Only annotation keys written by kctrl (or older versions of Tanzu CLI)
+		// when creating these resources are considered
+		var resourceKind CreatedResourceKind
+		switch {
+		case strings.HasPrefix(k, KctrlPkgAnnotation+"-"):
+			resourceKind = CreatedResourceKind(strings.TrimPrefix(k, KctrlPkgAnnotation+"-"))
+		case strings.HasPrefix(k, TanzuPkgAnnotation+"-"):
+			// To support older versions of Tanzu CLI. To be deprecated
+			resourceKind = CreatedResourceKind(strings.TrimPrefix(k, TanzuPkgAnnotation+"-"))
+		default:
 			continue
 		}
 
-		resourceKind := CreatedResourceKind(strings.TrimPrefix(split[1], KctrlPkgAnnotationPrefix))
-
-		// To support older versions of Tanzu CLI. To be deprecated
-		resourceKind = CreatedResourceKind(strings.TrimPrefix(resourceKind.AsString(), TanzuPkgAnnotationPrefix))
 		if deletedResources[resourceKind] {
 			continue
 		}
@@ -204,9 +208,8 @@ func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.
 			namespace = o.NamespaceFlags.Name
 		}
 
-		o.statusUI.PrintMessagef("Deleting '%s': %s", resourceKind, resourceName)
-
-		err := o.deleteResourceUsingGVR(schema.GroupVersionResource{
+		// Resources are only deleted if they are annotated as created for this package install
+		err := o.deleteIfExistsAndOwned(schema.GroupVersionResource{
 			Group:    apiGroup,
 			Version:  version,
 			Resource: resourceKind.Resource(),
@@ -218,7 +221,7 @@ func (o *DeleteOptions) deleteInstallCreatedResources(pkgInstall *kcpkgv1alpha1.
 
 	overlaysSecretName, hasOverlays := pkgInstall.Annotations[yttOverlayAnnotation]
 	if hasOverlays {
-		err := o.deleteResourceUsingGVR(schema.GroupVersionResource{
+		err := o.deleteIfExistsAndOwned(schema.GroupVersionResource{
 			Group:    corev1.SchemeGroupVersion.Group,
 			Version:  corev1.SchemeGroupVersion.Version,
 			Resource: KindSecret.Resource(),
@@ -312,15 +315,6 @@ func (o *DeleteOptions) deleteIfExistsAndOwned(groupVersionResource schema.Group
 
 	o.ui.PrintLinef("Deleting '%s': %s", groupVersionResource.Resource, name)
 	err = dynamicClient.Resource(groupVersionResource).Namespace(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (o *DeleteOptions) deleteResourceUsingGVR(groupVersionResource schema.GroupVersionResource, name string, namespace string, dynamicClient dynamic.Interface) error {
-	err := dynamicClient.Resource(groupVersionResource).Namespace(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
