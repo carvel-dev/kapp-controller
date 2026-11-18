@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	goexec "os/exec"
+	"strings"
 
 	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"carvel.dev/kapp-controller/pkg/exec"
@@ -54,6 +55,11 @@ func (c *cue) template(dirPath string, input io.Reader) exec.CmdRunResult {
 		args = append(args, ".")
 	} else {
 		for _, path := range c.opts.Paths {
+			// paths are passed to cue as positional arguments, so a leading '-'
+			// would be parsed as a cue flag instead of a path.
+			if strings.HasPrefix(path, "-") {
+				return exec.NewCmdRunResultWithErr(fmt.Errorf("invalid cue path '%s': must not start with '-'", path))
+			}
 			_, err := memdir.ScopedPath(dirPath, path)
 			if err != nil {
 				return exec.NewCmdRunResultWithErr(fmt.Errorf("Checking path: %w", err))
