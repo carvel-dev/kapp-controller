@@ -5,6 +5,7 @@ package reftracker
 
 import (
 	"fmt"
+	"maps"
 	"sync"
 )
 
@@ -28,18 +29,22 @@ func (a *AppRefTracker) AppsForRef(refKey RefKey) (map[RefKey]struct{}, error) {
 		return nil, fmt.Errorf("could not find ref %s", refKey.Description())
 	}
 
-	return apps, nil
+	// Return a copy so callers can iterate it without holding the lock
+	// while the tracker's internal maps are modified concurrently.
+	return maps.Clone(apps), nil
 }
 
 func (a *AppRefTracker) RefsForApp(appKey RefKey) (map[RefKey]struct{}, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	if a.appsToRefs[appKey] == nil {
+	refs := a.appsToRefs[appKey]
+	if refs == nil {
 		return nil, fmt.Errorf("could not find refs for App %s", appKey.RefName())
 	}
 
-	return a.appsToRefs[appKey], nil
+	// Return a copy for the same reason as AppsForRef.
+	return maps.Clone(refs), nil
 }
 
 func (a *AppRefTracker) RemoveRef(refKey RefKey) {
