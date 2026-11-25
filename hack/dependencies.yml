@@ -77,11 +77,11 @@
   version: v1.3.2
 - checksums:
     linux:
-      amd64: a39b0c97695069d95d276d99be0f5dbabb081d801bfdc9ba49b76efaf94e2369
-      arm64: 0d729be30d52c952ca38fc9dcb692caa09d8463fa0b64df5781312779183fbcd
+      amd64: 6f763cc20c42174344fbead70737714d63a50c3fa7ec71179e67974c4f9c5f81
+      arm64: 20b99a70821f358413318d80c956d36214aa98f61307af19130d31c3490b8451
   dev: false
   name: cue
   repo: cue-lang/cue
   tarballSubpath: cue
   urlTemplate: https://github.com/cue-lang/cue/releases/download/{{.Version}}/cue_{{.Version}}_{{.OS}}_{{.Arch}}.tar.gz
-  version: v0.17.1
+  version: v0.18.0
